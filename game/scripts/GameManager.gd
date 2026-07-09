@@ -4,6 +4,7 @@ const SAVE_PATH := "user://savegame.dat"
 
 const BONUS_ATTEMPT_PELT_THRESHOLD := 50
 const BONUS_BUST_REDUCTION_PELT_THRESHOLD := 150
+const REROLL_UNLOCK_PELT_THRESHOLD := 100
 
 var best_round: int = 0
 var total_pelts: int = 0
@@ -32,6 +33,10 @@ func get_bonus_attempts() -> int:
 
 func get_bonus_bust_reduction() -> int:
 	return 1 if total_pelts >= BONUS_BUST_REDUCTION_PELT_THRESHOLD else 0
+
+
+func get_max_rerolls() -> int:
+	return 1 if total_pelts >= REROLL_UNLOCK_PELT_THRESHOLD else 0
 
 
 func _load_data() -> void:

@@ -129,14 +129,18 @@ func _refresh() -> void:
 			secondary_button.show()
 			_set_message("라운드 클리어! 더 나아갈까, 여기서 귀환할까?", "success")
 		run.State.SHOP:
-			action_button.hide()
 			secondary_button.text = "건너뛰기"
 			secondary_button.show()
+			if run.rerolls_left > 0:
+				action_button.text = "새로고침 (%d)" % run.rerolls_left
+				action_button.show()
+			else:
+				action_button.hide()
 			_show_charms()
 			if current_offers.is_empty():
 				_set_message("유물 선택! (더 얻을 유물 없음)", "success")
 			else:
-				_set_message("유물을 선택하세요", "success")
+				_set_message("유물을 선택하세요 — 항상 좋은 것만 있지는 않다", "success")
 		run.State.GAME_OVER:
 			action_button.text = "다시 시작"
 			action_button.show()
@@ -157,9 +161,22 @@ func _show_charms() -> void:
 		if i < current_offers.size():
 			var charm: Dictionary = current_offers[i]
 			b.text = "%s — %s" % [charm["name"], charm["desc"]]
+			b.add_theme_color_override("font_color", _tier_color(charm.get("tier", "good")))
 			b.show()
 		else:
 			b.hide()
+
+
+func _tier_color(tier: String) -> Color:
+	match tier:
+		"good":
+			return Palette.SUCCESS
+		"risky":
+			return Palette.MOONLIGHT
+		"bad":
+			return Palette.DANGER
+		_:
+			return Palette.TEXT
 
 
 func _on_charm_button_pressed(index: int) -> void:
@@ -176,6 +193,8 @@ func _on_action_pressed() -> void:
 			run.draw()
 		run.State.ROUND_CLEAR:
 			run.continue_hunting()
+		run.State.SHOP:
+			run.use_reroll()
 		run.State.GAME_OVER, run.State.RETREATED:
 			run.start_run()
 

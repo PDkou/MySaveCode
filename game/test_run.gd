@@ -30,12 +30,16 @@ func _initialize() -> void:
 				else:
 					run.continue_hunting()
 			run.State.SHOP:
-				var offers: Array = run.offer_charms()
-				print("[SHOP] offers=", offers.map(func(c): return c["id"]))
-				if offers.size() > 0:
-					run.pick_charm(offers[0]["id"])
+				if run.rerolls_left > 0 and randf() < 0.5:
+					run.use_reroll()
 				else:
-					run.skip_shop()
+					var offers: Array = run.offer_charms()
+					print("[SHOP] offers=", offers.map(func(c): return "%s(%s)" % [c["id"], c["tier"]]))
+					if offers.size() > 0:
+						var pick: Dictionary = offers[randi() % offers.size()]
+						run.pick_charm(pick["id"])
+					else:
+						run.skip_shop()
 
 	var gm := root.get_node("GameManager")
 	print("FINAL state=", run.state, " round=", run.round_number,
