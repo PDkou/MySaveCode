@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Hungry Pack — HTML Test Build</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0f1724;
+    --bg-deep:#0a1119;
+    --surface:#16212f;
+    --surface-2:#1c2b3b;
+    --text:#ebf2f7;
+    --muted:#7d93a8;
+    --accent:#8cbfe0;
+    --success:#edad3f;
+    --danger:#bf4033;
+    --border:rgba(140,191,224,.20);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(140,191,224,.07), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(237,173,63,.04), transparent 55%),
+      var(--bg-deep);
+    color:var(--text);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px 12px;
+  }
+
+  .frame{
+    width:min(1100px, 100%);
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.7);
+    overflow:hidden;
+    position:relative;
+  }
+
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px 26px;
+    border-bottom:1px solid var(--border);
+    background:rgba(140,191,224,.03);
+  }
+  .brand{
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:700;
+  }
+  .stats{
+    display:flex;
+    gap:22px;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:2px;
+  }
+  .stat .label{font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);}
+  .stat .value{font-size:16px; font-weight:700; color:var(--accent);}
+  .stat .value.warn{color:var(--danger);}
+
+  .body{
+    padding:34px 26px 30px;
+    min-height:460px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:22px;
+    position:relative;
+  }
+
+  .message{
+    min-height:22px;
+    text-align:center;
+    font-size:15px;
+    font-weight:600;
+    max-width:60ch;
+  }
+  .message.success{color:var(--success);}
+  .message.trap{color:var(--danger);}
+  .message.neutral{color:var(--text);}
+
+  .pot{
+    font-size:34px;
+    font-weight:800;
+    letter-spacing:.01em;
+    color:var(--text);
+    font-variant-numeric: tabular-nums;
+    min-height:44px;
+  }
+  .pot .unit{font-size:15px; font-weight:600; color:var(--muted); margin-left:6px;}
+
+  /* bag grid: rounded = safe-feeling face-down tiles */
+  .bag{
+    display:grid;
+    grid-template-columns:repeat(5, 56px);
+    gap:12px;
+    justify-content:center;
+  }
+  .tile{
+    width:56px; height:56px;
+    border-radius:14px;
+    background:linear-gradient(145deg, var(--surface-2), var(--surface));
+    border:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    font-weight:800;
+    font-size:18px;
+    color:var(--muted);
+    transition:transform .12s ease, box-shadow .12s ease;
+    user-select:none;
+    position:relative;
+  }
+  .tile:hover:not(.spent){
+    transform:translateY(-3px);
+    box-shadow:0 8px 18px -6px rgba(140,191,224,.35);
+    border-color:var(--accent);
+  }
+  .tile.spent{
+    cursor:default;
+    opacity:.35;
+    transform:none;
+    box-shadow:none;
+  }
+  /* prey token: round, warm — "safe" shape language */
+  .tile.prey{
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #f7c467, var(--success) 70%);
+    color:#3a2405;
+    border-color:rgba(237,173,63,.6);
+  }
+  /* trap token: sharp angular shard — "danger" shape language */
+  .tile.trap{
+    border-radius:6px;
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+    background:linear-gradient(145deg, #d9564a, var(--danger) 75%);
+    color:#2a0603;
+    border-color:rgba(191,64,51,.7);
+  }
+  .tile.reveal{animation:pop .28s ease;}
+  @keyframes pop{
+    0%{transform:scale(.7); opacity:.4;}
+    70%{transform:scale(1.12);}
+    100%{transform:scale(1);}
+  }
+
+  .actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin-top:6px;
+  }
+  .btn{
+    appearance:none;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--text);
+    font-size:14px;
+    font-weight:700;
+    padding:12px 22px;
+    border-radius:9px;
+    cursor:pointer;
+    transition:background .15s ease, border-color .15s ease, transform .1s ease;
+    font-family:inherit;
+  }
+  .btn:hover{background:var(--surface-2); border-color:var(--accent);}
+  .btn:active{transform:scale(.97);}
+  .btn.primary{background:rgba(140,191,224,.14); border-color:var(--accent);}
+  .btn.warn{border-color:rgba(191,64,51,.5); color:#f0c3ba;}
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+
+  /* charm shop */
+  .shop-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0,220px));
+    gap:16px;
+    width:100%;
+    max-width:760px;
+  }
+  @media (max-width:720px){ .shop-grid{grid-template-columns:1fr;} }
+  .charm-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    cursor:pointer;
+    text-align:left;
+    color:var(--text);
+    font-family:inherit;
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .charm-card:hover{transform:translateY(-3px);}
+  .charm-card.good{border-color:rgba(237,173,63,.4);}
+  .charm-card.good:hover{box-shadow:0 10px 24px -10px rgba(237,173,63,.4);}
+  .charm-card.risky{border-color:rgba(140,191,224,.4);}
+  .charm-card.risky:hover{box-shadow:0 10px 24px -10px rgba(140,191,224,.4);}
+  .charm-card.bad{border-color:rgba(191,64,51,.4);}
+  .charm-card.bad:hover{box-shadow:0 10px 24px -10px rgba(191,64,51,.4);}
+  .charm-top{display:flex; align-items:center; gap:10px;}
+  .charm-icon{
+    width:30px; height:30px; flex:none; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:800;
+  }
+  .charm-card.good .charm-icon{background:rgba(237,173,63,.18); color:var(--success);}
+  .charm-card.risky .charm-icon{background:rgba(140,191,224,.18); color:var(--accent);}
+  .charm-card.bad .charm-icon{background:rgba(191,64,51,.18); color:var(--danger);}
+  .charm-name{font-size:14.5px; font-weight:700;}
+  .charm-tier{font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; opacity:.7;}
+  .charm-desc{font-size:12.5px; line-height:1.5; color:var(--muted);}
+
+  .footer-note{
+    padding:12px 26px;
+    border-top:1px solid var(--border);
+    font-size:11.5px;
+    color:var(--muted);
+    text-align:center;
+    background:rgba(140,191,224,.02);
+  }
+  .footer-note b{color:var(--accent);}
+
+  .end-badge{
+    font-size:44px;
+  }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="topbar">
+      <div class="brand">Howling — Hungry Pack <span style="color:var(--muted); font-weight:400;">/ HTML 테스트 빌드</span></div>
+      <div class="stats">
+        <div class="stat"><span class="label">라운드</span><span class="value" id="statRound">1</span></div>
+        <div class="stat"><span class="label">식량</span><span class="value" id="statFood">0 / 10</span></div>
+        <div class="stat"><span class="label">남은 사냥</span><span class="value" id="statAttempts">4 / 4</span></div>
+        <div class="stat"><span class="label">명성</span><span class="value" id="statPelts">0</span></div>
+      </div>
+    </div>
+
+    <div class="body" id="body"></div>
+
+    <div class="footer-note">
+      코드 기준 <b>test build</b> — <code>game/scripts/RunManager.gd</code> 로직을 1:1로 JS 포팅했습니다 (같은 확률 분포, 같은 27종 유물).
+      명성/최고기록은 브라우저 <code>localStorage</code>에 저장됩니다.
+    </div>
+  </div>
+
+<script>
+// ==== Ported 1:1 from game/scripts/RunManager.gd ====
+const CHARM_DEFS = [
+  {id:"lucky_paw", name:"행운의 발자국", desc:"함정 토큰 1개 감소", tier:"good", effects:[{stat:"bust_count", amount:-1}]},
+  {id:"thick_fur", name:"두꺼운 털가죽", desc:"먹잇감 가치 +1", tier:"good", effects:[{stat:"value_bonus", amount:1}]},
+  {id:"fat_reserves", name:"두둑한 비축", desc:"먹잇감 가치 +2", tier:"good", effects:[{stat:"value_bonus", amount:2}]},
+  {id:"safety_net", name:"안전망", desc:"함정에 걸려도 이번 사냥 식량의 50% 보존", tier:"good", effects:[{stat:"safety_percent", amount:0.5}]},
+  {id:"sure_footing", name:"확실한 발걸음", desc:"함정 손실 방어 +25% (중첩 가능)", tier:"good", effects:[{stat:"safety_percent", amount:0.25}]},
+  {id:"extra_hunt", name:"추가 사냥", desc:"라운드당 시도 횟수 +1", tier:"good", effects:[{stat:"attempts_per_round", amount:1}]},
+  {id:"steady_howl", name:"차분한 울음", desc:"다음 라운드부터 목표 증가폭 20% 감소", tier:"good", effects:[{stat:"quota_growth_multiplier", amount:0.8}]},
+  {id:"moonlight", name:"달빛 축복", desc:"사냥 성공 시 획득 식량 10% 보너스", tier:"good", effects:[{stat:"cashout_bonus_percent", amount:0.1}]},
+  {id:"wide_pouch", name:"넉넉한 주머니", desc:"주머니 속 사냥감 슬롯 +2 (함정 개수는 그대로)", tier:"good", effects:[{stat:"bag_size_bonus", amount:2}]},
+  {id:"keen_nose", name:"예민한 코", desc:"매 라운드 첫 함정 자동 회피", tier:"good", effects:[{stat:"bonus_trap_immunity", amount:1}]},
+  {id:"sharp_eyes", name:"날카로운 눈", desc:"매 라운드 함정 자동 회피 +1회 (중첩 가능)", tier:"good", effects:[{stat:"bonus_trap_immunity", amount:1}]},
+  {id:"packmother_blessing", name:"무리 어미의 축복", desc:"게임 오버 1회 무효 (목숨 보험)", tier:"good", effects:[{stat:"extra_life", amount:1}]},
+  {id:"homeward_scent", name:"귀향의 냄새", desc:"귀환 시 명성 +20%", tier:"good", effects:[{stat:"retreat_bonus_percent", amount:0.2}]},
+  {id:"greedy_claw", name:"탐욕의 발톱", desc:"먹잇감 가치 +3, 대신 함정 토큰 1개 추가", tier:"risky", effects:[{stat:"value_bonus", amount:3},{stat:"bust_count", amount:1}]},
+  {id:"hasty_hunt", name:"성급한 사냥", desc:"시도 횟수 +1, 대신 다음부터 목표 증가폭 15% 증가", tier:"risky", effects:[{stat:"attempts_per_round", amount:1},{stat:"quota_growth_multiplier", amount:1.15}]},
+  {id:"timid_pack", name:"겁 많은 무리", desc:"함정 피해 완전 무효화, 대신 시도 횟수 -1", tier:"risky", effects:[{stat:"safety_percent", amount:1.0},{stat:"attempts_per_round", amount:-1}]},
+  {id:"bold_leap", name:"대담한 도약", desc:"먹잇감 가치 +2, 대신 함정 방어 전부 초기화", tier:"risky", effects:[{stat:"value_bonus", amount:2},{stat:"safety_percent", amount:-1.0}]},
+  {id:"night_hunt", name:"밤 사냥", desc:"시도 횟수 +2, 대신 함정 토큰 1개 추가", tier:"risky", effects:[{stat:"attempts_per_round", amount:2},{stat:"bust_count", amount:1}]},
+  {id:"reckless_pace", name:"무모한 질주", desc:"캐시아웃 보너스 +25%, 대신 목표 증가폭 20% 증가", tier:"risky", effects:[{stat:"cashout_bonus_percent", amount:0.25},{stat:"quota_growth_multiplier", amount:1.2}]},
+  {id:"cramped_pouch", name:"비좁은 주머니", desc:"함정 1개 감소, 대신 먹잇감 가치 -1", tier:"risky", effects:[{stat:"bust_count", amount:-1},{stat:"value_bonus", amount:-1}]},
+  {id:"moon_howl", name:"만월의 하울", desc:"캐시아웃 보너스 +15%, 대신 함정 토큰 1개 추가", tier:"risky", effects:[{stat:"cashout_bonus_percent", amount:0.15},{stat:"bust_count", amount:1}]},
+  {id:"warm_den", name:"따뜻한 굴", desc:"귀환 시 명성 +10%, 대신 시도 횟수 -1", tier:"risky", effects:[{stat:"retreat_bonus_percent", amount:0.1},{stat:"attempts_per_round", amount:-1}]},
+  {id:"old_scar", name:"오래된 흉터", desc:"목숨 보험 +1, 대신 먹잇감 가치 -1", tier:"risky", effects:[{stat:"extra_life", amount:1},{stat:"value_bonus", amount:-1}]},
+  {id:"weary_steps", name:"지친 발걸음", desc:"라운드당 시도 횟수 -1 (보상 없음)", tier:"bad", effects:[{stat:"attempts_per_round", amount:-1}]},
+  {id:"thin_pouch", name:"얇은 주머니", desc:"주머니 속 사냥감 슬롯 -2 (보상 없음)", tier:"bad", effects:[{stat:"bag_size_bonus", amount:-2}]},
+  {id:"nervous_pack", name:"불안한 무리", desc:"목표 증가폭 25% 증가 (보상 없음)", tier:"bad", effects:[{stat:"quota_growth_multiplier", amount:1.25}]},
+  {id:"clumsy_paws", name:"서투른 발", desc:"함정 토큰 1개 추가 (보상 없음)", tier:"bad", effects:[{stat:"bust_count", amount:1}]},
+];
+
+const ICONS = {
+  bust_count:"◆", value_bonus:"●", safety_percent:"◈", attempts_per_round:"❖",
+  quota_growth_multiplier:"▲", cashout_bonus_percent:"◎", bag_size_bonus:"▣",
+  extra_life:"♥", retreat_bonus_percent:"☾", bonus_trap_immunity:"◉"
+};
+
+const BASE_QUOTA = 10, QUOTA_GROWTH = 10, BASE_ATTEMPTS = 4, BASE_BUST_COUNT = 1, BASE_BAG_SIZE = 10;
+const BONUS_ATTEMPT_PELT_THRESHOLD = 50, BONUS_BUST_REDUCTION_PELT_THRESHOLD = 150, REROLL_UNLOCK_PELT_THRESHOLD = 100;
+
+const GameManager = {
+  bestRound: parseInt(localStorage.getItem('hp_best_round') || '0', 10),
+  totalPelts: parseInt(localStorage.getItem('hp_total_pelts') || '0', 10),
+  save(){
+    localStorage.setItem('hp_best_round', this.bestRound);
+    localStorage.setItem('hp_total_pelts', this.totalPelts);
+  },
+  reportRunResult(roundReached){
+    if(roundReached > this.bestRound){ this.bestRound = roundReached; this.save(); }
+  },
+  reportExtraction(roundReached, peltsEarned){
+    this.totalPelts += peltsEarned;
+    if(roundReached > this.bestRound) this.bestRound = roundReached;
+    this.save();
+  },
+  getBonusAttempts(){ return this.totalPelts >= BONUS_ATTEMPT_PELT_THRESHOLD ? 1 : 0; },
+  getBonusBustReduction(){ return this.totalPelts >= BONUS_BUST_REDUCTION_PELT_THRESHOLD ? 1 : 0; },
+  getMaxRerolls(){ return this.totalPelts >= REROLL_UNLOCK_PELT_THRESHOLD ? 1 : 0; },
+};
+
+const State = { IDLE:"IDLE", DRAWING:"DRAWING", ROUND_CLEAR:"ROUND_CLEAR", SHOP:"SHOP", GAME_OVER:"GAME_OVER", RETREATED:"RETREATED" };
+
+const Run = {
+  state: State.IDLE,
+  roundNumber:1, quota:BASE_QUOTA, attemptsLeft:BASE_ATTEMPTS, attemptsPerRound:BASE_ATTEMPTS,
+  bustCount:BASE_BUST_COUNT, valueBonus:0, safetyPercent:0, cashoutBonusPercent:0, quotaGrowthMultiplier:1,
+  bagSizeBonus:0, extraLife:0, retreatBonusPercent:0, bonusTrapImmunity:0, trapImmunityLeft:0,
+  totalFood:0, pot:0, bag:[], ownedCharms:[], rerollsLeft:0,
+  lastMessage:{text:"", kind:"neutral"},
+  currentOffers:[],
+
+  startRun(){
+    this.roundNumber=1; this.quota=BASE_QUOTA;
+    this.attemptsPerRound = BASE_ATTEMPTS + GameManager.getBonusAttempts();
+    this.bustCount = Math.max(0, BASE_BUST_COUNT - GameManager.getBonusBustReduction());
+    this.valueBonus=0; this.safetyPercent=0; this.cashoutBonusPercent=0; this.quotaGrowthMultiplier=1;
+    this.bagSizeBonus=0; this.extraLife=0; this.retreatBonusPercent=0; this.bonusTrapImmunity=0;
+    this.totalFood=0; this.ownedCharms=[];
+    this._startRound();
+  },
+  startAttempt(){
+    if(this.state!==State.IDLE || this.attemptsLeft<=0) return;
+    this.attemptsLeft--; this.pot=0; this._buildBag();
+    this.state=State.DRAWING;
+  },
+  draw(){
+    if(this.state!==State.DRAWING || this.bag.length===0) return null;
+    const token = this.bag.pop();
+    if(token===-1){
+      if(this.trapImmunityLeft>0){
+        this.trapImmunityLeft--;
+        this._msg("무리가 함정을 미리 감지해 피했다!","success");
+        if(this.bag.length===0) this.cashOut();
+        return {kind:"dodged"};
+      }
+      this._onTrap();
+      return {kind:"trap"};
+    } else {
+      this.pot+=token;
+      if(this.bag.length===0) this.cashOut();
+      return {kind:"prey", value:token};
+    }
+  },
+  cashOut(){
+    if(this.state!==State.DRAWING) return;
+    const bonus = Math.floor(this.pot*this.cashoutBonusPercent);
+    this._msg(`사냥 성공! 식량 +${this.pot+bonus}`,"success");
+    this.totalFood += this.pot+bonus; this.pot=0;
+    this._resolveAfterAttempt();
+  },
+  retreat(){
+    if(this.state!==State.ROUND_CLEAR) return;
+    const base = this.roundNumber*5 + this.totalFood;
+    const earned = base + Math.floor(base*this.retreatBonusPercent);
+    this._msg(`무리가 안전하게 귀환했다! 명성 +${earned}`,"success");
+    GameManager.reportExtraction(this.roundNumber, earned);
+    this.state=State.RETREATED;
+  },
+  continueHunting(){
+    if(this.state!==State.ROUND_CLEAR) return;
+    this.state=State.SHOP; this.rerollsLeft=GameManager.getMaxRerolls();
+  },
+  useReroll(){
+    if(this.state!==State.SHOP || this.rerollsLeft<=0) return;
+    this.rerollsLeft--;
+  },
+  skipShop(){
+    if(this.state!==State.SHOP) return;
+    this._nextRound();
+  },
+  pickCharm(id){
+    if(this.state!==State.SHOP) return;
+    this.ownedCharms.push(id);
+    const def = CHARM_DEFS.find(c=>c.id===id);
+    if(def) for(const e of def.effects) this._applyEffect(e);
+    this._nextRound();
+  },
+  offerCharms(){
+    const pool = CHARM_DEFS.filter(c=>!this.ownedCharms.includes(c.id));
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+    this.currentOffers = pool.slice(0,3);
+    return this.currentOffers;
+  },
+  _applyEffect(e){
+    const a = e.amount;
+    switch(e.stat){
+      case "bust_count": this.bustCount = Math.max(0, this.bustCount+a); break;
+      case "value_bonus": this.valueBonus += a; break;
+      case "safety_percent": this.safetyPercent = Math.min(1, Math.max(0, this.safetyPercent+a)); break;
+      case "attempts_per_round": this.attemptsPerRound = Math.max(1, this.attemptsPerRound+a); break;
+      case "quota_growth_multiplier": this.quotaGrowthMultiplier *= a; break;
+      case "cashout_bonus_percent": this.cashoutBonusPercent = Math.max(0, this.cashoutBonusPercent+a); break;
+      case "bag_size_bonus": this.bagSizeBonus += a; break;
+      case "extra_life": this.extraLife = Math.max(0, this.extraLife+a); break;
+      case "retreat_bonus_percent": this.retreatBonusPercent = Math.max(0, this.retreatBonusPercent+a); break;
+      case "bonus_trap_immunity": this.bonusTrapImmunity = Math.max(0, this.bonusTrapImmunity+a); break;
+    }
+  },
+  _buildBag(){
+    this.bag=[];
+    const valueSlots = Math.max(1, BASE_BAG_SIZE + this.bagSizeBonus - this.bustCount);
+    for(let i=0;i<valueSlots;i++){
+      const roll = Math.floor(Math.random()*100);
+      let base = roll<55 ? 1 : (roll<85 ? 2 : 4);
+      this.bag.push(Math.max(0, base+this.valueBonus));
+    }
+    for(let i=0;i<this.bustCount;i++) this.bag.push(-1);
+    for(let i=this.bag.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [this.bag[i],this.bag[j]]=[this.bag[j],this.bag[i]]; }
+  },
+  _onTrap(){
+    const kept = Math.floor(this.pot*this.safetyPercent);
+    this._msg(`함정이다! 식량 ${kept}만 겨우 건짐`,"trap");
+    this.totalFood += kept; this.pot=0;
+    this._resolveAfterAttempt();
+  },
+  _resolveAfterAttempt(){
+    if(this.totalFood>=this.quota){ this.state=State.ROUND_CLEAR; }
+    else if(this.attemptsLeft>0){ this.state=State.IDLE; }
+    else { this._gameOver(); }
+  },
+  _startRound(){
+    this.attemptsLeft=this.attemptsPerRound; this.trapImmunityLeft=this.bonusTrapImmunity;
+    this.state=State.IDLE;
+  },
+  _nextRound(){
+    this.roundNumber++; this.quota += Math.floor(QUOTA_GROWTH*this.quotaGrowthMultiplier);
+    this._startRound();
+  },
+  _gameOver(){
+    if(this.extraLife>0){
+      this.extraLife--;
+      this._msg("무리 중 하나가 대신 희생해 살아남았다...","trap");
+      this.attemptsLeft=1; this.state=State.IDLE;
+      return;
+    }
+    this.state=State.GAME_OVER;
+    GameManager.reportRunResult(this.roundNumber);
+  },
+  _msg(text,kind){ this.lastMessage={text,kind}; }
+};
+
+// ==== Rendering (art direction: round+warm=safe, sharp+red=danger) ====
+const bodyEl = document.getElementById('body');
+
+function updateHUD(){
+  document.getElementById('statRound').textContent = Run.roundNumber;
+  document.getElementById('statFood').textContent = `${Run.totalFood} / ${Run.quota}`;
+  document.getElementById('statAttempts').textContent = `${Run.attemptsLeft} / ${Run.attemptsPerRound}`;
+  document.getElementById('statPelts').textContent = GameManager.totalPelts;
+}
+
+function el(tag, cls, html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML=html; return e; }
+
+function render(){
+  updateHUD();
+  bodyEl.innerHTML = "";
+
+  const msg = el('div', `message ${Run.lastMessage.kind}`, Run.lastMessage.text);
+
+  if(Run.state===State.IDLE){
+    bodyEl.append(msg);
+    const btn = el('button','btn primary','사냥 시작');
+    btn.onclick = ()=>{ Run._msg("",""); Run.startAttempt(); render(); };
+    bodyEl.append(btn);
+
+  } else if(Run.state===State.DRAWING){
+    bodyEl.append(el('div','pot', `${Run.pot} <span class="unit">이번 사냥</span>`));
+    const bag = el('div','bag');
+    Run.bag.forEach((_,idx)=>{
+      const tile = el('div','tile','');
+      tile.dataset.idx = idx;
+      tile.onclick = ()=> onTileClick(tile);
+      bag.append(tile);
+    });
+    bodyEl.append(bag);
+    bodyEl.append(msg);
+    const actions = el('div','actions');
+    const stopBtn = el('button','btn warn','저장하고 멈추기');
+    stopBtn.onclick = ()=>{ Run.cashOut(); render(); };
+    actions.append(stopBtn);
+    bodyEl.append(actions);
+
+  } else if(Run.state===State.ROUND_CLEAR){
+    bodyEl.append(el('div','end-badge','🏕️'));
+    bodyEl.append(el('div', 'message success', '라운드 클리어! 더 나아갈까, 여기서 귀환할까?'));
+    const actions = el('div','actions');
+    const goBtn = el('button','btn primary','계속 사냥');
+    goBtn.onclick = ()=>{ Run.continueHunting(); render(); };
+    const retreatBtn = el('button','btn warn','귀환 (지금까지 성과 보존)');
+    retreatBtn.onclick = ()=>{ Run.retreat(); render(); };
+    actions.append(goBtn, retreatBtn);
+    bodyEl.append(actions);
+
+  } else if(Run.state===State.SHOP){
+    const offers = Run.offerCharms();
+    bodyEl.append(el('div','message success', offers.length ? '유물을 선택하세요 — 항상 좋은 것만 있지는 않다' : '유물 선택! (더 얻을 유물 없음)'));
+    const grid = el('div','shop-grid');
+    offers.forEach(c=>{
+      const card = el('div', `charm-card ${c.tier}`);
+      const top = el('div','charm-top');
+      const icon = el('div','charm-icon', ICONS[c.effects[0].stat] || '?');
+      const nameWrap = el('div','');
+      nameWrap.append(el('div','charm-name', c.name), el('div','charm-tier', c.tier==='good'?'좋음':c.tier==='risky'?'위험':'나쁨'));
+      top.append(icon, nameWrap);
+      card.append(top, el('div','charm-desc', c.desc));
+      card.onclick = ()=>{ Run.pickCharm(c.id); render(); };
+      grid.append(card);
+    });
+    bodyEl.append(grid);
+    const actions = el('div','actions');
+    if(Run.rerollsLeft>0){
+      const rerollBtn = el('button','btn', `새로고침 (${Run.rerollsLeft})`);
+      rerollBtn.onclick = ()=>{ Run.useReroll(); render(); };
+      actions.append(rerollBtn);
+    }
+    const skipBtn = el('button','btn warn','건너뛰기');
+    skipBtn.onclick = ()=>{ Run.skipShop(); render(); };
+    actions.append(skipBtn);
+    bodyEl.append(actions);
+
+  } else if(Run.state===State.GAME_OVER){
+    bodyEl.append(el('div','end-badge','💀'));
+    bodyEl.append(el('div','message trap', `게임 오버 — 전부 잃었다 (${Run.roundNumber}라운드까지 생존, 최고 ${GameManager.bestRound})`));
+    const btn = el('button','btn primary','다시 시작');
+    btn.onclick = ()=>{ Run.startRun(); render(); };
+    bodyEl.append(btn);
+
+  } else if(Run.state===State.RETREATED){
+    bodyEl.append(el('div','end-badge','🌙'));
+    bodyEl.append(el('div','message success', `무리가 귀환했다! ${Run.roundNumber}라운드 생존 (누적 명성 ${GameManager.totalPelts})`));
+    const btn = el('button','btn primary','다시 시작');
+    btn.onclick = ()=>{ Run.startRun(); render(); };
+    bodyEl.append(btn);
+  }
+}
+
+function onTileClick(tile){
+  if(tile.classList.contains('spent')) return;
+  const result = Run.draw();
+  if(!result) return;
+  tile.classList.add('spent','reveal');
+  if(result.kind==='trap'){
+    tile.classList.add('trap'); tile.textContent='';
+  } else if(result.kind==='prey'){
+    tile.classList.add('prey'); tile.textContent = result.value;
+  } else if(result.kind==='dodged'){
+    tile.classList.add('prey'); tile.textContent='✓';
+  }
+  // brief pause so the flip/reveal animation is visible before the screen changes
+  setTimeout(()=>{ render(); }, 420);
+}
+
+Run.startRun();
+render();
+</script>
+</body>
+</html>
