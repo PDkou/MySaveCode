@@ -329,7 +329,7 @@ const PREY_TYPES = [
 ];
 
 const CHARM_DEFS = [
-  {id:"lucky_paw", name:"행운의 발자국", desc:"함정 토큰 1개 감소", tier:"good", effects:[{stat:"bust_count", amount:-1}]},
+  {id:"lucky_paw", name:"행운의 발자국", desc:"함정 토큰 1개 감소 (최소 1개는 유지), 정찰 +1회", tier:"good", effects:[{stat:"bust_count", amount:-1},{stat:"bonus_scouts", amount:1}]},
   {id:"thick_fur", name:"두꺼운 털가죽", desc:"먹잇감 가치 +1 (전 종류)", tier:"good", effects:[{stat:"value_bonus", amount:1}]},
   {id:"fat_reserves", name:"두둑한 비축", desc:"먹잇감 가치 +2 (전 종류)", tier:"good", effects:[{stat:"value_bonus", amount:2}]},
   {id:"safety_net", name:"안전망", desc:"함정에 걸려도 이번 사냥 식량의 50% 보존", tier:"good", effects:[{stat:"safety_percent", amount:0.5}]},
@@ -337,6 +337,8 @@ const CHARM_DEFS = [
   {id:"extra_hunt", name:"추가 사냥", desc:"라운드당 시도 횟수 +1", tier:"good", effects:[{stat:"attempts_per_round", amount:1}]},
   {id:"steady_howl", name:"차분한 울음", desc:"다음 라운드부터 목표 증가폭 20% 감소", tier:"good", effects:[{stat:"quota_growth_multiplier", amount:0.8}]},
   {id:"moonlight", name:"달빛 축복", desc:"사냥 성공 시 획득 식량 10% 보너스", tier:"good", effects:[{stat:"cashout_bonus_percent", amount:0.1}]},
+  {id:"trackers_eye", name:"추적자의 눈", desc:"매 사냥마다 정찰 +1회 (다음 뽑을 것을 미리 확인)", tier:"good", effects:[{stat:"bonus_scouts", amount:1}]},
+  {id:"keen_instinct", name:"타고난 감각", desc:"정찰 +2회, 대신 함정 토큰 1개 추가", tier:"risky", effects:[{stat:"bonus_scouts", amount:2},{stat:"bust_count", amount:1}]},
   {id:"wide_pouch", name:"넉넉한 주머니", desc:"주머니 속 사냥감 슬롯 +2 (함정 개수는 그대로)", tier:"good", effects:[{stat:"bag_size_bonus", amount:2}]},
   {id:"keen_nose", name:"예민한 코", desc:"매 라운드 첫 함정 자동 회피", tier:"good", effects:[{stat:"bonus_trap_immunity", amount:1}]},
   {id:"sharp_eyes", name:"날카로운 눈", desc:"매 라운드 함정 자동 회피 +1회 (중첩 가능)", tier:"good", effects:[{stat:"bonus_trap_immunity", amount:1}]},
@@ -367,10 +369,10 @@ const CHARM_DEFS = [
 const ICONS = {
   bust_count:"◆", value_bonus:"●", safety_percent:"◈", attempts_per_round:"❖",
   quota_growth_multiplier:"▲", cashout_bonus_percent:"◎", bag_size_bonus:"▣",
-  extra_life:"♥", retreat_bonus_percent:"☾", bonus_trap_immunity:"◉", type_bonus:"✦"
+  extra_life:"♥", retreat_bonus_percent:"☾", bonus_trap_immunity:"◉", type_bonus:"✦", bonus_scouts:"👁"
 };
 
-const BASE_QUOTA = 10, QUOTA_GROWTH = 10, BASE_ATTEMPTS = 4, BASE_BUST_COUNT = 1, BASE_BAG_SIZE = 10;
+const BASE_QUOTA = 10, QUOTA_GROWTH = 10, BASE_ATTEMPTS = 4, BASE_BUST_COUNT = 2, MIN_BUST_COUNT = 1, BASE_BAG_SIZE = 10;
 const BONUS_ATTEMPT_PELT_THRESHOLD = 50, BONUS_BUST_REDUCTION_PELT_THRESHOLD = 150, REROLL_UNLOCK_PELT_THRESHOLD = 100;
 
 const GameManager = {
@@ -400,7 +402,7 @@ const Run = {
   roundNumber:1, quota:BASE_QUOTA, attemptsLeft:BASE_ATTEMPTS, attemptsPerRound:BASE_ATTEMPTS,
   bustCount:BASE_BUST_COUNT, valueBonus:0, safetyPercent:0, cashoutBonusPercent:0, quotaGrowthMultiplier:1,
   bagSizeBonus:0, extraLife:0, retreatBonusPercent:0, bonusTrapImmunity:0, trapImmunityLeft:0,
-  typeBonus:{},
+  typeBonus:{}, bonusScouts:0, scoutsLeft:0,
   totalFood:0, pot:0, bag:[], ownedCharms:[], rerollsLeft:0,
   lastMessage:{text:"", kind:"neutral"},
   currentOffers:[],
@@ -408,17 +410,26 @@ const Run = {
   startRun(){
     this.roundNumber=1; this.quota=BASE_QUOTA;
     this.attemptsPerRound = BASE_ATTEMPTS + GameManager.getBonusAttempts();
-    this.bustCount = Math.max(0, BASE_BUST_COUNT - GameManager.getBonusBustReduction());
+    this.bustCount = Math.max(MIN_BUST_COUNT, BASE_BUST_COUNT - GameManager.getBonusBustReduction());
     this.valueBonus=0; this.safetyPercent=0; this.cashoutBonusPercent=0; this.quotaGrowthMultiplier=1;
     this.bagSizeBonus=0; this.extraLife=0; this.retreatBonusPercent=0; this.bonusTrapImmunity=0;
-    this.typeBonus={};
+    this.typeBonus={}; this.bonusScouts=0;
     this.totalFood=0; this.ownedCharms=[];
     this._startRound();
   },
   startAttempt(){
     if(this.state!==State.IDLE || this.attemptsLeft<=0) return;
+    this.scoutsLeft = 1 + this.bonusScouts;
     this.attemptsLeft--; this.pot=0; this._buildBag();
     this.state=State.DRAWING;
+  },
+  scout(){
+    if(this.state!==State.DRAWING || this.scoutsLeft<=0 || this.bag.length===0) return null;
+    this.scoutsLeft--;
+    const next = this.bag[this.bag.length-1];
+    if(next.type==="trap") this._msg("정찰 결과: 다음은 함정이다!","trap");
+    else this._msg(`정찰 결과: 다음은 ${next.icon} ${next.name} (+${next.value})`,"neutral");
+    return next;
   },
   draw(){
     if(this.state!==State.DRAWING || this.bag.length===0) return null;
@@ -484,7 +495,7 @@ const Run = {
   _applyEffect(e){
     const a = e.amount;
     switch(e.stat){
-      case "bust_count": this.bustCount = Math.max(0, this.bustCount+a); break;
+      case "bust_count": this.bustCount = Math.max(MIN_BUST_COUNT, this.bustCount+a); break;
       case "value_bonus": this.valueBonus += a; break;
       case "safety_percent": this.safetyPercent = Math.min(1, Math.max(0, this.safetyPercent+a)); break;
       case "attempts_per_round": this.attemptsPerRound = Math.max(1, this.attemptsPerRound+a); break;
@@ -495,6 +506,7 @@ const Run = {
       case "retreat_bonus_percent": this.retreatBonusPercent = Math.max(0, this.retreatBonusPercent+a); break;
       case "bonus_trap_immunity": this.bonusTrapImmunity = Math.max(0, this.bonusTrapImmunity+a); break;
       case "type_bonus": this.typeBonus[e.type] = (this.typeBonus[e.type]||0) + a; break;
+      case "bonus_scouts": this.bonusScouts = Math.max(0, this.bonusScouts+a); break;
     }
   },
   _rollPreyType(){
@@ -615,6 +627,11 @@ function render(){
     bodyEl.append(bag);
     bodyEl.append(msg);
     const actions = el('div','actions');
+    if(Run.scoutsLeft>0){
+      const scoutBtn = el('button','btn', `정찰 (${Run.scoutsLeft})`);
+      scoutBtn.onclick = ()=>{ Run.scout(); render(); };
+      actions.append(scoutBtn);
+    }
     const stopBtn = el('button','btn warn','저장하고 멈추기');
     stopBtn.onclick = ()=>{
       Run.cashOut();

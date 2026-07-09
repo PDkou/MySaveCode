@@ -13,6 +13,7 @@ var pot_label: Label
 var message_label: Label
 var action_button: Button
 var secondary_button: Button
+var scout_button: Button
 var charm_layer: CanvasLayer
 var charm_buttons: Array = []
 
@@ -59,6 +60,9 @@ func _build_hud(viewport_size: Vector2) -> void:
 
 	secondary_button = _make_button(hud, Vector2(200, 50), Vector2(viewport_size.x / 2.0 + 10, viewport_size.y / 2.0 + 20))
 	secondary_button.pressed.connect(_on_secondary_pressed)
+
+	scout_button = _make_button(hud, Vector2(190, 40), Vector2(viewport_size.x - 210, 20))
+	scout_button.pressed.connect(_on_scout_pressed)
 
 	charm_layer = CanvasLayer.new()
 	add_child(charm_layer)
@@ -113,6 +117,7 @@ func _refresh() -> void:
 	attempts_label.text = "남은 사냥 %d / %d" % [run.attempts_left, run.attempts_per_round]
 
 	risk_label.text = ""
+	scout_button.hide()
 
 	match run.state:
 		run.State.IDLE:
@@ -131,6 +136,9 @@ func _refresh() -> void:
 			if tiles > 0:
 				var odds := int(round(100.0 * traps / tiles))
 				risk_label.text = "위험도: 함정 %d / 남은 %d장 (약 %d%%)" % [traps, tiles, odds]
+			if run.scouts_left > 0:
+				scout_button.text = "정찰 (%d)" % run.scouts_left
+				scout_button.show()
 		run.State.ROUND_CLEAR:
 			action_button.text = "계속 사냥"
 			action_button.show()
@@ -206,6 +214,11 @@ func _on_action_pressed() -> void:
 			run.use_reroll()
 		run.State.GAME_OVER, run.State.RETREATED:
 			run.start_run()
+
+
+func _on_scout_pressed() -> void:
+	run.scout()
+	_refresh()
 
 
 func _on_secondary_pressed() -> void:

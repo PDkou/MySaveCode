@@ -10,6 +10,7 @@ const BASE_QUOTA := 10
 const QUOTA_GROWTH := 10
 const BASE_ATTEMPTS := 4
 const BASE_BUST_COUNT := 1
+const MIN_BUST_COUNT := 1  # the bag must always keep at least one trap — risk can never be fully removed
 const BASE_BAG_SIZE := 10
 
 # Prey have identity (not just anonymous numbers) so charms can build
@@ -26,8 +27,8 @@ const PREY_TYPES := [
 # generically by _apply_effect(). Adding a new charm almost never needs new
 # code — only a new "stat" needs a case in _apply_effect(), and only once.
 const CHARM_DEFS := [
-	{"id": "lucky_paw", "name": "행운의 발자국", "desc": "함정 토큰 1개 감소", "tier": "good",
-		"effects": [{"stat": "bust_count", "amount": -1}]},
+	{"id": "lucky_paw", "name": "행운의 발자국", "desc": "함정 토큰 1개 감소 (최소 1개는 유지), 정찰 +1회", "tier": "good",
+		"effects": [{"stat": "bust_count", "amount": -1}, {"stat": "bonus_scouts", "amount": 1}]},
 	{"id": "thick_fur", "name": "두꺼운 털가죽", "desc": "먹잇감 가치 +1 (전 종류)", "tier": "good",
 		"effects": [{"stat": "value_bonus", "amount": 1}]},
 	{"id": "fat_reserves", "name": "두둑한 비축", "desc": "먹잇감 가치 +2 (전 종류)", "tier": "good",
@@ -42,6 +43,10 @@ const CHARM_DEFS := [
 		"effects": [{"stat": "quota_growth_multiplier", "amount": 0.8}]},
 	{"id": "moonlight", "name": "달빛 축복", "desc": "사냥 성공 시 획득 식량 10% 보너스", "tier": "good",
 		"effects": [{"stat": "cashout_bonus_percent", "amount": 0.1}]},
+	{"id": "trackers_eye", "name": "추적자의 눈", "desc": "매 사냥마다 정찰 +1회 (다음 뽑을 것을 미리 확인)", "tier": "good",
+		"effects": [{"stat": "bonus_scouts", "amount": 1}]},
+	{"id": "keen_instinct", "name": "타고난 감각", "desc": "정찰 +2회, 대신 함정 토큰 1개 추가", "tier": "risky",
+		"effects": [{"stat": "bonus_scouts", "amount": 2}, {"stat": "bust_count", "amount": 1}]},
 	{"id": "wide_pouch", "name": "넉넉한 주머니", "desc": "주머니 속 사냥감 슬롯 +2 (함정 개수는 그대로)", "tier": "good",
 		"effects": [{"stat": "bag_size_bonus", "amount": 2}]},
 	{"id": "keen_nose", "name": "예민한 코", "desc": "매 라운드 첫 함정 자동 회피", "tier": "good",
@@ -110,6 +115,8 @@ var retreat_bonus_percent: float = 0.0
 var bonus_trap_immunity: int = 0
 var trap_immunity_left: int = 0
 var type_bonus: Dictionary = {}
+var bonus_scouts: int = 0
+var scouts_left: int = 0
 
 var total_food: int = 0
 var pot: int = 0
@@ -122,7 +129,7 @@ func start_run() -> void:
 	round_number = 1
 	quota = BASE_QUOTA
 	attempts_per_round = BASE_ATTEMPTS + GameManager.get_bonus_attempts()
-	bust_count = max(0, BASE_BUST_COUNT - GameManager.get_bonus_bust_reduction())
+	bust_count = max(MIN_BUST_COUNT, BASE_BUST_COUNT - GameManager.get_bonus_bust_reduction())
 	value_bonus = 0
 	safety_percent = 0.0
 	cashout_bonus_percent = 0.0
@@ -132,14 +139,28 @@ func start_run() -> void:
 	retreat_bonus_percent = 0.0
 	bonus_trap_immunity = 0
 	type_bonus.clear()
+	bonus_scouts = 0
 	total_food = 0
 	owned_charms.clear()
 	_start_round()
 
 
+func scout() -> Dictionary:
+	if state != State.DRAWING or scouts_left <= 0 or bag.is_empty():
+		return {}
+	scouts_left -= 1
+	var next: Dictionary = bag.back()
+	if next["type"] == "trap":
+		message.emit("정찰 결과: 다음은 함정이다!", "trap")
+	else:
+		message.emit("정찰 결과: 다음은 %s %s (+%d)" % [next["icon"], next["name"], next["value"]], "neutral")
+	return next
+
+
 func start_attempt() -> void:
 	if state != State.IDLE or attempts_left <= 0:
 		return
+	scouts_left = 1 + bonus_scouts
 	attempts_left -= 1
 	pot = 0
 	_build_bag()
@@ -254,7 +275,7 @@ func _apply_effect(effect: Dictionary) -> void:
 	var amount = effect["amount"]
 	match effect["stat"]:
 		"bust_count":
-			bust_count = max(0, bust_count + int(amount))
+			bust_count = max(MIN_BUST_COUNT, bust_count + int(amount))
 		"value_bonus":
 			value_bonus += int(amount)
 		"safety_percent":
@@ -276,6 +297,8 @@ func _apply_effect(effect: Dictionary) -> void:
 		"type_bonus":
 			var t: String = effect["type"]
 			type_bonus[t] = type_bonus.get(t, 0) + int(amount)
+		"bonus_scouts":
+			bonus_scouts = max(0, bonus_scouts + int(amount))
 
 
 func _roll_prey_type() -> Dictionary:
