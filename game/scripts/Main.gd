@@ -1,6 +1,6 @@
 extends Node2D
 
-const Palette := preload("res://scripts/Palette.gd")
+const Palette := preload("res://scripts/GamePalette.gd")
 
 var run: Node
 var current_offers: Array = []
