@@ -86,4 +86,4 @@ func _go_to_main() -> void:
 	if finished:
 		return
 	finished = true
-	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	get_tree().change_scene_to_file("res://scenes/Title.tscn")

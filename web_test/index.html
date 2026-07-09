@@ -106,6 +106,15 @@
   }
   .pot .unit{font-size:15px; font-weight:600; color:var(--muted); margin-left:6px;}
 
+  .risk{
+    font-size:13px;
+    font-weight:600;
+    color:var(--danger);
+    letter-spacing:.01em;
+    margin-top:-10px;
+  }
+  .risk-pct{color:#f0c3ba; font-weight:700;}
+
   /* bag grid: rounded = safe-feeling face-down tiles */
   .bag{
     display:grid;
@@ -244,11 +253,47 @@
   .end-badge{
     font-size:44px;
   }
+
+  .title-screen{
+    min-height:460px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    padding:40px 26px;
+    text-align:center;
+  }
+  .title-word{
+    font-size:clamp(30px,5vw,44px);
+    font-weight:800;
+    letter-spacing:.06em;
+    color:var(--text);
+  }
+  .title-sub{
+    font-size:15px;
+    color:var(--accent);
+    letter-spacing:.02em;
+  }
+  .title-stats{
+    font-size:12.5px;
+    color:var(--muted);
+    font-variant-numeric: tabular-nums;
+    margin-top:4px;
+  }
+  #titleStartBtn{margin-top:14px; padding:14px 34px; font-size:15px;}
+  .title-hint{
+    max-width:52ch;
+    font-size:12.5px;
+    line-height:1.6;
+    color:var(--muted);
+    margin-top:10px;
+  }
 </style>
 </head>
 <body>
   <div class="frame">
-    <div class="topbar">
+    <div class="topbar" id="topbar" style="display:none;">
       <div class="brand">Howling — Hungry Pack <span style="color:var(--muted); font-weight:400;">/ HTML 테스트 빌드</span></div>
       <div class="stats">
         <div class="stat"><span class="label">라운드</span><span class="value" id="statRound">1</span></div>
@@ -258,7 +303,15 @@
       </div>
     </div>
 
-    <div class="body" id="body"></div>
+    <div class="title-screen" id="titleScreen">
+      <div class="title-word">HUNGRY PACK</div>
+      <div class="title-sub">무리를 이끌고, 겨울을 나라</div>
+      <div class="title-stats" id="titleStats"></div>
+      <button class="btn primary" id="titleStartBtn">사냥 시작</button>
+      <div class="title-hint">겨울이 다가온다. 사냥감을 노릴 때마다, 밀어붙일지 물러설지가 무리의 생사를 가른다.</div>
+    </div>
+
+    <div class="body" id="body" style="display:none;"></div>
 
     <div class="footer-note">
       코드 기준 <b>test build</b> — <code>game/scripts/RunManager.gd</code> 로직을 1:1로 JS 포팅했습니다 (같은 확률 분포, 같은 27종 유물).
@@ -268,10 +321,17 @@
 
 <script>
 // ==== Ported 1:1 from game/scripts/RunManager.gd ====
+const PREY_TYPES = [
+  {id:"rabbit", name:"토끼", icon:"●", baseValue:1, weight:45},
+  {id:"fox", name:"여우", icon:"◆", baseValue:2, weight:30},
+  {id:"deer", name:"사슴", icon:"▲", baseValue:3, weight:15},
+  {id:"bear", name:"곰", icon:"★", baseValue:5, weight:10},
+];
+
 const CHARM_DEFS = [
   {id:"lucky_paw", name:"행운의 발자국", desc:"함정 토큰 1개 감소", tier:"good", effects:[{stat:"bust_count", amount:-1}]},
-  {id:"thick_fur", name:"두꺼운 털가죽", desc:"먹잇감 가치 +1", tier:"good", effects:[{stat:"value_bonus", amount:1}]},
-  {id:"fat_reserves", name:"두둑한 비축", desc:"먹잇감 가치 +2", tier:"good", effects:[{stat:"value_bonus", amount:2}]},
+  {id:"thick_fur", name:"두꺼운 털가죽", desc:"먹잇감 가치 +1 (전 종류)", tier:"good", effects:[{stat:"value_bonus", amount:1}]},
+  {id:"fat_reserves", name:"두둑한 비축", desc:"먹잇감 가치 +2 (전 종류)", tier:"good", effects:[{stat:"value_bonus", amount:2}]},
   {id:"safety_net", name:"안전망", desc:"함정에 걸려도 이번 사냥 식량의 50% 보존", tier:"good", effects:[{stat:"safety_percent", amount:0.5}]},
   {id:"sure_footing", name:"확실한 발걸음", desc:"함정 손실 방어 +25% (중첩 가능)", tier:"good", effects:[{stat:"safety_percent", amount:0.25}]},
   {id:"extra_hunt", name:"추가 사냥", desc:"라운드당 시도 횟수 +1", tier:"good", effects:[{stat:"attempts_per_round", amount:1}]},
@@ -282,6 +342,10 @@ const CHARM_DEFS = [
   {id:"sharp_eyes", name:"날카로운 눈", desc:"매 라운드 함정 자동 회피 +1회 (중첩 가능)", tier:"good", effects:[{stat:"bonus_trap_immunity", amount:1}]},
   {id:"packmother_blessing", name:"무리 어미의 축복", desc:"게임 오버 1회 무효 (목숨 보험)", tier:"good", effects:[{stat:"extra_life", amount:1}]},
   {id:"homeward_scent", name:"귀향의 냄새", desc:"귀환 시 명성 +20%", tier:"good", effects:[{stat:"retreat_bonus_percent", amount:0.2}]},
+  {id:"rabbit_hunter", name:"토끼 사냥꾼", desc:"토끼 가치 +2", tier:"good", effects:[{stat:"type_bonus", type:"rabbit", amount:2}]},
+  {id:"fox_tracker", name:"여우 추적자", desc:"여우 가치 +2", tier:"good", effects:[{stat:"type_bonus", type:"fox", amount:2}]},
+  {id:"deer_eye", name:"사슴의 눈썰미", desc:"사슴 가치 +3", tier:"good", effects:[{stat:"type_bonus", type:"deer", amount:3}]},
+  {id:"bear_pride", name:"곰 사냥의 긍지", desc:"곰 가치 +5", tier:"good", effects:[{stat:"type_bonus", type:"bear", amount:5}]},
   {id:"greedy_claw", name:"탐욕의 발톱", desc:"먹잇감 가치 +3, 대신 함정 토큰 1개 추가", tier:"risky", effects:[{stat:"value_bonus", amount:3},{stat:"bust_count", amount:1}]},
   {id:"hasty_hunt", name:"성급한 사냥", desc:"시도 횟수 +1, 대신 다음부터 목표 증가폭 15% 증가", tier:"risky", effects:[{stat:"attempts_per_round", amount:1},{stat:"quota_growth_multiplier", amount:1.15}]},
   {id:"timid_pack", name:"겁 많은 무리", desc:"함정 피해 완전 무효화, 대신 시도 횟수 -1", tier:"risky", effects:[{stat:"safety_percent", amount:1.0},{stat:"attempts_per_round", amount:-1}]},
@@ -292,16 +356,18 @@ const CHARM_DEFS = [
   {id:"moon_howl", name:"만월의 하울", desc:"캐시아웃 보너스 +15%, 대신 함정 토큰 1개 추가", tier:"risky", effects:[{stat:"cashout_bonus_percent", amount:0.15},{stat:"bust_count", amount:1}]},
   {id:"warm_den", name:"따뜻한 굴", desc:"귀환 시 명성 +10%, 대신 시도 횟수 -1", tier:"risky", effects:[{stat:"retreat_bonus_percent", amount:0.1},{stat:"attempts_per_round", amount:-1}]},
   {id:"old_scar", name:"오래된 흉터", desc:"목숨 보험 +1, 대신 먹잇감 가치 -1", tier:"risky", effects:[{stat:"extra_life", amount:1},{stat:"value_bonus", amount:-1}]},
+  {id:"specialist_hunter", name:"특화 사냥꾼", desc:"곰 가치 +6, 대신 토끼 가치 -1", tier:"risky", effects:[{stat:"type_bonus", type:"bear", amount:6},{stat:"type_bonus", type:"rabbit", amount:-1}]},
   {id:"weary_steps", name:"지친 발걸음", desc:"라운드당 시도 횟수 -1 (보상 없음)", tier:"bad", effects:[{stat:"attempts_per_round", amount:-1}]},
   {id:"thin_pouch", name:"얇은 주머니", desc:"주머니 속 사냥감 슬롯 -2 (보상 없음)", tier:"bad", effects:[{stat:"bag_size_bonus", amount:-2}]},
   {id:"nervous_pack", name:"불안한 무리", desc:"목표 증가폭 25% 증가 (보상 없음)", tier:"bad", effects:[{stat:"quota_growth_multiplier", amount:1.25}]},
   {id:"clumsy_paws", name:"서투른 발", desc:"함정 토큰 1개 추가 (보상 없음)", tier:"bad", effects:[{stat:"bust_count", amount:1}]},
+  {id:"clumsy_bear", name:"서투른 곰사냥", desc:"곰 가치 -2 (보상 없음)", tier:"bad", effects:[{stat:"type_bonus", type:"bear", amount:-2}]},
 ];
 
 const ICONS = {
   bust_count:"◆", value_bonus:"●", safety_percent:"◈", attempts_per_round:"❖",
   quota_growth_multiplier:"▲", cashout_bonus_percent:"◎", bag_size_bonus:"▣",
-  extra_life:"♥", retreat_bonus_percent:"☾", bonus_trap_immunity:"◉"
+  extra_life:"♥", retreat_bonus_percent:"☾", bonus_trap_immunity:"◉", type_bonus:"✦"
 };
 
 const BASE_QUOTA = 10, QUOTA_GROWTH = 10, BASE_ATTEMPTS = 4, BASE_BUST_COUNT = 1, BASE_BAG_SIZE = 10;
@@ -334,6 +400,7 @@ const Run = {
   roundNumber:1, quota:BASE_QUOTA, attemptsLeft:BASE_ATTEMPTS, attemptsPerRound:BASE_ATTEMPTS,
   bustCount:BASE_BUST_COUNT, valueBonus:0, safetyPercent:0, cashoutBonusPercent:0, quotaGrowthMultiplier:1,
   bagSizeBonus:0, extraLife:0, retreatBonusPercent:0, bonusTrapImmunity:0, trapImmunityLeft:0,
+  typeBonus:{},
   totalFood:0, pot:0, bag:[], ownedCharms:[], rerollsLeft:0,
   lastMessage:{text:"", kind:"neutral"},
   currentOffers:[],
@@ -344,6 +411,7 @@ const Run = {
     this.bustCount = Math.max(0, BASE_BUST_COUNT - GameManager.getBonusBustReduction());
     this.valueBonus=0; this.safetyPercent=0; this.cashoutBonusPercent=0; this.quotaGrowthMultiplier=1;
     this.bagSizeBonus=0; this.extraLife=0; this.retreatBonusPercent=0; this.bonusTrapImmunity=0;
+    this.typeBonus={};
     this.totalFood=0; this.ownedCharms=[];
     this._startRound();
   },
@@ -355,7 +423,7 @@ const Run = {
   draw(){
     if(this.state!==State.DRAWING || this.bag.length===0) return null;
     const token = this.bag.pop();
-    if(token===-1){
+    if(token.type==="trap"){
       if(this.trapImmunityLeft>0){
         this.trapImmunityLeft--;
         this._msg("무리가 함정을 미리 감지해 피했다!","success");
@@ -365,11 +433,14 @@ const Run = {
       this._onTrap();
       return {kind:"trap"};
     } else {
-      this.pot+=token;
+      this.pot+=token.value;
+      this._msg(`${token.icon} ${token.name} 발견 (+${token.value})`,"neutral");
       if(this.bag.length===0) this.cashOut();
-      return {kind:"prey", value:token};
+      return {kind:"prey", value:token.value, type:token.type, name:token.name, icon:token.icon};
     }
   },
+  remainingTrapCount(){ return this.bag.filter(t=>t.type==="trap").length; },
+  remainingTileCount(){ return this.bag.length; },
   cashOut(){
     if(this.state!==State.DRAWING) return;
     const bonus = Math.floor(this.pot*this.cashoutBonusPercent);
@@ -423,17 +494,24 @@ const Run = {
       case "extra_life": this.extraLife = Math.max(0, this.extraLife+a); break;
       case "retreat_bonus_percent": this.retreatBonusPercent = Math.max(0, this.retreatBonusPercent+a); break;
       case "bonus_trap_immunity": this.bonusTrapImmunity = Math.max(0, this.bonusTrapImmunity+a); break;
+      case "type_bonus": this.typeBonus[e.type] = (this.typeBonus[e.type]||0) + a; break;
     }
+  },
+  _rollPreyType(){
+    const totalWeight = PREY_TYPES.reduce((s,p)=>s+p.weight,0);
+    let roll = Math.random()*totalWeight, acc=0;
+    for(const p of PREY_TYPES){ acc+=p.weight; if(roll<acc) return p; }
+    return PREY_TYPES[0];
   },
   _buildBag(){
     this.bag=[];
     const valueSlots = Math.max(1, BASE_BAG_SIZE + this.bagSizeBonus - this.bustCount);
     for(let i=0;i<valueSlots;i++){
-      const roll = Math.floor(Math.random()*100);
-      let base = roll<55 ? 1 : (roll<85 ? 2 : 4);
-      this.bag.push(Math.max(0, base+this.valueBonus));
+      const prey = this._rollPreyType();
+      const value = Math.max(0, prey.baseValue + this.valueBonus + (this.typeBonus[prey.id]||0));
+      this.bag.push({type:prey.id, value, name:prey.name, icon:prey.icon});
     }
-    for(let i=0;i<this.bustCount;i++) this.bag.push(-1);
+    for(let i=0;i<this.bustCount;i++) this.bag.push({type:"trap", value:-1});
     for(let i=this.bag.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [this.bag[i],this.bag[j]]=[this.bag[j],this.bag[i]]; }
   },
   _onTrap(){
@@ -468,6 +546,36 @@ const Run = {
   _msg(text,kind){ this.lastMessage={text,kind}; }
 };
 
+// ==== Audio (lightweight synthesized feedback, no asset files) ====
+let audioCtx = null;
+function initAudio(){
+  if(!audioCtx){
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e){ audioCtx = null; }
+  }
+}
+function playTone(freq, duration, type, gainPeak, glideTo){
+  if(!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  if(glideTo) osc.frequency.exponentialRampToValueAtTime(glideTo, audioCtx.currentTime + duration);
+  gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(gainPeak||0.15, audioCtx.currentTime + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + duration + 0.02);
+}
+const Sound = {
+  preyPop(){ playTone(620, 0.09, 'triangle', 0.14); },
+  trap(){ playTone(160, 0.32, 'sawtooth', 0.16, 70); },
+  cashOut(){ playTone(520, 0.1, 'sine', 0.15); setTimeout(()=>playTone(780,0.16,'sine',0.15), 90); },
+  roundClear(){ playTone(500,0.12,'sine',0.14); setTimeout(()=>playTone(660,0.12,'sine',0.14),110); setTimeout(()=>playTone(880,0.2,'sine',0.15),220); },
+  retreat(){ playTone(440,0.5,'sine',0.12,330); },
+  gameOver(){ playTone(260,0.6,'sawtooth',0.13,90); },
+};
+
 // ==== Rendering (art direction: round+warm=safe, sharp+red=danger) ====
 const bodyEl = document.getElementById('body');
 
@@ -494,6 +602,9 @@ function render(){
 
   } else if(Run.state===State.DRAWING){
     bodyEl.append(el('div','pot', `${Run.pot} <span class="unit">이번 사냥</span>`));
+    const traps = Run.remainingTrapCount(), tiles = Run.remainingTileCount();
+    const odds = tiles>0 ? Math.round(100*traps/tiles) : 0;
+    bodyEl.append(el('div','risk', `위험도: 함정 ${traps} / 남은 ${tiles}장 <span class="risk-pct">(약 ${odds}%)</span>`));
     const bag = el('div','bag');
     Run.bag.forEach((_,idx)=>{
       const tile = el('div','tile','');
@@ -505,7 +616,13 @@ function render(){
     bodyEl.append(msg);
     const actions = el('div','actions');
     const stopBtn = el('button','btn warn','저장하고 멈추기');
-    stopBtn.onclick = ()=>{ Run.cashOut(); render(); };
+    stopBtn.onclick = ()=>{
+      Run.cashOut();
+      if(Run.state===State.ROUND_CLEAR) Sound.roundClear();
+      else if(Run.state===State.GAME_OVER) Sound.gameOver();
+      else Sound.cashOut();
+      render();
+    };
     actions.append(stopBtn);
     bodyEl.append(actions);
 
@@ -516,7 +633,7 @@ function render(){
     const goBtn = el('button','btn primary','계속 사냥');
     goBtn.onclick = ()=>{ Run.continueHunting(); render(); };
     const retreatBtn = el('button','btn warn','귀환 (지금까지 성과 보존)');
-    retreatBtn.onclick = ()=>{ Run.retreat(); render(); };
+    retreatBtn.onclick = ()=>{ Run.retreat(); Sound.retreat(); render(); };
     actions.append(goBtn, retreatBtn);
     bodyEl.append(actions);
 
@@ -570,17 +687,33 @@ function onTileClick(tile){
   tile.classList.add('spent','reveal');
   if(result.kind==='trap'){
     tile.classList.add('trap'); tile.textContent='';
+    Sound.trap();
   } else if(result.kind==='prey'){
-    tile.classList.add('prey'); tile.textContent = result.value;
+    tile.classList.add('prey'); tile.innerHTML = `${result.icon}<br>${result.value}`;
+    tile.style.fontSize = '13px';
+    Sound.preyPop();
   } else if(result.kind==='dodged'){
     tile.classList.add('prey'); tile.textContent='✓';
+    Sound.preyPop();
   }
   // brief pause so the flip/reveal animation is visible before the screen changes
-  setTimeout(()=>{ render(); }, 420);
+  setTimeout(()=>{
+    render();
+    if(Run.state===State.ROUND_CLEAR) Sound.roundClear();
+    else if(Run.state===State.GAME_OVER) Sound.gameOver();
+  }, 420);
 }
 
-Run.startRun();
-render();
+document.getElementById('titleStats').textContent =
+  `최고 기록 ${GameManager.bestRound}라운드 · 누적 명성 ${GameManager.totalPelts}`;
+document.getElementById('titleStartBtn').onclick = ()=>{
+  initAudio();
+  document.getElementById('titleScreen').style.display = 'none';
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('body').style.display = 'flex';
+  Run.startRun();
+  render();
+};
 </script>
 </body>
 </html>

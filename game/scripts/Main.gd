@@ -8,6 +8,7 @@ var current_offers: Array = []
 var round_label: Label
 var quota_label: Label
 var attempts_label: Label
+var risk_label: Label
 var pot_label: Label
 var message_label: Label
 var action_button: Button
@@ -43,6 +44,7 @@ func _build_hud(viewport_size: Vector2) -> void:
 	round_label = _make_label(hud, Vector2(20, 20), 24, Palette.MOONLIGHT)
 	quota_label = _make_label(hud, Vector2(20, 55), 20, Palette.MOONLIGHT)
 	attempts_label = _make_label(hud, Vector2(20, 85), 20, Palette.MOONLIGHT)
+	risk_label = _make_label(hud, Vector2(20, 115), 18, Palette.DANGER)
 
 	pot_label = _make_label(hud, Vector2(0, viewport_size.y / 2.0 - 90), 40, Palette.TEXT)
 	pot_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -110,6 +112,8 @@ func _refresh() -> void:
 	quota_label.text = "식량 %d / 목표 %d" % [run.total_food, run.quota]
 	attempts_label.text = "남은 사냥 %d / %d" % [run.attempts_left, run.attempts_per_round]
 
+	risk_label.text = ""
+
 	match run.state:
 		run.State.IDLE:
 			pot_label.text = ""
@@ -122,6 +126,11 @@ func _refresh() -> void:
 			action_button.show()
 			secondary_button.text = "저장하고 멈추기"
 			secondary_button.show()
+			var traps: int = run.remaining_trap_count()
+			var tiles: int = run.remaining_tile_count()
+			if tiles > 0:
+				var odds := int(round(100.0 * traps / tiles))
+				risk_label.text = "위험도: 함정 %d / 남은 %d장 (약 %d%%)" % [traps, tiles, odds]
 		run.State.ROUND_CLEAR:
 			action_button.text = "계속 사냥"
 			action_button.show()

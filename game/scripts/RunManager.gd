@@ -12,15 +12,25 @@ const BASE_ATTEMPTS := 4
 const BASE_BUST_COUNT := 1
 const BASE_BAG_SIZE := 10
 
-# Charms are data: a list of {stat, amount} effects applied generically by
-# _apply_effect(). Adding a new charm almost never needs new code — only a
-# new "stat" needs a case in _apply_effect(), and only once, ever.
+# Prey have identity (not just anonymous numbers) so charms can build
+# synergies around specific types, the way Luck be a Landlord / Balatro's
+# symbol systems create "discovery" depth instead of pure math.
+const PREY_TYPES := [
+	{"id": "rabbit", "name": "토끼", "icon": "●", "base_value": 1, "weight": 45},
+	{"id": "fox", "name": "여우", "icon": "◆", "base_value": 2, "weight": 30},
+	{"id": "deer", "name": "사슴", "icon": "▲", "base_value": 3, "weight": 15},
+	{"id": "bear", "name": "곰", "icon": "★", "base_value": 5, "weight": 10},
+]
+
+# Charms are data: a list of {stat, amount[, type]} effects applied
+# generically by _apply_effect(). Adding a new charm almost never needs new
+# code — only a new "stat" needs a case in _apply_effect(), and only once.
 const CHARM_DEFS := [
 	{"id": "lucky_paw", "name": "행운의 발자국", "desc": "함정 토큰 1개 감소", "tier": "good",
 		"effects": [{"stat": "bust_count", "amount": -1}]},
-	{"id": "thick_fur", "name": "두꺼운 털가죽", "desc": "먹잇감 가치 +1", "tier": "good",
+	{"id": "thick_fur", "name": "두꺼운 털가죽", "desc": "먹잇감 가치 +1 (전 종류)", "tier": "good",
 		"effects": [{"stat": "value_bonus", "amount": 1}]},
-	{"id": "fat_reserves", "name": "두둑한 비축", "desc": "먹잇감 가치 +2", "tier": "good",
+	{"id": "fat_reserves", "name": "두둑한 비축", "desc": "먹잇감 가치 +2 (전 종류)", "tier": "good",
 		"effects": [{"stat": "value_bonus", "amount": 2}]},
 	{"id": "safety_net", "name": "안전망", "desc": "함정에 걸려도 이번 사냥 식량의 50% 보존", "tier": "good",
 		"effects": [{"stat": "safety_percent", "amount": 0.5}]},
@@ -42,6 +52,14 @@ const CHARM_DEFS := [
 		"effects": [{"stat": "extra_life", "amount": 1}]},
 	{"id": "homeward_scent", "name": "귀향의 냄새", "desc": "귀환 시 명성 +20%", "tier": "good",
 		"effects": [{"stat": "retreat_bonus_percent", "amount": 0.2}]},
+	{"id": "rabbit_hunter", "name": "토끼 사냥꾼", "desc": "토끼 가치 +2", "tier": "good",
+		"effects": [{"stat": "type_bonus", "type": "rabbit", "amount": 2}]},
+	{"id": "fox_tracker", "name": "여우 추적자", "desc": "여우 가치 +2", "tier": "good",
+		"effects": [{"stat": "type_bonus", "type": "fox", "amount": 2}]},
+	{"id": "deer_eye", "name": "사슴의 눈썰미", "desc": "사슴 가치 +3", "tier": "good",
+		"effects": [{"stat": "type_bonus", "type": "deer", "amount": 3}]},
+	{"id": "bear_pride", "name": "곰 사냥의 긍지", "desc": "곰 가치 +5", "tier": "good",
+		"effects": [{"stat": "type_bonus", "type": "bear", "amount": 5}]},
 	{"id": "greedy_claw", "name": "탐욕의 발톱", "desc": "먹잇감 가치 +3, 대신 함정 토큰 1개 추가", "tier": "risky",
 		"effects": [{"stat": "value_bonus", "amount": 3}, {"stat": "bust_count", "amount": 1}]},
 	{"id": "hasty_hunt", "name": "성급한 사냥", "desc": "시도 횟수 +1, 대신 다음부터 목표 증가폭 15% 증가", "tier": "risky",
@@ -62,6 +80,8 @@ const CHARM_DEFS := [
 		"effects": [{"stat": "retreat_bonus_percent", "amount": 0.1}, {"stat": "attempts_per_round", "amount": -1}]},
 	{"id": "old_scar", "name": "오래된 흉터", "desc": "목숨 보험 +1, 대신 먹잇감 가치 -1", "tier": "risky",
 		"effects": [{"stat": "extra_life", "amount": 1}, {"stat": "value_bonus", "amount": -1}]},
+	{"id": "specialist_hunter", "name": "특화 사냥꾼", "desc": "곰 가치 +6, 대신 토끼 가치 -1", "tier": "risky",
+		"effects": [{"stat": "type_bonus", "type": "bear", "amount": 6}, {"stat": "type_bonus", "type": "rabbit", "amount": -1}]},
 	{"id": "weary_steps", "name": "지친 발걸음", "desc": "라운드당 시도 횟수 -1 (보상 없음)", "tier": "bad",
 		"effects": [{"stat": "attempts_per_round", "amount": -1}]},
 	{"id": "thin_pouch", "name": "얇은 주머니", "desc": "주머니 속 사냥감 슬롯 -2 (보상 없음)", "tier": "bad",
@@ -70,6 +90,8 @@ const CHARM_DEFS := [
 		"effects": [{"stat": "quota_growth_multiplier", "amount": 1.25}]},
 	{"id": "clumsy_paws", "name": "서투른 발", "desc": "함정 토큰 1개 추가 (보상 없음)", "tier": "bad",
 		"effects": [{"stat": "bust_count", "amount": 1}]},
+	{"id": "clumsy_bear", "name": "서투른 곰사냥", "desc": "곰 가치 -2 (보상 없음)", "tier": "bad",
+		"effects": [{"stat": "type_bonus", "type": "bear", "amount": -2}]},
 ]
 
 var state: State = State.IDLE
@@ -87,6 +109,7 @@ var extra_life: int = 0
 var retreat_bonus_percent: float = 0.0
 var bonus_trap_immunity: int = 0
 var trap_immunity_left: int = 0
+var type_bonus: Dictionary = {}
 
 var total_food: int = 0
 var pot: int = 0
@@ -108,6 +131,7 @@ func start_run() -> void:
 	extra_life = 0
 	retreat_bonus_percent = 0.0
 	bonus_trap_immunity = 0
+	type_bonus.clear()
 	total_food = 0
 	owned_charms.clear()
 	_start_round()
@@ -127,8 +151,8 @@ func start_attempt() -> void:
 func draw() -> void:
 	if state != State.DRAWING or bag.is_empty():
 		return
-	var token: int = bag.pop_back()
-	if token == -1:
+	var token: Dictionary = bag.pop_back()
+	if token["type"] == "trap":
 		if trap_immunity_left > 0:
 			trap_immunity_left -= 1
 			message.emit("무리가 함정을 미리 감지해 피했다!", "success")
@@ -137,7 +161,8 @@ func draw() -> void:
 			return
 		_on_trap()
 	else:
-		pot += token
+		pot += token["value"]
+		message.emit("%s %s 발견 (+%d)" % [token["icon"], token["name"], token["value"]], "neutral")
 		pot_changed.emit(pot)
 		if bag.is_empty():
 			cash_out()
@@ -203,6 +228,21 @@ func offer_charms() -> Array:
 	return pool.slice(0, min(3, pool.size()))
 
 
+# --- risk indicator: surfaces the odds that are already implicit in the
+# shuffled bag, so "draw again?" becomes an informed bet instead of a
+# blind click (see GDD.md design-meeting notes, 2026-07-09). ---
+func remaining_trap_count() -> int:
+	var c := 0
+	for t in bag:
+		if t["type"] == "trap":
+			c += 1
+	return c
+
+
+func remaining_tile_count() -> int:
+	return bag.size()
+
+
 func _find_charm_def(id: String) -> Dictionary:
 	for c in CHARM_DEFS:
 		if c["id"] == id:
@@ -233,23 +273,33 @@ func _apply_effect(effect: Dictionary) -> void:
 			retreat_bonus_percent = max(0.0, retreat_bonus_percent + amount)
 		"bonus_trap_immunity":
 			bonus_trap_immunity = max(0, bonus_trap_immunity + int(amount))
+		"type_bonus":
+			var t: String = effect["type"]
+			type_bonus[t] = type_bonus.get(t, 0) + int(amount)
+
+
+func _roll_prey_type() -> Dictionary:
+	var total_weight := 0
+	for p in PREY_TYPES:
+		total_weight += p["weight"]
+	var roll := randi() % total_weight
+	var acc := 0
+	for p in PREY_TYPES:
+		acc += p["weight"]
+		if roll < acc:
+			return p
+	return PREY_TYPES[0]
 
 
 func _build_bag() -> void:
 	bag.clear()
 	var value_slots: int = max(1, BASE_BAG_SIZE + bag_size_bonus - bust_count)
 	for i in value_slots:
-		var roll := randi() % 100
-		var base_value: int
-		if roll < 55:
-			base_value = 1
-		elif roll < 85:
-			base_value = 2
-		else:
-			base_value = 4
-		bag.append(max(0, base_value + value_bonus))
+		var prey := _roll_prey_type()
+		var value: int = max(0, prey["base_value"] + value_bonus + type_bonus.get(prey["id"], 0))
+		bag.append({"type": prey["id"], "value": value, "name": prey["name"], "icon": prey["icon"]})
 	for i in bust_count:
-		bag.append(-1)
+		bag.append({"type": "trap", "value": -1})
 	bag.shuffle()
 
 
