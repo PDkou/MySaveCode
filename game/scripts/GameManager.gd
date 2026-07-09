@@ -20,8 +20,8 @@ func report_run_result(round_reached: int) -> void:
 		_save_data()
 
 
-func report_extraction(round_reached: int, food_banked: int) -> void:
-	total_pelts += round_reached * 5 + food_banked
+func report_extraction(round_reached: int, pelts_earned: int) -> void:
+	total_pelts += pelts_earned
 	if round_reached > best_round:
 		best_round = round_reached
 	_save_data()
