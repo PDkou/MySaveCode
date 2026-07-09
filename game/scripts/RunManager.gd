@@ -6,10 +6,10 @@ signal message(text: String)
 
 enum State { IDLE, DRAWING, SHOP, GAME_OVER }
 
-const BASE_QUOTA := 20
-const QUOTA_GROWTH := 12
+const BASE_QUOTA := 14
+const QUOTA_GROWTH := 10
 const BASE_ATTEMPTS := 3
-const BASE_BUST_COUNT := 2
+const BASE_BUST_COUNT := 1
 const BASE_BAG_SIZE := 10
 
 const CHARM_DEFS := [
