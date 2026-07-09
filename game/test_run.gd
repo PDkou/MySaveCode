@@ -6,7 +6,7 @@ func _initialize() -> void:
 	var run := Node.new()
 	run.set_script(load("res://scripts/RunManager.gd"))
 	root.add_child(run)
-	run.message.connect(func(t): print("[MSG] ", t))
+	run.message.connect(func(t, k): print("[MSG:", k, "] ", t))
 	run.state_changed.connect(func():
 		print("[STATE] ", run.state, " round=", run.round_number,
 			" food=", run.total_food, "/", run.quota,

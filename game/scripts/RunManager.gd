@@ -2,7 +2,7 @@ extends Node
 
 signal state_changed
 signal pot_changed(pot: int)
-signal message(text: String)
+signal message(text: String, kind: String)
 
 enum State { IDLE, DRAWING, SHOP, GAME_OVER }
 
@@ -80,7 +80,7 @@ func cash_out() -> void:
 	if state != State.DRAWING:
 		return
 	var bonus := int(pot * cashout_bonus_percent)
-	message.emit("사냥 성공! 식량 +%d" % (pot + bonus))
+	message.emit("사냥 성공! 식량 +%d" % (pot + bonus), "success")
 	total_food += pot + bonus
 	pot = 0
 	pot_changed.emit(pot)
@@ -139,7 +139,7 @@ func _build_bag() -> void:
 
 func _on_trap() -> void:
 	var kept := int(pot * safety_percent)
-	message.emit("함정이다! 식량 %d만 겨우 건짐" % kept)
+	message.emit("함정이다! 식량 %d만 겨우 건짐" % kept, "trap")
 	total_food += kept
 	pot = 0
 	pot_changed.emit(pot)

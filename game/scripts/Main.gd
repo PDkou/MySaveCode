@@ -1,5 +1,7 @@
 extends Node2D
 
+const Palette := preload("res://scripts/Palette.gd")
+
 var run: Node
 var current_offers: Array = []
 
@@ -19,7 +21,7 @@ func _ready() -> void:
 
 	var bg := ColorRect.new()
 	bg.size = viewport_size
-	bg.color = Color(0.07, 0.09, 0.08)
+	bg.color = Palette.BG
 	add_child(bg)
 
 	run = Node.new()
@@ -38,55 +40,67 @@ func _build_hud(viewport_size: Vector2) -> void:
 	var hud := CanvasLayer.new()
 	add_child(hud)
 
-	round_label = _make_label(hud, Vector2(20, 20), 24)
-	quota_label = _make_label(hud, Vector2(20, 55), 20)
-	attempts_label = _make_label(hud, Vector2(20, 85), 20)
+	round_label = _make_label(hud, Vector2(20, 20), 24, Palette.MOONLIGHT)
+	quota_label = _make_label(hud, Vector2(20, 55), 20, Palette.MOONLIGHT)
+	attempts_label = _make_label(hud, Vector2(20, 85), 20, Palette.MOONLIGHT)
 
-	pot_label = _make_label(hud, Vector2(0, viewport_size.y / 2.0 - 90), 40)
+	pot_label = _make_label(hud, Vector2(0, viewport_size.y / 2.0 - 90), 40, Palette.TEXT)
 	pot_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pot_label.custom_minimum_size = Vector2(viewport_size.x, 50)
 
-	message_label = _make_label(hud, Vector2(0, viewport_size.y / 2.0 - 40), 18)
+	message_label = _make_label(hud, Vector2(0, viewport_size.y / 2.0 - 40), 18, Palette.TEXT)
 	message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	message_label.custom_minimum_size = Vector2(viewport_size.x, 30)
 
-	action_button = Button.new()
-	action_button.custom_minimum_size = Vector2(200, 50)
-	action_button.position = Vector2(viewport_size.x / 2.0 - 210, viewport_size.y / 2.0 + 20)
+	action_button = _make_button(hud, Vector2(200, 50), Vector2(viewport_size.x / 2.0 - 210, viewport_size.y / 2.0 + 20))
 	action_button.pressed.connect(_on_action_pressed)
-	hud.add_child(action_button)
 
-	secondary_button = Button.new()
-	secondary_button.custom_minimum_size = Vector2(200, 50)
-	secondary_button.position = Vector2(viewport_size.x / 2.0 + 10, viewport_size.y / 2.0 + 20)
+	secondary_button = _make_button(hud, Vector2(200, 50), Vector2(viewport_size.x / 2.0 + 10, viewport_size.y / 2.0 + 20))
 	secondary_button.pressed.connect(_on_secondary_pressed)
-	hud.add_child(secondary_button)
 
 	charm_layer = CanvasLayer.new()
 	add_child(charm_layer)
 	for i in 3:
-		var b := Button.new()
-		b.custom_minimum_size = Vector2(320, 60)
-		b.position = Vector2(viewport_size.x / 2.0 - 160, viewport_size.y / 2.0 - 100 + i * 75)
+		var b := _make_button(charm_layer, Vector2(320, 60), Vector2(viewport_size.x / 2.0 - 160, viewport_size.y / 2.0 - 100 + i * 75))
 		b.pressed.connect(_on_charm_button_pressed.bind(i))
-		charm_layer.add_child(b)
 		charm_buttons.append(b)
 
 
-func _make_label(parent: CanvasLayer, pos: Vector2, font_size: int) -> Label:
+func _make_label(parent: CanvasLayer, pos: Vector2, font_size: int, color: Color) -> Label:
 	var l := Label.new()
 	l.position = pos
 	l.add_theme_font_size_override("font_size", font_size)
+	l.add_theme_color_override("font_color", color)
 	parent.add_child(l)
 	return l
+
+
+func _make_button(parent: CanvasLayer, min_size: Vector2, pos: Vector2) -> Button:
+	var b := Button.new()
+	b.custom_minimum_size = min_size
+	b.position = pos
+	b.add_theme_color_override("font_color", Palette.TEXT)
+	parent.add_child(b)
+	return b
 
 
 func _on_pot_changed(pot: int) -> void:
 	pot_label.text = "이번 사냥: %d" % pot if pot > 0 else ""
 
 
-func _on_message(text: String) -> void:
+func _on_message(text: String, kind: String) -> void:
+	_set_message(text, kind)
+
+
+func _set_message(text: String, kind: String) -> void:
 	message_label.text = text
+	match kind:
+		"success":
+			message_label.add_theme_color_override("font_color", Palette.SUCCESS)
+		"trap":
+			message_label.add_theme_color_override("font_color", Palette.DANGER)
+		_:
+			message_label.add_theme_color_override("font_color", Palette.TEXT)
 
 
 func _refresh() -> void:
@@ -99,7 +113,7 @@ func _refresh() -> void:
 	match run.state:
 		run.State.IDLE:
 			pot_label.text = ""
-			message_label.text = ""
+			_set_message("", "info")
 			action_button.text = "사냥 시작"
 			action_button.show()
 			secondary_button.hide()
@@ -112,13 +126,16 @@ func _refresh() -> void:
 			action_button.hide()
 			secondary_button.text = "건너뛰기"
 			secondary_button.show()
-			message_label.text = "라운드 클리어! 유물을 선택하세요"
 			_show_charms()
+			if current_offers.is_empty():
+				_set_message("라운드 클리어! (더 얻을 유물 없음)", "success")
+			else:
+				_set_message("라운드 클리어! 유물을 선택하세요", "success")
 		run.State.GAME_OVER:
 			action_button.text = "다시 시작"
 			action_button.show()
 			secondary_button.hide()
-			message_label.text = "게임 오버 — %d라운드 생존 (최고 %d)" % [run.round_number, GameManager.best_round]
+			_set_message("게임 오버 — %d라운드 생존 (최고 %d)" % [run.round_number, GameManager.best_round], "info")
 
 
 func _show_charms() -> void:
