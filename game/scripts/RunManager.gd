@@ -6,9 +6,9 @@ signal message(text: String, kind: String)
 
 enum State { IDLE, DRAWING, ROUND_CLEAR, SHOP, GAME_OVER, RETREATED }
 
-const BASE_QUOTA := 14
+const BASE_QUOTA := 10
 const QUOTA_GROWTH := 10
-const BASE_ATTEMPTS := 3
+const BASE_ATTEMPTS := 4
 const BASE_BUST_COUNT := 1
 const BASE_BAG_SIZE := 10
 
