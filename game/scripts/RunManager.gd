@@ -169,24 +169,36 @@ func start_attempt() -> void:
 	pot_changed.emit(pot)
 
 
-func draw() -> void:
+func draw(precise: bool = false) -> Dictionary:
 	if state != State.DRAWING or bag.is_empty():
-		return
+		return {}
 	var token: Dictionary = bag.pop_back()
 	if token["type"] == "trap":
+		if precise:
+			message.emit("정확한 일격으로 함정을 쳐냈다!", "success")
+			if bag.is_empty():
+				cash_out()
+			return {"kind": "parried"}
 		if trap_immunity_left > 0:
 			trap_immunity_left -= 1
 			message.emit("무리가 함정을 미리 감지해 피했다!", "success")
 			if bag.is_empty():
 				cash_out()
-			return
+			return {"kind": "dodged"}
 		_on_trap()
+		return {"kind": "trap"}
 	else:
-		pot += token["value"]
-		message.emit("%s %s 발견 (+%d)" % [token["icon"], token["name"], token["value"]], "neutral")
+		var bonus: int = 2 if precise else 0
+		var value: int = token["value"] + bonus
+		pot += value
+		if precise:
+			message.emit("정확한 일격! %s %s (+%d)" % [token["icon"], token["name"], value], "neutral")
+		else:
+			message.emit("%s %s 발견 (+%d)" % [token["icon"], token["name"], value], "neutral")
 		pot_changed.emit(pot)
 		if bag.is_empty():
 			cash_out()
+		return {"kind": "prey", "value": value, "type": token["type"], "name": token["name"], "icon": token["icon"], "precise": precise}
 
 
 func cash_out() -> void:

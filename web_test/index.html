@@ -115,6 +115,41 @@
   }
   .risk-pct{color:#f0c3ba; font-weight:700;}
 
+  .aim-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    margin-top:4px;
+  }
+  .aim-hint{font-size:12px; color:var(--muted);}
+  .aim-track{
+    position:relative;
+    width:320px;
+    height:22px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:11px;
+    cursor:pointer;
+    overflow:hidden;
+  }
+  .aim-sweet{
+    position:absolute;
+    top:0; bottom:0;
+    background:rgba(237,173,63,.35);
+    border-left:2px solid var(--success);
+    border-right:2px solid var(--success);
+  }
+  .aim-marker{
+    position:absolute;
+    top:-3px; bottom:-3px;
+    width:6px;
+    background:var(--text);
+    border-radius:3px;
+    transform:translateX(-50%);
+    box-shadow:0 0 8px rgba(235,242,247,.7);
+  }
+
   .winter-line{
     text-align:center;
     padding:10px 26px 0;
@@ -441,10 +476,15 @@ const Run = {
     else this._msg(`정찰 결과: 다음은 ${next.icon} ${next.name} (+${next.value})`,"neutral");
     return next;
   },
-  draw(){
+  draw(precise){
     if(this.state!==State.DRAWING || this.bag.length===0) return null;
     const token = this.bag.pop();
     if(token.type==="trap"){
+      if(precise){
+        this._msg("정확한 일격으로 함정을 쳐냈다!","success");
+        if(this.bag.length===0) this.cashOut();
+        return {kind:"parried"};
+      }
       if(this.trapImmunityLeft>0){
         this.trapImmunityLeft--;
         this._msg("무리가 함정을 미리 감지해 피했다!","success");
@@ -454,10 +494,11 @@ const Run = {
       this._onTrap();
       return {kind:"trap"};
     } else {
-      this.pot+=token.value;
-      this._msg(`${token.icon} ${token.name} 발견 (+${token.value})`,"neutral");
+      const bonus = precise ? 2 : 0;
+      this.pot += token.value + bonus;
+      this._msg(precise ? `정확한 일격! ${token.icon} ${token.name} (+${token.value+bonus})` : `${token.icon} ${token.name} 발견 (+${token.value})`, "neutral");
       if(this.bag.length===0) this.cashOut();
-      return {kind:"prey", value:token.value, type:token.type, name:token.name, icon:token.icon};
+      return {kind:"prey", value:token.value+bonus, type:token.type, name:token.name, icon:token.icon, precise};
     }
   },
   remainingTrapCount(){ return this.bag.filter(t=>t.type==="trap").length; },
@@ -650,11 +691,15 @@ function render(){
       bag.append(tile);
     });
     bodyEl.append(bag);
+    const aimWrap = el('div','aim-wrap');
+    aimWrap.id = 'aimWrap';
+    bodyEl.append(aimWrap);
     bodyEl.append(msg);
     const actions = el('div','actions');
     if(Run.scoutsLeft>0){
       const scoutBtn = el('button','btn', `정찰 (${Run.scoutsLeft})`);
       scoutBtn.onclick = ()=>{
+        if(aimState) return;
         const peeked = Run.scout();
         if(peeked && peeked.type!=='trap') winterSay(Winter.SCOUT);
         render();
@@ -663,6 +708,7 @@ function render(){
     }
     const stopBtn = el('button','btn warn','저장하고 멈추기');
     stopBtn.onclick = ()=>{
+      if(aimState) return;
       Run.cashOut();
       if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(Winter.ROUND_CLEAR); }
       else if(Run.state===State.GAME_OVER){ Sound.gameOver(); winterSay(Winter.GAME_OVER); }
@@ -726,18 +772,74 @@ function render(){
   }
 }
 
+// ==== Aim & Strike: timing-based interaction on every draw ====
+// Click a tile to start aiming, then click the moving bar in the "sweet
+// zone" to land a precise strike (parries traps, boosts prey value).
+// Missing the zone just resolves as a normal draw - no punishment for
+// trying, so it's always worth engaging with.
+let aimState = null;
+
 function onTileClick(tile){
-  if(tile.classList.contains('spent')) return;
-  const result = Run.draw();
+  if(tile.classList.contains('spent') || aimState) return;
+  startAim(tile);
+}
+
+function startAim(tile){
+  const sweetWidth = 20;
+  const sweetStart = 4 + Math.random() * (96 - sweetWidth - 4);
+  aimState = { tile, pos: 0, dir: 1, sweetStart, sweetWidth, raf: null };
+
+  const wrap = document.getElementById('aimWrap');
+  wrap.innerHTML = '';
+  wrap.append(el('div','aim-hint','정확한 타이밍에 막대를 클릭! (함정도 쳐낼 수 있음)'));
+  const track = el('div','aim-track');
+  const sweet = el('div','aim-sweet');
+  sweet.style.left = sweetStart + '%';
+  sweet.style.width = sweetWidth + '%';
+  const marker = el('div','aim-marker');
+  marker.id = 'aimMarker';
+  track.append(sweet, marker);
+  track.onclick = () => resolveAim();
+  wrap.append(track);
+
+  const step = () => {
+    if(!aimState) return;
+    aimState.pos += aimState.dir * 2.6;
+    if(aimState.pos >= 100){ aimState.pos = 100; aimState.dir = -1; }
+    if(aimState.pos <= 0){ aimState.pos = 0; aimState.dir = 1; }
+    marker.style.left = aimState.pos + '%';
+    aimState.raf = requestAnimationFrame(step);
+  };
+  aimState.raf = requestAnimationFrame(step);
+}
+
+function resolveAim(){
+  if(!aimState) return;
+  cancelAnimationFrame(aimState.raf);
+  const { tile, pos, sweetStart, sweetWidth } = aimState;
+  const precise = pos >= sweetStart && pos <= sweetStart + sweetWidth;
+  aimState = null;
+  const wrap = document.getElementById('aimWrap');
+  if(wrap) wrap.innerHTML = '';
+  performDraw(tile, precise);
+}
+
+function performDraw(tile, precise){
+  const result = Run.draw(precise);
   if(!result) return;
   tile.classList.add('spent','reveal');
   if(result.kind==='trap'){
     tile.classList.add('trap'); tile.textContent='';
     Sound.trap();
     winterSay(Winter.TRAP);
+  } else if(result.kind==='parried'){
+    tile.classList.add('prey'); tile.textContent='⛊';
+    Sound.preyPop();
+    winterSay(["...제법이군.","훙, 운이 좋았을 뿐이다."]);
   } else if(result.kind==='prey'){
     tile.classList.add('prey'); tile.innerHTML = `${result.icon}<br>${result.value}`;
     tile.style.fontSize = '13px';
+    if(result.precise) tile.style.boxShadow = '0 0 0 3px var(--success)';
     Sound.preyPop();
   } else if(result.kind==='dodged'){
     tile.classList.add('prey'); tile.textContent='✓';
