@@ -115,6 +115,15 @@
   }
   .risk-pct{color:#f0c3ba; font-weight:700;}
 
+  .winter-line{
+    text-align:center;
+    padding:10px 26px 0;
+    font-size:14px;
+    font-style:italic;
+    color:var(--accent);
+    min-height:20px;
+  }
+
   /* bag grid: rounded = safe-feeling face-down tiles */
   .bag{
     display:grid;
@@ -311,6 +320,7 @@
       <div class="title-hint">겨울이 다가온다. 사냥감을 노릴 때마다, 밀어붙일지 물러설지가 무리의 생사를 가른다.</div>
     </div>
 
+    <div class="winter-line" id="winterLine" style="display:none;"></div>
     <div class="body" id="body" style="display:none;"></div>
 
     <div class="footer-note">
@@ -588,6 +598,21 @@ const Sound = {
   gameOver(){ playTone(260,0.6,'sawtooth',0.13,90); },
 };
 
+// "겨울" — personified opponent. Consistent voice, reacts to events (Inscryption-style presence).
+const Winter = {
+  TRAP: ["이빨을 보았나?","겨울다운 인사로군.","숨을 곳은 없다.","잊었나, 여긴 내 영역이다."],
+  ROUND_CLEAR: ["버텼군. 하지만 다음은 더 춥다.","여기까지가 다인가?","제법이군... 이번엔."],
+  RETREAT: ["현명한 선택이다... 이번엔.","돌아서는 자에게 박수를.","살아서 도망치는군."],
+  CONTINUE: ["탐욕이군. 마음에 든다.","후회하게 될 거다.","좋아, 계속해보지."],
+  GAME_OVER: ["겨울은 언제나 이긴다.","무리는... 여기까지였군.","다음 생엔 더 신중하길."],
+  SHOP: ["그 힘, 오래가진 않을 거다.","무엇을 챙기든, 나는 여전히 겨울이다."],
+  SCOUT: ["훔쳐본다고 달라지진 않는다.","미리 본들 무슨 소용이지."],
+  line(bank){ return bank[Math.floor(Math.random()*bank.length)]; },
+};
+function winterSay(bank){
+  document.getElementById('winterLine').textContent = `겨울: "${Winter.line(bank)}"`;
+}
+
 // ==== Rendering (art direction: round+warm=safe, sharp+red=danger) ====
 const bodyEl = document.getElementById('body');
 
@@ -629,14 +654,18 @@ function render(){
     const actions = el('div','actions');
     if(Run.scoutsLeft>0){
       const scoutBtn = el('button','btn', `정찰 (${Run.scoutsLeft})`);
-      scoutBtn.onclick = ()=>{ Run.scout(); render(); };
+      scoutBtn.onclick = ()=>{
+        const peeked = Run.scout();
+        if(peeked && peeked.type!=='trap') winterSay(Winter.SCOUT);
+        render();
+      };
       actions.append(scoutBtn);
     }
     const stopBtn = el('button','btn warn','저장하고 멈추기');
     stopBtn.onclick = ()=>{
       Run.cashOut();
-      if(Run.state===State.ROUND_CLEAR) Sound.roundClear();
-      else if(Run.state===State.GAME_OVER) Sound.gameOver();
+      if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(Winter.ROUND_CLEAR); }
+      else if(Run.state===State.GAME_OVER){ Sound.gameOver(); winterSay(Winter.GAME_OVER); }
       else Sound.cashOut();
       render();
     };
@@ -648,9 +677,9 @@ function render(){
     bodyEl.append(el('div', 'message success', '라운드 클리어! 더 나아갈까, 여기서 귀환할까?'));
     const actions = el('div','actions');
     const goBtn = el('button','btn primary','계속 사냥');
-    goBtn.onclick = ()=>{ Run.continueHunting(); render(); };
+    goBtn.onclick = ()=>{ Run.continueHunting(); winterSay(Winter.CONTINUE); render(); };
     const retreatBtn = el('button','btn warn','귀환 (지금까지 성과 보존)');
-    retreatBtn.onclick = ()=>{ Run.retreat(); Sound.retreat(); render(); };
+    retreatBtn.onclick = ()=>{ Run.retreat(); Sound.retreat(); winterSay(Winter.RETREAT); render(); };
     actions.append(goBtn, retreatBtn);
     bodyEl.append(actions);
 
@@ -705,6 +734,7 @@ function onTileClick(tile){
   if(result.kind==='trap'){
     tile.classList.add('trap'); tile.textContent='';
     Sound.trap();
+    winterSay(Winter.TRAP);
   } else if(result.kind==='prey'){
     tile.classList.add('prey'); tile.innerHTML = `${result.icon}<br>${result.value}`;
     tile.style.fontSize = '13px';
@@ -716,8 +746,8 @@ function onTileClick(tile){
   // brief pause so the flip/reveal animation is visible before the screen changes
   setTimeout(()=>{
     render();
-    if(Run.state===State.ROUND_CLEAR) Sound.roundClear();
-    else if(Run.state===State.GAME_OVER) Sound.gameOver();
+    if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(Winter.ROUND_CLEAR); }
+    else if(Run.state===State.GAME_OVER){ Sound.gameOver(); winterSay(Winter.GAME_OVER); }
   }, 420);
 }
 
@@ -727,6 +757,7 @@ document.getElementById('titleStartBtn').onclick = ()=>{
   initAudio();
   document.getElementById('titleScreen').style.display = 'none';
   document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('winterLine').style.display = 'block';
   document.getElementById('body').style.display = 'flex';
   Run.startRun();
   render();

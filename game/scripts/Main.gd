@@ -1,6 +1,7 @@
 extends Node2D
 
 const Palette := preload("res://scripts/GamePalette.gd")
+const Winter := preload("res://scripts/Winter.gd")
 
 var run: Node
 var current_offers: Array = []
@@ -9,6 +10,7 @@ var round_label: Label
 var quota_label: Label
 var attempts_label: Label
 var risk_label: Label
+var winter_label: Label
 var pot_label: Label
 var message_label: Label
 var action_button: Button
@@ -46,6 +48,10 @@ func _build_hud(viewport_size: Vector2) -> void:
 	quota_label = _make_label(hud, Vector2(20, 55), 20, Palette.MOONLIGHT)
 	attempts_label = _make_label(hud, Vector2(20, 85), 20, Palette.MOONLIGHT)
 	risk_label = _make_label(hud, Vector2(20, 115), 18, Palette.DANGER)
+
+	winter_label = _make_label(hud, Vector2(0, viewport_size.y * 0.14), 20, Palette.MOONLIGHT)
+	winter_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	winter_label.custom_minimum_size = Vector2(viewport_size.x, 30)
 
 	pot_label = _make_label(hud, Vector2(0, viewport_size.y / 2.0 - 90), 40, Palette.TEXT)
 	pot_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -94,8 +100,14 @@ func _on_pot_changed(pot: int) -> void:
 	pot_label.text = "이번 사냥: %d" % pot if pot > 0 else ""
 
 
+func _winter_say(bank: Array) -> void:
+	winter_label.text = "겨울: \"%s\"" % Winter.line(bank)
+
+
 func _on_message(text: String, kind: String) -> void:
 	_set_message(text, kind)
+	if kind == "trap":
+		_winter_say(Winter.TRAP_LINES)
 
 
 func _set_message(text: String, kind: String) -> void:
@@ -145,6 +157,7 @@ func _refresh() -> void:
 			secondary_button.text = "귀환 (지금까지 성과 보존)"
 			secondary_button.show()
 			_set_message("라운드 클리어! 더 나아갈까, 여기서 귀환할까?", "success")
+			_winter_say(Winter.ROUND_CLEAR_LINES)
 		run.State.SHOP:
 			secondary_button.text = "건너뛰기"
 			secondary_button.show()
@@ -158,16 +171,19 @@ func _refresh() -> void:
 				_set_message("유물 선택! (더 얻을 유물 없음)", "success")
 			else:
 				_set_message("유물을 선택하세요 — 항상 좋은 것만 있지는 않다", "success")
+			_winter_say(Winter.SHOP_LINES)
 		run.State.GAME_OVER:
 			action_button.text = "다시 시작"
 			action_button.show()
 			secondary_button.hide()
 			_set_message("게임 오버 — 전부 잃었다 (%d라운드까지 생존, 최고 %d)" % [run.round_number, GameManager.best_round], "trap")
+			_winter_say(Winter.GAME_OVER_LINES)
 		run.State.RETREATED:
 			action_button.text = "다시 시작"
 			action_button.show()
 			secondary_button.hide()
 			_set_message("무리가 귀환했다! %d라운드 생존 (누적 명성 %d)" % [run.round_number, GameManager.total_pelts], "success")
+			_winter_say(Winter.RETREAT_LINES)
 
 
 func _show_charms() -> void:
@@ -210,6 +226,7 @@ func _on_action_pressed() -> void:
 			run.draw()
 		run.State.ROUND_CLEAR:
 			run.continue_hunting()
+			_winter_say(Winter.CONTINUE_LINES)
 		run.State.SHOP:
 			run.use_reroll()
 		run.State.GAME_OVER, run.State.RETREATED:
@@ -217,7 +234,9 @@ func _on_action_pressed() -> void:
 
 
 func _on_scout_pressed() -> void:
-	run.scout()
+	var peeked := run.scout()
+	if peeked.get("type", "") != "trap":
+		_winter_say(Winter.SCOUT_LINES)
 	_refresh()
 
 
