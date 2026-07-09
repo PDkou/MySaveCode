@@ -14,7 +14,7 @@ func _initialize() -> void:
 
 	run.start_run()
 	var safety := 0
-	while run.state != run.State.GAME_OVER and safety < 500:
+	while run.state != run.State.GAME_OVER and run.state != run.State.RETREATED and safety < 500:
 		safety += 1
 		match run.state:
 			run.State.IDLE:
@@ -24,6 +24,11 @@ func _initialize() -> void:
 					run.draw()
 				else:
 					run.cash_out()
+			run.State.ROUND_CLEAR:
+				if randf() < 0.3:
+					run.retreat()
+				else:
+					run.continue_hunting()
 			run.State.SHOP:
 				var offers: Array = run.offer_charms()
 				print("[SHOP] offers=", offers.map(func(c): return c["id"]))
@@ -33,5 +38,6 @@ func _initialize() -> void:
 					run.skip_shop()
 
 	var gm := root.get_node("GameManager")
-	print("FINAL round=", run.round_number, " best_saved=", gm.best_round, " safety_used=", safety)
+	print("FINAL state=", run.state, " round=", run.round_number,
+		" best_saved=", gm.best_round, " pelts=", gm.total_pelts, " safety_used=", safety)
 	quit()

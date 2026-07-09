@@ -4,7 +4,7 @@ signal state_changed
 signal pot_changed(pot: int)
 signal message(text: String, kind: String)
 
-enum State { IDLE, DRAWING, SHOP, GAME_OVER }
+enum State { IDLE, DRAWING, ROUND_CLEAR, SHOP, GAME_OVER, RETREATED }
 
 const BASE_QUOTA := 14
 const QUOTA_GROWTH := 10
@@ -41,8 +41,8 @@ var owned_charms: Array = []
 func start_run() -> void:
 	round_number = 1
 	quota = BASE_QUOTA
-	attempts_per_round = BASE_ATTEMPTS
-	bust_count = BASE_BUST_COUNT
+	attempts_per_round = BASE_ATTEMPTS + GameManager.get_bonus_attempts()
+	bust_count = max(0, BASE_BUST_COUNT - GameManager.get_bonus_bust_reduction())
 	value_bonus = 0
 	safety_percent = 0.0
 	cashout_bonus_percent = 0.0
@@ -85,6 +85,23 @@ func cash_out() -> void:
 	pot = 0
 	pot_changed.emit(pot)
 	_resolve_after_attempt()
+
+
+func retreat() -> void:
+	if state != State.ROUND_CLEAR:
+		return
+	var earned := round_number * 5 + total_food
+	message.emit("무리가 안전하게 귀환했다! 명성 +%d" % earned, "success")
+	GameManager.report_extraction(round_number, total_food)
+	state = State.RETREATED
+	state_changed.emit()
+
+
+func continue_hunting() -> void:
+	if state != State.ROUND_CLEAR:
+		return
+	state = State.SHOP
+	state_changed.emit()
 
 
 func skip_shop() -> void:
@@ -148,7 +165,7 @@ func _on_trap() -> void:
 
 func _resolve_after_attempt() -> void:
 	if total_food >= quota:
-		state = State.SHOP
+		state = State.ROUND_CLEAR
 		state_changed.emit()
 	elif attempts_left > 0:
 		state = State.IDLE

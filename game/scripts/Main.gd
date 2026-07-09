@@ -122,20 +122,31 @@ func _refresh() -> void:
 			action_button.show()
 			secondary_button.text = "저장하고 멈추기"
 			secondary_button.show()
+		run.State.ROUND_CLEAR:
+			action_button.text = "계속 사냥"
+			action_button.show()
+			secondary_button.text = "귀환 (지금까지 성과 보존)"
+			secondary_button.show()
+			_set_message("라운드 클리어! 더 나아갈까, 여기서 귀환할까?", "success")
 		run.State.SHOP:
 			action_button.hide()
 			secondary_button.text = "건너뛰기"
 			secondary_button.show()
 			_show_charms()
 			if current_offers.is_empty():
-				_set_message("라운드 클리어! (더 얻을 유물 없음)", "success")
+				_set_message("유물 선택! (더 얻을 유물 없음)", "success")
 			else:
-				_set_message("라운드 클리어! 유물을 선택하세요", "success")
+				_set_message("유물을 선택하세요", "success")
 		run.State.GAME_OVER:
 			action_button.text = "다시 시작"
 			action_button.show()
 			secondary_button.hide()
-			_set_message("게임 오버 — %d라운드 생존 (최고 %d)" % [run.round_number, GameManager.best_round], "info")
+			_set_message("게임 오버 — 전부 잃었다 (%d라운드까지 생존, 최고 %d)" % [run.round_number, GameManager.best_round], "trap")
+		run.State.RETREATED:
+			action_button.text = "다시 시작"
+			action_button.show()
+			secondary_button.hide()
+			_set_message("무리가 귀환했다! %d라운드 생존 (누적 명성 %d)" % [run.round_number, GameManager.total_pelts], "success")
 
 
 func _show_charms() -> void:
@@ -163,7 +174,9 @@ func _on_action_pressed() -> void:
 			run.start_attempt()
 		run.State.DRAWING:
 			run.draw()
-		run.State.GAME_OVER:
+		run.State.ROUND_CLEAR:
+			run.continue_hunting()
+		run.State.GAME_OVER, run.State.RETREATED:
 			run.start_run()
 
 
@@ -171,5 +184,7 @@ func _on_secondary_pressed() -> void:
 	match run.state:
 		run.State.DRAWING:
 			run.cash_out()
+		run.State.ROUND_CLEAR:
+			run.retreat()
 		run.State.SHOP:
 			run.skip_shop()
