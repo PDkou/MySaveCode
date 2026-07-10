@@ -149,6 +149,7 @@ var pot: int = 0
 var bag: Array = []
 var owned_charms: Array = []
 var rerolls_left: int = 0
+var _next_uid: int = 0
 
 
 func start_run() -> void:
@@ -202,19 +203,31 @@ func start_attempt() -> void:
 	pot_changed.emit(pot)
 
 
-func draw() -> Dictionary:
+func draw(target_uid: int = -1) -> Dictionary:
 	if state != State.DRAWING or bag.is_empty():
 		return {}
-	var token: Dictionary = bag.pop_back()
+	var token: Dictionary
+	if target_uid == -1:
+		token = bag.pop_back()
+	else:
+		var idx := -1
+		for i in bag.size():
+			if bag[i]["uid"] == target_uid:
+				idx = i
+				break
+		if idx == -1:
+			return {}
+		token = bag[idx]
+		bag.remove_at(idx)
 	if token["type"] == "trap":
 		if trap_immunity_left > 0:
 			trap_immunity_left -= 1
 			message.emit("무리가 함정을 미리 감지해 피했다!", "success")
 			if bag.is_empty():
 				cash_out()
-			return {"kind": "dodged"}
+			return {"kind": "dodged", "uid": token["uid"]}
 		_on_trap()
-		return {"kind": "trap"}
+		return {"kind": "trap", "uid": token["uid"]}
 	else:
 		chain += 1
 		var chain_bonus: int = clamp(chain - (CHAIN_BONUS_START - 1), 0, CHAIN_BONUS_CAP)
@@ -228,7 +241,7 @@ func draw() -> Dictionary:
 		if bag.is_empty():
 			cash_out()
 		return {"kind": "prey", "value": value, "type": token["type"], "name": token["name"],
-			"icon": token["icon"], "chain": chain, "chain_bonus": chain_bonus}
+			"icon": token["icon"], "chain": chain, "chain_bonus": chain_bonus, "uid": token["uid"]}
 
 
 func cash_out() -> void:
@@ -410,6 +423,12 @@ func _build_bag() -> void:
 	for i in traps:
 		bag.append({"type": "trap", "value": -1})
 	bag.shuffle()
+	# each token gets a stable id so the 3D hunting field can bind one
+	# ground marker per token and resolve it out of order (walk-up trigger)
+	# instead of the old fixed last-in-first-out tile grid.
+	for token in bag:
+		token["uid"] = _next_uid
+		_next_uid += 1
 	# deal effects are scoped to the single hunt whose bag was just built
 	next_hunt_value_bonus = 0
 	next_hunt_extra_traps = 0
