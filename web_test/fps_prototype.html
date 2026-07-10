@@ -13,7 +13,13 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--bg-deep);
     font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color:var(--text);}
-  #glCanvas{position:fixed; inset:0; width:100%; height:100%; display:block;}
+  #glCanvas{position:fixed; inset:0; width:100%; height:100%; display:block; transition:none;}
+
+  .vignette{position:fixed; inset:0; z-index:3; pointer-events:none; opacity:0;
+    background:radial-gradient(ellipse at center, transparent 45%, rgba(140,20,10,.55) 100%);
+    transition:opacity .25s ease;}
+  .hit-flash{position:fixed; inset:0; z-index:4; pointer-events:none; opacity:0; background:rgba(191,64,51,.38);}
+  .hit-flash.active{opacity:1; transition:opacity .38s ease-out;}
 
   .hud{position:fixed; inset:0; pointer-events:none; z-index:5;}
   .hud .clickable{pointer-events:auto;}
@@ -29,9 +35,9 @@
   .crosshair{position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-3px;
     border-radius:50%; background:rgba(235,242,247,.85); box-shadow:0 0 6px rgba(235,242,247,.5);}
 
-  .risk-line, .chain-line{position:absolute; left:50%; transform:translateX(-50%); text-align:center; font-weight:700;}
-  .risk-line{top:74px; font-size:13px; color:#f0c3ba;}
-  .chain-line{top:98px; font-size:15px; color:var(--success); text-shadow:0 2px 6px rgba(0,0,0,.6);}
+  .risk-line, .chain-line{position:absolute; left:50%; transform:translateX(-50%); text-align:center; font-weight:700; width:100%;}
+  .risk-line{top:138px; font-size:13px; color:#f0c3ba;}
+  .chain-line{top:164px; font-size:16px; color:var(--success); text-shadow:0 2px 8px rgba(0,0,0,.7);}
 
   .hint{position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-size:13px; color:var(--muted);
     background:rgba(10,17,25,.55); padding:6px 14px; border-radius:8px; white-space:nowrap;}
@@ -43,7 +49,7 @@
   .message-toast.neutral{color:var(--text);}
 
   /* ==== Winter: visible antagonist, ported from the 2D test build ==== */
-  .winter-stage{position:absolute; top:56px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:14px;}
+  .winter-stage{position:absolute; top:64px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:14px;}
   .winter-portrait{position:relative; width:70px; height:60px; flex:none;}
   .winter-portrait .moon{position:absolute; left:10px; top:0; width:46px; height:46px; border-radius:50%;
     background:radial-gradient(circle at 38% 34%, #eef4f9, #b9d2e4 72%); box-shadow:0 0 22px rgba(140,191,224,.35);}
@@ -99,6 +105,8 @@
 </head>
 <body>
   <canvas id="glCanvas"></canvas>
+  <div class="vignette" id="vignette"></div>
+  <div class="hit-flash" id="hitFlash"></div>
 
   <div class="hud" id="hud">
     <div class="topbar">
@@ -132,7 +140,7 @@
       <div class="title-sub">무리를 이끌고, 겨울을 나라 — 1인칭 사냥 프로토타입</div>
       <div class="title-stats" id="titleStats"></div>
       <button class="btn primary clickable" id="titleStartBtn">사냥터로 나가기</button>
-      <div class="title-hint">클릭하면 화면이 잠기고 마우스로 시점을, WASD로 이동을 조작합니다. 눈더미는 전부 똑같이 생겼습니다 — 걸어서 다가가야 정체를 알 수 있습니다. Q: 저장하고 멈추기 · F: 정찰(위험 감지) · ESC: 시점 잠금 해제</div>
+      <div class="title-hint">WASD로 이동, 화면을 마우스로 누른 채 드래그하면 시점이 돌아갑니다. 눈더미는 전부 똑같이 생겼습니다 — 걸어서 다가가야 정체를 알 수 있습니다. Q: 저장하고 멈추기 · F: 정찰(위험 감지)</div>
     </div>
   </div>
 
@@ -568,9 +576,14 @@ function spawnFloatPop(worldPos, text){
   setTimeout(()=> el.remove(), 850);
 }
 
-// ============ Player movement (WASD + pointer-lock mouse look) ============
+// ============ Player movement (WASD + drag-to-look) ============
+// Pointer Lock needs a same-origin top-level document and is blocked inside
+// most sandboxed iframes (including where this Artifact renders), so it
+// silently did nothing when clicked. Click-and-drag look works everywhere —
+// no special permissions, no invisible failure mode.
 let yaw=0, pitch=0;
 let hunting = false; // movement/look only active while actually in the field (DRAWING)
+let dragging = false, lastMouseX=0, lastMouseY=0;
 const keys = {};
 addEventListener('keydown', e=>{
   keys[e.code]=true;
@@ -580,15 +593,40 @@ addEventListener('keydown', e=>{
   }
 });
 addEventListener('keyup', e=> keys[e.code]=false);
-addEventListener('mousemove', e=>{
-  if(document.pointerLockElement !== canvas) return;
-  yaw -= e.movementX * 0.0024;
-  pitch = Math.max(-1.3, Math.min(1.3, pitch - e.movementY*0.0024));
+canvas.addEventListener('mousedown', e=>{
+  if(!hunting) return;
+  dragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY;
 });
-canvas.addEventListener('click', ()=>{ if(hunting) canvas.requestPointerLock(); });
+addEventListener('mousemove', e=>{
+  if(!dragging) return;
+  const dx = e.clientX - lastMouseX, dy = e.clientY - lastMouseY;
+  lastMouseX = e.clientX; lastMouseY = e.clientY;
+  yaw -= dx * 0.0055;
+  pitch = Math.max(-1.3, Math.min(1.3, pitch - dy*0.0055));
+});
+addEventListener('mouseup', ()=> dragging=false);
+canvas.addEventListener('touchstart', e=>{
+  if(!hunting || !e.touches.length) return;
+  dragging = true; lastMouseX = e.touches[0].clientX; lastMouseY = e.touches[0].clientY;
+}, {passive:true});
+addEventListener('touchmove', e=>{
+  if(!dragging || !e.touches.length) return;
+  const dx = e.touches[0].clientX - lastMouseX, dy = e.touches[0].clientY - lastMouseY;
+  lastMouseX = e.touches[0].clientX; lastMouseY = e.touches[0].clientY;
+  yaw -= dx * 0.0055;
+  pitch = Math.max(-1.3, Math.min(1.3, pitch - dy*0.0055));
+}, {passive:true});
+addEventListener('touchend', ()=> dragging=false);
 
 const SPEED = 4.2;
 const _dir = new THREE.Vector3(), _right = new THREE.Vector3();
+
+// screen shake + FOV punch: the physical "impact" feedback a card UI never had
+let shakeEndAt=0, shakeDurMs=0, shakeMag=0;
+let fovKick=0;
+function triggerShake(mag, durationMs){ shakeEndAt=performance.now()+durationMs; shakeDurMs=durationMs; shakeMag=mag; }
+function punchFov(amount){ fovKick += amount; }
+
 function updateMovement(dt){
   camera.rotation.y = yaw; camera.rotation.x = pitch;
   if(!hunting) return;
@@ -603,6 +641,25 @@ function updateMovement(dt){
   camera.position.x = Math.max(-30, Math.min(30, camera.position.x));
   camera.position.z = Math.max(-30, Math.min(30, camera.position.z));
 }
+
+function updateJuice(dt){
+  const now = performance.now();
+  if(now < shakeEndAt){
+    const remaining = (shakeEndAt-now)/shakeDurMs;
+    const dx = (Math.random()*2-1)*shakeMag*remaining;
+    const dy = (Math.random()*2-1)*shakeMag*remaining;
+    canvas.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
+  } else if(canvas.style.transform){
+    canvas.style.transform = '';
+  }
+  if(fovKick > 0.01){
+    fovKick *= Math.pow(0.005, dt);
+    camera.fov = 75 + fovKick;
+    camera.updateProjectionMatrix();
+  } else if(camera.fov !== 75){
+    fovKick = 0; camera.fov = 75; camera.updateProjectionMatrix();
+  }
+}
 function checkTriggers(){
   if(Run.state!==State.DRAWING) return;
   for(const m of markers){
@@ -611,18 +668,28 @@ function checkTriggers(){
     if(dx*dx+dz*dz < TRIGGER_RADIUS_SQ) triggerMarker(m);
   }
 }
+function flashHit(){
+  const el = document.getElementById('hitFlash');
+  el.classList.remove('active'); void el.offsetWidth; // restart the CSS transition
+  el.classList.add('active');
+  setTimeout(()=> el.classList.remove('active'), 400);
+}
 function triggerMarker(m){
   m.triggered = true;
   const result = Run.draw(m.uid);
   if(!result) return;
   styleMarker(m, result);
-  if(result.kind==='trap'){ Sound.trap(); winterSay(Winter.TRAP, 'pleased'); }
+  if(result.kind==='trap'){
+    Sound.trap(); winterSay(Winter.TRAP, 'pleased');
+    triggerShake(14, 380); flashHit();
+  }
   else if(result.kind==='prey'){
     Sound.preyPop(result.chain);
     spawnFloatPop(m.mesh.position, result.chainBonus>0 ? `+${result.value} 🔥` : `+${result.value}`);
+    punchFov(4 + result.chainBonus*3);
     if(result.chainBonus>0) Sound.chainSpark(result.chain);
     if(result.chain===CHAIN_BONUS_START) winterSay(Winter.CHAIN, 'wary');
-  } else if(result.kind==='dodged'){ Sound.preyPop(0); }
+  } else if(result.kind==='dodged'){ Sound.preyPop(0); punchFov(3); }
   setTimeout(()=>{ scene.remove(m.mesh); markers = markers.filter(x=>x!==m); }, 550);
   refreshHud();
   if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(Winter.ROUND_CLEAR, 'wary'); }
@@ -674,6 +741,7 @@ function refreshHud(){
   const chainLine = document.getElementById('chainLine');
   const crosshair = document.getElementById('crosshair');
   const hint = document.getElementById('hintLine');
+  const vignette = document.getElementById('vignette');
   riskLine.textContent = ''; chainLine.textContent = ''; hint.style.display='none'; crosshair.style.display='none';
 
   if(Run.state===State.DRAWING){
@@ -683,15 +751,20 @@ function refreshHud(){
     const traps=Run.remainingTrapCount(), tiles=Run.remainingTileCount();
     const odds = tiles>0 ? Math.round(100*traps/tiles) : 0;
     riskLine.textContent = `위험도: 함정 ${traps} / 남은 ${tiles}곳 (약 ${odds}%)`;
-    if(Run.chain>=2) chainLine.textContent = `🔥 연쇄 x${Run.chain}`;
+    vignette.style.opacity = Math.min(0.6, (traps/Math.max(tiles,1)) * 1.1);
+    if(Run.chain>=2){
+      chainLine.textContent = `🔥 연쇄 x${Run.chain}`;
+      chainLine.style.fontSize = (16 + Math.min(Run.chain,8)) + 'px';
+    }
     const scoutHint = Run.scoutsLeft>0 ? ` · F: 정찰 (${Run.scoutsLeft})` : '';
-    hint.textContent = `클릭해서 시점 잠금 · WASD 이동 · Q: 저장하고 멈추기${scoutHint}`;
+    hint.textContent = `드래그: 시점 회전 · WASD 이동 · Q: 저장하고 멈추기${scoutHint}`;
     hint.style.display = 'block';
     return;
   }
 
   hunting = false;
-  if(document.pointerLockElement===canvas) document.exitPointerLock();
+  dragging = false;
+  vignette.style.opacity = 0;
 
   if(Run.state===State.IDLE){
     setWinterMood('calm');
@@ -711,7 +784,6 @@ function refreshHud(){
         Run.startAttempt(); spawnField(Run.bag);
         camera.position.set(0,1.6,0); yaw=0; pitch=0;
         refreshHud();
-        canvas.requestPointerLock();
       };
     }
     showOverlay('idleOverlay');
@@ -764,6 +836,7 @@ function loop(){
   const dt = Math.min((now-lastT)/1000, 0.1);
   lastT = now;
   updateMovement(dt);
+  updateJuice(dt);
   checkTriggers();
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
