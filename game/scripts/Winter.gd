@@ -38,6 +38,21 @@ const SCOUT_LINES := [
 	"훔쳐본다고 달라지진 않는다.",
 	"미리 본들 무슨 소용이지.",
 ]
+const DEAL_ACCEPT_LINES := [
+	"현명한지 어리석은지는 곧 알게 되겠지.",
+	"좋아. 거래는 거래다.",
+	"약속은 지키지. 나는 겨울이니까.",
+]
+const DEAL_REFUSE_LINES := [
+	"자존심인가. 그걸로 배를 채울 수 있길.",
+	"제안은 두 번 오지 않는다.",
+	"훙. 마음대로 해라.",
+]
+const CHAIN_LINES := [
+	"...멈출 줄 모르는군.",
+	"그 기세, 어디까지 가나 보자.",
+	"욕심이 이빨을 부른다.",
+]
 
 
 static func line(bank: Array) -> String:

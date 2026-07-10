@@ -29,6 +29,9 @@ func _initialize() -> void:
 	var charm_pick_counts := {}
 	var charm_offer_counts := {}
 	var negative_food_bug := 0
+	var deals_offered := 0
+	var deals_accepted := 0
+	var deal_counts := {}
 
 	var run := Node.new()
 	run.set_script(load("res://scripts/RunManager.gd"))
@@ -44,7 +47,16 @@ func _initialize() -> void:
 			steps += 1
 			match run.state:
 				run.State.IDLE:
-					run.start_attempt()
+					if not run.current_deal.is_empty():
+						deals_offered += 1
+						deal_counts[run.current_deal["id"]] = deal_counts.get(run.current_deal["id"], 0) + 1
+						if randf() < 0.5:
+							deals_accepted += 1
+							run.accept_deal()
+						else:
+							run.refuse_deal()
+					else:
+						run.start_attempt()
 				run.State.DRAWING:
 					if run.total_food < 0:
 						negative_food_bug += 1
@@ -109,6 +121,7 @@ func _initialize() -> void:
 	print("shop_visits: ", shop_visits)
 	print("all_bad_shop_offers: ", all_bad_shop_count,
 		" (", (String.num(100.0 * all_bad_shop_count / shop_visits, 2) if shop_visits > 0 else "n/a"), "% of visits)")
+	print("deals_offered: ", deals_offered, " accepted: ", deals_accepted, " by_type: ", deal_counts)
 	print("total_pelts_accumulated_in_gamemanager: ", total_pelts)
 	print("charm_offer_counts: ", charm_offer_counts)
 	print("charm_pick_counts: ", charm_pick_counts)

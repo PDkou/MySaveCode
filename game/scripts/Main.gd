@@ -2,6 +2,7 @@ extends Node2D
 
 const Palette := preload("res://scripts/GamePalette.gd")
 const Winter := preload("res://scripts/Winter.gd")
+const WinterPortraitScript := preload("res://scripts/WinterPortrait.gd")
 
 var run: Node
 var current_offers: Array = []
@@ -12,6 +13,7 @@ var attempts_label: Label
 var risk_label: Label
 var winter_label: Label
 var pot_label: Label
+var chain_label: Label
 var message_label: Label
 var action_button: Button
 var secondary_button: Button
@@ -21,18 +23,8 @@ var charm_buttons: Array = []
 
 var bag_layer: CanvasLayer
 var bag_grid: GridContainer
-var aim_container: Control
-var aim_track: ColorRect
-var aim_sweet: ColorRect
-var aim_marker: ColorRect
+var winter_portrait: Node2D
 
-var aiming: bool = false
-var aim_pos: float = 0.0
-var aim_dir: float = 1.0
-var aim_sweet_start: float = 0.0
-var aim_sweet_width: float = 20.0
-var aim_speed: float = 150.0  # percent per second
-var current_aim_tile: Panel = null
 var pending_refresh: bool = false
 
 
@@ -57,19 +49,6 @@ func _ready() -> void:
 	run.start_run()
 
 
-func _process(delta: float) -> void:
-	if not aiming:
-		return
-	aim_pos += aim_dir * aim_speed * delta
-	if aim_pos >= 100.0:
-		aim_pos = 100.0
-		aim_dir = -1.0
-	elif aim_pos <= 0.0:
-		aim_pos = 0.0
-		aim_dir = 1.0
-	aim_marker.position.x = aim_track.size.x * (aim_pos / 100.0) - aim_marker.size.x / 2.0
-
-
 func _build_hud(viewport_size: Vector2) -> void:
 	var hud := CanvasLayer.new()
 	add_child(hud)
@@ -79,6 +58,11 @@ func _build_hud(viewport_size: Vector2) -> void:
 	attempts_label = _make_label(hud, Vector2(20, 85), 20, Palette.MOONLIGHT)
 	risk_label = _make_label(hud, Vector2(20, 115), 18, Palette.DANGER)
 
+	winter_portrait = Node2D.new()
+	winter_portrait.set_script(WinterPortraitScript)
+	winter_portrait.position = Vector2(viewport_size.x / 2.0, 78)
+	hud.add_child(winter_portrait)
+
 	winter_label = _make_label(hud, Vector2(0, 130), 20, Palette.MOONLIGHT)
 	winter_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	winter_label.custom_minimum_size = Vector2(viewport_size.x, 28)
@@ -86,6 +70,10 @@ func _build_hud(viewport_size: Vector2) -> void:
 	pot_label = _make_label(hud, Vector2(0, 172), 36, Palette.TEXT)
 	pot_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pot_label.custom_minimum_size = Vector2(viewport_size.x, 46)
+
+	chain_label = _make_label(hud, Vector2(0, 214), 18, Palette.SUCCESS)
+	chain_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	chain_label.custom_minimum_size = Vector2(viewport_size.x, 24)
 
 	message_label = _make_label(hud, Vector2(0, 425), 18, Palette.TEXT)
 	message_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -116,37 +104,8 @@ func _build_bag_ui(viewport_size: Vector2) -> void:
 	bag_grid.columns = 5
 	bag_grid.add_theme_constant_override("h_separation", 10)
 	bag_grid.add_theme_constant_override("v_separation", 10)
-	bag_grid.position = Vector2(viewport_size.x / 2.0 - 155, 222)
+	bag_grid.position = Vector2(viewport_size.x / 2.0 - 155, 246)
 	bag_layer.add_child(bag_grid)
-
-	aim_container = Control.new()
-	aim_container.position = Vector2(viewport_size.x / 2.0 - 160, 362)
-	aim_container.custom_minimum_size = Vector2(320, 34)
-	aim_container.visible = false
-	bag_layer.add_child(aim_container)
-
-	aim_track = ColorRect.new()
-	aim_track.size = Vector2(320, 22)
-	aim_track.color = Palette.BG
-	aim_container.add_child(aim_track)
-
-	aim_sweet = ColorRect.new()
-	aim_sweet.size = Vector2(64, 22)
-	aim_sweet.color = Color(Palette.SUCCESS.r, Palette.SUCCESS.g, Palette.SUCCESS.b, 0.4)
-	aim_track.add_child(aim_sweet)
-
-	aim_marker = ColorRect.new()
-	aim_marker.size = Vector2(6, 26)
-	aim_marker.position = Vector2(-3, -2)
-	aim_marker.color = Palette.TEXT
-	aim_track.add_child(aim_marker)
-
-	var aim_button := Button.new()
-	aim_button.custom_minimum_size = Vector2(320, 22)
-	aim_button.flat = true
-	aim_button.modulate.a = 0.01
-	aim_button.pressed.connect(_on_aim_strike)
-	aim_container.add_child(aim_button)
 
 
 func _make_label(parent: CanvasLayer, pos: Vector2, font_size: int, color: Color) -> Label:
@@ -171,14 +130,16 @@ func _on_pot_changed(pot: int) -> void:
 	pot_label.text = "%d 이번 사냥" % pot if pot > 0 else ""
 
 
-func _winter_say(bank: Array) -> void:
+func _winter_say(bank: Array, mood: String = "") -> void:
 	winter_label.text = "겨울: \"%s\"" % Winter.line(bank)
+	if mood != "":
+		winter_portrait.set_mood(mood)
 
 
 func _on_message(text: String, kind: String) -> void:
 	_set_message(text, kind)
 	if kind == "trap":
-		_winter_say(Winter.TRAP_LINES)
+		_winter_say(Winter.TRAP_LINES, "pleased")
 
 
 func _set_message(text: String, kind: String) -> void:
@@ -201,23 +162,31 @@ func _on_state_changed() -> void:
 func _refresh() -> void:
 	charm_layer.hide()
 	_clear_bag_grid()
-	aim_container.visible = false
-	aiming = false
 
 	round_label.text = "라운드 %d" % run.round_number
 	quota_label.text = "식량 %d / 목표 %d" % [run.total_food, run.quota]
 	attempts_label.text = "남은 사냥 %d / %d" % [run.attempts_left, run.attempts_per_round]
 
 	risk_label.text = ""
+	chain_label.text = ""
 	scout_button.hide()
 
 	match run.state:
 		run.State.IDLE:
 			pot_label.text = ""
-			_set_message("", "info")
-			action_button.text = "사냥 시작"
-			action_button.show()
-			secondary_button.hide()
+			winter_portrait.set_mood("calm")
+			if not run.current_deal.is_empty():
+				winter_label.text = "겨울: \"%s\"" % run.current_deal["desc"]
+				_set_message("겨울이 거래를 제안한다 — %s" % run.current_deal["name"], "info")
+				action_button.text = "거래를 받아들인다"
+				action_button.show()
+				secondary_button.text = "거절한다"
+				secondary_button.show()
+			else:
+				_set_message("", "info")
+				action_button.text = "사냥 시작"
+				action_button.show()
+				secondary_button.hide()
 		run.State.DRAWING:
 			action_button.hide()
 			secondary_button.text = "저장하고 멈추기"
@@ -227,6 +196,8 @@ func _refresh() -> void:
 			if tiles > 0:
 				var odds := int(round(100.0 * traps / tiles))
 				risk_label.text = "위험도: 함정 %d / 남은 %d장 (약 %d%%)" % [traps, tiles, odds]
+			if run.chain >= 2:
+				chain_label.text = "연쇄 x%d" % run.chain
 			if run.scouts_left > 0:
 				scout_button.text = "정찰 (%d)" % run.scouts_left
 				scout_button.show()
@@ -237,7 +208,7 @@ func _refresh() -> void:
 			secondary_button.text = "귀환 (지금까지 성과 보존)"
 			secondary_button.show()
 			_set_message("라운드 클리어! 더 나아갈까, 여기서 귀환할까?", "success")
-			_winter_say(Winter.ROUND_CLEAR_LINES)
+			_winter_say(Winter.ROUND_CLEAR_LINES, "wary")
 		run.State.SHOP:
 			secondary_button.text = "건너뛰기"
 			secondary_button.show()
@@ -257,13 +228,13 @@ func _refresh() -> void:
 			action_button.show()
 			secondary_button.hide()
 			_set_message("게임 오버 — 전부 잃었다 (%d라운드까지 생존, 최고 %d)" % [run.round_number, GameManager.best_round], "trap")
-			_winter_say(Winter.GAME_OVER_LINES)
+			_winter_say(Winter.GAME_OVER_LINES, "pleased")
 		run.State.RETREATED:
 			action_button.text = "다시 시작"
 			action_button.show()
 			secondary_button.hide()
 			_set_message("무리가 귀환했다! %d라운드 생존 (누적 명성 %d)" % [run.round_number, GameManager.total_pelts], "success")
-			_winter_say(Winter.RETREAT_LINES)
+			_winter_say(Winter.RETREAT_LINES, "calm")
 
 
 func _clear_bag_grid() -> void:
@@ -305,35 +276,19 @@ func _build_bag_grid() -> void:
 
 
 func _on_tile_pressed(tile: Panel) -> void:
-	if aiming or not tile.get_meta("active", true):
+	if not tile.get_meta("active", true):
 		return
-	_start_aim(tile)
+	_resolve_draw(tile)
 
 
-func _start_aim(tile: Panel) -> void:
-	current_aim_tile = tile
-	aiming = true
-	aim_pos = 0.0
-	aim_dir = 1.0
-	aim_sweet_width = 20.0
-	aim_sweet_start = randf_range(4.0, 96.0 - aim_sweet_width)
-	aim_sweet.position.x = aim_track.size.x * (aim_sweet_start / 100.0)
-	aim_sweet.size.x = aim_track.size.x * (aim_sweet_width / 100.0)
-	aim_container.visible = true
-
-
-func _on_aim_strike() -> void:
-	if not aiming:
-		return
-	aiming = false
-	aim_container.visible = false
-	var precise: bool = aim_pos >= aim_sweet_start and aim_pos <= aim_sweet_start + aim_sweet_width
-	_resolve_draw(current_aim_tile, precise)
-
-
-func _resolve_draw(tile: Panel, precise: bool) -> void:
-	var result: Dictionary = run.draw(precise)
+func _resolve_draw(tile: Panel) -> void:
+	# Raise the guard BEFORE draw(): a trap (or bag-emptying cash-out) emits
+	# state_changed synchronously inside draw(), and an immediate _refresh()
+	# would free the very tile we're about to style.
+	pending_refresh = true
+	var result: Dictionary = run.draw()
 	if result.is_empty():
+		pending_refresh = false
 		return
 	tile.set_meta("active", false)
 	var label: Label = tile.get_child(0)
@@ -343,18 +298,21 @@ func _resolve_draw(tile: Panel, precise: bool) -> void:
 			label.text = ""
 			style.bg_color = Color(0.35, 0.14, 0.11)
 			style.border_color = Palette.DANGER
-		"parried":
-			label.text = "⛊"
-			style.bg_color = Color(0.14, 0.25, 0.14)
-			style.border_color = Palette.SUCCESS
 		"dodged":
 			label.text = "✓"
 			style.bg_color = Color(0.14, 0.25, 0.14)
 			style.border_color = Palette.SUCCESS
 		"prey":
 			label.text = "%s\n%d" % [result["icon"], result["value"]]
-			style.bg_color = Color(0.30, 0.22, 0.10) if not result.get("precise", false) else Color(0.30, 0.26, 0.10)
+			style.bg_color = Color(0.30, 0.22, 0.10)
 			style.border_color = Palette.SUCCESS
+			if result.get("chain_bonus", 0) > 0:
+				style.set_border_width_all(3)
+			var ch: int = result.get("chain", 0)
+			if ch >= 2:
+				chain_label.text = "연쇄 x%d" % ch
+			if ch == 4:
+				_winter_say(Winter.CHAIN_LINES, "wary")
 	tile.add_theme_stylebox_override("panel", style)
 
 	pending_refresh = true
@@ -399,7 +357,11 @@ func _on_charm_button_pressed(index: int) -> void:
 func _on_action_pressed() -> void:
 	match run.state:
 		run.State.IDLE:
-			run.start_attempt()
+			if not run.current_deal.is_empty():
+				run.accept_deal()
+				_winter_say(Winter.DEAL_ACCEPT_LINES, "pleased")
+			else:
+				run.start_attempt()
 		run.State.ROUND_CLEAR:
 			run.continue_hunting()
 			_winter_say(Winter.CONTINUE_LINES)
@@ -410,8 +372,6 @@ func _on_action_pressed() -> void:
 
 
 func _on_scout_pressed() -> void:
-	if aiming:
-		return
 	var peeked: Dictionary = run.scout()
 	if peeked.get("type", "") != "trap":
 		_winter_say(Winter.SCOUT_LINES)
@@ -419,16 +379,18 @@ func _on_scout_pressed() -> void:
 
 
 func _on_secondary_pressed() -> void:
-	if aiming:
-		return
 	match run.state:
+		run.State.IDLE:
+			if not run.current_deal.is_empty():
+				run.refuse_deal()
+				_winter_say(Winter.DEAL_REFUSE_LINES, "calm")
 		run.State.DRAWING:
 			run.cash_out()
 			match run.state:
 				run.State.ROUND_CLEAR:
-					_winter_say(Winter.ROUND_CLEAR_LINES)
+					_winter_say(Winter.ROUND_CLEAR_LINES, "wary")
 				run.State.GAME_OVER:
-					_winter_say(Winter.GAME_OVER_LINES)
+					_winter_say(Winter.GAME_OVER_LINES, "pleased")
 		run.State.ROUND_CLEAR:
 			run.retreat()
 		run.State.SHOP:

@@ -6,12 +6,32 @@ signal message(text: String, kind: String)
 
 enum State { IDLE, DRAWING, ROUND_CLEAR, SHOP, GAME_OVER, RETREATED }
 
-const BASE_QUOTA := 10
+const BASE_QUOTA := 12
 const QUOTA_GROWTH := 10
 const BASE_ATTEMPTS := 4
 const BASE_BUST_COUNT := 1
 const MIN_BUST_COUNT := 1  # the bag must always keep at least one trap — risk can never be fully removed
 const BASE_BAG_SIZE := 10
+
+# Chain: each consecutive prey in one hunt past the 2nd earns a growing
+# bonus (capped) — the deeper you push, the juicier each draw AND the more
+# you stand to lose to the one trap still in the bag.
+const CHAIN_BONUS_START := 4
+const CHAIN_BONUS_CAP := 3
+
+# Winter's bargains: between hunts, Winter herself may step in and offer a
+# deal. Accept or refuse — either way you're negotiating with the antagonist,
+# not just clicking tiles. Costs/rewards are one-hunt-scoped ("next_hunt_*").
+const DEAL_CHANCE := 0.35
+const DEAL_MIN_ROUND := 2
+const DEAL_DEFS := [
+	{"id": "hunger_price", "name": "굶주림의 대가",
+		"desc": "식량 %d을 바쳐라. 다음 사냥의 먹잇감 가치에 +2를 얹어주지."},
+	{"id": "winters_test", "name": "겨울의 시험",
+		"desc": "다음 사냥에 함정을 하나 더 심겠다. 대신 살아서 거두면 수확의 절반을 더 주지."},
+	{"id": "cold_mercy", "name": "차가운 자비",
+		"desc": "사냥 기회를 하나 더 주지. 대신 이번 겨울은 더 허기질 거다. (시도 +1 / 목표 +4)"},
+]
 
 # Prey have identity (not just anonymous numbers) so charms can build
 # synergies around specific types, the way Luck be a Landlord / Balatro's
@@ -117,6 +137,12 @@ var trap_immunity_left: int = 0
 var type_bonus: Dictionary = {}
 var bonus_scouts: int = 0
 var scouts_left: int = 0
+var chain: int = 0
+
+var current_deal: Dictionary = {}
+var next_hunt_value_bonus: int = 0
+var next_hunt_extra_traps: int = 0
+var next_hunt_cashout_bonus: float = 0.0
 
 var total_food: int = 0
 var pot: int = 0
@@ -140,6 +166,11 @@ func start_run() -> void:
 	bonus_trap_immunity = 0
 	type_bonus.clear()
 	bonus_scouts = 0
+	chain = 0
+	current_deal = {}
+	next_hunt_value_bonus = 0
+	next_hunt_extra_traps = 0
+	next_hunt_cashout_bonus = 0.0
 	total_food = 0
 	owned_charms.clear()
 	_start_round()
@@ -160,7 +191,9 @@ func scout() -> Dictionary:
 func start_attempt() -> void:
 	if state != State.IDLE or attempts_left <= 0:
 		return
+	current_deal = {}  # hunting past a pending offer counts as refusing it
 	scouts_left = 1 + bonus_scouts
+	chain = 0
 	attempts_left -= 1
 	pot = 0
 	_build_bag()
@@ -169,16 +202,11 @@ func start_attempt() -> void:
 	pot_changed.emit(pot)
 
 
-func draw(precise: bool = false) -> Dictionary:
+func draw() -> Dictionary:
 	if state != State.DRAWING or bag.is_empty():
 		return {}
 	var token: Dictionary = bag.pop_back()
 	if token["type"] == "trap":
-		if precise:
-			message.emit("정확한 일격으로 함정을 쳐냈다!", "success")
-			if bag.is_empty():
-				cash_out()
-			return {"kind": "parried"}
 		if trap_immunity_left > 0:
 			trap_immunity_left -= 1
 			message.emit("무리가 함정을 미리 감지해 피했다!", "success")
@@ -188,28 +216,73 @@ func draw(precise: bool = false) -> Dictionary:
 		_on_trap()
 		return {"kind": "trap"}
 	else:
-		var bonus: int = 2 if precise else 0
-		var value: int = token["value"] + bonus
+		chain += 1
+		var chain_bonus: int = clamp(chain - (CHAIN_BONUS_START - 1), 0, CHAIN_BONUS_CAP)
+		var value: int = token["value"] + chain_bonus
 		pot += value
-		if precise:
-			message.emit("정확한 일격! %s %s (+%d)" % [token["icon"], token["name"], value], "neutral")
+		if chain_bonus > 0:
+			message.emit("%d연쇄! %s %s (+%d)" % [chain, token["icon"], token["name"], value], "success")
 		else:
 			message.emit("%s %s 발견 (+%d)" % [token["icon"], token["name"], value], "neutral")
 		pot_changed.emit(pot)
 		if bag.is_empty():
 			cash_out()
-		return {"kind": "prey", "value": value, "type": token["type"], "name": token["name"], "icon": token["icon"], "precise": precise}
+		return {"kind": "prey", "value": value, "type": token["type"], "name": token["name"],
+			"icon": token["icon"], "chain": chain, "chain_bonus": chain_bonus}
 
 
 func cash_out() -> void:
 	if state != State.DRAWING:
 		return
-	var bonus := int(pot * cashout_bonus_percent)
+	var bonus := int(pot * (cashout_bonus_percent + next_hunt_cashout_bonus))
 	message.emit("사냥 성공! 식량 +%d" % (pot + bonus), "success")
 	total_food += pot + bonus
 	pot = 0
 	pot_changed.emit(pot)
 	_resolve_after_attempt()
+
+
+func accept_deal() -> void:
+	if state != State.IDLE or current_deal.is_empty():
+		return
+	match current_deal["id"]:
+		"hunger_price":
+			total_food -= current_deal["cost"]
+			next_hunt_value_bonus = 2
+		"winters_test":
+			next_hunt_extra_traps = 1
+			next_hunt_cashout_bonus = 0.5
+		"cold_mercy":
+			attempts_left += 1
+			quota += 4
+	message.emit("거래 성립 — %s" % current_deal["name"], "neutral")
+	current_deal = {}
+	state_changed.emit()
+
+
+func refuse_deal() -> void:
+	if state != State.IDLE or current_deal.is_empty():
+		return
+	current_deal = {}
+	message.emit("겨울의 제안을 거절했다", "neutral")
+	state_changed.emit()
+
+
+func _maybe_offer_deal() -> void:
+	current_deal = {}
+	if round_number < DEAL_MIN_ROUND or randf() >= DEAL_CHANCE:
+		return
+	var pool := []
+	for d in DEAL_DEFS:
+		if d["id"] == "hunger_price":
+			var cost: int = max(3, int(quota / 5.0))
+			if total_food >= cost:
+				pool.append({"id": d["id"], "name": d["name"], "desc": d["desc"] % cost, "cost": cost})
+		else:
+			pool.append({"id": d["id"], "name": d["name"], "desc": d["desc"], "cost": 0})
+	if pool.is_empty():
+		return
+	current_deal = pool.pick_random()
 
 
 func retreat() -> void:
@@ -328,17 +401,22 @@ func _roll_prey_type() -> Dictionary:
 
 func _build_bag() -> void:
 	bag.clear()
-	var value_slots: int = max(1, BASE_BAG_SIZE + bag_size_bonus - bust_count)
+	var traps: int = bust_count + next_hunt_extra_traps
+	var value_slots: int = max(1, BASE_BAG_SIZE + bag_size_bonus - traps)
 	for i in value_slots:
 		var prey := _roll_prey_type()
-		var value: int = max(0, prey["base_value"] + value_bonus + type_bonus.get(prey["id"], 0))
+		var value: int = max(0, prey["base_value"] + value_bonus + next_hunt_value_bonus + type_bonus.get(prey["id"], 0))
 		bag.append({"type": prey["id"], "value": value, "name": prey["name"], "icon": prey["icon"]})
-	for i in bust_count:
+	for i in traps:
 		bag.append({"type": "trap", "value": -1})
 	bag.shuffle()
+	# deal effects are scoped to the single hunt whose bag was just built
+	next_hunt_value_bonus = 0
+	next_hunt_extra_traps = 0
 
 
 func _on_trap() -> void:
+	chain = 0
 	var kept := int(pot * safety_percent)
 	message.emit("함정이다! 식량 %d만 겨우 건짐" % kept, "trap")
 	total_food += kept
@@ -348,10 +426,12 @@ func _on_trap() -> void:
 
 
 func _resolve_after_attempt() -> void:
+	next_hunt_cashout_bonus = 0.0
 	if total_food >= quota:
 		state = State.ROUND_CLEAR
 		state_changed.emit()
 	elif attempts_left > 0:
+		_maybe_offer_deal()
 		state = State.IDLE
 		state_changed.emit()
 	else:
@@ -361,6 +441,7 @@ func _resolve_after_attempt() -> void:
 func _start_round() -> void:
 	attempts_left = attempts_per_round
 	trap_immunity_left = bonus_trap_immunity
+	_maybe_offer_deal()
 	state = State.IDLE
 	state_changed.emit()
 

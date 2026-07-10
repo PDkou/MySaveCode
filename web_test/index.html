@@ -115,48 +115,133 @@
   }
   .risk-pct{color:#f0c3ba; font-weight:700;}
 
-  .aim-wrap{
+  /* ==== Winter: the visible antagonist (pure CSS, no image assets) ==== */
+  .winter-stage{
     display:flex;
-    flex-direction:column;
     align-items:center;
-    gap:8px;
-    margin-top:4px;
+    justify-content:center;
+    gap:16px;
+    padding:16px 26px 0;
+    min-height:86px;
   }
-  .aim-hint{font-size:12px; color:var(--muted);}
-  .aim-track{
+  .winter-portrait{
     position:relative;
-    width:320px;
-    height:22px;
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:11px;
-    cursor:pointer;
-    overflow:hidden;
+    width:84px; height:74px;
+    flex:none;
   }
-  .aim-sweet{
+  .winter-portrait .moon{
     position:absolute;
-    top:0; bottom:0;
-    background:rgba(237,173,63,.35);
-    border-left:2px solid var(--success);
-    border-right:2px solid var(--success);
+    left:14px; top:0;
+    width:56px; height:56px;
+    border-radius:50%;
+    background:radial-gradient(circle at 38% 34%, #eef4f9, #b9d2e4 72%);
+    box-shadow:0 0 26px rgba(140,191,224,.35);
   }
-  .aim-marker{
+  .winter-portrait .moon::after{
+    content:"";
     position:absolute;
-    top:-3px; bottom:-3px;
-    width:6px;
-    background:var(--text);
-    border-radius:3px;
-    transform:translateX(-50%);
-    box-shadow:0 0 8px rgba(235,242,247,.7);
+    left:16px; top:-6px;
+    width:52px; height:52px;
+    border-radius:50%;
+    background:var(--bg);
   }
-
-  .winter-line{
-    text-align:center;
-    padding:10px 26px 0;
+  .winter-portrait .wolf{
+    position:absolute;
+    left:0; bottom:0;
+    width:84px; height:44px;
+    background:#05070b;
+    clip-path:polygon(0% 100%, 20% 42%, 27% 8%, 33% 40%, 42% 34%, 49% 0%, 54% 36%, 72% 52%, 100% 78%, 78% 88%, 0% 100%);
+  }
+  .winter-portrait .eye{
+    position:absolute;
+    bottom:16px;
+    width:7px; height:7px;
+    border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 8px 2px rgba(140,191,224,.55);
+    transition:background .25s ease, box-shadow .25s ease;
+    animation:blink 5.5s infinite;
+  }
+  .winter-portrait .eye.left{left:26px;}
+  .winter-portrait .eye.right{left:44px; animation-delay:.12s;}
+  @keyframes blink{
+    0%, 91%, 100%{transform:scaleY(1);}
+    93%, 95%{transform:scaleY(.12);}
+  }
+  .winter-portrait.pleased .eye{background:var(--success); box-shadow:0 0 10px 3px rgba(237,173,63,.6);}
+  .winter-portrait.wary .eye{background:var(--danger); box-shadow:0 0 10px 3px rgba(191,64,51,.65);}
+  .winter-bubble{
+    max-width:56ch;
     font-size:14px;
     font-style:italic;
     color:var(--accent);
+    background:rgba(140,191,224,.06);
+    border:1px solid var(--border);
+    border-radius:12px;
+    border-bottom-left-radius:3px;
+    padding:10px 16px;
     min-height:20px;
+  }
+
+  /* chain (combo) heat */
+  .chain{
+    font-size:15px;
+    font-weight:800;
+    color:var(--success);
+    letter-spacing:.04em;
+    min-height:20px;
+    animation:chainPulse .35s ease;
+  }
+  @keyframes chainPulse{
+    0%{transform:scale(.8);}
+    60%{transform:scale(1.25);}
+    100%{transform:scale(1);}
+  }
+
+  /* floating reward numbers */
+  .float-pop{
+    position:absolute;
+    left:50%; top:-6px;
+    transform:translateX(-50%);
+    font-size:15px;
+    font-weight:800;
+    color:var(--success);
+    pointer-events:none;
+    animation:floatUp .8s ease-out forwards;
+    text-shadow:0 2px 8px rgba(0,0,0,.6);
+    z-index:5;
+  }
+  @keyframes floatUp{
+    0%{opacity:0; transform:translateX(-50%) translateY(4px) scale(.8);}
+    20%{opacity:1;}
+    100%{opacity:0; transform:translateX(-50%) translateY(-34px) scale(1.15);}
+  }
+
+  .pot.punch{animation:potPunch .3s ease;}
+  @keyframes potPunch{
+    0%{transform:scale(1);}
+    45%{transform:scale(1.14);}
+    100%{transform:scale(1);}
+  }
+
+  /* Winter's bargain panel */
+  .deal-panel{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+    background:rgba(140,191,224,.05);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:20px 26px;
+    max-width:560px;
+  }
+  .deal-name{
+    font-size:13px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:700;
   }
 
   /* bag grid: rounded = safe-feeling face-down tiles */
@@ -355,11 +440,19 @@
       <div class="title-hint">겨울이 다가온다. 사냥감을 노릴 때마다, 밀어붙일지 물러설지가 무리의 생사를 가른다.</div>
     </div>
 
-    <div class="winter-line" id="winterLine" style="display:none;"></div>
+    <div class="winter-stage" id="winterStage" style="display:none;">
+      <div class="winter-portrait calm" id="winterPortrait">
+        <div class="moon"></div>
+        <div class="wolf"></div>
+        <span class="eye left"></span>
+        <span class="eye right"></span>
+      </div>
+      <div class="winter-bubble" id="winterLine">...</div>
+    </div>
     <div class="body" id="body" style="display:none;"></div>
 
     <div class="footer-note">
-      코드 기준 <b>test build</b> — <code>game/scripts/RunManager.gd</code> 로직을 1:1로 JS 포팅했습니다 (같은 확률 분포, 같은 27종 유물).
+      코드 기준 <b>test build</b> — <code>game/scripts/RunManager.gd</code> 로직을 1:1로 JS 포팅했습니다 (같은 확률 분포, 같은 35종 유물, 연쇄/거래 포함).
       명성/최고기록은 브라우저 <code>localStorage</code>에 저장됩니다.
     </div>
   </div>
@@ -417,8 +510,15 @@ const ICONS = {
   extra_life:"♥", retreat_bonus_percent:"☾", bonus_trap_immunity:"◉", type_bonus:"✦", bonus_scouts:"👁"
 };
 
-const BASE_QUOTA = 10, QUOTA_GROWTH = 10, BASE_ATTEMPTS = 4, BASE_BUST_COUNT = 2, MIN_BUST_COUNT = 1, BASE_BAG_SIZE = 10;
+const BASE_QUOTA = 12, QUOTA_GROWTH = 10, BASE_ATTEMPTS = 4, BASE_BUST_COUNT = 1, MIN_BUST_COUNT = 1, BASE_BAG_SIZE = 10;
 const BONUS_ATTEMPT_PELT_THRESHOLD = 50, BONUS_BUST_REDUCTION_PELT_THRESHOLD = 150, REROLL_UNLOCK_PELT_THRESHOLD = 100;
+const CHAIN_BONUS_START = 4, CHAIN_BONUS_CAP = 3;
+const DEAL_CHANCE = 0.35, DEAL_MIN_ROUND = 2;
+const DEAL_DEFS = [
+  {id:"hunger_price", name:"굶주림의 대가", desc:"식량 %d을 바쳐라. 다음 사냥의 먹잇감 가치에 +2를 얹어주지."},
+  {id:"winters_test", name:"겨울의 시험", desc:"다음 사냥에 함정을 하나 더 심겠다. 대신 살아서 거두면 수확의 절반을 더 주지."},
+  {id:"cold_mercy", name:"차가운 자비", desc:"사냥 기회를 하나 더 주지. 대신 이번 겨울은 더 허기질 거다. (시도 +1 / 목표 +4)"},
+];
 
 const GameManager = {
   bestRound: parseInt(localStorage.getItem('hp_best_round') || '0', 10),
@@ -448,6 +548,8 @@ const Run = {
   bustCount:BASE_BUST_COUNT, valueBonus:0, safetyPercent:0, cashoutBonusPercent:0, quotaGrowthMultiplier:1,
   bagSizeBonus:0, extraLife:0, retreatBonusPercent:0, bonusTrapImmunity:0, trapImmunityLeft:0,
   typeBonus:{}, bonusScouts:0, scoutsLeft:0,
+  chain:0,
+  currentDeal:null, nextHuntValueBonus:0, nextHuntExtraTraps:0, nextHuntCashoutBonus:0,
   totalFood:0, pot:0, bag:[], ownedCharms:[], rerollsLeft:0,
   lastMessage:{text:"", kind:"neutral"},
   currentOffers:[],
@@ -459,14 +561,46 @@ const Run = {
     this.valueBonus=0; this.safetyPercent=0; this.cashoutBonusPercent=0; this.quotaGrowthMultiplier=1;
     this.bagSizeBonus=0; this.extraLife=0; this.retreatBonusPercent=0; this.bonusTrapImmunity=0;
     this.typeBonus={}; this.bonusScouts=0;
+    this.chain=0; this.currentDeal=null;
+    this.nextHuntValueBonus=0; this.nextHuntExtraTraps=0; this.nextHuntCashoutBonus=0;
     this.totalFood=0; this.ownedCharms=[];
     this._startRound();
   },
   startAttempt(){
     if(this.state!==State.IDLE || this.attemptsLeft<=0) return;
+    this.currentDeal = null; // hunting past a pending offer counts as refusing it
     this.scoutsLeft = 1 + this.bonusScouts;
+    this.chain = 0;
     this.attemptsLeft--; this.pot=0; this._buildBag();
     this.state=State.DRAWING;
+  },
+  acceptDeal(){
+    if(this.state!==State.IDLE || !this.currentDeal) return;
+    const d = this.currentDeal;
+    if(d.id==="hunger_price"){ this.totalFood -= d.cost; this.nextHuntValueBonus = 2; }
+    else if(d.id==="winters_test"){ this.nextHuntExtraTraps = 1; this.nextHuntCashoutBonus = 0.5; }
+    else if(d.id==="cold_mercy"){ this.attemptsLeft += 1; this.quota += 4; }
+    this._msg(`거래 성립 — ${d.name}`,"neutral");
+    this.currentDeal = null;
+  },
+  refuseDeal(){
+    if(this.state!==State.IDLE || !this.currentDeal) return;
+    this.currentDeal = null;
+    this._msg("겨울의 제안을 거절했다","neutral");
+  },
+  _maybeOfferDeal(){
+    this.currentDeal = null;
+    if(this.roundNumber < DEAL_MIN_ROUND || Math.random() >= DEAL_CHANCE) return;
+    const pool = [];
+    for(const d of DEAL_DEFS){
+      if(d.id==="hunger_price"){
+        const cost = Math.max(3, Math.floor(this.quota/5));
+        if(this.totalFood >= cost) pool.push({id:d.id, name:d.name, desc:d.desc.replace("%d", cost), cost});
+      } else {
+        pool.push({id:d.id, name:d.name, desc:d.desc, cost:0});
+      }
+    }
+    if(pool.length) this.currentDeal = pool[Math.floor(Math.random()*pool.length)];
   },
   scout(){
     if(this.state!==State.DRAWING || this.scoutsLeft<=0 || this.bag.length===0) return null;
@@ -476,15 +610,10 @@ const Run = {
     else this._msg(`정찰 결과: 다음은 ${next.icon} ${next.name} (+${next.value})`,"neutral");
     return next;
   },
-  draw(precise){
+  draw(){
     if(this.state!==State.DRAWING || this.bag.length===0) return null;
     const token = this.bag.pop();
     if(token.type==="trap"){
-      if(precise){
-        this._msg("정확한 일격으로 함정을 쳐냈다!","success");
-        if(this.bag.length===0) this.cashOut();
-        return {kind:"parried"};
-      }
       if(this.trapImmunityLeft>0){
         this.trapImmunityLeft--;
         this._msg("무리가 함정을 미리 감지해 피했다!","success");
@@ -494,18 +623,21 @@ const Run = {
       this._onTrap();
       return {kind:"trap"};
     } else {
-      const bonus = precise ? 2 : 0;
-      this.pot += token.value + bonus;
-      this._msg(precise ? `정확한 일격! ${token.icon} ${token.name} (+${token.value+bonus})` : `${token.icon} ${token.name} 발견 (+${token.value})`, "neutral");
+      this.chain++;
+      const chainBonus = Math.min(Math.max(this.chain - (CHAIN_BONUS_START - 1), 0), CHAIN_BONUS_CAP);
+      const value = token.value + chainBonus;
+      this.pot += value;
+      if(chainBonus > 0) this._msg(`${this.chain}연쇄! ${token.icon} ${token.name} (+${value})`,"success");
+      else this._msg(`${token.icon} ${token.name} 발견 (+${value})`,"neutral");
       if(this.bag.length===0) this.cashOut();
-      return {kind:"prey", value:token.value+bonus, type:token.type, name:token.name, icon:token.icon, precise};
+      return {kind:"prey", value, type:token.type, name:token.name, icon:token.icon, chain:this.chain, chainBonus};
     }
   },
   remainingTrapCount(){ return this.bag.filter(t=>t.type==="trap").length; },
   remainingTileCount(){ return this.bag.length; },
   cashOut(){
     if(this.state!==State.DRAWING) return;
-    const bonus = Math.floor(this.pot*this.cashoutBonusPercent);
+    const bonus = Math.floor(this.pot*(this.cashoutBonusPercent + this.nextHuntCashoutBonus));
     this._msg(`사냥 성공! 식량 +${this.pot+bonus}`,"success");
     this.totalFood += this.pot+bonus; this.pot=0;
     this._resolveAfterAttempt();
@@ -568,28 +700,35 @@ const Run = {
   },
   _buildBag(){
     this.bag=[];
-    const valueSlots = Math.max(1, BASE_BAG_SIZE + this.bagSizeBonus - this.bustCount);
+    const traps = this.bustCount + this.nextHuntExtraTraps;
+    const valueSlots = Math.max(1, BASE_BAG_SIZE + this.bagSizeBonus - traps);
     for(let i=0;i<valueSlots;i++){
       const prey = this._rollPreyType();
-      const value = Math.max(0, prey.baseValue + this.valueBonus + (this.typeBonus[prey.id]||0));
+      const value = Math.max(0, prey.baseValue + this.valueBonus + this.nextHuntValueBonus + (this.typeBonus[prey.id]||0));
       this.bag.push({type:prey.id, value, name:prey.name, icon:prey.icon});
     }
-    for(let i=0;i<this.bustCount;i++) this.bag.push({type:"trap", value:-1});
+    for(let i=0;i<traps;i++) this.bag.push({type:"trap", value:-1});
     for(let i=this.bag.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [this.bag[i],this.bag[j]]=[this.bag[j],this.bag[i]]; }
+    // deal effects are scoped to the single hunt whose bag was just built
+    this.nextHuntValueBonus = 0;
+    this.nextHuntExtraTraps = 0;
   },
   _onTrap(){
+    this.chain = 0;
     const kept = Math.floor(this.pot*this.safetyPercent);
     this._msg(`함정이다! 식량 ${kept}만 겨우 건짐`,"trap");
     this.totalFood += kept; this.pot=0;
     this._resolveAfterAttempt();
   },
   _resolveAfterAttempt(){
+    this.nextHuntCashoutBonus = 0;
     if(this.totalFood>=this.quota){ this.state=State.ROUND_CLEAR; }
-    else if(this.attemptsLeft>0){ this.state=State.IDLE; }
+    else if(this.attemptsLeft>0){ this._maybeOfferDeal(); this.state=State.IDLE; }
     else { this._gameOver(); }
   },
   _startRound(){
     this.attemptsLeft=this.attemptsPerRound; this.trapImmunityLeft=this.bonusTrapImmunity;
+    this._maybeOfferDeal();
     this.state=State.IDLE;
   },
   _nextRound(){
@@ -631,7 +770,9 @@ function playTone(freq, duration, type, gainPeak, glideTo){
   osc.start(); osc.stop(audioCtx.currentTime + duration + 0.02);
 }
 const Sound = {
-  preyPop(){ playTone(620, 0.09, 'triangle', 0.14); },
+  // pitch climbs with the chain — the audio itself gets hotter the deeper you push
+  preyPop(chain){ playTone(620 * (1 + 0.07*Math.min(chain||0, 8)), 0.09, 'triangle', 0.14); },
+  chainSpark(chain){ playTone(880 + 60*Math.min(chain,8), 0.14, 'sine', 0.13, 1200); },
   trap(){ playTone(160, 0.32, 'sawtooth', 0.16, 70); },
   cashOut(){ playTone(520, 0.1, 'sine', 0.15); setTimeout(()=>playTone(780,0.16,'sine',0.15), 90); },
   roundClear(){ playTone(500,0.12,'sine',0.14); setTimeout(()=>playTone(660,0.12,'sine',0.14),110); setTimeout(()=>playTone(880,0.2,'sine',0.15),220); },
@@ -648,10 +789,20 @@ const Winter = {
   GAME_OVER: ["겨울은 언제나 이긴다.","무리는... 여기까지였군.","다음 생엔 더 신중하길."],
   SHOP: ["그 힘, 오래가진 않을 거다.","무엇을 챙기든, 나는 여전히 겨울이다."],
   SCOUT: ["훔쳐본다고 달라지진 않는다.","미리 본들 무슨 소용이지."],
+  DEAL_ACCEPT: ["현명한지 어리석은지는 곧 알게 되겠지.","좋아. 거래는 거래다.","약속은 지키지. 나는 겨울이니까."],
+  DEAL_REFUSE: ["자존심인가. 그걸로 배를 채울 수 있길.","제안은 두 번 오지 않는다.","훙. 마음대로 해라."],
+  CHAIN: ["...멈출 줄 모르는군.","그 기세, 어디까지 가나 보자.","욕심이 이빨을 부른다."],
   line(bank){ return bank[Math.floor(Math.random()*bank.length)]; },
 };
-function winterSay(bank){
-  document.getElementById('winterLine').textContent = `겨울: "${Winter.line(bank)}"`;
+// mood: calm (ice blue, watching) / pleased (amber, enjoying your misfortune) / wary (red, you're doing too well)
+function winterSay(bank, mood){
+  document.getElementById('winterLine').textContent = `"${Winter.line(bank)}"`;
+  if(mood) setWinterMood(mood);
+}
+function setWinterMood(mood){
+  const p = document.getElementById('winterPortrait');
+  p.classList.remove('calm','pleased','wary');
+  p.classList.add(mood);
 }
 
 // ==== Rendering (art direction: round+warm=safe, sharp+red=danger) ====
@@ -673,13 +824,33 @@ function render(){
   const msg = el('div', `message ${Run.lastMessage.kind}`, Run.lastMessage.text);
 
   if(Run.state===State.IDLE){
-    bodyEl.append(msg);
-    const btn = el('button','btn primary','사냥 시작');
-    btn.onclick = ()=>{ Run._msg("",""); Run.startAttempt(); render(); };
-    bodyEl.append(btn);
+    if(Run.currentDeal){
+      setWinterMood('wary');
+      document.getElementById('winterLine').textContent = `"${Run.currentDeal.desc}"`;
+      const panel = el('div','deal-panel');
+      panel.append(el('div','deal-name', `겨울의 거래 — ${Run.currentDeal.name}`));
+      panel.append(msg);
+      const actions = el('div','actions');
+      const okBtn = el('button','btn primary','거래를 받아들인다');
+      okBtn.onclick = ()=>{ Run.acceptDeal(); winterSay(Winter.DEAL_ACCEPT,'pleased'); Sound.cashOut(); render(); };
+      const noBtn = el('button','btn warn','거절한다');
+      noBtn.onclick = ()=>{ Run.refuseDeal(); winterSay(Winter.DEAL_REFUSE,'calm'); render(); };
+      actions.append(okBtn, noBtn);
+      panel.append(actions);
+      bodyEl.append(panel);
+    } else {
+      setWinterMood('calm');
+      bodyEl.append(msg);
+      const btn = el('button','btn primary','사냥 시작');
+      btn.onclick = ()=>{ Run._msg("",""); Run.startAttempt(); render(); };
+      bodyEl.append(btn);
+    }
 
   } else if(Run.state===State.DRAWING){
-    bodyEl.append(el('div','pot', `${Run.pot} <span class="unit">이번 사냥</span>`));
+    const pot = el('div','pot', `${Run.pot} <span class="unit">이번 사냥</span>`);
+    pot.id = 'potDisplay';
+    bodyEl.append(pot);
+    bodyEl.append(el('div','chain', Run.chain>=2 ? `🔥 연쇄 x${Run.chain}` : ''));
     const traps = Run.remainingTrapCount(), tiles = Run.remainingTileCount();
     const odds = tiles>0 ? Math.round(100*traps/tiles) : 0;
     bodyEl.append(el('div','risk', `위험도: 함정 ${traps} / 남은 ${tiles}장 <span class="risk-pct">(약 ${odds}%)</span>`));
@@ -691,15 +862,11 @@ function render(){
       bag.append(tile);
     });
     bodyEl.append(bag);
-    const aimWrap = el('div','aim-wrap');
-    aimWrap.id = 'aimWrap';
-    bodyEl.append(aimWrap);
     bodyEl.append(msg);
     const actions = el('div','actions');
     if(Run.scoutsLeft>0){
       const scoutBtn = el('button','btn', `정찰 (${Run.scoutsLeft})`);
       scoutBtn.onclick = ()=>{
-        if(aimState) return;
         const peeked = Run.scout();
         if(peeked && peeked.type!=='trap') winterSay(Winter.SCOUT);
         render();
@@ -708,10 +875,9 @@ function render(){
     }
     const stopBtn = el('button','btn warn','저장하고 멈추기');
     stopBtn.onclick = ()=>{
-      if(aimState) return;
       Run.cashOut();
-      if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(Winter.ROUND_CLEAR); }
-      else if(Run.state===State.GAME_OVER){ Sound.gameOver(); winterSay(Winter.GAME_OVER); }
+      if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(Winter.ROUND_CLEAR,'wary'); }
+      else if(Run.state===State.GAME_OVER){ Sound.gameOver(); winterSay(Winter.GAME_OVER,'pleased'); }
       else Sound.cashOut();
       render();
     };
@@ -723,9 +889,9 @@ function render(){
     bodyEl.append(el('div', 'message success', '라운드 클리어! 더 나아갈까, 여기서 귀환할까?'));
     const actions = el('div','actions');
     const goBtn = el('button','btn primary','계속 사냥');
-    goBtn.onclick = ()=>{ Run.continueHunting(); winterSay(Winter.CONTINUE); render(); };
+    goBtn.onclick = ()=>{ Run.continueHunting(); winterSay(Winter.CONTINUE,'wary'); render(); };
     const retreatBtn = el('button','btn warn','귀환 (지금까지 성과 보존)');
-    retreatBtn.onclick = ()=>{ Run.retreat(); Sound.retreat(); winterSay(Winter.RETREAT); render(); };
+    retreatBtn.onclick = ()=>{ Run.retreat(); Sound.retreat(); winterSay(Winter.RETREAT,'calm'); render(); };
     actions.append(goBtn, retreatBtn);
     bodyEl.append(actions);
 
@@ -772,84 +938,48 @@ function render(){
   }
 }
 
-// ==== Aim & Strike: timing-based interaction on every draw ====
-// Click a tile to start aiming, then click the moving bar in the "sweet
-// zone" to land a precise strike (parries traps, boosts prey value).
-// Missing the zone just resolves as a normal draw - no punishment for
-// trying, so it's always worth engaging with.
-let aimState = null;
+// ==== Tile draw: click = commit. The choice IS the interaction; the
+// feedback (float numbers, chain heat, Winter's reaction) is the reward. ====
+let drawLocked = false; // one reveal at a time so the animation is readable
 
 function onTileClick(tile){
-  if(tile.classList.contains('spent') || aimState) return;
-  startAim(tile);
+  if(tile.classList.contains('spent') || drawLocked) return;
+  performDraw(tile);
 }
 
-function startAim(tile){
-  const sweetWidth = 20;
-  const sweetStart = 4 + Math.random() * (96 - sweetWidth - 4);
-  aimState = { tile, pos: 0, dir: 1, sweetStart, sweetWidth, raf: null };
-
-  const wrap = document.getElementById('aimWrap');
-  wrap.innerHTML = '';
-  wrap.append(el('div','aim-hint','정확한 타이밍에 막대를 클릭! (함정도 쳐낼 수 있음)'));
-  const track = el('div','aim-track');
-  const sweet = el('div','aim-sweet');
-  sweet.style.left = sweetStart + '%';
-  sweet.style.width = sweetWidth + '%';
-  const marker = el('div','aim-marker');
-  marker.id = 'aimMarker';
-  track.append(sweet, marker);
-  track.onclick = () => resolveAim();
-  wrap.append(track);
-
-  const step = () => {
-    if(!aimState) return;
-    aimState.pos += aimState.dir * 2.6;
-    if(aimState.pos >= 100){ aimState.pos = 100; aimState.dir = -1; }
-    if(aimState.pos <= 0){ aimState.pos = 0; aimState.dir = 1; }
-    marker.style.left = aimState.pos + '%';
-    aimState.raf = requestAnimationFrame(step);
-  };
-  aimState.raf = requestAnimationFrame(step);
-}
-
-function resolveAim(){
-  if(!aimState) return;
-  cancelAnimationFrame(aimState.raf);
-  const { tile, pos, sweetStart, sweetWidth } = aimState;
-  const precise = pos >= sweetStart && pos <= sweetStart + sweetWidth;
-  aimState = null;
-  const wrap = document.getElementById('aimWrap');
-  if(wrap) wrap.innerHTML = '';
-  performDraw(tile, precise);
-}
-
-function performDraw(tile, precise){
-  const result = Run.draw(precise);
+function performDraw(tile){
+  const result = Run.draw();
   if(!result) return;
+  drawLocked = true;
   tile.classList.add('spent','reveal');
   if(result.kind==='trap'){
     tile.classList.add('trap'); tile.textContent='';
     Sound.trap();
-    winterSay(Winter.TRAP);
-  } else if(result.kind==='parried'){
-    tile.classList.add('prey'); tile.textContent='⛊';
-    Sound.preyPop();
-    winterSay(["...제법이군.","훙, 운이 좋았을 뿐이다."]);
+    winterSay(Winter.TRAP, 'pleased');
   } else if(result.kind==='prey'){
     tile.classList.add('prey'); tile.innerHTML = `${result.icon}<br>${result.value}`;
     tile.style.fontSize = '13px';
-    if(result.precise) tile.style.boxShadow = '0 0 0 3px var(--success)';
-    Sound.preyPop();
+    Sound.preyPop(result.chain);
+    // floating reward number — bigger chain, hotter feedback
+    const popText = result.chainBonus>0 ? `+${result.value} 🔥` : `+${result.value}`;
+    tile.append(el('span','float-pop', popText));
+    const pot = document.getElementById('potDisplay');
+    if(pot){
+      pot.innerHTML = `${Run.pot} <span class="unit">이번 사냥</span>`;
+      pot.classList.remove('punch'); void pot.offsetWidth; pot.classList.add('punch');
+    }
+    if(result.chainBonus>0) Sound.chainSpark(result.chain);
+    if(result.chain===CHAIN_BONUS_START) winterSay(Winter.CHAIN, 'wary');
   } else if(result.kind==='dodged'){
     tile.classList.add('prey'); tile.textContent='✓';
-    Sound.preyPop();
+    Sound.preyPop(0);
   }
   // brief pause so the flip/reveal animation is visible before the screen changes
   setTimeout(()=>{
+    drawLocked = false;
     render();
-    if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(Winter.ROUND_CLEAR); }
-    else if(Run.state===State.GAME_OVER){ Sound.gameOver(); winterSay(Winter.GAME_OVER); }
+    if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(Winter.ROUND_CLEAR,'wary'); }
+    else if(Run.state===State.GAME_OVER){ Sound.gameOver(); winterSay(Winter.GAME_OVER,'pleased'); }
   }, 420);
 }
 
@@ -859,7 +989,7 @@ document.getElementById('titleStartBtn').onclick = ()=>{
   initAudio();
   document.getElementById('titleScreen').style.display = 'none';
   document.getElementById('topbar').style.display = 'flex';
-  document.getElementById('winterLine').style.display = 'block';
+  document.getElementById('winterStage').style.display = 'flex';
   document.getElementById('body').style.display = 'flex';
   Run.startRun();
   render();
