@@ -33,23 +33,39 @@
   .stat .value{font-size:15px; font-weight:700; color:var(--accent);}
 
   .crosshair{position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-3px;
-    border-radius:50%; background:rgba(235,242,247,.85); box-shadow:0 0 6px rgba(235,242,247,.5);}
+    border-radius:50%; background:rgba(235,242,247,.85); box-shadow:0 0 6px rgba(235,242,247,.5);
+    transition:width .12s ease, height .12s ease, margin .12s ease, background .12s ease;}
+  .crosshair.aiming{width:14px; height:14px; margin:-7px; background:rgba(237,173,63,.95);
+    box-shadow:0 0 12px rgba(237,173,63,.8); border-radius:3px; transform:rotate(45deg);}
 
-  .risk-line, .chain-line{position:absolute; left:50%; transform:translateX(-50%); text-align:center; font-weight:700; width:100%;}
-  .risk-line{top:138px; font-size:13px; color:#f0c3ba;}
-  .chain-line{top:164px; font-size:16px; color:var(--success); text-shadow:0 2px 8px rgba(0,0,0,.7);}
+  .interact-prompt{position:absolute; left:50%; top:calc(50% + 34px); transform:translateX(-50%);
+    font-size:14px; font-weight:700; color:var(--text); background:rgba(10,17,25,.7);
+    border:1px solid rgba(237,173,63,.5); padding:7px 16px; border-radius:9px; white-space:nowrap;}
+  .interact-prompt b{color:var(--success);}
 
-  .hint{position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-size:13px; color:var(--muted);
+  /* bottom-left risk gauge — out of the way of the top-center Winter stage */
+  .risk-panel{position:absolute; left:22px; bottom:56px; width:220px; display:flex; flex-direction:column; gap:6px;
+    background:rgba(10,17,25,.55); border:1px solid var(--border); border-radius:10px; padding:10px 14px;}
+  .risk-panel .risk-title{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:700;}
+  .risk-panel .risk-text{font-size:12.5px; color:#f0c3ba; font-weight:700;}
+  .risk-bar{height:6px; border-radius:3px; background:rgba(140,191,224,.15); overflow:hidden;}
+  .risk-bar .fill{height:100%; width:0%; border-radius:3px; background:linear-gradient(90deg, #edad3f, #bf4033);
+    transition:width .3s ease;}
+
+  .chain-line{position:absolute; left:50%; top:calc(50% - 78px); transform:translateX(-50%);
+    text-align:center; font-weight:800; font-size:18px; color:var(--success); text-shadow:0 2px 10px rgba(0,0,0,.8);}
+
+  .hint{position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-size:12.5px; color:var(--muted);
     background:rgba(10,17,25,.55); padding:6px 14px; border-radius:8px; white-space:nowrap;}
 
   .message-toast{position:absolute; bottom:70px; left:50%; transform:translateX(-50%); font-size:14px; font-weight:600;
-    text-align:center; max-width:60ch; text-shadow:0 2px 6px rgba(0,0,0,.7);}
+    text-align:center; max-width:56ch; text-shadow:0 2px 6px rgba(0,0,0,.7);}
   .message-toast.success{color:var(--success);}
   .message-toast.trap{color:var(--danger);}
   .message-toast.neutral{color:var(--text);}
 
   /* ==== Winter: visible antagonist, ported from the 2D test build ==== */
-  .winter-stage{position:absolute; top:64px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:14px;}
+  .winter-stage{position:absolute; top:64px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:14px; max-width:min(560px, 86vw);}
   .winter-portrait{position:relative; width:70px; height:60px; flex:none;}
   .winter-portrait .moon{position:absolute; left:10px; top:0; width:46px; height:46px; border-radius:50%;
     background:radial-gradient(circle at 38% 34%, #eef4f9, #b9d2e4 72%); box-shadow:0 0 22px rgba(140,191,224,.35);}
@@ -127,9 +143,14 @@
       <div class="winter-bubble" id="winterLine">...</div>
     </div>
 
-    <div class="risk-line" id="riskLine"></div>
+    <div class="risk-panel" id="riskPanel" style="display:none;">
+      <div class="risk-title">위험도</div>
+      <div class="risk-bar"><div class="fill" id="riskFill"></div></div>
+      <div class="risk-text" id="riskText"></div>
+    </div>
     <div class="chain-line" id="chainLine"></div>
     <div class="crosshair" id="crosshair" style="display:none;"></div>
+    <div class="interact-prompt" id="interactPrompt" style="display:none;"><b>클릭 / E</b> 파헤치기</div>
     <div class="message-toast" id="messageToast"></div>
     <div class="hint" id="hintLine" style="display:none;"></div>
   </div>
@@ -140,7 +161,7 @@
       <div class="title-sub">무리를 이끌고, 겨울을 나라 — 1인칭 사냥 프로토타입</div>
       <div class="title-stats" id="titleStats"></div>
       <button class="btn primary clickable" id="titleStartBtn">사냥터로 나가기</button>
-      <div class="title-hint">WASD로 이동, 화면을 마우스로 누른 채 드래그하면 시점이 돌아갑니다. 눈더미는 전부 똑같이 생겼습니다 — 걸어서 다가가야 정체를 알 수 있습니다. Q: 저장하고 멈추기 · F: 정찰(위험 감지)</div>
+      <div class="title-hint">WASD로 이동, 드래그로 시점 회전. 눈더미는 전부 똑같이 생겼습니다 — 다가가 조준한 뒤 <b>클릭/E로 직접 파헤쳐야</b> 정체가 드러납니다. 사냥감이면 무리의 식량, 함정이면 이번 사냥에서 모은 걸 전부 잃습니다. Q: 저장하고 멈추기 · F: 정찰(위험 감지)</div>
     </div>
   </div>
 
@@ -472,9 +493,23 @@ function playTone(freq,duration,type,gainPeak,glideTo){
   osc.connect(gain); gain.connect(audioCtx.destination);
   osc.start(); osc.stop(audioCtx.currentTime+duration+0.02);
 }
+function playNoise(duration, gainPeak, lowpassHz){
+  if(!audioCtx) return;
+  const len = Math.floor(audioCtx.sampleRate * duration);
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0;i<len;i++) data[i] = (Math.random()*2-1) * (1 - i/len);
+  const src = audioCtx.createBufferSource(); src.buffer = buf;
+  const filter = audioCtx.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value = lowpassHz||900;
+  const gain = audioCtx.createGain(); gain.gain.value = gainPeak||0.08;
+  src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+  src.start();
+}
 const Sound = {
   preyPop(chain){ playTone(620*(1+0.07*Math.min(chain||0,8)), 0.09, 'triangle', 0.14); },
   chainSpark(chain){ playTone(880+60*Math.min(chain,8), 0.14, 'sine', 0.13, 1200); },
+  footstep(){ playNoise(0.09, 0.05, 700); },
+  dig(){ playNoise(0.22, 0.12, 1200); },
   trap(){ playTone(160,0.32,'sawtooth',0.16,70); },
   cashOut(){ playTone(520,0.1,'sine',0.15); setTimeout(()=>playTone(780,0.16,'sine',0.15),90); },
   roundClear(){ playTone(500,0.12,'sine',0.14); setTimeout(()=>playTone(660,0.12,'sine',0.14),110); setTimeout(()=>playTone(880,0.2,'sine',0.15),220); },
@@ -508,20 +543,75 @@ const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
-const treeMat = new THREE.MeshStandardMaterial({color:0x0a120f, roughness:1.0});
-for(let i=0;i<28;i++){
+// layered firs with trunks + snow caps — reads as a real winter forest, still all primitives
+const firMat = new THREE.MeshStandardMaterial({color:0x11241c, roughness:1.0});
+const firSnowMat = new THREE.MeshStandardMaterial({color:0xdde7f0, roughness:0.95});
+const trunkMat = new THREE.MeshStandardMaterial({color:0x2a1e14, roughness:1.0});
+function buildFir(scale){
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.14*scale, 0.2*scale, 0.9*scale, 6), trunkMat);
+  trunk.position.y = 0.45*scale;
+  g.add(trunk);
+  const tiers = [ [1.5, 1.7, 0.8], [1.15, 1.4, 1.75], [0.8, 1.15, 2.6] ];
+  for(const [r, h, y] of tiers){
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(r*scale, h*scale, 8), firMat);
+    cone.position.y = y*scale + h*scale/2;
+    g.add(cone);
+  }
+  const cap = new THREE.Mesh(new THREE.ConeGeometry(0.5*scale, 0.7*scale, 8), firSnowMat);
+  cap.position.y = 3.55*scale;
+  g.add(cap);
+  return g;
+}
+for(let i=0;i<26;i++){
   const angle = Math.random()*Math.PI*2;
-  const dist = 10 + Math.random()*19;
-  const h = 3 + Math.random()*2.5;
-  const r = 1.0 + Math.random()*0.6;
-  const cone = new THREE.ConeGeometry(r, h, 8);
-  const tree = new THREE.Mesh(cone, treeMat);
-  tree.position.set(Math.cos(angle)*dist, h/2, Math.sin(angle)*dist);
-  scene.add(tree);
+  const dist = 11 + Math.random()*19;
+  const fir = buildFir(0.8 + Math.random()*0.9);
+  fir.position.set(Math.cos(angle)*dist, 0, Math.sin(angle)*dist);
+  fir.rotation.y = Math.random()*Math.PI*2;
+  scene.add(fir);
+}
+
+// scattered rocks poking out of the snow
+const rockMat = new THREE.MeshStandardMaterial({color:0x4a5560, roughness:1.0, flatShading:true});
+for(let i=0;i<14;i++){
+  const angle = Math.random()*Math.PI*2, dist = 5 + Math.random()*22;
+  const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.25 + Math.random()*0.5, 0), rockMat);
+  rock.position.set(Math.cos(angle)*dist, 0.12, Math.sin(angle)*dist);
+  rock.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3);
+  rock.scale.y = 0.55;
+  scene.add(rock);
+}
+
+// falling snow: one Points cloud, recycled vertically — near-zero cost
+const SNOW_COUNT = 900, SNOW_AREA = 46, SNOW_HEIGHT = 18;
+const snowPositions = new Float32Array(SNOW_COUNT*3);
+for(let i=0;i<SNOW_COUNT;i++){
+  snowPositions[i*3] = (Math.random()*2-1)*SNOW_AREA;
+  snowPositions[i*3+1] = Math.random()*SNOW_HEIGHT;
+  snowPositions[i*3+2] = (Math.random()*2-1)*SNOW_AREA;
+}
+const snowGeo = new THREE.BufferGeometry();
+snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPositions, 3));
+const snowMat = new THREE.PointsMaterial({color:0xf0f5fa, size:0.07, transparent:true, opacity:0.85});
+const snow = new THREE.Points(snowGeo, snowMat);
+scene.add(snow);
+function updateSnow(dt){
+  const arr = snowGeo.attributes.position.array;
+  for(let i=0;i<SNOW_COUNT;i++){
+    arr[i*3+1] -= (0.9 + (i%5)*0.14) * dt;
+    arr[i*3] += Math.sin((performance.now()*0.0004) + i) * 0.16 * dt;
+    if(arr[i*3+1] < 0){
+      arr[i*3+1] = SNOW_HEIGHT;
+      arr[i*3] = camera.position.x + (Math.random()*2-1)*SNOW_AREA;
+      arr[i*3+2] = camera.position.z + (Math.random()*2-1)*SNOW_AREA;
+    }
+  }
+  snowGeo.attributes.position.needsUpdate = true;
 }
 
 // ============ Hunting field: bag tokens as ground markers ============
-const FIELD_RADIUS = 9.0, MIN_SPACING = 2.2, TRIGGER_RADIUS_SQ = 1.1*1.1;
+const FIELD_RADIUS = 9.0, MIN_SPACING = 2.2;
 let markers = []; // {uid, mesh, triggered}
 
 function clearField(){
@@ -538,31 +628,132 @@ function findSpot(placed){
   }
   return {x:(Math.random()*2-1)*FIELD_RADIUS, z:(Math.random()*2-1)*FIELD_RADIUS};
 }
+function buildMound(){
+  const g = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({color:0xe4ecf3, roughness:0.92});
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.62, 12, 8, 0, Math.PI*2, 0, Math.PI/2), mat);
+  dome.scale.y = 0.62;
+  g.add(dome);
+  const bump = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6, 0, Math.PI*2, 0, Math.PI/2), mat);
+  bump.scale.y = 0.7;
+  bump.position.set(0.34, 0, 0.2);
+  g.add(bump);
+  g.userData.mat = mat;
+  return g;
+}
+
+// low-poly reveal "characters": each prey type gets a recognizable silhouette
+const ANIMAL_COLORS = {rabbit:0xd8dde3, fox:0xc26a2e, deer:0x8a6844, bear:0x4a3628};
+function buildAnimal(type){
+  const c = ANIMAL_COLORS[type] || 0xd8dde3;
+  const mat = new THREE.MeshStandardMaterial({color:c, roughness:0.9, flatShading:true});
+  const g = new THREE.Group();
+  if(type==='rabbit'){
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), mat); body.position.y=0.2; g.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), mat); head.position.set(0.18,0.36,0); g.add(head);
+    for(const s of [-1,1]){
+      const ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.2, 2, 4), mat);
+      ear.position.set(0.18, 0.56, 0.06*s); g.add(ear);
+    }
+  } else if(type==='fox'){
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.36, 3, 6), mat); body.rotation.z=Math.PI/2; body.position.y=0.26; g.add(body);
+    const head = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.3, 6), mat); head.rotation.z=-Math.PI/2; head.position.set(0.4,0.3,0); g.add(head);
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 6), mat); tail.rotation.z=Math.PI/2.4; tail.position.set(-0.36,0.32,0); g.add(tail);
+    for(const s of [-1,1]){
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 4), mat);
+      ear.position.set(0.32, 0.48, 0.07*s); g.add(ear);
+    }
+  } else if(type==='deer'){
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.44, 3, 6), mat); body.rotation.z=Math.PI/2; body.position.y=0.62; g.add(body);
+    for(const [x,z] of [[0.26,0.12],[0.26,-0.12],[-0.26,0.12],[-0.26,-0.12]]){
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.03,0.55,5), mat);
+      leg.position.set(x,0.28,z); g.add(leg);
+    }
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.09,0.34,5), mat); neck.position.set(0.4,0.86,0); neck.rotation.z=-0.5; g.add(neck);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.13,0.12), mat); head.position.set(0.54,1.0,0); g.add(head);
+    const antlerMat = new THREE.MeshStandardMaterial({color:0xd9cdb8, roughness:0.9});
+    for(const s of [-1,1]){
+      const antler = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.26,4), antlerMat);
+      antler.position.set(0.5, 1.16, 0.08*s); antler.rotation.x = 0.5*s; g.add(antler);
+    }
+  } else { // bear
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), mat); body.scale.set(1.25,1,1); body.position.y=0.44; g.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), mat); head.position.set(0.5,0.66,0); g.add(head);
+    const snout = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 5), mat); snout.position.set(0.68,0.6,0); g.add(snout);
+    for(const s of [-1,1]){
+      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), mat);
+      ear.position.set(0.42, 0.86, 0.14*s); g.add(ear);
+    }
+  }
+  return g;
+}
+
+function buildTrapJaws(){
+  const g = new THREE.Group();
+  const metal = new THREE.MeshStandardMaterial({color:0x3a3f45, roughness:0.5, metalness:0.7});
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.06, 10), metal);
+  base.position.y = 0.03;
+  g.add(base);
+  for(let i=0;i<8;i++){
+    const angle = (i/8)*Math.PI*2;
+    const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.3, 4), metal);
+    tooth.position.set(Math.cos(angle)*0.34, 0.2, Math.sin(angle)*0.34);
+    tooth.rotation.set(Math.sin(angle)*0.5, 0, -Math.cos(angle)*0.5);
+    g.add(tooth);
+  }
+  return g;
+}
+
 function spawnField(bag){
   clearField();
   const placed = [];
   for(const token of bag){
     const pos = findSpot(placed);
     placed.push(pos);
-    const geo = new THREE.BoxGeometry(0.9, 0.4, 0.9);
-    const mat = new THREE.MeshStandardMaterial({color:0xdbe4ec, roughness:0.9});
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(pos.x, 0.2, pos.z);
+    const mesh = buildMound();
+    mesh.position.set(pos.x, 0, pos.z);
+    mesh.rotation.y = Math.random()*Math.PI*2;
     scene.add(mesh);
-    markers.push({uid:token.uid, mesh, triggered:false});
+    markers.push({uid:token.uid, mesh, triggered:false, scouted:false});
   }
 }
-function styleMarker(m, result){
-  const mat = m.mesh.material;
-  if(result.kind==='trap'){ mat.color.setHex(0x8c2318); m.mesh.scale.y = 0.3; }
-  else if(result.kind==='dodged'){ mat.color.setHex(0x598c59); }
-  else if(result.kind==='prey'){ mat.color.setHex(0xd99e33); m.mesh.scale.y = 1 + Math.min(result.chainBonus||0,3)*0.4; }
+
+// reveal: mound sinks away, the animal (or trap jaws) pops out where it stood
+let revealAnims = []; // {obj, bornAt, lifeMs, popScale}
+function revealAt(m, result){
+  const pos = m.mesh.position;
+  let obj = null;
+  if(result.kind==='trap'){ obj = buildTrapJaws(); }
+  else if(result.kind==='prey'){ obj = buildAnimal(result.type); }
+  else if(result.kind==='dodged'){ obj = buildTrapJaws(); obj.rotation.z = 0.6; } // sprung harmlessly
+  if(!obj) return;
+  obj.position.copy(pos);
+  obj.rotation.y = Math.atan2(camera.position.x-pos.x, camera.position.z-pos.z); // face the player
+  obj.scale.setScalar(0.01);
+  scene.add(obj);
+  revealAnims.push({obj, bornAt:performance.now(), lifeMs:1400, popScale:1});
+  scene.remove(m.mesh);
 }
+function updateReveals(){
+  const now = performance.now();
+  revealAnims = revealAnims.filter(r=>{
+    const t = (now - r.bornAt) / r.lifeMs;
+    if(t >= 1){ scene.remove(r.obj); return false; }
+    // pop in with overshoot, hold, then sink back into the snow
+    const s = t<0.18 ? (t/0.18)*1.15 : t<0.3 ? 1.15-((t-0.18)/0.12)*0.15 : 1;
+    r.obj.scale.setScalar(Math.max(s, 0.01));
+    if(t > 0.72) r.obj.position.y = -((t-0.72)/0.28) * 0.9;
+    return true;
+  });
+}
+
 function highlightMarker(uid, isTrap){
   const m = markers.find(mk=>mk.uid===uid);
   if(!m) return;
-  m.mesh.material.emissive = new THREE.Color(isTrap?0xbf3326:0x4dbf59);
-  m.mesh.material.emissiveIntensity = 0.9;
+  m.scouted = true;
+  const mat = m.mesh.userData.mat;
+  mat.emissive = new THREE.Color(isTrap?0xbf3326:0x4dbf59);
+  mat.emissiveIntensity = 0.7;
 }
 function spawnFloatPop(worldPos, text){
   const v = worldPos.clone().project(camera);
@@ -574,6 +765,99 @@ function spawnFloatPop(worldPos, text){
   el.textContent = text;
   document.body.appendChild(el);
   setTimeout(()=> el.remove(), 850);
+}
+
+// ============ First-person paws: your "hands" ============
+// Attached to the camera so they frame the bottom of the view; bob while
+// walking, swipe forward when you dig.
+const pawMat = new THREE.MeshStandardMaterial({color:0x23282e, roughness:0.95});
+const pawPadMat = new THREE.MeshStandardMaterial({color:0x8892a0, roughness:0.9});
+function buildPaw(){
+  const g = new THREE.Group();
+  const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.42, 3, 6), pawMat);
+  arm.rotation.x = -1.1;
+  g.add(arm);
+  const paw = new THREE.Mesh(new THREE.SphereGeometry(0.115, 8, 6), pawMat);
+  paw.scale.set(1, 0.7, 1.15);
+  paw.position.set(0, 0.22, -0.22);
+  g.add(paw);
+  for(const s of [-1, 0, 1]){
+    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.07, 4), pawPadMat);
+    claw.position.set(0.06*s, 0.24, -0.34);
+    claw.rotation.x = -Math.PI/2;
+    g.add(claw);
+  }
+  return g;
+}
+const pawL = buildPaw(), pawR = buildPaw();
+pawL.position.set(-0.28, -0.42, -0.55);
+pawR.position.set(0.28, -0.42, -0.55);
+camera.add(pawL); camera.add(pawR);
+scene.add(camera); // camera must be in the scene graph for its children to render
+
+let pawSwipeAt = 0; // performance.now() when a dig swipe started
+function updatePaws(moving){
+  const now = performance.now();
+  const t = now * 0.006;
+  const bobAmt = moving ? 0.045 : 0.012;
+  pawL.position.y = -0.42 + Math.sin(t) * bobAmt;
+  pawR.position.y = -0.42 + Math.sin(t + Math.PI) * bobAmt;
+  pawL.position.z = pawR.position.z = -0.55;
+  const swipeT = (now - pawSwipeAt) / 260;
+  if(swipeT < 1){
+    const k = Math.sin(swipeT * Math.PI); // out and back
+    pawR.position.z = -0.55 - k * 0.45;
+    pawR.position.y += -k * 0.18;
+  }
+}
+
+// ============ Companion wolf: a packmate that trails you ============
+function buildWolf(){
+  const g = new THREE.Group();
+  const fur = new THREE.MeshStandardMaterial({color:0x2e343c, roughness:0.95, flatShading:true});
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.5, 3, 6), fur);
+  body.rotation.z = Math.PI/2; body.position.y = 0.5; g.add(body);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.22, 0.2), fur);
+  head.position.set(0.48, 0.64, 0); g.add(head);
+  const snout = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.1), fur);
+  snout.position.set(0.66, 0.6, 0); g.add(snout);
+  for(const s of [-1,1]){
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.13, 4), fur);
+    ear.position.set(0.42, 0.8, 0.08*s); g.add(ear);
+  }
+  for(const [x,z] of [[0.24,0.12],[0.24,-0.12],[-0.24,0.12],[-0.24,-0.12]]){
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.04,0.42,5), fur);
+    leg.position.set(x,0.21,z); g.add(leg);
+  }
+  const tail = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.34, 5), fur);
+  tail.position.set(-0.44, 0.62, 0); tail.rotation.z = Math.PI/1.6; g.add(tail);
+  const eyeMat = new THREE.MeshStandardMaterial({color:0x8cbfe0, emissive:0x8cbfe0, emissiveIntensity:0.8});
+  for(const s of [-1,1]){
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), eyeMat);
+    eye.position.set(0.6, 0.68, 0.07*s); g.add(eye);
+  }
+  return g;
+}
+const packmate = buildWolf();
+packmate.visible = false;
+scene.add(packmate);
+const _wolfTarget = new THREE.Vector3();
+function updatePackmate(dt){
+  packmate.visible = hunting;
+  if(!hunting) return;
+  // heel position: behind-left of the player
+  camera.getWorldDirection(_dir); _dir.y = 0; _dir.normalize();
+  _right.crossVectors(_dir, camera.up).normalize();
+  _wolfTarget.copy(camera.position).addScaledVector(_dir, -1.4).addScaledVector(_right, -1.1);
+  _wolfTarget.y = 0;
+  const toTarget = _wolfTarget.clone().sub(packmate.position);
+  const dist = toTarget.length();
+  if(dist > 0.08){
+    const step = Math.min(dist, Math.max(1.0, dist*2.2) * dt);
+    packmate.position.addScaledVector(toTarget.normalize(), step);
+    packmate.rotation.y = Math.atan2(toTarget.x, toTarget.z) - Math.PI/2;
+    packmate.position.y = Math.abs(Math.sin(performance.now()*0.012)) * Math.min(dist,1) * 0.05;
+  }
 }
 
 // ============ Player movement (WASD + drag-to-look) ============
@@ -590,21 +874,28 @@ addEventListener('keydown', e=>{
   if(Run.state===State.DRAWING){
     if(e.code==='KeyQ') doCashOut();
     else if(e.code==='KeyF') doScout();
+    else if(e.code==='KeyE') tryDig();
   }
 });
 addEventListener('keyup', e=> keys[e.code]=false);
+let dragTravel = 0; // px moved during this press: small = a click (dig), big = a look-drag
 canvas.addEventListener('mousedown', e=>{
   if(!hunting) return;
-  dragging = true; lastMouseX = e.clientX; lastMouseY = e.clientY;
+  dragging = true; dragTravel = 0; lastMouseX = e.clientX; lastMouseY = e.clientY;
 });
 addEventListener('mousemove', e=>{
   if(!dragging) return;
   const dx = e.clientX - lastMouseX, dy = e.clientY - lastMouseY;
+  dragTravel += Math.abs(dx) + Math.abs(dy);
   lastMouseX = e.clientX; lastMouseY = e.clientY;
   yaw -= dx * 0.0055;
   pitch = Math.max(-1.3, Math.min(1.3, pitch - dy*0.0055));
 });
-addEventListener('mouseup', ()=> dragging=false);
+addEventListener('mouseup', ()=>{
+  const wasClick = dragging && dragTravel < 6;
+  dragging = false;
+  if(wasClick && hunting) tryDig();
+});
 canvas.addEventListener('touchstart', e=>{
   if(!hunting || !e.touches.length) return;
   dragging = true; lastMouseX = e.touches[0].clientX; lastMouseY = e.touches[0].clientY;
@@ -627,19 +918,67 @@ let fovKick=0;
 function triggerShake(mag, durationMs){ shakeEndAt=performance.now()+durationMs; shakeDurMs=durationMs; shakeMag=mag; }
 function punchFov(amount){ fovKick += amount; }
 
+let isMoving = false;
+let bobPhase = 0, lastStepAt = 0;
 function updateMovement(dt){
   camera.rotation.y = yaw; camera.rotation.x = pitch;
-  if(!hunting) return;
+  if(!hunting){ isMoving = false; return; }
   let mf = (keys['KeyW']?1:0) - (keys['KeyS']?1:0);
   let mr = (keys['KeyD']?1:0) - (keys['KeyA']?1:0);
   const len = Math.hypot(mf,mr);
   if(len>0){ mf/=len; mr/=len; }
+  isMoving = len > 0;
   camera.getWorldDirection(_dir); _dir.y=0; _dir.normalize();
   _right.crossVectors(_dir, camera.up).normalize();
   camera.position.addScaledVector(_dir, mf*SPEED*dt);
   camera.position.addScaledVector(_right, mr*SPEED*dt);
   camera.position.x = Math.max(-30, Math.min(30, camera.position.x));
   camera.position.z = Math.max(-30, Math.min(30, camera.position.z));
+  // head bob + snow-crunch footsteps while walking
+  if(isMoving){
+    bobPhase += dt * 9.5;
+    camera.position.y = 1.6 + Math.sin(bobPhase) * 0.045;
+    const now = performance.now();
+    if(now - lastStepAt > 420){ lastStepAt = now; Sound.footstep(); }
+  } else {
+    camera.position.y += (1.6 - camera.position.y) * Math.min(1, dt*8);
+  }
+}
+
+// ============ Aiming + digging: the deliberate interaction ============
+// Look at a mound within reach → prompt appears → click or E digs it open.
+// Walking over a mound no longer auto-triggers: every reveal is a choice.
+const DIG_RANGE = 3.4, DIG_ANGLE_COS = Math.cos(0.42);
+let aimTarget = null;
+const _toMarker = new THREE.Vector3();
+function updateAim(){
+  const prompt = document.getElementById('interactPrompt');
+  const cross = document.getElementById('crosshair');
+  aimTarget = null;
+  if(hunting){
+    camera.getWorldDirection(_dir);
+    let bestDot = DIG_ANGLE_COS;
+    for(const m of markers){
+      if(m.triggered) continue;
+      _toMarker.copy(m.mesh.position); _toMarker.y = 0.3;
+      _toMarker.sub(camera.position);
+      const dist = _toMarker.length();
+      if(dist > DIG_RANGE) continue;
+      _toMarker.normalize();
+      const dot = _toMarker.dot(_dir);
+      if(dot > bestDot){ bestDot = dot; aimTarget = m; }
+    }
+  }
+  prompt.style.display = aimTarget ? 'block' : 'none';
+  cross.classList.toggle('aiming', !!aimTarget);
+}
+function tryDig(){
+  if(!aimTarget || Run.state!==State.DRAWING) return;
+  const m = aimTarget;
+  aimTarget = null;
+  pawSwipeAt = performance.now();
+  Sound.dig();
+  setTimeout(()=> triggerMarker(m), 150); // reveal lands as the paw swipe connects
 }
 
 function updateJuice(dt){
@@ -660,14 +999,6 @@ function updateJuice(dt){
     fovKick = 0; camera.fov = 75; camera.updateProjectionMatrix();
   }
 }
-function checkTriggers(){
-  if(Run.state!==State.DRAWING) return;
-  for(const m of markers){
-    if(m.triggered) continue;
-    const dx = camera.position.x - m.mesh.position.x, dz = camera.position.z - m.mesh.position.z;
-    if(dx*dx+dz*dz < TRIGGER_RADIUS_SQ) triggerMarker(m);
-  }
-}
 function flashHit(){
   const el = document.getElementById('hitFlash');
   el.classList.remove('active'); void el.offsetWidth; // restart the CSS transition
@@ -678,19 +1009,20 @@ function triggerMarker(m){
   m.triggered = true;
   const result = Run.draw(m.uid);
   if(!result) return;
-  styleMarker(m, result);
+  const pos = m.mesh.position.clone();
+  revealAt(m, result); // mound is replaced by the animal / trap jaws popping out
+  markers = markers.filter(x=>x!==m);
   if(result.kind==='trap'){
     Sound.trap(); winterSay(Winter.TRAP, 'pleased');
     triggerShake(14, 380); flashHit();
   }
   else if(result.kind==='prey'){
     Sound.preyPop(result.chain);
-    spawnFloatPop(m.mesh.position, result.chainBonus>0 ? `+${result.value} 🔥` : `+${result.value}`);
+    spawnFloatPop(pos, result.chainBonus>0 ? `+${result.value} 🔥` : `+${result.value}`);
     punchFov(4 + result.chainBonus*3);
     if(result.chainBonus>0) Sound.chainSpark(result.chain);
     if(result.chain===CHAIN_BONUS_START) winterSay(Winter.CHAIN, 'wary');
   } else if(result.kind==='dodged'){ Sound.preyPop(0); punchFov(3); }
-  setTimeout(()=>{ scene.remove(m.mesh); markers = markers.filter(x=>x!==m); }, 550);
   refreshHud();
   if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(Winter.ROUND_CLEAR, 'wary'); }
   else if(Run.state===State.GAME_OVER){ Sound.gameOver(); winterSay(Winter.GAME_OVER, 'pleased'); }
@@ -737,27 +1069,31 @@ function refreshHud(){
   toast.textContent = Run.lastMessage.text;
   toast.className = 'message-toast ' + Run.lastMessage.kind;
 
-  const riskLine = document.getElementById('riskLine');
+  const riskPanel = document.getElementById('riskPanel');
   const chainLine = document.getElementById('chainLine');
   const crosshair = document.getElementById('crosshair');
   const hint = document.getElementById('hintLine');
   const vignette = document.getElementById('vignette');
-  riskLine.textContent = ''; chainLine.textContent = ''; hint.style.display='none'; crosshair.style.display='none';
+  chainLine.textContent = ''; hint.style.display='none'; crosshair.style.display='none';
+  riskPanel.style.display = 'none';
+  document.getElementById('interactPrompt').style.display = 'none';
 
   if(Run.state===State.DRAWING){
     hunting = true;
     hideAllOverlays();
     crosshair.style.display='block';
+    riskPanel.style.display = 'flex';
     const traps=Run.remainingTrapCount(), tiles=Run.remainingTileCount();
     const odds = tiles>0 ? Math.round(100*traps/tiles) : 0;
-    riskLine.textContent = `위험도: 함정 ${traps} / 남은 ${tiles}곳 (약 ${odds}%)`;
+    document.getElementById('riskText').textContent = `함정 ${traps} / 남은 눈더미 ${tiles} (약 ${odds}%)`;
+    document.getElementById('riskFill').style.width = odds + '%';
     vignette.style.opacity = Math.min(0.6, (traps/Math.max(tiles,1)) * 1.1);
     if(Run.chain>=2){
       chainLine.textContent = `🔥 연쇄 x${Run.chain}`;
-      chainLine.style.fontSize = (16 + Math.min(Run.chain,8)) + 'px';
+      chainLine.style.fontSize = (18 + Math.min(Run.chain,8)) + 'px';
     }
     const scoutHint = Run.scoutsLeft>0 ? ` · F: 정찰 (${Run.scoutsLeft})` : '';
-    hint.textContent = `드래그: 시점 회전 · WASD 이동 · Q: 저장하고 멈추기${scoutHint}`;
+    hint.textContent = `드래그: 시점 · WASD: 이동 · 조준 후 클릭/E: 파헤치기 · Q: 저장하고 멈추기${scoutHint}`;
     hint.style.display = 'block';
     return;
   }
@@ -837,7 +1173,11 @@ function loop(){
   lastT = now;
   updateMovement(dt);
   updateJuice(dt);
-  checkTriggers();
+  updateAim();
+  updatePaws(isMoving);
+  updatePackmate(dt);
+  updateSnow(dt);
+  updateReveals();
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
 }
@@ -849,7 +1189,8 @@ addEventListener('resize', ()=>{
 });
 
 // expose for automated/headless verification
-window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField, clearField, refreshHud, triggerMarker, yaw:()=>yaw, pitch:()=>pitch, setYawPitch:(y,p)=>{yaw=y;pitch=p;}};
+window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField, clearField, refreshHud, triggerMarker,
+  tryDig, aimTarget: ()=>aimTarget, yaw:()=>yaw, pitch:()=>pitch, setYawPitch:(y,p)=>{yaw=y;pitch=p;}};
 })();
 </script>
 </body>
