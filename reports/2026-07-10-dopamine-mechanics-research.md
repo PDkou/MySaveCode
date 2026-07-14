@@ -47,8 +47,19 @@
 ## 4. 총괄기획의 우려 사항 (원칙 4번: 정확한 지적)
 가챠/체스트 타이머류 기법 상당수는 **실제 결제 유도 및 도박 규제 이슈와 강하게 묶여 있는 기법**임. 이전에 이미 "슬롯머신 테마 → 늑대 사냥 테마"로 바꾼 전례가 있듯, 이번에도 "니어 미스"나 "천장" 같은 심리 기법을 게임성 강화 목적으로 가져오는 것과, 실제 결제/가챠 상품과 결합해 소비를 유도하는 것은 전혀 다른 문제임. 우리는 무료 유물 상점/정찰 등 **인게임 자원 순환에만** 이 원리를 적용하고 있고 실제 화폐 결제 요소가 없으므로 현재로선 규제 리스크가 낮다고 판단하나, 스팀 출시 시 "이 게임이 도박을 모사하는가"라는 심사 기준은 계속 염두에 둬야 함.
 
-## 5. 결론
-코드 수정 없이 리서치·제안만 제출함. 위 5개 제안 중 총괄책임자가 채택할 항목을 지정해주시면 그에 맞춰 총괄기획이 구체적 수치/UX를 설계하고, 이후 실제 코드 반영은 별도 승인 후 진행하겠음.
+## 5-1. 추가 참조 (총괄책임자 제공 영상 기준) — Space Rock Breaker
+총괄책임자가 공유한 유튜브 영상("도파민 나오는건 일단 다 쑤셔넣은 게임", 똘킹 채널)이 다룬 게임을 확인함. 스팀 리뷰 2,155개 중 96% 긍정("압도적으로 긍정적") — 소규모 인디 인크리멘탈 게임임에도 이 카테고리에서 최상급 평가를 받음.
+
+**핵심 루프**: 우주선으로 소행성을 총·미사일·레이저로 부숴 광석 획득 → 그 광석을 **핀볼/파친코 판(Plinko)에 떨어뜨려 가치를 결정** → 크레딧으로 거대한 스킬 트리(무기/함선/광석 가치/처리 보너스) 강화 → 반복.
+
+**왜 이게 다른 게임들과 결이 다른가 — "불확실성을 눈에 보이게 만듦"**: 지금까지 조사한 사례(가챠, 슬롯머신, 유물 상점)는 전부 확률이 **숨겨진 계산**이고 결과만 통보됨. Space Rock Breaker의 Plinko는 그 반대 — 광석이 페그에 부딪히며 튀어 다니는 과정 자체를 몇 초간 **눈으로 보여줌**. 리뷰들이 공통으로 짚는 지점: "떨어지는 소리 자체가 극도로 만족스럽다", "각 배치가 통과할 때마다 기대감과 전략성이 생겨 흥분됨". 즉 보상이 결정되는 그 짧은 물리적 낙하 시간 자체가 하나의 독립된 쾌감 구간으로 설계되어 있음 — 결과가 나오기 전 "지켜보는 시간"을 억지로 늘려서 기대감(위 1번 원리)을 극대화한 사례.
+
+**Hungry Pack에 대한 시사점 (제안, 미적용)**: 지금 "파헤치기"는 클릭 → 즉시 결과 텍스트+연출이 뜨는 구조(반응 시간 사실상 0). Plinko 사례를 따르면, **파헤치는 순간과 결과가 드러나는 순간 사이에 아주 짧은 "지켜보는 구간"을 물리적으로 만드는 것**이 검토해볼 만함 — 예: 눈이 흩날리며 파묻힌 것의 실루엣이 반쯤 드러났다 사라지길 반복하다 확정되는 0.3~0.5초 정도의 연출. 이미 파운스 모션(스와이프 후 150ms 뒤 판정)이 있어 이 구조를 넣을 자리 자체는 마련되어 있음 — 그 150ms를 "이미 정해진 결과를 숨기는 시간"이 아니라 "결과가 실제로 눈앞에서 결정되는 것처럼 보이는 시간"으로 연출을 바꾸는 정도의 작업.
+
+또한 스킬 트리 관련 리뷰에서 "사소한 초반 업그레이드가 후반에 눈덩이처럼 불어나 동기부여가 유지된다"는 평가가 있었음 — 이는 기존 보고서의 유물/연쇄 시스템이 이미 채택 중인 방향과 일치하므로 별도 조치 불필요, 현재 설계가 검증된 방향이라는 근거로 추가.
+
+## 5-2. 결론
+코드 수정 없이 리서치·제안만 제출함. 위 5개 제안 + Space Rock Breaker 기반 제안(파헤치기 결과를 "짧게 지켜보는 구간"으로 재연출) 중 총괄책임자가 채택할 항목을 지정해주시면 그에 맞춰 총괄기획이 구체적 수치/UX를 설계하고, 이후 실제 코드 반영은 별도 승인 후 진행하겠음.
 
 ## Sources
 - [Variable Reward Psychology: The Science Behind Unpredictable Reinforcement](https://neurolaunch.com/variable-reward-psychology/)
@@ -66,3 +77,7 @@
 - [Duolingo Streaks: How the Mechanic Drives 2x Daily Retention](https://duolingo.deconstructoroffun.com/mechanics/streaks)
 - [The Psychology Behind Duolingo's Streak Feature](https://www.justanotherpm.com/blog/the-psychology-behind-duolingos-streak-feature)
 - [What Is The Compulsion Loop? — GameAnalytics](https://www.gameanalytics.com/blog/the-compulsion-loop-explained)
+- [도파민 나오는건 일단 다 쑤셔넣은 게임 (똘킹) — YouTube](https://www.youtube.com/watch?v=ykkXWUKedmo)
+- [Space Rock Breaker on Steam](https://store.steampowered.com/app/4035270/Space_Rock_Breaker/)
+- [Space Rock Breaker review - incrementaldb](https://www.incrementaldb.com/community/review/8138)
+- [Space Rock Breaker Review - Missi the Achievement Huntress](https://www.missitheachievementhuntress.com/space-rock-breaker-review/)
