@@ -58,8 +58,32 @@
 
 또한 스킬 트리 관련 리뷰에서 "사소한 초반 업그레이드가 후반에 눈덩이처럼 불어나 동기부여가 유지된다"는 평가가 있었음 — 이는 기존 보고서의 유물/연쇄 시스템이 이미 채택 중인 방향과 일치하므로 별도 조치 불필요, 현재 설계가 검증된 방향이라는 근거로 추가.
 
-## 5-2. 결론
-코드 수정 없이 리서치·제안만 제출함. 위 5개 제안 + Space Rock Breaker 기반 제안(파헤치기 결과를 "짧게 지켜보는 구간"으로 재연출) 중 총괄책임자가 채택할 항목을 지정해주시면 그에 맞춰 총괄기획이 구체적 수치/UX를 설계하고, 이후 실제 코드 반영은 별도 승인 후 진행하겠음.
+## 6. 추가 참조 리서치 (2차) — "물리적으로 눈에 보이는 불확실성" 계열 게임 확장 조사
+총괄책임자 지시로 Space Rock Breaker와 같은 결의 게임을 더 조사함. 결론부터 말하면, 이 계열은 하나의 뚜렷한 하위 장르로 존재하며 공통 설계 원칙이 명확함.
+
+### Peggle (PopCap, 2007) — "주시"(juice) 개념의 원조 격 사례
+페그(못)에 튕기는 공 하나하나에 소리·점수·조명 반응이 붙고, 튕길 때마다 소리의 음높이가 점점 올라가며 화면 전체에 패턴을 그림. 마지막 주황 페그를 맞추는 순간 "환희의 송가"(Ode to Joy)가 점점 고조되는 음악과 함께 **"Extreme Fever"** 연출이 터짐 — 단순 점수 획득을 오케스트라급 축제로 과장한 연출. PopCap 디자이너 매튜 존슨의 말: *"이건 시간을 들여 스탯을 쌓는 게 아니다. 지금 이 순간 벌어지는 일이 얼마나 짜릿하고 근사하게 느껴지느냐가 전부다."* 이 게임은 공이 통로 맨 아래 흔들리는 바구니에 들어가면 공 하나를 돌려받는 보너스도 있음 — "아쉽게 놓칠 뻔한" 순간에 대한 구제 장치가 오히려 짜릿함을 더함.
+
+### Suika Game (수박 게임) — 메타 진행 없이 "물리 피드백만으로" 바이럴에 성공한 사례
+과일을 떨어뜨려 같은 종류끼리 합치는 게 룰의 전부(업그레이드도, 스킬 트리도, 스토리도 없음). 2021년 출시 후 2년간 무명이었다가 2023년 스트리머들을 통해 역주행, 두 달 만에 300만 다운로드. 핵심은 **"과일이 굴러가고, 튕기고, 합쳐지는 과정 자체가 도파민을 유발하는 시각 피드백"** — 무게·관성·공간 배치의 물리 시뮬레이션 하나만으로 중독성을 만들어냄. **이 사례가 우리에게 중요한 이유**: 가챠/천장 같은 "확률 조작형" 기법을 전혀 안 써도, 순수 물리·시청각 피드백만으로 최상급 중독성을 만들 수 있다는 실증 사례임 — 4번 보고서에서 지적한 도박 규제 리스크를 피하면서도 도파민을 만드는 가장 "깨끗한" 경로.
+
+### Gacha Capsule Shop Simulator - Akihabara (2026) — 캡슐 개봉의 물리적 연출
+가챠 캡슐 뽑기 판매점을 운영하는 시뮬레이션 게임. 캡슐을 실제로 여는 손맛(개봉 모션)에 "생각보다 훨씬 많은 도파민이 나온다"는 평가 — 여기에 거스름돈을 빠르게 맞추는 미니게임까지 곁들여 "젠 상태"에 가까운 몰입감을 만든다는 리뷰가 있음. Space Rock Breaker의 Plinko와 마찬가지로 **결과 확인 자체를 손으로 하는 물리적 동작**으로 만든 사례.
+
+### 동일 계열 인디 인크리멘탈 게임군
+Space Rock Breaker와 같은 "자원 채굴 → 처리 → 거대 스킬 트리" 구조의 게임이 다수 존재함(Keep on Mining!, Rock Crusher, Trainatic 등) — 이는 한 게임의 우연한 성공이 아니라, **"짧은 세션 + 물리적 처리 연출 + 거대 성장 트리"** 조합이 현재 인디 시장에서 검증된 반복 가능한 공식이라는 뜻.
+
+### 이론적 근거 — "Juice"(주시) 디자인 원칙
+위 사례들을 관통하는 명명된 게임 디자인 이론이 있음: Steve Swink의 저서 『Game Feel』(2008)이 처음 체계화했고, Vlambeer의 Jan Willem Nijman이 2013년 강연 "The Art of Screenshake"로 업계에 널리 알림. 핵심 주장: **입력에 비해 "과할 정도로" 넘치는 시청각 피드백(스크린셰이크, 파티클, 사운드)을 주는 것 자체가 재미의 핵심 재료**이며, 이는 "장기간에 걸친 스탯 성장"과는 별개의, 훨씬 값싸게 구현 가능한 도파민 경로임.
+
+### Hungry Pack에 대한 종합 시사점 (제안, 미적용)
+1. **Suika Game이 증명하듯, 가장 리스크 낮은 경로는 "순수 피드백 강화"임** — 이미 있는 화면 흔들림/히트플래시/FOV 펀치를 "Juice" 원칙에 맞춰 전면 감사(audit): 걷기, 파헤치기, 사냥감 포획, 함정 발동, 사냥 성공 각각에 대해 "입력 대비 반응이 충분히 과한가"를 하나씩 점검할 것을 제안
+2. **Peggle의 "Extreme Fever" 대응**: 지금 연쇄(chain)가 최고조에 달했을 때, 현재는 색상/피치 변화 정도인데, 여기에 짧은 음악적 크레센도(고조되는 멜로디)를 얹으면 훨씬 축제감 있는 정점을 만들 수 있음
+3. **Peggle의 "구제 바구니" 대응**: 함정을 밟았지만 "간발의 차로 아쉽게" 놓친 것처럼 보이는 니어미스 연출(이미 1차 보고서에서 제안한 것과 동일한 방향) — Peggle 사례가 이 설계가 실제로 검증된 패턴임을 뒷받침
+4. **Gacha Capsule Shop Simulator / Space Rock Breaker 공통**: "결과를 손으로 확인하는 물리적 동작"이 핵심 — 우리 게임엔 이미 "파헤치기"라는 손동작이 있으므로, 이 부분은 이미 방향이 맞게 설계되어 있음. 다만 그 동작과 결과 사이의 "지켜보는 구간" 연출(1차 보고서 제안)을 넣으면 완성도가 올라갈 것
+
+## 7. 결론
+코드 수정 없이 리서치·제안만 제출함. 1차 제안 5개 + Space Rock Breaker/Peggle/Suika Game 기반 제안(파헤치기 결과 지연 연출, Juice 원칙 전면 감사, 연쇄 최고조 음악 크레센도, 니어미스 연출) 중 총괄책임자가 채택할 항목을 지정해주시면 그에 맞춰 총괄기획이 구체적 수치/UX를 설계하고, 이후 실제 코드 반영은 별도 승인 후 진행하겠음.
 
 ## Sources
 - [Variable Reward Psychology: The Science Behind Unpredictable Reinforcement](https://neurolaunch.com/variable-reward-psychology/)
@@ -81,3 +105,13 @@
 - [Space Rock Breaker on Steam](https://store.steampowered.com/app/4035270/Space_Rock_Breaker/)
 - [Space Rock Breaker review - incrementaldb](https://www.incrementaldb.com/community/review/8138)
 - [Space Rock Breaker Review - Missi the Achievement Huntress](https://www.missitheachievementhuntress.com/space-rock-breaker-review/)
+- [Games like Space Rock Breaker - 18 best alternatives - gg.deals](https://gg.deals/game/space-rock-breaker/similar-games/)
+- [Why Peggle Works (A Short Game Analysis) - Medium](https://kalebnek.medium.com/why-peggle-works-a-game-analysis-7899d1716bdf)
+- [How and why game devs manipulate 'luck' in games like Peggle - Game Developer](https://www.gamedeveloper.com/design/how-and-why-game-devs-manipulate-luck-in-games-like-i-peggle-i-)
+- [Anatomy of Fun: Why Peggle is a Masterpiece - Philip Trippenbach](https://trippenbach.org/2009/08/11/anatomy-of-fun-why-peggle-is-a-masterpiece/)
+- [Suika Game - Wikipedia](https://en.wikipedia.org/wiki/Suika_Game)
+- [Unique Games Don't Need Complexity — Suika Game Design Analysis](https://www.kokutech.com/blog/gamedev/design-patterns/unique-mechanics/suika-game)
+- [Gacha Capsule Shop Simulator - Akihabara on Steam](https://store.steampowered.com/app/4164900/Gacha_Capsule_Shop_Simulator__Akihabara/)
+- [Gacha Capsule Shop Simulator - Akihabara Review - MonsterVine](https://monstervine.com/2026/06/gacha-capsule-shop-simulator-akihabara-review/)
+- [Game feel on the web: squash, shake, and the art of juice](https://valdemird.com/blog/game-feel-on-the-web/)
+- [Game Feel | Encyclopedia of Ludic Terms](https://eolt.org/articles/game-feel/)
