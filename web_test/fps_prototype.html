@@ -169,7 +169,7 @@
         <input type="range" id="sensSlider" min="0.6" max="4.5" step="0.1">
         <span id="sensValue"></span>
       </div>
-      <div class="title-hint">WASD로 이동, 마우스를 움직이면 그대로 시점이 돌아갑니다(클릭할 필요 없음). 화면 가장자리에 커서가 막혀 한 바퀴가 안 돌아가면 감도를 올려보세요. 눈더미는 전부 똑같이 생겼습니다 — 다가가 조준한 뒤 <b>클릭/E로 직접 파헤쳐야</b> 정체가 드러납니다. 사냥감이면 무리의 식량, 함정이면 이번 사냥에서 모은 걸 전부 잃습니다. <b>눈 위 발자국</b>은 사냥감이 있을 확률이 높다는 단서일 뿐, 함정으로 이어질 수도 있습니다. 일부 사냥감은 예민해서 <b>거칠게 다가가면 도망칩니다</b> — Shift로 살금살금 걸으면 놀라지 않습니다. Q: 저장하고 멈추기 · F: 정찰(위험 감지)</div>
+      <div class="title-hint">WASD로 이동, 마우스를 움직이면 그대로 시점이 돌아갑니다(클릭할 필요 없음). 화면 가장자리에 커서가 막혀 한 바퀴가 안 돌아가면 감도를 올려보세요. 눈더미는 전부 똑같이 생겼습니다 — 다가가 조준한 뒤 <b>클릭/E로 직접 파헤쳐야</b> 정체가 드러납니다. 사냥감이면 무리의 식량, 함정이면 이번 사냥에서 모은 걸 전부 잃습니다. <b>눈 위 발자국</b>은 사냥감이 있을 확률이 높다는 단서일 뿐, 함정으로 이어질 수도 있습니다. 일부 사냥감은 예민해서 <b>거칠게 다가가면 도망칩니다</b> — Shift로 살금살금 걸으면 놀라지 않습니다(단, Space로 점프해서 착지하면 살금살금 중이어도 소리가 납니다). Q: 저장하고 멈추기 · F: 정찰(위험 감지)</div>
     </div>
   </div>
 
@@ -540,6 +540,8 @@ const Sound = {
   chainSpark(chain){ playTone(880+60*Math.min(chain,8), 0.14, 'sine', 0.13, 1200); },
   footstep(quiet){ playNoise(0.09, quiet ? 0.018 : 0.05, 700); },
   spook(){ playTone(520, 0.14, 'triangle', 0.1, 900); },
+  jump(){ playTone(340, 0.09, 'sine', 0.06, 460); },
+  jumpLand(){ playNoise(0.12, 0.09, 500); },
   dig(){ playNoise(0.22, 0.12, 1200); },
   digRise(){ playTone(180, DIG_SUSPENSE_MS/1000, 'sine', 0.05, 520); }, // rising hum during the suspense window, Peggle-style building pitch
   anticipationTick(proximity){ playTone(300 + proximity*260, 0.06, 'sine', 0.045 + proximity*0.05); },
@@ -865,12 +867,14 @@ function spawnTrails(){
 
 // ============ Spook: alert prey bolts if you approach carelessly ============
 const SPOOK_RADIUS = 5.0, SPOOK_RATE = 0.55;
+let loudUntil = 0; // landing a jump overrides sneaking briefly — no free stealth via hopping
+function isQuiet(){ return isSneaking && performance.now() > loudUntil; }
 function updateSpook(dt){
   if(!hunting) return;
   for(const m of markers){
     if(m.triggered || !m.alert) continue;
     const d = m.mesh.position.distanceTo(camera.position);
-    if(d < SPOOK_RADIUS && isMoving && !isSneaking){
+    if(d < SPOOK_RADIUS && isMoving && !isQuiet()){
       const proximity = 1 - d/SPOOK_RADIUS;
       m.spookMeter += dt * SPOOK_RATE * (0.4+proximity);
       if(m.spookMeter >= 1) fleeMound(m);
@@ -1203,6 +1207,7 @@ addEventListener('keydown', e=>{
     if(e.code==='KeyQ') doCashOut();
     else if(e.code==='KeyF') doScout();
     else if(e.code==='KeyE') tryDig();
+    else if(e.code==='Space') tryJump();
   }
 });
 addEventListener('keyup', e=> keys[e.code]=false);
@@ -1278,7 +1283,7 @@ const SNEAK_SPEED_MULT = 0.5;
 let isSneaking = false;
 function updateMovement(dt){
   camera.rotation.y = yaw; camera.rotation.x = pitch;
-  if(!hunting){ isMoving = false; isSneaking = false; return; }
+  if(!hunting){ isMoving = false; isSneaking = false; jumpOffset = 0; jumpVel = 0; grounded = true; return; }
   let mf = (keys['KeyW']?1:0) - (keys['KeyS']?1:0);
   let mr = (keys['KeyD']?1:0) - (keys['KeyA']?1:0);
   const len = Math.hypot(mf,mr);
@@ -1301,6 +1306,39 @@ function updateMovement(dt){
     if(now - lastStepAt > stepInterval){ lastStepAt = now; Sound.footstep(isSneaking); }
   } else if(!isDying()){
     camera.position.y += (1.6 - camera.position.y) * Math.min(1, dt*8);
+  }
+  camera.position.y += jumpOffset;
+}
+
+// ============ Jump: a pounce-flavored hop, not a stealth loophole ============
+// Landing always makes noise, even mid-sneak — jumping past an alert
+// mound's spook radius isn't a free workaround for careful footwork.
+const JUMP_SPEED = 4.6, JUMP_GRAVITY = 13.0;
+let jumpOffset = 0, jumpVel = 0, grounded = true;
+function tryJump(){
+  if(!hunting || !grounded) return;
+  grounded = false;
+  jumpVel = JUMP_SPEED;
+  Sound.jump();
+}
+function updateJump(dt){
+  if(grounded) return;
+  jumpVel -= JUMP_GRAVITY*dt;
+  jumpOffset += jumpVel*dt;
+  if(jumpOffset <= 0){
+    jumpOffset = 0; jumpVel = 0; grounded = true;
+    loudUntil = performance.now() + 350;
+    Sound.jumpLand();
+    jumpLandNoise();
+  }
+}
+function jumpLandNoise(){
+  for(const m of markers){
+    if(m.triggered || !m.alert) continue;
+    if(m.mesh.position.distanceTo(camera.position) < SPOOK_RADIUS){
+      m.spookMeter += 0.5;
+      if(m.spookMeter >= 1) fleeMound(m);
+    }
   }
 }
 
@@ -1550,7 +1588,7 @@ function refreshHud(){
       chainLine.style.fontSize = (18 + Math.min(Run.chain,8)) + 'px';
     }
     const scoutHint = Run.scoutsLeft>0 ? ` · F: 정찰 (${Run.scoutsLeft})` : '';
-    hint.textContent = `마우스: 시점 · WASD: 이동 · Shift: 살금살금 · 조준 후 클릭/E: 파헤치기 · Q: 저장하고 멈추기${scoutHint}`;
+    hint.textContent = `마우스: 시점 · WASD: 이동 · Shift: 살금살금 · Space: 점프 · 조준 후 클릭/E: 파헤치기 · Q: 저장하고 멈추기${scoutHint}`;
     hint.style.display = 'block';
     return;
   }
@@ -1641,6 +1679,7 @@ function loop(){
   const now = performance.now();
   const dt = Math.min((now-lastT)/1000, 0.1);
   lastT = now;
+  updateJump(dt);
   updateMovement(dt);
   updateJuice(dt);
   updateDeath();
@@ -1669,7 +1708,8 @@ window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField
   tryDig, aimTarget: ()=>aimTarget, yaw:()=>yaw, pitch:()=>pitch, setYawPitch:(y,p)=>{yaw=y;pitch=p;},
   CAMP_POS, diggingMounds: ()=>diggingMounds, burstAnims: ()=>burstAnims, isDying,
   mouseSensitivity: ()=>mouseSensitivity, setMouseSensitivity: v=>{mouseSensitivity=v;},
-  isSneaking: ()=>isSneaking, trailGroups: ()=>trailGroups, fleeMound};
+  isSneaking: ()=>isSneaking, trailGroups: ()=>trailGroups, fleeMound,
+  tryJump, grounded: ()=>grounded, jumpOffset: ()=>jumpOffset, isQuiet};
 })();
 </script>
 </body>
