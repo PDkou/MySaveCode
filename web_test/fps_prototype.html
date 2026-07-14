@@ -201,6 +201,7 @@
     <div class="panel">
       <div id="endBadge" style="font-size:40px;"></div>
       <div id="endMessage" class="message-toast" style="position:static;"></div>
+      <div id="packmateLine" class="message-toast neutral" style="position:static; font-style:italic; font-size:12.5px; opacity:.85;"></div>
       <button class="btn primary clickable" id="restartBtn">다시 시작</button>
     </div>
   </div>
@@ -466,12 +467,19 @@ const Run = {
 };
 
 // ============ Winter dialogue (ported) ============
+// Light narrative framing only (no cutscenes/story system): Winter's bank
+// deepens once the pack has proven itself across several rounds, and the
+// pack itself talks back once you're home. Round-tiered variants are
+// additive — banks without a *_LATE counterpart just stay flat.
+const STORY_LATE_ROUND = 5;
 const Winter = {
   TRAP:["이빨을 보았나?","겨울다운 인사로군.","숨을 곳은 없다.","잊었나, 여긴 내 영역이다."],
   ROUND_CLEAR:["버텼군. 하지만 다음은 더 춥다.","여기까지가 다인가?","제법이군... 이번엔."],
+  ROUND_CLEAR_LATE:["아직도 서 있다니.","이 정도로 무너지지 않는군... 흥미로워지는데.","몇 번째 겨울이었더라, 이걸로.","슬슬 이름을 기억해둬야겠군."],
   RETREAT:["현명한 선택이다... 이번엔.","돌아서는 자에게 박수를.","살아서 도망치는군."],
   CONTINUE:["탐욕이군. 마음에 든다.","후회하게 될 거다.","좋아, 계속해보지."],
   GAME_OVER:["겨울은 언제나 이긴다.","무리는... 여기까지였군.","다음 생엔 더 신중하길."],
+  GAME_OVER_LATE:["오래 버텼다. 그거면 됐다.","이 정도 왔으면... 나쁘지 않은 겨울이었다.","다음 무리는 더 멀리 가겠지."],
   SHOP:["그 힘, 오래가진 않을 거다.","무엇을 챙기든, 나는 여전히 겨울이다."],
   SCOUT:["훔쳐본다고 달라지진 않는다.","미리 본들 무슨 소용이지."],
   DEAL_ACCEPT:["현명한지 어리석은지는 곧 알게 되겠지.","좋아. 거래는 거래다.","약속은 지키지. 나는 겨울이니까."],
@@ -479,6 +487,20 @@ const Winter = {
   CHAIN:["...멈출 줄 모르는군.","그 기세, 어디까지 가나 보자.","욕심이 이빨을 부른다."],
   line(bank){ return bank[Math.floor(Math.random()*bank.length)]; },
 };
+function bankFor(round, bank, lateBank){ return round>=STORY_LATE_ROUND ? lateBank : bank; }
+
+// the rest of the pack, waiting at camp — the game's only "story" is this
+// relationship: you hunt, they wait, and they notice how it went.
+const Packmate = {
+  RETREAT:["오늘도 무사히 돌아왔구나.","잘했다. 다들 배불리 먹겠어.","너 없이 못 버텼을 거다."],
+  CONTINUE:["더 간다고... 알겠다, 기다리지.","무리하지 마라."],
+  GAME_OVER:["...다음엔 내가 앞장서마.","잃은 건 되찾으면 된다.","돌아온 것만으로 됐다."],
+  line(bank){ return bank[Math.floor(Math.random()*bank.length)]; },
+};
+function packmateSay(bank){
+  const el = document.getElementById('packmateLine');
+  if(el) el.textContent = Packmate.line(bank);
+}
 
 let audioCtx=null;
 function initAudio(){ if(!audioCtx){ try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ audioCtx=null; } } }
@@ -510,6 +532,8 @@ const Sound = {
   chainSpark(chain){ playTone(880+60*Math.min(chain,8), 0.14, 'sine', 0.13, 1200); },
   footstep(){ playNoise(0.09, 0.05, 700); },
   dig(){ playNoise(0.22, 0.12, 1200); },
+  digRise(){ playTone(180, DIG_SUSPENSE_MS/1000, 'sine', 0.05, 520); }, // rising hum during the suspense window, Peggle-style building pitch
+  anticipationTick(proximity){ playTone(300 + proximity*260, 0.06, 'sine', 0.045 + proximity*0.05); },
   trap(){ playTone(160,0.32,'sawtooth',0.16,70); },
   cashOut(){ playTone(520,0.1,'sine',0.15); setTimeout(()=>playTone(780,0.16,'sine',0.15),90); },
   roundClear(){ playTone(500,0.12,'sine',0.14); setTimeout(()=>playTone(660,0.12,'sine',0.14),110); setTimeout(()=>playTone(880,0.2,'sine',0.15),220); },
@@ -525,7 +549,8 @@ scene.fog = new THREE.FogExp2(0x2a3f55, 0.026);
 
 const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 200);
 camera.rotation.order = 'YXZ';
-camera.position.set(0, 1.6, 0);
+const CAMP_POS = new THREE.Vector3(0, 1.6, -42);
+camera.position.copy(CAMP_POS);
 
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setSize(innerWidth, innerHeight);
@@ -650,6 +675,75 @@ for(let i=0;i<14;i++){
   rockGroup.position.set(Math.cos(angle)*dist, 0.12, Math.sin(angle)*dist);
   addContactShadow(rockGroup, rSize*1.4, 0.25);
   scene.add(rockGroup);
+}
+
+// ============ Camp: a real place to return to ============
+// Retreat/shop/deal states used to be just a UI overlay floating over the
+// same hunting ground — "returning home" had no home. This is a fixed,
+// permanent area the camera is moved to whenever the player isn't out
+// hunting, so there's an actual place with stakes to come back to.
+const camp = new THREE.Group();
+camp.position.copy(CAMP_POS).setY(0);
+scene.add(camp);
+
+const logMat = new THREE.MeshStandardMaterial({color:0x3a2a1a, roughness:1.0});
+for(let i=0;i<5;i++){
+  const log = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.1, 6), logMat);
+  log.rotation.z = Math.PI/2;
+  log.rotation.y = (i/5)*Math.PI*2;
+  log.position.set(0, 0.12, -4);
+  camp.add(log);
+}
+const flameMat = new THREE.MeshBasicMaterial({color:0xffa542, fog:false});
+const flame = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.7, 8), flameMat);
+flame.position.set(0, 0.5, -4);
+camp.add(flame);
+const fireLight = new THREE.PointLight(0xff9a4d, 2.2, 9, 2);
+fireLight.position.set(0, 0.8, -4);
+camp.add(fireLight);
+addContactShadow(camp, 1.1, 0.3).position.set(0, 0.03, -4);
+function updateCampfire(){
+  const t = performance.now()*0.006;
+  const flicker = 0.75 + Math.sin(t)*0.15 + Math.sin(t*2.7)*0.08 + (Math.random()-0.5)*0.06;
+  fireLight.intensity = 2.0 * flicker;
+  flame.scale.y = 0.9 + flicker*0.25;
+}
+
+const tentMat = new THREE.MeshStandardMaterial({color:0x5a4a38, roughness:1.0});
+const tentDoorMat = new THREE.MeshStandardMaterial({color:0x1a1410, roughness:1.0});
+function buildTent(scale){
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.ConeGeometry(1.1*scale, 1.8*scale, 7), tentMat);
+  body.position.y = 0.9*scale;
+  g.add(body);
+  const door = new THREE.Mesh(new THREE.ConeGeometry(0.32*scale, 0.7*scale, 3), tentDoorMat);
+  door.position.set(0, 0.35*scale, 1.0*scale);
+  g.add(door);
+  addContactShadow(g, 1.3*scale, 0.3);
+  return g;
+}
+const tentPositions = [[-3.4, -6.2, 0.5], [3.6, -6.6, -0.3]];
+for(const [x,z,ry] of tentPositions){
+  const tent = buildTent(1.0 + Math.random()*0.15);
+  tent.position.set(x, 0, z);
+  tent.rotation.y = ry;
+  camp.add(tent);
+}
+
+// resident packmates lounging near the fire — the pack you're feeding
+const campWolves = [];
+for(const [x,z,ry] of [[-1.6, -3.2, 0.6], [1.9, -2.9, -0.5]]){
+  const w = buildWolf();
+  w.position.set(x, 0, z);
+  w.rotation.y = ry;
+  w.scale.setScalar(0.92 + Math.random()*0.12);
+  addContactShadow(w, 0.55, 0.24);
+  camp.add(w);
+  campWolves.push(w);
+}
+function updateCampWolves(){
+  const t = performance.now()*0.0025;
+  campWolves.forEach((w, i)=>{ w.position.y = Math.sin(t + i*2)*0.02; });
 }
 
 // falling snow: one Points cloud, recycled vertically — near-zero cost
@@ -850,6 +944,20 @@ function highlightMarker(uid, isTrap){
   const mat = m.mesh.userData.mat;
   mat.emissive = new THREE.Color(isTrap?0xbf3326:0x4dbf59);
   mat.emissiveIntensity = 0.7;
+}
+// 긴장감: after a trap hit, occasionally glimpse an unrelated nearby mound
+// as if it might have been prey — a near-miss beat (Peggle/Candy Crush
+// pattern). Cosmetic only: it never touches Run's economy or the bag.
+function nearMissPulse(fromPos){
+  if(Math.random() > 0.55) return;
+  const nearby = markers.filter(mk=>!mk.triggered && !mk.scouted && mk.mesh.position.distanceTo(fromPos) < 4.5);
+  if(!nearby.length) return;
+  const pick = nearby[Math.floor(Math.random()*nearby.length)];
+  const mat = pick.mesh.userData.mat;
+  mat.emissive = new THREE.Color(0xe8d9a8);
+  mat.emissiveIntensity = 0.5;
+  spawnFloatPop(pick.mesh.position, '...?');
+  setTimeout(()=>{ if(!pick.scouted) mat.emissiveIntensity = 0; }, 1100);
 }
 function spawnFloatPop(worldPos, text){
   const v = worldPos.clone().project(camera);
@@ -1076,11 +1184,14 @@ function updateMovement(dt){
 // Walking over a mound no longer auto-triggers: every reveal is a choice.
 const DIG_RANGE = 3.4, DIG_ANGLE_COS = Math.cos(0.42);
 let aimTarget = null;
+let lastAimedMesh = null;
+let anticipationNext = 0;
 const _toMarker = new THREE.Vector3();
-function updateAim(){
+function updateAim(dt){
   const prompt = document.getElementById('interactPrompt');
   const cross = document.getElementById('crosshair');
   aimTarget = null;
+  let aimDist = null;
   if(hunting){
     camera.getWorldDirection(_dir);
     let bestDot = DIG_ANGLE_COS;
@@ -1092,20 +1203,101 @@ function updateAim(){
       if(dist > DIG_RANGE) continue;
       _toMarker.normalize();
       const dot = _toMarker.dot(_dir);
-      if(dot > bestDot){ bestDot = dot; aimTarget = m; }
+      if(dot > bestDot){ bestDot = dot; aimTarget = m; aimDist = dist; }
     }
+  }
+
+  // 설렘: a soft pulse that quickens the closer/longer you hold aim on an
+  // unrevealed mound — anticipation building *before* you commit to dig,
+  // not just feedback after. Purely cosmetic, no effect on the outcome.
+  if(lastAimedMesh && lastAimedMesh !== (aimTarget && aimTarget.mesh)) lastAimedMesh.scale.setScalar(1);
+  if(aimTarget){
+    const proximity = 1 - Math.min(aimDist, DIG_RANGE)/DIG_RANGE; // 0 far .. 1 close
+    anticipationNext -= dt;
+    if(anticipationNext <= 0){
+      Sound.anticipationTick(proximity);
+      anticipationNext = 0.55 - proximity*0.35;
+    }
+    const breathe = 1 + Math.sin(performance.now()*0.006*(1+proximity*2)) * 0.02 * (0.4+proximity);
+    aimTarget.mesh.scale.setScalar(breathe);
+    lastAimedMesh = aimTarget.mesh;
+  } else {
+    anticipationNext = 0;
+    lastAimedMesh = null;
   }
   prompt.style.display = aimTarget ? 'block' : 'none';
   cross.classList.toggle('aiming', !!aimTarget);
 }
+// Digging used to resolve in a flat 150ms timer — click, then the answer
+// just appears. Every referenced "dopamine game" (Space Rock Breaker's
+// Plinko, Peggle's peg cascade, Suika's falling fruit) instead makes the
+// instant *before* the answer is known into its own physical, watchable
+// event. DIG_SUSPENSE_MS is that watched moment: the mound visibly shudders
+// and kicks up snow while the outcome (already decided internally) is
+// withheld from the player just long enough to feel like it's happening
+// live, not like a loading spinner.
+const DIG_SUSPENSE_MS = 480;
+let diggingMounds = []; // {mesh, startAt}
+
+function spawnDigBurst(pos){
+  const count = 16;
+  const positions = new Float32Array(count*3);
+  const velocities = [];
+  for(let i=0;i<count;i++){
+    positions[i*3]=pos.x; positions[i*3+1]=pos.y+0.2; positions[i*3+2]=pos.z;
+    const a = Math.random()*Math.PI*2, spd = 0.8+Math.random()*1.4;
+    velocities.push([Math.cos(a)*spd, 1.2+Math.random()*1.6, Math.sin(a)*spd]);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({color:0xf3f7fb, size:0.09, transparent:true, opacity:0.9});
+  const pts = new THREE.Points(geo, mat);
+  scene.add(pts);
+  burstAnims.push({pts, velocities, bornAt:performance.now(), lifeMs:520});
+}
+let burstAnims = [];
+function updateBursts(dt){
+  const now = performance.now();
+  burstAnims = burstAnims.filter(b=>{
+    const t = (now-b.bornAt)/b.lifeMs;
+    if(t>=1){ scene.remove(b.pts); b.pts.geometry.dispose(); b.pts.material.dispose(); return false; }
+    const arr = b.pts.geometry.attributes.position.array;
+    for(let i=0;i<b.velocities.length;i++){
+      const v = b.velocities[i];
+      arr[i*3] += v[0]*dt; arr[i*3+1] += v[1]*dt; arr[i*3+2] += v[2]*dt;
+      v[1] -= 4.0*dt; // gravity
+    }
+    b.pts.geometry.attributes.position.needsUpdate = true;
+    b.pts.material.opacity = 0.9 * (1-t);
+    return true;
+  });
+}
+
+function updateDigging(){
+  const now = performance.now();
+  diggingMounds = diggingMounds.filter(d=>{
+    const t = (now-d.startAt)/DIG_SUSPENSE_MS;
+    if(t>=1 || !d.mesh.parent){ if(d.mesh.parent){ d.mesh.rotation.x=0; d.mesh.rotation.z=0; } return false; }
+    const s = Math.sin(t*Math.PI); // builds then settles right as the reveal lands
+    d.mesh.rotation.x = Math.sin(now*0.045)*0.05*s;
+    d.mesh.rotation.z = Math.cos(now*0.038)*0.05*s;
+    d.mesh.position.y = -0.03*s;
+    return true;
+  });
+}
+
 function tryDig(){
   if(!aimTarget || Run.state!==State.DRAWING) return;
   const m = aimTarget;
   aimTarget = null;
+  m.triggered = true; // exclude from aim/re-dig immediately, not just once the timeout resolves
   pawSwipeAt = performance.now();
   triggerLunge(POUNCE_MS + 80);
   Sound.dig();
-  setTimeout(()=> triggerMarker(m), 150); // reveal lands as the paw swipe connects
+  Sound.digRise();
+  spawnDigBurst(m.mesh.position);
+  diggingMounds.push({mesh:m.mesh, startAt:performance.now()});
+  setTimeout(()=> triggerMarker(m), DIG_SUSPENSE_MS);
 }
 
 function updateJuice(dt){
@@ -1146,6 +1338,7 @@ function triggerMarker(m){
   if(result.kind==='trap'){
     Sound.trap(); winterSay(Winter.TRAP, 'pleased');
     triggerShake(14, 380); flashHit();
+    nearMissPulse(pos);
   }
   else if(result.kind==='prey'){
     Sound.preyPop(result.chain);
@@ -1155,20 +1348,20 @@ function triggerMarker(m){
     if(result.chain===CHAIN_BONUS_START) winterSay(Winter.CHAIN, 'wary');
   } else if(result.kind==='dodged'){ Sound.preyPop(0); punchFov(3); }
   if(Run.state===State.GAME_OVER){
-    Sound.gameOver(); winterSay(Winter.GAME_OVER, 'pleased');
+    Sound.gameOver(); winterSay(bankFor(Run.roundNumber, Winter.GAME_OVER, Winter.GAME_OVER_LATE), 'pleased');
     playDeathSequence(); // delays refreshHud() until the collapse plays out
   } else {
-    if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(Winter.ROUND_CLEAR, 'wary'); }
+    if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(bankFor(Run.roundNumber, Winter.ROUND_CLEAR, Winter.ROUND_CLEAR_LATE), 'wary'); }
     refreshHud();
   }
 }
 function doCashOut(){
   Run.cashOut();
   if(Run.state===State.GAME_OVER){
-    Sound.gameOver(); winterSay(Winter.GAME_OVER,'pleased');
+    Sound.gameOver(); winterSay(bankFor(Run.roundNumber, Winter.GAME_OVER, Winter.GAME_OVER_LATE),'pleased');
     playDeathSequence();
   } else {
-    if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(Winter.ROUND_CLEAR,'wary'); }
+    if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(bankFor(Run.roundNumber, Winter.ROUND_CLEAR, Winter.ROUND_CLEAR_LATE),'wary'); }
     refreshHud();
   }
 }
@@ -1239,6 +1432,8 @@ function refreshHud(){
 
   hunting = false;
   vignette.style.opacity = 0;
+  camera.position.copy(CAMP_POS);
+  yaw = 0; pitch = 0;
 
   if(Run.state===State.IDLE){
     setWinterMood('calm');
@@ -1285,12 +1480,14 @@ function refreshHud(){
     document.getElementById('endBadge').textContent = '💀';
     const em = document.getElementById('endMessage'); em.className='message-toast trap';
     em.textContent = `게임 오버 — 전부 잃었다 (${Run.roundNumber}라운드까지 생존, 최고 ${GameManager.bestRound})`;
+    packmateSay(Packmate.GAME_OVER);
     document.getElementById('restartBtn').onclick = ()=>{ Run.startRun(); refreshHud(); };
     showOverlay('endOverlay');
   } else if(Run.state===State.RETREATED){
     document.getElementById('endBadge').textContent = '🌙';
     const em = document.getElementById('endMessage'); em.className='message-toast success';
     em.textContent = `무리가 귀환했다! ${Run.roundNumber}라운드 생존 (누적 명성 ${GameManager.totalPelts})`;
+    packmateSay(Packmate.RETREAT);
     document.getElementById('restartBtn').onclick = ()=>{ Run.startRun(); refreshHud(); };
     showOverlay('endOverlay');
   }
@@ -1312,11 +1509,15 @@ function loop(){
   updateMovement(dt);
   updateJuice(dt);
   updateDeath();
-  updateAim();
+  updateAim(dt);
   updatePaws(isMoving);
   updatePackmate(dt);
   updateSnow(dt);
   updateReveals();
+  updateDigging();
+  updateBursts(dt);
+  updateCampfire();
+  updateCampWolves();
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
 }
@@ -1329,7 +1530,8 @@ addEventListener('resize', ()=>{
 
 // expose for automated/headless verification
 window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField, clearField, refreshHud, triggerMarker,
-  tryDig, aimTarget: ()=>aimTarget, yaw:()=>yaw, pitch:()=>pitch, setYawPitch:(y,p)=>{yaw=y;pitch=p;}};
+  tryDig, aimTarget: ()=>aimTarget, yaw:()=>yaw, pitch:()=>pitch, setYawPitch:(y,p)=>{yaw=y;pitch=p;},
+  CAMP_POS, diggingMounds: ()=>diggingMounds, burstAnims: ()=>burstAnims, isDying};
 })();
 </script>
 </body>
