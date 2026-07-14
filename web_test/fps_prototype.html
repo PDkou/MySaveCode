@@ -169,7 +169,7 @@
         <input type="range" id="sensSlider" min="0.6" max="4.5" step="0.1">
         <span id="sensValue"></span>
       </div>
-      <div class="title-hint">WASD로 이동, 마우스를 움직이면 그대로 시점이 돌아갑니다(클릭할 필요 없음). 화면 가장자리에 커서가 막혀 한 바퀴가 안 돌아가면 감도를 올려보세요. 눈더미는 전부 똑같이 생겼습니다 — 다가가 조준한 뒤 <b>클릭/E로 직접 파헤쳐야</b> 정체가 드러납니다. 사냥감이면 무리의 식량, 함정이면 이번 사냥에서 모은 걸 전부 잃습니다. Q: 저장하고 멈추기 · F: 정찰(위험 감지)</div>
+      <div class="title-hint">WASD로 이동, 마우스를 움직이면 그대로 시점이 돌아갑니다(클릭할 필요 없음). 화면 가장자리에 커서가 막혀 한 바퀴가 안 돌아가면 감도를 올려보세요. 눈더미는 전부 똑같이 생겼습니다 — 다가가 조준한 뒤 <b>클릭/E로 직접 파헤쳐야</b> 정체가 드러납니다. 사냥감이면 무리의 식량, 함정이면 이번 사냥에서 모은 걸 전부 잃습니다. <b>눈 위 발자국</b>은 사냥감이 있을 확률이 높다는 단서일 뿐, 함정으로 이어질 수도 있습니다. 일부 사냥감은 예민해서 <b>거칠게 다가가면 도망칩니다</b> — Shift로 살금살금 걸으면 놀라지 않습니다. Q: 저장하고 멈추기 · F: 정찰(위험 감지)</div>
     </div>
   </div>
 
@@ -538,7 +538,8 @@ function playNoise(duration, gainPeak, lowpassHz){
 const Sound = {
   preyPop(chain){ playTone(620*(1+0.07*Math.min(chain||0,8)), 0.09, 'triangle', 0.14); },
   chainSpark(chain){ playTone(880+60*Math.min(chain,8), 0.14, 'sine', 0.13, 1200); },
-  footstep(){ playNoise(0.09, 0.05, 700); },
+  footstep(quiet){ playNoise(0.09, quiet ? 0.018 : 0.05, 700); },
+  spook(){ playTone(520, 0.14, 'triangle', 0.1, 900); },
   dig(){ playNoise(0.22, 0.12, 1200); },
   digRise(){ playTone(180, DIG_SUSPENSE_MS/1000, 'sine', 0.05, 520); }, // rising hum during the suspense window, Peggle-style building pitch
   anticipationTick(proximity){ playTone(300 + proximity*260, 0.06, 'sine', 0.045 + proximity*0.05); },
@@ -806,6 +807,87 @@ function disposeRevealObj(obj){ disposeSubtree(obj); }
 function clearField(){
   for(const m of markers){ scene.remove(m.mesh); disposeMound(m); }
   markers = [];
+  clearTrails();
+}
+
+// ============ Footprint trails: a readable-but-imperfect clue ============
+// A trail leading to a mound biases the odds toward prey, but doesn't
+// guarantee it — sometimes what walked through was the thing that got
+// caught, not the thing that's still there. Purely a rendering overlay;
+// Run's bag/economy is untouched, the trail just chooses which already-
+// decided token to point at.
+const footprintGeo = new THREE.CircleGeometry(0.1, 6);
+const footprintMat = new THREE.MeshBasicMaterial({color:0x3a4550, transparent:true, opacity:0.32, depthWrite:false});
+SHARED_GEOMETRIES.add(footprintGeo);
+let trailGroups = [];
+function clearTrails(){
+  for(const g of trailGroups) scene.remove(g);
+  trailGroups = [];
+}
+function buildTrail(from, to){
+  const g = new THREE.Group();
+  const steps = 7 + Math.floor(Math.random()*4);
+  for(let i=1;i<=steps;i++){
+    const t = i/(steps+1);
+    const x = from.x + (to.x-from.x)*t + Math.sin(t*8+i)*0.3*(1-t*0.4);
+    const z = from.z + (to.z-from.z)*t + Math.cos(t*7+i)*0.2*(1-t*0.4);
+    const side = (i%2===0) ? 0.14 : -0.14;
+    const print = new THREE.Mesh(footprintGeo, footprintMat);
+    print.rotation.x = -Math.PI/2;
+    print.rotation.z = Math.random()*0.6-0.3;
+    print.position.set(x+side*0.4, 0.015, z);
+    print.scale.set(0.8, 1.4, 1);
+    g.add(print);
+  }
+  scene.add(g);
+  trailGroups.push(g);
+}
+const TRAIL_PREY_BIAS = 0.7; // most trails point at real prey; some are decoys onto traps
+function spawnTrails(){
+  const preyMarkers = markers.filter(m=>m.type!=='trap');
+  const trapMarkers = markers.filter(m=>m.type==='trap');
+  const trailCount = Math.min(4, markers.length);
+  const chosen = [];
+  for(let i=0;i<trailCount;i++){
+    const wantTrap = trapMarkers.length>0 && Math.random() > TRAIL_PREY_BIAS;
+    const pool = (wantTrap ? trapMarkers : preyMarkers).filter(m=>!chosen.includes(m));
+    const fallback = markers.filter(m=>!chosen.includes(m));
+    const pick = (pool.length ? pool : fallback)[Math.floor(Math.random()*(pool.length||fallback.length))];
+    if(!pick) break;
+    chosen.push(pick);
+    const angle = Math.random()*Math.PI*2, startDist = FIELD_RADIUS+2+Math.random()*3;
+    buildTrail(
+      {x: pick.mesh.position.x+Math.cos(angle)*startDist, z: pick.mesh.position.z+Math.sin(angle)*startDist},
+      {x: pick.mesh.position.x, z: pick.mesh.position.z}
+    );
+  }
+}
+
+// ============ Spook: alert prey bolts if you approach carelessly ============
+const SPOOK_RADIUS = 5.0, SPOOK_RATE = 0.55;
+function updateSpook(dt){
+  if(!hunting) return;
+  for(const m of markers){
+    if(m.triggered || !m.alert) continue;
+    const d = m.mesh.position.distanceTo(camera.position);
+    if(d < SPOOK_RADIUS && isMoving && !isSneaking){
+      const proximity = 1 - d/SPOOK_RADIUS;
+      m.spookMeter += dt * SPOOK_RATE * (0.4+proximity);
+      if(m.spookMeter >= 1) fleeMound(m);
+    } else if(m.spookMeter > 0){
+      m.spookMeter = Math.max(0, m.spookMeter - dt*0.3);
+    }
+  }
+}
+function fleeMound(m){
+  m.spookMeter = 0;
+  const angle = Math.random()*Math.PI*2, dist = 4+Math.random()*3;
+  const nx = Math.max(-FIELD_RADIUS, Math.min(FIELD_RADIUS, m.mesh.position.x + Math.cos(angle)*dist));
+  const nz = Math.max(-FIELD_RADIUS, Math.min(FIELD_RADIUS, m.mesh.position.z + Math.sin(angle)*dist));
+  m.mesh.position.set(nx, 0, nz);
+  Sound.spook();
+  spawnFloatPop(m.mesh.position, '...!');
+  triggerShake(3, 160);
 }
 function findSpot(placed){
   for(let a=0;a<24;a++){
@@ -910,8 +992,14 @@ function spawnField(bag){
     mesh.position.set(pos.x, 0, pos.z);
     mesh.rotation.y = Math.random()*Math.PI*2;
     scene.add(mesh);
-    markers.push({uid:token.uid, mesh, triggered:false, scouted:false});
+    // some prey is "alert": careless approach lets it bolt to a new spot
+    // before you can dig — a real skill (patience/positioning) layered on
+    // top of the dig, not a way to dodge traps.
+    const isPrey = token.type !== 'trap';
+    markers.push({uid:token.uid, mesh, triggered:false, scouted:false,
+      type:token.type, alert: isPrey && Math.random()<0.4, spookMeter:0});
   }
+  spawnTrails();
 }
 
 // reveal: mound sinks away, the animal (or trap jaws) pops out where it stood
@@ -1183,26 +1271,34 @@ function updateDeath(){
 
 let isMoving = false;
 let bobPhase = 0, lastStepAt = 0;
+// 살금살금 걷기(sneak): Shift를 누르면 느려지지만 발소리가 줄고 놀람
+// 반경도 줄어든다 — 함정을 피하는 스킬이 아니라 "살아있는" 사냥감을
+// 놓치지 않기 위한 스킬. 이동 자체가 사냥의 일부가 되도록 하는 것이 핵심.
+const SNEAK_SPEED_MULT = 0.5;
+let isSneaking = false;
 function updateMovement(dt){
   camera.rotation.y = yaw; camera.rotation.x = pitch;
-  if(!hunting){ isMoving = false; return; }
+  if(!hunting){ isMoving = false; isSneaking = false; return; }
   let mf = (keys['KeyW']?1:0) - (keys['KeyS']?1:0);
   let mr = (keys['KeyD']?1:0) - (keys['KeyA']?1:0);
   const len = Math.hypot(mf,mr);
   if(len>0){ mf/=len; mr/=len; }
   isMoving = len > 0;
+  isSneaking = isMoving && !!(keys['ShiftLeft'] || keys['ShiftRight']);
+  const speed = SPEED * (isSneaking ? SNEAK_SPEED_MULT : 1);
   camera.getWorldDirection(_dir); _dir.y=0; _dir.normalize();
   _right.crossVectors(_dir, camera.up).normalize();
-  camera.position.addScaledVector(_dir, mf*SPEED*dt);
-  camera.position.addScaledVector(_right, mr*SPEED*dt);
+  camera.position.addScaledVector(_dir, mf*speed*dt);
+  camera.position.addScaledVector(_right, mr*speed*dt);
   camera.position.x = Math.max(-30, Math.min(30, camera.position.x));
   camera.position.z = Math.max(-30, Math.min(30, camera.position.z));
-  // head bob + snow-crunch footsteps while walking
+  // head bob + snow-crunch footsteps while walking (sneaking = quieter, less bob)
   if(isMoving){
-    bobPhase += dt * 9.5;
-    camera.position.y = 1.6 + Math.sin(bobPhase) * 0.045;
+    bobPhase += dt * (isSneaking ? 6.5 : 9.5);
+    camera.position.y = 1.6 + Math.sin(bobPhase) * (isSneaking ? 0.025 : 0.045);
     const now = performance.now();
-    if(now - lastStepAt > 420){ lastStepAt = now; Sound.footstep(); }
+    const stepInterval = isSneaking ? 640 : 420;
+    if(now - lastStepAt > stepInterval){ lastStepAt = now; Sound.footstep(isSneaking); }
   } else if(!isDying()){
     camera.position.y += (1.6 - camera.position.y) * Math.min(1, dt*8);
   }
@@ -1454,7 +1550,7 @@ function refreshHud(){
       chainLine.style.fontSize = (18 + Math.min(Run.chain,8)) + 'px';
     }
     const scoutHint = Run.scoutsLeft>0 ? ` · F: 정찰 (${Run.scoutsLeft})` : '';
-    hint.textContent = `마우스: 시점 · WASD: 이동 · 조준 후 클릭/E: 파헤치기 · Q: 저장하고 멈추기${scoutHint}`;
+    hint.textContent = `마우스: 시점 · WASD: 이동 · Shift: 살금살금 · 조준 후 클릭/E: 파헤치기 · Q: 저장하고 멈추기${scoutHint}`;
     hint.style.display = 'block';
     return;
   }
@@ -1555,6 +1651,7 @@ function loop(){
   updateReveals();
   updateDigging();
   updateBursts(dt);
+  updateSpook(dt);
   updateCampfire();
   updateCampWolves();
   renderer.render(scene, camera);
@@ -1571,7 +1668,8 @@ addEventListener('resize', ()=>{
 window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField, clearField, refreshHud, triggerMarker,
   tryDig, aimTarget: ()=>aimTarget, yaw:()=>yaw, pitch:()=>pitch, setYawPitch:(y,p)=>{yaw=y;pitch=p;},
   CAMP_POS, diggingMounds: ()=>diggingMounds, burstAnims: ()=>burstAnims, isDying,
-  mouseSensitivity: ()=>mouseSensitivity, setMouseSensitivity: v=>{mouseSensitivity=v;}};
+  mouseSensitivity: ()=>mouseSensitivity, setMouseSensitivity: v=>{mouseSensitivity=v;},
+  isSneaking: ()=>isSneaking, trailGroups: ()=>trailGroups, fleeMound};
 })();
 </script>
 </body>
