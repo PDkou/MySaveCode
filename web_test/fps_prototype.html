@@ -1283,6 +1283,8 @@ function tryEngagePointerLock(){
   if(document.pointerLockElement === canvas) return;
   canvas.requestPointerLock?.().catch(()=>{});
 }
+let pointerLocked = false;
+document.addEventListener('pointerlockchange', ()=>{ pointerLocked = document.pointerLockElement === canvas; });
 document.addEventListener('pointerlockerror', ()=>{}); // expected/silent inside restricted iframes
 
 // Digging a mound and stepping through the trailhead gate use the same
@@ -1307,11 +1309,23 @@ addEventListener('keydown', e=>{
   }
 });
 addEventListener('keyup', e=> keys[e.code]=false);
+// Mouse acceleration: without Pointer Lock actually engaged, mousemove events
+// stop firing the instant the OS cursor hits the edge of the playable area —
+// no amount of extra sensitivity fixes that, because a flat multiplier still
+// needs the *same total pixel travel* for a given turn. What actually gets a
+// full 360° out of a limited travel budget is scaling the turn rate with how
+// fast the mouse is moving: a slow, deliberate nudge stays precise for aiming,
+// but a fast flick — even across the same short physical distance — covers
+// far more rotation, the same idea behind a real FPS's "mouse acceleration"
+// option. This works whether or not Pointer Lock is active.
+const ACCEL_GAIN = 0.045, ACCEL_CAP = 3.2;
 addEventListener('mousemove', e=>{
   if(!hunting && !exploring) return;
-  const sens = BASE_MOUSE_SENS * mouseSensitivity;
-  yaw -= (e.movementX||0) * sens;
-  pitch = Math.max(-1.3, Math.min(1.3, pitch - (e.movementY||0)*sens));
+  const mx = e.movementX||0, my = e.movementY||0;
+  const accel = Math.min(ACCEL_CAP, 1 + Math.hypot(mx, my)*ACCEL_GAIN);
+  const sens = BASE_MOUSE_SENS * mouseSensitivity * accel;
+  yaw -= mx * sens;
+  pitch = Math.max(-1.3, Math.min(1.3, pitch - my*sens));
 });
 canvas.addEventListener('click', ()=>{ if(hunting||exploring){ tryInteract(); tryEngagePointerLock(); } });
 
@@ -1878,7 +1892,8 @@ window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField
   tryJump, grounded: ()=>grounded, jumpOffset: ()=>jumpOffset, isQuiet,
   Tutorial, doScout,
   exploring: ()=>exploring, trailheadInRange: ()=>trailheadInRange, TRAILHEAD_POS, enterHunt,
-  startPrologue, beginCamp, prologueIndex: ()=>prologueIndex, PROLOGUE_LINES, CAMP_BOUNDS};
+  startPrologue, beginCamp, prologueIndex: ()=>prologueIndex, PROLOGUE_LINES, CAMP_BOUNDS,
+  pointerLocked: ()=>pointerLocked};
 })();
 </script>
 </body>
