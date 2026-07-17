@@ -58,6 +58,15 @@
   .hint{position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-size:12.5px; color:var(--muted);
     background:rgba(10,17,25,.55); padding:6px 14px; border-radius:8px; white-space:nowrap;}
 
+  /* one-time contextual teaching toasts, fired by real gameplay events instead of
+     front-loading every mechanic into the title screen (see 2026-07-10 playtest report) */
+  .tutorial-toast{position:absolute; top:172px; left:50%; transform:translateX(-50%) translateY(-6px);
+    max-width:42ch; font-size:12.5px; line-height:1.55; text-align:center; color:var(--text);
+    background:rgba(10,17,25,.82); border:1px solid var(--accent); border-radius:10px; padding:9px 16px;
+    opacity:0; pointer-events:none; z-index:7; transition:opacity .35s ease, transform .35s ease;}
+  .tutorial-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .tutorial-toast b{color:var(--accent);}
+
   .message-toast{position:absolute; bottom:70px; left:50%; transform:translateX(-50%); font-size:14px; font-weight:600;
     text-align:center; max-width:56ch; text-shadow:0 2px 6px rgba(0,0,0,.7);}
   .message-toast.success{color:var(--success);}
@@ -156,6 +165,7 @@
     <div class="interact-prompt" id="interactPrompt" style="display:none;"><b>클릭 / E</b> 파헤치기</div>
     <div class="message-toast" id="messageToast"></div>
     <div class="hint" id="hintLine" style="display:none;"></div>
+    <div class="tutorial-toast" id="tutorialToast"></div>
   </div>
 
   <div class="overlay" id="titleOverlay">
@@ -169,7 +179,7 @@
         <input type="range" id="sensSlider" min="0.6" max="4.5" step="0.1">
         <span id="sensValue"></span>
       </div>
-      <div class="title-hint">WASD로 이동, 마우스를 움직이면 그대로 시점이 돌아갑니다(클릭할 필요 없음). 화면 가장자리에 커서가 막혀 한 바퀴가 안 돌아가면 감도를 올려보세요. 눈더미는 전부 똑같이 생겼습니다 — 다가가 조준한 뒤 <b>클릭/E로 직접 파헤쳐야</b> 정체가 드러납니다. 사냥감이면 무리의 식량, 함정이면 이번 사냥에서 모은 걸 전부 잃습니다. <b>눈 위 발자국</b>은 사냥감이 있을 확률이 높다는 단서일 뿐, 함정으로 이어질 수도 있습니다. 일부 사냥감은 예민해서 <b>거칠게 다가가면 도망칩니다</b> — Shift로 살금살금 걸으면 놀라지 않습니다(단, Space로 점프해서 착지하면 살금살금 중이어도 소리가 납니다). Q: 저장하고 멈추기 · F: 정찰(위험 감지)</div>
+      <div class="title-hint">WASD로 이동, 마우스로 시점 회전(클릭 불필요) — 가장자리에 막혀 한 바퀴가 안 돌아가면 감도를 올려보세요. 눈더미에 다가가 조준한 뒤 <b>클릭/E로 파헤쳐야</b> 정체가 드러납니다. 사냥감이면 무리의 식량, 함정이면 이번 사냥에서 모은 걸 전부 잃습니다. 발자국·은신·정찰 같은 요령은 직접 사냥하며 그때그때 알려드립니다.</div>
     </div>
   </div>
 
@@ -812,6 +822,28 @@ function clearField(){
   clearTrails();
 }
 
+// ============ Tutorial: teach mechanics where they happen, not before ============
+// The title screen used to dump every mechanic (footprints, sneak, jump-noise)
+// into one paragraph before the player ever saw them in motion — per the
+// 2026-07-10 imagined-playtest report, that's the single biggest onboarding
+// risk. Each nuance now surfaces once, as a short toast, the first time it's
+// actually relevant in-game; the title screen only covers what's true from
+// the very first second (movement, dig-to-reveal, trap/prey stakes).
+const Tutorial = {
+  seen: (()=>{ try{ return JSON.parse(localStorage.getItem('hp_fps_tutorial_seen')||'{}'); }catch(e){ return {}; } })(),
+  _hideTimer: null,
+  show(key, text){
+    if(this.seen[key]) return;
+    this.seen[key] = true;
+    localStorage.setItem('hp_fps_tutorial_seen', JSON.stringify(this.seen));
+    const el = document.getElementById('tutorialToast');
+    el.innerHTML = text;
+    el.classList.add('show');
+    clearTimeout(this._hideTimer);
+    this._hideTimer = setTimeout(()=> el.classList.remove('show'), 5400);
+  },
+};
+
 // ============ Footprint trails: a readable-but-imperfect clue ============
 // A trail leading to a mound biases the odds toward prey, but doesn't
 // guarantee it — sometimes what walked through was the thing that got
@@ -863,6 +895,7 @@ function spawnTrails(){
       {x: pick.mesh.position.x, z: pick.mesh.position.z}
     );
   }
+  if(chosen.length) Tutorial.show('trail', '눈 위 <b>발자국</b>은 사냥감이 있을 확률이 높다는 단서일 뿐 — 함정으로 이어질 수도 있다.');
 }
 
 // ============ Spook: alert prey bolts if you approach carelessly ============
@@ -884,6 +917,7 @@ function updateSpook(dt){
   }
 }
 function fleeMound(m){
+  Tutorial.show('flee', '사냥감이 인기척을 느끼고 도망쳤다 — <b>Shift</b>로 살금살금 걸으면 놀라지 않는다.');
   m.spookMeter = 0;
   const angle = Math.random()*Math.PI*2, dist = 4+Math.random()*3;
   const nx = Math.max(-FIELD_RADIUS, Math.min(FIELD_RADIUS, m.mesh.position.x + Math.cos(angle)*dist));
@@ -1317,6 +1351,7 @@ const JUMP_SPEED = 4.6, JUMP_GRAVITY = 13.0;
 let jumpOffset = 0, jumpVel = 0, grounded = true;
 function tryJump(){
   if(!hunting || !grounded) return;
+  Tutorial.show('jump', '착지하면 <b>살금살금 중이어도 소리가 나</b> 주변 사냥감이 놀랄 수 있다.');
   grounded = false;
   jumpVel = JUMP_SPEED;
   Sound.jump();
@@ -1531,6 +1566,7 @@ function doCashOut(){
 function doScout(){
   const peeked = Run.scout();
   if(!peeked) return;
+  Tutorial.show('scout', '<b>정찰(F)</b>로 눈더미 하나의 정체를 미리 엿볼 수 있다 — 사냥마다 제한된 횟수만 가능하다.');
   highlightMarker(peeked.uid, peeked.type==='trap');
   if(peeked.type!=='trap') winterSay(Winter.SCOUT);
   refreshHud();
@@ -1709,7 +1745,8 @@ window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField
   CAMP_POS, diggingMounds: ()=>diggingMounds, burstAnims: ()=>burstAnims, isDying,
   mouseSensitivity: ()=>mouseSensitivity, setMouseSensitivity: v=>{mouseSensitivity=v;},
   isSneaking: ()=>isSneaking, trailGroups: ()=>trailGroups, fleeMound,
-  tryJump, grounded: ()=>grounded, jumpOffset: ()=>jumpOffset, isQuiet};
+  tryJump, grounded: ()=>grounded, jumpOffset: ()=>jumpOffset, isQuiet,
+  Tutorial, doScout};
 })();
 </script>
 </body>
