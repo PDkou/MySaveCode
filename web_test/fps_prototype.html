@@ -332,14 +332,20 @@ const CHAIN_BONUS_START=4, CHAIN_BONUS_CAP=3;
 
 // ============ Ending: a defined final round instead of infinite scaling ============
 // 2026-07-21 회의: "결국 엔딩이 뭔지 명확하지 않다"는 지적에 대한 대응 (결합형,
-// 옵션 3). FINAL_ROUND는 시뮬레이션으로 조정 예정인 1차 추정값 — 실제 도달
-// 난이도는 대량 시뮬레이션(아래 sim_ending.js 참고)으로 검증 필요.
+// 옵션 3). 튜닝 근거(fresh-player, charm-blind 봇 500회 기준, sim_ending.js/
+// sim_natural_curve.js — 저장소에 커밋 안 함):
+//   - FINAL_ROUND=8: 자연 성장 곡선상 라운드 7 도달률 64%, 라운드 8 도달률
+//     41~45% — "쉽게 닿지도, 사실상 불가능하지도 않은" 지점으로 유지
+//   - FINAL_EXTRA_TRAPS_BY_TIER 최초값 [2,3,4,5]는 도달 후 승리율이 약
+//     63%로 최종 관문치고 너무 관대해 [4,5,6,7]로 상향 — 도달 후 승리율
+//     약 48%(거의 반반)로 재검증. 실제 사람 플레이는 유물 선택을 더 잘하니
+//     이 수치보다 유리할 가능성이 높음(봇은 유물을 등급 무시하고 아무거나 고름)
 // META_TIERS는 누적 명성(GameManager.totalPelts) 구간별로 최종 조우의 함정
 // 개수를 늘리고 겨울의 승리 대사를 더 깊게 만든다 — Hades류처럼 메타 진행이
 // "버프"가 아니라 "더 진짜인 마지막 도전"으로 이어지게 하려는 의도.
-const FINAL_ROUND = 8;
+let FINAL_ROUND = 8; // let (not const): exposed via __HP for balance-simulation overrides
 const META_TIERS = [0, 100, 250, 500]; // totalPelts thresholds; index = tier
-const FINAL_EXTRA_TRAPS_BY_TIER = [2, 3, 4, 5];
+const FINAL_EXTRA_TRAPS_BY_TIER = [4, 5, 6, 7];
 const DEAL_CHANCE=0.35, DEAL_MIN_ROUND=2;
 const DEAL_DEFS = [
   {id:"hunger_price", name:"굶주림의 대가", desc:"식량 %d을 바쳐라. 다음 사냥의 먹잇감 가치에 +2를 얹어주지."},
@@ -2098,7 +2104,7 @@ window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField
   updateQuotaPanel, quotaReachedThisAttempt: ()=>quotaReachedThisAttempt,
   updateTension, huntStartAt: ()=>huntStartAt, setNextHeartbeatAt: v=>{nextHeartbeatAt=v;},
   refreshTrophyPile, trophyPile: ()=>trophyPile, Sound,
-  FINAL_ROUND, META_TIERS, FINAL_EXTRA_TRAPS_BY_TIER};
+  FINAL_ROUND: ()=>FINAL_ROUND, setFinalRound: v=>{FINAL_ROUND=v;}, META_TIERS, FINAL_EXTRA_TRAPS_BY_TIER};
 })();
 </script>
 </body>
