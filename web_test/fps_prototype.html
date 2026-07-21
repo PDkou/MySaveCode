@@ -24,10 +24,10 @@
   .hud{position:fixed; inset:0; pointer-events:none; z-index:5;}
   .hud .clickable{pointer-events:auto;}
 
-  .topbar{position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:center;
-    padding:14px 26px; background:linear-gradient(rgba(10,17,25,.75), transparent);}
+  .topbar{position:absolute; top:0; left:0; right:0; display:flex; flex-wrap:wrap; justify-content:space-between;
+    align-items:center; gap:8px 20px; padding:14px 26px; background:linear-gradient(rgba(10,17,25,.75), transparent);}
   .brand{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); font-weight:700;}
-  .stats{display:flex; gap:20px; font-variant-numeric:tabular-nums;}
+  .stats{display:flex; flex-wrap:wrap; gap:8px 20px; font-variant-numeric:tabular-nums;}
   .stat{display:flex; flex-direction:column; align-items:flex-end; gap:2px;}
   .stat .label{font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);}
   .stat .value{font-size:15px; font-weight:700; color:var(--accent);}
@@ -40,7 +40,8 @@
 
   .interact-prompt{position:absolute; left:50%; top:calc(50% + 34px); transform:translateX(-50%);
     font-size:14px; font-weight:700; color:var(--text); background:rgba(10,17,25,.7);
-    border:1px solid rgba(237,173,63,.5); padding:7px 16px; border-radius:9px; white-space:nowrap;}
+    border:1px solid rgba(237,173,63,.5); padding:7px 16px; border-radius:9px;
+    max-width:min(420px, 90vw); width:max-content; text-align:center;}
   .interact-prompt b{color:var(--success);}
 
   /* bottom-left risk gauge — out of the way of the top-center Winter stage */
@@ -52,11 +53,24 @@
   .risk-bar .fill{height:100%; width:0%; border-radius:3px; background:linear-gradient(90deg, #edad3f, #bf4033);
     transition:width .3s ease;}
 
+  /* bottom-right goal gauge, mirroring risk-panel — "how close am I to a clear
+     right now" was previously only a small number in the topbar, easy to miss
+     while actually exploring the field (2026-07-21 회의 지적) */
+  .quota-panel{position:absolute; right:22px; bottom:56px; width:220px; display:flex; flex-direction:column; gap:6px;
+    background:rgba(10,17,25,.55); border:1px solid var(--border); border-radius:10px; padding:10px 14px;
+    transition:border-color .25s ease, box-shadow .25s ease;}
+  .quota-panel .risk-bar .fill{background:linear-gradient(90deg, #5b7a8f, #8cbfe0);}
+  .quota-panel .risk-text{color:var(--accent); font-weight:700;}
+  .quota-panel.reached{border-color:var(--success); box-shadow:0 0 18px -4px rgba(237,173,63,.5);}
+  .quota-panel.reached .risk-bar .fill{background:linear-gradient(90deg, #edad3f, #f7cf7a);}
+  .quota-panel.reached .risk-text{color:var(--success);}
+
   .chain-line{position:absolute; left:50%; top:calc(50% - 78px); transform:translateX(-50%);
     text-align:center; font-weight:800; font-size:18px; color:var(--success); text-shadow:0 2px 10px rgba(0,0,0,.8);}
 
   .hint{position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-size:12.5px; color:var(--muted);
-    background:rgba(10,17,25,.55); padding:6px 14px; border-radius:8px; white-space:nowrap;}
+    background:rgba(10,17,25,.55); padding:6px 14px; border-radius:8px;
+    max-width:min(760px, 94vw); width:max-content; text-align:center; line-height:1.5;}
 
   /* one-time contextual teaching toasts, fired by real gameplay events instead of
      front-loading every mechanic into the title screen (see 2026-07-10 playtest report) */
@@ -159,6 +173,12 @@
       <div class="risk-title">위험도</div>
       <div class="risk-bar"><div class="fill" id="riskFill"></div></div>
       <div class="risk-text" id="riskText"></div>
+    </div>
+
+    <div class="quota-panel" id="quotaPanel" style="display:none;">
+      <div class="risk-title">목표</div>
+      <div class="risk-bar"><div class="fill" id="quotaFill"></div></div>
+      <div class="risk-text" id="quotaText"></div>
     </div>
     <div class="chain-line" id="chainLine"></div>
     <div class="crosshair" id="crosshair" style="display:none;"></div>
@@ -571,6 +591,8 @@ const Sound = {
   roundClear(){ playTone(500,0.12,'sine',0.14); setTimeout(()=>playTone(660,0.12,'sine',0.14),110); setTimeout(()=>playTone(880,0.2,'sine',0.15),220); },
   retreat(){ playTone(440,0.5,'sine',0.12,330); },
   gameOver(){ playTone(260,0.6,'sawtooth',0.13,90); },
+  quotaReached(){ playTone(660,0.1,'sine',0.13); setTimeout(()=>playTone(990,0.18,'sine',0.14),100); },
+  heartbeat(tension){ playTone(46,0.15,'sine',0.03+tension*0.05); },
 };
 
 // ============ Three.js scene ============
@@ -866,6 +888,36 @@ function disposeSubtree(obj){
 function disposeMound(m){ disposeSubtree(m.mesh); }
 function disposeRevealObj(obj){ disposeSubtree(obj); }
 
+// ============ Trophy pile: 누적 명성 made visible at camp ============
+// GameManager.totalPelts was previously only a number in a corner UI stat —
+// per the 총괄기획 "환경 스토리텔링" proposal from the 2026-07-21 회의, give
+// it a physical presence: a pile of pelts by the campfire that visibly grows
+// as the pack survives more runs, so progress reads as a place, not a stat.
+const peltGeo = new THREE.BoxGeometry(0.5, 0.08, 0.34);
+SHARED_GEOMETRIES.add(peltGeo);
+let trophyPile = null;
+function refreshTrophyPile(){
+  if(trophyPile){ disposeSubtree(trophyPile); camp.remove(trophyPile); trophyPile = null; }
+  const tier = Math.min(10, Math.floor(GameManager.totalPelts/15));
+  if(tier <= 0) return;
+  const g = new THREE.Group();
+  for(let i=0;i<tier;i++){
+    // each pelt gets its own material instance (not shared) so disposeSubtree
+    // can safely dispose it on rebuild without breaking the next pile
+    const mat = new THREE.MeshStandardMaterial({color:0x8a5a34, roughness:0.9});
+    const pelt = new THREE.Mesh(peltGeo, mat);
+    pelt.position.set((Math.random()-0.5)*0.22, 0.03 + i*0.075, (Math.random()-0.5)*0.16);
+    pelt.rotation.y = Math.random()*Math.PI;
+    pelt.rotation.z = (Math.random()-0.5)*0.15;
+    g.add(pelt);
+  }
+  g.position.set(2.3, 0, -3.1);
+  addContactShadow(g, 0.5, 0.28);
+  camp.add(g);
+  trophyPile = g;
+}
+refreshTrophyPile();
+
 function clearField(){
   for(const m of markers){ scene.remove(m.mesh); disposeMound(m); }
   markers = [];
@@ -1154,6 +1206,17 @@ function spawnFloatPop(worldPos, text){
   document.body.appendChild(el);
   setTimeout(()=> el.remove(), 850);
 }
+// Screen-anchored variant for HUD callouts that aren't tied to a 3D point
+// (e.g. the quota panel in the corner) — spawnFloatPop's camera projection
+// degenerates for points at/behind the camera, so this skips that entirely.
+function spawnScreenPop(x, y, text){
+  const el = document.createElement('div');
+  el.className = 'float-pop';
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(()=> el.remove(), 850);
+}
 
 // ============ First-person paws: your "hands" ============
 // Attached to the camera so they frame the bottom of the view; bob while
@@ -1265,6 +1328,27 @@ function updatePackmate(dt){
 let yaw=0, pitch=0;
 let hunting = false; // movement/look only active while actually in the field (DRAWING)
 let exploring = false; // free-roam at camp (IDLE, no pending deal) — walk to the trailhead to hunt
+
+// ============ Ambient tension: a slow heartbeat that quickens with risk ============
+// Purely atmospheric — never touches trap odds, never gives skill a way to
+// dodge risk. Rate is driven mostly by the remaining trap ratio (the same
+// number already shown in the risk panel) and a little by how long you've
+// lingered in the field this attempt, since a big part of an extraction
+// loop's tension is "the longer I push it, the worse this could get."
+// 2026-07-21 회의: "긴장감이 없다"는 지적에 대한 첫 대응.
+let huntStartAt = 0, nextHeartbeatAt = 0;
+function updateTension(){
+  if(!hunting){ nextHeartbeatAt = 0; return; }
+  const now = performance.now();
+  if(nextHeartbeatAt === 0){ nextHeartbeatAt = now + 1200; return; }
+  if(now < nextHeartbeatAt) return;
+  const traps = Run.remainingTrapCount(), tiles = Math.max(Run.remainingTileCount(), 1);
+  const riskT = Math.min(1, traps/tiles);
+  const elapsedT = Math.min(1, (now-huntStartAt)/45000); // ramps up over ~45s of lingering
+  const tension = Math.min(1, riskT*0.7 + elapsedT*0.3);
+  Sound.heartbeat(tension);
+  nextHeartbeatAt = now + (1000 - tension*550); // 1000ms (calm) down to ~450ms (tense) between beats
+}
 
 // Sensitivity is user-adjustable and persisted: without Pointer Lock (see
 // below), a full 360° turn is bounded by how far the OS cursor can travel
@@ -1475,8 +1559,35 @@ function enterHunt(){
   spawnField(Run.bag);
   camera.position.set(0, 1.6, 0);
   yaw = 0; pitch = 0;
+  quotaReachedThisAttempt = false;
+  huntStartAt = performance.now();
+  nextHeartbeatAt = 0;
   refreshHud();
   tryEngagePointerLock();
+}
+
+// ============ Goal gauge: "would cashing out right now clear the round?" ============
+// The quota check only ever ran against Run.totalFood (only updated on an
+// actual cash-out), so mid-hunt there was no way to see progress toward the
+// goal without doing the arithmetic yourself off the small topbar number —
+// per the 2026-07-21 회의, that's exactly why the goal never felt visible or
+// earned. This shows the *projected* total (banked + this attempt's pot) live.
+let quotaReachedThisAttempt = false;
+function updateQuotaPanel(){
+  const panel = document.getElementById('quotaPanel');
+  if(Run.state !== State.DRAWING){ panel.style.display = 'none'; return; }
+  const projected = Run.totalFood + Run.pot;
+  const pct = Math.min(100, Math.round(100*projected/Math.max(Run.quota,1)));
+  document.getElementById('quotaFill').style.width = pct + '%';
+  document.getElementById('quotaText').textContent = `${projected} / ${Run.quota}`;
+  const reached = projected >= Run.quota;
+  panel.classList.toggle('reached', reached);
+  panel.style.display = 'flex';
+  if(reached && !quotaReachedThisAttempt){
+    quotaReachedThisAttempt = true;
+    Sound.quotaReached();
+    spawnScreenPop(innerWidth - 130, innerHeight - 150, '목표 달성!');
+  }
 }
 
 // ============ Aiming + digging: the deliberate interaction ============
@@ -1644,6 +1755,7 @@ function triggerMarker(m){
   else if(result.kind==='prey'){
     Sound.preyPop(result.chain);
     spawnFloatPop(pos, result.chainBonus>0 ? `+${result.value} 🔥` : `+${result.value}`);
+    updateQuotaPanel();
     punchFov(4 + result.chainBonus*3);
     if(result.chainBonus>0) Sound.chainSpark(result.chain);
     if(result.chain===CHAIN_BONUS_START) winterSay(Winter.CHAIN, 'wary');
@@ -1722,6 +1834,7 @@ function refreshHud(){
     document.getElementById('riskText').textContent = `함정 ${traps} / 남은 눈더미 ${tiles} (약 ${odds}%)`;
     document.getElementById('riskFill').style.width = odds + '%';
     vignette.style.opacity = Math.min(0.6, (traps/Math.max(tiles,1)) * 1.1);
+    updateQuotaPanel();
     if(Run.chain>=2){
       chainLine.textContent = `🔥 연쇄 x${Run.chain}`;
       chainLine.style.fontSize = (18 + Math.min(Run.chain,8)) + 'px';
@@ -1793,6 +1906,7 @@ function refreshHud(){
     const em = document.getElementById('endMessage'); em.className='message-toast success';
     em.textContent = `무리가 귀환했다! ${Run.roundNumber}라운드 생존 (누적 명성 ${GameManager.totalPelts})`;
     packmateSay(Packmate.RETREAT);
+    refreshTrophyPile();
     document.getElementById('restartBtn').onclick = ()=>{ Run.startRun(); refreshHud(); };
     showOverlay('endOverlay');
   }
@@ -1872,6 +1986,7 @@ function loop(){
   updateDigging();
   updateBursts(dt);
   updateSpook(dt);
+  updateTension();
   updateCampfire();
   updateCampWolves();
   updateTrailheadGate();
@@ -1895,7 +2010,10 @@ window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField
   Tutorial, doScout,
   exploring: ()=>exploring, trailheadInRange: ()=>trailheadInRange, TRAILHEAD_POS, enterHunt,
   startPrologue, beginCamp, prologueIndex: ()=>prologueIndex, PROLOGUE_LINES, CAMP_BOUNDS,
-  pointerLocked: ()=>pointerLocked};
+  pointerLocked: ()=>pointerLocked,
+  updateQuotaPanel, quotaReachedThisAttempt: ()=>quotaReachedThisAttempt,
+  updateTension, huntStartAt: ()=>huntStartAt, setNextHeartbeatAt: v=>{nextHeartbeatAt=v;},
+  refreshTrophyPile, trophyPile: ()=>trophyPile, Sound};
 })();
 </script>
 </body>
