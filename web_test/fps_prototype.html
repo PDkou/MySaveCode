@@ -839,6 +839,44 @@ function updateTrailheadGate(){
   trailheadGate.lantern.material.emissiveIntensity = 1.2 + Math.sin(t)*0.3;
 }
 
+// ============ Shop altar: the charm shop is a place too, not just a popup ============
+// Same reasoning as the trailhead gate — approach + click/E to open, instead
+// of the SHOP state slapping a card-picker overlay over the screen the
+// instant a round clears. 2026-07-21 회의: 다음 과제 1순위로 지정.
+const ALTAR_POS = new THREE.Vector3(-7, 0, -30);
+function buildShopAltar(){
+  const g = new THREE.Group();
+  const baseMat = new THREE.MeshStandardMaterial({color:0x3a3a42, roughness:0.9});
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.7, 0.5, 8), baseMat);
+  base.position.y = 0.25;
+  g.add(base);
+  const gems = [];
+  for(let i=0;i<3;i++){
+    const gemMat = new THREE.MeshStandardMaterial({color:0xf2c477, emissive:0xedad3f, emissiveIntensity:1.3});
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.14, 0), gemMat);
+    const a = (i/3)*Math.PI*2;
+    gem.position.set(Math.cos(a)*0.34, 0.78, Math.sin(a)*0.34);
+    g.add(gem);
+    gems.push(gem);
+  }
+  const glow = new THREE.PointLight(0xedad3f, 1.0, 8, 2);
+  glow.position.set(0, 0.95, 0);
+  g.add(glow);
+  addContactShadow(g, 0.75, 0.28);
+  g.position.copy(ALTAR_POS);
+  scene.add(g);
+  return {glow, gems};
+}
+const shopAltar = buildShopAltar();
+function updateShopAltar(){
+  const t = performance.now()*0.0015;
+  shopAltar.gems.forEach((gem,i)=>{
+    gem.position.y = 0.78 + Math.sin(t*2 + i*2.1)*0.05;
+    gem.rotation.y += 0.014;
+  });
+  shopAltar.glow.intensity = 0.85 + Math.sin(t*3)*0.18;
+}
+
 // falling snow: one Points cloud, recycled vertically — near-zero cost
 const SNOW_COUNT = 900, SNOW_AREA = 46, SNOW_HEIGHT = 18;
 const snowPositions = new Float32Array(SNOW_COUNT*3);
@@ -1328,6 +1366,7 @@ function updatePackmate(dt){
 let yaw=0, pitch=0;
 let hunting = false; // movement/look only active while actually in the field (DRAWING)
 let exploring = false; // free-roam at camp (IDLE, no pending deal) — walk to the trailhead to hunt
+let shopOverlayOpened = false; // SHOP entered but altar not yet reached this visit — see openShopAltar()
 
 // ============ Ambient tension: a slow heartbeat that quickens with risk ============
 // Purely atmospheric — never touches trap odds, never gives skill a way to
@@ -1371,12 +1410,15 @@ let pointerLocked = false;
 document.addEventListener('pointerlockchange', ()=>{ pointerLocked = document.pointerLockElement === canvas; });
 document.addEventListener('pointerlockerror', ()=>{}); // expected/silent inside restricted iframes
 
-// Digging a mound and stepping through the trailhead gate use the same
-// click/E gesture — which one fires depends on which scene you're standing
-// in, so leaving camp never feels like a different kind of input than hunting.
+// Digging a mound, stepping through the trailhead gate, and approaching the
+// shop altar all use the same click/E gesture — which one fires depends on
+// which scene/state you're standing in, so every "commit to this" moment in
+// the game reads as the same kind of input.
 function tryInteract(){
   if(hunting){ tryDig(); return; }
-  if(exploring && trailheadInRange){ enterHunt(); }
+  if(!exploring) return;
+  if(Run.state===State.SHOP && altarInRange){ openShopAltar(); return; }
+  if(Run.state===State.IDLE && trailheadInRange){ enterHunt(); }
 }
 
 const keys = {};
@@ -1545,11 +1587,18 @@ function jumpLandNoise(){
   }
 }
 
-// ============ Trailhead interaction: leaving camp is a place, not a button ============
-let trailheadInRange = false;
+// ============ Camp landmarks: leaving camp / opening the shop are places, not buttons ============
+let trailheadInRange = false, altarInRange = false;
 function updateCampInteract(){
   const prompt = document.getElementById('interactPrompt');
-  if(!exploring){ trailheadInRange = false; return; }
+  trailheadInRange = false; altarInRange = false;
+  if(!exploring) return;
+  if(Run.state === State.SHOP){
+    altarInRange = camera.position.distanceTo(ALTAR_POS) < 3.6;
+    prompt.innerHTML = '<b>클릭 / E</b> 유물 확인';
+    prompt.style.display = altarInRange ? 'block' : 'none';
+    return;
+  }
   trailheadInRange = camera.position.distanceTo(TRAILHEAD_POS) < 3.6;
   prompt.innerHTML = '<b>클릭 / E</b> 사냥터로 나가기';
   prompt.style.display = trailheadInRange ? 'block' : 'none';
@@ -1564,6 +1613,10 @@ function enterHunt(){
   nextHeartbeatAt = 0;
   refreshHud();
   tryEngagePointerLock();
+}
+function openShopAltar(){
+  shopOverlayOpened = true;
+  refreshHud();
 }
 
 // ============ Goal gauge: "would cashing out right now clear the round?" ============
@@ -1875,25 +1928,37 @@ function refreshHud(){
       tryEngagePointerLock();
     }
   } else if(Run.state===State.ROUND_CLEAR){
-    document.getElementById('continueBtn').onclick = ()=>{ Run.continueHunting(); winterSay(Winter.CONTINUE,'wary'); refreshHud(); };
+    document.getElementById('continueBtn').onclick = ()=>{ shopOverlayOpened=false; Run.continueHunting(); winterSay(Winter.CONTINUE,'wary'); refreshHud(); };
     document.getElementById('retreatBtn').onclick = ()=>{ Run.retreat(); Sound.retreat(); winterSay(Winter.RETREAT,'calm'); refreshHud(); };
     showOverlay('roundClearOverlay');
   } else if(Run.state===State.SHOP){
-    const offers = Run.offerCharms();
-    document.getElementById('shopMessage').textContent = offers.length ? '유물을 선택하세요 — 항상 좋은 것만 있지는 않다' : '유물 선택! (더 얻을 유물 없음)';
-    const grid = document.getElementById('shopGrid'); grid.innerHTML='';
-    offers.forEach(c=>{
-      const card = document.createElement('div'); card.className = `charm-card ${c.tier}`;
-      card.innerHTML = `<div class="charm-name">${c.name}</div><div class="charm-tier">${c.tier==='good'?'좋음':c.tier==='risky'?'위험':'나쁨'}</div><div class="charm-desc">${c.desc}</div>`;
-      card.onclick = ()=>{ Run.pickCharm(c.id); refreshHud(); };
-      grid.appendChild(card);
-    });
-    const reroll = document.getElementById('rerollBtn');
-    if(Run.rerollsLeft>0){ reroll.style.display='inline-block'; reroll.textContent=`새로고침 (${Run.rerollsLeft})`; reroll.onclick=()=>{ Run.useReroll(); refreshHud(); }; }
-    else reroll.style.display='none';
-    document.getElementById('skipBtn').onclick = ()=>{ Run.skipShop(); refreshHud(); };
-    winterSay(Winter.SHOP);
-    showOverlay('shopOverlay');
+    if(!shopOverlayOpened){
+      // haven't walked up to the altar yet this shop visit — free-roam camp,
+      // same pattern as the trailhead: approach + interact opens the shop.
+      exploring = true;
+      hideAllOverlays();
+      crosshair.style.display = 'block';
+      hint.textContent = '마우스: 시점 · WASD: 이동 · 빛나는 유물 제단으로 걸어가 클릭/E로 확인';
+      hint.style.display = 'block';
+      Tutorial.show('altar', '캠프 안 빛나는 <b>유물 제단</b>으로 걸어가 클릭/E로 유물을 확인하세요.');
+      tryEngagePointerLock();
+    } else {
+      const offers = Run.offerCharms();
+      document.getElementById('shopMessage').textContent = offers.length ? '유물을 선택하세요 — 항상 좋은 것만 있지는 않다' : '유물 선택! (더 얻을 유물 없음)';
+      const grid = document.getElementById('shopGrid'); grid.innerHTML='';
+      offers.forEach(c=>{
+        const card = document.createElement('div'); card.className = `charm-card ${c.tier}`;
+        card.innerHTML = `<div class="charm-name">${c.name}</div><div class="charm-tier">${c.tier==='good'?'좋음':c.tier==='risky'?'위험':'나쁨'}</div><div class="charm-desc">${c.desc}</div>`;
+        card.onclick = ()=>{ Run.pickCharm(c.id); refreshHud(); };
+        grid.appendChild(card);
+      });
+      const reroll = document.getElementById('rerollBtn');
+      if(Run.rerollsLeft>0){ reroll.style.display='inline-block'; reroll.textContent=`새로고침 (${Run.rerollsLeft})`; reroll.onclick=()=>{ Run.useReroll(); refreshHud(); }; }
+      else reroll.style.display='none';
+      document.getElementById('skipBtn').onclick = ()=>{ Run.skipShop(); refreshHud(); };
+      winterSay(Winter.SHOP);
+      showOverlay('shopOverlay');
+    }
   } else if(Run.state===State.GAME_OVER){
     document.getElementById('endBadge').textContent = '💀';
     const em = document.getElementById('endMessage'); em.className='message-toast trap';
@@ -1990,6 +2055,7 @@ function loop(){
   updateCampfire();
   updateCampWolves();
   updateTrailheadGate();
+  updateShopAltar();
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
 }
@@ -2013,7 +2079,8 @@ window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField
   pointerLocked: ()=>pointerLocked,
   updateQuotaPanel, quotaReachedThisAttempt: ()=>quotaReachedThisAttempt,
   updateTension, huntStartAt: ()=>huntStartAt, setNextHeartbeatAt: v=>{nextHeartbeatAt=v;},
-  refreshTrophyPile, trophyPile: ()=>trophyPile, Sound};
+  refreshTrophyPile, trophyPile: ()=>trophyPile, Sound,
+  altarInRange: ()=>altarInRange, ALTAR_POS, openShopAltar, shopOverlayOpened: ()=>shopOverlayOpened};
 })();
 </script>
 </body>
