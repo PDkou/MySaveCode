@@ -86,6 +86,13 @@
   .message-toast.success{color:var(--success);}
   .message-toast.trap{color:var(--danger);}
   .message-toast.neutral{color:var(--text);}
+  /* overlay panels reuse this class with position:static (to sit inline in a
+     flex column instead of floating over the HUD) via a plain inline style —
+     but transform isn't gated by position, so the base class's
+     translateX(-50%) (meant to pair with left:50% under position:absolute)
+     kept shoving the text half its own width to the left, overflowing the
+     panel. .static cancels both. */
+  .message-toast.static{position:static; left:auto; transform:none;}
 
   /* ==== Winter: visible antagonist, ported from the 2D test build ==== */
   .winter-stage{position:absolute; top:64px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:14px; max-width:min(560px, 86vw);}
@@ -209,14 +216,14 @@
         <div class="moon"></div><div class="wolf"></div>
         <span class="eye left"></span><span class="eye right"></span>
       </div>
-      <div id="prologueLine" class="message-toast neutral" style="position:static; font-style:italic; min-height:70px; display:flex; align-items:center; justify-content:center;"></div>
+      <div id="prologueLine" class="message-toast neutral static" style="font-style:italic; min-height:70px; display:flex; align-items:center; justify-content:center;"></div>
       <button class="btn primary clickable" id="prologueNextBtn">계속</button>
     </div>
   </div>
 
   <div class="overlay" id="idleOverlay" style="display:none;">
     <div class="panel">
-      <div id="idleMessage" class="message-toast neutral" style="position:static;"></div>
+      <div id="idleMessage" class="message-toast neutral static"></div>
       <div class="actions">
         <button class="btn primary clickable" id="idleActionBtn">사냥 시작</button>
         <button class="btn warn clickable" id="idleSecondaryBtn" style="display:none;"></button>
@@ -227,7 +234,7 @@
   <div class="overlay" id="roundClearOverlay" style="display:none;">
     <div class="panel">
       <div style="font-size:40px;">🏕️</div>
-      <div class="message-toast success" style="position:static;">라운드 클리어! 더 나아갈까, 여기서 귀환할까?</div>
+      <div class="message-toast success static">라운드 클리어! 더 나아갈까, 여기서 귀환할까?</div>
       <div class="actions">
         <button class="btn primary clickable" id="continueBtn">계속 사냥</button>
         <button class="btn warn clickable" id="retreatBtn">귀환 (지금까지 성과 보존)</button>
@@ -237,7 +244,7 @@
 
   <div class="overlay" id="shopOverlay" style="display:none;">
     <div class="panel" style="max-width:760px;">
-      <div id="shopMessage" class="message-toast success" style="position:static;"></div>
+      <div id="shopMessage" class="message-toast success static"></div>
       <div class="shop-grid" id="shopGrid"></div>
       <div class="actions">
         <button class="btn clickable" id="rerollBtn" style="display:none;"></button>
@@ -249,8 +256,8 @@
   <div class="overlay" id="endOverlay" style="display:none;">
     <div class="panel">
       <div id="endBadge" style="font-size:40px;"></div>
-      <div id="endMessage" class="message-toast" style="position:static;"></div>
-      <div id="packmateLine" class="message-toast neutral" style="position:static; font-style:italic; font-size:12.5px; opacity:.85;"></div>
+      <div id="endMessage" class="message-toast static"></div>
+      <div id="packmateLine" class="message-toast neutral static" style="font-style:italic; font-size:12.5px; opacity:.85;"></div>
       <button class="btn primary clickable" id="restartBtn">다시 시작</button>
     </div>
   </div>
@@ -839,44 +846,6 @@ function updateTrailheadGate(){
   trailheadGate.lantern.material.emissiveIntensity = 1.2 + Math.sin(t)*0.3;
 }
 
-// ============ Shop altar: the charm shop is a place too, not just a popup ============
-// Same reasoning as the trailhead gate — approach + click/E to open, instead
-// of the SHOP state slapping a card-picker overlay over the screen the
-// instant a round clears. 2026-07-21 회의: 다음 과제 1순위로 지정.
-const ALTAR_POS = new THREE.Vector3(-7, 0, -30);
-function buildShopAltar(){
-  const g = new THREE.Group();
-  const baseMat = new THREE.MeshStandardMaterial({color:0x3a3a42, roughness:0.9});
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.7, 0.5, 8), baseMat);
-  base.position.y = 0.25;
-  g.add(base);
-  const gems = [];
-  for(let i=0;i<3;i++){
-    const gemMat = new THREE.MeshStandardMaterial({color:0xf2c477, emissive:0xedad3f, emissiveIntensity:1.3});
-    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.14, 0), gemMat);
-    const a = (i/3)*Math.PI*2;
-    gem.position.set(Math.cos(a)*0.34, 0.78, Math.sin(a)*0.34);
-    g.add(gem);
-    gems.push(gem);
-  }
-  const glow = new THREE.PointLight(0xedad3f, 1.0, 8, 2);
-  glow.position.set(0, 0.95, 0);
-  g.add(glow);
-  addContactShadow(g, 0.75, 0.28);
-  g.position.copy(ALTAR_POS);
-  scene.add(g);
-  return {glow, gems};
-}
-const shopAltar = buildShopAltar();
-function updateShopAltar(){
-  const t = performance.now()*0.0015;
-  shopAltar.gems.forEach((gem,i)=>{
-    gem.position.y = 0.78 + Math.sin(t*2 + i*2.1)*0.05;
-    gem.rotation.y += 0.014;
-  });
-  shopAltar.glow.intensity = 0.85 + Math.sin(t*3)*0.18;
-}
-
 // falling snow: one Points cloud, recycled vertically — near-zero cost
 const SNOW_COUNT = 900, SNOW_AREA = 46, SNOW_HEIGHT = 18;
 const snowPositions = new Float32Array(SNOW_COUNT*3);
@@ -1366,7 +1335,6 @@ function updatePackmate(dt){
 let yaw=0, pitch=0;
 let hunting = false; // movement/look only active while actually in the field (DRAWING)
 let exploring = false; // free-roam at camp (IDLE, no pending deal) — walk to the trailhead to hunt
-let shopOverlayOpened = false; // SHOP entered but altar not yet reached this visit — see openShopAltar()
 
 // ============ Ambient tension: a slow heartbeat that quickens with risk ============
 // Purely atmospheric — never touches trap odds, never gives skill a way to
@@ -1416,9 +1384,7 @@ document.addEventListener('pointerlockerror', ()=>{}); // expected/silent inside
 // the game reads as the same kind of input.
 function tryInteract(){
   if(hunting){ tryDig(); return; }
-  if(!exploring) return;
-  if(Run.state===State.SHOP && altarInRange){ openShopAltar(); return; }
-  if(Run.state===State.IDLE && trailheadInRange){ enterHunt(); }
+  if(exploring && trailheadInRange){ enterHunt(); }
 }
 
 const keys = {};
@@ -1587,18 +1553,11 @@ function jumpLandNoise(){
   }
 }
 
-// ============ Camp landmarks: leaving camp / opening the shop are places, not buttons ============
-let trailheadInRange = false, altarInRange = false;
+// ============ Trailhead interaction: leaving camp is a place, not a button ============
+let trailheadInRange = false;
 function updateCampInteract(){
   const prompt = document.getElementById('interactPrompt');
-  trailheadInRange = false; altarInRange = false;
-  if(!exploring) return;
-  if(Run.state === State.SHOP){
-    altarInRange = camera.position.distanceTo(ALTAR_POS) < 3.6;
-    prompt.innerHTML = '<b>클릭 / E</b> 유물 확인';
-    prompt.style.display = altarInRange ? 'block' : 'none';
-    return;
-  }
+  if(!exploring){ trailheadInRange = false; return; }
   trailheadInRange = camera.position.distanceTo(TRAILHEAD_POS) < 3.6;
   prompt.innerHTML = '<b>클릭 / E</b> 사냥터로 나가기';
   prompt.style.display = trailheadInRange ? 'block' : 'none';
@@ -1613,10 +1572,6 @@ function enterHunt(){
   nextHeartbeatAt = 0;
   refreshHud();
   tryEngagePointerLock();
-}
-function openShopAltar(){
-  shopOverlayOpened = true;
-  refreshHud();
 }
 
 // ============ Goal gauge: "would cashing out right now clear the round?" ============
@@ -1928,47 +1883,39 @@ function refreshHud(){
       tryEngagePointerLock();
     }
   } else if(Run.state===State.ROUND_CLEAR){
-    document.getElementById('continueBtn').onclick = ()=>{ shopOverlayOpened=false; Run.continueHunting(); winterSay(Winter.CONTINUE,'wary'); refreshHud(); };
+    document.getElementById('continueBtn').onclick = ()=>{ Run.continueHunting(); winterSay(Winter.CONTINUE,'wary'); refreshHud(); };
     document.getElementById('retreatBtn').onclick = ()=>{ Run.retreat(); Sound.retreat(); winterSay(Winter.RETREAT,'calm'); refreshHud(); };
     showOverlay('roundClearOverlay');
   } else if(Run.state===State.SHOP){
-    if(!shopOverlayOpened){
-      // haven't walked up to the altar yet this shop visit — free-roam camp,
-      // same pattern as the trailhead: approach + interact opens the shop.
-      exploring = true;
-      hideAllOverlays();
-      crosshair.style.display = 'block';
-      hint.textContent = '마우스: 시점 · WASD: 이동 · 빛나는 유물 제단으로 걸어가 클릭/E로 확인';
-      hint.style.display = 'block';
-      Tutorial.show('altar', '캠프 안 빛나는 <b>유물 제단</b>으로 걸어가 클릭/E로 유물을 확인하세요.');
-      tryEngagePointerLock();
-    } else {
-      const offers = Run.offerCharms();
-      document.getElementById('shopMessage').textContent = offers.length ? '유물을 선택하세요 — 항상 좋은 것만 있지는 않다' : '유물 선택! (더 얻을 유물 없음)';
-      const grid = document.getElementById('shopGrid'); grid.innerHTML='';
-      offers.forEach(c=>{
-        const card = document.createElement('div'); card.className = `charm-card ${c.tier}`;
-        card.innerHTML = `<div class="charm-name">${c.name}</div><div class="charm-tier">${c.tier==='good'?'좋음':c.tier==='risky'?'위험':'나쁨'}</div><div class="charm-desc">${c.desc}</div>`;
-        card.onclick = ()=>{ Run.pickCharm(c.id); refreshHud(); };
-        grid.appendChild(card);
-      });
-      const reroll = document.getElementById('rerollBtn');
-      if(Run.rerollsLeft>0){ reroll.style.display='inline-block'; reroll.textContent=`새로고침 (${Run.rerollsLeft})`; reroll.onclick=()=>{ Run.useReroll(); refreshHud(); }; }
-      else reroll.style.display='none';
-      document.getElementById('skipBtn').onclick = ()=>{ Run.skipShop(); refreshHud(); };
-      winterSay(Winter.SHOP);
-      showOverlay('shopOverlay');
-    }
+    // Kept as an immediate popup (like ROUND_CLEAR right before it) rather
+    // than a walk-to-altar interaction — 2026-07-21 피드백: 귀환/계속 판단과
+    // 유물 상점이 같은 캠프 배경을 공유하는데 하나만 걸어가야 하는 방식으로
+    // 바뀌면 오히려 사용자가 헷갈림. 두 판단 모두 팝업으로 통일.
+    const offers = Run.offerCharms();
+    document.getElementById('shopMessage').textContent = offers.length ? '유물을 선택하세요 — 항상 좋은 것만 있지는 않다' : '유물 선택! (더 얻을 유물 없음)';
+    const grid = document.getElementById('shopGrid'); grid.innerHTML='';
+    offers.forEach(c=>{
+      const card = document.createElement('div'); card.className = `charm-card ${c.tier}`;
+      card.innerHTML = `<div class="charm-name">${c.name}</div><div class="charm-tier">${c.tier==='good'?'좋음':c.tier==='risky'?'위험':'나쁨'}</div><div class="charm-desc">${c.desc}</div>`;
+      card.onclick = ()=>{ Run.pickCharm(c.id); refreshHud(); };
+      grid.appendChild(card);
+    });
+    const reroll = document.getElementById('rerollBtn');
+    if(Run.rerollsLeft>0){ reroll.style.display='inline-block'; reroll.textContent=`새로고침 (${Run.rerollsLeft})`; reroll.onclick=()=>{ Run.useReroll(); refreshHud(); }; }
+    else reroll.style.display='none';
+    document.getElementById('skipBtn').onclick = ()=>{ Run.skipShop(); refreshHud(); };
+    winterSay(Winter.SHOP);
+    showOverlay('shopOverlay');
   } else if(Run.state===State.GAME_OVER){
     document.getElementById('endBadge').textContent = '💀';
-    const em = document.getElementById('endMessage'); em.className='message-toast trap';
+    const em = document.getElementById('endMessage'); em.className='message-toast trap static';
     em.textContent = `게임 오버 — 전부 잃었다 (${Run.roundNumber}라운드까지 생존, 최고 ${GameManager.bestRound})`;
     packmateSay(Packmate.GAME_OVER);
     document.getElementById('restartBtn').onclick = ()=>{ Run.startRun(); refreshHud(); };
     showOverlay('endOverlay');
   } else if(Run.state===State.RETREATED){
     document.getElementById('endBadge').textContent = '🌙';
-    const em = document.getElementById('endMessage'); em.className='message-toast success';
+    const em = document.getElementById('endMessage'); em.className='message-toast success static';
     em.textContent = `무리가 귀환했다! ${Run.roundNumber}라운드 생존 (누적 명성 ${GameManager.totalPelts})`;
     packmateSay(Packmate.RETREAT);
     refreshTrophyPile();
@@ -2055,7 +2002,6 @@ function loop(){
   updateCampfire();
   updateCampWolves();
   updateTrailheadGate();
-  updateShopAltar();
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
 }
@@ -2079,8 +2025,7 @@ window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField
   pointerLocked: ()=>pointerLocked,
   updateQuotaPanel, quotaReachedThisAttempt: ()=>quotaReachedThisAttempt,
   updateTension, huntStartAt: ()=>huntStartAt, setNextHeartbeatAt: v=>{nextHeartbeatAt=v;},
-  refreshTrophyPile, trophyPile: ()=>trophyPile, Sound,
-  altarInRange: ()=>altarInRange, ALTAR_POS, openShopAltar, shopOverlayOpened: ()=>shopOverlayOpened};
+  refreshTrophyPile, trophyPile: ()=>trophyPile, Sound};
 })();
 </script>
 </body>
