@@ -1390,6 +1390,14 @@ function updatePackmate(dt){
 let yaw=0, pitch=0;
 let hunting = false; // movement/look only active while actually in the field (DRAWING)
 let exploring = false; // free-roam at camp (IDLE, no pending deal) — walk to the trailhead to hunt
+// The camp/trailhead walk is meant for "you're home, about to head back out"
+// — genuinely true only at the start of a run. Every IDLE re-entry *within*
+// the same run (post-shop continuation, or a mid-round retry after a bust
+// with attempts left) used to force the same walk again, which just reads as
+// being teleported back home mid-expedition for no reason. This flag limits
+// the camp/trailhead screen to once per run; every later IDLE auto-continues
+// straight into the next hunt instead.
+let freshRunEntry = true;
 
 // ============ Ambient tension: a slow heartbeat that quickens with risk ============
 // Purely atmospheric — never touches trap odds, never gives skill a way to
@@ -1618,6 +1626,10 @@ function updateCampInteract(){
   prompt.style.display = trailheadInRange ? 'block' : 'none';
 }
 function enterHunt(){
+  freshRunEntry = false; // camp/trailhead walk is spent for the rest of this run
+  if(Run.roundNumber===FINAL_ROUND){
+    Tutorial.show('finalRound', '이번 사냥에서 <b>겨울의 화신</b>이 나타난다. 붙잡으면 그 자리에서 결판이 난다 — 물러설 곳은 없다.');
+  }
   Run.startAttempt();
   spawnField(Run.bag);
   camera.position.set(0, 1.6, 0);
@@ -1933,19 +1945,22 @@ function refreshHud(){
       a.onclick = ()=>{ Run.acceptDeal(); winterSay(Winter.DEAL_ACCEPT,'pleased'); refreshHud(); };
       s.onclick = ()=>{ Run.refuseDeal(); winterSay(Winter.DEAL_REFUSE,'calm'); refreshHud(); };
       showOverlay('idleOverlay');
-    } else {
-      // no forced decision — camp is free-roam, walking to the trailhead
-      // gate (not a "사냥 시작" button) is what starts the next hunt.
+    } else if(freshRunEntry){
+      // first hunt of a fresh run only — camp is free-roam, walking to the
+      // trailhead gate (not a "사냥 시작" button) is what starts the hunt.
       exploring = true;
       hideAllOverlays();
       crosshair.style.display = 'block';
       hint.textContent = '마우스: 시점 · WASD: 이동 · 빛나는 트레일 게이트로 걸어가 클릭/E로 사냥 시작';
       hint.style.display = 'block';
       Tutorial.show('trailhead', '캠프 앞, 빛나는 <b>트레일 게이트</b>로 걸어가 클릭/E로 사냥터에 나갈 수 있다.');
-      if(Run.roundNumber===FINAL_ROUND){
-        Tutorial.show('finalRound', '이번 사냥에서 <b>겨울의 화신</b>이 나타난다. 붙잡으면 그 자리에서 결판이 난다 — 물러설 곳은 없다.');
-      }
       tryEngagePointerLock();
+    } else {
+      // continuing the same expedition (post-shop, or a mid-round retry
+      // after a bust with attempts left) — already made the camp trip once
+      // this run, so dive straight back into the next hunt.
+      enterHunt();
+      return;
     }
   } else if(Run.state===State.ROUND_CLEAR){
     document.getElementById('continueBtn').onclick = ()=>{ Run.continueHunting(); winterSay(Winter.CONTINUE,'wary'); refreshHud(); };
@@ -1978,7 +1993,7 @@ function refreshHud(){
       ? `겨울의 화신을 놓쳤다... 무리는 여기까지였다 (최고 ${GameManager.bestRound}라운드)`
       : `게임 오버 — 전부 잃었다 (${Run.roundNumber}라운드까지 생존, 최고 ${GameManager.bestRound})`;
     packmateSay(Packmate.GAME_OVER);
-    document.getElementById('restartBtn').onclick = ()=>{ Run.startRun(); refreshHud(); };
+    document.getElementById('restartBtn').onclick = ()=>{ freshRunEntry=true; Run.startRun(); refreshHud(); };
     showOverlay('endOverlay');
   } else if(Run.state===State.RETREATED){
     document.getElementById('endBadge').textContent = '🌙';
@@ -1986,7 +2001,7 @@ function refreshHud(){
     em.textContent = `무리가 귀환했다! ${Run.roundNumber}라운드 생존 (누적 명성 ${GameManager.totalPelts})`;
     packmateSay(Packmate.RETREAT);
     refreshTrophyPile();
-    document.getElementById('restartBtn').onclick = ()=>{ Run.startRun(); refreshHud(); };
+    document.getElementById('restartBtn').onclick = ()=>{ freshRunEntry=true; Run.startRun(); refreshHud(); };
     showOverlay('endOverlay');
   } else if(Run.state===State.VICTORY){
     // the confirmed ending (결합형, 2026-07-21): catching the Alpha on the
@@ -1997,7 +2012,7 @@ function refreshHud(){
     em.textContent = `겨울을 이겼다! 무리가 마침내 겨울을 났다 (누적 명성 ${GameManager.totalPelts})`;
     packmateSay(Packmate.VICTORY);
     refreshTrophyPile();
-    document.getElementById('restartBtn').onclick = ()=>{ Run.startRun(); refreshHud(); };
+    document.getElementById('restartBtn').onclick = ()=>{ freshRunEntry=true; Run.startRun(); refreshHud(); };
     showOverlay('endOverlay');
   }
 }
@@ -2037,6 +2052,7 @@ document.getElementById('prologueNextBtn').onclick = ()=>{
 };
 function beginCamp(){
   document.getElementById('winterStage').style.display='flex';
+  freshRunEntry = true;
   Run.startRun();
   refreshHud();
 }
@@ -2104,7 +2120,8 @@ window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField
   updateQuotaPanel, quotaReachedThisAttempt: ()=>quotaReachedThisAttempt,
   updateTension, huntStartAt: ()=>huntStartAt, setNextHeartbeatAt: v=>{nextHeartbeatAt=v;},
   refreshTrophyPile, trophyPile: ()=>trophyPile, Sound,
-  FINAL_ROUND: ()=>FINAL_ROUND, setFinalRound: v=>{FINAL_ROUND=v;}, META_TIERS, FINAL_EXTRA_TRAPS_BY_TIER};
+  FINAL_ROUND: ()=>FINAL_ROUND, setFinalRound: v=>{FINAL_ROUND=v;}, META_TIERS, FINAL_EXTRA_TRAPS_BY_TIER,
+  freshRunEntry: ()=>freshRunEntry};
 })();
 </script>
 </body>
