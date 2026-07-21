@@ -329,6 +329,17 @@ const CHARM_DEFS = [
 const BASE_QUOTA=12, QUOTA_GROWTH=10, BASE_ATTEMPTS=4, BASE_BUST_COUNT=1, MIN_BUST_COUNT=1, BASE_BAG_SIZE=10;
 const BONUS_ATTEMPT_PELT_THRESHOLD=50, BONUS_BUST_REDUCTION_PELT_THRESHOLD=150, REROLL_UNLOCK_PELT_THRESHOLD=100;
 const CHAIN_BONUS_START=4, CHAIN_BONUS_CAP=3;
+
+// ============ Ending: a defined final round instead of infinite scaling ============
+// 2026-07-21 회의: "결국 엔딩이 뭔지 명확하지 않다"는 지적에 대한 대응 (결합형,
+// 옵션 3). FINAL_ROUND는 시뮬레이션으로 조정 예정인 1차 추정값 — 실제 도달
+// 난이도는 대량 시뮬레이션(아래 sim_ending.js 참고)으로 검증 필요.
+// META_TIERS는 누적 명성(GameManager.totalPelts) 구간별로 최종 조우의 함정
+// 개수를 늘리고 겨울의 승리 대사를 더 깊게 만든다 — Hades류처럼 메타 진행이
+// "버프"가 아니라 "더 진짜인 마지막 도전"으로 이어지게 하려는 의도.
+const FINAL_ROUND = 8;
+const META_TIERS = [0, 100, 250, 500]; // totalPelts thresholds; index = tier
+const FINAL_EXTRA_TRAPS_BY_TIER = [2, 3, 4, 5];
 const DEAL_CHANCE=0.35, DEAL_MIN_ROUND=2;
 const DEAL_DEFS = [
   {id:"hunger_price", name:"굶주림의 대가", desc:"식량 %d을 바쳐라. 다음 사냥의 먹잇감 가치에 +2를 얹어주지."},
@@ -345,9 +356,14 @@ const GameManager = {
   getBonusAttempts(){ return this.totalPelts>=BONUS_ATTEMPT_PELT_THRESHOLD?1:0; },
   getBonusBustReduction(){ return this.totalPelts>=BONUS_BUST_REDUCTION_PELT_THRESHOLD?1:0; },
   getMaxRerolls(){ return this.totalPelts>=REROLL_UNLOCK_PELT_THRESHOLD?1:0; },
+  getMetaTier(){
+    let tier = 0;
+    for(let i=0;i<META_TIERS.length;i++) if(this.totalPelts>=META_TIERS[i]) tier = i;
+    return tier;
+  },
 };
 
-const State = {IDLE:"IDLE", DRAWING:"DRAWING", ROUND_CLEAR:"ROUND_CLEAR", SHOP:"SHOP", GAME_OVER:"GAME_OVER", RETREATED:"RETREATED"};
+const State = {IDLE:"IDLE", DRAWING:"DRAWING", ROUND_CLEAR:"ROUND_CLEAR", SHOP:"SHOP", GAME_OVER:"GAME_OVER", RETREATED:"RETREATED", VICTORY:"VICTORY"};
 
 const Run = {
   state: State.IDLE, roundNumber:1, quota:BASE_QUOTA, attemptsLeft:BASE_ATTEMPTS, attemptsPerRound:BASE_ATTEMPTS,
@@ -411,7 +427,10 @@ const Run = {
     }
     const token = this.bag[idx];
     this.bag.splice(idx,1);
-    if(token.type==="trap"){
+    if(token.type==="alpha"){
+      this._onAlphaCaught();
+      return {kind:"alpha", uid:token.uid, name:token.name, icon:token.icon};
+    } else if(token.type==="trap"){
       if(this.trapImmunityLeft>0){
         this.trapImmunityLeft--; this._msg("무리가 함정을 미리 감지해 피했다!","success");
         if(this.bag.length===0) this.cashOut();
@@ -488,7 +507,9 @@ const Run = {
   },
   _buildBag(){
     this.bag=[];
-    const traps = this.bustCount + this.nextHuntExtraTraps;
+    const isFinal = this.roundNumber===FINAL_ROUND;
+    const finalExtraTraps = isFinal ? FINAL_EXTRA_TRAPS_BY_TIER[GameManager.getMetaTier()] : 0;
+    const traps = this.bustCount + this.nextHuntExtraTraps + finalExtraTraps;
     const slots = Math.max(1, BASE_BAG_SIZE + this.bagSizeBonus - traps);
     for(let i=0;i<slots;i++){
       const prey=this._rollPreyType();
@@ -496,6 +517,10 @@ const Run = {
       this.bag.push({type:prey.id, value, name:prey.name, icon:prey.icon});
     }
     for(let i=0;i<traps;i++) this.bag.push({type:"trap", value:-1});
+    // guaranteed once per attempt on the final round — catching it ends the
+    // run in victory outright, regardless of quota/pot. Added on top of the
+    // normal slot count so it never displaces a prey/trap slot.
+    if(isFinal) this.bag.push({type:"alpha", value:0, name:"겨울의 화신", icon:"☾"});
     for(let i=this.bag.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [this.bag[i],this.bag[j]]=[this.bag[j],this.bag[i]]; }
     for(const t of this.bag){ t.uid=this._nextUid++; }
     this.nextHuntValueBonus=0; this.nextHuntExtraTraps=0;
@@ -507,9 +532,19 @@ const Run = {
     this.totalFood+=kept; this.pot=0;
     this._resolveAfterAttempt();
   },
+  // The final round's decisive catch — reaching quota alone no longer ends
+  // it (see _resolveAfterAttempt's isFinal guard); only this does.
+  _onAlphaCaught(){
+    this.chain=0; this.pot=0;
+    const earned = this.roundNumber*10 + this.totalFood + 100;
+    this._msg(`겨울의 화신을 붙잡았다! 명성 +${earned}`,"success");
+    GameManager.reportExtraction(this.roundNumber, earned);
+    this.state=State.VICTORY;
+  },
   _resolveAfterAttempt(){
     this.nextHuntCashoutBonus=0;
-    if(this.totalFood>=this.quota) this.state=State.ROUND_CLEAR;
+    const isFinal = this.roundNumber===FINAL_ROUND;
+    if(!isFinal && this.totalFood>=this.quota) this.state=State.ROUND_CLEAR;
     else if(this.attemptsLeft>0){ this._maybeOfferDeal(); this.state=State.IDLE; }
     else this._gameOver();
   },
@@ -541,6 +576,15 @@ const Winter = {
   DEAL_ACCEPT:["현명한지 어리석은지는 곧 알게 되겠지.","좋아. 거래는 거래다.","약속은 지키지. 나는 겨울이니까."],
   DEAL_REFUSE:["자존심인가. 그걸로 배를 채울 수 있길.","제안은 두 번 오지 않는다.","훙. 마음대로 해라."],
   CHAIN:["...멈출 줄 모르는군.","그 기세, 어디까지 가나 보자.","욕심이 이빨을 부른다."],
+  // one fixed line per meta tier (not randomly pooled) — the point is that a
+  // veteran pack (high totalPelts) gets a visibly deeper acknowledgment than
+  // a first-timer's victory, not just a harder final bag.
+  VICTORY_BY_TIER: [
+    ["...결국 여기까지 왔군."],
+    ["몇 번의 겨울을 났는지 셀 수도 없겠군. 인정하지."],
+    ["너희 무리는... 내가 아는 어떤 무리와도 달랐다."],
+    ["나는 늘 이겼다. 오늘까지는."],
+  ],
   line(bank){ return bank[Math.floor(Math.random()*bank.length)]; },
 };
 function bankFor(round, bank, lateBank){ return round>=STORY_LATE_ROUND ? lateBank : bank; }
@@ -551,6 +595,7 @@ const Packmate = {
   RETREAT:["오늘도 무사히 돌아왔구나.","잘했다. 다들 배불리 먹겠어.","너 없이 못 버텼을 거다."],
   CONTINUE:["더 간다고... 알겠다, 기다리지.","무리하지 마라."],
   GAME_OVER:["...다음엔 내가 앞장서마.","잃은 건 되찾으면 된다.","돌아온 것만으로 됐다."],
+  VICTORY:["우리가... 우리가 해냈어.","무리가, 마침내.","겨울이 끝났다."],
   line(bank){ return bank[Math.floor(Math.random()*bank.length)]; },
 };
 function packmateSay(bank){
@@ -600,6 +645,10 @@ const Sound = {
   gameOver(){ playTone(260,0.6,'sawtooth',0.13,90); },
   quotaReached(){ playTone(660,0.1,'sine',0.13); setTimeout(()=>playTone(990,0.18,'sine',0.14),100); },
   heartbeat(tension){ playTone(46,0.15,'sine',0.03+tension*0.05); },
+  victory(){
+    playTone(440,0.16,'sine',0.16); setTimeout(()=>playTone(554,0.16,'sine',0.16),130);
+    setTimeout(()=>playTone(660,0.16,'sine',0.16),260); setTimeout(()=>playTone(880,0.4,'sine',0.18),390);
+  },
 };
 
 // ============ Three.js scene ============
@@ -1768,9 +1817,16 @@ function triggerMarker(m){
     if(result.chainBonus>0) Sound.chainSpark(result.chain);
     if(result.chain===CHAIN_BONUS_START) winterSay(Winter.CHAIN, 'wary');
   } else if(result.kind==='dodged'){ Sound.preyPop(0); punchFov(3); }
+  else if(result.kind==='alpha'){
+    Sound.victory(); triggerShake(6, 500); punchFov(10);
+    spawnFloatPop(pos, '👑');
+  }
   if(Run.state===State.GAME_OVER){
     Sound.gameOver(); winterSay(bankFor(Run.roundNumber, Winter.GAME_OVER, Winter.GAME_OVER_LATE), 'pleased');
     playDeathSequence(); // delays refreshHud() until the collapse plays out
+  } else if(Run.state===State.VICTORY){
+    winterSay(Winter.VICTORY_BY_TIER[GameManager.getMetaTier()], 'pleased');
+    refreshHud();
   } else {
     if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(bankFor(Run.roundNumber, Winter.ROUND_CLEAR, Winter.ROUND_CLEAR_LATE), 'wary'); }
     refreshHud();
@@ -1880,6 +1936,9 @@ function refreshHud(){
       hint.textContent = '마우스: 시점 · WASD: 이동 · 빛나는 트레일 게이트로 걸어가 클릭/E로 사냥 시작';
       hint.style.display = 'block';
       Tutorial.show('trailhead', '캠프 앞, 빛나는 <b>트레일 게이트</b>로 걸어가 클릭/E로 사냥터에 나갈 수 있다.');
+      if(Run.roundNumber===FINAL_ROUND){
+        Tutorial.show('finalRound', '이번 사냥에서 <b>겨울의 화신</b>이 나타난다. 붙잡으면 그 자리에서 결판이 난다 — 물러설 곳은 없다.');
+      }
       tryEngagePointerLock();
     }
   } else if(Run.state===State.ROUND_CLEAR){
@@ -1909,7 +1968,9 @@ function refreshHud(){
   } else if(Run.state===State.GAME_OVER){
     document.getElementById('endBadge').textContent = '💀';
     const em = document.getElementById('endMessage'); em.className='message-toast trap static';
-    em.textContent = `게임 오버 — 전부 잃었다 (${Run.roundNumber}라운드까지 생존, 최고 ${GameManager.bestRound})`;
+    em.textContent = Run.roundNumber===FINAL_ROUND
+      ? `겨울의 화신을 놓쳤다... 무리는 여기까지였다 (최고 ${GameManager.bestRound}라운드)`
+      : `게임 오버 — 전부 잃었다 (${Run.roundNumber}라운드까지 생존, 최고 ${GameManager.bestRound})`;
     packmateSay(Packmate.GAME_OVER);
     document.getElementById('restartBtn').onclick = ()=>{ Run.startRun(); refreshHud(); };
     showOverlay('endOverlay');
@@ -1918,6 +1979,17 @@ function refreshHud(){
     const em = document.getElementById('endMessage'); em.className='message-toast success static';
     em.textContent = `무리가 귀환했다! ${Run.roundNumber}라운드 생존 (누적 명성 ${GameManager.totalPelts})`;
     packmateSay(Packmate.RETREAT);
+    refreshTrophyPile();
+    document.getElementById('restartBtn').onclick = ()=>{ Run.startRun(); refreshHud(); };
+    showOverlay('endOverlay');
+  } else if(Run.state===State.VICTORY){
+    // the confirmed ending (결합형, 2026-07-21): catching the Alpha on the
+    // final round, distinct from RETREATED (a voluntary safe stop) — this is
+    // the one outcome the game actually builds toward.
+    document.getElementById('endBadge').textContent = '👑';
+    const em = document.getElementById('endMessage'); em.className='message-toast success static';
+    em.textContent = `겨울을 이겼다! 무리가 마침내 겨울을 났다 (누적 명성 ${GameManager.totalPelts})`;
+    packmateSay(Packmate.VICTORY);
     refreshTrophyPile();
     document.getElementById('restartBtn').onclick = ()=>{ Run.startRun(); refreshHud(); };
     showOverlay('endOverlay');
@@ -2025,7 +2097,8 @@ window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField
   pointerLocked: ()=>pointerLocked,
   updateQuotaPanel, quotaReachedThisAttempt: ()=>quotaReachedThisAttempt,
   updateTension, huntStartAt: ()=>huntStartAt, setNextHeartbeatAt: v=>{nextHeartbeatAt=v;},
-  refreshTrophyPile, trophyPile: ()=>trophyPile, Sound};
+  refreshTrophyPile, trophyPile: ()=>trophyPile, Sound,
+  FINAL_ROUND, META_TIERS, FINAL_EXTRA_TRAPS_BY_TIER};
 })();
 </script>
 </body>
