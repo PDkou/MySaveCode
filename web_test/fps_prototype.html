@@ -200,6 +200,7 @@
       <div class="title-word">HUNGRY PACK</div>
       <div class="title-sub">1인칭 익스트랙션 사냥 — 눈밭 속, 살아서 돌아올 수 있을까</div>
       <div class="title-stats" id="titleStats"></div>
+      <div class="title-stats" id="titleStreak" style="color:var(--success);"></div>
       <button class="btn primary clickable" id="titleStartBtn">사냥터로 나가기</button>
       <div class="sens-row clickable">
         마우스 감도
@@ -369,6 +370,36 @@ const GameManager = {
   },
 };
 
+// ============ Daily / streak: the one thing "today's fun" can't buy ============
+// 2026-07-21 Dopamine Driven Development 원칙 채택 — 도파민 리서치 보고서가
+// "세션 간 리텐션이 전혀 없다"고 지적한 부분에 대한 대응. 원칙:
+//   1. 강제 대기 없음 — 그냥 접속하면 준다 (클래시 로얄 체스트 타이머류의
+//      "기다려야 받는" 방식은 최근 유저 반발로 폐지 추세라는 보고서 지적 반영)
+//   2. 관대한 스트릭 — 하루 빠져도 그 즉시 끊기지 않고 한 번은 봐준다
+//      (듀오링고 방식이되, 압박형이 아니라 여유를 두는 쪽으로)
+// 날짜는 UTC 기준 단순 비교(프로토타입 수준 — 타임존 보정은 하지 않음).
+const Daily = {
+  today: new Date().toISOString().slice(0,10),
+  lastPlayDate: localStorage.getItem('hp_fps_last_play_date') || null,
+  streak: parseInt(localStorage.getItem('hp_fps_streak_count') || '0', 10),
+  bonusGrantedToday: false,
+  init(){
+    if(this.lastPlayDate === this.today) return; // already logged in today, nothing new to grant
+    const daysSince = this.lastPlayDate === null ? null
+      : Math.round((Date.parse(this.today) - Date.parse(this.lastPlayDate)) / 86400000);
+    if(daysSince === null) this.streak = 1; // first visit ever
+    else if(daysSince === 1) this.streak += 1; // played yesterday — streak continues
+    else if(daysSince === 2) { /* missed exactly one day — grace, streak survives unchanged */ }
+    else this.streak = 1; // missed 2+ days — streak resets, but no other penalty
+    this.lastPlayDate = this.today;
+    this.bonusGrantedToday = true;
+    localStorage.setItem('hp_fps_last_play_date', this.today);
+    localStorage.setItem('hp_fps_streak_count', this.streak);
+  },
+  bonusScouts(){ return Math.min(3, Math.floor(this.streak/2)); }, // capped — a nudge, not a power spike
+};
+Daily.init();
+
 const State = {IDLE:"IDLE", DRAWING:"DRAWING", ROUND_CLEAR:"ROUND_CLEAR", SHOP:"SHOP", GAME_OVER:"GAME_OVER", RETREATED:"RETREATED", VICTORY:"VICTORY"};
 
 const Run = {
@@ -386,7 +417,7 @@ const Run = {
     this.bustCount = Math.max(MIN_BUST_COUNT, BASE_BUST_COUNT - GameManager.getBonusBustReduction());
     this.valueBonus=0; this.safetyPercent=0; this.cashoutBonusPercent=0; this.quotaGrowthMultiplier=1;
     this.bagSizeBonus=0; this.extraLife=0; this.retreatBonusPercent=0; this.bonusTrapImmunity=0;
-    this.typeBonus={}; this.bonusScouts=0; this.chain=0; this.currentDeal=null;
+    this.typeBonus={}; this.bonusScouts=Daily.bonusScouts(); this.chain=0; this.currentDeal=null;
     this.nextHuntValueBonus=0; this.nextHuntExtraTraps=0; this.nextHuntCashoutBonus=0;
     this.totalFood=0; this.ownedCharms=[];
     this._startRound();
@@ -2018,6 +2049,12 @@ function refreshHud(){
 }
 
 document.getElementById('titleStats').textContent = `최고 기록 ${GameManager.bestRound}라운드 · 누적 명성 ${GameManager.totalPelts}`;
+{
+  const streakEl = document.getElementById('titleStreak');
+  const bonus = Daily.bonusScouts();
+  const bonusNote = Daily.bonusGrantedToday && bonus>0 ? ` · 오늘의 보너스: 정찰 +${bonus}회` : '';
+  streakEl.textContent = `🔥 연속 ${Daily.streak}일째${bonusNote}`;
+}
 
 // ============ Prologue: told once, before the pack ever sees the field ============
 // A first-ever "새 게임" used to drop straight into camp with zero setup.
@@ -2121,7 +2158,7 @@ window.__HP = {Run, State, GameManager, markers: ()=>markers, camera, spawnField
   updateTension, huntStartAt: ()=>huntStartAt, setNextHeartbeatAt: v=>{nextHeartbeatAt=v;},
   refreshTrophyPile, trophyPile: ()=>trophyPile, Sound,
   FINAL_ROUND: ()=>FINAL_ROUND, setFinalRound: v=>{FINAL_ROUND=v;}, META_TIERS, FINAL_EXTRA_TRAPS_BY_TIER,
-  freshRunEntry: ()=>freshRunEntry};
+  freshRunEntry: ()=>freshRunEntry, Daily};
 })();
 </script>
 </body>
