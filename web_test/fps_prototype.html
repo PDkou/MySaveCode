@@ -686,6 +686,17 @@ const Sound = {
     playTone(440,0.16,'sine',0.16); setTimeout(()=>playTone(554,0.16,'sine',0.16),130);
     setTimeout(()=>playTone(660,0.16,'sine',0.16),260); setTimeout(()=>playTone(880,0.4,'sine',0.18),390);
   },
+  // ============ 2026-07-21 Juice 감사로 발견된 무음 지점 보강 ============
+  // cashOut()은 이미 정의돼 있었지만 실제로는 한 번도 호출되지 않았음(라운드
+  // 클리어/게임오버로 안 이어지는 "그냥 성공적으로 캐시아웃"이 완전 무음이던
+  // 것 — 가장 흔한 결과인데 가장 조용했던 역설). 나머지는 신규 추가.
+  scout(){ playTone(700,0.08,'triangle',0.09); },
+  nearMiss(){ playTone(340,0.12,'sine',0.07,260); }, // 아쉬운 하강음 — "한 끗 차이"
+  charmPick(){ playTone(600,0.09,'sine',0.14); setTimeout(()=>playTone(760,0.14,'sine',0.13),70); },
+  dealAccept(){ playTone(480,0.12,'sine',0.12,620); },
+  dealRefuse(){ playTone(320,0.12,'sine',0.1,220); },
+  trapDodge(){ playTone(880,0.1,'sine',0.11); setTimeout(()=>playTone(1040,0.12,'sine',0.1),80); }, // 안도의 "휴"
+  huntEntry(){ playNoise(0.25,0.05,2400); }, // 게이트를 나설 때의 바람 소리
 };
 
 // ============ Three.js scene ============
@@ -1285,6 +1296,7 @@ function nearMissPulse(fromPos){
   const mat = pick.mesh.userData.mat;
   mat.emissive = new THREE.Color(0xe8d9a8);
   mat.emissiveIntensity = 0.5;
+  Sound.nearMiss();
   spawnFloatPop(pick.mesh.position, '...?');
   setTimeout(()=>{ if(!pick.scouted) mat.emissiveIntensity = 0; }, 1100);
 }
@@ -1634,6 +1646,7 @@ function updateJump(dt){
     jumpOffset = 0; jumpVel = 0; grounded = true;
     loudUntil = performance.now() + 350;
     Sound.jumpLand();
+    spawnDigBurst(camera.position.clone().setY(0)); // landing dust — reuses the dig-suspense snow puff, previously audio-only
     jumpLandNoise();
   }
 }
@@ -1661,6 +1674,7 @@ function enterHunt(){
   if(Run.roundNumber===FINAL_ROUND){
     Tutorial.show('finalRound', '이번 사냥에서 <b>겨울의 화신</b>이 나타난다. 붙잡으면 그 자리에서 결판이 난다 — 물러설 곳은 없다.');
   }
+  Sound.huntEntry();
   Run.startAttempt();
   spawnField(Run.bag);
   camera.position.set(0, 1.6, 0);
@@ -1865,7 +1879,7 @@ function triggerMarker(m){
     punchFov(4 + result.chainBonus*3);
     if(result.chainBonus>0) Sound.chainSpark(result.chain);
     if(result.chain===CHAIN_BONUS_START) winterSay(Winter.CHAIN, 'wary');
-  } else if(result.kind==='dodged'){ Sound.preyPop(0); punchFov(3); }
+  } else if(result.kind==='dodged'){ Sound.trapDodge(); punchFov(3); }
   else if(result.kind==='alpha'){
     Sound.victory(); triggerShake(6, 500); punchFov(10);
     spawnFloatPop(pos, '👑');
@@ -1886,14 +1900,20 @@ function doCashOut(){
   if(Run.state===State.GAME_OVER){
     Sound.gameOver(); winterSay(bankFor(Run.roundNumber, Winter.GAME_OVER, Winter.GAME_OVER_LATE),'pleased');
     playDeathSequence();
+  } else if(Run.state===State.ROUND_CLEAR){
+    Sound.roundClear(); winterSay(bankFor(Run.roundNumber, Winter.ROUND_CLEAR, Winter.ROUND_CLEAR_LATE),'wary');
+    refreshHud();
   } else {
-    if(Run.state===State.ROUND_CLEAR){ Sound.roundClear(); winterSay(bankFor(Run.roundNumber, Winter.ROUND_CLEAR, Winter.ROUND_CLEAR_LATE),'wary'); }
+    // plain successful cash-out (still mid-round) — the single most common
+    // outcome, and until this Juice audit, the only one with zero sound
+    Sound.cashOut();
     refreshHud();
   }
 }
 function doScout(){
   const peeked = Run.scout();
   if(!peeked) return;
+  Sound.scout();
   Tutorial.show('scout', '<b>정찰(F)</b>로 눈더미 하나의 정체를 미리 엿볼 수 있다 — 사냥마다 제한된 횟수만 가능하다.');
   highlightMarker(peeked.uid, peeked.type==='trap');
   if(peeked.type!=='trap') winterSay(Winter.SCOUT);
@@ -1973,8 +1993,8 @@ function refreshHud(){
       document.getElementById('idleMessage').textContent = `겨울이 거래를 제안한다 — ${Run.currentDeal.name}`;
       const a=document.getElementById('idleActionBtn'), s=document.getElementById('idleSecondaryBtn');
       a.textContent='거래를 받아들인다'; s.textContent='거절한다'; s.style.display='inline-block';
-      a.onclick = ()=>{ Run.acceptDeal(); winterSay(Winter.DEAL_ACCEPT,'pleased'); refreshHud(); };
-      s.onclick = ()=>{ Run.refuseDeal(); winterSay(Winter.DEAL_REFUSE,'calm'); refreshHud(); };
+      a.onclick = ()=>{ Sound.dealAccept(); Run.acceptDeal(); winterSay(Winter.DEAL_ACCEPT,'pleased'); refreshHud(); };
+      s.onclick = ()=>{ Sound.dealRefuse(); Run.refuseDeal(); winterSay(Winter.DEAL_REFUSE,'calm'); refreshHud(); };
       showOverlay('idleOverlay');
     } else if(freshRunEntry){
       // first hunt of a fresh run only — camp is free-roam, walking to the
@@ -2008,7 +2028,7 @@ function refreshHud(){
     offers.forEach(c=>{
       const card = document.createElement('div'); card.className = `charm-card ${c.tier}`;
       card.innerHTML = `<div class="charm-name">${c.name}</div><div class="charm-tier">${c.tier==='good'?'좋음':c.tier==='risky'?'위험':'나쁨'}</div><div class="charm-desc">${c.desc}</div>`;
-      card.onclick = ()=>{ Run.pickCharm(c.id); refreshHud(); };
+      card.onclick = ()=>{ Sound.charmPick(); Run.pickCharm(c.id); refreshHud(); };
       grid.appendChild(card);
     });
     const reroll = document.getElementById('rerollBtn');
