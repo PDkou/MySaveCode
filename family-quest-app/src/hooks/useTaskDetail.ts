@@ -1,0 +1,111 @@
+import { useCallback, useEffect, useState } from 'react';
+
+import { supabase } from '../lib/supabaseClient';
+import type { TaskActivityRow, TaskRow } from '../types/database';
+
+interface UseTaskDetailResult {
+  task: TaskRow | null;
+  activities: TaskActivityRow[];
+  loading: boolean;
+  notFound: boolean;
+  completeTask: (completionNote: string) => Promise<void>;
+  reopenTask: () => Promise<void>;
+}
+
+export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
+  const [task, setTask] = useState<TaskRow | null>(null);
+  const [activities, setActivities] = useState<TaskActivityRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  const loadTask = useCallback(async (id: string) => {
+    const { data, error } = await supabase.from('tasks').select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    setTask(data);
+    setNotFound(!data);
+  }, []);
+
+  const loadActivities = useCallback(async (id: string) => {
+    const { data, error } = await supabase
+      .from('task_activities')
+      .select('*')
+      .eq('task_id', id)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    setActivities(data ?? []);
+  }, []);
+
+  useEffect(() => {
+    if (!taskId) {
+      setTask(null);
+      setActivities([]);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+
+    Promise.all([loadTask(taskId), loadActivities(taskId)]).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    const channel = supabase
+      .channel(`task-detail-${taskId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks', filter: `id=eq.${taskId}` },
+        () => {
+          void loadTask(taskId);
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'task_activities', filter: `task_id=eq.${taskId}` },
+        () => {
+          void loadActivities(taskId);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(channel);
+    };
+  }, [taskId, loadTask, loadActivities]);
+
+  const completeTask = useCallback(async (completionNote: string) => {
+    if (!taskId) return;
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        status: 'done',
+        completed_at: new Date().toISOString(),
+        completed_by: userData.user?.id ?? null,
+        completion_note: completionNote.trim(),
+      })
+      .eq('id', taskId);
+    if (error) throw error;
+    await loadTask(taskId);
+    await loadActivities(taskId);
+  }, [taskId, loadTask, loadActivities]);
+
+  const reopenTask = useCallback(async () => {
+    if (!taskId) return;
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        status: 'open',
+        completed_at: null,
+        completed_by: null,
+        completion_note: null,
+      })
+      .eq('id', taskId);
+    if (error) throw error;
+    await loadTask(taskId);
+    await loadActivities(taskId);
+  }, [taskId, loadTask, loadActivities]);
+
+  return { task, activities, loading, notFound, completeTask, reopenTask };
+}
