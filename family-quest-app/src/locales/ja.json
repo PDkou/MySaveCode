@@ -1,0 +1,145 @@
+{
+  "app": {
+    "name": "Family Quest",
+    "tagline": "家族でこなす生活クエスト"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "close": "閉じる",
+    "back": "戻る",
+    "copy": "コピー",
+    "copied": "コピーしました",
+    "retry": "もう一度試す",
+    "networkError": "通信状態を確認してください。",
+    "unknownError": "エラーが発生しました。"
+  },
+  "auth": {
+    "loginTab": "ログイン",
+    "signupTab": "新規登録",
+    "email": "メールアドレス",
+    "emailPlaceholder": "you@example.com",
+    "password": "パスワード",
+    "passwordPlaceholder": "6文字以上で入力",
+    "displayName": "表示名",
+    "displayNamePlaceholder": "家族に表示される名前",
+    "login": "ログイン",
+    "signup": "登録する",
+    "logout": "ログアウト",
+    "loggingIn": "ログイン中...",
+    "signingUp": "登録中...",
+    "signupSuccessConfirmEmail": "登録が完了しました。届いた確認メールのリンクを開いてからログインしてください。",
+    "signupSuccessAutoLogin": "登録が完了しました。",
+    "error": {
+      "invalidCredentials": "メールアドレスまたはパスワードが正しくありません。",
+      "emailInUse": "このメールアドレスは既に使われています。",
+      "weakPassword": "パスワードは6文字以上にしてください。",
+      "invalidEmail": "メールアドレスの形式が正しくありません。",
+      "displayNameRequired": "表示名を入力してください。",
+      "emailRequired": "メールアドレスを入力してください。",
+      "passwordRequired": "パスワードを入力してください。",
+      "emailNotConfirmed": "メールアドレスの確認が必要です。受信トレイをご確認ください。",
+      "unknown": "ログインまたは登録に失敗しました。"
+    }
+  },
+  "family": {
+    "setupTitle": "まだ家族ルームがありません",
+    "setupSubtitle": "新しく家族ルームを作るか、届いた招待コードで参加してください。",
+    "createHeading": "家族ルームを作成",
+    "createNameLabel": "家族ルーム名",
+    "createNamePlaceholder": "例: わが家",
+    "createButton": "作成する",
+    "creating": "作成中...",
+    "joinHeading": "家族ルームに参加",
+    "joinCodeLabel": "招待コード（8桁）",
+    "joinCodePlaceholder": "例: AB12CD34",
+    "joinButton": "参加する",
+    "joining": "参加中...",
+    "inviteCodeLabel": "招待コード",
+    "memberCount": "{{count}}/2人 参加中",
+    "shareHint": "このコードを家族に共有して、一緒に参加してもらいましょう。",
+    "error": {
+      "nameRequired": "家族ルーム名を入力してください。",
+      "alreadyInFamily": "すでに別の家族ルームに参加しています。",
+      "codeRequired": "招待コードを入力してください。",
+      "invalidCode": "招待コードは8桁で入力してください。",
+      "codeNotFound": "その招待コードの家族ルームが見つかりません。",
+      "familyFull": "この家族ルームは定員（2人）に達しています。",
+      "unknown": "家族ルームの処理に失敗しました。"
+    }
+  },
+  "dashboard": {
+    "newTask": "新しく依頼する",
+    "filterOpen": "進行中",
+    "filterDone": "完了",
+    "filterAll": "すべて",
+    "emptyOpen": "進行中のクエストはありません。",
+    "emptyDone": "完了したクエストはありません。",
+    "emptyAll": "まだクエストが登録されていません。",
+    "assignedTo": "担当: {{name}}",
+    "unassigned": "担当者なし",
+    "createdBy": "依頼者: {{name}}",
+    "dueAt": "期限: {{date}}",
+    "noDueDate": "期限なし",
+    "refresh": "更新"
+  },
+  "taskForm": {
+    "heading": "新しく依頼する",
+    "title": "タイトル",
+    "titlePlaceholder": "例: ゴミ出し",
+    "details": "詳細",
+    "detailsPlaceholder": "詳しい内容があれば入力してください（任意）",
+    "assignedTo": "担当者",
+    "assignedToPlaceholder": "担当者を選択（任意）",
+    "noAssignee": "担当者を指定しない",
+    "dueAt": "期限",
+    "submit": "依頼する",
+    "submitting": "登録中...",
+    "error": {
+      "titleRequired": "タイトルを入力してください。",
+      "unknown": "クエストの登録に失敗しました。"
+    }
+  },
+  "taskDetail": {
+    "heading": "クエスト詳細",
+    "details": "詳細",
+    "noDetails": "詳細はありません。",
+    "assignedTo": "担当者",
+    "createdBy": "依頼者",
+    "dueAt": "期限",
+    "status": "状態",
+    "statusOpen": "進行中",
+    "statusDone": "完了",
+    "createdAt": "登録日",
+    "completedAt": "完了日",
+    "completionNote": "対応結果",
+    "completionNotePlaceholder": "対応した内容を残しましょう",
+    "completeButton": "完了にする",
+    "completing": "処理中...",
+    "reopenButton": "進行中に戻す",
+    "reopening": "変更中...",
+    "activityLog": "対応履歴",
+    "noActivity": "履歴はありません。",
+    "activity": {
+      "created": "{{name}}さんがクエストを登録しました。",
+      "completed": "{{name}}さんが完了にしました。",
+      "reopened": "{{name}}さんが進行中に戻しました。"
+    },
+    "error": {
+      "completionNoteRequired": "対応結果を入力してください。",
+      "unknown": "処理に失敗しました。",
+      "notFound": "クエストが見つかりません。"
+    }
+  },
+  "header": {
+    "members": "参加人数",
+    "inviteCode": "招待コード"
+  },
+  "language": {
+    "label": "言語",
+    "ko": "한국어",
+    "ja": "日本語"
+  }
+}
