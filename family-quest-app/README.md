@@ -50,8 +50,12 @@ family-quest-app/
       LanguageSwitch.tsx
       TaskCard.tsx
       NewTaskModal.tsx
-    styles/global.css           # 팔레트 + 모바일 우선 레이아웃
-  public/icons/                 # PWA 아이콘 (192/512/apple-touch-icon)
+    styles/
+      pretendard.css             # 자체 호스팅 Pretendard 가변 폰트 (@font-face, 92개 유니코드 서브셋)
+      global.css                 # 팔레트 + 모바일 우선 레이아웃
+  public/
+    icons/                       # PWA 아이콘 (192/512/apple-touch-icon)
+    fonts/pretendard/            # Pretendard 서브셋 woff2 (실제 사용된 글자 범위만 다운로드됨)
   scripts/generate-icons.cjs    # 아이콘 생성 스크립트 (재실행 가능)
   .env.example
 ```

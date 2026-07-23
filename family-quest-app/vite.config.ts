@@ -53,6 +53,11 @@ export default defineConfig({
         // 12). This just precaches the built app shell so a repeat visit
         // opens instantly; all Supabase API calls always go to the network.
         globPatterns: ['**/*.{js,css,html,png,svg,webmanifest}'],
+        // Pretendard's dynamic-subset woff2 files are fetched on demand per
+        // unicode range and are large in aggregate; only precache the app
+        // shell above, let the service worker's default runtime handling
+        // (network, browser HTTP cache) serve font files as they're used.
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: '/index.html',
         runtimeCaching: [],
       },

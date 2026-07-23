@@ -15,7 +15,11 @@ export function TaskCard({ task, assigneeName, creatorName }: TaskCardProps) {
   const navigate = useNavigate();
 
   return (
-    <button type="button" className="task-card" onClick={() => navigate(`/task/${task.id}`)}>
+    <button
+      type="button"
+      className={`task-card ${task.status === 'done' ? 'task-card-done' : ''}`}
+      onClick={() => navigate(`/task/${task.id}`)}
+    >
       <div className="task-card-top">
         <span className={`status-badge ${task.status === 'done' ? 'status-done' : 'status-open'}`}>
           {task.status === 'done' ? t('taskDetail.statusDone') : t('taskDetail.statusOpen')}

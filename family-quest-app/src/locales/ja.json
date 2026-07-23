@@ -66,7 +66,7 @@
       "codeRequired": "招待コードを入力してください。",
       "invalidCode": "招待コードは8桁で入力してください。",
       "codeNotFound": "その招待コードの家族ルームが見つかりません。",
-      "familyFull": "この家族ルームは定員（2人）に達しています。",
+      "familyFull": "この家族ルームはもう定員（2人）です。",
       "unknown": "家族ルームの処理に失敗しました。"
     }
   },
@@ -92,7 +92,6 @@
     "details": "詳細",
     "detailsPlaceholder": "詳しい内容があれば入力してください（任意）",
     "assignedTo": "担当者",
-    "assignedToPlaceholder": "担当者を選択（任意）",
     "noAssignee": "担当者を指定しない",
     "dueAt": "期限",
     "submit": "依頼する",
@@ -114,7 +113,7 @@
     "statusDone": "完了",
     "createdAt": "登録日",
     "completedAt": "完了日",
-    "completionNote": "対応結果",
+    "completionNote": "完了メモ",
     "completionNotePlaceholder": "対応した内容を残しましょう",
     "completeButton": "完了にする",
     "completing": "処理中...",
@@ -128,7 +127,7 @@
       "reopened": "{{name}}さんが進行中に戻しました。"
     },
     "error": {
-      "completionNoteRequired": "対応結果を入力してください。",
+      "completionNoteRequired": "完了メモを入力してください。",
       "unknown": "処理に失敗しました。",
       "notFound": "クエストが見つかりません。"
     }

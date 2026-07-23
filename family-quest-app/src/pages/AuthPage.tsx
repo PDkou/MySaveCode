@@ -72,6 +72,7 @@ export function AuthPage() {
 
       <div className="auth-card">
         <div className="auth-brand">
+          <img src="/icons/icon-192.png" alt="" className="brand-mark" />
           <h1>{t('app.name')}</h1>
           <p>{t('app.tagline')}</p>
         </div>
