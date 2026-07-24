@@ -62,6 +62,14 @@ create table if not exists public.family_members (
   -- create_family_room/join_family_room), editable afterward just for this
   -- family. Null falls back to profiles.display_name.
   display_name text,
+  -- Gamification: all per-family-membership, same reasoning as display_name
+  -- above -- a member's streak/points are earned within one family's quest
+  -- list, not shared globally across every family they belong to.
+  points integer not null default 0,
+  current_streak integer not null default 0,
+  longest_streak integer not null default 0,
+  last_completed_date date,
+  completed_count integer not null default 0,
   joined_at timestamptz not null default now(),
   constraint family_members_role_check check (role in ('owner', 'member')),
   constraint family_members_family_user_unique unique (family_id, user_id)
@@ -76,6 +84,14 @@ alter table public.family_members drop constraint if exists family_members_user_
 -- Upgrades an already-deployed database from before per-family display
 -- names existed.
 alter table public.family_members add column if not exists display_name text;
+
+-- Upgrades an already-deployed database from before points/streaks/badges
+-- existed.
+alter table public.family_members add column if not exists points integer not null default 0;
+alter table public.family_members add column if not exists current_streak integer not null default 0;
+alter table public.family_members add column if not exists longest_streak integer not null default 0;
+alter table public.family_members add column if not exists last_completed_date date;
+alter table public.family_members add column if not exists completed_count integer not null default 0;
 
 create index if not exists family_members_family_id_idx on public.family_members (family_id);
 create index if not exists family_members_user_id_idx on public.family_members (user_id);
@@ -202,6 +218,23 @@ create table if not exists public.task_activities (
 
 create index if not exists task_activities_task_id_idx on public.task_activities (task_id, created_at);
 create index if not exists task_activities_family_id_idx on public.task_activities (family_id);
+
+-- Badges a member has earned within one family (milestones on
+-- completed_count/current_streak, plus time-of-day badges). Only ever
+-- written by the complete_task RPC (SECURITY DEFINER) -- see section 9 --
+-- so there is no client insert/update/delete policy, matching the
+-- task_activities pattern above. The unique constraint doubles as the
+-- idempotency guard for that RPC's "insert if not already earned" checks.
+create table if not exists public.member_badges (
+  id uuid primary key default gen_random_uuid(),
+  family_id uuid not null references public.families(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  badge_key text not null,
+  earned_at timestamptz not null default now(),
+  constraint member_badges_unique unique (family_id, user_id, badge_key)
+);
+
+create index if not exists member_badges_family_user_idx on public.member_badges (family_id, user_id);
 
 -- -----------------------------------------------------------------------------
 -- 3. updated_at trigger helper
@@ -616,6 +649,16 @@ $$;
 -- transaction as the completion itself. p_completion_note is validated by
 -- the client (required to complete), not re-validated here.
 --
+-- Also awards the completer (not every assignee -- whoever actually tapped
+-- "complete") gamification progress in the same transaction: +10 points,
+-- completed_count +1, and a daily-streak update (continues if their last
+-- completion was yesterday, stays put if it was already today, otherwise
+-- resets to 1), then checks a handful of milestones and inserts any
+-- newly-earned badges into member_badges. The return type deliberately
+-- stays public.tasks (unchanged) to avoid a breaking API change -- the
+-- client instead diffs the completer's family_members row (points/streak/
+-- badge set) from before vs. after the call to drive the celebration UI.
+--
 -- p_completion_photo_path added after the initial version of this
 -- function; drop the old 2-arg signature first (see the create_task /
 -- update_task comment above for why).
@@ -637,6 +680,11 @@ declare
   v_family_id uuid;
   v_next_due timestamptz;
   v_new_task_id uuid;
+  v_today date := current_date;
+  v_member public.family_members;
+  v_new_streak integer;
+  v_new_completed_count integer;
+  v_completed_hour integer;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -678,6 +726,54 @@ begin
     where ta.task_id = p_task_id;
   end if;
 
+  -- Gamification: points/streak/badges for whoever completed it.
+  select * into v_member from public.family_members where family_id = v_family_id and user_id = v_uid;
+
+  if found then
+    v_new_streak := case
+      when v_member.last_completed_date = v_today then v_member.current_streak
+      when v_member.last_completed_date = v_today - 1 then v_member.current_streak + 1
+      else 1
+    end;
+    v_new_completed_count := v_member.completed_count + 1;
+
+    update public.family_members
+    set points = points + 10,
+        completed_count = v_new_completed_count,
+        current_streak = v_new_streak,
+        longest_streak = greatest(longest_streak, v_new_streak),
+        last_completed_date = v_today
+    where family_id = v_family_id and user_id = v_uid;
+
+    if v_new_completed_count = 1 then
+      insert into public.member_badges (family_id, user_id, badge_key)
+      values (v_family_id, v_uid, 'first_quest') on conflict do nothing;
+    elsif v_new_completed_count = 10 then
+      insert into public.member_badges (family_id, user_id, badge_key)
+      values (v_family_id, v_uid, 'ten_quests') on conflict do nothing;
+    elsif v_new_completed_count = 50 then
+      insert into public.member_badges (family_id, user_id, badge_key)
+      values (v_family_id, v_uid, 'fifty_quests') on conflict do nothing;
+    end if;
+
+    if v_new_streak = 3 then
+      insert into public.member_badges (family_id, user_id, badge_key)
+      values (v_family_id, v_uid, 'streak_3') on conflict do nothing;
+    elsif v_new_streak = 7 then
+      insert into public.member_badges (family_id, user_id, badge_key)
+      values (v_family_id, v_uid, 'streak_7') on conflict do nothing;
+    end if;
+
+    v_completed_hour := extract(hour from now());
+    if v_completed_hour < 7 then
+      insert into public.member_badges (family_id, user_id, badge_key)
+      values (v_family_id, v_uid, 'early_bird') on conflict do nothing;
+    elsif v_completed_hour >= 23 then
+      insert into public.member_badges (family_id, user_id, badge_key)
+      values (v_family_id, v_uid, 'night_owl') on conflict do nothing;
+    end if;
+  end if;
+
   return v_task;
 end;
 $$;
@@ -691,6 +787,7 @@ alter table public.family_members enable row level security;
 alter table public.tasks enable row level security;
 alter table public.task_assignees enable row level security;
 alter table public.task_activities enable row level security;
+alter table public.member_badges enable row level security;
 
 -- profiles: see your own row, see the display name of your family partner,
 -- only ever edit your own row.
@@ -797,6 +894,13 @@ create policy task_activities_select on public.task_activities
 for select
 using (public.is_family_member(family_id));
 
+-- member_badges: read-only from the client's point of view (rows are
+-- written by the complete_task RPC), scoped to your own family.
+drop policy if exists member_badges_select on public.member_badges;
+create policy member_badges_select on public.member_badges
+for select
+using (public.is_family_member(family_id));
+
 -- Storage: a private "task-photos" bucket for completion photos. Objects
 -- are uploaded by the client at the path "{family_id}/{task_id}/{file}",
 -- so membership can be checked from the first folder segment without a
@@ -849,6 +953,7 @@ grant update (display_name) on public.family_members to authenticated;
 grant select, insert, update, delete on public.tasks to authenticated;
 grant select, insert, delete on public.task_assignees to authenticated;
 grant select on public.task_activities to authenticated;
+grant select on public.member_badges to authenticated;
 
 grant execute on function public.create_family_room(text) to authenticated;
 grant execute on function public.join_family_room(text) to authenticated;
@@ -890,6 +995,20 @@ end $$;
 do $$
 begin
   alter publication supabase_realtime add table public.task_activities;
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.family_members;
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.member_badges;
 exception
   when duplicate_object then null;
 end $$;

@@ -6,6 +6,7 @@ import { useTasks } from '../context/TasksContext';
 import type { FamilyMember } from '../context/FamilyContext';
 import type { TaskRecurrence } from '../types/database';
 import { AssigneeCheckboxes } from './AssigneeCheckboxes';
+import { AssigneeLotteryButton } from './AssigneeLotteryButton';
 import { RecurrenceSelect } from './RecurrenceSelect';
 import { DueDateTimeFields } from './DueDateTimeFields';
 
@@ -21,6 +22,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [dueAt, setDueAt] = useState('');
   const [recurrence, setRecurrence] = useState<TaskRecurrence>('none');
   const [submitting, setSubmitting] = useState(false);
@@ -79,8 +81,20 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
           </label>
 
           <div className="field">
-            <span>{t('taskForm.assignedTo')}</span>
-            <AssigneeCheckboxes members={members} selectedIds={assigneeIds} onChange={setAssigneeIds} />
+            <div className="field-label-row">
+              <span>{t('taskForm.assignedTo')}</span>
+              <AssigneeLotteryButton
+                members={members}
+                onHighlightChange={setHighlightedId}
+                onPick={(userId) => setAssigneeIds([userId])}
+              />
+            </div>
+            <AssigneeCheckboxes
+              members={members}
+              selectedIds={assigneeIds}
+              onChange={setAssigneeIds}
+              highlightedId={highlightedId}
+            />
           </div>
 
           <div className="field">

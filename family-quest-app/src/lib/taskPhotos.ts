@@ -40,3 +40,16 @@ export async function getTaskPhotoUrl(path: string): Promise<string | null> {
   if (error) return null;
   return data.signedUrl;
 }
+
+// Batch variant for the photo gallery -- one round trip for every photo on
+// screen instead of one createSignedUrl call per thumbnail.
+export async function getTaskPhotoUrls(paths: string[]): Promise<Map<string, string>> {
+  if (paths.length === 0) return new Map();
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrls(paths, SIGNED_URL_TTL_SECONDS);
+  const map = new Map<string, string>();
+  if (error || !data) return map;
+  data.forEach((entry) => {
+    if (entry.path && entry.signedUrl) map.set(entry.path, entry.signedUrl);
+  });
+  return map;
+}

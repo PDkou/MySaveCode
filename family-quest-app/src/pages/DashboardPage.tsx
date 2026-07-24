@@ -13,9 +13,12 @@ import { TaskCard } from '../components/TaskCard';
 import { NewTaskModal } from '../components/NewTaskModal';
 import { EditNameModal } from '../components/EditNameModal';
 import { EditFamilyNameModal } from '../components/EditFamilyNameModal';
+import { MyStatsModal } from '../components/MyStatsModal';
+import { WeeklyBreakdownModal } from '../components/WeeklyBreakdownModal';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
 import { startOfThisWeek } from '../lib/formatDate';
+import { levelForPoints } from '../lib/gamification';
 
 type Filter = 'open' | 'done' | 'all';
 
@@ -31,6 +34,8 @@ export function DashboardPage() {
   const [showNewTask, setShowNewTask] = useState(false);
   const [showEditName, setShowEditName] = useState(false);
   const [showEditFamilyName, setShowEditFamilyName] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [showWeekly, setShowWeekly] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const [selectMode, setSelectMode] = useState(false);
@@ -41,6 +46,8 @@ export function DashboardPage() {
     members.forEach((m) => map.set(m.user_id, m.display_name));
     return map;
   }, [members]);
+
+  const me = useMemo(() => members.find((m) => m.user_id === user?.id) ?? null, [members, user]);
 
   const weeklyCompletedCount = useMemo(() => {
     const weekStart = startOfThisWeek();
@@ -125,7 +132,11 @@ export function DashboardPage() {
           </div>
           <div className="family-meta">
             <span>{t('family.memberCount', { count: members.length })}</span>
-            <span>{t('dashboard.weeklyCompleted', { count: weeklyCompletedCount })}</span>
+            <span>
+              <button type="button" className="family-meta-link" onClick={() => setShowWeekly(true)}>
+                {t('dashboard.weeklyCompleted', { count: weeklyCompletedCount })}
+              </button>
+            </span>
             {family && (
               <button type="button" className="invite-code-chip" onClick={() => void handleCopyInviteCode()}>
                 {family.invite_code} {copied ? `(${t('common.copied')})` : ''}
@@ -134,6 +145,12 @@ export function DashboardPage() {
           </div>
         </div>
         <div className="topbar-actions">
+          {me && (
+            <button type="button" className="btn btn-ghost btn-sm stats-chip" onClick={() => setShowStats(true)}>
+              {`Lv.${levelForPoints(me.points)}`}
+              {me.current_streak > 0 ? ` 🔥${me.current_streak}` : ''}
+            </button>
+          )}
           {profile && (
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowEditName(true)}>
               {(user && nameByUserId.get(user.id)) || profile.display_name}
@@ -174,6 +191,9 @@ export function DashboardPage() {
         </button>
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/calendar')}>
           {t('calendar.openButton')}
+        </button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/gallery')}>
+          {t('gallery.openButton')}
         </button>
         <button
           type="button"
@@ -271,6 +291,8 @@ export function DashboardPage() {
       {showEditFamilyName && family && (
         <EditFamilyNameModal currentName={family.name} onClose={() => setShowEditFamilyName(false)} />
       )}
+      {showStats && <MyStatsModal onClose={() => setShowStats(false)} />}
+      {showWeekly && <WeeklyBreakdownModal onClose={() => setShowWeekly(false)} />}
     </div>
   );
 }
