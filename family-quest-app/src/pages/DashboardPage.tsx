@@ -129,8 +129,17 @@ export function DashboardPage() {
           )}
           <ThemeToggle />
           <LanguageSwitch />
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => void signOut()}>
-            {t('auth.logout')}
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon btn-sm"
+            onClick={() => void signOut()}
+            aria-label={t('auth.logout')}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <path d="M16 17l5-5-5-5" />
+              <path d="M21 12H9" />
+            </svg>
           </button>
           <NotificationBell />
         </div>
