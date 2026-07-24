@@ -13,7 +13,7 @@
 --   4. profiles auto-creation trigger (auth.users -> public.profiles)
 --   5. Family membership helper functions (RLS-safe, no recursion)
 --   6. create_family_room / join_family_room RPCs
---   7. Family member limit trigger (defense in depth)
+--   7. (removed) Family member limit trigger
 --   8. Task activity log trigger
 --   9. create_task / update_task / complete_task RPCs
 --  10. Row Level Security policies
@@ -66,9 +66,9 @@ create table if not exists public.family_members (
 );
 
 -- A user can belong to more than one family (e.g. their own household plus
--- their and their spouse's parents' households), each still capped at 2
--- members -- see enforce_family_member_limit below. Drops the old
--- one-family-per-user constraint from earlier versions of this schema.
+-- their and their spouse's parents' households); each family itself can
+-- have any number of members. Drops the old one-family-per-user constraint
+-- from earlier versions of this schema.
 alter table public.family_members drop constraint if exists family_members_user_unique;
 
 -- Upgrades an already-deployed database from before per-family display
@@ -323,9 +323,9 @@ $$;
 -- Clients never insert into families / family_members directly (see the RLS
 -- section below -- there are no insert policies on those tables). All writes
 -- go through these two SECURITY DEFINER functions so membership rules
--- (2 members per family, unique invite code, no joining a family you're
--- already in) are enforced in one place, atomically. A user can belong to
--- any number of families at once.
+-- (unique invite code, no joining a family you're already in) are enforced
+-- in one place, atomically. A family has no member-count cap, and a user
+-- can belong to any number of families at once.
 -- -----------------------------------------------------------------------------
 create or replace function public.generate_invite_code()
 returns text
@@ -402,7 +402,6 @@ declare
   v_uid uuid := auth.uid();
   v_code text := upper(trim(coalesce(p_code, '')));
   v_family public.families;
-  v_member_count integer;
   v_display_name text;
 begin
   if v_uid is null then
@@ -413,20 +412,13 @@ begin
     raise exception 'invalid_invite_code' using errcode = '22023';
   end if;
 
-  -- Lock the target family row so two people joining at the same instant
-  -- can't both pass the "under 2 members" check before either commits.
-  select * into v_family from public.families where invite_code = v_code for update;
+  select * into v_family from public.families where invite_code = v_code;
   if not found then
     raise exception 'family_not_found' using errcode = 'P0002';
   end if;
 
   if exists (select 1 from public.family_members where family_id = v_family.id and user_id = v_uid) then
     raise exception 'already_in_this_family' using errcode = '23505';
-  end if;
-
-  select count(*) into v_member_count from public.family_members where family_id = v_family.id;
-  if v_member_count >= 2 then
-    raise exception 'family_full' using errcode = 'P0001';
   end if;
 
   select display_name into v_display_name from public.profiles where id = v_uid;
@@ -439,33 +431,16 @@ end;
 $$;
 
 -- -----------------------------------------------------------------------------
--- 7. Family member limit trigger (defense in depth)
+-- 7. (removed) Family member limit trigger
 --
--- create_family_room / join_family_room already enforce the 2-member cap
--- (with a row lock to close the race window), but this trigger guarantees
--- the invariant at the table level regardless of which code path inserts.
+-- Families used to cap out at 2 members; that limit is gone (a family can
+-- now have any number of members). Drops the trigger/function from earlier
+-- versions of this schema so re-running this file actually removes the
+-- limit on an already-deployed database, instead of just no longer
+-- re-creating it.
 -- -----------------------------------------------------------------------------
-create or replace function public.enforce_family_member_limit()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_count integer;
-begin
-  select count(*) into v_count from public.family_members where family_id = new.family_id;
-  if v_count >= 2 then
-    raise exception 'family_full' using errcode = 'P0001';
-  end if;
-  return new;
-end;
-$$;
-
 drop trigger if exists trg_family_member_limit on public.family_members;
-create trigger trg_family_member_limit
-before insert on public.family_members
-for each row execute function public.enforce_family_member_limit();
+drop function if exists public.enforce_family_member_limit();
 
 -- -----------------------------------------------------------------------------
 -- 8. Task activity log trigger

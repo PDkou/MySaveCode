@@ -20,7 +20,6 @@ function mapFamilyErrorToKey(message: string | undefined): string {
   if (m.includes('invalid_family_name')) return 'family.error.nameRequired';
   if (m.includes('invalid_invite_code')) return 'family.error.invalidCode';
   if (m.includes('family_not_found')) return 'family.error.codeNotFound';
-  if (m.includes('family_full')) return 'family.error.familyFull';
   if (m.includes('not_authenticated')) return 'auth.error.unknown';
   return 'family.error.unknown';
 }
