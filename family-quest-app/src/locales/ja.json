@@ -169,7 +169,9 @@
   },
   "notifications": {
     "title": "通知",
-    "empty": "新しい通知はありません。"
+    "empty": "新しい通知はありません。",
+    "pushLabel": "期限リマインダー（端末通知）",
+    "pushDenied": "ブラウザの通知許可がオフになっています"
   },
   "profile": {
     "editNameHeading": "表示名を変更"

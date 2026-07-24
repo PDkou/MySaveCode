@@ -8,6 +8,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // injectManifest (rather than the default generateSW) lets sw.ts add
+      // its own push/notificationclick handlers for due-task reminders --
+      // generateSW only supports Workbox's built-in runtime-caching hooks.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
         id: '/',
@@ -48,7 +54,7 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
+      injectManifest: {
         // v0.1 does not need full offline support (see handoff doc section
         // 12). This just precaches the built app shell so a repeat visit
         // opens instantly; all Supabase API calls always go to the network.
@@ -58,8 +64,6 @@ export default defineConfig({
         // shell above, let the service worker's default runtime handling
         // (network, browser HTTP cache) serve font files as they're used.
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
-        navigateFallback: '/index.html',
-        runtimeCaching: [],
       },
       devOptions: {
         enabled: false,

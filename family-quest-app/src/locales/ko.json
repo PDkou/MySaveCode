@@ -169,7 +169,9 @@
   },
   "notifications": {
     "title": "알림",
-    "empty": "새로운 알림이 없습니다."
+    "empty": "새로운 알림이 없습니다.",
+    "pushLabel": "기한 알림 (기기 알림)",
+    "pushDenied": "브라우저 알림 권한이 꺼져 있어요"
   },
   "profile": {
     "editNameHeading": "이름 변경"

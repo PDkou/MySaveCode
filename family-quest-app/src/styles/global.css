@@ -581,6 +581,60 @@ textarea {
   padding: 12px 6px;
 }
 
+.notification-push-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 6px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--navy);
+}
+
+.notification-push-denied {
+  font-size: 11px;
+  color: var(--muted-light);
+  text-align: right;
+}
+
+.push-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  border: none;
+  background: var(--border);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.push-switch:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.push-switch-on {
+  background: var(--purple);
+}
+
+.push-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+
+.push-switch-on .push-switch-knob {
+  transform: translateX(16px);
+}
+
 .notification-list {
   list-style: none;
   margin: 0;

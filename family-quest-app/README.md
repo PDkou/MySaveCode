@@ -130,13 +130,95 @@ npm run preview # 빌드 결과물을 로컬에서 미리보기
 1. 이 저장소를 GitHub에 두고 [Vercel](https://vercel.com)에서 New Project → 해당 저장소 import
 2. **Root Directory**를 `family-quest-app`으로 지정 (모노레포 형태이므로 반드시 지정)
 3. Framework Preset: **Vite** (자동 감지됨)
-4. Environment Variables에 다음 2개 추가:
+4. Environment Variables에 다음 항목 추가:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_PUBLISHABLE_KEY`
+   - `VITE_VAPID_PUBLIC_KEY` (푸시 알림 기능을 쓰려면 필요 — 아래 3-1 참고. 당장 안 쓸 거면 생략해도 앱은 정상 동작합니다)
 5. Deploy
 6. 배포된 주소를 Supabase **Authentication → URL Configuration**의 Site URL / Redirect URLs에 추가 (위 1.2 참고)
 
-Netlify나 Cloudflare Pages를 쓸 경우도 동일합니다: 빌드 커맨드 `npm run build`, 출력 디렉터리 `dist`, 동일한 환경변수 2개를 등록하면 됩니다.
+Netlify나 Cloudflare Pages를 쓸 경우도 동일합니다: 빌드 커맨드 `npm run build`, 출력 디렉터리 `dist`, 동일한 환경변수를 등록하면 됩니다.
+
+---
+
+## 3-1. 푸시 알림(기한 알림) 설정
+
+퀘스트 기한이 됐을 때 앱을 안 켜놔도 휴대폰/PC에 알림이 뜨는 기능입니다. 다른 기능들과 달리 **schema.sql만 다시 실행하는 걸로는 안 되고**, 아래 4단계를 한 번 거쳐야 합니다. 순서대로 하면 됩니다.
+
+**이미 준비된 값** (이번에 새로 생성한 키 — 그대로 쓰면 됩니다):
+
+```
+VITE_VAPID_PUBLIC_KEY=BGCaf4UN5pv1R7tEtmoj4Zi8Czyalqh7IGRbyDRhWZ2HT4xB1DkmjK6oEB0YPzVgyAzwI1Am6VuDqoE766UiEsw
+VAPID_PRIVATE_KEY=JuTMqywb8rLzCaeNr3Z0wFJnpWIIaSRgQOLCl4pz-E8
+```
+
+`VAPID_PRIVATE_KEY`는 **절대 .env나 프런트엔드 코드에 넣지 마세요** — Edge Function의 비밀값(secret)으로만 등록합니다. 아래 2단계에서 등록합니다.
+
+### 3-1-1. Supabase CLI 설치 및 로그인
+
+로컬(본인 컴퓨터) 터미널에서:
+
+```bash
+npm install -g supabase
+supabase login          # 브라우저가 열리며 Supabase 계정으로 로그인
+cd family-quest-app
+supabase link --project-ref jmzucjmwgryblrpjfbzm
+```
+
+`supabase link`는 최초 1회만 하면 됩니다. 이후 재배포 시에는 아래 3-1-2, 3-1-3만 반복하면 됩니다.
+
+### 3-1-2. Edge Function 비밀값 등록 (최초 1회)
+
+```bash
+supabase secrets set VAPID_PUBLIC_KEY=BGCaf4UN5pv1R7tEtmoj4Zi8Czyalqh7IGRbyDRhWZ2HT4xB1DkmjK6oEB0YPzVgyAzwI1Am6VuDqoE766UiEsw
+supabase secrets set VAPID_PRIVATE_KEY=JuTMqywb8rLzCaeNr3Z0wFJnpWIIaSRgQOLCl4pz-E8
+supabase secrets set VAPID_SUBJECT=mailto:본인이메일@example.com
+```
+
+`VAPID_SUBJECT`는 푸시 서비스(구글/모질라 등)가 문제 발생 시 연락할 연락처로 요구하는 값입니다 — 실제 이메일 주소로 바꿔서 실행하세요. `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`는 Edge Function에 자동으로 주입되므로 따로 등록할 필요 없습니다.
+
+### 3-1-3. Edge Function 배포
+
+```bash
+supabase functions deploy send-due-reminders
+```
+
+코드를 수정할 때마다(현재는 수정할 필요 없음, 있는 그대로 배포) 이 명령을 다시 실행하면 됩니다.
+
+### 3-1-4. 스케줄러(pg_cron) 켜기 (최초 1회)
+
+Supabase 대시보드 **SQL Editor**에서 아래를 실행합니다 (`schema.sql`의 섹션 13 하단에 있는 것과 같은 내용이며, 이 프로젝트 값으로 미리 채워뒀습니다):
+
+```sql
+select cron.schedule(
+  'send-due-reminders',
+  '* * * * *',
+  $$
+  select net.http_post(
+    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/send-due-reminders',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
+    ),
+    body := '{}'::jsonb
+  );
+  $$
+);
+```
+
+(`schema.sql`을 처음부터 다시 실행할 때 `pg_cron`/`pg_net` extension은 함께 켜지지만, 이 `cron.schedule` 호출 자체는 프로젝트별 URL이 필요해서 일부러 주석 처리되어 있습니다 — 이 블록만 따로 한 번 실행하면 됩니다.)
+
+### 3-1-5. Vercel 환경변수 추가
+
+위 3단계 "배포 (Vercel 예시)"에서 `VITE_VAPID_PUBLIC_KEY`를 추가하지 않았다면 Vercel 프로젝트 설정 → Environment Variables에 추가 후 **Redeploy**.
+
+### 3-1-6. 켜서 확인하기
+
+1. 배포된 사이트에 접속 → 우측 상단 🔔 알림 아이콘 클릭
+2. "기한 알림 (기기 알림)" 토글을 켜면 브라우저가 알림 권한을 물어봄 → 허용
+3. 테스트: 새 퀘스트를 만들면서 기한을 "지금부터 2분 뒤"로 설정 → 앱을 최소화하거나 다른 탭으로 이동 → 2분 이내(최대 1분 간격으로 검사하므로 최대 약 3분)에 기기 알림이 뜨는지 확인
+
+**참고**: 크롬/엣지(안드로이드, 데스크톱)는 잘 지원됩니다. iPhone Safari는 iOS 16.4+이고 **홈 화면에 추가한 앱**으로 실행 중일 때만 지원됩니다(사파리 브라우저 탭에서는 동작하지 않음) — 위 4번 "홈 화면 설치"를 먼저 해야 합니다.
 
 ---
 
@@ -224,9 +306,10 @@ Netlify나 Cloudflare Pages를 쓸 경우도 동일합니다: 빌드 커맨드 `
 
 ## 7. v0.1에서 의도적으로 제외한 기능
 
-푸시 알림, 사진 첨부, 음성 입력, 반복 퀘스트, 캘린더, 포인트/레벨, 3인 이상 가족방, 관리자 페이지, 앱스토어 정식 등록, 완전한 오프라인 모드. 기본판이 안정화된 뒤 추가할 수 있습니다.
+음성 입력, 포인트/레벨, 3인 이상 가족방, 관리자 페이지, 앱스토어 정식 등록, 완전한 오프라인 모드. 기본판이 안정화된 뒤 추가할 수 있습니다.
 
 ## 8. 알려진 제약
 
 - 이 저장소를 준비한 개발 환경은 외부 네트워크가 제한되어 있어 Supabase 프로젝트에 직접 접속해 end-to-end 테스트를 실행하지 못했습니다. SQL과 프런트엔드 코드는 각각 검토했지만, **위 5장·6장 절차는 실제 배포/로컬 환경에서 최초 1회 반드시 직접 실행**해 확인해주세요.
 - 오프라인 모드는 지원하지 않습니다. 네트워크가 끊기면 각 화면에서 요청 실패가 노출됩니다(무한 로딩으로 멈추지 않음).
+- **푸시 알림(3-1)은 Edge Function/pg_cron 배포 단계까지 실제 Supabase 프로젝트에 붙여서 테스트하지 못했습니다.** SQL·Edge Function 코드·클라이언트 구독 로직은 각각 Supabase/Web Push 공식 문서 기준으로 작성했지만, 실배포 후 3-1-6 확인 절차를 꼭 직접 실행해보세요. 안 되면 Supabase 대시보드 **Edge Functions → send-due-reminders → Logs**에서 에러를 확인하는 게 가장 빠릅니다.

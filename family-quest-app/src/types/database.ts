@@ -65,6 +65,16 @@ export type TaskActivityRow = {
   created_at: string;
 };
 
+export type PushSubscriptionRow = {
+  id: string;
+  user_id: string;
+  family_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth_key: string;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -103,6 +113,13 @@ export type Database = {
         Insert: Partial<TaskActivityRow> &
           Pick<TaskActivityRow, 'task_id' | 'family_id' | 'actor_id' | 'action'>;
         Update: Partial<TaskActivityRow>;
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: PushSubscriptionRow;
+        Insert: Partial<PushSubscriptionRow> &
+          Pick<PushSubscriptionRow, 'user_id' | 'family_id' | 'endpoint' | 'p256dh' | 'auth_key'>;
+        Update: Partial<PushSubscriptionRow>;
         Relationships: [];
       };
     };

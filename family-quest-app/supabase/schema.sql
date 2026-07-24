@@ -19,6 +19,7 @@
 --  10. Row Level Security policies
 --  11. Table/function grants
 --  12. Realtime publication
+--  13. Push notifications (subscriptions table + due-reminder scheduling)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -74,6 +75,7 @@ create table if not exists public.tasks (
   completion_note text,
   completion_photo_path text,
   recurrence text not null default 'none',
+  due_reminder_sent_for timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint tasks_status_check check (status in ('open', 'done')),
@@ -82,6 +84,12 @@ create table if not exists public.tasks (
 );
 
 alter table public.tasks add column if not exists completion_photo_path text;
+
+-- Marks which due_at a push reminder has already been sent for, so the
+-- reminder job (see section 13) doesn't re-notify every run. Left null
+-- until a reminder fires; if due_at is later edited, this stops matching
+-- the new due_at so a fresh reminder becomes eligible automatically.
+alter table public.tasks add column if not exists due_reminder_sent_for timestamptz;
 
 -- Upgrades an already-deployed database from before recurrence existed.
 -- No-op on a fresh install (the create table above already has the
@@ -874,6 +882,92 @@ begin
 exception
   when duplicate_object then null;
 end $$;
+
+-- -----------------------------------------------------------------------------
+-- 13. Push notifications (subscriptions table + due-reminder scheduling)
+--
+-- Lets a device get a native OS notification for a task at/near its due
+-- time, even when the app isn't open. Three moving parts, in the order you
+-- actually need to deploy them:
+--   a. push_subscriptions table below -- created by re-running this file,
+--      same as everything else.
+--   b. The `send-due-reminders` Supabase Edge Function (in
+--      supabase/functions/send-due-reminders/) -- deployed separately with
+--      the Supabase CLI. See README.md "Push notifications" for the exact
+--      commands.
+--   c. The pg_cron schedule commented out at the bottom of this section,
+--      which calls (b) every minute -- uncomment and fill in your project
+--      ref + anon key AFTER deploying the Edge Function.
+-- -----------------------------------------------------------------------------
+
+create table if not exists public.push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  family_id uuid not null references public.families(id) on delete cascade,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth_key text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists push_subscriptions_user_id_idx on public.push_subscriptions (user_id);
+
+alter table public.push_subscriptions enable row level security;
+
+drop policy if exists push_subscriptions_select on public.push_subscriptions;
+create policy push_subscriptions_select on public.push_subscriptions
+for select
+using (user_id = auth.uid());
+
+drop policy if exists push_subscriptions_insert on public.push_subscriptions;
+create policy push_subscriptions_insert on public.push_subscriptions
+for insert
+with check (user_id = auth.uid() and public.is_family_member(family_id));
+
+drop policy if exists push_subscriptions_update on public.push_subscriptions;
+create policy push_subscriptions_update on public.push_subscriptions
+for update
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+drop policy if exists push_subscriptions_delete on public.push_subscriptions;
+create policy push_subscriptions_delete on public.push_subscriptions
+for delete
+using (user_id = auth.uid());
+
+grant select, insert, update, delete on public.push_subscriptions to authenticated;
+revoke all on public.push_subscriptions from anon, public;
+
+-- The Edge Function itself connects with the service_role key (auto-injected
+-- into every Edge Function's environment by Supabase), which bypasses RLS by
+-- design -- it has to read every family's due tasks, not just one user's.
+
+-- pg_cron + pg_net let Postgres call the deployed Edge Function on a
+-- schedule without any external scheduler. Both are available on every
+-- Supabase plan, including the free tier.
+create extension if not exists pg_cron with schema extensions;
+create extension if not exists pg_net with schema extensions;
+
+-- After deploying the Edge Function (see README.md), uncomment this block,
+-- replace <PROJECT_REF> and <ANON_KEY> with your project's actual values
+-- (Project Settings -> API), and run just this block in the SQL Editor.
+-- Re-running the whole schema.sql afterwards is still safe -- cron.schedule
+-- with a reused job name updates the existing job instead of duplicating it.
+--
+-- select cron.schedule(
+--   'send-due-reminders',
+--   '* * * * *',
+--   $$
+--   select net.http_post(
+--     url := 'https://<PROJECT_REF>.supabase.co/functions/v1/send-due-reminders',
+--     headers := jsonb_build_object(
+--       'Content-Type', 'application/json',
+--       'Authorization', 'Bearer <ANON_KEY>'
+--     ),
+--     body := '{}'::jsonb
+--   );
+--   $$
+-- );
 
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification
