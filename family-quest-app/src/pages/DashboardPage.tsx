@@ -7,6 +7,7 @@ import { useFamily } from '../context/FamilyContext';
 import { useTasks } from '../context/TasksContext';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { NotificationBell } from '../components/NotificationBell';
 import { TaskCard } from '../components/TaskCard';
 import { NewTaskModal } from '../components/NewTaskModal';
 import { EditNameModal } from '../components/EditNameModal';
@@ -122,15 +123,16 @@ export function DashboardPage() {
         </div>
         <div className="topbar-actions">
           {profile && (
-            <button type="button" className="btn btn-ghost" onClick={() => setShowEditName(true)}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowEditName(true)}>
               {profile.display_name}
             </button>
           )}
           <ThemeToggle />
           <LanguageSwitch />
-          <button type="button" className="btn btn-ghost" onClick={() => void signOut()}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => void signOut()}>
             {t('auth.logout')}
           </button>
+          <NotificationBell />
         </div>
       </div>
 
@@ -138,15 +140,23 @@ export function DashboardPage() {
         <button type="button" className="btn btn-primary" onClick={() => setShowNewTask(true)}>
           {t('dashboard.newTask')}
         </button>
-        <button type="button" className="btn btn-ghost btn-icon" onClick={() => void refresh()} aria-label={t('dashboard.refresh')}>
-          {t('dashboard.refresh')}
+        <button
+          type="button"
+          className="btn btn-ghost btn-icon btn-sm"
+          onClick={() => void refresh()}
+          aria-label={t('dashboard.refresh')}
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+            <path d="M21 3v6h-6" />
+          </svg>
         </button>
-        <button type="button" className="btn btn-ghost" onClick={() => navigate('/calendar')}>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/calendar')}>
           {t('calendar.openButton')}
         </button>
         <button
           type="button"
-          className="btn btn-ghost"
+          className="btn btn-ghost btn-sm"
           onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
         >
           {selectMode ? t('common.cancel') : t('dashboard.selectButton')}

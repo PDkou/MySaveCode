@@ -167,6 +167,10 @@
     "nextMonth": "次の月",
     "noTasksOnDay": "この日に予定されているクエストはありません。"
   },
+  "notifications": {
+    "title": "通知",
+    "empty": "新しい通知はありません。"
+  },
   "profile": {
     "editNameHeading": "表示名を変更"
   },
