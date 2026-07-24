@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
@@ -18,6 +19,7 @@ type Filter = 'open' | 'done' | 'all';
 
 export function DashboardPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { signOut, profile, user } = useAuth();
   const { family, members } = useFamily();
   const { tasks, assigneesByTaskId, loading, refresh, requestDelete } = useTasks();
@@ -138,6 +140,9 @@ export function DashboardPage() {
         </button>
         <button type="button" className="btn btn-ghost btn-icon" onClick={() => void refresh()} aria-label={t('dashboard.refresh')}>
           {t('dashboard.refresh')}
+        </button>
+        <button type="button" className="btn btn-ghost" onClick={() => navigate('/calendar')}>
+          {t('calendar.openButton')}
         </button>
         <button
           type="button"

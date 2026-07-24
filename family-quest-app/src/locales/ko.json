@@ -161,6 +161,12 @@
     "members": "참여 인원",
     "inviteCode": "초대 코드"
   },
+  "calendar": {
+    "openButton": "캘린더",
+    "prevMonth": "이전 달",
+    "nextMonth": "다음 달",
+    "noTasksOnDay": "이 날짜에 예정된 퀘스트가 없습니다."
+  },
   "profile": {
     "editNameHeading": "이름 변경"
   },

@@ -161,6 +161,12 @@
     "members": "参加人数",
     "inviteCode": "招待コード"
   },
+  "calendar": {
+    "openButton": "カレンダー",
+    "prevMonth": "前の月",
+    "nextMonth": "次の月",
+    "noTasksOnDay": "この日に予定されているクエストはありません。"
+  },
   "profile": {
     "editNameHeading": "表示名を変更"
   },
