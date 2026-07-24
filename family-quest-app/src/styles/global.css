@@ -811,6 +811,14 @@ textarea {
   white-space: pre-wrap;
 }
 
+.completion-photo {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
 .task-detail-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

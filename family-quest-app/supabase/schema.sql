@@ -72,6 +72,7 @@ create table if not exists public.tasks (
   completed_at timestamptz,
   completed_by uuid references auth.users(id),
   completion_note text,
+  completion_photo_path text,
   recurrence text not null default 'none',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -79,6 +80,8 @@ create table if not exists public.tasks (
   constraint tasks_title_not_blank check (length(trim(title)) > 0),
   constraint tasks_recurrence_check check (recurrence in ('none', 'daily', 'weekly', 'monthly'))
 );
+
+alter table public.tasks add column if not exists completion_photo_path text;
 
 -- Upgrades an already-deployed database from before recurrence existed.
 -- No-op on a fresh install (the create table above already has the
@@ -608,7 +611,17 @@ $$;
 -- title/details/assignees, due date advanced by the interval) in the same
 -- transaction as the completion itself. p_completion_note is validated by
 -- the client (required to complete), not re-validated here.
-create or replace function public.complete_task(p_task_id uuid, p_completion_note text)
+--
+-- p_completion_photo_path added after the initial version of this
+-- function; drop the old 2-arg signature first (see the create_task /
+-- update_task comment above for why).
+drop function if exists public.complete_task(uuid, text);
+
+create or replace function public.complete_task(
+  p_task_id uuid,
+  p_completion_note text,
+  p_completion_photo_path text default null
+)
 returns public.tasks
 language plpgsql
 security definer
@@ -638,7 +651,8 @@ begin
   set status = 'done',
       completed_at = now(),
       completed_by = v_uid,
-      completion_note = nullif(trim(coalesce(p_completion_note, '')), '')
+      completion_note = nullif(trim(coalesce(p_completion_note, '')), ''),
+      completion_photo_path = p_completion_photo_path
   where id = p_task_id
   returning * into v_task;
 
@@ -767,6 +781,39 @@ create policy task_activities_select on public.task_activities
 for select
 using (public.is_family_member(family_id));
 
+-- Storage: a private "task-photos" bucket for completion photos. Objects
+-- are uploaded by the client at the path "{family_id}/{task_id}/{file}",
+-- so membership can be checked from the first folder segment without a
+-- join. RLS is already enabled on storage.objects by Supabase itself;
+-- only the bucket and its policies need creating here.
+insert into storage.buckets (id, name, public)
+values ('task-photos', 'task-photos', false)
+on conflict (id) do nothing;
+
+drop policy if exists task_photos_select on storage.objects;
+create policy task_photos_select on storage.objects
+for select
+using (
+  bucket_id = 'task-photos'
+  and public.is_family_member((storage.foldername(name))[1]::uuid)
+);
+
+drop policy if exists task_photos_insert on storage.objects;
+create policy task_photos_insert on storage.objects
+for insert
+with check (
+  bucket_id = 'task-photos'
+  and public.is_family_member((storage.foldername(name))[1]::uuid)
+);
+
+drop policy if exists task_photos_delete on storage.objects;
+create policy task_photos_delete on storage.objects
+for delete
+using (
+  bucket_id = 'task-photos'
+  and public.is_family_member((storage.foldername(name))[1]::uuid)
+);
+
 -- -----------------------------------------------------------------------------
 -- 11. Table / function grants
 --
@@ -788,13 +835,13 @@ grant execute on function public.create_family_room(text) to authenticated;
 grant execute on function public.join_family_room(text) to authenticated;
 grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text) to authenticated;
 grant execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text) to authenticated;
-grant execute on function public.complete_task(uuid, text) to authenticated;
+grant execute on function public.complete_task(uuid, text, text) to authenticated;
 
 revoke execute on function public.create_family_room(text) from anon, public;
 revoke execute on function public.join_family_room(text) from anon, public;
 revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text) from anon, public;
 revoke execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text) from anon, public;
-revoke execute on function public.complete_task(uuid, text) from anon, public;
+revoke execute on function public.complete_task(uuid, text, text) from anon, public;
 revoke execute on function public.is_family_member(uuid) from anon, public;
 revoke execute on function public.get_my_family_id() from anon, public;
 revoke execute on function public.shares_family_with(uuid) from anon, public;

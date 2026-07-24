@@ -17,7 +17,7 @@ interface UseTaskDetailResult {
   activities: TaskActivityRow[];
   loading: boolean;
   notFound: boolean;
-  completeTask: (completionNote: string) => Promise<void>;
+  completeTask: (completionNote: string, completionPhotoPath: string | null) => Promise<void>;
   reopenTask: () => Promise<void>;
   updateTask: (input: TaskEditInput) => Promise<void>;
 }
@@ -99,7 +99,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     };
   }, [taskId, loadTask, loadAssignees, loadActivities]);
 
-  const completeTask = useCallback(async (completionNote: string) => {
+  const completeTask = useCallback(async (completionNote: string, completionPhotoPath: string | null) => {
     if (!taskId) return;
     // RPC rather than a plain update: completing a recurring task also
     // creates its next occurrence (copying assignees) in the same
@@ -107,6 +107,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     const { error } = await supabase.rpc('complete_task', {
       p_task_id: taskId,
       p_completion_note: completionNote.trim(),
+      p_completion_photo_path: completionPhotoPath,
     });
     if (error) throw error;
     await loadTask(taskId);
@@ -122,6 +123,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
         completed_at: null,
         completed_by: null,
         completion_note: null,
+        completion_photo_path: null,
       })
       .eq('id', taskId);
     if (error) throw error;

@@ -135,6 +135,7 @@
     "completedAt": "完了日",
     "completionNote": "完了メモ",
     "completionNotePlaceholder": "対応した内容を残しましょう",
+    "completionPhoto": "完了写真",
     "completeButton": "完了にする",
     "completing": "処理中...",
     "reopenButton": "進行中に戻す",
@@ -150,7 +151,10 @@
     "error": {
       "completionNoteRequired": "完了メモを入力してください。",
       "unknown": "処理に失敗しました。",
-      "notFound": "クエストが見つかりません。"
+      "notFound": "クエストが見つかりません。",
+      "photoTooLarge": "写真の容量は8MB以下にしてください。",
+      "photoInvalidType": "画像ファイルのみ添付できます。",
+      "photoUploadFailed": "写真のアップロードに失敗しました。"
     }
   },
   "header": {
