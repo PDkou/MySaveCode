@@ -7,6 +7,7 @@ import { useFamily } from '../context/FamilyContext';
 import { useTaskDetail } from '../hooks/useTaskDetail';
 import { formatDateTime, toDateTimeLocalValue } from '../lib/formatDate';
 import { AssigneeCheckboxes } from '../components/AssigneeCheckboxes';
+import { Spinner } from '../components/Spinner';
 
 export function TaskDetailPage() {
   const { t, i18n } = useTranslation();
@@ -119,7 +120,7 @@ export function TaskDetailPage() {
   if (loading) {
     return (
       <div className="screen task-detail-screen">
-        <p className="empty-message">{t('common.loading')}</p>
+        <Spinner label={t('common.loading')} />
       </div>
     );
   }

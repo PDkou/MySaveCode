@@ -18,6 +18,7 @@ interface TasksContextValue {
   assigneesByTaskId: Map<string, string[]>;
   loading: boolean;
   createTask: (input: NewTaskInput) => Promise<void>;
+  deleteTasks: (taskIds: string[]) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -115,13 +116,21 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [family, user, refresh]);
 
+  const deleteTasks = useCallback(async (taskIds: string[]) => {
+    if (taskIds.length === 0) return;
+    const { error } = await supabase.from('tasks').delete().in('id', taskIds);
+    if (error) throw error;
+    await refresh();
+  }, [refresh]);
+
   const value = useMemo<TasksContextValue>(() => ({
     tasks,
     assigneesByTaskId,
     loading,
     createTask,
+    deleteTasks,
     refresh,
-  }), [tasks, assigneesByTaskId, loading, createTask, refresh]);
+  }), [tasks, assigneesByTaskId, loading, createTask, deleteTasks, refresh]);
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
 }

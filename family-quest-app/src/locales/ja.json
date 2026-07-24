@@ -87,7 +87,11 @@
     "noDueDate": "期限なし",
     "refresh": "更新",
     "overdue": "期限切れ",
-    "onlyMine": "自分の担当のみ"
+    "onlyMine": "自分の担当のみ",
+    "selectButton": "選択",
+    "selectedCount": "{{count}}件選択中",
+    "deleteSelected": "選択項目を削除",
+    "deleteSelectedConfirm": "選択した{{count}}件を削除しますか？対応履歴もすべて消え、元に戻せません。"
   },
   "taskForm": {
     "heading": "新しく依頼する",
