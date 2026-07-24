@@ -100,39 +100,49 @@ export function CalendarPage() {
         </div>
       </div>
 
-      <div className="calendar-weekday-row">
-        {weekdayLabels.map((label) => (
-          <span key={label}>{label}</span>
-        ))}
-      </div>
-
-      <div className="calendar-grid">
-        {gridDays.map((day) => {
-          const key = toDateKey(day);
-          const inMonth = day.getMonth() === cursor.getMonth();
-          const dayTasks = tasksByDateKey.get(key) ?? [];
-          const openCount = dayTasks.filter((task) => task.status === 'open').length;
-          return (
-            <button
-              type="button"
-              key={key}
-              className={[
-                'calendar-day',
-                inMonth ? '' : 'calendar-day-outside',
-                key === todayKey ? 'calendar-day-today' : '',
-                key === selectedKey ? 'calendar-day-selected' : '',
-              ].filter(Boolean).join(' ')}
-              onClick={() => setSelectedDate(key === selectedKey ? null : day)}
+      <div className="calendar-card">
+        <div className="calendar-weekday-row">
+          {weekdayLabels.map((label, i) => (
+            <span
+              key={label}
+              className={i === 5 ? 'calendar-weekday-sat' : i === 6 ? 'calendar-weekday-sun' : undefined}
             >
-              <span className="calendar-day-number">{day.getDate()}</span>
-              {dayTasks.length > 0 && (
-                <span className={`calendar-day-count ${openCount > 0 ? '' : 'calendar-day-count-done'}`}>
-                  {dayTasks.length}
-                </span>
-              )}
-            </button>
-          );
-        })}
+              {label}
+            </span>
+          ))}
+        </div>
+
+        <div className="calendar-grid">
+          {gridDays.map((day) => {
+            const key = toDateKey(day);
+            const inMonth = day.getMonth() === cursor.getMonth();
+            const dayTasks = tasksByDateKey.get(key) ?? [];
+            const openCount = dayTasks.filter((task) => task.status === 'open').length;
+            const weekday = day.getDay();
+            return (
+              <button
+                type="button"
+                key={key}
+                className={[
+                  'calendar-day',
+                  inMonth ? '' : 'calendar-day-outside',
+                  key === todayKey ? 'calendar-day-today' : '',
+                  key === selectedKey ? 'calendar-day-selected' : '',
+                  weekday === 6 ? 'calendar-day-sat' : '',
+                  weekday === 0 ? 'calendar-day-sun' : '',
+                ].filter(Boolean).join(' ')}
+                onClick={() => setSelectedDate(key === selectedKey ? null : day)}
+              >
+                <span className="calendar-day-number">{day.getDate()}</span>
+                {dayTasks.length > 0 && (
+                  <span className={`calendar-day-count ${openCount > 0 ? '' : 'calendar-day-count-done'}`}>
+                    {dayTasks.length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {selectedDate && (
