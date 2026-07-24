@@ -1,11 +1,11 @@
 // Deno Edge Function -- deployed separately from the main app via the
-// Supabase CLI (`supabase functions deploy send-due-reminders`), then
-// invoked on a schedule by the pg_cron job set up in schema.sql section 13.
-// See README.md "Push notifications" for the full deploy walkthrough.
+// Supabase CLI or the dashboard's "Via Editor" flow, then invoked on a
+// schedule by the pg_cron job set up in schema.sql section 13. See
+// README.md "Push notifications" for the full deploy walkthrough.
 //
-// Finds tasks that just became due, sends a Web Push notification to each
-// assignee's subscribed devices, and marks the task so it isn't re-notified
-// on the next run.
+// Finds tasks whose due time is coming up soon, sends a Web Push
+// notification to each assignee's subscribed devices, and marks the task
+// so it isn't re-notified on the next run.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 
@@ -17,31 +17,40 @@ const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') ?? 'mailto:admin@example.com
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
+// Notify this many minutes before due_at rather than exactly at due_at, so
+// there's still time to act on the reminder.
+const REMINDER_LEAD_MINUTES = 5;
+// How far back a missed cron tick can still catch up (the
+// due_reminder_sent_for check is what actually prevents duplicates, not
+// this window -- it just bounds how late a recovery can be).
+const CATCHUP_WINDOW_MINUTES = 15;
+
 // Reminder text is only ever this one sentence, so a tiny inline dictionary
 // keyed off the assignee's saved preferred_language is simpler than pulling
 // in the app's full i18next setup for a Deno function.
 const BODY_TEXT: Record<string, string> = {
-  ko: '지금 이 퀘스트를 처리할 시간이에요!',
-  ja: 'このクエストに取り組む時間です!',
+  ko: `${REMINDER_LEAD_MINUTES}분 후 마감이에요! 지금 처리해주세요.`,
+  ja: `あと${REMINDER_LEAD_MINUTES}分で期限です! 今のうちに片付けましょう。`,
 };
 
 Deno.serve(async (_req: Request) => {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   const now = new Date();
-  const nowIso = now.toISOString();
-  // A wider-than-the-cron-interval window means a missed run (e.g. the
-  // function was briefly down) still catches up on the next tick; the
-  // due_reminder_sent_for check below is what actually prevents duplicates,
-  // not this window.
-  const windowStart = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
+  const leadMs = REMINDER_LEAD_MINUTES * 60 * 1000;
+  const catchupMs = CATCHUP_WINDOW_MINUTES * 60 * 1000;
+  // A task is eligible once (due_at - lead) has passed -- i.e. due_at is at
+  // most `lead` minutes away -- and stays eligible for `catchup` minutes
+  // after that point in case a run was missed.
+  const dueAtUpperBound = new Date(now.getTime() + leadMs).toISOString();
+  const dueAtLowerBound = new Date(now.getTime() + leadMs - catchupMs).toISOString();
 
   const { data: dueTasks, error: tasksError } = await supabase
     .from('tasks')
     .select('id, title, due_at, due_reminder_sent_for')
     .eq('status', 'open')
-    .lte('due_at', nowIso)
-    .gt('due_at', windowStart);
+    .lte('due_at', dueAtUpperBound)
+    .gt('due_at', dueAtLowerBound);
 
   if (tasksError) {
     return new Response(JSON.stringify({ error: tasksError.message }), {

@@ -9,6 +9,8 @@ import { useTaskDetail } from '../hooks/useTaskDetail';
 import { formatDateTime, toDateTimeLocalValue } from '../lib/formatDate';
 import { AssigneeCheckboxes } from '../components/AssigneeCheckboxes';
 import { RecurrenceSelect } from '../components/RecurrenceSelect';
+import { DueDateTimeFields } from '../components/DueDateTimeFields';
+import { AvatarChip } from '../components/AvatarChip';
 import { Spinner } from '../components/Spinner';
 import { getTaskPhotoUrl, TaskPhotoError, uploadTaskPhoto } from '../lib/taskPhotos';
 import type { TaskRecurrence } from '../types/database';
@@ -206,10 +208,10 @@ export function TaskDetailPage() {
             <AssigneeCheckboxes members={members} selectedIds={editAssigneeIds} onChange={setEditAssigneeIds} />
           </div>
 
-          <label className="field">
+          <div className="field">
             <span>{t('taskForm.dueAt')}</span>
-            <input type="datetime-local" value={editDueAt} onChange={(e) => setEditDueAt(e.target.value)} />
-          </label>
+            <DueDateTimeFields value={editDueAt} onChange={setEditDueAt} />
+          </div>
 
           <label className="field">
             <span>{t('taskForm.recurrence.label')}</span>
@@ -252,11 +254,19 @@ export function TaskDetailPage() {
       <div className="task-detail-grid">
         <div>
           <span className="label">{t('taskDetail.assignedTo')}</span>
-          <span>{assigneeLabel}</span>
+          <span className="task-card-assignee">
+            {assigneeLabel && assigneeLabel !== t('dashboard.unassigned') && assigneeLabel !== t('taskForm.everyone') && (
+              <AvatarChip name={assigneeLabel} size={18} />
+            )}
+            {assigneeLabel}
+          </span>
         </div>
         <div>
           <span className="label">{t('taskDetail.createdBy')}</span>
-          <span>{nameFor(task.created_by)}</span>
+          <span className="task-card-assignee">
+            {nameFor(task.created_by) && <AvatarChip name={nameFor(task.created_by)} size={18} />}
+            {nameFor(task.created_by)}
+          </span>
         </div>
         <div>
           <span className="label">{t('taskDetail.dueAt')}</span>
