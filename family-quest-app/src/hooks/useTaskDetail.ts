@@ -139,34 +139,21 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
   }, [taskId]);
 
   const updateTask = useCallback(async (input: TaskEditInput) => {
-    if (!taskId || !task) return;
-    const { error: taskErr } = await supabase
-      .from('tasks')
-      .update({
-        title: input.title.trim(),
-        details: input.details.trim() ? input.details.trim() : null,
-        due_at: input.dueAt,
-      })
-      .eq('id', taskId);
-    if (taskErr) throw taskErr;
-
-    const { error: deleteErr } = await supabase.from('task_assignees').delete().eq('task_id', taskId);
-    if (deleteErr) throw deleteErr;
-
-    if (input.assigneeIds.length > 0) {
-      const { error: insertErr } = await supabase.from('task_assignees').insert(
-        input.assigneeIds.map((userId) => ({
-          task_id: taskId,
-          family_id: task.family_id,
-          user_id: userId,
-        })),
-      );
-      if (insertErr) throw insertErr;
-    }
+    if (!taskId) return;
+    // One RPC (one DB transaction) instead of update + delete + insert as
+    // three separate calls -- see create_task for why that matters.
+    const { error } = await supabase.rpc('update_task', {
+      p_task_id: taskId,
+      p_title: input.title.trim(),
+      p_details: input.details.trim() ? input.details.trim() : null,
+      p_due_at: input.dueAt,
+      p_assignee_ids: input.assigneeIds,
+    });
+    if (error) throw error;
 
     await loadTask(taskId);
     await loadAssignees(taskId);
-  }, [taskId, task, loadTask, loadAssignees]);
+  }, [taskId, loadTask, loadAssignees]);
 
   return {
     task,

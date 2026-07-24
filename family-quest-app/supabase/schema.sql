@@ -15,9 +15,10 @@
 --   6. create_family_room / join_family_room RPCs
 --   7. Family member limit trigger (defense in depth)
 --   8. Task activity log trigger
---   9. Row Level Security policies
---  10. Table/function grants
---  11. Realtime publication
+--   9. create_task / update_task RPCs
+--  10. Row Level Security policies
+--  11. Table/function grants
+--  12. Realtime publication
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -438,7 +439,120 @@ after insert or update on public.tasks
 for each row execute function public.log_task_activity();
 
 -- -----------------------------------------------------------------------------
--- 9. Row Level Security
+-- 9. create_task / update_task RPCs
+--
+-- The task row and its task_assignees rows are always written together
+-- from these two functions rather than as two separate client requests --
+-- a Postgres function body is one transaction, so a failure partway
+-- through (e.g. a flaky mobile connection dropping between the two
+-- inserts) rolls back everything instead of leaving a task behind with
+-- no assignees while the client reports the whole thing as failed.
+-- -----------------------------------------------------------------------------
+create or replace function public.create_task(
+  p_family_id uuid,
+  p_title text,
+  p_details text,
+  p_due_at timestamptz,
+  p_assignee_ids uuid[]
+)
+returns public.tasks
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_title text := trim(coalesce(p_title, ''));
+  v_task public.tasks;
+  v_assignee uuid;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  if length(v_title) = 0 then
+    raise exception 'title_required' using errcode = '22023';
+  end if;
+
+  insert into public.tasks (family_id, title, details, created_by, due_at)
+  values (p_family_id, v_title, nullif(trim(coalesce(p_details, '')), ''), v_uid, p_due_at)
+  returning * into v_task;
+
+  if p_assignee_ids is not null then
+    foreach v_assignee in array p_assignee_ids loop
+      insert into public.task_assignees (task_id, family_id, user_id)
+      values (v_task.id, p_family_id, v_assignee)
+      on conflict do nothing;
+    end loop;
+  end if;
+
+  return v_task;
+end;
+$$;
+
+create or replace function public.update_task(
+  p_task_id uuid,
+  p_title text,
+  p_details text,
+  p_due_at timestamptz,
+  p_assignee_ids uuid[]
+)
+returns public.tasks
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_title text := trim(coalesce(p_title, ''));
+  v_task public.tasks;
+  v_assignee uuid;
+  v_family_id uuid;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select family_id into v_family_id from public.tasks where id = p_task_id;
+  if v_family_id is null then
+    raise exception 'task_not_found' using errcode = 'P0002';
+  end if;
+
+  if not public.is_family_member(v_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  if length(v_title) = 0 then
+    raise exception 'title_required' using errcode = '22023';
+  end if;
+
+  update public.tasks
+  set title = v_title,
+      details = nullif(trim(coalesce(p_details, '')), ''),
+      due_at = p_due_at
+  where id = p_task_id
+  returning * into v_task;
+
+  delete from public.task_assignees where task_id = p_task_id;
+
+  if p_assignee_ids is not null then
+    foreach v_assignee in array p_assignee_ids loop
+      insert into public.task_assignees (task_id, family_id, user_id)
+      values (p_task_id, v_family_id, v_assignee)
+      on conflict do nothing;
+    end loop;
+  end if;
+
+  return v_task;
+end;
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 10. Row Level Security
 -- -----------------------------------------------------------------------------
 alter table public.profiles enable row level security;
 alter table public.families enable row level security;
@@ -541,7 +655,7 @@ for select
 using (public.is_family_member(family_id));
 
 -- -----------------------------------------------------------------------------
--- 10. Table / function grants
+-- 11. Table / function grants
 --
 -- Supabase's "anon" role is never granted anything here -- every screen in
 -- this app requires an authenticated session before it touches the
@@ -559,15 +673,19 @@ grant select on public.task_activities to authenticated;
 
 grant execute on function public.create_family_room(text) to authenticated;
 grant execute on function public.join_family_room(text) to authenticated;
+grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[]) to authenticated;
+grant execute on function public.update_task(uuid, text, text, timestamptz, uuid[]) to authenticated;
 
 revoke execute on function public.create_family_room(text) from anon, public;
 revoke execute on function public.join_family_room(text) from anon, public;
+revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[]) from anon, public;
+revoke execute on function public.update_task(uuid, text, text, timestamptz, uuid[]) from anon, public;
 revoke execute on function public.is_family_member(uuid) from anon, public;
 revoke execute on function public.get_my_family_id() from anon, public;
 revoke execute on function public.shares_family_with(uuid) from anon, public;
 
 -- -----------------------------------------------------------------------------
--- 11. Realtime publication
+-- 12. Realtime publication
 --
 -- Lets the app subscribe to postgres_changes for live task/activity updates
 -- instead of relying solely on manual refresh. If a table is already a
