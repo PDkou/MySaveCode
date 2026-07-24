@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import type { TaskRow } from '../types/database';
 import { formatDateTime } from '../lib/formatDate';
+import { AvatarChip } from './AvatarChip';
 
 interface TaskCardProps {
   task: TaskRow;
@@ -25,6 +26,9 @@ export function TaskCard({
   const navigate = useNavigate();
 
   const isOverdue = task.status === 'open' && !!task.due_at && new Date(task.due_at) < new Date();
+  const unassignedText = t('dashboard.unassigned');
+  const everyoneText = t('taskForm.everyone');
+  const showAssigneeAvatar = assigneeLabel && assigneeLabel !== unassignedText && assigneeLabel !== everyoneText;
 
   return (
     <button
@@ -52,7 +56,10 @@ export function TaskCard({
         <h3 className="task-card-title">{task.title}</h3>
       </div>
       <div className="task-card-meta">
-        <span>{t('dashboard.assignedTo', { name: assigneeLabel })}</span>
+        <span className="task-card-assignee">
+          {showAssigneeAvatar && <AvatarChip name={assigneeLabel} size={18} />}
+          {t('dashboard.assignedTo', { name: assigneeLabel })}
+        </span>
         <span>{t('dashboard.createdBy', { name: creatorName ?? '' })}</span>
         <span className={isOverdue ? 'overdue-text' : undefined}>
           {task.due_at

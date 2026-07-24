@@ -205,6 +205,36 @@ a {
   color: var(--navy);
 }
 
+.avatar-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.task-card-assignee {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.due-datetime-fields {
+  display: flex;
+  gap: 8px;
+}
+
+.due-datetime-fields input[type='date'] {
+  flex: 1.3;
+}
+
+.due-datetime-fields input[type='time'] {
+  flex: 1;
+}
+
 .checkbox-group {
   display: flex;
   flex-direction: column;
@@ -252,7 +282,7 @@ textarea,
 select {
   font-size: 16px;
   padding: 13px 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--navy);
@@ -284,7 +314,7 @@ textarea {
   font-size: 16px;
   font-weight: 700;
   padding: 14px 20px;
-  border-radius: 14px;
+  border-radius: 16px;
   border: none;
   cursor: pointer;
   transition: background-color 0.15s ease, opacity 0.15s ease, transform 0.05s ease;
@@ -461,7 +491,7 @@ textarea {
 .card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 22px 20px;
   box-shadow: var(--shadow-md);
   display: flex;
@@ -763,10 +793,12 @@ textarea {
   align-items: center;
   gap: 10px;
   padding: 24px 0;
-  color: var(--muted-light);
+  color: var(--purple);
+  opacity: 0.8;
 }
 
 .empty-state .empty-message {
+  color: var(--muted-light);
   padding: 0;
 }
 
@@ -811,7 +843,7 @@ textarea {
   background: var(--card);
   border: none;
   border-left: 4px solid var(--amber);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 16px;
   box-shadow: var(--shadow-sm);
   display: flex;
@@ -955,7 +987,7 @@ textarea {
 
 .modal {
   background: var(--card);
-  border-radius: 22px 22px 0 0;
+  border-radius: 26px 26px 0 0;
   padding: 24px;
   width: 100%;
   max-width: 480px;
@@ -1006,7 +1038,7 @@ textarea {
   flex-direction: column;
   gap: 10px;
   background: var(--card);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 18px;
 }
 

@@ -7,6 +7,7 @@ import type { FamilyMember } from '../context/FamilyContext';
 import type { TaskRecurrence } from '../types/database';
 import { AssigneeCheckboxes } from './AssigneeCheckboxes';
 import { RecurrenceSelect } from './RecurrenceSelect';
+import { DueDateTimeFields } from './DueDateTimeFields';
 
 interface NewTaskModalProps {
   members: FamilyMember[];
@@ -82,10 +83,10 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
             <AssigneeCheckboxes members={members} selectedIds={assigneeIds} onChange={setAssigneeIds} />
           </div>
 
-          <label className="field">
+          <div className="field">
             <span>{t('taskForm.dueAt')}</span>
-            <input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
-          </label>
+            <DueDateTimeFields value={dueAt} onChange={setDueAt} />
+          </div>
 
           <label className="field">
             <span>{t('taskForm.recurrence.label')}</span>
