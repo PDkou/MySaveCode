@@ -21,6 +21,7 @@
 --  12. Realtime publication
 --  13. Push notifications (subscriptions table + due-reminder scheduling)
 --  14. Task comments (progress notes / replies / reactions)
+--  15. Event-driven push notifications (created/completed/reopened/comment)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -1052,6 +1053,80 @@ begin
 exception
   when duplicate_object then null;
 end $$;
+
+-- -----------------------------------------------------------------------------
+-- 15. Event-driven push notifications (created/completed/reopened/comment)
+--
+-- Section 13's send-due-reminders Edge Function was extended to also
+-- handle single-event pushes (see its source) when called with a JSON
+-- body instead of the empty one pg_cron sends. These two triggers fire
+-- that same call immediately on the relevant insert, via pg_net -- same
+-- mechanism, same URL, same secrets as the cron job already uses.
+--
+-- IMPORTANT: the URL below points at this project's Edge Function under
+-- the slug it actually got deployed as ("rapid-service", not
+-- "send-due-reminders" -- a naming mishap during setup that stuck because
+-- Supabase slugs can't be renamed after creation). If you ever redeploy
+-- under the correct name, update the url here to match.
+-- -----------------------------------------------------------------------------
+create or replace function public.notify_task_activity_event()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.action in ('created', 'completed', 'reopened') then
+    perform net.http_post(
+      url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service',
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
+      ),
+      body := jsonb_build_object(
+        'task_id', new.task_id,
+        'event', new.action,
+        'actor_id', new.actor_id
+      )
+    );
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_notify_task_activity on public.task_activities;
+create trigger trg_notify_task_activity
+after insert on public.task_activities
+for each row execute function public.notify_task_activity_event();
+
+create or replace function public.notify_task_comment_event()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform net.http_post(
+    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
+    ),
+    body := jsonb_build_object(
+      'task_id', new.task_id,
+      'event', 'comment',
+      'actor_id', new.author_id,
+      'comment_body', new.body
+    )
+  );
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_notify_task_comment on public.task_comments;
+create trigger trg_notify_task_comment
+after insert on public.task_comments
+for each row execute function public.notify_task_comment_event();
 
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification
