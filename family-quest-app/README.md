@@ -1,9 +1,9 @@
 # Family Quest (v0.1)
 
-가족 2명이 실제로 쓰는 생활 퀘스트 공유 앱. React + Vite + TypeScript + Supabase 기반 PWA.
+가족이 실제로 쓰는 생활 퀘스트 공유 앱. React + Vite + TypeScript + Supabase 기반 PWA.
 
 - 이메일/비밀번호 회원가입·로그인
-- 가족방 생성(8자리 초대 코드) / 참여, 최대 2명, 1인 1가족방
+- 가족방 생성(8자리 초대 코드) / 참여, 인원 제한 없음, 한 계정으로 여러 가족방 참여 가능 (우리 가족/친정/시댁 등)
 - 퀘스트(할 일) 등록 → 담당자 지정 → 완료 처리(결과 메모) → 필요 시 재오픈
 - 처리 기록(누가 등록/완료/재오픈했는지) 자동 기록
 - 한국어/일본어: 기기 언어 자동 감지 + 수동 전환, 선택한 언어는 프로필에도 저장
@@ -307,15 +307,15 @@ supabase functions deploy send-due-reminders
 5. 같은 방식으로 다른 가족방의 `task_id`를 골라 `PATCH`(완료 처리, 담당자 변경 등)를 시도 → 영향받은 행이 0건이어야 합니다 (역시 에러가 아니라 "아무 것도 바뀌지 않음"이 정상)
 6. `family_members`에 자신을 다른 가족방 멤버로 직접 `POST`(insert)해보기 → 실패해야 합니다 (해당 테이블에는 insert 정책 자체가 없고, 참여는 `join_family_room` RPC로만 가능)
 7. 이미 속한 가족방의 초대 코드로 같은 계정이 다시 `join_family_room` 호출 → `already_in_this_family` 오류가 나야 합니다 (한 계정이 여러 가족방에 속하는 것 자체는 정상 동작이므로, "이미 어딘가에 속해 있다"가 아니라 "이 가족방에는 이미 속해 있다"만 막습니다)
-8. 3번째 계정으로 이미 2명이 꽉 찬 가족방에 `join_family_room` 호출 → `family_full` 오류가 나야 합니다
+8. 다른 계정의 `family_members` 행에서 `display_name`이 아닌 다른 컬럼(`role` 등)을 `PATCH`로 바꿔보기 → 실패해야 합니다 (컬럼 단위 권한으로 `display_name`만 허용되고, 그마저도 본인 행만 가능)
 
 이 저장소의 `supabase/schema.sql`에서 위 동작을 보장하는 부분:
 
 - 모든 테이블 `enable row level security` (섹션 9)
 - `families` / `family_members`는 **insert 정책이 아예 없음** → 클라이언트가 직접 넣을 방법이 없고, 오직 `create_family_room` / `join_family_room` (SECURITY DEFINER) 함수만 삽입 가능
 - `is_family_member()` / `shares_family_with()` 헬퍼 함수가 SECURITY DEFINER로 재귀 없이 멤버십을 확인 (섹션 5) — `family_members` 자기 자신을 참조하는 정책에서 무한 재귀가 나지 않도록 설계
-- `join_family_room`은 `select ... for update`로 가족방 행을 잠근 뒤 인원수를 확인 → 동시 참여 요청에서도 3번째 인원이 끼어들 수 없음
-- `enforce_family_member_limit` 트리거가 테이블 레벨에서도 2명 제한을 한 번 더 강제 (섹션 7)
+- `family_members`의 update 정책은 본인 행으로 제한되고, 컬럼 단위 권한(`grant update (display_name)`)으로 `display_name` 외 컬럼은 애초에 클라이언트가 바꿀 방법이 없음 (섹션 10/11)
+- 가족방 인원수 제한은 없음 (예전 2명 제한 트리거는 제거됨) — 대신 `already_in_this_family` 체크로 같은 가족방에 중복 참여만 막음
 
 ---
 

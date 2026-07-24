@@ -62,7 +62,7 @@
     "joinButton": "참여하기",
     "joining": "참여하는 중...",
     "inviteCodeLabel": "초대 코드",
-    "memberCount": "{{count}}/2명 참여 중",
+    "memberCount": "{{count}}명 참여 중",
     "shareHint": "이 코드를 가족에게 공유해서 함께 참여하세요.",
     "switcherTitle": "가족방 전환",
     "addAnother": "새 가족방 추가하기",
@@ -73,7 +73,6 @@
       "codeRequired": "초대 코드를 입력해주세요.",
       "invalidCode": "초대 코드는 8자리여야 합니다.",
       "codeNotFound": "해당 초대 코드의 가족방을 찾을 수 없습니다.",
-      "familyFull": "이 가족방은 이미 정원(최대 2명)이 다 찼어요.",
       "unknown": "가족방 처리 중 문제가 발생했습니다."
     }
   },

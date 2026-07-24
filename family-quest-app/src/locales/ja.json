@@ -62,7 +62,7 @@
     "joinButton": "参加する",
     "joining": "参加中...",
     "inviteCodeLabel": "招待コード",
-    "memberCount": "{{count}}/2人 参加中",
+    "memberCount": "{{count}}人 参加中",
     "shareHint": "このコードを家族に共有して、一緒に参加してもらいましょう。",
     "switcherTitle": "家族ルームを切り替え",
     "addAnother": "新しい家族ルームを追加",
@@ -73,7 +73,6 @@
       "codeRequired": "招待コードを入力してください。",
       "invalidCode": "招待コードは8桁で入力してください。",
       "codeNotFound": "その招待コードの家族ルームが見つかりません。",
-      "familyFull": "この家族ルームはもう定員（2人）です。",
       "unknown": "家族ルームの処理に失敗しました。"
     }
   },
