@@ -5,18 +5,26 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { useFamily } from '../context/FamilyContext';
 import { useTaskDetail } from '../hooks/useTaskDetail';
-import { formatDateTime } from '../lib/formatDate';
+import { formatDateTime, toDateTimeLocalValue } from '../lib/formatDate';
+import { AssigneeCheckboxes } from '../components/AssigneeCheckboxes';
 
 export function TaskDetailPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { taskId } = useParams<{ taskId: string }>();
   const { members } = useFamily();
-  const { task, activities, loading, notFound, completeTask, reopenTask, deleteTask } = useTaskDetail(taskId);
+  const { task, assigneeIds, activities, loading, notFound, completeTask, reopenTask, deleteTask, updateTask } =
+    useTaskDetail(taskId);
 
   const [completionNote, setCompletionNote] = useState('');
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDetails, setEditDetails] = useState('');
+  const [editDueAt, setEditDueAt] = useState('');
+  const [editAssigneeIds, setEditAssigneeIds] = useState<string[]>([]);
 
   const nameByUserId = useMemo(() => {
     const map = new Map<string, string>();
@@ -25,6 +33,45 @@ export function TaskDetailPage() {
   }, [members]);
 
   const nameFor = (userId: string | null) => (userId ? nameByUserId.get(userId) ?? '' : '');
+
+  const assigneeLabel = useMemo(() => {
+    if (assigneeIds.length === 0) return t('dashboard.unassigned');
+    if (assigneeIds.length > 1 && assigneeIds.length === members.length) return t('taskForm.everyone');
+    return assigneeIds.map((id) => nameByUserId.get(id) ?? '').join(', ');
+  }, [assigneeIds, members.length, nameByUserId, t]);
+
+  const startEditing = () => {
+    if (!task) return;
+    setEditTitle(task.title);
+    setEditDetails(task.details ?? '');
+    setEditDueAt(toDateTimeLocalValue(task.due_at));
+    setEditAssigneeIds(assigneeIds);
+    setErrorKey(null);
+    setEditing(true);
+  };
+
+  const handleSaveEdit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editTitle.trim()) {
+      setErrorKey('taskForm.error.titleRequired');
+      return;
+    }
+    setErrorKey(null);
+    setBusy(true);
+    try {
+      await updateTask({
+        title: editTitle,
+        details: editDetails,
+        dueAt: editDueAt ? new Date(editDueAt).toISOString() : null,
+        assigneeIds: editAssigneeIds,
+      });
+      setEditing(false);
+    } catch {
+      setErrorKey('taskForm.error.unknown');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const handleComplete = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -88,15 +135,73 @@ export function TaskDetailPage() {
     );
   }
 
+  if (editing) {
+    return (
+      <div className="screen task-detail-screen">
+        <div className="topbar">
+          <button type="button" className="btn btn-ghost" onClick={() => setEditing(false)}>
+            {t('common.cancel')}
+          </button>
+        </div>
+
+        <form onSubmit={handleSaveEdit} className="form task-detail-section">
+          <h2>{t('taskDetail.editHeading')}</h2>
+          <label className="field">
+            <span>{t('taskForm.title')}</span>
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              placeholder={t('taskForm.titlePlaceholder')}
+              maxLength={120}
+            />
+          </label>
+
+          <label className="field">
+            <span>{t('taskForm.details')}</span>
+            <textarea
+              value={editDetails}
+              onChange={(e) => setEditDetails(e.target.value)}
+              placeholder={t('taskForm.detailsPlaceholder')}
+              rows={3}
+              maxLength={2000}
+            />
+          </label>
+
+          <div className="field">
+            <span>{t('taskForm.assignedTo')}</span>
+            <AssigneeCheckboxes members={members} selectedIds={editAssigneeIds} onChange={setEditAssigneeIds} />
+          </div>
+
+          <label className="field">
+            <span>{t('taskForm.dueAt')}</span>
+            <input type="datetime-local" value={editDueAt} onChange={(e) => setEditDueAt(e.target.value)} />
+          </label>
+
+          {errorKey && <p className="form-error" role="alert">{t(errorKey)}</p>}
+
+          <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
+            {busy ? t('common.saving') : t('common.save')}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="screen task-detail-screen">
       <div className="topbar">
         <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)}>
           {t('common.back')}
         </button>
-        <span className={`status-badge ${task.status === 'done' ? 'status-done' : 'status-open'}`}>
-          {task.status === 'done' ? t('taskDetail.statusDone') : t('taskDetail.statusOpen')}
-        </span>
+        <div className="topbar-actions">
+          <span className={`status-badge ${task.status === 'done' ? 'status-done' : 'status-open'}`}>
+            {task.status === 'done' ? t('taskDetail.statusDone') : t('taskDetail.statusOpen')}
+          </span>
+          <button type="button" className="btn btn-ghost" onClick={startEditing}>
+            {t('taskDetail.editButton')}
+          </button>
+        </div>
       </div>
 
       <h1 className="task-detail-title">{task.title}</h1>
@@ -109,7 +214,7 @@ export function TaskDetailPage() {
       <div className="task-detail-grid">
         <div>
           <span className="label">{t('taskDetail.assignedTo')}</span>
-          <span>{task.assigned_to_all ? t('taskForm.everyone') : nameFor(task.assigned_to) || t('dashboard.unassigned')}</span>
+          <span>{assigneeLabel}</span>
         </div>
         <div>
           <span className="label">{t('taskDetail.createdBy')}</span>

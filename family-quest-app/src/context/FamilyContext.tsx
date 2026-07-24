@@ -35,6 +35,7 @@ interface FamilyContextValue {
   loading: boolean;
   createFamily: (name: string) => Promise<void>;
   joinFamily: (code: string) => Promise<void>;
+  renameFamily: (name: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -124,14 +125,28 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [refresh]);
 
+  const renameFamily = useCallback(async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      throw new FamilyActionError('family.error.nameRequired');
+    }
+    if (!family) return;
+    const { error } = await supabase.from('families').update({ name: trimmed }).eq('id', family.id);
+    if (error) {
+      throw new FamilyActionError('family.error.unknown');
+    }
+    setFamily((prev) => (prev ? { ...prev, name: trimmed } : prev));
+  }, [family]);
+
   const value = useMemo<FamilyContextValue>(() => ({
     family,
     members,
     loading,
     createFamily,
     joinFamily,
+    renameFamily,
     refresh,
-  }), [family, members, loading, createFamily, joinFamily, refresh]);
+  }), [family, members, loading, createFamily, joinFamily, renameFamily, refresh]);
 
   return <FamilyContext.Provider value={value}>{children}</FamilyContext.Provider>;
 }

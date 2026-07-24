@@ -166,6 +166,48 @@ a {
   color: var(--navy);
 }
 
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--navy);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.checkbox-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--purple);
+  flex-shrink: 0;
+}
+
+.only-mine-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+}
+
+.only-mine-toggle input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--purple);
+}
+
 input,
 textarea,
 select {
@@ -289,6 +331,21 @@ textarea {
   font-size: 22px;
   margin: 0;
   letter-spacing: -0.01em;
+}
+
+.app-title-button {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .app-title-button:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+  }
 }
 
 .topbar-actions {
@@ -515,6 +572,16 @@ textarea {
 .status-done {
   background: rgba(39, 137, 102, 0.15);
   color: var(--green);
+}
+
+.status-overdue {
+  background: rgba(198, 74, 85, 0.12);
+  color: var(--error);
+}
+
+.overdue-text {
+  color: var(--error);
+  font-weight: 700;
 }
 
 /* ---------- Modal ---------- */

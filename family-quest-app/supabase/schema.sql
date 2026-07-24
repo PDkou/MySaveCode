@@ -66,8 +66,6 @@ create table if not exists public.tasks (
   title text not null,
   details text,
   created_by uuid not null references auth.users(id),
-  assigned_to uuid references auth.users(id),
-  assigned_to_all boolean not null default false,
   status text not null default 'open',
   due_at timestamptz,
   completed_at timestamptz,
@@ -76,25 +74,56 @@ create table if not exists public.tasks (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint tasks_status_check check (status in ('open', 'done')),
-  constraint tasks_title_not_blank check (length(trim(title)) > 0),
-  constraint tasks_assignment_exclusive check (not (assigned_to_all and assigned_to is not null))
+  constraint tasks_title_not_blank check (length(trim(title)) > 0)
 );
-
--- Upgrades an already-deployed database that was set up before
--- assigned_to_all existed. No-op on a fresh install (the create table
--- above already has the column/constraint), safe to re-run.
-alter table public.tasks add column if not exists assigned_to_all boolean not null default false;
-
-do $$
-begin
-  if not exists (select 1 from pg_constraint where conname = 'tasks_assignment_exclusive') then
-    alter table public.tasks
-      add constraint tasks_assignment_exclusive check (not (assigned_to_all and assigned_to is not null));
-  end if;
-end $$;
 
 create index if not exists tasks_family_id_idx on public.tasks (family_id);
 create index if not exists tasks_family_status_idx on public.tasks (family_id, status);
+
+-- A task can be assigned to any number of family members (0, 1, or all of
+-- them) via one row per assignee here, rather than a single assigned_to
+-- column -- this is what lets the UI offer real checkboxes instead of a
+-- single-choice dropdown, and keeps working unchanged if the 2-member cap
+-- is ever relaxed later. family_id is denormalized (same pattern as
+-- task_activities below) so RLS can check membership without a join.
+create table if not exists public.task_assignees (
+  task_id uuid not null references public.tasks(id) on delete cascade,
+  family_id uuid not null references public.families(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  assigned_at timestamptz not null default now(),
+  primary key (task_id, user_id)
+);
+
+create index if not exists task_assignees_task_id_idx on public.task_assignees (task_id);
+create index if not exists task_assignees_family_id_idx on public.task_assignees (family_id);
+create index if not exists task_assignees_user_id_idx on public.task_assignees (user_id);
+
+-- Upgrades an already-deployed database that still has the older single
+-- assigned_to / assigned_to_all columns: carry their data over into
+-- task_assignees, then drop them. No-op (skipped entirely) once a database
+-- has already been migrated, so this stays safe to re-run.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'tasks' and column_name = 'assigned_to'
+  ) then
+    insert into public.task_assignees (task_id, family_id, user_id)
+    select id, family_id, assigned_to from public.tasks
+    where assigned_to is not null
+    on conflict do nothing;
+
+    insert into public.task_assignees (task_id, family_id, user_id)
+    select t.id, t.family_id, fm.user_id
+    from public.tasks t
+    join public.family_members fm on fm.family_id = t.family_id
+    where t.assigned_to_all
+    on conflict do nothing;
+
+    alter table public.tasks drop column assigned_to;
+    alter table public.tasks drop column assigned_to_all;
+  end if;
+end $$;
 
 create table if not exists public.task_activities (
   id uuid primary key default gen_random_uuid(),
@@ -415,6 +444,7 @@ alter table public.profiles enable row level security;
 alter table public.families enable row level security;
 alter table public.family_members enable row level security;
 alter table public.tasks enable row level security;
+alter table public.task_assignees enable row level security;
 alter table public.task_activities enable row level security;
 
 -- profiles: see your own row, see the display name of your family partner,
@@ -485,6 +515,24 @@ create policy tasks_delete on public.tasks
 for delete
 using (public.is_family_member(family_id));
 
+-- task_assignees: who a task is assigned to, scoped to your own family.
+-- Set at task creation and replaced wholesale when editing assignees
+-- later (delete the old rows, insert the new set).
+drop policy if exists task_assignees_select on public.task_assignees;
+create policy task_assignees_select on public.task_assignees
+for select
+using (public.is_family_member(family_id));
+
+drop policy if exists task_assignees_insert on public.task_assignees;
+create policy task_assignees_insert on public.task_assignees
+for insert
+with check (public.is_family_member(family_id));
+
+drop policy if exists task_assignees_delete on public.task_assignees;
+create policy task_assignees_delete on public.task_assignees
+for delete
+using (public.is_family_member(family_id));
+
 -- task_activities: read-only from the client's point of view (rows are
 -- written by the log_task_activity trigger), scoped to your own family.
 drop policy if exists task_activities_select on public.task_activities;
@@ -506,6 +554,7 @@ grant select, update on public.profiles to authenticated;
 grant select on public.families to authenticated;
 grant select on public.family_members to authenticated;
 grant select, insert, update, delete on public.tasks to authenticated;
+grant select, insert, delete on public.task_assignees to authenticated;
 grant select on public.task_activities to authenticated;
 
 grant execute on function public.create_family_room(text) to authenticated;
@@ -528,6 +577,13 @@ revoke execute on function public.shares_family_with(uuid) from anon, public;
 do $$
 begin
   alter publication supabase_realtime add table public.tasks;
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.task_assignees;
 exception
   when duplicate_object then null;
 end $$;

@@ -3,18 +3,28 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import type { TaskActivityRow, TaskRow } from '../types/database';
 
+export interface TaskEditInput {
+  title: string;
+  details: string;
+  dueAt: string | null;
+  assigneeIds: string[];
+}
+
 interface UseTaskDetailResult {
   task: TaskRow | null;
+  assigneeIds: string[];
   activities: TaskActivityRow[];
   loading: boolean;
   notFound: boolean;
   completeTask: (completionNote: string) => Promise<void>;
   reopenTask: () => Promise<void>;
   deleteTask: () => Promise<void>;
+  updateTask: (input: TaskEditInput) => Promise<void>;
 }
 
 export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
   const [task, setTask] = useState<TaskRow | null>(null);
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [activities, setActivities] = useState<TaskActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -24,6 +34,12 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     if (error) throw error;
     setTask(data);
     setNotFound(!data);
+  }, []);
+
+  const loadAssignees = useCallback(async (id: string) => {
+    const { data, error } = await supabase.from('task_assignees').select('user_id').eq('task_id', id);
+    if (error) throw error;
+    setAssigneeIds((data ?? []).map((row) => row.user_id));
   }, []);
 
   const loadActivities = useCallback(async (id: string) => {
@@ -39,6 +55,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
   useEffect(() => {
     if (!taskId) {
       setTask(null);
+      setAssigneeIds([]);
       setActivities([]);
       setLoading(false);
       return;
@@ -47,7 +64,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     let cancelled = false;
     setLoading(true);
 
-    Promise.all([loadTask(taskId), loadActivities(taskId)]).finally(() => {
+    Promise.all([loadTask(taskId), loadAssignees(taskId), loadActivities(taskId)]).finally(() => {
       if (!cancelled) setLoading(false);
     });
 
@@ -58,6 +75,13 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
         { event: '*', schema: 'public', table: 'tasks', filter: `id=eq.${taskId}` },
         () => {
           void loadTask(taskId);
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'task_assignees', filter: `task_id=eq.${taskId}` },
+        () => {
+          void loadAssignees(taskId);
         },
       )
       .on(
@@ -73,7 +97,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
       cancelled = true;
       void supabase.removeChannel(channel);
     };
-  }, [taskId, loadTask, loadActivities]);
+  }, [taskId, loadTask, loadAssignees, loadActivities]);
 
   const completeTask = useCallback(async (completionNote: string) => {
     if (!taskId) return;
@@ -114,5 +138,45 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     if (error) throw error;
   }, [taskId]);
 
-  return { task, activities, loading, notFound, completeTask, reopenTask, deleteTask };
+  const updateTask = useCallback(async (input: TaskEditInput) => {
+    if (!taskId || !task) return;
+    const { error: taskErr } = await supabase
+      .from('tasks')
+      .update({
+        title: input.title.trim(),
+        details: input.details.trim() ? input.details.trim() : null,
+        due_at: input.dueAt,
+      })
+      .eq('id', taskId);
+    if (taskErr) throw taskErr;
+
+    const { error: deleteErr } = await supabase.from('task_assignees').delete().eq('task_id', taskId);
+    if (deleteErr) throw deleteErr;
+
+    if (input.assigneeIds.length > 0) {
+      const { error: insertErr } = await supabase.from('task_assignees').insert(
+        input.assigneeIds.map((userId) => ({
+          task_id: taskId,
+          family_id: task.family_id,
+          user_id: userId,
+        })),
+      );
+      if (insertErr) throw insertErr;
+    }
+
+    await loadTask(taskId);
+    await loadAssignees(taskId);
+  }, [taskId, task, loadTask, loadAssignees]);
+
+  return {
+    task,
+    assigneeIds,
+    activities,
+    loading,
+    notFound,
+    completeTask,
+    reopenTask,
+    deleteTask,
+    updateTask,
+  };
 }
