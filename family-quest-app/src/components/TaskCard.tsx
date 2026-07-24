@@ -46,6 +46,9 @@ export function TaskCard({
           {task.status === 'done' ? t('taskDetail.statusDone') : t('taskDetail.statusOpen')}
         </span>
         {isOverdue && <span className="status-badge status-overdue">{t('dashboard.overdue')}</span>}
+        {task.recurrence !== 'none' && (
+          <span className="status-badge status-recurring">{t(`taskForm.recurrence.${task.recurrence}`)}</span>
+        )}
         <h3 className="task-card-title">{task.title}</h3>
       </div>
       <div className="task-card-meta">

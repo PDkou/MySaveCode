@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 
 import { useTasks } from '../context/TasksContext';
 import type { FamilyMember } from '../context/FamilyContext';
+import type { TaskRecurrence } from '../types/database';
 import { AssigneeCheckboxes } from './AssigneeCheckboxes';
+import { RecurrenceSelect } from './RecurrenceSelect';
 
 interface NewTaskModalProps {
   members: FamilyMember[];
@@ -19,6 +21,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
   const [details, setDetails] = useState('');
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [dueAt, setDueAt] = useState('');
+  const [recurrence, setRecurrence] = useState<TaskRecurrence>('none');
   const [submitting, setSubmitting] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
 
@@ -36,6 +39,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
         details,
         assigneeIds,
         dueAt: dueAt ? new Date(dueAt).toISOString() : null,
+        recurrence,
       });
       onClose();
     } catch {
@@ -81,6 +85,11 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
           <label className="field">
             <span>{t('taskForm.dueAt')}</span>
             <input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
+          </label>
+
+          <label className="field">
+            <span>{t('taskForm.recurrence.label')}</span>
+            <RecurrenceSelect value={recurrence} onChange={setRecurrence} />
           </label>
 
           {errorKey && <p className="form-error" role="alert">{t(errorKey)}</p>}

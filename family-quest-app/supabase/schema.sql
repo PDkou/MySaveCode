@@ -15,7 +15,7 @@
 --   6. create_family_room / join_family_room RPCs
 --   7. Family member limit trigger (defense in depth)
 --   8. Task activity log trigger
---   9. create_task / update_task RPCs
+--   9. create_task / update_task / complete_task RPCs
 --  10. Row Level Security policies
 --  11. Table/function grants
 --  12. Realtime publication
@@ -72,11 +72,26 @@ create table if not exists public.tasks (
   completed_at timestamptz,
   completed_by uuid references auth.users(id),
   completion_note text,
+  recurrence text not null default 'none',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint tasks_status_check check (status in ('open', 'done')),
-  constraint tasks_title_not_blank check (length(trim(title)) > 0)
+  constraint tasks_title_not_blank check (length(trim(title)) > 0),
+  constraint tasks_recurrence_check check (recurrence in ('none', 'daily', 'weekly', 'monthly'))
 );
+
+-- Upgrades an already-deployed database from before recurrence existed.
+-- No-op on a fresh install (the create table above already has the
+-- column/constraint) and no-op again once already applied.
+alter table public.tasks add column if not exists recurrence text not null default 'none';
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'tasks_recurrence_check') then
+    alter table public.tasks
+      add constraint tasks_recurrence_check check (recurrence in ('none', 'daily', 'weekly', 'monthly'));
+  end if;
+end $$;
 
 create index if not exists tasks_family_id_idx on public.tasks (family_id);
 create index if not exists tasks_family_status_idx on public.tasks (family_id, status);
@@ -458,7 +473,7 @@ after insert or update on public.tasks
 for each row execute function public.log_task_activity();
 
 -- -----------------------------------------------------------------------------
--- 9. create_task / update_task RPCs
+-- 9. create_task / update_task / complete_task RPCs
 --
 -- The task row and its task_assignees rows are always written together
 -- from these two functions rather than as two separate client requests --
@@ -467,12 +482,19 @@ for each row execute function public.log_task_activity();
 -- inserts) rolls back everything instead of leaving a task behind with
 -- no assignees while the client reports the whole thing as failed.
 -- -----------------------------------------------------------------------------
+-- Signatures below changed (added p_recurrence) from an earlier version of
+-- this file; drop the old ones first so re-running this script doesn't
+-- leave a stale overload behind that PostgREST could ambiguously match.
+drop function if exists public.create_task(uuid, text, text, timestamptz, uuid[]);
+drop function if exists public.update_task(uuid, text, text, timestamptz, uuid[]);
+
 create or replace function public.create_task(
   p_family_id uuid,
   p_title text,
   p_details text,
   p_due_at timestamptz,
-  p_assignee_ids uuid[]
+  p_assignee_ids uuid[],
+  p_recurrence text default 'none'
 )
 returns public.tasks
 language plpgsql
@@ -482,6 +504,7 @@ as $$
 declare
   v_uid uuid := auth.uid();
   v_title text := trim(coalesce(p_title, ''));
+  v_recurrence text := coalesce(p_recurrence, 'none');
   v_task public.tasks;
   v_assignee uuid;
 begin
@@ -497,8 +520,12 @@ begin
     raise exception 'title_required' using errcode = '22023';
   end if;
 
-  insert into public.tasks (family_id, title, details, created_by, due_at)
-  values (p_family_id, v_title, nullif(trim(coalesce(p_details, '')), ''), v_uid, p_due_at)
+  if v_recurrence not in ('none', 'daily', 'weekly', 'monthly') then
+    v_recurrence := 'none';
+  end if;
+
+  insert into public.tasks (family_id, title, details, created_by, due_at, recurrence)
+  values (p_family_id, v_title, nullif(trim(coalesce(p_details, '')), ''), v_uid, p_due_at, v_recurrence)
   returning * into v_task;
 
   if p_assignee_ids is not null then
@@ -518,7 +545,8 @@ create or replace function public.update_task(
   p_title text,
   p_details text,
   p_due_at timestamptz,
-  p_assignee_ids uuid[]
+  p_assignee_ids uuid[],
+  p_recurrence text default 'none'
 )
 returns public.tasks
 language plpgsql
@@ -528,6 +556,7 @@ as $$
 declare
   v_uid uuid := auth.uid();
   v_title text := trim(coalesce(p_title, ''));
+  v_recurrence text := coalesce(p_recurrence, 'none');
   v_task public.tasks;
   v_assignee uuid;
   v_family_id uuid;
@@ -549,10 +578,15 @@ begin
     raise exception 'title_required' using errcode = '22023';
   end if;
 
+  if v_recurrence not in ('none', 'daily', 'weekly', 'monthly') then
+    v_recurrence := 'none';
+  end if;
+
   update public.tasks
   set title = v_title,
       details = nullif(trim(coalesce(p_details, '')), ''),
-      due_at = p_due_at
+      due_at = p_due_at,
+      recurrence = v_recurrence
   where id = p_task_id
   returning * into v_task;
 
@@ -564,6 +598,66 @@ begin
       values (p_task_id, v_family_id, v_assignee)
       on conflict do nothing;
     end loop;
+  end if;
+
+  return v_task;
+end;
+$$;
+
+-- Completing a task that has a recurrence spawns the next occurrence (same
+-- title/details/assignees, due date advanced by the interval) in the same
+-- transaction as the completion itself. p_completion_note is validated by
+-- the client (required to complete), not re-validated here.
+create or replace function public.complete_task(p_task_id uuid, p_completion_note text)
+returns public.tasks
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_task public.tasks;
+  v_family_id uuid;
+  v_next_due timestamptz;
+  v_new_task_id uuid;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select family_id into v_family_id from public.tasks where id = p_task_id;
+  if v_family_id is null then
+    raise exception 'task_not_found' using errcode = 'P0002';
+  end if;
+
+  if not public.is_family_member(v_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  update public.tasks
+  set status = 'done',
+      completed_at = now(),
+      completed_by = v_uid,
+      completion_note = nullif(trim(coalesce(p_completion_note, '')), '')
+  where id = p_task_id
+  returning * into v_task;
+
+  if v_task.recurrence <> 'none' then
+    v_next_due := case v_task.recurrence
+      when 'daily' then coalesce(v_task.due_at, now()) + interval '1 day'
+      when 'weekly' then coalesce(v_task.due_at, now()) + interval '7 days'
+      when 'monthly' then coalesce(v_task.due_at, now()) + interval '1 month'
+      else null
+    end;
+
+    insert into public.tasks (family_id, title, details, created_by, due_at, recurrence)
+    values (v_task.family_id, v_task.title, v_task.details, v_task.created_by, v_next_due, v_task.recurrence)
+    returning id into v_new_task_id;
+
+    insert into public.task_assignees (task_id, family_id, user_id)
+    select v_new_task_id, v_task.family_id, ta.user_id
+    from public.task_assignees ta
+    where ta.task_id = p_task_id;
   end if;
 
   return v_task;
@@ -692,13 +786,15 @@ grant select on public.task_activities to authenticated;
 
 grant execute on function public.create_family_room(text) to authenticated;
 grant execute on function public.join_family_room(text) to authenticated;
-grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[]) to authenticated;
-grant execute on function public.update_task(uuid, text, text, timestamptz, uuid[]) to authenticated;
+grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text) to authenticated;
+grant execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text) to authenticated;
+grant execute on function public.complete_task(uuid, text) to authenticated;
 
 revoke execute on function public.create_family_room(text) from anon, public;
 revoke execute on function public.join_family_room(text) from anon, public;
-revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[]) from anon, public;
-revoke execute on function public.update_task(uuid, text, text, timestamptz, uuid[]) from anon, public;
+revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text) from anon, public;
+revoke execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text) from anon, public;
+revoke execute on function public.complete_task(uuid, text) from anon, public;
 revoke execute on function public.is_family_member(uuid) from anon, public;
 revoke execute on function public.get_my_family_id() from anon, public;
 revoke execute on function public.shares_family_with(uuid) from anon, public;

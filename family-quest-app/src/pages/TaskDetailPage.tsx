@@ -8,7 +8,9 @@ import { useTasks } from '../context/TasksContext';
 import { useTaskDetail } from '../hooks/useTaskDetail';
 import { formatDateTime, toDateTimeLocalValue } from '../lib/formatDate';
 import { AssigneeCheckboxes } from '../components/AssigneeCheckboxes';
+import { RecurrenceSelect } from '../components/RecurrenceSelect';
 import { Spinner } from '../components/Spinner';
+import type { TaskRecurrence } from '../types/database';
 
 export function TaskDetailPage() {
   const { t, i18n } = useTranslation();
@@ -28,6 +30,7 @@ export function TaskDetailPage() {
   const [editDetails, setEditDetails] = useState('');
   const [editDueAt, setEditDueAt] = useState('');
   const [editAssigneeIds, setEditAssigneeIds] = useState<string[]>([]);
+  const [editRecurrence, setEditRecurrence] = useState<TaskRecurrence>('none');
 
   const nameByUserId = useMemo(() => {
     const map = new Map<string, string>();
@@ -49,6 +52,7 @@ export function TaskDetailPage() {
     setEditDetails(task.details ?? '');
     setEditDueAt(toDateTimeLocalValue(task.due_at));
     setEditAssigneeIds(assigneeIds);
+    setEditRecurrence(task.recurrence);
     setErrorKey(null);
     setEditing(true);
   };
@@ -67,6 +71,7 @@ export function TaskDetailPage() {
         details: editDetails,
         dueAt: editDueAt ? new Date(editDueAt).toISOString() : null,
         assigneeIds: editAssigneeIds,
+        recurrence: editRecurrence,
       });
       setEditing(false);
     } catch {
@@ -174,6 +179,11 @@ export function TaskDetailPage() {
             <input type="datetime-local" value={editDueAt} onChange={(e) => setEditDueAt(e.target.value)} />
           </label>
 
+          <label className="field">
+            <span>{t('taskForm.recurrence.label')}</span>
+            <RecurrenceSelect value={editRecurrence} onChange={setEditRecurrence} />
+          </label>
+
           {errorKey && <p className="form-error" role="alert">{t(errorKey)}</p>}
 
           <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
@@ -220,6 +230,12 @@ export function TaskDetailPage() {
           <span className="label">{t('taskDetail.dueAt')}</span>
           <span>{task.due_at ? formatDateTime(task.due_at, i18n.language) : t('dashboard.noDueDate')}</span>
         </div>
+        {task.recurrence !== 'none' && (
+          <div>
+            <span className="label">{t('taskForm.recurrence.label')}</span>
+            <span>{t(`taskForm.recurrence.${task.recurrence}`)}</span>
+          </div>
+        )}
         <div>
           <span className="label">{t('taskDetail.createdAt')}</span>
           <span>{formatDateTime(task.created_at, i18n.language)}</span>

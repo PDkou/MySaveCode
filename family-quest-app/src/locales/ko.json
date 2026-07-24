@@ -105,6 +105,13 @@
     "noAssignee": "담당자 지정 안 함",
     "everyone": "모두",
     "dueAt": "기한",
+    "recurrence": {
+      "label": "반복",
+      "none": "반복 안 함",
+      "daily": "매일",
+      "weekly": "매주",
+      "monthly": "매달"
+    },
     "submit": "전달하기",
     "submitting": "전달하는 중...",
     "error": {

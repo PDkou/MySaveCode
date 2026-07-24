@@ -4,6 +4,8 @@ export type TaskStatus = 'open' | 'done';
 
 export type TaskActivityAction = 'created' | 'completed' | 'reopened' | 'updated';
 
+export type TaskRecurrence = 'none' | 'daily' | 'weekly' | 'monthly';
+
 export type ProfileRow = {
   id: string;
   display_name: string;
@@ -40,6 +42,7 @@ export type TaskRow = {
   completed_at: string | null;
   completed_by: string | null;
   completion_note: string | null;
+  recurrence: TaskRecurrence;
   created_at: string;
   updated_at: string;
 };
@@ -119,6 +122,7 @@ export type Database = {
           p_details: string | null;
           p_due_at: string | null;
           p_assignee_ids: string[] | null;
+          p_recurrence: TaskRecurrence;
         };
         Returns: TaskRow;
       };
@@ -129,6 +133,14 @@ export type Database = {
           p_details: string | null;
           p_due_at: string | null;
           p_assignee_ids: string[] | null;
+          p_recurrence: TaskRecurrence;
+        };
+        Returns: TaskRow;
+      };
+      complete_task: {
+        Args: {
+          p_task_id: string;
+          p_completion_note: string | null;
         };
         Returns: TaskRow;
       };
