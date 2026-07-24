@@ -10,64 +10,101 @@ const path = require('path');
 const zlib = require('zlib');
 
 const NAVY = [0x18, 0x26, 0x40];
-const AMBER = [0xd9, 0x94, 0x35];
+const PURPLE = [0x6f, 0x5b, 0xd3];
 const CREAM = [0xf6, 0xf4, 0xef];
 
-function mix(a, b, t) {
-  return a.map((v, i) => Math.round(v + (b[i] - v) * t));
+// Standard ray-casting point-in-polygon test.
+function pointInPolygon(px, py, points) {
+  let inside = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    const [xi, yi] = points[i];
+    const [xj, yj] = points[j];
+    const intersects = yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
+    if (intersects) inside = !inside;
+  }
+  return inside;
 }
 
-// Distance from point to a line segment, for drawing the checkmark stroke.
-function segmentDistance(px, py, x1, y1, x2, y2) {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const lenSq = dx * dx + dy * dy;
-  let t = lenSq === 0 ? 0 : ((px - x1) * dx + (py - y1) * dy) / lenSq;
-  t = Math.max(0, Math.min(1, t));
-  const cx = x1 + t * dx;
-  const cy = y1 + t * dy;
-  return Math.hypot(px - cx, py - cy);
+function pointInCircle(px, py, cx, cy, r) {
+  return Math.hypot(px - cx, py - cy) <= r;
 }
 
+// Supersampled render: evaluate shape membership on a fine subpixel grid and
+// average each block down to the final pixel, which gives smooth
+// anti-aliased edges on the circle/house/door without hand-written AA math
+// per shape.
 function drawIcon(size) {
+  const SS = 4;
+  const superSize = size * SS;
+  const cx = superSize / 2;
+  const cy = superSize / 2;
+  const circleR = superSize * 0.33;
+
+  // Simple house silhouette (square body + triangular roof, no overhang),
+  // sized to sit comfortably inside the circle badge.
+  const unit = circleR * 0.6;
+  const eavesY = cy - unit * 0.05;
+  const bottomY = cy + unit * 0.95;
+  const apexY = cy - unit * 1.15;
+  const house = [
+    [cx - unit, bottomY],
+    [cx - unit, eavesY],
+    [cx, apexY],
+    [cx + unit, eavesY],
+    [cx + unit, bottomY],
+  ];
+
+  // A small door cut-out, punched through the house back to the background
+  // color, for recognizability as a "home" glyph at small sizes.
+  const doorW = unit * 0.42;
+  const doorH = unit * 0.62;
+  const doorX0 = cx - doorW / 2;
+  const doorX1 = cx + doorW / 2;
+  const doorY0 = bottomY - doorH;
+  const doorY1 = bottomY;
+
+  // Render at supersample resolution first.
+  const superBuf = new Uint8Array(superSize * superSize * 3);
+  for (let y = 0; y < superSize; y++) {
+    for (let x = 0; x < superSize; x++) {
+      const px = x + 0.5;
+      const py = y + 0.5;
+      let color = NAVY;
+      if (pointInCircle(px, py, cx, cy, circleR)) {
+        color = PURPLE;
+        if (pointInPolygon(px, py, house)) {
+          color = CREAM;
+          if (px >= doorX0 && px <= doorX1 && py >= doorY0 && py <= doorY1) {
+            color = PURPLE;
+          }
+        }
+      }
+      const idx = (y * superSize + x) * 3;
+      superBuf[idx] = color[0];
+      superBuf[idx + 1] = color[1];
+      superBuf[idx + 2] = color[2];
+    }
+  }
+
+  // Box-downsample SSxSS blocks to the final pixel size.
   const buf = Buffer.alloc(size * size * 4);
-  const cx = size / 2;
-  const cy = size / 2;
-  const circleR = size * 0.33;
-  const strokeW = size * 0.052;
-
-  // Checkmark control points, scaled to the icon size, centered on the circle.
-  const p1 = [cx - circleR * 0.5, cy + circleR * 0.02];
-  const p2 = [cx - circleR * 0.12, cy + circleR * 0.42];
-  const p3 = [cx + circleR * 0.58, cy - circleR * 0.38];
-
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      let color = NAVY;
-
-      const distFromCenter = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
-      const edge = distFromCenter - circleR;
-      if (edge < 0) {
-        // Soft anti-aliased edge on the amber circle.
-        const t = Math.min(1, Math.max(0, 1 - edge / -1.2));
-        color = edge < -1.2 ? AMBER : mix(NAVY, AMBER, t);
+      let r = 0, g = 0, b = 0;
+      for (let sy = 0; sy < SS; sy++) {
+        for (let sx = 0; sx < SS; sx++) {
+          const idx = ((y * SS + sy) * superSize + (x * SS + sx)) * 3;
+          r += superBuf[idx];
+          g += superBuf[idx + 1];
+          b += superBuf[idx + 2];
+        }
       }
-
-      const d1 = segmentDistance(x + 0.5, y + 0.5, p1[0], p1[1], p2[0], p2[1]);
-      const d2 = segmentDistance(x + 0.5, y + 0.5, p2[0], p2[1], p3[0], p3[1]);
-      const d = Math.min(d1, d2);
-      if (d < strokeW / 2) {
-        color = CREAM;
-      } else if (d < strokeW / 2 + 1) {
-        const t = strokeW / 2 + 1 - d;
-        color = mix(color, CREAM, t);
-      }
-
-      const idx = (y * size + x) * 4;
-      buf[idx] = color[0];
-      buf[idx + 1] = color[1];
-      buf[idx + 2] = color[2];
-      buf[idx + 3] = 255;
+      const n = SS * SS;
+      const outIdx = (y * size + x) * 4;
+      buf[outIdx] = Math.round(r / n);
+      buf[outIdx + 1] = Math.round(g / n);
+      buf[outIdx + 2] = Math.round(b / n);
+      buf[outIdx + 3] = 255;
     }
   }
   return buf;
