@@ -3,14 +3,43 @@ import type { BadgeKey } from '../types/database';
 // Points/level are simple and purely derived on the client -- the server
 // (complete_task RPC, see supabase/schema.sql section 9) only ever tracks
 // raw points; there is no stored "level" column to keep in sync.
-export const POINTS_PER_LEVEL = 100;
+//
+// Each level requires more points than the last (level 1->2 costs
+// LEVEL_BASE_POINTS, 2->3 costs LEVEL_BASE_POINTS + LEVEL_INCREMENT, and so
+// on) instead of a flat amount per level, so leveling up gets gradually
+// harder the way it does in most games.
+export const LEVEL_BASE_POINTS = 100;
+export const LEVEL_INCREMENT = 50;
 
-export function levelForPoints(points: number): number {
-  return Math.floor(points / POINTS_PER_LEVEL) + 1;
+// Points required to advance from `level` to `level + 1`.
+function levelUpCost(level: number): number {
+  return LEVEL_BASE_POINTS + (level - 1) * LEVEL_INCREMENT;
 }
 
+function levelProgress(points: number): { level: number; intoLevel: number } {
+  let level = 1;
+  let remaining = points;
+  while (remaining >= levelUpCost(level)) {
+    remaining -= levelUpCost(level);
+    level++;
+  }
+  return { level, intoLevel: remaining };
+}
+
+export function levelForPoints(points: number): number {
+  return levelProgress(points).level;
+}
+
+// Points earned so far within the current level.
 export function pointsIntoLevel(points: number): number {
-  return points % POINTS_PER_LEVEL;
+  return levelProgress(points).intoLevel;
+}
+
+// Points needed in total to clear the current level (the denominator for a
+// progress bar), i.e. the same escalating cost the "harder every level"
+// design implies.
+export function pointsNeededForLevel(points: number): number {
+  return levelUpCost(levelProgress(points).level);
 }
 
 export const ALL_BADGE_KEYS: BadgeKey[] = [

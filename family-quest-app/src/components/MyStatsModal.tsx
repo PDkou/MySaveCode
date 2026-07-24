@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { supabase } from '../lib/supabaseClient';
-import { ALL_BADGE_KEYS, BADGE_EMOJI, levelForPoints, pointsIntoLevel, POINTS_PER_LEVEL } from '../lib/gamification';
+import { ALL_BADGE_KEYS, BADGE_EMOJI, levelForPoints, pointsIntoLevel, pointsNeededForLevel } from '../lib/gamification';
 import type { BadgeKey } from '../types/database';
 
 interface MyStatsModalProps {
@@ -46,7 +46,8 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
 
   const level = levelForPoints(me.points);
   const intoLevel = pointsIntoLevel(me.points);
-  const progressPct = Math.round((intoLevel / POINTS_PER_LEVEL) * 100);
+  const neededForLevel = pointsNeededForLevel(me.points);
+  const progressPct = Math.round((intoLevel / neededForLevel) * 100);
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -58,7 +59,7 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
           <div className="stats-level-bar-track">
             <div className="stats-level-bar-fill" style={{ width: `${progressPct}%` }} />
           </div>
-          <span className="stats-level-points">{t('stats.pointsToNext', { current: intoLevel, total: POINTS_PER_LEVEL })}</span>
+          <span className="stats-level-points">{t('stats.pointsToNext', { current: intoLevel, total: neededForLevel })}</span>
         </div>
 
         <div className="stats-row-group">
