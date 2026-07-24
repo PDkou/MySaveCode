@@ -64,9 +64,12 @@
     "inviteCodeLabel": "招待コード",
     "memberCount": "{{count}}/2人 参加中",
     "shareHint": "このコードを家族に共有して、一緒に参加してもらいましょう。",
+    "switcherTitle": "家族ルームを切り替え",
+    "addAnother": "新しい家族ルームを追加",
+    "addAnotherHeading": "新しい家族ルームを追加",
     "error": {
       "nameRequired": "家族ルーム名を入力してください。",
-      "alreadyInFamily": "すでに別の家族ルームに参加しています。",
+      "alreadyInThisFamily": "すでにこの家族ルームに参加しています。",
       "codeRequired": "招待コードを入力してください。",
       "invalidCode": "招待コードは8桁で入力してください。",
       "codeNotFound": "その招待コードの家族ルームが見つかりません。",

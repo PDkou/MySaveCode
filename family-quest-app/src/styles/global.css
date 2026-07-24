@@ -205,6 +205,74 @@ a {
   color: var(--navy);
 }
 
+.family-title-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.family-switcher-wrap {
+  position: relative;
+}
+
+.family-switcher-caret {
+  font-size: 11px;
+  margin-left: 5px;
+  color: var(--muted-light);
+}
+
+.family-switcher-menu {
+  width: 240px;
+}
+
+.family-switcher-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.family-switcher-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .family-switcher-item:hover {
+    background: var(--bg);
+  }
+}
+
+.family-switcher-item-active,
+.family-switcher-item-active:hover {
+  background: var(--ink);
+  color: #fff;
+}
+
+.family-switcher-add {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding: 10px 10px 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--purple);
+  cursor: pointer;
+}
+
 .avatar-chip {
   display: inline-flex;
   align-items: center;

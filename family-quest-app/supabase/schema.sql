@@ -56,11 +56,17 @@ create table if not exists public.family_members (
   role text not null default 'member',
   joined_at timestamptz not null default now(),
   constraint family_members_role_check check (role in ('owner', 'member')),
-  constraint family_members_user_unique unique (user_id),
   constraint family_members_family_user_unique unique (family_id, user_id)
 );
 
+-- A user can belong to more than one family (e.g. their own household plus
+-- their and their spouse's parents' households), each still capped at 2
+-- members -- see enforce_family_member_limit below. Drops the old
+-- one-family-per-user constraint from earlier versions of this schema.
+alter table public.family_members drop constraint if exists family_members_user_unique;
+
 create index if not exists family_members_family_id_idx on public.family_members (family_id);
+create index if not exists family_members_user_id_idx on public.family_members (user_id);
 
 create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
@@ -307,8 +313,9 @@ $$;
 -- Clients never insert into families / family_members directly (see the RLS
 -- section below -- there are no insert policies on those tables). All writes
 -- go through these two SECURITY DEFINER functions so membership rules
--- (1 family per user, 2 members per family, unique invite code) are
--- enforced in one place, atomically.
+-- (2 members per family, unique invite code, no joining a family you're
+-- already in) are enforced in one place, atomically. A user can belong to
+-- any number of families at once.
 -- -----------------------------------------------------------------------------
 create or replace function public.generate_invite_code()
 returns text
@@ -352,10 +359,6 @@ begin
     raise exception 'invalid_family_name' using errcode = '22023';
   end if;
 
-  if exists (select 1 from public.family_members where user_id = v_uid) then
-    raise exception 'already_in_family' using errcode = '23505';
-  end if;
-
   loop
     v_code := public.generate_invite_code();
     v_attempts := v_attempts + 1;
@@ -396,15 +399,15 @@ begin
     raise exception 'invalid_invite_code' using errcode = '22023';
   end if;
 
-  if exists (select 1 from public.family_members where user_id = v_uid) then
-    raise exception 'already_in_family' using errcode = '23505';
-  end if;
-
   -- Lock the target family row so two people joining at the same instant
   -- can't both pass the "under 2 members" check before either commits.
   select * into v_family from public.families where invite_code = v_code for update;
   if not found then
     raise exception 'family_not_found' using errcode = 'P0002';
+  end if;
+
+  if exists (select 1 from public.family_members where family_id = v_family.id and user_id = v_uid) then
+    raise exception 'already_in_this_family' using errcode = '23505';
   end if;
 
   select count(*) into v_member_count from public.family_members where family_id = v_family.id;

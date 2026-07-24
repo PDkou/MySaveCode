@@ -16,7 +16,7 @@ export class FamilyActionError extends Error {
 
 function mapFamilyErrorToKey(message: string | undefined): string {
   const m = (message ?? '').toLowerCase();
-  if (m.includes('already_in_family')) return 'family.error.alreadyInFamily';
+  if (m.includes('already_in_this_family')) return 'family.error.alreadyInThisFamily';
   if (m.includes('invalid_family_name')) return 'family.error.nameRequired';
   if (m.includes('invalid_invite_code')) return 'family.error.invalidCode';
   if (m.includes('family_not_found')) return 'family.error.codeNotFound';
@@ -25,17 +25,21 @@ function mapFamilyErrorToKey(message: string | undefined): string {
   return 'family.error.unknown';
 }
 
+const activeFamilyStorageKey = (userId: string) => `familyquest.active-family.${userId}`;
+
 export interface FamilyMember extends FamilyMemberRow {
   display_name: string;
 }
 
 interface FamilyContextValue {
   family: FamilyRow | null;
+  families: FamilyRow[];
   members: FamilyMember[];
   loading: boolean;
   createFamily: (name: string) => Promise<void>;
   joinFamily: (code: string) => Promise<void>;
   renameFamily: (name: string) => Promise<void>;
+  switchFamily: (familyId: string) => void;
   refresh: () => Promise<void>;
 }
 
@@ -44,32 +48,71 @@ const FamilyContext = createContext<FamilyContextValue | null>(null);
 export function FamilyProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [family, setFamily] = useState<FamilyRow | null>(null);
+  const [families, setFamilies] = useState<FamilyRow[]>([]);
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async (userId: string) => {
+  // preferredFamilyId lets createFamily/joinFamily/switchFamily jump
+  // straight to the family that was just created/joined/picked, instead of
+  // falling back to whatever was previously stored.
+  const load = useCallback(async (userId: string, preferredFamilyId?: string) => {
     setLoading(true);
     try {
-      const { data: memberRow, error: memberErr } = await supabase
+      const { data: membershipRows, error: membershipErr } = await supabase
         .from('family_members')
-        .select('family_id')
+        .select('family_id, joined_at')
         .eq('user_id', userId)
-        .maybeSingle();
+        .order('joined_at', { ascending: true });
 
-      if (memberErr) throw memberErr;
+      if (membershipErr) throw membershipErr;
 
-      if (!memberRow) {
+      if (!membershipRows || membershipRows.length === 0) {
+        setFamilies([]);
         setFamily(null);
         setMembers([]);
         return;
       }
 
-      const [{ data: familyRow, error: familyErr }, { data: memberRows, error: membersErr }] = await Promise.all([
-        supabase.from('families').select('*').eq('id', memberRow.family_id).maybeSingle(),
-        supabase.from('family_members').select('*').eq('family_id', memberRow.family_id).order('joined_at', { ascending: true }),
-      ]);
+      const familyIds = membershipRows.map((m) => m.family_id);
+      const { data: familyRows, error: familiesErr } = await supabase
+        .from('families')
+        .select('*')
+        .in('id', familyIds);
 
-      if (familyErr) throw familyErr;
+      if (familiesErr) throw familiesErr;
+
+      const familyById = new Map((familyRows ?? []).map((f) => [f.id, f]));
+      // Preserve join order (oldest membership first) rather than whatever
+      // order the `in (...)` query happens to return.
+      const orderedFamilies = membershipRows
+        .map((m) => familyById.get(m.family_id))
+        .filter((f): f is FamilyRow => !!f);
+
+      setFamilies(orderedFamilies);
+
+      let activeId = preferredFamilyId;
+      if (!activeId) {
+        const stored = window.localStorage.getItem(activeFamilyStorageKey(userId));
+        activeId = stored && orderedFamilies.some((f) => f.id === stored) ? stored : orderedFamilies[0]?.id;
+      }
+      if (activeId) {
+        window.localStorage.setItem(activeFamilyStorageKey(userId), activeId);
+      }
+
+      const activeFamily = orderedFamilies.find((f) => f.id === activeId) ?? null;
+      setFamily(activeFamily);
+
+      if (!activeFamily) {
+        setMembers([]);
+        return;
+      }
+
+      const { data: memberRows, error: membersErr } = await supabase
+        .from('family_members')
+        .select('*')
+        .eq('family_id', activeFamily.id)
+        .order('joined_at', { ascending: true });
+
       if (membersErr) throw membersErr;
 
       const memberIds = (memberRows ?? []).map((m) => m.user_id);
@@ -81,7 +124,6 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
       const nameById = new Map((profileRows ?? []).map((p) => [p.id, p.display_name]));
 
-      setFamily(familyRow ?? null);
       setMembers(
         (memberRows ?? []).map((m) => ({
           ...m,
@@ -96,6 +138,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) {
       setFamily(null);
+      setFamilies([]);
       setMembers([]);
       setLoading(false);
       return;
@@ -105,25 +148,44 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     if (user) {
-      await load(user.id);
+      await load(user.id, family?.id);
     }
-  }, [user, load]);
+  }, [user, load, family]);
+
+  const switchFamily = useCallback(
+    (familyId: string) => {
+      if (!user) return;
+      window.localStorage.setItem(activeFamilyStorageKey(user.id), familyId);
+      void load(user.id, familyId);
+    },
+    [user, load],
+  );
 
   const createFamily = useCallback(async (name: string) => {
-    const { error } = await supabase.rpc('create_family_room', { p_name: name });
+    const { data, error } = await supabase.rpc('create_family_room', { p_name: name });
     if (error) {
       throw new FamilyActionError(mapFamilyErrorToKey(error.message));
     }
-    await refresh();
-  }, [refresh]);
+    if (user && data) {
+      window.localStorage.setItem(activeFamilyStorageKey(user.id), data.id);
+      await load(user.id, data.id);
+    } else {
+      await refresh();
+    }
+  }, [user, load, refresh]);
 
   const joinFamily = useCallback(async (code: string) => {
-    const { error } = await supabase.rpc('join_family_room', { p_code: code });
+    const { data, error } = await supabase.rpc('join_family_room', { p_code: code });
     if (error) {
       throw new FamilyActionError(mapFamilyErrorToKey(error.message));
     }
-    await refresh();
-  }, [refresh]);
+    if (user && data) {
+      window.localStorage.setItem(activeFamilyStorageKey(user.id), data.id);
+      await load(user.id, data.id);
+    } else {
+      await refresh();
+    }
+  }, [user, load, refresh]);
 
   const renameFamily = useCallback(async (name: string) => {
     const trimmed = name.trim();
@@ -136,17 +198,20 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       throw new FamilyActionError('family.error.unknown');
     }
     setFamily((prev) => (prev ? { ...prev, name: trimmed } : prev));
+    setFamilies((prev) => prev.map((f) => (f.id === family.id ? { ...f, name: trimmed } : f)));
   }, [family]);
 
   const value = useMemo<FamilyContextValue>(() => ({
     family,
+    families,
     members,
     loading,
     createFamily,
     joinFamily,
     renameFamily,
+    switchFamily,
     refresh,
-  }), [family, members, loading, createFamily, joinFamily, renameFamily, refresh]);
+  }), [family, families, members, loading, createFamily, joinFamily, renameFamily, switchFamily, refresh]);
 
   return <FamilyContext.Provider value={value}>{children}</FamilyContext.Provider>;
 }
