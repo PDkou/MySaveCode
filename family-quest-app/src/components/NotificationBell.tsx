@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,7 +15,9 @@ export function NotificationBell() {
   const { user } = useAuth();
   const { family, members } = useFamily();
   const { notifications, unreadCount, markAllRead } = useNotifications();
+  const bellRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
   const [pushState, setPushState] = useState<PushState>('unsupported');
   const [pushBusy, setPushBusy] = useState(false);
 
@@ -33,7 +35,26 @@ export function NotificationBell() {
   const toggle = () => {
     setOpen((prev) => {
       const next = !prev;
-      if (next) markAllRead();
+      if (next) {
+        markAllRead();
+        // Anchor the dropdown to the bell's actual on-screen position (not
+        // CSS-relative to its own tiny wrapper) so it stays fully visible
+        // regardless of how the header row happens to wrap on a given
+        // device/font -- a wrapped row left the wrapper (and so the
+        // absolutely-positioned panel) off past the edge of the screen on
+        // some phones. Preferred position is right-aligned under the bell,
+        // but clamped on both sides so it can never render partly
+        // off-screen even if the bell itself ends up near an edge.
+        const rect = bellRef.current?.getBoundingClientRect();
+        if (rect) {
+          const margin = 8;
+          const panelWidth = Math.min(300, window.innerWidth * 0.86);
+          const idealLeft = rect.right - panelWidth;
+          const maxLeft = window.innerWidth - margin - panelWidth;
+          const left = Math.max(margin, Math.min(idealLeft, maxLeft));
+          setPanelPos({ top: rect.bottom + 8, left });
+        }
+      }
       return next;
     });
   };
@@ -58,7 +79,7 @@ export function NotificationBell() {
 
   return (
     <div className="notification-bell-wrap">
-      <button type="button" className="notification-bell" onClick={toggle} aria-label={t('notifications.title')}>
+      <button ref={bellRef} type="button" className="notification-bell" onClick={toggle} aria-label={t('notifications.title')}>
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
@@ -69,7 +90,10 @@ export function NotificationBell() {
       {open && (
         <>
           <div className="notification-backdrop" onClick={() => setOpen(false)} />
-          <div className="notification-panel">
+          <div
+            className="notification-panel"
+            style={panelPos ? { top: panelPos.top, left: panelPos.left } : undefined}
+          >
             <div className="notification-panel-header">{t('notifications.title')}</div>
 
             {pushState !== 'unsupported' && (

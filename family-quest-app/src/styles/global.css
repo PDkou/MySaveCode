@@ -550,9 +550,13 @@ textarea {
 }
 
 .notification-panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+  /* fixed + viewport-relative because top/right are set inline from the
+     bell's actual getBoundingClientRect() at open time -- see
+     NotificationBell.tsx. These top/right values are just a fallback for
+     the rare case that measurement isn't available. */
+  position: fixed;
+  top: 64px;
+  left: 12px;
   width: 300px;
   max-width: 86vw;
   max-height: 380px;
