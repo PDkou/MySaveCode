@@ -106,6 +106,8 @@
     "assignedTo": "담당자",
     "noAssignee": "담당자 지정 안 함",
     "everyone": "모두",
+    "lotteryButton": "🎲 제비뽑기",
+    "lotteryPicking": "뽑는 중...",
     "dueAt": "기한",
     "recurrence": {
       "label": "반복",
@@ -193,5 +195,47 @@
     "toggle": "테마 전환",
     "light": "라이트",
     "dark": "다크"
+  },
+  "celebration": {
+    "messages": [
+      "완벽해요! 오늘도 가족을 챙겼네요 🎉",
+      "역시 믿음직한 우리 가족!",
+      "최고예요! 한 걸음 더 가까워졌어요",
+      "잘했어요! 가족이 편해졌어요",
+      "굿잡! 오늘의 영웅은 당신입니다",
+      "이 정도면 프로 살림꾼!",
+      "완료! 가족 모두가 고마워할 거예요",
+      "짱이에요! 다음 퀘스트도 기대할게요"
+    ],
+    "pointsGained": "+{{points}} 포인트 획득!",
+    "levelUp": "레벨 업! Lv.{{level}}",
+    "streak": "{{count}}일 연속 완료 중! 🔥",
+    "newBadgeHeading": "새 뱃지 획득!"
+  },
+  "gallery": {
+    "openButton": "사진첩",
+    "heading": "완료 사진첩",
+    "empty": "아직 첨부된 완료 사진이 없습니다."
+  },
+  "weeklyBreakdown": {
+    "heading": "이번 주 가족별 완료 현황",
+    "empty": "이번 주에 완료한 퀘스트가 아직 없습니다."
+  },
+  "stats": {
+    "heading": "나의 기록",
+    "pointsToNext": "다음 레벨까지 {{current}}/{{total}}",
+    "currentStreak": "연속 완료",
+    "longestStreak": "최고 기록",
+    "completedCount": "총 완료",
+    "badgeGallery": "뱃지 컬렉션"
+  },
+  "badges": {
+    "first_quest": { "name": "첫 발걸음", "desc": "첫 퀘스트를 완료했어요" },
+    "ten_quests": { "name": "열정 가득", "desc": "퀘스트 10개를 완료했어요" },
+    "fifty_quests": { "name": "가족 영웅", "desc": "퀘스트 50개를 완료했어요" },
+    "streak_3": { "name": "3일 연속", "desc": "3일 연속으로 퀘스트를 완료했어요" },
+    "streak_7": { "name": "일주일 개근", "desc": "7일 연속으로 퀘스트를 완료했어요" },
+    "early_bird": { "name": "얼리버드", "desc": "오전 7시 이전에 퀘스트를 완료했어요" },
+    "night_owl": { "name": "올빼미족", "desc": "밤 11시 이후에 퀘스트를 완료했어요" }
   }
 }

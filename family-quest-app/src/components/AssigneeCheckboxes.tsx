@@ -4,9 +4,10 @@ interface AssigneeCheckboxesProps {
   members: FamilyMember[];
   selectedIds: string[];
   onChange: (ids: string[]) => void;
+  highlightedId?: string | null;
 }
 
-export function AssigneeCheckboxes({ members, selectedIds, onChange }: AssigneeCheckboxesProps) {
+export function AssigneeCheckboxes({ members, selectedIds, onChange, highlightedId }: AssigneeCheckboxesProps) {
   const toggle = (userId: string) => {
     if (selectedIds.includes(userId)) {
       onChange(selectedIds.filter((id) => id !== userId));
@@ -18,7 +19,10 @@ export function AssigneeCheckboxes({ members, selectedIds, onChange }: AssigneeC
   return (
     <div className="checkbox-group">
       {members.map((m) => (
-        <label key={m.user_id} className="checkbox-row">
+        <label
+          key={m.user_id}
+          className={`checkbox-row${m.user_id === highlightedId ? ' checkbox-row-highlight' : ''}`}
+        >
           <input
             type="checkbox"
             checked={selectedIds.includes(m.user_id)}

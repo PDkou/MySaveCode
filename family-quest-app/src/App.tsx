@@ -9,6 +9,7 @@ import { FamilySetupPage } from './pages/FamilySetupPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
 import { CalendarPage } from './pages/CalendarPage';
+import { PhotoGalleryPage } from './pages/PhotoGalleryPage';
 import { Spinner } from './components/Spinner';
 import { UndoSnackbar } from './components/UndoSnackbar';
 
@@ -76,12 +77,29 @@ function ProtectedCalendar() {
   return <CalendarPage />;
 }
 
+function ProtectedGallery() {
+  const { session, initializing } = useAuth();
+  const { family, loading: familyLoading } = useFamily();
+
+  if (initializing || familyLoading) {
+    return <FullScreenLoading />;
+  }
+  if (!session) {
+    return <Navigate to="/" replace />;
+  }
+  if (!family) {
+    return <Navigate to="/" replace />;
+  }
+  return <PhotoGalleryPage />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<RootGate />} />
       <Route path="/task/:taskId" element={<ProtectedTaskDetail />} />
       <Route path="/calendar" element={<ProtectedCalendar />} />
+      <Route path="/gallery" element={<ProtectedGallery />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

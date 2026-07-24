@@ -6,6 +6,15 @@ export type TaskActivityAction = 'created' | 'completed' | 'reopened' | 'updated
 
 export type TaskRecurrence = 'none' | 'daily' | 'weekly' | 'monthly';
 
+export type BadgeKey =
+  | 'first_quest'
+  | 'ten_quests'
+  | 'fifty_quests'
+  | 'streak_3'
+  | 'streak_7'
+  | 'early_bird'
+  | 'night_owl';
+
 export type ProfileRow = {
   id: string;
   display_name: string;
@@ -29,6 +38,11 @@ export type FamilyMemberRow = {
   user_id: string;
   role: 'owner' | 'member';
   display_name: string | null;
+  points: number;
+  current_streak: number;
+  longest_streak: number;
+  last_completed_date: string | null;
+  completed_count: number;
   joined_at: string;
 };
 
@@ -85,6 +99,14 @@ export type TaskCommentRow = {
   created_at: string;
 };
 
+export type MemberBadgeRow = {
+  id: string;
+  family_id: string;
+  user_id: string;
+  badge_key: BadgeKey;
+  earned_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -136,6 +158,12 @@ export type Database = {
         Row: TaskCommentRow;
         Insert: Partial<TaskCommentRow> & Pick<TaskCommentRow, 'task_id' | 'family_id' | 'author_id' | 'body'>;
         Update: Partial<TaskCommentRow>;
+        Relationships: [];
+      };
+      member_badges: {
+        Row: MemberBadgeRow;
+        Insert: Partial<MemberBadgeRow> & Pick<MemberBadgeRow, 'family_id' | 'user_id' | 'badge_key'>;
+        Update: Partial<MemberBadgeRow>;
         Relationships: [];
       };
     };

@@ -9,11 +9,14 @@ import { useTasks } from '../context/TasksContext';
 import { useTaskDetail } from '../hooks/useTaskDetail';
 import { formatDateTime, toDateTimeLocalValue } from '../lib/formatDate';
 import { AssigneeCheckboxes } from '../components/AssigneeCheckboxes';
+import { AssigneeLotteryButton } from '../components/AssigneeLotteryButton';
 import { RecurrenceSelect } from '../components/RecurrenceSelect';
 import { DueDateTimeFields } from '../components/DueDateTimeFields';
 import { AvatarChip } from '../components/AvatarChip';
 import { Spinner } from '../components/Spinner';
+import { CelebrationOverlay } from '../components/CelebrationOverlay';
 import { getTaskPhotoUrl, TaskPhotoError, uploadTaskPhoto } from '../lib/taskPhotos';
+import type { CompletionResult } from '../lib/gamification';
 import type { TaskRecurrence } from '../types/database';
 
 export function TaskDetailPage() {
@@ -33,6 +36,7 @@ export function TaskDetailPage() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [commentBody, setCommentBody] = useState('');
   const [commentBusy, setCommentBusy] = useState(false);
+  const [celebration, setCelebration] = useState<CompletionResult | null>(null);
 
   const QUICK_EMOJIS = ['👍', '❤️', '🎉', '😊', '🙏', '💪'];
 
@@ -41,6 +45,7 @@ export function TaskDetailPage() {
   const [editDetails, setEditDetails] = useState('');
   const [editDueAt, setEditDueAt] = useState('');
   const [editAssigneeIds, setEditAssigneeIds] = useState<string[]>([]);
+  const [editHighlightedId, setEditHighlightedId] = useState<string | null>(null);
   const [editRecurrence, setEditRecurrence] = useState<TaskRecurrence>('none');
 
   const nameByUserId = useMemo(() => {
@@ -129,9 +134,10 @@ export function TaskDetailPage() {
           return;
         }
       }
-      await completeTask(completionNote, photoPath);
+      const result = await completeTask(completionNote, photoPath);
       setCompletionNote('');
       setCompletionPhotoFile(null);
+      if (result) setCelebration(result);
     } catch {
       setErrorKey('taskDetail.error.unknown');
     } finally {
@@ -244,8 +250,20 @@ export function TaskDetailPage() {
           </label>
 
           <div className="field">
-            <span>{t('taskForm.assignedTo')}</span>
-            <AssigneeCheckboxes members={members} selectedIds={editAssigneeIds} onChange={setEditAssigneeIds} />
+            <div className="field-label-row">
+              <span>{t('taskForm.assignedTo')}</span>
+              <AssigneeLotteryButton
+                members={members}
+                onHighlightChange={setEditHighlightedId}
+                onPick={(userId) => setEditAssigneeIds([userId])}
+              />
+            </div>
+            <AssigneeCheckboxes
+              members={members}
+              selectedIds={editAssigneeIds}
+              onChange={setEditAssigneeIds}
+              highlightedId={editHighlightedId}
+            />
           </div>
 
           <div className="field">
@@ -450,6 +468,8 @@ export function TaskDetailPage() {
       <button type="button" className="btn btn-danger btn-block" onClick={handleDelete}>
         {t('taskDetail.deleteButton')}
       </button>
+
+      {celebration && <CelebrationOverlay result={celebration} onDismiss={() => setCelebration(null)} />}
     </div>
   );
 }

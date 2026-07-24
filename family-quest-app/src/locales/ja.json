@@ -106,6 +106,8 @@
     "assignedTo": "担当者",
     "noAssignee": "担当者を指定しない",
     "everyone": "全員",
+    "lotteryButton": "🎲 くじ引き",
+    "lotteryPicking": "選んでいます...",
     "dueAt": "期限",
     "recurrence": {
       "label": "繰り返し",
@@ -193,5 +195,47 @@
     "toggle": "テーマ切替",
     "light": "ライト",
     "dark": "ダーク"
+  },
+  "celebration": {
+    "messages": [
+      "完璧です! 今日も家族を支えましたね🎉",
+      "さすが頼れる家族!",
+      "最高です! また一歩前進しました",
+      "よくやりました! 家族が助かりました",
+      "グッジョブ! 今日のヒーローはあなたです",
+      "もう立派な家事のプロですね!",
+      "完了! きっと家族みんなが感謝しています",
+      "さすがです! 次のクエストも楽しみですね"
+    ],
+    "pointsGained": "+{{points}}ポイント獲得!",
+    "levelUp": "レベルアップ! Lv.{{level}}",
+    "streak": "{{count}}日連続達成中! 🔥",
+    "newBadgeHeading": "新しいバッジ獲得!"
+  },
+  "gallery": {
+    "openButton": "フォトギャラリー",
+    "heading": "完了フォトギャラリー",
+    "empty": "まだ完了写真が添付されていません。"
+  },
+  "weeklyBreakdown": {
+    "heading": "今週の家族別完了状況",
+    "empty": "今週完了したクエストはまだありません。"
+  },
+  "stats": {
+    "heading": "わたしの記録",
+    "pointsToNext": "次のレベルまで {{current}}/{{total}}",
+    "currentStreak": "連続達成",
+    "longestStreak": "最長記録",
+    "completedCount": "累計完了",
+    "badgeGallery": "バッジコレクション"
+  },
+  "badges": {
+    "first_quest": { "name": "はじめの一歩", "desc": "はじめてのクエストを完了しました" },
+    "ten_quests": { "name": "がんばり屋", "desc": "クエストを10個完了しました" },
+    "fifty_quests": { "name": "家族のヒーロー", "desc": "クエストを50個完了しました" },
+    "streak_3": { "name": "3日連続", "desc": "3日連続でクエストを完了しました" },
+    "streak_7": { "name": "週間皆勤", "desc": "7日連続でクエストを完了しました" },
+    "early_bird": { "name": "早起きさん", "desc": "午前7時前にクエストを完了しました" },
+    "night_owl": { "name": "夜ふかしさん", "desc": "夜11時以降にクエストを完了しました" }
   }
 }

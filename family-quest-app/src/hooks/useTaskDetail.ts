@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import type { TaskActivityRow, TaskCommentRow, TaskRecurrence, TaskRow } from '../types/database';
+import { levelForPoints } from '../lib/gamification';
+import type { CompletionResult } from '../lib/gamification';
+import type { BadgeKey, TaskActivityRow, TaskCommentRow, TaskRecurrence, TaskRow } from '../types/database';
 
 export interface TaskEditInput {
   title: string;
@@ -19,7 +21,7 @@ interface UseTaskDetailResult {
   comments: TaskCommentRow[];
   loading: boolean;
   notFound: boolean;
-  completeTask: (completionNote: string, completionPhotoPath: string | null) => Promise<void>;
+  completeTask: (completionNote: string, completionPhotoPath: string | null) => Promise<CompletionResult | null>;
   reopenTask: () => Promise<void>;
   updateTask: (input: TaskEditInput) => Promise<void>;
   addComment: (body: string) => Promise<void>;
@@ -123,8 +125,19 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     };
   }, [taskId, loadTask, loadAssignees, loadActivities, loadComments]);
 
-  const completeTask = useCallback(async (completionNote: string, completionPhotoPath: string | null) => {
-    if (!taskId) return;
+  const completeTask = useCallback(async (completionNote: string, completionPhotoPath: string | null): Promise<CompletionResult | null> => {
+    if (!taskId || !task || !user) return null;
+    const familyId = task.family_id;
+
+    // Snapshot the completer's points/streak/badges before the RPC runs so
+    // the celebration UI can diff before vs. after -- complete_task itself
+    // still returns just the task row (unchanged API), see schema.sql.
+    const [{ data: prevMember }, { data: prevBadgeRows }] = await Promise.all([
+      supabase.from('family_members').select('points, current_streak').eq('family_id', familyId).eq('user_id', user.id).maybeSingle(),
+      supabase.from('member_badges').select('badge_key').eq('family_id', familyId).eq('user_id', user.id),
+    ]);
+    const prevBadgeKeys = new Set((prevBadgeRows ?? []).map((b) => b.badge_key));
+
     // RPC rather than a plain update: completing a recurring task also
     // creates its next occurrence (copying assignees) in the same
     // transaction as the completion.
@@ -136,7 +149,31 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     if (error) throw error;
     await loadTask(taskId);
     await loadActivities(taskId);
-  }, [taskId, loadTask, loadActivities]);
+
+    if (!prevMember) return null;
+
+    const [{ data: newMember }, { data: newBadgeRows }] = await Promise.all([
+      supabase.from('family_members').select('points, current_streak').eq('family_id', familyId).eq('user_id', user.id).maybeSingle(),
+      supabase.from('member_badges').select('badge_key').eq('family_id', familyId).eq('user_id', user.id),
+    ]);
+    if (!newMember) return null;
+
+    const newBadges = (newBadgeRows ?? [])
+      .map((b) => b.badge_key as BadgeKey)
+      .filter((key) => !prevBadgeKeys.has(key));
+    const prevLevel = levelForPoints(prevMember.points);
+    const newLevel = levelForPoints(newMember.points);
+
+    return {
+      pointsGained: newMember.points - prevMember.points,
+      newPoints: newMember.points,
+      newLevel,
+      leveledUp: newLevel > prevLevel,
+      newStreak: newMember.current_streak,
+      streakIncreased: newMember.current_streak > prevMember.current_streak,
+      newBadges,
+    };
+  }, [taskId, task, user, loadTask, loadActivities]);
 
   const reopenTask = useCallback(async () => {
     if (!taskId) return;
