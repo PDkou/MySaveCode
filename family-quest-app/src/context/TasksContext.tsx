@@ -100,29 +100,17 @@ export function TasksProvider({ children }: { children: ReactNode }) {
 
   const createTask = useCallback(async (input: NewTaskInput) => {
     if (!family || !user) return;
-    const { data: task, error } = await supabase
-      .from('tasks')
-      .insert({
-        family_id: family.id,
-        title: input.title.trim(),
-        details: input.details.trim() ? input.details.trim() : null,
-        created_by: user.id,
-        due_at: input.dueAt,
-      })
-      .select()
-      .single();
+    // A single RPC (one DB transaction) instead of two separate insert
+    // calls, so a dropped connection between them (flaky mobile network)
+    // can't leave the task created but reported to the user as failed.
+    const { error } = await supabase.rpc('create_task', {
+      p_family_id: family.id,
+      p_title: input.title.trim(),
+      p_details: input.details.trim() ? input.details.trim() : null,
+      p_due_at: input.dueAt,
+      p_assignee_ids: input.assigneeIds,
+    });
     if (error) throw error;
-
-    if (input.assigneeIds.length > 0) {
-      const { error: assigneesErr } = await supabase.from('task_assignees').insert(
-        input.assigneeIds.map((userId) => ({
-          task_id: task.id,
-          family_id: family.id,
-          user_id: userId,
-        })),
-      );
-      if (assigneesErr) throw assigneesErr;
-    }
 
     await refresh();
   }, [family, user, refresh]);

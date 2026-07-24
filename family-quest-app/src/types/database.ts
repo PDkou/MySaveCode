@@ -112,6 +112,26 @@ export type Database = {
         Args: { p_code: string };
         Returns: FamilyRow;
       };
+      create_task: {
+        Args: {
+          p_family_id: string;
+          p_title: string;
+          p_details: string | null;
+          p_due_at: string | null;
+          p_assignee_ids: string[] | null;
+        };
+        Returns: TaskRow;
+      };
+      update_task: {
+        Args: {
+          p_task_id: string;
+          p_title: string;
+          p_details: string | null;
+          p_due_at: string | null;
+          p_assignee_ids: string[] | null;
+        };
+        Returns: TaskRow;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
