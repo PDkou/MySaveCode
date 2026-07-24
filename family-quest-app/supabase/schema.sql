@@ -778,6 +778,86 @@ begin
 end;
 $$;
 
+-- Reopening a task undoes the completer's gamification progress from it --
+-- otherwise toggling complete/reopen/complete on the same task would let
+-- points and streak climb forever. Rather than trying to precisely undo a
+-- single complete_task call (which would need per-completion history we
+-- don't keep), this recomputes the (former) completer's points/streak/
+-- completed_count from their actual remaining 'done' tasks in this family,
+-- so the numbers stay correct no matter how many times something gets
+-- toggled. Already-earned badges are intentionally left alone -- an
+-- achievement earned once stays earned, same as most gamification systems.
+create or replace function public.reopen_task(p_task_id uuid)
+returns public.tasks
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_task public.tasks;
+  v_family_id uuid;
+  v_completer_id uuid;
+  v_new_completed_count integer;
+  v_streak_len integer;
+  v_last_date date;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select family_id, completed_by into v_family_id, v_completer_id from public.tasks where id = p_task_id;
+  if v_family_id is null then
+    raise exception 'task_not_found' using errcode = 'P0002';
+  end if;
+
+  if not public.is_family_member(v_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  update public.tasks
+  set status = 'open',
+      completed_at = null,
+      completed_by = null,
+      completion_note = null,
+      completion_photo_path = null
+  where id = p_task_id
+  returning * into v_task;
+
+  if v_completer_id is not null then
+    select count(*) into v_new_completed_count
+    from public.tasks
+    where family_id = v_family_id and completed_by = v_completer_id and status = 'done';
+
+    -- Classic gaps-and-islands grouping: dates that are consecutive share
+    -- the same (date - row_number) value, so the group containing the most
+    -- recent date is exactly the current streak.
+    with dates as (
+      select distinct completed_at::date as d
+      from public.tasks
+      where family_id = v_family_id and completed_by = v_completer_id and status = 'done'
+    ),
+    grouped as (
+      select d, d - (row_number() over (order by d))::int as grp
+      from dates
+    )
+    select max(d), count(*) into v_last_date, v_streak_len
+    from grouped
+    where grp = (select grp from grouped order by d desc limit 1);
+
+    update public.family_members
+    set points = v_new_completed_count * 10,
+        completed_count = v_new_completed_count,
+        current_streak = coalesce(v_streak_len, 0),
+        longest_streak = greatest(longest_streak, coalesce(v_streak_len, 0)),
+        last_completed_date = v_last_date
+    where family_id = v_family_id and user_id = v_completer_id;
+  end if;
+
+  return v_task;
+end;
+$$;
+
 -- -----------------------------------------------------------------------------
 -- 10. Row Level Security
 -- -----------------------------------------------------------------------------
@@ -960,12 +1040,14 @@ grant execute on function public.join_family_room(text) to authenticated;
 grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text) to authenticated;
 grant execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text) to authenticated;
 grant execute on function public.complete_task(uuid, text, text) to authenticated;
+grant execute on function public.reopen_task(uuid) to authenticated;
 
 revoke execute on function public.create_family_room(text) from anon, public;
 revoke execute on function public.join_family_room(text) from anon, public;
 revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text) from anon, public;
 revoke execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text) from anon, public;
 revoke execute on function public.complete_task(uuid, text, text) from anon, public;
+revoke execute on function public.reopen_task(uuid) from anon, public;
 revoke execute on function public.is_family_member(uuid) from anon, public;
 revoke execute on function public.get_my_family_id() from anon, public;
 revoke execute on function public.shares_family_with(uuid) from anon, public;

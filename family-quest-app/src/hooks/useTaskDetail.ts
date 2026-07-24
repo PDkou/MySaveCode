@@ -177,16 +177,10 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
 
   const reopenTask = useCallback(async () => {
     if (!taskId) return;
-    const { error } = await supabase
-      .from('tasks')
-      .update({
-        status: 'open',
-        completed_at: null,
-        completed_by: null,
-        completion_note: null,
-        completion_photo_path: null,
-      })
-      .eq('id', taskId);
+    // RPC rather than a plain update: it also rolls back the completer's
+    // points/streak/completed_count so toggling complete/reopen doesn't
+    // let those climb forever -- see reopen_task in schema.sql.
+    const { error } = await supabase.rpc('reopen_task', { p_task_id: taskId });
     if (error) throw error;
     await loadTask(taskId);
     await loadActivities(taskId);
