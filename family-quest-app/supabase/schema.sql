@@ -101,19 +101,35 @@ create index if not exists task_assignees_user_id_idx on public.task_assignees (
 
 -- Upgrades an already-deployed database that still has the older single
 -- assigned_to / assigned_to_all columns: carry their data over into
--- task_assignees, then drop them. No-op (skipped entirely) once a database
--- has already been migrated, so this stays safe to re-run.
+-- task_assignees, then drop them. Each column is checked independently
+-- (not "both or neither") since a database can be caught mid-upgrade --
+-- e.g. it went straight from the very first schema (assigned_to only, no
+-- assigned_to_all yet) to this one without ever running the in-between
+-- version. No-op once a database has already been fully migrated, so
+-- this stays safe to re-run.
 do $$
+declare
+  v_has_assigned_to boolean;
+  v_has_assigned_to_all boolean;
 begin
-  if exists (
+  select exists (
     select 1 from information_schema.columns
     where table_schema = 'public' and table_name = 'tasks' and column_name = 'assigned_to'
-  ) then
+  ) into v_has_assigned_to;
+
+  select exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'tasks' and column_name = 'assigned_to_all'
+  ) into v_has_assigned_to_all;
+
+  if v_has_assigned_to then
     insert into public.task_assignees (task_id, family_id, user_id)
     select id, family_id, assigned_to from public.tasks
     where assigned_to is not null
     on conflict do nothing;
+  end if;
 
+  if v_has_assigned_to_all then
     insert into public.task_assignees (task_id, family_id, user_id)
     select t.id, t.family_id, fm.user_id
     from public.tasks t
@@ -121,8 +137,11 @@ begin
     where t.assigned_to_all
     on conflict do nothing;
 
-    alter table public.tasks drop column assigned_to;
     alter table public.tasks drop column assigned_to_all;
+  end if;
+
+  if v_has_assigned_to then
+    alter table public.tasks drop column assigned_to;
   end if;
 end $$;
 
