@@ -95,7 +95,12 @@ a {
   min-height: 100dvh;
   max-width: 560px;
   margin: 0 auto;
-  padding: 20px 16px calc(env(safe-area-inset-bottom, 0px) + 32px);
+  /* viewport-fit=cover lets the page render under the notch/Dynamic
+     Island, so without this the top row (back/edit buttons) ends up
+     crammed right against the status bar on notched phones -- worse the
+     bigger the phone/notch, which is exactly what "hard to press" was
+     describing. */
+  padding: calc(env(safe-area-inset-top, 0px) + 20px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px);
   display: flex;
   flex-direction: column;
   gap: 20px;
