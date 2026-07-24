@@ -156,6 +156,10 @@ VAPID_PRIVATE_KEY=JuTMqywb8rLzCaeNr3Z0wFJnpWIIaSRgQOLCl4pz-E8
 
 아래는 **터미널 없이, 브라우저(Supabase 대시보드)만으로** 하는 방법입니다. 회사 컴퓨터처럼 터미널을 못 쓰는 환경에서도 그대로 따라할 수 있습니다. (나중에 집 컴퓨터 등에서 터미널을 쓸 수 있게 되면, 맨 아래 "CLI로 하는 방법"으로 대체해도 됩니다 — 결과는 동일합니다.)
 
+### 3-1-0. schema.sql 다시 실행 (최초 1회, 잊지 마세요)
+
+이 기능은 `push_subscriptions` 테이블과 `tasks.due_reminder_sent_for` 컬럼을 새로 추가합니다. Supabase **SQL Editor**에서 저장소의 `family-quest-app/supabase/schema.sql` 전체 내용을 복사해서 다시 실행하세요 (위 1.1과 동일한 방법). 이걸 건너뛰면 아래 단계에서 `relation "push_subscriptions" does not exist` 같은 오류가 납니다.
+
 ### 3-1-1. Edge Function 만들기 (브라우저에서, 최초 1회)
 
 1. [supabase.com](https://supabase.com) 접속 → 로그인 → 이 프로젝트 선택
@@ -199,6 +203,8 @@ select cron.schedule(
 ```
 
 (`schema.sql`을 처음부터 다시 실행할 때 `pg_cron`/`pg_net` extension은 함께 켜지지만, 이 `cron.schedule` 호출 자체는 프로젝트별 URL이 필요해서 일부러 주석 처리되어 있습니다 — 이 블록만 따로 한 번 실행하면 됩니다.)
+
+**`ERROR: schema "cron" does not exist`가 뜬다면**: `pg_cron` extension이 아직 안 켜진 것입니다. 위 3-1-0에서 `schema.sql`을 다시 실행했는데도 이 오류가 나면, SQL로 켜는 대신 대시보드에서 직접 켜세요 — 왼쪽 메뉴 **Database → Extensions** → 검색창에 `pg_cron` 입력 → 토글로 활성화 (`pg_net`도 같은 방법으로 활성화). 이후 위 `cron.schedule(...)` 블록을 다시 실행하면 됩니다.
 
 ### 3-1-4. Vercel 환경변수 추가
 

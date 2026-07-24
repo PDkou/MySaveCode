@@ -944,9 +944,28 @@ revoke all on public.push_subscriptions from anon, public;
 
 -- pg_cron + pg_net let Postgres call the deployed Edge Function on a
 -- schedule without any external scheduler. Both are available on every
--- Supabase plan, including the free tier.
-create extension if not exists pg_cron with schema extensions;
-create extension if not exists pg_net with schema extensions;
+-- Supabase plan, including the free tier. pg_cron is not relocatable (it
+-- always creates its own "cron" schema), so no "with schema" clause here --
+-- wrapped in DO blocks so that if the SQL Editor's role can't create the
+-- extension directly for some reason, this reports it instead of aborting
+-- the rest of the script; enabling it from the dashboard's Database ->
+-- Extensions page (search "pg_cron" / "pg_net", toggle on) does the same
+-- thing and is the more reliable path if this notice shows up.
+do $$
+begin
+  create extension if not exists pg_cron;
+exception
+  when others then
+    raise notice 'pg_cron extension not enabled via SQL (%). Enable it from Database > Extensions in the Supabase dashboard instead, then re-run this file.', sqlerrm;
+end $$;
+
+do $$
+begin
+  create extension if not exists pg_net;
+exception
+  when others then
+    raise notice 'pg_net extension not enabled via SQL (%). Enable it from Database > Extensions in the Supabase dashboard instead, then re-run this file.', sqlerrm;
+end $$;
 
 -- After deploying the Edge Function (see README.md), uncomment this block,
 -- replace <PROJECT_REF> and <ANON_KEY> with your project's actual values
