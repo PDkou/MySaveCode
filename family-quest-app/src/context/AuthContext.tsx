@@ -41,6 +41,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   setLanguage: (language: AppLanguageCode) => Promise<void>;
+  updateDisplayName: (name: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -152,6 +153,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [i18n, session]);
 
+  const updateDisplayName = useCallback(async (name: string) => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      throw new AuthActionError('auth.error.displayNameRequired');
+    }
+    if (!session?.user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ display_name: trimmedName })
+      .eq('id', session.user.id);
+    if (error) {
+      throw new AuthActionError('auth.error.unknown');
+    }
+    setProfile((prev) => (prev ? { ...prev, display_name: trimmedName } : prev));
+  }, [session]);
+
   const refreshProfile = useCallback(async () => {
     if (session?.user) {
       await loadProfile(session.user.id);
@@ -168,8 +185,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     setLanguage,
+    updateDisplayName,
     refreshProfile,
-  }), [session, profile, initializing, profileLoading, signUp, signIn, signOut, setLanguage, refreshProfile]);
+  }), [session, profile, initializing, profileLoading, signUp, signIn, signOut, setLanguage, updateDisplayName, refreshProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

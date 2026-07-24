@@ -6,6 +6,7 @@
   "common": {
     "loading": "불러오는 중...",
     "save": "저장",
+    "saving": "저장 중...",
     "cancel": "취소",
     "confirm": "확인",
     "close": "닫기",
@@ -135,6 +136,9 @@
   "header": {
     "members": "참여 인원",
     "inviteCode": "초대 코드"
+  },
+  "profile": {
+    "editNameHeading": "이름 변경"
   },
   "language": {
     "label": "언어",
