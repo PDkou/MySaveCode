@@ -28,6 +28,7 @@ export type FamilyMemberRow = {
   family_id: string;
   user_id: string;
   role: 'owner' | 'member';
+  display_name: string | null;
   joined_at: string;
 };
 

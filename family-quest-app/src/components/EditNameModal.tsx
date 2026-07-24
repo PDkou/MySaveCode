@@ -2,16 +2,14 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useAuth, AuthActionError } from '../context/AuthContext';
-
 interface EditNameModalProps {
   currentName: string;
+  onSave: (name: string) => Promise<void>;
   onClose: () => void;
 }
 
-export function EditNameModal({ currentName, onClose }: EditNameModalProps) {
+export function EditNameModal({ currentName, onSave, onClose }: EditNameModalProps) {
   const { t } = useTranslation();
-  const { updateDisplayName } = useAuth();
 
   const [name, setName] = useState(currentName);
   const [submitting, setSubmitting] = useState(false);
@@ -22,10 +20,13 @@ export function EditNameModal({ currentName, onClose }: EditNameModalProps) {
     setErrorKey(null);
     setSubmitting(true);
     try {
-      await updateDisplayName(name);
+      await onSave(name);
       onClose();
     } catch (err) {
-      setErrorKey(err instanceof AuthActionError ? err.translationKey : 'auth.error.unknown');
+      const key = err && typeof err === 'object' && 'translationKey' in err
+        ? (err as { translationKey: string }).translationKey
+        : 'auth.error.unknown';
+      setErrorKey(key);
     } finally {
       setSubmitting(false);
     }

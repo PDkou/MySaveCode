@@ -23,7 +23,7 @@ export function DashboardPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { signOut, profile, user } = useAuth();
-  const { family, members } = useFamily();
+  const { family, members, updateMyDisplayName } = useFamily();
   const { tasks, assigneesByTaskId, loading, refresh, requestDelete } = useTasks();
 
   const [filter, setFilter] = useState<Filter>('open');
@@ -136,7 +136,7 @@ export function DashboardPage() {
         <div className="topbar-actions">
           {profile && (
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowEditName(true)}>
-              {profile.display_name}
+              {(user && nameByUserId.get(user.id)) || profile.display_name}
             </button>
           )}
           <ThemeToggle />
@@ -262,7 +262,11 @@ export function DashboardPage() {
 
       {showNewTask && <NewTaskModal members={members} onClose={() => setShowNewTask(false)} />}
       {showEditName && profile && (
-        <EditNameModal currentName={profile.display_name} onClose={() => setShowEditName(false)} />
+        <EditNameModal
+          currentName={(user && nameByUserId.get(user.id)) || profile.display_name}
+          onSave={updateMyDisplayName}
+          onClose={() => setShowEditName(false)}
+        />
       )}
       {showEditFamilyName && family && (
         <EditFamilyNameModal currentName={family.name} onClose={() => setShowEditFamilyName(false)} />

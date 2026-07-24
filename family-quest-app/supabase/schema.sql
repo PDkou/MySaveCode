@@ -54,6 +54,12 @@ create table if not exists public.family_members (
   family_id uuid not null references public.families(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   role text not null default 'member',
+  -- Per-family override of profiles.display_name -- e.g. showing up as
+  -- "며느리" to in-laws but your own name to your own household. Defaulted
+  -- from the profile's current name at create/join time (see
+  -- create_family_room/join_family_room), editable afterward just for this
+  -- family. Null falls back to profiles.display_name.
+  display_name text,
   joined_at timestamptz not null default now(),
   constraint family_members_role_check check (role in ('owner', 'member')),
   constraint family_members_family_user_unique unique (family_id, user_id)
@@ -64,6 +70,10 @@ create table if not exists public.family_members (
 -- members -- see enforce_family_member_limit below. Drops the old
 -- one-family-per-user constraint from earlier versions of this schema.
 alter table public.family_members drop constraint if exists family_members_user_unique;
+
+-- Upgrades an already-deployed database from before per-family display
+-- names existed.
+alter table public.family_members add column if not exists display_name text;
 
 create index if not exists family_members_family_id_idx on public.family_members (family_id);
 create index if not exists family_members_user_id_idx on public.family_members (user_id);
@@ -350,6 +360,7 @@ declare
   v_code text;
   v_family public.families;
   v_attempts integer := 0;
+  v_display_name text;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -372,8 +383,10 @@ begin
   values (v_name, v_code, v_uid)
   returning * into v_family;
 
-  insert into public.family_members (family_id, user_id, role)
-  values (v_family.id, v_uid, 'owner');
+  select display_name into v_display_name from public.profiles where id = v_uid;
+
+  insert into public.family_members (family_id, user_id, role, display_name)
+  values (v_family.id, v_uid, 'owner', v_display_name);
 
   return v_family;
 end;
@@ -390,6 +403,7 @@ declare
   v_code text := upper(trim(coalesce(p_code, '')));
   v_family public.families;
   v_member_count integer;
+  v_display_name text;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -415,8 +429,10 @@ begin
     raise exception 'family_full' using errcode = 'P0001';
   end if;
 
-  insert into public.family_members (family_id, user_id, role)
-  values (v_family.id, v_uid, 'member');
+  select display_name into v_display_name from public.profiles where id = v_uid;
+
+  insert into public.family_members (family_id, user_id, role, display_name)
+  values (v_family.id, v_uid, 'member', v_display_name);
 
   return v_family;
 end;
@@ -732,12 +748,24 @@ using (public.is_family_member(id))
 with check (public.is_family_member(id));
 
 -- family_members: only members of the same family can see the roster.
--- No insert/update/delete policy -- membership changes only happen through
+-- No insert/delete policy -- membership changes only happen through
 -- create_family_room() / join_family_room().
 drop policy if exists family_members_select on public.family_members;
 create policy family_members_select on public.family_members
 for select
 using (public.is_family_member(family_id));
+
+-- Lets a member set how their own name shows up within this specific
+-- family (e.g. different from how they appear in another family they also
+-- belong to). Row-scoped to their own membership row here, and further
+-- restricted to only the display_name column via the column-level grant
+-- below -- the row policy alone wouldn't stop a client from also trying to
+-- rewrite role/family_id/user_id on that same row.
+drop policy if exists family_members_update_self on public.family_members;
+create policy family_members_update_self on public.family_members
+for update
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
 
 -- tasks: fully scoped to your own family.
 drop policy if exists tasks_select on public.tasks;
@@ -838,6 +866,9 @@ grant usage on schema public to authenticated;
 grant select, update on public.profiles to authenticated;
 grant select on public.families to authenticated;
 grant select on public.family_members to authenticated;
+-- Column-restricted: only display_name is updatable client-side (see the
+-- family_members_update_self policy above), never role/family_id/user_id.
+grant update (display_name) on public.family_members to authenticated;
 grant select, insert, update, delete on public.tasks to authenticated;
 grant select, insert, delete on public.task_assignees to authenticated;
 grant select on public.task_activities to authenticated;
