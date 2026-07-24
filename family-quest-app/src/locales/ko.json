@@ -94,6 +94,7 @@
     "detailsPlaceholder": "자세한 내용을 적어주세요 (선택)",
     "assignedTo": "담당자",
     "noAssignee": "담당자 지정 안 함",
+    "everyone": "둘 다",
     "dueAt": "기한",
     "submit": "전달하기",
     "submitting": "전달하는 중...",
@@ -127,6 +128,8 @@
       "completed": "{{name}}님이 완료했습니다.",
       "reopened": "{{name}}님이 다시 진행 상태로 되돌렸습니다."
     },
+    "deleteButton": "이 퀘스트 삭제하기",
+    "deleteConfirm": "정말 삭제할까요? 처리 기록까지 모두 사라지고, 되돌릴 수 없습니다.",
     "error": {
       "completionNoteRequired": "완료 메모를 입력해주세요.",
       "unknown": "처리 중 문제가 발생했습니다.",

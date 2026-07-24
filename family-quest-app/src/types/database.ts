@@ -36,6 +36,7 @@ export type TaskRow = {
   details: string | null;
   created_by: string;
   assigned_to: string | null;
+  assigned_to_all: boolean;
   status: TaskStatus;
   due_at: string | null;
   completed_at: string | null;

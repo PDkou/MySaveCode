@@ -12,7 +12,7 @@ export function TaskDetailPage() {
   const navigate = useNavigate();
   const { taskId } = useParams<{ taskId: string }>();
   const { members } = useFamily();
-  const { task, activities, loading, notFound, completeTask, reopenTask } = useTaskDetail(taskId);
+  const { task, activities, loading, notFound, completeTask, reopenTask, deleteTask } = useTaskDetail(taskId);
 
   const [completionNote, setCompletionNote] = useState('');
   const [errorKey, setErrorKey] = useState<string | null>(null);
@@ -52,6 +52,19 @@ export function TaskDetailPage() {
     } catch {
       setErrorKey('taskDetail.error.unknown');
     } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm(t('taskDetail.deleteConfirm'))) return;
+    setBusy(true);
+    setErrorKey(null);
+    try {
+      await deleteTask();
+      navigate('/', { replace: true });
+    } catch {
+      setErrorKey('taskDetail.error.unknown');
       setBusy(false);
     }
   };
@@ -96,7 +109,7 @@ export function TaskDetailPage() {
       <div className="task-detail-grid">
         <div>
           <span className="label">{t('taskDetail.assignedTo')}</span>
-          <span>{nameFor(task.assigned_to) || t('dashboard.unassigned')}</span>
+          <span>{task.assigned_to_all ? t('taskForm.everyone') : nameFor(task.assigned_to) || t('dashboard.unassigned')}</span>
         </div>
         <div>
           <span className="label">{t('taskDetail.createdBy')}</span>
@@ -163,6 +176,10 @@ export function TaskDetailPage() {
           </ul>
         )}
       </div>
+
+      <button type="button" className="btn btn-danger btn-block" onClick={() => void handleDelete()} disabled={busy}>
+        {t('taskDetail.deleteButton')}
+      </button>
     </div>
   );
 }

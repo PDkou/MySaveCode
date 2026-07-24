@@ -94,6 +94,7 @@
     "detailsPlaceholder": "詳しい内容があれば入力してください（任意）",
     "assignedTo": "担当者",
     "noAssignee": "担当者を指定しない",
+    "everyone": "ふたりとも",
     "dueAt": "期限",
     "submit": "依頼する",
     "submitting": "登録中...",
@@ -127,6 +128,8 @@
       "completed": "{{name}}さんが完了にしました。",
       "reopened": "{{name}}さんが進行中に戻しました。"
     },
+    "deleteButton": "このクエストを削除する",
+    "deleteConfirm": "本当に削除しますか？対応履歴もすべて消え、元に戻せません。",
     "error": {
       "completionNoteRequired": "完了メモを入力してください。",
       "unknown": "処理に失敗しました。",

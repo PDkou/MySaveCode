@@ -67,6 +67,7 @@ create table if not exists public.tasks (
   details text,
   created_by uuid not null references auth.users(id),
   assigned_to uuid references auth.users(id),
+  assigned_to_all boolean not null default false,
   status text not null default 'open',
   due_at timestamptz,
   completed_at timestamptz,
@@ -75,8 +76,22 @@ create table if not exists public.tasks (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint tasks_status_check check (status in ('open', 'done')),
-  constraint tasks_title_not_blank check (length(trim(title)) > 0)
+  constraint tasks_title_not_blank check (length(trim(title)) > 0),
+  constraint tasks_assignment_exclusive check (not (assigned_to_all and assigned_to is not null))
 );
+
+-- Upgrades an already-deployed database that was set up before
+-- assigned_to_all existed. No-op on a fresh install (the create table
+-- above already has the column/constraint), safe to re-run.
+alter table public.tasks add column if not exists assigned_to_all boolean not null default false;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'tasks_assignment_exclusive') then
+    alter table public.tasks
+      add constraint tasks_assignment_exclusive check (not (assigned_to_all and assigned_to is not null));
+  end if;
+end $$;
 
 create index if not exists tasks_family_id_idx on public.tasks (family_id);
 create index if not exists tasks_family_status_idx on public.tasks (family_id, status);
@@ -462,6 +477,14 @@ for update
 using (public.is_family_member(family_id))
 with check (public.is_family_member(family_id));
 
+-- Either family member can remove a task that was created by mistake.
+-- task_activities rows for it cascade-delete along with it (see the FK on
+-- task_activities.task_id above), so no orphaned history is left behind.
+drop policy if exists tasks_delete on public.tasks;
+create policy tasks_delete on public.tasks
+for delete
+using (public.is_family_member(family_id));
+
 -- task_activities: read-only from the client's point of view (rows are
 -- written by the log_task_activity trigger), scoped to your own family.
 drop policy if exists task_activities_select on public.task_activities;
@@ -482,7 +505,7 @@ grant usage on schema public to authenticated;
 grant select, update on public.profiles to authenticated;
 grant select on public.families to authenticated;
 grant select on public.family_members to authenticated;
-grant select, insert, update on public.tasks to authenticated;
+grant select, insert, update, delete on public.tasks to authenticated;
 grant select on public.task_activities to authenticated;
 
 grant execute on function public.create_family_room(text) to authenticated;

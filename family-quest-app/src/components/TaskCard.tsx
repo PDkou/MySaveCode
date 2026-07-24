@@ -14,6 +14,8 @@ export function TaskCard({ task, assigneeName, creatorName }: TaskCardProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
+  const assignedLabel = task.assigned_to_all ? t('taskForm.everyone') : assigneeName ?? t('dashboard.unassigned');
+
   return (
     <button
       type="button"
@@ -27,7 +29,7 @@ export function TaskCard({ task, assigneeName, creatorName }: TaskCardProps) {
         <h3 className="task-card-title">{task.title}</h3>
       </div>
       <div className="task-card-meta">
-        <span>{t('dashboard.assignedTo', { name: assigneeName ?? t('dashboard.unassigned') })}</span>
+        <span>{t('dashboard.assignedTo', { name: assignedLabel })}</span>
         <span>{t('dashboard.createdBy', { name: creatorName ?? '' })}</span>
         <span>
           {task.due_at
