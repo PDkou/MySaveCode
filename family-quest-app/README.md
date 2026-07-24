@@ -306,7 +306,7 @@ supabase functions deploy send-due-reminders
 4. 기대 결과: `tasks`, `family_members`, `families`, `task_activities` 조회 결과가 **빈 배열**로 와야 합니다 (에러가 아니라 "0건"으로 필터링되는 것이 RLS의 정상 동작입니다)
 5. 같은 방식으로 다른 가족방의 `task_id`를 골라 `PATCH`(완료 처리, 담당자 변경 등)를 시도 → 영향받은 행이 0건이어야 합니다 (역시 에러가 아니라 "아무 것도 바뀌지 않음"이 정상)
 6. `family_members`에 자신을 다른 가족방 멤버로 직접 `POST`(insert)해보기 → 실패해야 합니다 (해당 테이블에는 insert 정책 자체가 없고, 참여는 `join_family_room` RPC로만 가능)
-7. 이미 가족방에 속한 계정으로 `create_family_room` 또는 `join_family_room`을 다시 호출 → `already_in_family` 오류가 나야 합니다
+7. 이미 속한 가족방의 초대 코드로 같은 계정이 다시 `join_family_room` 호출 → `already_in_this_family` 오류가 나야 합니다 (한 계정이 여러 가족방에 속하는 것 자체는 정상 동작이므로, "이미 어딘가에 속해 있다"가 아니라 "이 가족방에는 이미 속해 있다"만 막습니다)
 8. 3번째 계정으로 이미 2명이 꽉 찬 가족방에 `join_family_room` 호출 → `family_full` 오류가 나야 합니다
 
 이 저장소의 `supabase/schema.sql`에서 위 동작을 보장하는 부분:

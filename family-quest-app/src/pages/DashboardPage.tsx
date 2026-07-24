@@ -8,6 +8,7 @@ import { useTasks } from '../context/TasksContext';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { NotificationBell } from '../components/NotificationBell';
+import { FamilySwitcher } from '../components/FamilySwitcher';
 import { TaskCard } from '../components/TaskCard';
 import { NewTaskModal } from '../components/NewTaskModal';
 import { EditNameModal } from '../components/EditNameModal';
@@ -108,9 +109,20 @@ export function DashboardPage() {
     <div className="screen dashboard-screen">
       <div className="topbar">
         <div className="family-info">
-          <button type="button" className="app-title app-title-button" onClick={() => setShowEditFamilyName(true)}>
-            {family?.name ?? t('app.name')}
-          </button>
+          <div className="family-title-row">
+            <FamilySwitcher />
+            <button
+              type="button"
+              className="btn btn-ghost btn-icon btn-sm"
+              onClick={() => setShowEditFamilyName(true)}
+              aria-label={t('family.editNameHeading')}
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+            </button>
+          </div>
           <div className="family-meta">
             <span>{t('family.memberCount', { count: members.length })}</span>
             <span>{t('dashboard.weeklyCompleted', { count: weeklyCompletedCount })}</span>
