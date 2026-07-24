@@ -167,6 +167,10 @@
     "nextMonth": "다음 달",
     "noTasksOnDay": "이 날짜에 예정된 퀘스트가 없습니다."
   },
+  "notifications": {
+    "title": "알림",
+    "empty": "새로운 알림이 없습니다."
+  },
   "profile": {
     "editNameHeading": "이름 변경"
   },
