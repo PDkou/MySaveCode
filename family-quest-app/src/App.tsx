@@ -8,12 +8,13 @@ import { AuthPage } from './pages/AuthPage';
 import { FamilySetupPage } from './pages/FamilySetupPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
+import { Spinner } from './components/Spinner';
 
 function FullScreenLoading() {
   const { t } = useTranslation();
   return (
     <div className="screen loading-screen">
-      <p>{t('common.loading')}</p>
+      <Spinner label={t('common.loading')} />
     </div>
   );
 }

@@ -9,6 +9,8 @@ import { TaskCard } from '../components/TaskCard';
 import { NewTaskModal } from '../components/NewTaskModal';
 import { EditNameModal } from '../components/EditNameModal';
 import { EditFamilyNameModal } from '../components/EditFamilyNameModal';
+import { Spinner } from '../components/Spinner';
+import { EmptyState } from '../components/EmptyState';
 
 type Filter = 'open' | 'done' | 'all';
 
@@ -16,7 +18,7 @@ export function DashboardPage() {
   const { t } = useTranslation();
   const { signOut, profile, user } = useAuth();
   const { family, members } = useFamily();
-  const { tasks, assigneesByTaskId, loading, refresh } = useTasks();
+  const { tasks, assigneesByTaskId, loading, refresh, deleteTasks } = useTasks();
 
   const [filter, setFilter] = useState<Filter>('open');
   const [onlyMine, setOnlyMine] = useState(false);
@@ -24,6 +26,10 @@ export function DashboardPage() {
   const [showEditName, setShowEditName] = useState(false);
   const [showEditFamilyName, setShowEditFamilyName] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const nameByUserId = useMemo(() => {
     const map = new Map<string, string>();
@@ -55,6 +61,38 @@ export function DashboardPage() {
     } catch {
       // Clipboard API can be unavailable (older iOS Safari without a user
       // gesture context); the code is still visible on screen to copy by hand.
+    }
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelect = (taskId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.add(taskId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) =>
+      prev.size === filteredTasks.length ? new Set() : new Set(filteredTasks.map((task) => task.id)),
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(t('dashboard.deleteSelectedConfirm', { count: selectedIds.size }))) return;
+    setDeleting(true);
+    try {
+      await deleteTasks(Array.from(selectedIds));
+      exitSelectMode();
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -97,6 +135,13 @@ export function DashboardPage() {
         <button type="button" className="btn btn-ghost btn-icon" onClick={() => void refresh()} aria-label={t('dashboard.refresh')}>
           {t('dashboard.refresh')}
         </button>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          onClick={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+        >
+          {selectMode ? t('common.cancel') : t('dashboard.selectButton')}
+        </button>
       </div>
 
       <div className="filter-tabs" role="tablist">
@@ -134,11 +179,32 @@ export function DashboardPage() {
         <span>{t('dashboard.onlyMine')}</span>
       </label>
 
+      {selectMode && (
+        <div className="bulk-action-bar">
+          <label className="checkbox-row bulk-select-all">
+            <input
+              type="checkbox"
+              checked={filteredTasks.length > 0 && selectedIds.size === filteredTasks.length}
+              onChange={toggleSelectAll}
+            />
+            <span>{t('dashboard.selectedCount', { count: selectedIds.size })}</span>
+          </label>
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={() => void handleBulkDelete()}
+            disabled={selectedIds.size === 0 || deleting}
+          >
+            {deleting ? t('common.saving') : t('dashboard.deleteSelected')}
+          </button>
+        </div>
+      )}
+
       <div className="task-list">
         {loading ? (
-          <p className="empty-message">{t('common.loading')}</p>
+          <Spinner label={t('common.loading')} />
         ) : filteredTasks.length === 0 ? (
-          <p className="empty-message">{t(emptyMessageKey)}</p>
+          <EmptyState message={t(emptyMessageKey)} />
         ) : (
           filteredTasks.map((task) => (
             <TaskCard
@@ -146,6 +212,9 @@ export function DashboardPage() {
               task={task}
               assigneeLabel={assigneeLabel(task.id)}
               creatorName={nameByUserId.get(task.created_by) ?? null}
+              selectable={selectMode}
+              selected={selectedIds.has(task.id)}
+              onToggleSelect={toggleSelect}
             />
           ))
         )}

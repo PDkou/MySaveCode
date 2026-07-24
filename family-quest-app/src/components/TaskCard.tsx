@@ -8,9 +8,19 @@ interface TaskCardProps {
   task: TaskRow;
   assigneeLabel: string;
   creatorName: string | null;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (taskId: string) => void;
 }
 
-export function TaskCard({ task, assigneeLabel, creatorName }: TaskCardProps) {
+export function TaskCard({
+  task,
+  assigneeLabel,
+  creatorName,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
+}: TaskCardProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
@@ -19,10 +29,19 @@ export function TaskCard({ task, assigneeLabel, creatorName }: TaskCardProps) {
   return (
     <button
       type="button"
-      className={`task-card ${task.status === 'done' ? 'task-card-done' : ''}`}
-      onClick={() => navigate(`/task/${task.id}`)}
+      className={`task-card ${task.status === 'done' ? 'task-card-done' : ''} ${selected ? 'task-card-selected' : ''}`}
+      onClick={() => (selectable ? onToggleSelect?.(task.id) : navigate(`/task/${task.id}`))}
     >
       <div className="task-card-top">
+        {selectable && (
+          <input
+            type="checkbox"
+            className="task-card-checkbox"
+            checked={selected}
+            onChange={() => onToggleSelect?.(task.id)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        )}
         <span className={`status-badge ${task.status === 'done' ? 'status-done' : 'status-open'}`}>
           {task.status === 'done' ? t('taskDetail.statusDone') : t('taskDetail.statusOpen')}
         </span>
