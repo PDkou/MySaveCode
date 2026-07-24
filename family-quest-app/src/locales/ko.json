@@ -46,6 +46,7 @@
     }
   },
   "family": {
+    "editNameHeading": "가족방 이름 변경",
     "setupTitle": "가족방이 아직 없어요",
     "setupSubtitle": "가족방을 새로 만들거나, 받은 초대 코드로 참여하세요.",
     "createHeading": "새 가족방 만들기",
@@ -84,7 +85,9 @@
     "createdBy": "등록: {{name}}",
     "dueAt": "기한: {{date}}",
     "noDueDate": "기한 없음",
-    "refresh": "새로고침"
+    "refresh": "새로고침",
+    "overdue": "기한 지남",
+    "onlyMine": "내 담당만 보기"
   },
   "taskForm": {
     "heading": "새 퀘스트 전달하기",
@@ -94,7 +97,7 @@
     "detailsPlaceholder": "자세한 내용을 적어주세요 (선택)",
     "assignedTo": "담당자",
     "noAssignee": "담당자 지정 안 함",
-    "everyone": "둘 다",
+    "everyone": "모두",
     "dueAt": "기한",
     "submit": "전달하기",
     "submitting": "전달하는 중...",
@@ -105,6 +108,8 @@
   },
   "taskDetail": {
     "heading": "퀘스트 상세",
+    "editButton": "수정하기",
+    "editHeading": "퀘스트 수정",
     "details": "설명",
     "noDetails": "설명이 없습니다.",
     "assignedTo": "담당자",

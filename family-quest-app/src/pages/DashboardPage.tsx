@@ -8,18 +8,21 @@ import { LanguageSwitch } from '../components/LanguageSwitch';
 import { TaskCard } from '../components/TaskCard';
 import { NewTaskModal } from '../components/NewTaskModal';
 import { EditNameModal } from '../components/EditNameModal';
+import { EditFamilyNameModal } from '../components/EditFamilyNameModal';
 
 type Filter = 'open' | 'done' | 'all';
 
 export function DashboardPage() {
   const { t } = useTranslation();
-  const { signOut, profile } = useAuth();
+  const { signOut, profile, user } = useAuth();
   const { family, members } = useFamily();
-  const { tasks, loading, refresh } = useTasks();
+  const { tasks, assigneesByTaskId, loading, refresh } = useTasks();
 
   const [filter, setFilter] = useState<Filter>('open');
+  const [onlyMine, setOnlyMine] = useState(false);
   const [showNewTask, setShowNewTask] = useState(false);
   const [showEditName, setShowEditName] = useState(false);
+  const [showEditFamilyName, setShowEditFamilyName] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const nameByUserId = useMemo(() => {
@@ -28,10 +31,20 @@ export function DashboardPage() {
     return map;
   }, [members]);
 
+  const assigneeLabel = (taskId: string) => {
+    const ids = assigneesByTaskId.get(taskId) ?? [];
+    if (ids.length === 0) return t('dashboard.unassigned');
+    if (ids.length > 1 && ids.length === members.length) return t('taskForm.everyone');
+    return ids.map((id) => nameByUserId.get(id) ?? '').join(', ');
+  };
+
   const filteredTasks = useMemo(() => {
-    if (filter === 'all') return tasks;
-    return tasks.filter((task) => task.status === filter);
-  }, [tasks, filter]);
+    let result = filter === 'all' ? tasks : tasks.filter((task) => task.status === filter);
+    if (onlyMine && user) {
+      result = result.filter((task) => (assigneesByTaskId.get(task.id) ?? []).includes(user.id));
+    }
+    return result;
+  }, [tasks, filter, onlyMine, user, assigneesByTaskId]);
 
   const handleCopyInviteCode = async () => {
     if (!family) return;
@@ -52,7 +65,9 @@ export function DashboardPage() {
     <div className="screen dashboard-screen">
       <div className="topbar">
         <div className="family-info">
-          <h1 className="app-title">{family?.name ?? t('app.name')}</h1>
+          <button type="button" className="app-title app-title-button" onClick={() => setShowEditFamilyName(true)}>
+            {family?.name ?? t('app.name')}
+          </button>
           <div className="family-meta">
             <span>{t('family.memberCount', { count: members.length })}</span>
             {family && (
@@ -114,6 +129,11 @@ export function DashboardPage() {
         </button>
       </div>
 
+      <label className="only-mine-toggle">
+        <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine(e.target.checked)} />
+        <span>{t('dashboard.onlyMine')}</span>
+      </label>
+
       <div className="task-list">
         {loading ? (
           <p className="empty-message">{t('common.loading')}</p>
@@ -124,7 +144,7 @@ export function DashboardPage() {
             <TaskCard
               key={task.id}
               task={task}
-              assigneeName={task.assigned_to ? nameByUserId.get(task.assigned_to) ?? null : null}
+              assigneeLabel={assigneeLabel(task.id)}
               creatorName={nameByUserId.get(task.created_by) ?? null}
             />
           ))
@@ -134,6 +154,9 @@ export function DashboardPage() {
       {showNewTask && <NewTaskModal members={members} onClose={() => setShowNewTask(false)} />}
       {showEditName && profile && (
         <EditNameModal currentName={profile.display_name} onClose={() => setShowEditName(false)} />
+      )}
+      {showEditFamilyName && family && (
+        <EditFamilyNameModal currentName={family.name} onClose={() => setShowEditFamilyName(false)} />
       )}
     </div>
   );

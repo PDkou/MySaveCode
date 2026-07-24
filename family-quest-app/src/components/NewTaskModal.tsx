@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useTasks } from '../context/TasksContext';
 import type { FamilyMember } from '../context/FamilyContext';
+import { AssigneeCheckboxes } from './AssigneeCheckboxes';
 
 interface NewTaskModalProps {
   members: FamilyMember[];
@@ -16,7 +17,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
 
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
-  const [assignedTo, setAssignedTo] = useState('');
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [dueAt, setDueAt] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
@@ -33,8 +34,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
       await createTask({
         title,
         details,
-        assignedTo: assignedTo === 'ALL' || assignedTo === '' ? null : assignedTo,
-        assignedToAll: assignedTo === 'ALL',
+        assigneeIds,
         dueAt: dueAt ? new Date(dueAt).toISOString() : null,
       });
       onClose();
@@ -73,18 +73,10 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
             />
           </label>
 
-          <label className="field">
+          <div className="field">
             <span>{t('taskForm.assignedTo')}</span>
-            <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
-              <option value="">{t('taskForm.noAssignee')}</option>
-              {members.map((m) => (
-                <option key={m.user_id} value={m.user_id}>
-                  {m.display_name}
-                </option>
-              ))}
-              {members.length > 1 && <option value="ALL">{t('taskForm.everyone')}</option>}
-            </select>
-          </label>
+            <AssigneeCheckboxes members={members} selectedIds={assigneeIds} onChange={setAssigneeIds} />
+          </div>
 
           <label className="field">
             <span>{t('taskForm.dueAt')}</span>

@@ -35,8 +35,6 @@ export type TaskRow = {
   title: string;
   details: string | null;
   created_by: string;
-  assigned_to: string | null;
-  assigned_to_all: boolean;
   status: TaskStatus;
   due_at: string | null;
   completed_at: string | null;
@@ -44,6 +42,13 @@ export type TaskRow = {
   completion_note: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type TaskAssigneeRow = {
+  task_id: string;
+  family_id: string;
+  user_id: string;
+  assigned_at: string;
 };
 
 export type TaskActivityRow = {
@@ -81,6 +86,12 @@ export type Database = {
         Row: TaskRow;
         Insert: Partial<TaskRow> & Pick<TaskRow, 'family_id' | 'title' | 'created_by'>;
         Update: Partial<TaskRow>;
+        Relationships: [];
+      };
+      task_assignees: {
+        Row: TaskAssigneeRow;
+        Insert: Partial<TaskAssigneeRow> & Pick<TaskAssigneeRow, 'task_id' | 'family_id' | 'user_id'>;
+        Update: Partial<TaskAssigneeRow>;
         Relationships: [];
       };
       task_activities: {

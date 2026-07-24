@@ -46,6 +46,7 @@
     }
   },
   "family": {
+    "editNameHeading": "家族ルーム名を変更",
     "setupTitle": "まだ家族ルームがありません",
     "setupSubtitle": "新しく家族ルームを作るか、届いた招待コードで参加してください。",
     "createHeading": "家族ルームを作成",
@@ -84,7 +85,9 @@
     "createdBy": "依頼者: {{name}}",
     "dueAt": "期限: {{date}}",
     "noDueDate": "期限なし",
-    "refresh": "更新"
+    "refresh": "更新",
+    "overdue": "期限切れ",
+    "onlyMine": "自分の担当のみ"
   },
   "taskForm": {
     "heading": "新しく依頼する",
@@ -94,7 +97,7 @@
     "detailsPlaceholder": "詳しい内容があれば入力してください（任意）",
     "assignedTo": "担当者",
     "noAssignee": "担当者を指定しない",
-    "everyone": "ふたりとも",
+    "everyone": "全員",
     "dueAt": "期限",
     "submit": "依頼する",
     "submitting": "登録中...",
@@ -105,6 +108,8 @@
   },
   "taskDetail": {
     "heading": "クエスト詳細",
+    "editButton": "編集する",
+    "editHeading": "クエストを編集",
     "details": "詳細",
     "noDetails": "詳細はありません。",
     "assignedTo": "担当者",
