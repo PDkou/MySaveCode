@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import type { FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -10,20 +10,23 @@ import { formatDateTime, toDateTimeLocalValue } from '../lib/formatDate';
 import { AssigneeCheckboxes } from '../components/AssigneeCheckboxes';
 import { RecurrenceSelect } from '../components/RecurrenceSelect';
 import { Spinner } from '../components/Spinner';
+import { getTaskPhotoUrl, TaskPhotoError, uploadTaskPhoto } from '../lib/taskPhotos';
 import type { TaskRecurrence } from '../types/database';
 
 export function TaskDetailPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { taskId } = useParams<{ taskId: string }>();
-  const { members } = useFamily();
+  const { family, members } = useFamily();
   const { requestDelete } = useTasks();
   const { task, assigneeIds, activities, loading, notFound, completeTask, reopenTask, updateTask } =
     useTaskDetail(taskId);
 
   const [completionNote, setCompletionNote] = useState('');
+  const [completionPhotoFile, setCompletionPhotoFile] = useState<File | null>(null);
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
@@ -39,6 +42,20 @@ export function TaskDetailPage() {
   }, [members]);
 
   const nameFor = (userId: string | null) => (userId ? nameByUserId.get(userId) ?? '' : '');
+
+  useEffect(() => {
+    if (!task?.completion_photo_path) {
+      setPhotoUrl(null);
+      return;
+    }
+    let cancelled = false;
+    void getTaskPhotoUrl(task.completion_photo_path).then((url) => {
+      if (!cancelled) setPhotoUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [task?.completion_photo_path]);
 
   const assigneeLabel = useMemo(() => {
     if (assigneeIds.length === 0) return t('dashboard.unassigned');
@@ -81,6 +98,10 @@ export function TaskDetailPage() {
     }
   };
 
+  const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setCompletionPhotoFile(event.target.files?.[0] ?? null);
+  };
+
   const handleComplete = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!completionNote.trim()) {
@@ -90,8 +111,19 @@ export function TaskDetailPage() {
     setErrorKey(null);
     setBusy(true);
     try {
-      await completeTask(completionNote);
+      let photoPath: string | null = null;
+      if (completionPhotoFile && task && family) {
+        try {
+          photoPath = await uploadTaskPhoto(family.id, task.id, completionPhotoFile);
+        } catch (err) {
+          setErrorKey(err instanceof TaskPhotoError ? err.translationKey : 'taskDetail.error.photoUploadFailed');
+          setBusy(false);
+          return;
+        }
+      }
+      await completeTask(completionNote, photoPath);
       setCompletionNote('');
+      setCompletionPhotoFile(null);
     } catch {
       setErrorKey('taskDetail.error.unknown');
     } finally {
@@ -255,6 +287,15 @@ export function TaskDetailPage() {
         </div>
       )}
 
+      {task.status === 'done' && photoUrl && (
+        <div className="task-detail-section">
+          <h2>{t('taskDetail.completionPhoto')}</h2>
+          <a href={photoUrl} target="_blank" rel="noreferrer">
+            <img src={photoUrl} alt={t('taskDetail.completionPhoto')} className="completion-photo" />
+          </a>
+        </div>
+      )}
+
       {errorKey && <p className="form-error" role="alert">{t(errorKey)}</p>}
 
       {task.status === 'open' ? (
@@ -267,6 +308,10 @@ export function TaskDetailPage() {
             rows={3}
             maxLength={2000}
           />
+          <label className="field">
+            <span>{t('taskDetail.completionPhoto')}</span>
+            <input type="file" accept="image/*" onChange={handlePhotoChange} />
+          </label>
           <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
             {busy ? t('taskDetail.completing') : t('taskDetail.completeButton')}
           </button>

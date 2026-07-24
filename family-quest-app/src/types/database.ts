@@ -42,6 +42,7 @@ export type TaskRow = {
   completed_at: string | null;
   completed_by: string | null;
   completion_note: string | null;
+  completion_photo_path: string | null;
   recurrence: TaskRecurrence;
   created_at: string;
   updated_at: string;
@@ -141,6 +142,7 @@ export type Database = {
         Args: {
           p_task_id: string;
           p_completion_note: string | null;
+          p_completion_photo_path: string | null;
         };
         Returns: TaskRow;
       };
