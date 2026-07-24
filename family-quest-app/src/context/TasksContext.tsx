@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { supabase } from '../lib/supabaseClient';
@@ -13,12 +13,16 @@ export interface NewTaskInput {
   dueAt: string | null;
 }
 
+const UNDO_WINDOW_MS = 5000;
+
 interface TasksContextValue {
   tasks: TaskRow[];
   assigneesByTaskId: Map<string, string[]>;
   loading: boolean;
   createTask: (input: NewTaskInput) => Promise<void>;
-  deleteTasks: (taskIds: string[]) => Promise<void>;
+  requestDelete: (taskIds: string[]) => void;
+  pendingDeleteCount: number;
+  undoPendingDelete: () => void;
   refresh: () => Promise<void>;
 }
 
@@ -27,9 +31,11 @@ const TasksContext = createContext<TasksContextValue | null>(null);
 export function TasksProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { family } = useFamily();
-  const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [rawTasks, setRawTasks] = useState<TaskRow[]>([]);
   const [assigneesByTaskId, setAssigneesByTaskId] = useState<Map<string, string[]>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[] | null>(null);
+  const pendingTimerRef = useRef<number | null>(null);
 
   const load = useCallback(async (familyId: string) => {
     setLoading(true);
@@ -53,7 +59,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         map.set(row.task_id, list);
       });
 
-      setTasks(taskRows ?? []);
+      setRawTasks(taskRows ?? []);
       setAssigneesByTaskId(map);
     } finally {
       setLoading(false);
@@ -62,7 +68,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!family) {
-      setTasks([]);
+      setRawTasks([]);
       setAssigneesByTaskId(new Map());
       setLoading(false);
       return;
@@ -116,21 +122,91 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [family, user, refresh]);
 
-  const deleteTasks = useCallback(async (taskIds: string[]) => {
-    if (taskIds.length === 0) return;
-    const { error } = await supabase.from('tasks').delete().in('id', taskIds);
-    if (error) throw error;
+  const commitPendingDelete = useCallback(async (ids: string[]) => {
+    if (pendingTimerRef.current !== null) {
+      window.clearTimeout(pendingTimerRef.current);
+      pendingTimerRef.current = null;
+    }
+    setPendingDeleteIds(null);
+    const { error } = await supabase.from('tasks').delete().in('id', ids);
+    if (error) {
+      // The tasks were only optimistically hidden, never actually removed
+      // from the server; refreshing brings them back into view so a failed
+      // delete doesn't silently disappear.
+      await refresh();
+      throw error;
+    }
     await refresh();
   }, [refresh]);
+
+  // Deleting doesn't hit the database immediately -- the task(s) are hidden
+  // right away, but the actual delete only fires after UNDO_WINDOW_MS
+  // unless undoPendingDelete() cancels it first.
+  const requestDelete = useCallback((taskIds: string[]) => {
+    if (taskIds.length === 0) return;
+
+    if (pendingTimerRef.current !== null) {
+      window.clearTimeout(pendingTimerRef.current);
+      pendingTimerRef.current = null;
+      setPendingDeleteIds((prev) => {
+        if (prev) void commitPendingDelete(prev);
+        return null;
+      });
+    }
+
+    setPendingDeleteIds(taskIds);
+    pendingTimerRef.current = window.setTimeout(() => {
+      pendingTimerRef.current = null;
+      void commitPendingDelete(taskIds);
+    }, UNDO_WINDOW_MS);
+  }, [commitPendingDelete]);
+
+  const undoPendingDelete = useCallback(() => {
+    if (pendingTimerRef.current !== null) {
+      window.clearTimeout(pendingTimerRef.current);
+      pendingTimerRef.current = null;
+    }
+    setPendingDeleteIds(null);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (pendingTimerRef.current !== null) {
+        window.clearTimeout(pendingTimerRef.current);
+      }
+    };
+  }, []);
+
+  const tasks = useMemo(() => {
+    if (!pendingDeleteIds) return rawTasks;
+    const hidden = new Set(pendingDeleteIds);
+    return rawTasks.filter((task) => !hidden.has(task.id));
+  }, [rawTasks, pendingDeleteIds]);
+
+  // Home screen app badge: count of open tasks assigned to me. No-op where
+  // the Badging API doesn't exist (iOS Safari, most non-Chromium browsers).
+  useEffect(() => {
+    if (!navigator.setAppBadge) return;
+    const myOpenCount = user
+      ? tasks.filter((task) => task.status === 'open' && (assigneesByTaskId.get(task.id) ?? []).includes(user.id)).length
+      : 0;
+    if (myOpenCount > 0) {
+      void navigator.setAppBadge(myOpenCount);
+    } else {
+      void navigator.clearAppBadge?.();
+    }
+  }, [tasks, assigneesByTaskId, user]);
 
   const value = useMemo<TasksContextValue>(() => ({
     tasks,
     assigneesByTaskId,
     loading,
     createTask,
-    deleteTasks,
+    requestDelete,
+    pendingDeleteCount: pendingDeleteIds?.length ?? 0,
+    undoPendingDelete,
     refresh,
-  }), [tasks, assigneesByTaskId, loading, createTask, deleteTasks, refresh]);
+  }), [tasks, assigneesByTaskId, loading, createTask, requestDelete, pendingDeleteIds, undoPendingDelete, refresh]);
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
 }

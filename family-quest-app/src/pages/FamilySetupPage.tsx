@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useFamily, FamilyActionError } from '../context/FamilyContext';
 import { useAuth } from '../context/AuthContext';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 export function FamilySetupPage() {
   const { t } = useTranslation();
@@ -58,6 +59,7 @@ export function FamilySetupPage() {
       <div className="topbar">
         <h1 className="app-title">{t('app.name')}</h1>
         <div className="topbar-actions">
+          <ThemeToggle />
           <LanguageSwitch />
           <button type="button" className="btn btn-ghost" onClick={() => void signOut()}>
             {t('auth.logout')}

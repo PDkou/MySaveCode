@@ -18,7 +18,6 @@ interface UseTaskDetailResult {
   notFound: boolean;
   completeTask: (completionNote: string) => Promise<void>;
   reopenTask: () => Promise<void>;
-  deleteTask: () => Promise<void>;
   updateTask: (input: TaskEditInput) => Promise<void>;
 }
 
@@ -132,12 +131,6 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     await loadActivities(taskId);
   }, [taskId, loadTask, loadActivities]);
 
-  const deleteTask = useCallback(async () => {
-    if (!taskId) return;
-    const { error } = await supabase.from('tasks').delete().eq('id', taskId);
-    if (error) throw error;
-  }, [taskId]);
-
   const updateTask = useCallback(async (input: TaskEditInput) => {
     if (!taskId) return;
     // One RPC (one DB transaction) instead of update + delete + insert as
@@ -163,7 +156,6 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     notFound,
     completeTask,
     reopenTask,
-    deleteTask,
     updateTask,
   };
 }
