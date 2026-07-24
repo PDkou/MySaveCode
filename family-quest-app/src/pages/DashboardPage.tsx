@@ -7,17 +7,19 @@ import { useTasks } from '../context/TasksContext';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { TaskCard } from '../components/TaskCard';
 import { NewTaskModal } from '../components/NewTaskModal';
+import { EditNameModal } from '../components/EditNameModal';
 
 type Filter = 'open' | 'done' | 'all';
 
 export function DashboardPage() {
   const { t } = useTranslation();
-  const { signOut } = useAuth();
+  const { signOut, profile } = useAuth();
   const { family, members } = useFamily();
   const { tasks, loading, refresh } = useTasks();
 
   const [filter, setFilter] = useState<Filter>('open');
   const [showNewTask, setShowNewTask] = useState(false);
+  const [showEditName, setShowEditName] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const nameByUserId = useMemo(() => {
@@ -61,6 +63,11 @@ export function DashboardPage() {
           </div>
         </div>
         <div className="topbar-actions">
+          {profile && (
+            <button type="button" className="btn btn-ghost" onClick={() => setShowEditName(true)}>
+              {profile.display_name}
+            </button>
+          )}
           <LanguageSwitch />
           <button type="button" className="btn btn-ghost" onClick={() => void signOut()}>
             {t('auth.logout')}
@@ -125,6 +132,9 @@ export function DashboardPage() {
       </div>
 
       {showNewTask && <NewTaskModal members={members} onClose={() => setShowNewTask(false)} />}
+      {showEditName && profile && (
+        <EditNameModal currentName={profile.display_name} onClose={() => setShowEditName(false)} />
+      )}
     </div>
   );
 }
