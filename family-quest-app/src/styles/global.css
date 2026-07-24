@@ -696,6 +696,11 @@ textarea {
   color: var(--error);
 }
 
+.status-recurring {
+  background: rgba(111, 91, 211, 0.12);
+  color: var(--purple);
+}
+
 .overdue-text {
   color: var(--error);
   font-weight: 700;

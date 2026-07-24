@@ -4,13 +4,14 @@ import type { ReactNode } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
 import { useFamily } from './FamilyContext';
-import type { TaskRow } from '../types/database';
+import type { TaskRecurrence, TaskRow } from '../types/database';
 
 export interface NewTaskInput {
   title: string;
   details: string;
   assigneeIds: string[];
   dueAt: string | null;
+  recurrence: TaskRecurrence;
 }
 
 const UNDO_WINDOW_MS = 5000;
@@ -116,6 +117,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       p_details: input.details.trim() ? input.details.trim() : null,
       p_due_at: input.dueAt,
       p_assignee_ids: input.assigneeIds,
+      p_recurrence: input.recurrence,
     });
     if (error) throw error;
 

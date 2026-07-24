@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { supabase } from '../lib/supabaseClient';
-import type { TaskActivityRow, TaskRow } from '../types/database';
+import type { TaskActivityRow, TaskRecurrence, TaskRow } from '../types/database';
 
 export interface TaskEditInput {
   title: string;
   details: string;
   dueAt: string | null;
   assigneeIds: string[];
+  recurrence: TaskRecurrence;
 }
 
 interface UseTaskDetailResult {
@@ -100,16 +101,13 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
 
   const completeTask = useCallback(async (completionNote: string) => {
     if (!taskId) return;
-    const { data: userData } = await supabase.auth.getUser();
-    const { error } = await supabase
-      .from('tasks')
-      .update({
-        status: 'done',
-        completed_at: new Date().toISOString(),
-        completed_by: userData.user?.id ?? null,
-        completion_note: completionNote.trim(),
-      })
-      .eq('id', taskId);
+    // RPC rather than a plain update: completing a recurring task also
+    // creates its next occurrence (copying assignees) in the same
+    // transaction as the completion.
+    const { error } = await supabase.rpc('complete_task', {
+      p_task_id: taskId,
+      p_completion_note: completionNote.trim(),
+    });
     if (error) throw error;
     await loadTask(taskId);
     await loadActivities(taskId);
@@ -141,6 +139,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
       p_details: input.details.trim() ? input.details.trim() : null,
       p_due_at: input.dueAt,
       p_assignee_ids: input.assigneeIds,
+      p_recurrence: input.recurrence,
     });
     if (error) throw error;
 

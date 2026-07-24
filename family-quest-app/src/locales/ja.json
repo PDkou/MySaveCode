@@ -105,6 +105,13 @@
     "noAssignee": "担当者を指定しない",
     "everyone": "全員",
     "dueAt": "期限",
+    "recurrence": {
+      "label": "繰り返し",
+      "none": "繰り返さない",
+      "daily": "毎日",
+      "weekly": "毎週",
+      "monthly": "毎月"
+    },
     "submit": "依頼する",
     "submitting": "登録中...",
     "error": {
