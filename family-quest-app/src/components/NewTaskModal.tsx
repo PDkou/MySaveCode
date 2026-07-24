@@ -33,7 +33,8 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
       await createTask({
         title,
         details,
-        assignedTo: assignedTo || null,
+        assignedTo: assignedTo === 'ALL' || assignedTo === '' ? null : assignedTo,
+        assignedToAll: assignedTo === 'ALL',
         dueAt: dueAt ? new Date(dueAt).toISOString() : null,
       });
       onClose();
@@ -81,6 +82,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
                   {m.display_name}
                 </option>
               ))}
+              {members.length > 1 && <option value="ALL">{t('taskForm.everyone')}</option>}
             </select>
           </label>
 

@@ -10,6 +10,7 @@ export interface NewTaskInput {
   title: string;
   details: string;
   assignedTo: string | null;
+  assignedToAll: boolean;
   dueAt: string | null;
 }
 
@@ -81,7 +82,8 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       title: input.title.trim(),
       details: input.details.trim() ? input.details.trim() : null,
       created_by: user.id,
-      assigned_to: input.assignedTo,
+      assigned_to: input.assignedToAll ? null : input.assignedTo,
+      assigned_to_all: input.assignedToAll,
       due_at: input.dueAt,
     });
     if (error) throw error;

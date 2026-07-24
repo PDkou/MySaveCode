@@ -10,6 +10,7 @@ interface UseTaskDetailResult {
   notFound: boolean;
   completeTask: (completionNote: string) => Promise<void>;
   reopenTask: () => Promise<void>;
+  deleteTask: () => Promise<void>;
 }
 
 export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
@@ -107,5 +108,11 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     await loadActivities(taskId);
   }, [taskId, loadTask, loadActivities]);
 
-  return { task, activities, loading, notFound, completeTask, reopenTask };
+  const deleteTask = useCallback(async () => {
+    if (!taskId) return;
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+    if (error) throw error;
+  }, [taskId]);
+
+  return { task, activities, loading, notFound, completeTask, reopenTask, deleteTask };
 }

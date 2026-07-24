@@ -235,6 +235,12 @@ textarea {
   border: 1px solid var(--border);
 }
 
+.btn-danger {
+  background: transparent;
+  color: var(--error);
+  border: 1px solid rgba(198, 74, 85, 0.35);
+}
+
 @media (hover: hover) {
   .btn-primary:hover:not(:disabled) {
     background: var(--purple-dark);
@@ -244,6 +250,9 @@ textarea {
   }
   .btn-ghost:hover:not(:disabled) {
     background: rgba(24, 38, 64, 0.04);
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: rgba(198, 74, 85, 0.08);
   }
 }
 
