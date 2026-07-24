@@ -1158,6 +1158,17 @@ textarea {
   text-align: center;
 }
 
+.calendar-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 16px 12px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .calendar-weekday-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -1172,10 +1183,18 @@ textarea {
   font-weight: 700;
 }
 
+.calendar-weekday-sun {
+  color: var(--error) !important;
+}
+
+.calendar-weekday-sat {
+  color: var(--purple) !important;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 5px;
 }
 
 .calendar-day {
@@ -1185,28 +1204,73 @@ textarea {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  border-radius: 14px;
   color: var(--navy);
   font-size: 13px;
   cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.05s ease;
+}
+
+@media (hover: hover) {
+  .calendar-day:hover {
+    background: var(--bg);
+  }
+}
+
+.calendar-day:active {
+  transform: scale(0.94);
+}
+
+.calendar-day-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
 }
 
 .calendar-day-outside {
   color: var(--muted-light);
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
-.calendar-day-today {
-  border-color: var(--purple);
+.calendar-day-sat .calendar-day-number {
+  color: var(--purple);
+}
+
+.calendar-day-sun .calendar-day-number {
+  color: var(--error);
+}
+
+.calendar-day-outside.calendar-day-sat .calendar-day-number,
+.calendar-day-outside.calendar-day-sun .calendar-day-number {
+  color: var(--muted-light);
+}
+
+.calendar-day-today .calendar-day-number {
+  background: var(--amber);
+  color: #fff;
+  font-weight: 700;
 }
 
 .calendar-day-selected {
   background: var(--ink);
-  border-color: var(--ink);
+}
+
+.calendar-day-selected .calendar-day-number,
+.calendar-day-selected.calendar-day-sat .calendar-day-number,
+.calendar-day-selected.calendar-day-sun .calendar-day-number {
   color: #fff;
+}
+
+@media (hover: hover) {
+  .calendar-day-selected:hover {
+    background: var(--ink-soft);
+  }
 }
 
 .calendar-day-count {
@@ -1218,6 +1282,7 @@ textarea {
   padding: 1px 6px;
   min-width: 16px;
   text-align: center;
+  line-height: 1.4;
 }
 
 .calendar-day-count-done {
