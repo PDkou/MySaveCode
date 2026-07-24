@@ -207,6 +207,10 @@ export type Database = {
         };
         Returns: TaskRow;
       };
+      reopen_task: {
+        Args: { p_task_id: string };
+        Returns: TaskRow;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
