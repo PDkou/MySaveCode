@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAuth, AuthActionError } from '../context/AuthContext';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 type Tab = 'login' | 'signup';
 
@@ -67,6 +68,7 @@ export function AuthPage() {
   return (
     <div className="screen auth-screen">
       <div className="auth-topbar">
+        <ThemeToggle />
         <LanguageSwitch />
       </div>
 

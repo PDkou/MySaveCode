@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useFamily } from '../context/FamilyContext';
+import { useTasks } from '../context/TasksContext';
 import { useTaskDetail } from '../hooks/useTaskDetail';
 import { formatDateTime, toDateTimeLocalValue } from '../lib/formatDate';
 import { AssigneeCheckboxes } from '../components/AssigneeCheckboxes';
@@ -14,7 +15,8 @@ export function TaskDetailPage() {
   const navigate = useNavigate();
   const { taskId } = useParams<{ taskId: string }>();
   const { members } = useFamily();
-  const { task, assigneeIds, activities, loading, notFound, completeTask, reopenTask, deleteTask, updateTask } =
+  const { requestDelete } = useTasks();
+  const { task, assigneeIds, activities, loading, notFound, completeTask, reopenTask, updateTask } =
     useTaskDetail(taskId);
 
   const [completionNote, setCompletionNote] = useState('');
@@ -104,17 +106,10 @@ export function TaskDetailPage() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm(t('taskDetail.deleteConfirm'))) return;
-    setBusy(true);
-    setErrorKey(null);
-    try {
-      await deleteTask();
-      navigate('/', { replace: true });
-    } catch {
-      setErrorKey('taskDetail.error.unknown');
-      setBusy(false);
-    }
+  const handleDelete = () => {
+    if (!taskId) return;
+    requestDelete([taskId]);
+    navigate('/', { replace: true });
   };
 
   if (loading) {
@@ -283,7 +278,7 @@ export function TaskDetailPage() {
         )}
       </div>
 
-      <button type="button" className="btn btn-danger btn-block" onClick={() => void handleDelete()} disabled={busy}>
+      <button type="button" className="btn btn-danger btn-block" onClick={handleDelete}>
         {t('taskDetail.deleteButton')}
       </button>
     </div>

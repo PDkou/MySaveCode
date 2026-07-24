@@ -15,7 +15,9 @@
     "copied": "コピーしました",
     "retry": "もう一度試す",
     "networkError": "通信状態を確認してください。",
-    "unknownError": "エラーが発生しました。"
+    "unknownError": "エラーが発生しました。",
+    "undo": "元に戻す",
+    "deletedToast": "{{count}}件削除しました"
   },
   "auth": {
     "loginTab": "ログイン",
@@ -88,10 +90,10 @@
     "refresh": "更新",
     "overdue": "期限切れ",
     "onlyMine": "自分の担当のみ",
+    "weeklyCompleted": "今週の完了 {{count}}件",
     "selectButton": "選択",
     "selectedCount": "{{count}}件選択中",
-    "deleteSelected": "選択項目を削除",
-    "deleteSelectedConfirm": "選択した{{count}}件を削除しますか？対応履歴もすべて消え、元に戻せません。"
+    "deleteSelected": "選択項目を削除"
   },
   "taskForm": {
     "heading": "新しく依頼する",
@@ -138,7 +140,6 @@
       "reopened": "{{name}}さんが進行中に戻しました。"
     },
     "deleteButton": "このクエストを削除する",
-    "deleteConfirm": "本当に削除しますか？対応履歴もすべて消え、元に戻せません。",
     "error": {
       "completionNoteRequired": "完了メモを入力してください。",
       "unknown": "処理に失敗しました。",
@@ -156,5 +157,10 @@
     "label": "言語",
     "ko": "한국어",
     "ja": "日本語"
+  },
+  "theme": {
+    "toggle": "テーマ切替",
+    "light": "ライト",
+    "dark": "ダーク"
   }
 }

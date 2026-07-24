@@ -9,6 +9,7 @@ import { FamilySetupPage } from './pages/FamilySetupPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
 import { Spinner } from './components/Spinner';
+import { UndoSnackbar } from './components/UndoSnackbar';
 
 function FullScreenLoading() {
   const { t } = useTranslation();
@@ -39,11 +40,7 @@ function RootGate() {
     return <FamilySetupPage />;
   }
 
-  return (
-    <TasksProvider>
-      <DashboardPage />
-    </TasksProvider>
-  );
+  return <DashboardPage />;
 }
 
 function ProtectedTaskDetail() {
@@ -77,7 +74,10 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <FamilyProvider>
-          <AppRoutes />
+          <TasksProvider>
+            <AppRoutes />
+            <UndoSnackbar />
+          </TasksProvider>
         </FamilyProvider>
       </AuthProvider>
     </BrowserRouter>

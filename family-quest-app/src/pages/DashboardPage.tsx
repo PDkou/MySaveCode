@@ -5,12 +5,14 @@ import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { useTasks } from '../context/TasksContext';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { TaskCard } from '../components/TaskCard';
 import { NewTaskModal } from '../components/NewTaskModal';
 import { EditNameModal } from '../components/EditNameModal';
 import { EditFamilyNameModal } from '../components/EditFamilyNameModal';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
+import { startOfThisWeek } from '../lib/formatDate';
 
 type Filter = 'open' | 'done' | 'all';
 
@@ -18,7 +20,7 @@ export function DashboardPage() {
   const { t } = useTranslation();
   const { signOut, profile, user } = useAuth();
   const { family, members } = useFamily();
-  const { tasks, assigneesByTaskId, loading, refresh, deleteTasks } = useTasks();
+  const { tasks, assigneesByTaskId, loading, refresh, requestDelete } = useTasks();
 
   const [filter, setFilter] = useState<Filter>('open');
   const [onlyMine, setOnlyMine] = useState(false);
@@ -29,13 +31,19 @@ export function DashboardPage() {
 
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [deleting, setDeleting] = useState(false);
 
   const nameByUserId = useMemo(() => {
     const map = new Map<string, string>();
     members.forEach((m) => map.set(m.user_id, m.display_name));
     return map;
   }, [members]);
+
+  const weeklyCompletedCount = useMemo(() => {
+    const weekStart = startOfThisWeek();
+    return tasks.filter(
+      (task) => task.status === 'done' && task.completed_at && new Date(task.completed_at) >= weekStart,
+    ).length;
+  }, [tasks]);
 
   const assigneeLabel = (taskId: string) => {
     const ids = assigneesByTaskId.get(taskId) ?? [];
@@ -84,16 +92,10 @@ export function DashboardPage() {
     );
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedIds.size === 0) return;
-    if (!window.confirm(t('dashboard.deleteSelectedConfirm', { count: selectedIds.size }))) return;
-    setDeleting(true);
-    try {
-      await deleteTasks(Array.from(selectedIds));
-      exitSelectMode();
-    } finally {
-      setDeleting(false);
-    }
+    requestDelete(Array.from(selectedIds));
+    exitSelectMode();
   };
 
   const emptyMessageKey =
@@ -108,6 +110,7 @@ export function DashboardPage() {
           </button>
           <div className="family-meta">
             <span>{t('family.memberCount', { count: members.length })}</span>
+            <span>{t('dashboard.weeklyCompleted', { count: weeklyCompletedCount })}</span>
             {family && (
               <button type="button" className="invite-code-chip" onClick={() => void handleCopyInviteCode()}>
                 {family.invite_code} {copied ? `(${t('common.copied')})` : ''}
@@ -121,6 +124,7 @@ export function DashboardPage() {
               {profile.display_name}
             </button>
           )}
+          <ThemeToggle />
           <LanguageSwitch />
           <button type="button" className="btn btn-ghost" onClick={() => void signOut()}>
             {t('auth.logout')}
@@ -192,10 +196,10 @@ export function DashboardPage() {
           <button
             type="button"
             className="btn btn-danger"
-            onClick={() => void handleBulkDelete()}
-            disabled={selectedIds.size === 0 || deleting}
+            onClick={handleBulkDelete}
+            disabled={selectedIds.size === 0}
           >
-            {deleting ? t('common.saving') : t('dashboard.deleteSelected')}
+            {t('dashboard.deleteSelected')}
           </button>
         </div>
       )}
