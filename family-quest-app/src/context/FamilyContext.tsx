@@ -39,6 +39,7 @@ interface FamilyContextValue {
   createFamily: (name: string) => Promise<void>;
   joinFamily: (code: string) => Promise<void>;
   renameFamily: (name: string) => Promise<void>;
+  updateMyDisplayName: (name: string) => Promise<void>;
   switchFamily: (familyId: string) => void;
   refresh: () => Promise<void>;
 }
@@ -122,12 +123,14 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
       if (profilesErr) throw profilesErr;
 
-      const nameById = new Map((profileRows ?? []).map((p) => [p.id, p.display_name]));
+      const profileNameById = new Map((profileRows ?? []).map((p) => [p.id, p.display_name]));
 
       setMembers(
         (memberRows ?? []).map((m) => ({
           ...m,
-          display_name: nameById.get(m.user_id) ?? '',
+          // A per-family override (m.display_name) wins when set; otherwise
+          // fall back to the account's global profile name.
+          display_name: m.display_name?.trim() || profileNameById.get(m.user_id) || '',
         })),
       );
     } finally {
@@ -201,6 +204,27 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     setFamilies((prev) => prev.map((f) => (f.id === family.id ? { ...f, name: trimmed } : f)));
   }, [family]);
 
+  // How the current user's name shows up to fellow members of THIS
+  // specific family -- e.g. different in-laws vs. their own household.
+  // Never touches profiles.display_name (the account-wide default used
+  // when joining a new family for the first time).
+  const updateMyDisplayName = useCallback(async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      throw new FamilyActionError('auth.error.displayNameRequired');
+    }
+    if (!family || !user) return;
+    const { error } = await supabase
+      .from('family_members')
+      .update({ display_name: trimmed })
+      .eq('family_id', family.id)
+      .eq('user_id', user.id);
+    if (error) {
+      throw new FamilyActionError('family.error.unknown');
+    }
+    setMembers((prev) => prev.map((m) => (m.user_id === user.id ? { ...m, display_name: trimmed } : m)));
+  }, [family, user]);
+
   const value = useMemo<FamilyContextValue>(() => ({
     family,
     families,
@@ -209,9 +233,10 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     createFamily,
     joinFamily,
     renameFamily,
+    updateMyDisplayName,
     switchFamily,
     refresh,
-  }), [family, families, members, loading, createFamily, joinFamily, renameFamily, switchFamily, refresh]);
+  }), [family, families, members, loading, createFamily, joinFamily, renameFamily, updateMyDisplayName, switchFamily, refresh]);
 
   return <FamilyContext.Provider value={value}>{children}</FamilyContext.Provider>;
 }
