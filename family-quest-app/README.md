@@ -143,7 +143,7 @@ Netlify나 Cloudflare Pages를 쓸 경우도 동일합니다: 빌드 커맨드 `
 
 ## 3-1. 푸시 알림(기한 알림) 설정
 
-퀘스트 기한이 됐을 때 앱을 안 켜놔도 휴대폰/PC에 알림이 뜨는 기능입니다. 다른 기능들과 달리 **schema.sql만 다시 실행하는 걸로는 안 되고**, 아래 4단계를 한 번 거쳐야 합니다. 순서대로 하면 됩니다.
+퀘스트 기한이 됐을 때 앱을 안 켜놔도 휴대폰/PC에 알림이 뜨는 기능입니다. 다른 기능들과 달리 **schema.sql만 다시 실행하는 걸로는 안 되고**, 아래 단계를 한 번 거쳐야 합니다. 전부 브라우저에서만 하는 작업이라 터미널이 없어도 됩니다 — 순서대로 하면 됩니다.
 
 **이미 준비된 값** (이번에 새로 생성한 키 — 그대로 쓰면 됩니다):
 
@@ -154,38 +154,30 @@ VAPID_PRIVATE_KEY=JuTMqywb8rLzCaeNr3Z0wFJnpWIIaSRgQOLCl4pz-E8
 
 `VAPID_PRIVATE_KEY`는 **절대 .env나 프런트엔드 코드에 넣지 마세요** — Edge Function의 비밀값(secret)으로만 등록합니다. 아래 2단계에서 등록합니다.
 
-### 3-1-1. Supabase CLI 설치 및 로그인
+아래는 **터미널 없이, 브라우저(Supabase 대시보드)만으로** 하는 방법입니다. 회사 컴퓨터처럼 터미널을 못 쓰는 환경에서도 그대로 따라할 수 있습니다. (나중에 집 컴퓨터 등에서 터미널을 쓸 수 있게 되면, 맨 아래 "CLI로 하는 방법"으로 대체해도 됩니다 — 결과는 동일합니다.)
 
-로컬(본인 컴퓨터) 터미널에서:
+### 3-1-1. Edge Function 만들기 (브라우저에서, 최초 1회)
 
-```bash
-npm install -g supabase
-supabase login          # 브라우저가 열리며 Supabase 계정으로 로그인
-cd family-quest-app
-supabase link --project-ref jmzucjmwgryblrpjfbzm
-```
+1. [supabase.com](https://supabase.com) 접속 → 로그인 → 이 프로젝트 선택
+2. 왼쪽 메뉴에서 **Edge Functions** 클릭
+3. **Deploy a new function** (또는 "Create a new function") 클릭 → **Via Editor**(코드 편집기로 직접 작성) 선택 — CLI 관련 옵션이 아니라 브라우저에서 코드를 붙여넣는 방식입니다
+4. 함수 이름(Name/Slug)에 정확히 `send-due-reminders` 입력 (이 이름이어야 아래 SQL과 일치합니다)
+5. 편집기에 기본으로 채워진 코드를 전부 지우고, 이 저장소의 `family-quest-app/supabase/functions/send-due-reminders/index.ts` 파일 내용을 그대로 복사해서 붙여넣기 (GitHub에서 해당 파일 열기 → 우측 복사 아이콘)
+6. **Deploy** 클릭
 
-`supabase link`는 최초 1회만 하면 됩니다. 이후 재배포 시에는 아래 3-1-2, 3-1-3만 반복하면 됩니다.
+### 3-1-2. Edge Function 비밀값(Secrets) 등록 (최초 1회)
 
-### 3-1-2. Edge Function 비밀값 등록 (최초 1회)
+Edge Functions 페이지에서 방금 만든 `send-due-reminders` 함수로 들어가면 **Secrets**(비밀값) 관리 메뉴가 있습니다 (프로젝트 전체 공통 설정이라 "Manage secrets" 같은 이름으로 별도 페이지에 있을 수도 있습니다 — Edge Functions 섹션 안에서 찾으면 됩니다). 아래 3개를 추가하세요:
 
-```bash
-supabase secrets set VAPID_PUBLIC_KEY=BGCaf4UN5pv1R7tEtmoj4Zi8Czyalqh7IGRbyDRhWZ2HT4xB1DkmjK6oEB0YPzVgyAzwI1Am6VuDqoE766UiEsw
-supabase secrets set VAPID_PRIVATE_KEY=JuTMqywb8rLzCaeNr3Z0wFJnpWIIaSRgQOLCl4pz-E8
-supabase secrets set VAPID_SUBJECT=mailto:본인이메일@example.com
-```
+| Key | Value |
+|---|---|
+| `VAPID_PUBLIC_KEY` | `BGCaf4UN5pv1R7tEtmoj4Zi8Czyalqh7IGRbyDRhWZ2HT4xB1DkmjK6oEB0YPzVgyAzwI1Am6VuDqoE766UiEsw` |
+| `VAPID_PRIVATE_KEY` | `JuTMqywb8rLzCaeNr3Z0wFJnpWIIaSRgQOLCl4pz-E8` |
+| `VAPID_SUBJECT` | `mailto:본인이메일@example.com` (실제 이메일 주소로) |
 
-`VAPID_SUBJECT`는 푸시 서비스(구글/모질라 등)가 문제 발생 시 연락할 연락처로 요구하는 값입니다 — 실제 이메일 주소로 바꿔서 실행하세요. `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`는 Edge Function에 자동으로 주입되므로 따로 등록할 필요 없습니다.
+`VAPID_PRIVATE_KEY`는 여기(Secrets)에만 등록하고 **.env나 Vercel 등 프런트엔드 쪽에는 절대 넣지 마세요**. `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`는 Edge Function에 자동으로 주입되므로 따로 등록할 필요 없습니다. 저장 후 함수가 자동으로 다시 배포되지 않는다면 Edge Functions 페이지에서 **Redeploy**를 한 번 눌러주세요 (비밀값은 재배포 시점부터 적용됩니다).
 
-### 3-1-3. Edge Function 배포
-
-```bash
-supabase functions deploy send-due-reminders
-```
-
-코드를 수정할 때마다(현재는 수정할 필요 없음, 있는 그대로 배포) 이 명령을 다시 실행하면 됩니다.
-
-### 3-1-4. 스케줄러(pg_cron) 켜기 (최초 1회)
+### 3-1-3. 스케줄러(pg_cron) 켜기 (최초 1회)
 
 Supabase 대시보드 **SQL Editor**에서 아래를 실행합니다 (`schema.sql`의 섹션 13 하단에 있는 것과 같은 내용이며, 이 프로젝트 값으로 미리 채워뒀습니다):
 
@@ -208,17 +200,34 @@ select cron.schedule(
 
 (`schema.sql`을 처음부터 다시 실행할 때 `pg_cron`/`pg_net` extension은 함께 켜지지만, 이 `cron.schedule` 호출 자체는 프로젝트별 URL이 필요해서 일부러 주석 처리되어 있습니다 — 이 블록만 따로 한 번 실행하면 됩니다.)
 
-### 3-1-5. Vercel 환경변수 추가
+### 3-1-4. Vercel 환경변수 추가
 
 위 3단계 "배포 (Vercel 예시)"에서 `VITE_VAPID_PUBLIC_KEY`를 추가하지 않았다면 Vercel 프로젝트 설정 → Environment Variables에 추가 후 **Redeploy**.
 
-### 3-1-6. 켜서 확인하기
+### 3-1-5. 켜서 확인하기
 
 1. 배포된 사이트에 접속 → 우측 상단 🔔 알림 아이콘 클릭
 2. "기한 알림 (기기 알림)" 토글을 켜면 브라우저가 알림 권한을 물어봄 → 허용
 3. 테스트: 새 퀘스트를 만들면서 기한을 "지금부터 2분 뒤"로 설정 → 앱을 최소화하거나 다른 탭으로 이동 → 2분 이내(최대 1분 간격으로 검사하므로 최대 약 3분)에 기기 알림이 뜨는지 확인
 
 **참고**: 크롬/엣지(안드로이드, 데스크톱)는 잘 지원됩니다. iPhone Safari는 iOS 16.4+이고 **홈 화면에 추가한 앱**으로 실행 중일 때만 지원됩니다(사파리 브라우저 탭에서는 동작하지 않음) — 위 4번 "홈 화면 설치"를 먼저 해야 합니다.
+
+### 참고: 나중에 터미널을 쓸 수 있을 때 (CLI 방법)
+
+3-1-1, 3-1-2를 대시보드 대신 터미널로 하고 싶다면:
+
+```bash
+npm install -g supabase
+supabase login
+cd family-quest-app
+supabase link --project-ref jmzucjmwgryblrpjfbzm
+supabase secrets set VAPID_PUBLIC_KEY=BGCaf4UN5pv1R7tEtmoj4Zi8Czyalqh7IGRbyDRhWZ2HT4xB1DkmjK6oEB0YPzVgyAzwI1Am6VuDqoE766UiEsw
+supabase secrets set VAPID_PRIVATE_KEY=JuTMqywb8rLzCaeNr3Z0wFJnpWIIaSRgQOLCl4pz-E8
+supabase secrets set VAPID_SUBJECT=mailto:본인이메일@example.com
+supabase functions deploy send-due-reminders
+```
+
+코드를 나중에 수정하게 되면(지금은 수정할 필요 없음) `supabase functions deploy send-due-reminders`만 다시 실행하면 됩니다. 3-1-3(pg_cron), 3-1-4(Vercel)는 CLI를 쓰든 대시보드를 쓰든 동일합니다.
 
 ---
 
