@@ -20,6 +20,7 @@
 --  11. Table/function grants
 --  12. Realtime publication
 --  13. Push notifications (subscriptions table + due-reminder scheduling)
+--  14. Task comments (progress notes / replies / reactions)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -996,6 +997,61 @@ end $$;
 --   );
 --   $$
 -- );
+
+-- -----------------------------------------------------------------------------
+-- 14. Task comments (progress notes / replies / reactions)
+--
+-- A free-form, user-authored thread on a task -- separate from
+-- task_activities (which is trigger-generated and read-only). Lets anyone
+-- in the family leave a progress update while a task is still open, or
+-- reply/react (including with a plain emoji as the body) once someone
+-- completes it. Unlike completion_note (authored once, only by whoever
+-- completes the task), this can have any number of entries from anyone,
+-- at any time.
+-- -----------------------------------------------------------------------------
+create table if not exists public.task_comments (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid not null references public.tasks(id) on delete cascade,
+  family_id uuid not null references public.families(id) on delete cascade,
+  author_id uuid not null references auth.users(id),
+  body text not null,
+  created_at timestamptz not null default now(),
+  constraint task_comments_body_not_blank check (length(trim(body)) > 0),
+  constraint task_comments_body_length check (length(body) <= 500)
+);
+
+create index if not exists task_comments_task_id_idx on public.task_comments (task_id, created_at);
+create index if not exists task_comments_family_id_idx on public.task_comments (family_id);
+
+alter table public.task_comments enable row level security;
+
+drop policy if exists task_comments_select on public.task_comments;
+create policy task_comments_select on public.task_comments
+for select
+using (public.is_family_member(family_id));
+
+drop policy if exists task_comments_insert on public.task_comments;
+create policy task_comments_insert on public.task_comments
+for insert
+with check (public.is_family_member(family_id) and author_id = auth.uid());
+
+-- Anyone can leave a comment, but only the author can remove one they
+-- posted by mistake -- unlike tasks themselves, where any family member
+-- can delete (comments are lower-stakes but still "someone else's words").
+drop policy if exists task_comments_delete on public.task_comments;
+create policy task_comments_delete on public.task_comments
+for delete
+using (author_id = auth.uid());
+
+grant select, insert, delete on public.task_comments to authenticated;
+revoke all on public.task_comments from anon, public;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.task_comments;
+exception
+  when duplicate_object then null;
+end $$;
 
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification

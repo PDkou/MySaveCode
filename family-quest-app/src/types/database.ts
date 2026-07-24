@@ -76,6 +76,15 @@ export type PushSubscriptionRow = {
   created_at: string;
 };
 
+export type TaskCommentRow = {
+  id: string;
+  task_id: string;
+  family_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -121,6 +130,12 @@ export type Database = {
         Insert: Partial<PushSubscriptionRow> &
           Pick<PushSubscriptionRow, 'user_id' | 'family_id' | 'endpoint' | 'p256dh' | 'auth_key'>;
         Update: Partial<PushSubscriptionRow>;
+        Relationships: [];
+      };
+      task_comments: {
+        Row: TaskCommentRow;
+        Insert: Partial<TaskCommentRow> & Pick<TaskCommentRow, 'task_id' | 'family_id' | 'author_id' | 'body'>;
+        Update: Partial<TaskCommentRow>;
         Relationships: [];
       };
     };

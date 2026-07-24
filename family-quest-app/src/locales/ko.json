@@ -149,6 +149,11 @@
       "completed": "{{name}}님이 완료했습니다.",
       "reopened": "{{name}}님이 다시 진행 상태로 되돌렸습니다."
     },
+    "comments": "댓글 · 진행 메모",
+    "noComments": "아직 댓글이 없습니다. 진행 상황을 남기거나 이모지로 응원해보세요.",
+    "commentPlaceholder": "메모를 남기거나 응원 한마디...",
+    "commentSend": "등록",
+    "commentDelete": "삭제",
     "deleteButton": "이 퀘스트 삭제하기",
     "error": {
       "completionNoteRequired": "완료 메모를 입력해주세요.",
@@ -172,6 +177,7 @@
   "notifications": {
     "title": "알림",
     "empty": "새로운 알림이 없습니다.",
+    "newComment": "{{name}}님이 댓글을 남겼습니다.",
     "pushLabel": "기한 알림 (기기 알림)",
     "pushDenied": "브라우저 알림 권한이 꺼져 있어요"
   },

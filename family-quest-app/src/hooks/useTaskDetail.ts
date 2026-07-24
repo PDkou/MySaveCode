@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { supabase } from '../lib/supabaseClient';
-import type { TaskActivityRow, TaskRecurrence, TaskRow } from '../types/database';
+import { useAuth } from '../context/AuthContext';
+import type { TaskActivityRow, TaskCommentRow, TaskRecurrence, TaskRow } from '../types/database';
 
 export interface TaskEditInput {
   title: string;
@@ -15,17 +16,22 @@ interface UseTaskDetailResult {
   task: TaskRow | null;
   assigneeIds: string[];
   activities: TaskActivityRow[];
+  comments: TaskCommentRow[];
   loading: boolean;
   notFound: boolean;
   completeTask: (completionNote: string, completionPhotoPath: string | null) => Promise<void>;
   reopenTask: () => Promise<void>;
   updateTask: (input: TaskEditInput) => Promise<void>;
+  addComment: (body: string) => Promise<void>;
+  deleteComment: (commentId: string) => Promise<void>;
 }
 
 export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
+  const { user } = useAuth();
   const [task, setTask] = useState<TaskRow | null>(null);
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [activities, setActivities] = useState<TaskActivityRow[]>([]);
+  const [comments, setComments] = useState<TaskCommentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -52,11 +58,22 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     setActivities(data ?? []);
   }, []);
 
+  const loadComments = useCallback(async (id: string) => {
+    const { data, error } = await supabase
+      .from('task_comments')
+      .select('*')
+      .eq('task_id', id)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    setComments(data ?? []);
+  }, []);
+
   useEffect(() => {
     if (!taskId) {
       setTask(null);
       setAssigneeIds([]);
       setActivities([]);
+      setComments([]);
       setLoading(false);
       return;
     }
@@ -64,7 +81,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     let cancelled = false;
     setLoading(true);
 
-    Promise.all([loadTask(taskId), loadAssignees(taskId), loadActivities(taskId)]).finally(() => {
+    Promise.all([loadTask(taskId), loadAssignees(taskId), loadActivities(taskId), loadComments(taskId)]).finally(() => {
       if (!cancelled) setLoading(false);
     });
 
@@ -91,13 +108,20 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
           void loadActivities(taskId);
         },
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'task_comments', filter: `task_id=eq.${taskId}` },
+        () => {
+          void loadComments(taskId);
+        },
+      )
       .subscribe();
 
     return () => {
       cancelled = true;
       void supabase.removeChannel(channel);
     };
-  }, [taskId, loadTask, loadAssignees, loadActivities]);
+  }, [taskId, loadTask, loadAssignees, loadActivities, loadComments]);
 
   const completeTask = useCallback(async (completionNote: string, completionPhotoPath: string | null) => {
     if (!taskId) return;
@@ -149,14 +173,37 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     await loadAssignees(taskId);
   }, [taskId, loadTask, loadAssignees]);
 
+  const addComment = useCallback(async (body: string) => {
+    const trimmed = body.trim();
+    if (!taskId || !task || !user || !trimmed) return;
+    const { error } = await supabase.from('task_comments').insert({
+      task_id: taskId,
+      family_id: task.family_id,
+      author_id: user.id,
+      body: trimmed,
+    });
+    if (error) throw error;
+    await loadComments(taskId);
+  }, [taskId, task, user, loadComments]);
+
+  const deleteComment = useCallback(async (commentId: string) => {
+    if (!taskId) return;
+    const { error } = await supabase.from('task_comments').delete().eq('id', commentId);
+    if (error) throw error;
+    await loadComments(taskId);
+  }, [taskId, loadComments]);
+
   return {
     task,
     assigneeIds,
     activities,
+    comments,
     loading,
     notFound,
     completeTask,
     reopenTask,
     updateTask,
+    addComment,
+    deleteComment,
   };
 }
