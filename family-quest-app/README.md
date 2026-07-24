@@ -169,6 +169,8 @@ VAPID_PRIVATE_KEY=JuTMqywb8rLzCaeNr3Z0wFJnpWIIaSRgQOLCl4pz-E8
 5. 편집기에 기본으로 채워진 코드를 전부 지우고, 이 저장소의 `family-quest-app/supabase/functions/send-due-reminders/index.ts` 파일 내용을 그대로 복사해서 붙여넣기 (GitHub에서 해당 파일 열기 → 우측 복사 아이콘)
 6. **Deploy** 클릭
 
+**이후 코드가 바뀔 때마다**(예: 이번에 담당 배정/완료/댓글 알림이 추가된 것처럼): 새 함수를 또 만들 필요 없이, 기존 함수 페이지의 **Code** 탭에서 내용을 최신 버전으로 바꿔 넣고 다시 **Deploy**만 누르면 됩니다. 시크릿/JWT 설정은 그대로 유지됩니다. (참고: 이 프로젝트는 처음 만들 때 실수로 실제 함수 이름이 `send-due-reminders`가 아니라 `rapid-service`로 배포되어 있습니다 — Supabase는 함수 이름을 나중에 못 바꾸기 때문에 그대로 쓰고 있고, `schema.sql`의 관련 URL들도 전부 `rapid-service` 기준으로 맞춰뒀습니다.)
+
 ### 3-1-2. Edge Function 비밀값(Secrets) 등록 (최초 1회)
 
 Edge Functions 페이지에서 방금 만든 `send-due-reminders` 함수로 들어가면 **Secrets**(비밀값) 관리 메뉴가 있습니다 (프로젝트 전체 공통 설정이라 "Manage secrets" 같은 이름으로 별도 페이지에 있을 수도 있습니다 — Edge Functions 섹션 안에서 찾으면 됩니다). 아래 3개를 추가하세요:
