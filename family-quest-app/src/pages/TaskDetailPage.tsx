@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { useTasks } from '../context/TasksContext';
 import { useTaskDetail } from '../hooks/useTaskDetail';
@@ -19,9 +20,10 @@ export function TaskDetailPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { taskId } = useParams<{ taskId: string }>();
+  const { user } = useAuth();
   const { family, members } = useFamily();
   const { requestDelete } = useTasks();
-  const { task, assigneeIds, activities, loading, notFound, completeTask, reopenTask, updateTask } =
+  const { task, assigneeIds, activities, comments, loading, notFound, completeTask, reopenTask, updateTask, addComment, deleteComment } =
     useTaskDetail(taskId);
 
   const [completionNote, setCompletionNote] = useState('');
@@ -29,6 +31,10 @@ export function TaskDetailPage() {
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [commentBody, setCommentBody] = useState('');
+  const [commentBusy, setCommentBusy] = useState(false);
+
+  const QUICK_EMOJIS = ['👍', '❤️', '🎉', '😊', '🙏', '💪'];
 
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
@@ -149,6 +155,40 @@ export function TaskDetailPage() {
     if (!taskId) return;
     requestDelete([taskId]);
     navigate('/', { replace: true });
+  };
+
+  const handleAddComment = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!commentBody.trim() || commentBusy) return;
+    setCommentBusy(true);
+    try {
+      await addComment(commentBody);
+      setCommentBody('');
+    } catch {
+      // Best-effort -- keep the draft in the input so nothing is lost.
+    } finally {
+      setCommentBusy(false);
+    }
+  };
+
+  const handleQuickEmoji = async (emoji: string) => {
+    if (commentBusy) return;
+    setCommentBusy(true);
+    try {
+      await addComment(emoji);
+    } catch {
+      // ignore -- a failed reaction isn't worth surfacing an error for
+    } finally {
+      setCommentBusy(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await deleteComment(commentId);
+    } catch {
+      // ignore
+    }
   };
 
   if (loading) {
@@ -347,6 +387,64 @@ export function TaskDetailPage() {
             ))}
           </ul>
         )}
+      </div>
+
+      <div className="task-detail-section">
+        <h2>{t('taskDetail.comments')}</h2>
+        {comments.length === 0 ? (
+          <p className="empty-message">{t('taskDetail.noComments')}</p>
+        ) : (
+          <ul className="comment-list">
+            {comments.map((c) => (
+              <li key={c.id} className="comment-item">
+                <div className="comment-item-header">
+                  <span className="comment-item-author">
+                    <AvatarChip name={nameFor(c.author_id)} size={16} />
+                    {nameFor(c.author_id)}
+                  </span>
+                  <span className="comment-item-time">{formatDateTime(c.created_at, i18n.language)}</span>
+                </div>
+                <p className="comment-item-body">{c.body}</p>
+                {user?.id === c.author_id && (
+                  <button
+                    type="button"
+                    className="comment-item-delete"
+                    onClick={() => void handleDeleteComment(c.id)}
+                  >
+                    {t('taskDetail.commentDelete')}
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="comment-quick-emoji-row">
+          {QUICK_EMOJIS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              className="comment-emoji-btn"
+              onClick={() => void handleQuickEmoji(emoji)}
+              disabled={commentBusy}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+
+        <form className="comment-form" onSubmit={handleAddComment}>
+          <input
+            type="text"
+            value={commentBody}
+            onChange={(e) => setCommentBody(e.target.value)}
+            placeholder={t('taskDetail.commentPlaceholder')}
+            maxLength={500}
+          />
+          <button type="submit" className="btn btn-primary" disabled={commentBusy || !commentBody.trim()}>
+            {t('taskDetail.commentSend')}
+          </button>
+        </form>
       </div>
 
       <button type="button" className="btn btn-danger btn-block" onClick={handleDelete}>

@@ -149,6 +149,11 @@
       "completed": "{{name}}さんが完了にしました。",
       "reopened": "{{name}}さんが進行中に戻しました。"
     },
+    "comments": "コメント・進捗メモ",
+    "noComments": "まだコメントはありません。進捗を残したり、絵文字で応援してみましょう。",
+    "commentPlaceholder": "メモや一言を残す...",
+    "commentSend": "送信",
+    "commentDelete": "削除",
     "deleteButton": "このクエストを削除する",
     "error": {
       "completionNoteRequired": "完了メモを入力してください。",
@@ -172,6 +177,7 @@
   "notifications": {
     "title": "通知",
     "empty": "新しい通知はありません。",
+    "newComment": "{{name}}さんがコメントを残しました。",
     "pushLabel": "期限リマインダー（端末通知）",
     "pushDenied": "ブラウザの通知許可がオフになっています"
   },

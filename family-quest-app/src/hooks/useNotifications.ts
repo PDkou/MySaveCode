@@ -4,11 +4,27 @@ import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { useTasks } from '../context/TasksContext';
 import { supabase } from '../lib/supabaseClient';
-import type { TaskActivityRow } from '../types/database';
+import type { TaskActivityAction, TaskActivityRow, TaskCommentRow } from '../types/database';
 
-export interface NotificationItem extends TaskActivityRow {
-  taskTitle: string;
-}
+export type NotificationItem =
+  | {
+      kind: 'activity';
+      id: string;
+      task_id: string;
+      taskTitle: string;
+      actor_id: string;
+      created_at: string;
+      action: TaskActivityAction;
+    }
+  | {
+      kind: 'comment';
+      id: string;
+      task_id: string;
+      taskTitle: string;
+      actor_id: string;
+      created_at: string;
+      body: string;
+    };
 
 const lastSeenKey = (userId: string) => `notif-last-seen-${userId}`;
 
@@ -23,9 +39,10 @@ export function useNotifications(): UseNotificationsResult {
   const { family } = useFamily();
   const { tasks, assigneesByTaskId } = useTasks();
   const [activities, setActivities] = useState<TaskActivityRow[]>([]);
+  const [comments, setComments] = useState<TaskCommentRow[]>([]);
   const [lastSeen, setLastSeen] = useState<string | null>(null);
 
-  const load = useCallback(async (familyId: string) => {
+  const loadActivities = useCallback(async (familyId: string) => {
     const { data, error } = await supabase
       .from('task_activities')
       .select('*')
@@ -36,13 +53,26 @@ export function useNotifications(): UseNotificationsResult {
     setActivities(data ?? []);
   }, []);
 
+  const loadComments = useCallback(async (familyId: string) => {
+    const { data, error } = await supabase
+      .from('task_comments')
+      .select('*')
+      .eq('family_id', familyId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) return;
+    setComments(data ?? []);
+  }, []);
+
   useEffect(() => {
     if (!family) {
       setActivities([]);
+      setComments([]);
       return;
     }
 
-    void load(family.id);
+    void loadActivities(family.id);
+    void loadComments(family.id);
 
     const channel = supabase
       .channel(`notifications-${family.id}`)
@@ -50,7 +80,14 @@ export function useNotifications(): UseNotificationsResult {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'task_activities', filter: `family_id=eq.${family.id}` },
         () => {
-          void load(family.id);
+          void loadActivities(family.id);
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'task_comments', filter: `family_id=eq.${family.id}` },
+        () => {
+          void loadComments(family.id);
         },
       )
       .subscribe();
@@ -58,7 +95,7 @@ export function useNotifications(): UseNotificationsResult {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [family, load]);
+  }, [family, loadActivities, loadComments]);
 
   useEffect(() => {
     if (!user) {
@@ -76,40 +113,73 @@ export function useNotifications(): UseNotificationsResult {
 
   // A notification is relevant when someone else acted on a task the
   // current user cares about: they were assigned it (created), or they
-  // created/are assigned it and someone else completed or reopened it.
-  const notifications = useMemo<NotificationItem[]>(() => {
+  // created/are assigned it and someone else completed/reopened/commented
+  // on it -- a reply or emoji reaction after completion is exactly the
+  // kind of thing that should surface here, not just silently sit unseen.
+  const isRelevant = useCallback((taskId: string, actorId: string) => {
+    if (!user || actorId === user.id) return false;
+    const task = taskById.get(taskId);
+    if (!task) return false;
+    const assignees = assigneesByTaskId.get(taskId) ?? [];
+    return task.created_by === user.id || assignees.includes(user.id);
+  }, [user, taskById, assigneesByTaskId]);
+
+  const relevantNotifications = useMemo<NotificationItem[]>(() => {
     if (!user) return [];
-    return activities
+
+    const activityItems: NotificationItem[] = activities
       .filter((activity) => {
         if (activity.actor_id === user.id) return false;
         const task = taskById.get(activity.task_id);
         if (!task) return false;
-        const assignees = assigneesByTaskId.get(activity.task_id) ?? [];
         if (activity.action === 'created') {
+          const assignees = assigneesByTaskId.get(activity.task_id) ?? [];
           return assignees.includes(user.id);
         }
-        if (activity.action === 'completed' || activity.action === 'reopened') {
-          return task.created_by === user.id || assignees.includes(user.id);
-        }
-        return false;
+        return isRelevant(activity.task_id, activity.actor_id);
       })
       .map((activity) => ({
-        ...activity,
+        kind: 'activity' as const,
+        id: activity.id,
+        task_id: activity.task_id,
         taskTitle: taskById.get(activity.task_id)?.title ?? '',
+        actor_id: activity.actor_id,
+        created_at: activity.created_at,
+        action: activity.action,
       }));
-  }, [activities, taskById, assigneesByTaskId, user]);
 
-  const unreadCount = useMemo(() => {
-    if (!lastSeen) return notifications.length;
-    return notifications.filter((item) => item.created_at > lastSeen).length;
-  }, [notifications, lastSeen]);
+    const commentItems: NotificationItem[] = comments
+      .filter((comment) => isRelevant(comment.task_id, comment.author_id))
+      .map((comment) => ({
+        kind: 'comment' as const,
+        id: comment.id,
+        task_id: comment.task_id,
+        taskTitle: taskById.get(comment.task_id)?.title ?? '',
+        actor_id: comment.author_id,
+        created_at: comment.created_at,
+        body: comment.body,
+      }));
+
+    return [...activityItems, ...commentItems].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  }, [activities, comments, taskById, assigneesByTaskId, user, isRelevant]);
+
+  // Once seen, a notification drops off the list entirely rather than
+  // lingering (read but still shown) forever -- "seen" here means the
+  // panel was closed after showing it, not the moment it's opened (see
+  // NotificationBell: markAllRead is called on close, not on open, so the
+  // list a user is currently looking at doesn't vanish out from under them
+  // the instant they open it).
+  const notifications = useMemo<NotificationItem[]>(() => {
+    if (!lastSeen) return relevantNotifications;
+    return relevantNotifications.filter((item) => item.created_at > lastSeen);
+  }, [relevantNotifications, lastSeen]);
 
   const markAllRead = useCallback(() => {
-    if (!user || notifications.length === 0) return;
-    const latest = notifications[0].created_at;
+    if (!user || relevantNotifications.length === 0) return;
+    const latest = relevantNotifications[0].created_at;
     window.localStorage.setItem(lastSeenKey(user.id), latest);
     setLastSeen(latest);
-  }, [user, notifications]);
+  }, [user, relevantNotifications]);
 
-  return { notifications, unreadCount, markAllRead };
+  return { notifications, unreadCount: notifications.length, markAllRead };
 }

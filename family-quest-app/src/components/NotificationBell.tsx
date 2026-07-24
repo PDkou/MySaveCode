@@ -32,11 +32,21 @@ export function NotificationBell() {
     return map;
   }, [members]);
 
+  // markAllRead fires on CLOSE, not open -- notifications are filtered
+  // reactively off the "last seen" timestamp, so marking read on open would
+  // make the list empty the instant it's opened, before anyone could read
+  // it. Closing (backdrop click, item click-through, or toggling shut) is
+  // what "I've seen these" actually means -- next time it's opened, only
+  // genuinely new items remain.
+  const close = () => {
+    setOpen(false);
+    markAllRead();
+  };
+
   const toggle = () => {
     setOpen((prev) => {
       const next = !prev;
       if (next) {
-        markAllRead();
         // Anchor the dropdown to the bell's actual on-screen position (not
         // CSS-relative to its own tiny wrapper) so it stays fully visible
         // regardless of how the header row happens to wrap on a given
@@ -54,6 +64,8 @@ export function NotificationBell() {
           const left = Math.max(margin, Math.min(idealLeft, maxLeft));
           setPanelPos({ top: rect.bottom + 8, left });
         }
+      } else {
+        markAllRead();
       }
       return next;
     });
@@ -89,7 +101,7 @@ export function NotificationBell() {
 
       {open && (
         <>
-          <div className="notification-backdrop" onClick={() => setOpen(false)} />
+          <div className="notification-backdrop" onClick={close} />
           <div
             className="notification-panel"
             style={panelPos ? { top: panelPos.top, left: panelPos.left } : undefined}
@@ -126,14 +138,17 @@ export function NotificationBell() {
                       type="button"
                       className="notification-item"
                       onClick={() => {
-                        setOpen(false);
+                        close();
                         navigate(`/task/${item.task_id}`);
                       }}
                     >
                       <span className="notification-item-text">
-                        {t(`taskDetail.activity.${item.action}`, { name: nameByUserId.get(item.actor_id) ?? '' })}
+                        {item.kind === 'activity'
+                          ? t(`taskDetail.activity.${item.action}`, { name: nameByUserId.get(item.actor_id) ?? '' })
+                          : t('notifications.newComment', { name: nameByUserId.get(item.actor_id) ?? '' })}
                       </span>
                       <span className="notification-item-title">{item.taskTitle}</span>
+                      {item.kind === 'comment' && <span className="notification-item-body">{item.body}</span>}
                       <span className="notification-item-time">{formatDateTime(item.created_at, i18n.language)}</span>
                     </button>
                   </li>
