@@ -120,9 +120,13 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               {/* A <label> wrapping the <input> directly, rather than a
                   separate button calling inputRef.current.click(), is the
                   more broadly-compatible pattern for custom-styled file
-                  pickers -- some mobile browsers don't reliably propagate
-                  the file selection back when the picker was opened via a
-                  synthetic click() on a different element. */}
+                  pickers. The input itself is a full-size, fully
+                  transparent overlay (not clipped down to 1px via
+                  .visually-hidden) -- confirmed some Chromium-based mobile
+                  browsers (Samsung Internet reproduced directly, not just
+                  the installed-app cache) never fire the file input's
+                  change event once it's clipped that small, even though
+                  the native picker still opens and completes normally. */}
               <label className={`settings-photo-trigger ${photoBusy ? 'settings-photo-trigger-disabled' : ''}`}>
                 <AvatarChip name={currentName} size={40} photoUrl={avatarUrl} />
                 <span className="settings-photo-trigger-label">
@@ -131,7 +135,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 <input
                   type="file"
                   accept="image/*"
-                  className="visually-hidden"
+                  className="file-input-overlay"
                   onChange={handleFileSelected}
                   disabled={photoBusy}
                 />

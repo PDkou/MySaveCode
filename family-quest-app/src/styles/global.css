@@ -2559,6 +2559,7 @@ textarea {
 }
 
 .settings-photo-trigger {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -2567,6 +2568,19 @@ textarea {
   padding: 0;
   cursor: pointer;
   font-family: inherit;
+}
+
+/* Full-size, fully transparent overlay rather than clipped to 1px --
+   some Chromium-based mobile browsers (Samsung Internet confirmed) never
+   fire the file input's change event once it's clipped that small, even
+   though the native picker still opens and completes normally. */
+.file-input-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .settings-photo-trigger-label {
