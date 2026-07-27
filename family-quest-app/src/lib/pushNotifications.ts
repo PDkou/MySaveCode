@@ -1,8 +1,57 @@
 import { supabase } from './supabaseClient';
+import type { NotificationPrefsRow } from '../types/database';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 export type PushState = 'unsupported' | 'denied' | 'subscribed' | 'unsubscribed';
+
+export type NotificationEventType = 'due' | 'created' | 'completed' | 'reopened' | 'comment';
+
+const DEFAULT_PREFS: Record<NotificationEventType, boolean> = {
+  due: true,
+  created: true,
+  completed: true,
+  reopened: true,
+  comment: true,
+};
+
+// No row yet (the common case -- most people never touch these toggles)
+// means "everything on", matching the Edge Function's own default.
+export async function getNotificationPrefs(userId: string, familyId: string): Promise<Record<NotificationEventType, boolean>> {
+  const { data } = await supabase
+    .from('notification_prefs')
+    .select('notify_due, notify_created, notify_completed, notify_reopened, notify_comment')
+    .eq('user_id', userId)
+    .eq('family_id', familyId)
+    .maybeSingle();
+  if (!data) return { ...DEFAULT_PREFS };
+  return {
+    due: data.notify_due,
+    created: data.notify_created,
+    completed: data.notify_completed,
+    reopened: data.notify_reopened,
+    comment: data.notify_comment,
+  };
+}
+
+export async function setNotificationPref(
+  userId: string,
+  familyId: string,
+  eventType: NotificationEventType,
+  enabled: boolean,
+): Promise<void> {
+  const columnUpdate: Partial<NotificationPrefsRow> = {
+    due: { notify_due: enabled },
+    created: { notify_created: enabled },
+    completed: { notify_completed: enabled },
+    reopened: { notify_reopened: enabled },
+    comment: { notify_comment: enabled },
+  }[eventType];
+  const { error } = await supabase
+    .from('notification_prefs')
+    .upsert({ user_id: userId, family_id: familyId, ...columnUpdate }, { onConflict: 'user_id,family_id' });
+  if (error) throw error;
+}
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);

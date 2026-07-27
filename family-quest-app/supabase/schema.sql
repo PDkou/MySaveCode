@@ -1456,6 +1456,52 @@ exception
   when duplicate_object then null;
 end $$;
 
+-- -----------------------------------------------------------------------------
+-- 16. Per-event-type push notification preferences
+--
+-- One row per (user, family): which of the event types from section 15 (plus
+-- the due-time reminder from section 13) this user actually wants pushed to
+-- their device(s) in that family room. Deliberately separate from
+-- push_subscriptions -- a subscription is per-device (keyed by endpoint) and
+-- gets replaced whenever a device re-subscribes, so storing preferences on
+-- it would silently reset them; this table survives that. Missing row (the
+-- common case -- most users never touch this) means "everything on", so the
+-- Edge Function treats a missing row the same as all-true rather than
+-- silently sending nothing.
+-- -----------------------------------------------------------------------------
+create table if not exists public.notification_prefs (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  family_id uuid not null references public.families(id) on delete cascade,
+  notify_due boolean not null default true,
+  notify_created boolean not null default true,
+  notify_completed boolean not null default true,
+  notify_reopened boolean not null default true,
+  notify_comment boolean not null default true,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, family_id)
+);
+
+alter table public.notification_prefs enable row level security;
+
+drop policy if exists notification_prefs_select on public.notification_prefs;
+create policy notification_prefs_select on public.notification_prefs
+for select
+using (user_id = auth.uid());
+
+drop policy if exists notification_prefs_insert on public.notification_prefs;
+create policy notification_prefs_insert on public.notification_prefs
+for insert
+with check (user_id = auth.uid() and public.is_family_member(family_id));
+
+drop policy if exists notification_prefs_update on public.notification_prefs;
+create policy notification_prefs_update on public.notification_prefs
+for update
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+grant select, insert, update on public.notification_prefs to authenticated;
+revoke all on public.notification_prefs from anon, public;
+
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification
 -- checklist that should be run against this schema before go-live.

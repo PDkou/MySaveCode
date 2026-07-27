@@ -33,6 +33,29 @@ interface PushSubscriptionRow {
   auth_key: string;
 }
 
+type NotifyColumn = 'notify_due' | 'notify_created' | 'notify_completed' | 'notify_reopened' | 'notify_comment';
+
+// A missing notification_prefs row means "everything on" (most users never
+// touch these toggles), so this only ever *removes* ids whose row explicitly
+// turned the given event type off -- it never treats "no row" as opt-out.
+async function filterByNotificationPref(
+  supabase: SupabaseClient,
+  familyId: string,
+  userIds: string[],
+  column: NotifyColumn,
+): Promise<string[]> {
+  if (userIds.length === 0) return userIds;
+  const { data } = await supabase
+    .from('notification_prefs')
+    .select(`user_id, ${column}`)
+    .eq('family_id', familyId)
+    .in('user_id', userIds);
+  const optedOut = new Set(
+    (data ?? []).filter((row) => row[column] === false).map((row) => row.user_id as string),
+  );
+  return userIds.filter((id) => !optedOut.has(id));
+}
+
 // Sends one push per subscription and cleans up any that have expired
 // (404/410) or been unregistered by the browser. Shared by both request
 // paths below since the "actually deliver it" step is identical either way.
@@ -78,7 +101,7 @@ async function handleDueReminders(supabase: SupabaseClient): Promise<Response> {
 
   const { data: dueTasks, error: tasksError } = await supabase
     .from('tasks')
-    .select('id, title, due_at, due_reminder_sent_for')
+    .select('id, title, family_id, due_at, due_reminder_sent_for')
     .eq('status', 'open')
     .lte('due_at', dueAtUpperBound)
     .gt('due_at', dueAtLowerBound);
@@ -95,7 +118,8 @@ async function handleDueReminders(supabase: SupabaseClient): Promise<Response> {
 
   for (const task of eligibleTasks) {
     const { data: assignees } = await supabase.from('task_assignees').select('user_id').eq('task_id', task.id);
-    const userIds = (assignees ?? []).map((a) => a.user_id as string);
+    const assigneeIds = (assignees ?? []).map((a) => a.user_id as string);
+    const userIds = await filterByNotificationPref(supabase, task.family_id as string, assigneeIds, 'notify_due');
 
     if (userIds.length > 0) {
       const [{ data: profiles }, { data: subscriptions }] = await Promise.all([
@@ -181,9 +205,21 @@ async function handleTaskEvent(supabase: SupabaseClient, payload: TaskEventPaylo
   // reaches whoever was assigned; completed/reopened/comment reach the
   // task's creator and every assignee. The actor never gets a push for
   // their own action.
-  const recipientIds = Array.from(
+  const eventToColumn: Record<TaskEventPayload['event'], NotifyColumn> = {
+    created: 'notify_created',
+    completed: 'notify_completed',
+    reopened: 'notify_reopened',
+    comment: 'notify_comment',
+  };
+  const relevantIds = Array.from(
     new Set(payload.event === 'created' ? assigneeIds : [task.created_by, ...assigneeIds]),
   ).filter((id) => id !== payload.actor_id);
+  const recipientIds = await filterByNotificationPref(
+    supabase,
+    task.family_id as string,
+    relevantIds,
+    eventToColumn[payload.event],
+  );
 
   if (recipientIds.length === 0) {
     return new Response(JSON.stringify({ notificationsSent: 0 }), {
