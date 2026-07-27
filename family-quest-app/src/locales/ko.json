@@ -64,6 +64,8 @@
     "inviteCodeLabel": "초대 코드",
     "memberCount": "{{count}}명 참여 중",
     "shareHint": "이 코드를 가족에게 공유해서 함께 참여하세요.",
+    "qrHeading": "초대 QR코드",
+    "qrHint": "가족에게 이 QR코드를 스캔하게 하면 초대 코드가 자동으로 입력돼요.",
     "switcherTitle": "가족방 전환",
     "addAnother": "새 가족방 추가하기",
     "addAnotherHeading": "새 가족방 추가",

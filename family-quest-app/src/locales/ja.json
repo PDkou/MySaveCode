@@ -64,6 +64,8 @@
     "inviteCodeLabel": "招待コード",
     "memberCount": "{{count}}人 参加中",
     "shareHint": "このコードを家族に共有して、一緒に参加してもらいましょう。",
+    "qrHeading": "招待QRコード",
+    "qrHint": "家族にこのQRコードをスキャンしてもらうと、招待コードが自動で入力されます。",
     "switcherTitle": "家族ルームを切り替え",
     "addAnother": "新しい家族ルームを追加",
     "addAnotherHeading": "新しい家族ルームを追加",
