@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -32,7 +32,6 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoErrorKey, setPhotoErrorKey] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   // Temporary on-screen diagnostic trail -- remove once the "no reaction
   // after picking a photo" report from a real Android device is diagnosed.
   const [debugLog, setDebugLog] = useState<string[]>([]);
@@ -118,24 +117,25 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             <p className="settings-section-title">{t('settings.account')}</p>
             <div className="settings-row">
               <span>{t('profile.photoHeading')}</span>
-              <button
-                type="button"
-                className="settings-photo-trigger"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={photoBusy}
-              >
+              {/* A <label> wrapping the <input> directly, rather than a
+                  separate button calling inputRef.current.click(), is the
+                  more broadly-compatible pattern for custom-styled file
+                  pickers -- some mobile browsers don't reliably propagate
+                  the file selection back when the picker was opened via a
+                  synthetic click() on a different element. */}
+              <label className={`settings-photo-trigger ${photoBusy ? 'settings-photo-trigger-disabled' : ''}`}>
                 <AvatarChip name={currentName} size={40} photoUrl={avatarUrl} />
                 <span className="settings-photo-trigger-label">
                   {photoBusy ? t('profile.photoUploading') : t('profile.photoChange')}
                 </span>
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="visually-hidden"
-                onChange={handleFileSelected}
-              />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="visually-hidden"
+                  onChange={handleFileSelected}
+                  disabled={photoBusy}
+                />
+              </label>
             </div>
             {photoErrorKey && <p className="form-error" role="alert">{t(photoErrorKey)}</p>}
             {debugLog.length > 0 && (
