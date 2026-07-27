@@ -13,6 +13,7 @@ export interface NewTaskInput {
   dueAt: string | null;
   recurrence: TaskRecurrence;
   startsAt: string | null;
+  recurrenceWeekdays: number[] | null;
 }
 
 const UNDO_WINDOW_MS = 5000;
@@ -121,6 +122,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       p_assignee_ids: input.assigneeIds,
       p_recurrence: input.recurrence,
       p_starts_at: input.startsAt,
+      p_recurrence_weekdays: input.recurrence === 'weekly' ? input.recurrenceWeekdays : null,
     });
     if (error) throw error;
 
