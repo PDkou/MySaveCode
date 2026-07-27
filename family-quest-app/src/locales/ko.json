@@ -246,6 +246,9 @@
     "photoHeading": "프로필 사진",
     "photoChange": "사진 변경",
     "photoUploading": "업로드 중...",
+    "cropHeading": "사진 위치 조정",
+    "cropHint": "손가락으로 끌어서 위치를 옮기고, 슬라이더로 확대/축소하세요.",
+    "cropZoom": "확대/축소",
     "error": {
       "photoTooLarge": "사진 용량은 5MB 이하여야 합니다.",
       "photoInvalidType": "이미지 파일만 첨부할 수 있습니다.",

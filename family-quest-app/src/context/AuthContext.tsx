@@ -44,7 +44,7 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   setLanguage: (language: AppLanguageCode) => Promise<void>;
   updateDisplayName: (name: string) => Promise<void>;
-  updateAvatarPhoto: (file: File) => Promise<void>;
+  updateAvatarPhoto: (blob: Blob) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -204,12 +204,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile((prev) => (prev ? { ...prev, display_name: trimmedName } : prev));
   }, [session]);
 
-  const updateAvatarPhoto = useCallback(async (file: File) => {
+  const updateAvatarPhoto = useCallback(async (blob: Blob) => {
     if (!session?.user) return;
     const userId = session.user.id;
     const previousPath = profile?.avatar_path ?? null;
 
-    const path = await uploadAvatarPhoto(userId, file);
+    const path = await uploadAvatarPhoto(userId, blob);
+
+    // getAvatarPhotoUrls swallows storage errors and returns an empty map
+    // (reasonable for the batch case elsewhere, where one bad avatar
+    // shouldn't break a whole member list) -- but here, silently leaving
+    // avatarUrl unset after a "successful" upload would look exactly like
+    // nothing happened. Failing loudly instead surfaces whatever's actually
+    // wrong (e.g. the avatars bucket/policies not deployed yet).
+    const urls = await getAvatarPhotoUrls([path]);
+    const newUrl = urls.get(path);
+    if (!newUrl) {
+      throw new AvatarPhotoError('profile.error.photoUploadFailed');
+    }
 
     const { error } = await supabase.from('profiles').update({ avatar_path: path }).eq('id', userId);
     if (error) {
@@ -217,8 +229,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setProfile((prev) => (prev ? { ...prev, avatar_path: path } : prev));
-    const urls = await getAvatarPhotoUrls([path]);
-    setAvatarUrl(urls.get(path) ?? null);
+    setAvatarUrl(newUrl);
 
     // Best-effort cleanup of the replaced file -- not worth failing the
     // whole update if this doesn't succeed.

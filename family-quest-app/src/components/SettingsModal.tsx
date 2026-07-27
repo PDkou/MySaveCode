@@ -9,6 +9,8 @@ import { ThemeToggle } from './ThemeToggle';
 import { ColorThemePicker } from './ColorThemePicker';
 import { LanguageSwitch } from './LanguageSwitch';
 import { EditNameModal } from './EditNameModal';
+import { FamilyMembersModal } from './FamilyMembersModal';
+import { PhotoCropModal } from './PhotoCropModal';
 import { AvatarChip } from './AvatarChip';
 import { AvatarPhotoError } from '../lib/avatarPhotos';
 
@@ -24,8 +26,10 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, profile, avatarUrl, signOut, updateAvatarPhoto } = useAuth();
-  const { members, updateMyDisplayName, refresh: refreshFamily } = useFamily();
+  const { family, members, updateMyDisplayName, refresh: refreshFamily } = useFamily();
   const [showEditName, setShowEditName] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoErrorKey, setPhotoErrorKey] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,14 +39,23 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
     return members.find((m) => m.user_id === user.id)?.display_name || profile?.display_name || '';
   }, [members, user, profile]);
 
-  const handlePhotoChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelected = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setPhotoErrorKey('profile.error.photoInvalidType');
+      return;
+    }
     setPhotoErrorKey(null);
+    setPendingPhotoFile(file);
+  };
+
+  const handleCropConfirm = async (blob: Blob) => {
+    setPendingPhotoFile(null);
     setPhotoBusy(true);
     try {
-      await updateAvatarPhoto(file);
+      await updateAvatarPhoto(blob);
       // AuthContext only tracks the current user's own profile -- other
       // components (weekly breakdown, task cards, comments) read avatar
       // URLs from FamilyContext's per-member map, which needs its own
@@ -102,7 +115,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 type="file"
                 accept="image/*"
                 className="visually-hidden"
-                onChange={(e) => void handlePhotoChange(e)}
+                onChange={handleFileSelected}
               />
             </div>
             {photoErrorKey && <p className="form-error" role="alert">{t(photoErrorKey)}</p>}
@@ -110,6 +123,11 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               <span>{t('profile.editNameHeading')}</span>
               <span className="settings-row-value">{currentName}</span>
             </button>
+            {family && (
+              <button type="button" className="settings-row-button" onClick={() => setShowMembers(true)}>
+                {t('family.membersHeading')}
+              </button>
+            )}
             <button
               type="button"
               className="settings-row-button settings-row-danger"
@@ -138,6 +156,16 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           currentName={currentName}
           onSave={updateMyDisplayName}
           onClose={() => setShowEditName(false)}
+        />
+      )}
+
+      {showMembers && <FamilyMembersModal onClose={() => setShowMembers(false)} />}
+
+      {pendingPhotoFile && (
+        <PhotoCropModal
+          file={pendingPhotoFile}
+          onCancel={() => setPendingPhotoFile(null)}
+          onConfirm={(blob) => void handleCropConfirm(blob)}
         />
       )}
     </div>
