@@ -15,6 +15,8 @@ export function WeeklyBreakdownModal({ onClose }: WeeklyBreakdownModalProps) {
   const { members } = useFamily();
   const { tasks } = useTasks();
 
+  const STREAK_HIGHLIGHT_THRESHOLD = 3;
+
   const rows = useMemo(() => {
     const weekStart = startOfThisWeek();
     const countByUser = new Map<string, number>();
@@ -23,11 +25,16 @@ export function WeeklyBreakdownModal({ onClose }: WeeklyBreakdownModalProps) {
       if (new Date(task.completed_at) < weekStart) return;
       countByUser.set(task.completed_by, (countByUser.get(task.completed_by) ?? 0) + 1);
     });
-    const maxCount = Math.max(1, ...Array.from(countByUser.values()));
+    const rawMax = Math.max(0, ...Array.from(countByUser.values()));
+    const maxCount = Math.max(1, rawMax);
     return members
       .map((member) => ({ member, count: countByUser.get(member.user_id) ?? 0 }))
       .sort((a, b) => b.count - a.count)
-      .map((entry) => ({ ...entry, pct: Math.round((entry.count / maxCount) * 100) }));
+      .map((entry) => ({
+        ...entry,
+        pct: Math.round((entry.count / maxCount) * 100),
+        isMvp: rawMax > 0 && entry.count === rawMax,
+      }));
   }, [tasks, members]);
 
   const total = rows.reduce((sum, row) => sum + row.count, 0);
@@ -40,20 +47,29 @@ export function WeeklyBreakdownModal({ onClose }: WeeklyBreakdownModalProps) {
         {total === 0 ? (
           <p className="empty-message">{t('weeklyBreakdown.empty')}</p>
         ) : (
-          <div className="weekly-breakdown-list">
-            {rows.map(({ member, count, pct }) => (
-              <div key={member.user_id} className="weekly-breakdown-row">
-                <span className="weekly-breakdown-name">
-                  <AvatarChip name={member.display_name} size={18} />
-                  {member.display_name}
-                </span>
-                <div className="weekly-breakdown-bar-track">
-                  <div className="weekly-breakdown-bar-fill" style={{ width: `${pct}%` }} />
+          <>
+            <p className="weekly-breakdown-total">{t('weeklyBreakdown.total', { count: total })}</p>
+            <div className="weekly-breakdown-list">
+              {rows.map(({ member, count, pct, isMvp }) => (
+                <div key={member.user_id} className="weekly-breakdown-row">
+                  <span className="weekly-breakdown-name">
+                    <AvatarChip name={member.display_name} size={18} />
+                    {member.display_name}
+                    {isMvp && <span className="weekly-breakdown-mvp" title={t('weeklyBreakdown.mvp')}>👑</span>}
+                    {member.current_streak >= STREAK_HIGHLIGHT_THRESHOLD && (
+                      <span className="weekly-breakdown-streak" title={t('weeklyBreakdown.streak', { count: member.current_streak })}>
+                        🔥{member.current_streak}
+                      </span>
+                    )}
+                  </span>
+                  <div className="weekly-breakdown-bar-track">
+                    <div className="weekly-breakdown-bar-fill" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="weekly-breakdown-count">{count}</span>
                 </div>
-                <span className="weekly-breakdown-count">{count}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
 
         <div className="modal-actions">

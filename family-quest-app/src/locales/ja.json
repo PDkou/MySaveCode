@@ -300,7 +300,10 @@
   },
   "weeklyBreakdown": {
     "heading": "今週の家族別完了状況",
-    "empty": "今週完了したクエストはまだありません。"
+    "empty": "今週完了したクエストはまだありません。",
+    "total": "今週の家族全体の完了 {{count}}件",
+    "mvp": "今週のMVP",
+    "streak": "{{count}}日連続達成中"
   },
   "stats": {
     "heading": "わたしの記録",

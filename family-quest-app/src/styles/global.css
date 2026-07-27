@@ -2089,6 +2089,13 @@ textarea {
 
 /* ---------- Weekly per-member breakdown ---------- */
 
+.weekly-breakdown-total {
+  margin: -4px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
 .weekly-breakdown-list {
   display: flex;
   flex-direction: column;
@@ -2104,15 +2111,27 @@ textarea {
 .weekly-breakdown-name {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-size: 13px;
   font-weight: 700;
   color: var(--navy);
-  width: 84px;
+  width: 110px;
   flex-shrink: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.weekly-breakdown-mvp {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.weekly-breakdown-streak {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--amber-dark);
+  flex-shrink: 0;
 }
 
 .weekly-breakdown-bar-track {
