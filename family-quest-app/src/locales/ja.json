@@ -95,7 +95,9 @@
     "weeklyCompleted": "今週の完了 {{count}}件",
     "selectButton": "選択",
     "selectedCount": "{{count}}件選択中",
-    "deleteSelected": "選択項目を削除"
+    "deleteSelected": "選択項目を削除",
+    "completeSelected": "選択項目を完了にする",
+    "searchPlaceholder": "クエストを検索..."
   },
   "taskForm": {
     "heading": "新しく依頼する",
@@ -149,6 +151,7 @@
     "completeButton": "完了にする",
     "completing": "処理中...",
     "reopenButton": "進行中に戻す",
+    "reopenConfirm": "完了を取り消して進行中に戻しますか?",
     "reopening": "変更中...",
     "activityLog": "対応履歴",
     "noActivity": "履歴はありません。",
@@ -255,6 +258,10 @@
         "body": "右上で言語(한국어/日本語)、ダークモード、家族部屋の名前を変更できます。"
       }
     ]
+  },
+  "install": {
+    "bannerText": "ホーム画面に追加すると、もっと早く開けます",
+    "installButton": "インストール"
   },
   "gallery": {
     "openButton": "フォトギャラリー",

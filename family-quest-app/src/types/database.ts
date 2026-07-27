@@ -113,6 +113,7 @@ export type TaskTemplateRow = {
   title: string;
   details: string | null;
   recurrence: TaskRecurrence;
+  assignee_ids: string[];
   created_by: string;
   created_at: string;
 };

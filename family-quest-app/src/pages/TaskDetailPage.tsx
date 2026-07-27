@@ -15,6 +15,7 @@ import { DueDateTimeFields } from '../components/DueDateTimeFields';
 import { AvatarChip } from '../components/AvatarChip';
 import { Spinner } from '../components/Spinner';
 import { CelebrationOverlay } from '../components/CelebrationOverlay';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { getTaskPhotoUrl, TaskPhotoError, uploadTaskPhoto } from '../lib/taskPhotos';
 import { displayStatusForTask } from '../lib/taskStatus';
 import type { CompletionResult } from '../lib/gamification';
@@ -38,6 +39,7 @@ export function TaskDetailPage() {
   const [commentBody, setCommentBody] = useState('');
   const [commentBusy, setCommentBusy] = useState(false);
   const [celebration, setCelebration] = useState<CompletionResult | null>(null);
+  const [showReopenConfirm, setShowReopenConfirm] = useState(false);
 
   const QUICK_EMOJIS = ['👍', '❤️', '🎉', '😊', '🙏', '💪'];
 
@@ -147,6 +149,7 @@ export function TaskDetailPage() {
   };
 
   const handleReopen = async () => {
+    setShowReopenConfirm(false);
     setBusy(true);
     setErrorKey(null);
     try {
@@ -392,7 +395,12 @@ export function TaskDetailPage() {
           </button>
         </form>
       ) : (
-        <button type="button" className="btn btn-secondary btn-block" onClick={() => void handleReopen()} disabled={busy}>
+        <button
+          type="button"
+          className="btn btn-secondary btn-block"
+          onClick={() => setShowReopenConfirm(true)}
+          disabled={busy}
+        >
           {busy ? t('taskDetail.reopening') : t('taskDetail.reopenButton')}
         </button>
       )}
@@ -477,6 +485,15 @@ export function TaskDetailPage() {
       </button>
 
       {celebration && <CelebrationOverlay result={celebration} onDismiss={() => setCelebration(null)} />}
+
+      {showReopenConfirm && (
+        <ConfirmModal
+          message={t('taskDetail.reopenConfirm')}
+          confirmLabel={t('taskDetail.reopenButton')}
+          onConfirm={() => void handleReopen()}
+          onCancel={() => setShowReopenConfirm(false)}
+        />
+      )}
     </div>
   );
 }

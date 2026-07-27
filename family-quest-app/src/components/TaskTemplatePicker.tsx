@@ -10,17 +10,21 @@ interface TaskTemplatePickerProps {
   currentTitle: string;
   currentDetails: string;
   currentRecurrence: TaskRecurrence;
+  currentAssigneeIds: string[];
   onApply: (template: TaskTemplateRow) => void;
 }
 
 // Lets the family save a frequently-repeated request once (title/details/
-// recurrence) and reload it from a dropdown next time instead of retyping
-// it -- see task_templates in schema.sql.
+// recurrence/assignees) and reload it from a dropdown next time instead of
+// retyping it -- see task_templates in schema.sql. The saved assignees are
+// just a default the picker pre-fills; onApply's caller still lets them be
+// freely changed afterward.
 export function TaskTemplatePicker({
   familyId,
   currentTitle,
   currentDetails,
   currentRecurrence,
+  currentAssigneeIds,
   onApply,
 }: TaskTemplatePickerProps) {
   const { t } = useTranslation();
@@ -65,6 +69,7 @@ export function TaskTemplatePicker({
           title: trimmedTitle,
           details: currentDetails.trim() ? currentDetails.trim() : null,
           recurrence: currentRecurrence,
+          assignee_ids: currentAssigneeIds,
           created_by: user.id,
         })
         .select()

@@ -13,6 +13,7 @@ import { PhotoGalleryPage } from './pages/PhotoGalleryPage';
 import { HelpPage } from './pages/HelpPage';
 import { Spinner } from './components/Spinner';
 import { UndoSnackbar } from './components/UndoSnackbar';
+import { InstallPromptBanner } from './components/InstallPromptBanner';
 
 function FullScreenLoading() {
   const { t } = useTranslation();
@@ -121,6 +122,7 @@ function App() {
           </TasksProvider>
         </FamilyProvider>
       </AuthProvider>
+      <InstallPromptBanner />
     </BrowserRouter>
   );
 }
