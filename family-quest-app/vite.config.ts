@@ -15,15 +15,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       includeAssets: ['icons/apple-touch-icon.png'],
-      // TEMPORARILY disabled (manifest: false) to test a hypothesis: a
-      // Samsung Internet bug report where picking a photo (native file
-      // picker) always lands back on "/" (this app's start_url) regardless
-      // of which page the picker was opened from -- suggesting Samsung
-      // Internet may treat the manifest's start_url as a "resume" target
-      // when a page backgrounded by an external Activity returns. Restore
-      // the object below once this is confirmed or ruled out.
-      manifest: false,
-      /* manifest: {
+      manifest: {
         id: '/',
         name: 'Family Quest',
         short_name: 'FamilyQuest',
@@ -61,7 +53,7 @@ export default defineConfig({
             purpose: 'maskable',
           },
         ],
-      }, */
+      },
       injectManifest: {
         // v0.1 does not need full offline support (see handoff doc section
         // 12). This just precaches the built app shell so a repeat visit
