@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabaseClient';
 import type { AppLanguageCode, ProfileRow } from '../types/database';
 import { LANGUAGE_STORAGE_KEY, SUPPORTED_LANGUAGES } from '../i18n';
+import { AvatarPhotoError, deleteAvatarPhoto, getAvatarPhotoUrls, uploadAvatarPhoto } from '../lib/avatarPhotos';
 
 export class AuthActionError extends Error {
   translationKey: string;
@@ -35,6 +36,7 @@ interface AuthContextValue {
   session: Session | null;
   user: User | null;
   profile: ProfileRow | null;
+  avatarUrl: string | null;
   initializing: boolean;
   profileLoading: boolean;
   signUp: (email: string, password: string, displayName: string) => Promise<{ needsEmailConfirmation: boolean }>;
@@ -42,6 +44,7 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   setLanguage: (language: AppLanguageCode) => Promise<void>;
   updateDisplayName: (name: string) => Promise<void>;
+  updateAvatarPhoto: (file: File) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -51,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { i18n } = useTranslation();
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initializing, setInitializing] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
 
@@ -62,6 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(data);
       if (data && SUPPORTED_LANGUAGES.includes(data.preferred_language)) {
         void i18n.changeLanguage(data.preferred_language);
+      }
+      if (data?.avatar_path) {
+        const urls = await getAvatarPhotoUrls([data.avatar_path]);
+        setAvatarUrl(urls.get(data.avatar_path) ?? null);
+      } else {
+        setAvatarUrl(null);
       }
     } finally {
       setProfileLoading(false);
@@ -169,6 +179,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile((prev) => (prev ? { ...prev, display_name: trimmedName } : prev));
   }, [session]);
 
+  const updateAvatarPhoto = useCallback(async (file: File) => {
+    if (!session?.user) return;
+    const userId = session.user.id;
+    const previousPath = profile?.avatar_path ?? null;
+
+    const path = await uploadAvatarPhoto(userId, file);
+
+    const { error } = await supabase.from('profiles').update({ avatar_path: path }).eq('id', userId);
+    if (error) {
+      throw new AvatarPhotoError('profile.error.photoUploadFailed');
+    }
+
+    setProfile((prev) => (prev ? { ...prev, avatar_path: path } : prev));
+    const urls = await getAvatarPhotoUrls([path]);
+    setAvatarUrl(urls.get(path) ?? null);
+
+    // Best-effort cleanup of the replaced file -- not worth failing the
+    // whole update if this doesn't succeed.
+    if (previousPath) {
+      void deleteAvatarPhoto(previousPath);
+    }
+  }, [session, profile]);
+
   const refreshProfile = useCallback(async () => {
     if (session?.user) {
       await loadProfile(session.user.id);
@@ -179,6 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     user: session?.user ?? null,
     profile,
+    avatarUrl,
     initializing,
     profileLoading,
     signUp,
@@ -186,8 +220,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     setLanguage,
     updateDisplayName,
+    updateAvatarPhoto,
     refreshProfile,
-  }), [session, profile, initializing, profileLoading, signUp, signIn, signOut, setLanguage, updateDisplayName, refreshProfile]);
+  }), [
+    session, profile, avatarUrl, initializing, profileLoading, signUp, signIn, signOut, setLanguage,
+    updateDisplayName, updateAvatarPhoto, refreshProfile,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

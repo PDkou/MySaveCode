@@ -27,7 +27,7 @@ export function TaskDetailPage() {
   const navigate = useNavigate();
   const { taskId } = useParams<{ taskId: string }>();
   const { user } = useAuth();
-  const { family, members } = useFamily();
+  const { family, members, avatarUrlByUserId } = useFamily();
   const { requestDelete } = useTasks();
   const { task, assigneeIds, activities, comments, loading, notFound, completeTask, reopenTask, updateTask, addComment, deleteComment } =
     useTaskDetail(taskId);
@@ -344,7 +344,11 @@ export function TaskDetailPage() {
           <span className="label">{t('taskDetail.assignedTo')}</span>
           <span className="task-card-assignee">
             {assigneeLabel && assigneeLabel !== t('dashboard.unassigned') && assigneeLabel !== t('taskForm.everyone') && (
-              <AvatarChip name={assigneeLabel} size={18} />
+              <AvatarChip
+                name={assigneeLabel}
+                size={18}
+                photoUrl={assigneeIds.length === 1 ? avatarUrlByUserId.get(assigneeIds[0]) : undefined}
+              />
             )}
             {assigneeLabel}
           </span>
@@ -352,7 +356,9 @@ export function TaskDetailPage() {
         <div>
           <span className="label">{t('taskDetail.createdBy')}</span>
           <span className="task-card-assignee">
-            {nameFor(task.created_by) && <AvatarChip name={nameFor(task.created_by)} size={18} />}
+            {nameFor(task.created_by) && (
+              <AvatarChip name={nameFor(task.created_by)} size={18} photoUrl={avatarUrlByUserId.get(task.created_by)} />
+            )}
             {nameFor(task.created_by)}
           </span>
         </div>
@@ -470,7 +476,7 @@ export function TaskDetailPage() {
               <li key={c.id} className="comment-item">
                 <div className="comment-item-header">
                   <span className="comment-item-author">
-                    <AvatarChip name={nameFor(c.author_id)} size={16} />
+                    <AvatarChip name={nameFor(c.author_id)} size={16} photoUrl={avatarUrlByUserId.get(c.author_id)} />
                     {nameFor(c.author_id)}
                   </span>
                   <span className="comment-item-time">{formatDateTime(c.created_at, i18n.language)}</span>

@@ -218,7 +218,15 @@
     }
   },
   "profile": {
-    "editNameHeading": "이름 변경"
+    "editNameHeading": "이름 변경",
+    "photoHeading": "프로필 사진",
+    "photoChange": "사진 변경",
+    "photoUploading": "업로드 중...",
+    "error": {
+      "photoTooLarge": "사진 용량은 5MB 이하여야 합니다.",
+      "photoInvalidType": "이미지 파일만 첨부할 수 있습니다.",
+      "photoUploadFailed": "사진 업로드에 실패했습니다."
+    }
   },
   "settings": {
     "heading": "설정",

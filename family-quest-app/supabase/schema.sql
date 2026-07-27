@@ -38,10 +38,18 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text not null,
   preferred_language text not null default 'ko',
+  -- Path within the "avatars" storage bucket (see section 9), not a URL --
+  -- the bucket is private, so the client resolves this to a signed URL at
+  -- render time. Null means "no photo uploaded yet", falling back to the
+  -- initials-based AvatarChip.
+  avatar_path text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint profiles_preferred_language_check check (preferred_language in ('ko', 'ja'))
 );
+
+-- Upgrades an already-deployed database from before profile photos existed.
+alter table public.profiles add column if not exists avatar_path text;
 
 create table if not exists public.families (
   id uuid primary key default gen_random_uuid(),
@@ -1080,6 +1088,42 @@ for delete
 using (
   bucket_id = 'task-photos'
   and public.is_family_member((storage.foldername(name))[1]::uuid)
+);
+
+-- Storage: a private "avatars" bucket for profile photos. Objects are
+-- uploaded at the path "{user_id}/{file}" -- unlike task-photos, this isn't
+-- family-scoped (a profile is one account-wide row), so the first folder
+-- segment is compared directly against auth.uid()/shares_family_with rather
+-- than checked through is_family_member.
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', false)
+on conflict (id) do nothing;
+
+drop policy if exists avatars_select on storage.objects;
+create policy avatars_select on storage.objects
+for select
+using (
+  bucket_id = 'avatars'
+  and (
+    (storage.foldername(name))[1]::uuid = auth.uid()
+    or public.shares_family_with((storage.foldername(name))[1]::uuid)
+  )
+);
+
+drop policy if exists avatars_insert on storage.objects;
+create policy avatars_insert on storage.objects
+for insert
+with check (
+  bucket_id = 'avatars'
+  and (storage.foldername(name))[1]::uuid = auth.uid()
+);
+
+drop policy if exists avatars_delete on storage.objects;
+create policy avatars_delete on storage.objects
+for delete
+using (
+  bucket_id = 'avatars'
+  and (storage.foldername(name))[1]::uuid = auth.uid()
 );
 
 -- -----------------------------------------------------------------------------

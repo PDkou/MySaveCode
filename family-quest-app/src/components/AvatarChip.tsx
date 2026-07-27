@@ -11,9 +11,22 @@ function colorForName(name: string): string {
 interface AvatarChipProps {
   name: string;
   size?: number;
+  photoUrl?: string | null;
 }
 
-export function AvatarChip({ name, size = 20 }: AvatarChipProps) {
+export function AvatarChip({ name, size = 20, photoUrl }: AvatarChipProps) {
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt=""
+        className="avatar-chip avatar-chip-photo"
+        style={{ width: size, height: size }}
+        aria-hidden="true"
+      />
+    );
+  }
+
   const initial = name.trim().charAt(0).toUpperCase() || '?';
   return (
     <span

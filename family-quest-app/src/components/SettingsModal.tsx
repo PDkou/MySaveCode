@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,6 +9,8 @@ import { ThemeToggle } from './ThemeToggle';
 import { ColorThemePicker } from './ColorThemePicker';
 import { LanguageSwitch } from './LanguageSwitch';
 import { EditNameModal } from './EditNameModal';
+import { AvatarChip } from './AvatarChip';
+import { AvatarPhotoError } from '../lib/avatarPhotos';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -20,14 +23,32 @@ interface SettingsModalProps {
 export function SettingsModal({ onClose }: SettingsModalProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, avatarUrl, signOut, updateAvatarPhoto } = useAuth();
   const { members, updateMyDisplayName } = useFamily();
   const [showEditName, setShowEditName] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoErrorKey, setPhotoErrorKey] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentName = useMemo(() => {
     if (!user) return '';
     return members.find((m) => m.user_id === user.id)?.display_name || profile?.display_name || '';
   }, [members, user, profile]);
+
+  const handlePhotoChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setPhotoErrorKey(null);
+    setPhotoBusy(true);
+    try {
+      await updateAvatarPhoto(file);
+    } catch (err) {
+      setPhotoErrorKey(err instanceof AvatarPhotoError ? err.translationKey : 'profile.error.photoUploadFailed');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
 
   const goToHelp = () => {
     onClose();
@@ -58,6 +79,28 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
         {user && (
           <div className="settings-section">
             <p className="settings-section-title">{t('settings.account')}</p>
+            <div className="settings-row">
+              <span>{t('profile.photoHeading')}</span>
+              <button
+                type="button"
+                className="settings-photo-trigger"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={photoBusy}
+              >
+                <AvatarChip name={currentName} size={40} photoUrl={avatarUrl} />
+                <span className="settings-photo-trigger-label">
+                  {photoBusy ? t('profile.photoUploading') : t('profile.photoChange')}
+                </span>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="visually-hidden"
+                onChange={(e) => void handlePhotoChange(e)}
+              />
+            </div>
+            {photoErrorKey && <p className="form-error" role="alert">{t(photoErrorKey)}</p>}
             <button type="button" className="settings-row-button" onClick={() => setShowEditName(true)}>
               <span>{t('profile.editNameHeading')}</span>
               <span className="settings-row-value">{currentName}</span>
