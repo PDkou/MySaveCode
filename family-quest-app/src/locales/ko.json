@@ -198,6 +198,11 @@
   "profile": {
     "editNameHeading": "이름 변경"
   },
+  "settings": {
+    "heading": "설정",
+    "appearance": "화면",
+    "account": "계정"
+  },
   "language": {
     "label": "언어",
     "ko": "한국어",

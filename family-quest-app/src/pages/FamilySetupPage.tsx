@@ -1,30 +1,28 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 
-import { useAuth } from '../context/AuthContext';
-import { LanguageSwitch } from '../components/LanguageSwitch';
-import { ThemeToggle } from '../components/ThemeToggle';
-import { ColorThemePicker } from '../components/ColorThemePicker';
+import { SettingsModal } from '../components/SettingsModal';
 import { FamilyOnboardingForms } from '../components/FamilyOnboardingForms';
 
 export function FamilySetupPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const [showSettings, setShowSettings] = useState(false);
 
   return (
     <div className="screen family-setup-screen">
       <div className="topbar">
         <h1 className="app-title">{t('app.name')}</h1>
         <div className="topbar-actions">
-          <ThemeToggle />
-          <ColorThemePicker />
-          <LanguageSwitch />
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/help')}>
-            {t('help.openButton')}
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={() => void signOut()}>
-            {t('auth.logout')}
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon btn-sm"
+            onClick={() => setShowSettings(true)}
+            aria-label={t('settings.heading')}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
           </button>
         </div>
       </div>
@@ -35,6 +33,8 @@ export function FamilySetupPage() {
       </div>
 
       <FamilyOnboardingForms />
+
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   );
 }

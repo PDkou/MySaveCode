@@ -5,15 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { useTasks } from '../context/TasksContext';
-import { LanguageSwitch } from '../components/LanguageSwitch';
-import { ThemeToggle } from '../components/ThemeToggle';
-import { ColorThemePicker } from '../components/ColorThemePicker';
 import { NotificationBell } from '../components/NotificationBell';
 import { FamilySwitcher } from '../components/FamilySwitcher';
 import { TaskCard } from '../components/TaskCard';
 import { NewTaskModal } from '../components/NewTaskModal';
-import { EditNameModal } from '../components/EditNameModal';
 import { EditFamilyNameModal } from '../components/EditFamilyNameModal';
+import { SettingsModal } from '../components/SettingsModal';
 import { MyStatsModal } from '../components/MyStatsModal';
 import { WeeklyBreakdownModal } from '../components/WeeklyBreakdownModal';
 import { Spinner } from '../components/Spinner';
@@ -26,15 +23,15 @@ type Filter = 'open' | 'done' | 'all';
 export function DashboardPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { signOut, profile, user } = useAuth();
-  const { family, members, updateMyDisplayName } = useFamily();
+  const { user } = useAuth();
+  const { family, members } = useFamily();
   const { tasks, assigneesByTaskId, loading, refresh, requestDelete, completeTasks } = useTasks();
 
   const [filter, setFilter] = useState<Filter>('open');
   const [onlyMine, setOnlyMine] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewTask, setShowNewTask] = useState(false);
-  const [showEditName, setShowEditName] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [showEditFamilyName, setShowEditFamilyName] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showWeekly, setShowWeekly] = useState(false);
@@ -169,39 +166,18 @@ export function DashboardPage() {
               {me.current_streak > 0 ? ` 🔥${me.current_streak}` : ''}
             </button>
           )}
-          {profile && (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowEditName(true)}>
-              {(user && nameByUserId.get(user.id)) || profile.display_name}
-            </button>
-          )}
-          <ThemeToggle />
-          <ColorThemePicker />
-          <LanguageSwitch />
-          <button
-            type="button"
-            className="btn btn-ghost btn-icon btn-sm"
-            onClick={() => navigate('/help')}
-            aria-label={t('help.openButton')}
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.5 9a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 1.7-2.4 3.4" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            className="btn btn-ghost btn-icon btn-sm"
-            onClick={() => void signOut()}
-            aria-label={t('auth.logout')}
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <path d="M16 17l5-5-5-5" />
-              <path d="M21 12H9" />
-            </svg>
-          </button>
           <NotificationBell />
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon btn-sm"
+            onClick={() => setShowSettings(true)}
+            aria-label={t('settings.heading')}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -339,18 +315,12 @@ export function DashboardPage() {
       </div>
 
       {showNewTask && <NewTaskModal members={members} onClose={() => setShowNewTask(false)} />}
-      {showEditName && profile && (
-        <EditNameModal
-          currentName={(user && nameByUserId.get(user.id)) || profile.display_name}
-          onSave={updateMyDisplayName}
-          onClose={() => setShowEditName(false)}
-        />
-      )}
       {showEditFamilyName && family && (
         <EditFamilyNameModal currentName={family.name} onClose={() => setShowEditFamilyName(false)} />
       )}
       {showStats && <MyStatsModal onClose={() => setShowStats(false)} />}
       {showWeekly && <WeeklyBreakdownModal onClose={() => setShowWeekly(false)} />}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   );
 }
