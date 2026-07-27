@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,6 +6,7 @@ import { useFamily } from '../context/FamilyContext';
 import { useTasks } from '../context/TasksContext';
 import { TaskCard } from '../components/TaskCard';
 import { EmptyState } from '../components/EmptyState';
+import { getTaskPhotoUrls } from '../lib/taskPhotos';
 import type { TaskRow } from '../types/database';
 
 function toDateKey(d: Date): string {
@@ -24,6 +25,7 @@ export function CalendarPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [photoUrlByPath, setPhotoUrlByPath] = useState<Map<string, string>>(new Map());
 
   const locale = i18n.language === 'ja' ? 'ja-JP' : 'ko-KR';
 
@@ -51,6 +53,32 @@ export function CalendarPage() {
     });
     return map;
   }, [tasks]);
+
+  // First completion photo found per date key -- a small preview thumbnail
+  // shown on the day cell, not the full gallery.
+  const thumbnailPathByDateKey = useMemo(() => {
+    const map = new Map<string, string>();
+    tasksByDateKey.forEach((dayTasks, key) => {
+      const withPhoto = dayTasks.find((task) => task.status === 'done' && task.completion_photo_path);
+      if (withPhoto?.completion_photo_path) map.set(key, withPhoto.completion_photo_path);
+    });
+    return map;
+  }, [tasksByDateKey]);
+
+  useEffect(() => {
+    const paths = Array.from(new Set(thumbnailPathByDateKey.values()));
+    if (paths.length === 0) {
+      setPhotoUrlByPath(new Map());
+      return;
+    }
+    let cancelled = false;
+    void getTaskPhotoUrls(paths).then((map) => {
+      if (!cancelled) setPhotoUrlByPath(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [thumbnailPathByDateKey]);
 
   const monthLabel = useMemo(
     () => new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(cursor),
@@ -119,6 +147,8 @@ export function CalendarPage() {
             const dayTasks = tasksByDateKey.get(key) ?? [];
             const openCount = dayTasks.filter((task) => task.status === 'open').length;
             const weekday = day.getDay();
+            const thumbnailPath = thumbnailPathByDateKey.get(key);
+            const thumbnailUrl = thumbnailPath ? photoUrlByPath.get(thumbnailPath) : undefined;
             return (
               <button
                 type="button"
@@ -133,6 +163,7 @@ export function CalendarPage() {
                 ].filter(Boolean).join(' ')}
                 onClick={() => setSelectedDate(key === selectedKey ? null : day)}
               >
+                {thumbnailUrl && <img src={thumbnailUrl} alt="" className="calendar-day-photo" />}
                 <span className="calendar-day-number">{day.getDate()}</span>
                 {dayTasks.length > 0 && (
                   <span className={`calendar-day-count ${openCount > 0 ? '' : 'calendar-day-count-done'}`}>
