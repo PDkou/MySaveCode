@@ -69,12 +69,23 @@
     "switcherTitle": "가족방 전환",
     "addAnother": "새 가족방 추가하기",
     "addAnotherHeading": "새 가족방 추가",
+    "membersHeading": "가족 멤버 관리",
+    "ownerTag": "방장",
+    "removeMember": "내보내기",
+    "removeMemberConfirm": "이 멤버를 가족방에서 내보낼까요?",
+    "leaveFamily": "이 가족방 나가기",
+    "leaveFamilyConfirm": "정말 이 가족방을 나가시겠어요? 나가면 다시 초대 코드로 참여해야 해요.",
+    "regenerateInviteCode": "초대 코드 재발급",
+    "regenerateInviteCodeConfirm": "새 코드를 발급하면 기존 초대 코드는 더 이상 사용할 수 없어요. 계속할까요?",
     "error": {
       "nameRequired": "가족방 이름을 입력해주세요.",
       "alreadyInThisFamily": "이미 이 가족방에 참여하고 있습니다.",
       "codeRequired": "초대 코드를 입력해주세요.",
       "invalidCode": "초대 코드는 8자리여야 합니다.",
       "codeNotFound": "해당 초대 코드의 가족방을 찾을 수 없습니다.",
+      "notAuthorized": "방장만 할 수 있는 기능이에요.",
+      "cannotRemoveSelf": "본인은 이 기능으로 내보낼 수 없어요. '가족방 나가기'를 이용해주세요.",
+      "memberNotFound": "해당 멤버를 찾을 수 없습니다.",
       "unknown": "가족방 처리 중 문제가 발생했습니다."
     }
   },

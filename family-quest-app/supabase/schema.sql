@@ -495,6 +495,131 @@ begin
 end;
 $$;
 
+-- Lets a member leave a family room they no longer want to be part of --
+-- there was previously no way to undo joining the wrong room or step away
+-- from one that's no longer needed. If the leaving member is the family's
+-- last remaining member, the whole family (and everything scoped to it --
+-- tasks, templates, etc, all on delete cascade) is deleted along with them
+-- rather than left behind as an empty, ownerless room. If they're the
+-- owner and other members remain, ownership passes to whoever joined
+-- earliest among the rest, so the family is never left without an owner.
+create or replace function public.leave_family(p_family_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_role text;
+  v_member_count integer;
+  v_next_owner uuid;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select role into v_role from public.family_members where family_id = p_family_id and user_id = v_uid;
+  if not found then
+    raise exception 'not_a_member' using errcode = 'P0002';
+  end if;
+
+  select count(*) into v_member_count from public.family_members where family_id = p_family_id;
+
+  if v_member_count <= 1 then
+    delete from public.families where id = p_family_id;
+    return;
+  end if;
+
+  if v_role = 'owner' then
+    select user_id into v_next_owner
+    from public.family_members
+    where family_id = p_family_id and user_id <> v_uid
+    order by joined_at asc
+    limit 1;
+
+    update public.family_members set role = 'owner' where family_id = p_family_id and user_id = v_next_owner;
+  end if;
+
+  delete from public.family_members where family_id = p_family_id and user_id = v_uid;
+end;
+$$;
+
+-- Lets the owner remove a member who joined by mistake or shouldn't be in
+-- the room anymore -- there was previously no way to undo a bad join except
+-- for that member to leave on their own. Owner-only; removing yourself
+-- through this would leave the room without checking for a next owner, so
+-- that path is deliberately blocked in favor of leave_family() above.
+create or replace function public.remove_family_member(p_family_id uuid, p_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_role text;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select role into v_role from public.family_members where family_id = p_family_id and user_id = v_uid;
+  if not found or v_role <> 'owner' then
+    raise exception 'not_authorized' using errcode = '42501';
+  end if;
+
+  if p_user_id = v_uid then
+    raise exception 'cannot_remove_self' using errcode = '22023';
+  end if;
+
+  if not exists (select 1 from public.family_members where family_id = p_family_id and user_id = p_user_id) then
+    raise exception 'member_not_found' using errcode = 'P0002';
+  end if;
+
+  delete from public.family_members where family_id = p_family_id and user_id = p_user_id;
+end;
+$$;
+
+-- Lets the owner issue a fresh invite code if the old one leaked (posted
+-- somewhere public by mistake, shared with someone no longer trusted,
+-- etc) without having to recreate the whole family room.
+create or replace function public.regenerate_invite_code(p_family_id uuid)
+returns public.families
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_role text;
+  v_code text;
+  v_attempts integer := 0;
+  v_family public.families;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select role into v_role from public.family_members where family_id = p_family_id and user_id = v_uid;
+  if not found or v_role <> 'owner' then
+    raise exception 'not_authorized' using errcode = '42501';
+  end if;
+
+  loop
+    v_code := public.generate_invite_code();
+    v_attempts := v_attempts + 1;
+    exit when not exists (select 1 from public.families where invite_code = v_code);
+    if v_attempts > 25 then
+      raise exception 'invite_code_generation_failed' using errcode = 'P0001';
+    end if;
+  end loop;
+
+  update public.families set invite_code = v_code where id = p_family_id returning * into v_family;
+  return v_family;
+end;
+$$;
+
 -- -----------------------------------------------------------------------------
 -- 7. (removed) Family member limit trigger
 --
@@ -1149,6 +1274,9 @@ grant select on public.member_badges to authenticated;
 
 grant execute on function public.create_family_room(text) to authenticated;
 grant execute on function public.join_family_room(text) to authenticated;
+grant execute on function public.leave_family(uuid) to authenticated;
+grant execute on function public.remove_family_member(uuid, uuid) to authenticated;
+grant execute on function public.regenerate_invite_code(uuid) to authenticated;
 grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) to authenticated;
 grant execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) to authenticated;
 grant execute on function public.complete_task(uuid, text, text) to authenticated;
@@ -1156,6 +1284,9 @@ grant execute on function public.reopen_task(uuid) to authenticated;
 
 revoke execute on function public.create_family_room(text) from anon, public;
 revoke execute on function public.join_family_room(text) from anon, public;
+revoke execute on function public.leave_family(uuid) from anon, public;
+revoke execute on function public.remove_family_member(uuid, uuid) from anon, public;
+revoke execute on function public.regenerate_invite_code(uuid) from anon, public;
 revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) from anon, public;
 revoke execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) from anon, public;
 revoke execute on function public.complete_task(uuid, text, text) from anon, public;

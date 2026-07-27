@@ -24,7 +24,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, profile, avatarUrl, signOut, updateAvatarPhoto } = useAuth();
-  const { members, updateMyDisplayName } = useFamily();
+  const { members, updateMyDisplayName, refresh: refreshFamily } = useFamily();
   const [showEditName, setShowEditName] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoErrorKey, setPhotoErrorKey] = useState<string | null>(null);
@@ -43,6 +43,11 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
     setPhotoBusy(true);
     try {
       await updateAvatarPhoto(file);
+      // AuthContext only tracks the current user's own profile -- other
+      // components (weekly breakdown, task cards, comments) read avatar
+      // URLs from FamilyContext's per-member map, which needs its own
+      // refresh to pick up the newly uploaded photo.
+      await refreshFamily();
     } catch (err) {
       setPhotoErrorKey(err instanceof AvatarPhotoError ? err.translationKey : 'profile.error.photoUploadFailed');
     } finally {

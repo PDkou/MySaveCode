@@ -215,6 +215,18 @@ export type Database = {
         Args: { p_code: string };
         Returns: FamilyRow;
       };
+      leave_family: {
+        Args: { p_family_id: string };
+        Returns: void;
+      };
+      remove_family_member: {
+        Args: { p_family_id: string; p_user_id: string };
+        Returns: void;
+      };
+      regenerate_invite_code: {
+        Args: { p_family_id: string };
+        Returns: FamilyRow;
+      };
       create_task: {
         Args: {
           p_family_id: string;

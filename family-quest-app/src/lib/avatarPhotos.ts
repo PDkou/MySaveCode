@@ -3,6 +3,12 @@ import { supabase } from './supabaseClient';
 const BUCKET = 'avatars';
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
+// AvatarChip always renders this as a circle (CSS border-radius: 50% +
+// object-fit: cover), so an off-center rectangular source photo can crop
+// awkwardly (e.g. cutting off a face) if stored as-is. Center-cropping to a
+// square here means the stored file itself already matches what the circular
+// chip will show, instead of leaving the crop to CSS guesswork.
+const AVATAR_OUTPUT_SIZE = 512;
 
 export class AvatarPhotoError extends Error {
   translationKey: string;
@@ -13,6 +19,43 @@ export class AvatarPhotoError extends Error {
   }
 }
 
+function loadImage(file: File): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('image_decode_failed'));
+    };
+    image.src = objectUrl;
+  });
+}
+
+export async function cropToSquareJpeg(file: File): Promise<Blob> {
+  const image = await loadImage(file);
+  const side = Math.min(image.naturalWidth, image.naturalHeight);
+  const sx = (image.naturalWidth - side) / 2;
+  const sy = (image.naturalHeight - side) / 2;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = AVATAR_OUTPUT_SIZE;
+  canvas.height = AVATAR_OUTPUT_SIZE;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('canvas_unsupported');
+  ctx.drawImage(image, sx, sy, side, side, 0, 0, AVATAR_OUTPUT_SIZE, AVATAR_OUTPUT_SIZE);
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error('canvas_encode_failed'));
+    }, 'image/jpeg', 0.9);
+  });
+}
+
 export async function uploadAvatarPhoto(userId: string, file: File): Promise<string> {
   if (file.size > MAX_FILE_SIZE_BYTES) {
     throw new AvatarPhotoError('profile.error.photoTooLarge');
@@ -21,11 +64,17 @@ export async function uploadAvatarPhoto(userId: string, file: File): Promise<str
     throw new AvatarPhotoError('profile.error.photoInvalidType');
   }
 
-  const extension = file.name.includes('.') ? file.name.split('.').pop() : 'jpg';
-  const path = `${userId}/${Date.now()}.${extension}`;
+  let cropped: Blob;
+  try {
+    cropped = await cropToSquareJpeg(file);
+  } catch {
+    throw new AvatarPhotoError('profile.error.photoUploadFailed');
+  }
 
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    contentType: file.type,
+  const path = `${userId}/${Date.now()}.jpg`;
+
+  const { error } = await supabase.storage.from(BUCKET).upload(path, cropped, {
+    contentType: 'image/jpeg',
     upsert: false,
   });
   if (error) {

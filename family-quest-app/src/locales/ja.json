@@ -69,12 +69,23 @@
     "switcherTitle": "家族ルームを切り替え",
     "addAnother": "新しい家族ルームを追加",
     "addAnotherHeading": "新しい家族ルームを追加",
+    "membersHeading": "家族メンバー管理",
+    "ownerTag": "ルーム長",
+    "removeMember": "退出させる",
+    "removeMemberConfirm": "このメンバーを家族ルームから退出させますか?",
+    "leaveFamily": "この家族ルームを退出する",
+    "leaveFamilyConfirm": "本当にこの家族ルームを退出しますか? 退出すると、再度招待コードで参加する必要があります。",
+    "regenerateInviteCode": "招待コードを再発行",
+    "regenerateInviteCodeConfirm": "新しいコードを発行すると、以前の招待コードは使えなくなります。続けますか?",
     "error": {
       "nameRequired": "家族ルーム名を入力してください。",
       "alreadyInThisFamily": "すでにこの家族ルームに参加しています。",
       "codeRequired": "招待コードを入力してください。",
       "invalidCode": "招待コードは8桁で入力してください。",
       "codeNotFound": "その招待コードの家族ルームが見つかりません。",
+      "notAuthorized": "ルーム長のみ実行できます。",
+      "cannotRemoveSelf": "自分自身はこの方法では退出できません。「この家族ルームを退出する」をご利用ください。",
+      "memberNotFound": "該当するメンバーが見つかりません。",
       "unknown": "家族ルームの処理に失敗しました。"
     }
   },

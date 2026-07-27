@@ -22,6 +22,9 @@ function mapFamilyErrorToKey(message: string | undefined): string {
   if (m.includes('invalid_invite_code')) return 'family.error.invalidCode';
   if (m.includes('family_not_found')) return 'family.error.codeNotFound';
   if (m.includes('not_authenticated')) return 'auth.error.unknown';
+  if (m.includes('not_authorized')) return 'family.error.notAuthorized';
+  if (m.includes('cannot_remove_self')) return 'family.error.cannotRemoveSelf';
+  if (m.includes('member_not_found') || m.includes('not_a_member')) return 'family.error.memberNotFound';
   return 'family.error.unknown';
 }
 
@@ -42,6 +45,9 @@ interface FamilyContextValue {
   joinFamily: (code: string) => Promise<void>;
   renameFamily: (name: string) => Promise<void>;
   updateMyDisplayName: (name: string) => Promise<void>;
+  leaveFamily: (familyId: string) => Promise<void>;
+  removeMember: (familyId: string, userId: string) => Promise<void>;
+  regenerateInviteCode: (familyId: string) => Promise<void>;
   switchFamily: (familyId: string) => void;
   refresh: () => Promise<void>;
 }
@@ -241,6 +247,41 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     setMembers((prev) => prev.map((m) => (m.user_id === user.id ? { ...m, display_name: trimmed } : m)));
   }, [family, user]);
 
+  // Leaving clears the locally-stored "active family" pointer for this room
+  // if it was the active one, then reloads -- load() will fall back to
+  // whichever family (if any) is still left for this user.
+  const leaveFamily = useCallback(async (familyId: string) => {
+    if (!user) return;
+    const { error } = await supabase.rpc('leave_family', { p_family_id: familyId });
+    if (error) {
+      throw new FamilyActionError(mapFamilyErrorToKey(error.message));
+    }
+    const stored = window.localStorage.getItem(activeFamilyStorageKey(user.id));
+    if (stored === familyId) {
+      window.localStorage.removeItem(activeFamilyStorageKey(user.id));
+    }
+    await load(user.id);
+  }, [user, load]);
+
+  const removeMember = useCallback(async (familyId: string, userId: string) => {
+    const { error } = await supabase.rpc('remove_family_member', { p_family_id: familyId, p_user_id: userId });
+    if (error) {
+      throw new FamilyActionError(mapFamilyErrorToKey(error.message));
+    }
+    setMembers((prev) => prev.filter((m) => m.user_id !== userId));
+  }, []);
+
+  const regenerateInviteCode = useCallback(async (familyId: string) => {
+    const { data, error } = await supabase.rpc('regenerate_invite_code', { p_family_id: familyId });
+    if (error) {
+      throw new FamilyActionError(mapFamilyErrorToKey(error.message));
+    }
+    if (data) {
+      setFamily((prev) => (prev && prev.id === familyId ? { ...prev, invite_code: data.invite_code } : prev));
+      setFamilies((prev) => prev.map((f) => (f.id === familyId ? { ...f, invite_code: data.invite_code } : f)));
+    }
+  }, []);
+
   const value = useMemo<FamilyContextValue>(() => ({
     family,
     families,
@@ -251,11 +292,14 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     joinFamily,
     renameFamily,
     updateMyDisplayName,
+    leaveFamily,
+    removeMember,
+    regenerateInviteCode,
     switchFamily,
     refresh,
   }), [
     family, families, members, avatarUrlByUserId, loading, createFamily, joinFamily, renameFamily,
-    updateMyDisplayName, switchFamily, refresh,
+    updateMyDisplayName, leaveFamily, removeMember, regenerateInviteCode, switchFamily, refresh,
   ]);
 
   return <FamilyContext.Provider value={value}>{children}</FamilyContext.Provider>;
