@@ -33,6 +33,10 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoErrorKey, setPhotoErrorKey] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Temporary on-screen diagnostic trail -- remove once the "no reaction
+  // after picking a photo" report from a real Android device is diagnosed.
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const addDebugLog = (msg: string) => setDebugLog((prev) => [...prev.slice(-9), msg]);
 
   const currentName = useMemo(() => {
     if (!user) return '';
@@ -40,28 +44,43 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   }, [members, user, profile]);
 
   const handleFileSelected = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setPhotoErrorKey('profile.error.photoInvalidType');
-      return;
+    try {
+      addDebugLog(`onChange fired, files=${event.target.files?.length ?? 0}`);
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file) {
+        addDebugLog('no file in event, stopping');
+        return;
+      }
+      addDebugLog(`picked: type="${file.type}" size=${file.size} name="${file.name}"`);
+      if (!file.type.startsWith('image/')) {
+        addDebugLog('rejected: type does not start with image/');
+        setPhotoErrorKey('profile.error.photoInvalidType');
+        return;
+      }
+      setPhotoErrorKey(null);
+      setPendingPhotoFile(file);
+      addDebugLog('setPendingPhotoFile called -- crop modal should open now');
+    } catch (err) {
+      addDebugLog(`EXCEPTION in handleFileSelected: ${err instanceof Error ? err.message : String(err)}`);
     }
-    setPhotoErrorKey(null);
-    setPendingPhotoFile(file);
   };
 
   const handleCropConfirm = async (blob: Blob) => {
+    addDebugLog(`crop confirmed, blob size=${blob.size}`);
     setPendingPhotoFile(null);
     setPhotoBusy(true);
     try {
       await updateAvatarPhoto(blob);
+      addDebugLog('updateAvatarPhoto succeeded');
       // AuthContext only tracks the current user's own profile -- other
       // components (weekly breakdown, task cards, comments) read avatar
       // URLs from FamilyContext's per-member map, which needs its own
       // refresh to pick up the newly uploaded photo.
       await refreshFamily();
+      addDebugLog('refreshFamily succeeded');
     } catch (err) {
+      addDebugLog(`EXCEPTION in handleCropConfirm: ${err instanceof Error ? err.message : String(err)}`);
       setPhotoErrorKey(err instanceof AvatarPhotoError ? err.translationKey : 'profile.error.photoUploadFailed');
     } finally {
       setPhotoBusy(false);
@@ -119,6 +138,12 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               />
             </div>
             {photoErrorKey && <p className="form-error" role="alert">{t(photoErrorKey)}</p>}
+            {debugLog.length > 0 && (
+              <pre className="profile-debug-log">
+                진단 로그 (스크린샷해서 알려주세요):{'\n'}
+                {debugLog.join('\n')}
+              </pre>
+            )}
             <button type="button" className="settings-row-button" onClick={() => setShowEditName(true)}>
               <span>{t('profile.editNameHeading')}</span>
               <span className="settings-row-value">{currentName}</span>
