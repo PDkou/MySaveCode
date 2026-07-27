@@ -53,6 +53,7 @@ export type TaskRow = {
   details: string | null;
   created_by: string;
   status: TaskStatus;
+  starts_at: string | null;
   due_at: string | null;
   completed_at: string | null;
   completed_by: string | null;
@@ -202,6 +203,7 @@ export type Database = {
           p_due_at: string | null;
           p_assignee_ids: string[] | null;
           p_recurrence: TaskRecurrence;
+          p_starts_at: string | null;
         };
         Returns: TaskRow;
       };
@@ -213,6 +215,7 @@ export type Database = {
           p_due_at: string | null;
           p_assignee_ids: string[] | null;
           p_recurrence: TaskRecurrence;
+          p_starts_at: string | null;
         };
         Returns: TaskRow;
       };

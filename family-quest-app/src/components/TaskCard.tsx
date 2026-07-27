@@ -67,6 +67,9 @@ export function TaskCard({
           {t('dashboard.assignedTo', { name: assigneeLabel })}
         </span>
         <span>{t('dashboard.createdBy', { name: creatorName ?? '' })}</span>
+        {task.starts_at && (
+          <span>{t('dashboard.startsAt', { date: formatDateTime(task.starts_at, i18n.language) })}</span>
+        )}
         <span className={isOverdue ? 'overdue-text' : undefined}>
           {task.due_at
             ? t('dashboard.dueAt', { date: formatDateTime(task.due_at, i18n.language) })

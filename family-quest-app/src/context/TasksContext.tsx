@@ -12,6 +12,7 @@ export interface NewTaskInput {
   assigneeIds: string[];
   dueAt: string | null;
   recurrence: TaskRecurrence;
+  startsAt: string | null;
 }
 
 const UNDO_WINDOW_MS = 5000;
@@ -119,6 +120,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       p_due_at: input.dueAt,
       p_assignee_ids: input.assigneeIds,
       p_recurrence: input.recurrence,
+      p_starts_at: input.startsAt,
     });
     if (error) throw error;
 

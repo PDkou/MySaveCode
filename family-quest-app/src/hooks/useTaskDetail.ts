@@ -12,6 +12,7 @@ export interface TaskEditInput {
   dueAt: string | null;
   assigneeIds: string[];
   recurrence: TaskRecurrence;
+  startsAt: string | null;
 }
 
 interface UseTaskDetailResult {
@@ -197,6 +198,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
       p_due_at: input.dueAt,
       p_assignee_ids: input.assigneeIds,
       p_recurrence: input.recurrence,
+      p_starts_at: input.startsAt,
     });
     if (error) throw error;
 

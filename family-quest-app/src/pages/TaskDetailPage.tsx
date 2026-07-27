@@ -46,6 +46,7 @@ export function TaskDetailPage() {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editDetails, setEditDetails] = useState('');
+  const [editStartsAt, setEditStartsAt] = useState('');
   const [editDueAt, setEditDueAt] = useState('');
   const [editAssigneeIds, setEditAssigneeIds] = useState<string[]>([]);
   const [editHighlightedId, setEditHighlightedId] = useState<string | null>(null);
@@ -83,6 +84,7 @@ export function TaskDetailPage() {
     if (!task) return;
     setEditTitle(task.title);
     setEditDetails(task.details ?? '');
+    setEditStartsAt(toDateTimeLocalValue(task.starts_at));
     setEditDueAt(toDateTimeLocalValue(task.due_at));
     setEditAssigneeIds(assigneeIds);
     setEditRecurrence(task.recurrence);
@@ -105,6 +107,7 @@ export function TaskDetailPage() {
         dueAt: editDueAt ? new Date(editDueAt).toISOString() : null,
         assigneeIds: editAssigneeIds,
         recurrence: editRecurrence,
+        startsAt: editStartsAt ? new Date(editStartsAt).toISOString() : null,
       });
       setEditing(false);
     } catch {
@@ -271,6 +274,11 @@ export function TaskDetailPage() {
           </div>
 
           <div className="field">
+            <span>{t('taskForm.startsAt')}</span>
+            <DueDateTimeFields value={editStartsAt} onChange={setEditStartsAt} />
+          </div>
+
+          <div className="field">
             <span>{t('taskForm.dueAt')}</span>
             <DueDateTimeFields value={editDueAt} onChange={setEditDueAt} />
           </div>
@@ -336,6 +344,12 @@ export function TaskDetailPage() {
             {nameFor(task.created_by)}
           </span>
         </div>
+        {task.starts_at && (
+          <div>
+            <span className="label">{t('taskDetail.startsAt')}</span>
+            <span>{formatDateTime(task.starts_at, i18n.language)}</span>
+          </div>
+        )}
         <div>
           <span className="label">{t('taskDetail.dueAt')}</span>
           <span>{task.due_at ? formatDateTime(task.due_at, i18n.language) : t('dashboard.noDueDate')}</span>

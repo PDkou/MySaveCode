@@ -104,6 +104,7 @@ create table if not exists public.tasks (
   details text,
   created_by uuid not null references auth.users(id),
   status text not null default 'open',
+  starts_at timestamptz,
   due_at timestamptz,
   completed_at timestamptz,
   completed_by uuid references auth.users(id),
@@ -119,6 +120,13 @@ create table if not exists public.tasks (
 );
 
 alter table public.tasks add column if not exists completion_photo_path text;
+
+-- Optional "starts on" date, separate from due_at (the deadline). A task
+-- with a future starts_at reads as "예정" (scheduled) on the client
+-- instead of "진행 중" until that day arrives -- see displayStatusForTask
+-- in src/lib/taskStatus.ts. Upgrades an already-deployed database from
+-- before this existed.
+alter table public.tasks add column if not exists starts_at timestamptz;
 
 -- Marks which due_at a push reminder has already been sent for, so the
 -- reminder job (see section 13) doesn't re-notify every run. Left null
@@ -523,11 +531,14 @@ for each row execute function public.log_task_activity();
 -- inserts) rolls back everything instead of leaving a task behind with
 -- no assignees while the client reports the whole thing as failed.
 -- -----------------------------------------------------------------------------
--- Signatures below changed (added p_recurrence) from an earlier version of
--- this file; drop the old ones first so re-running this script doesn't
--- leave a stale overload behind that PostgREST could ambiguously match.
+-- Signatures below changed (added p_recurrence, later p_starts_at) from
+-- earlier versions of this file; drop the old ones first so re-running
+-- this script doesn't leave a stale overload behind that PostgREST could
+-- ambiguously match.
 drop function if exists public.create_task(uuid, text, text, timestamptz, uuid[]);
+drop function if exists public.create_task(uuid, text, text, timestamptz, uuid[], text);
 drop function if exists public.update_task(uuid, text, text, timestamptz, uuid[]);
+drop function if exists public.update_task(uuid, text, text, timestamptz, uuid[], text);
 
 create or replace function public.create_task(
   p_family_id uuid,
@@ -535,7 +546,8 @@ create or replace function public.create_task(
   p_details text,
   p_due_at timestamptz,
   p_assignee_ids uuid[],
-  p_recurrence text default 'none'
+  p_recurrence text default 'none',
+  p_starts_at timestamptz default null
 )
 returns public.tasks
 language plpgsql
@@ -565,8 +577,8 @@ begin
     v_recurrence := 'none';
   end if;
 
-  insert into public.tasks (family_id, title, details, created_by, due_at, recurrence)
-  values (p_family_id, v_title, nullif(trim(coalesce(p_details, '')), ''), v_uid, p_due_at, v_recurrence)
+  insert into public.tasks (family_id, title, details, created_by, due_at, recurrence, starts_at)
+  values (p_family_id, v_title, nullif(trim(coalesce(p_details, '')), ''), v_uid, p_due_at, v_recurrence, p_starts_at)
   returning * into v_task;
 
   if p_assignee_ids is not null then
@@ -587,7 +599,8 @@ create or replace function public.update_task(
   p_details text,
   p_due_at timestamptz,
   p_assignee_ids uuid[],
-  p_recurrence text default 'none'
+  p_recurrence text default 'none',
+  p_starts_at timestamptz default null
 )
 returns public.tasks
 language plpgsql
@@ -627,7 +640,8 @@ begin
   set title = v_title,
       details = nullif(trim(coalesce(p_details, '')), ''),
       due_at = p_due_at,
-      recurrence = v_recurrence
+      recurrence = v_recurrence,
+      starts_at = p_starts_at
   where id = p_task_id
   returning * into v_task;
 
@@ -680,6 +694,7 @@ declare
   v_task public.tasks;
   v_family_id uuid;
   v_next_due timestamptz;
+  v_next_starts timestamptz;
   v_new_task_id uuid;
   v_today date := current_date;
   v_member public.family_members;
@@ -717,8 +732,21 @@ begin
       else null
     end;
 
-    insert into public.tasks (family_id, title, details, created_by, due_at, recurrence)
-    values (v_task.family_id, v_task.title, v_task.details, v_task.created_by, v_next_due, v_task.recurrence)
+    -- Only advance starts_at if this task actually had one -- a recurring
+    -- task with no start date set stays that way each occurrence.
+    if v_task.starts_at is not null then
+      v_next_starts := case v_task.recurrence
+        when 'daily' then v_task.starts_at + interval '1 day'
+        when 'weekly' then v_task.starts_at + interval '7 days'
+        when 'monthly' then v_task.starts_at + interval '1 month'
+        else null
+      end;
+    else
+      v_next_starts := null;
+    end if;
+
+    insert into public.tasks (family_id, title, details, created_by, due_at, recurrence, starts_at)
+    values (v_task.family_id, v_task.title, v_task.details, v_task.created_by, v_next_due, v_task.recurrence, v_next_starts)
     returning id into v_new_task_id;
 
     insert into public.task_assignees (task_id, family_id, user_id)
@@ -1038,15 +1066,15 @@ grant select on public.member_badges to authenticated;
 
 grant execute on function public.create_family_room(text) to authenticated;
 grant execute on function public.join_family_room(text) to authenticated;
-grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text) to authenticated;
-grant execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text) to authenticated;
+grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz) to authenticated;
+grant execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz) to authenticated;
 grant execute on function public.complete_task(uuid, text, text) to authenticated;
 grant execute on function public.reopen_task(uuid) to authenticated;
 
 revoke execute on function public.create_family_room(text) from anon, public;
 revoke execute on function public.join_family_room(text) from anon, public;
-revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text) from anon, public;
-revoke execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text) from anon, public;
+revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz) from anon, public;
+revoke execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz) from anon, public;
 revoke execute on function public.complete_task(uuid, text, text) from anon, public;
 revoke execute on function public.reopen_task(uuid) from anon, public;
 revoke execute on function public.is_family_member(uuid) from anon, public;
