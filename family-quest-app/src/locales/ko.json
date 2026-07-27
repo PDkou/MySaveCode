@@ -300,7 +300,10 @@
   },
   "weeklyBreakdown": {
     "heading": "이번 주 가족별 완료 현황",
-    "empty": "이번 주에 완료한 퀘스트가 아직 없습니다."
+    "empty": "이번 주에 완료한 퀘스트가 아직 없습니다.",
+    "total": "이번 주 가족 전체 완료 {{count}}개",
+    "mvp": "이번 주 MVP",
+    "streak": "{{count}}일 연속 완료 중"
   },
   "stats": {
     "heading": "나의 기록",
