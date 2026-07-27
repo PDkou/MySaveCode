@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { useAuth, AuthActionError } from '../context/AuthContext';
 import { LanguageSwitch } from '../components/LanguageSwitch';
@@ -10,6 +11,7 @@ type Tab = 'login' | 'signup';
 
 export function AuthPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
 
   const [tab, setTab] = useState<Tab>('login');
@@ -70,6 +72,9 @@ export function AuthPage() {
       <div className="auth-topbar">
         <ThemeToggle />
         <LanguageSwitch />
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/help')}>
+          {t('help.openButton')}
+        </button>
       </div>
 
       <div className="auth-card">

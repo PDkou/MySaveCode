@@ -94,20 +94,6 @@ function ProtectedGallery() {
   return <PhotoGalleryPage />;
 }
 
-function ProtectedHelp() {
-  const { session, initializing } = useAuth();
-
-  if (initializing) {
-    return <FullScreenLoading />;
-  }
-  if (!session) {
-    return <Navigate to="/" replace />;
-  }
-  // No family required -- the first section covers creating/joining one,
-  // so this page needs to be reachable from FamilySetupPage too.
-  return <HelpPage />;
-}
-
 function AppRoutes() {
   return (
     <Routes>
@@ -115,7 +101,10 @@ function AppRoutes() {
       <Route path="/task/:taskId" element={<ProtectedTaskDetail />} />
       <Route path="/calendar" element={<ProtectedCalendar />} />
       <Route path="/gallery" element={<ProtectedGallery />} />
-      <Route path="/help" element={<ProtectedHelp />} />
+      {/* No auth/family guard -- it's static instructions, and needs to be
+          reachable from the login screen and family-setup screen too, both
+          of which come before a session/family exist. */}
+      <Route path="/help" element={<HelpPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
