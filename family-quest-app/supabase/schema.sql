@@ -541,6 +541,11 @@ begin
     update public.family_members set role = 'owner' where family_id = p_family_id and user_id = v_next_owner;
   end if;
 
+  -- task_assignees.user_id only cascades on account deletion, not on
+  -- leaving a family room -- without this, tasks stay "assigned" to
+  -- someone no longer in the room, showing a blank name (they've dropped
+  -- out of the members list) with no way to reassign from the UI.
+  delete from public.task_assignees where family_id = p_family_id and user_id = v_uid;
   delete from public.family_members where family_id = p_family_id and user_id = v_uid;
 end;
 $$;
@@ -577,6 +582,9 @@ begin
     raise exception 'member_not_found' using errcode = 'P0002';
   end if;
 
+  -- Same reasoning as leave_family() -- clean up assignments left pointing
+  -- at someone no longer in the room.
+  delete from public.task_assignees where family_id = p_family_id and user_id = p_user_id;
   delete from public.family_members where family_id = p_family_id and user_id = p_user_id;
 end;
 $$;
