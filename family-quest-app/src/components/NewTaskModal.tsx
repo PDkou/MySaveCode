@@ -26,6 +26,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
   const [details, setDetails] = useState('');
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [startsAt, setStartsAt] = useState('');
   const [dueAt, setDueAt] = useState('');
   const [recurrence, setRecurrence] = useState<TaskRecurrence>('none');
   const [submitting, setSubmitting] = useState(false);
@@ -46,6 +47,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
         assigneeIds,
         dueAt: dueAt ? new Date(dueAt).toISOString() : null,
         recurrence,
+        startsAt: startsAt ? new Date(startsAt).toISOString() : null,
       });
       onClose();
     } catch {
@@ -118,6 +120,11 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
               onChange={setAssigneeIds}
               highlightedId={highlightedId}
             />
+          </div>
+
+          <div className="field">
+            <span>{t('taskForm.startsAt')}</span>
+            <DueDateTimeFields value={startsAt} onChange={setStartsAt} />
           </div>
 
           <div className="field">
