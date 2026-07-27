@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -15,6 +16,7 @@ import { HelpPage } from './pages/HelpPage';
 import { Spinner } from './components/Spinner';
 import { UndoSnackbar } from './components/UndoSnackbar';
 import { InstallPromptBanner } from './components/InstallPromptBanner';
+import { getLastPath, saveLastPath } from './lib/lastRoute';
 
 function FullScreenLoading() {
   const { t } = useTranslation();
@@ -96,6 +98,39 @@ function ProtectedGallery() {
   return <PhotoGalleryPage />;
 }
 
+// Android (Samsung Internet in particular) can kill the backgrounded tab
+// while the native photo/file picker Activity is in front, then relaunch
+// the PWA at the manifest's start_url ("/") instead of resuming the page
+// the user was actually on -- landing them back on the dashboard mid-flow
+// with no explanation. Persisting the last route and resuming it on a
+// fresh boot that lands at "/" reproduces a normal "app remembers where
+// you left off" experience regardless of why the OS restarted the page.
+function ResumeLastRoute() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const hasCheckedRef = useRef(false);
+
+  useEffect(() => {
+    if (hasCheckedRef.current) return;
+    hasCheckedRef.current = true;
+    if (location.pathname === '/') {
+      const lastPath = getLastPath();
+      if (lastPath && lastPath !== '/') {
+        navigate(lastPath, { replace: true });
+      }
+    }
+    // Only ever runs once, on the first render after a full page load --
+    // deliberately not re-checking on later in-app navigation back to "/".
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    saveLastPath(location.pathname);
+  }, [location.pathname]);
+
+  return null;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -118,6 +153,7 @@ function AppRoutes() {
 function App() {
   return (
     <BrowserRouter>
+      <ResumeLastRoute />
       <AuthProvider>
         <FamilyProvider>
           <TasksProvider>
