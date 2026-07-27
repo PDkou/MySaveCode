@@ -246,6 +246,9 @@
     "photoHeading": "プロフィール写真",
     "photoChange": "写真を変更",
     "photoUploading": "アップロード中...",
+    "cropHeading": "写真の位置を調整",
+    "cropHint": "指でドラッグして位置を動かし、スライダーで拡大・縮小してください。",
+    "cropZoom": "拡大・縮小",
     "error": {
       "photoTooLarge": "写真の容量は5MB以下にしてください。",
       "photoInvalidType": "画像ファイルのみ添付できます。",
