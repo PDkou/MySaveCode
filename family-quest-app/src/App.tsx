@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { FamilyProvider, useFamily } from './context/FamilyContext';
 import { TasksProvider } from './context/TasksContext';
 import { AuthPage } from './pages/AuthPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { FamilySetupPage } from './pages/FamilySetupPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
@@ -106,6 +107,9 @@ function AppRoutes() {
           reachable from the login screen and family-setup screen too, both
           of which come before a session/family exist. */}
       <Route path="/help" element={<HelpPage />} />
+      {/* No guard here either -- this is reached via the recovery link in
+          the reset email, before any normal session/family exists yet. */}
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

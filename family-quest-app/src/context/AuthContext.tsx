@@ -45,6 +45,8 @@ interface AuthContextValue {
   setLanguage: (language: AppLanguageCode) => Promise<void>;
   updateDisplayName: (name: string) => Promise<void>;
   updateAvatarPhoto: (file: File) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -144,6 +146,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   }, []);
 
+  const sendPasswordReset = useCallback(async (email: string) => {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      throw new AuthActionError('auth.error.emailRequired');
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) {
+      throw new AuthActionError(mapAuthErrorToKey(error.message));
+    }
+  }, []);
+
+  const updatePassword = useCallback(async (newPassword: string) => {
+    if (newPassword.length < 6) {
+      throw new AuthActionError('auth.error.weakPassword');
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      throw new AuthActionError(mapAuthErrorToKey(error.message));
+    }
+  }, []);
+
   const setLanguage = useCallback(async (language: AppLanguageCode) => {
     await i18n.changeLanguage(language);
     try {
@@ -221,10 +246,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLanguage,
     updateDisplayName,
     updateAvatarPhoto,
+    sendPasswordReset,
+    updatePassword,
     refreshProfile,
   }), [
     session, profile, avatarUrl, initializing, profileLoading, signUp, signIn, signOut, setLanguage,
-    updateDisplayName, updateAvatarPhoto, refreshProfile,
+    updateDisplayName, updateAvatarPhoto, sendPasswordReset, updatePassword, refreshProfile,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

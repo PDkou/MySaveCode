@@ -9,7 +9,7 @@ type Tab = 'login' | 'signup';
 
 export function AuthPage() {
   const { t } = useTranslation();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, sendPasswordReset } = useAuth();
   const [showSettings, setShowSettings] = useState(false);
 
   const [tab, setTab] = useState<Tab>('login');
@@ -20,10 +20,37 @@ export function AuthPage() {
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSubmitting, setResetSubmitting] = useState(false);
+  const [resetErrorKey, setResetErrorKey] = useState<string | null>(null);
+  const [resetSent, setResetSent] = useState(false);
+
   const switchTab = (nextTab: Tab) => {
     setTab(nextTab);
     setErrorKey(null);
     setInfoMessage(null);
+  };
+
+  const openForgotPassword = () => {
+    setResetEmail(email);
+    setResetErrorKey(null);
+    setResetSent(false);
+    setShowForgotPassword(true);
+  };
+
+  const handleSendReset = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setResetErrorKey(null);
+    setResetSubmitting(true);
+    try {
+      await sendPasswordReset(resetEmail);
+      setResetSent(true);
+    } catch (err) {
+      setResetErrorKey(err instanceof AuthActionError ? err.translationKey : 'auth.error.unknown');
+    } finally {
+      setResetSubmitting(false);
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -148,6 +175,12 @@ export function AuthPage() {
             />
           </label>
 
+          {tab === 'login' && (
+            <button type="button" className="auth-forgot-password-link" onClick={openForgotPassword}>
+              {t('auth.forgotPasswordLink')}
+            </button>
+          )}
+
           {errorKey && <p className="form-error" role="alert">{t(errorKey)}</p>}
           {infoMessage && <p className="form-info" role="status">{infoMessage}</p>}
 
@@ -164,6 +197,41 @@ export function AuthPage() {
       </div>
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+
+      {showForgotPassword && (
+        <div className="modal-backdrop" onClick={() => setShowForgotPassword(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>{t('auth.forgotPasswordHeading')}</h2>
+            {resetSent ? (
+              <p className="form-info" role="status">{t('auth.forgotPasswordSent')}</p>
+            ) : (
+              <form onSubmit={handleSendReset} className="form">
+                <label className="field">
+                  <span>{t('auth.email')}</span>
+                  <input
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder={t('auth.emailPlaceholder')}
+                    autoComplete="email"
+                    inputMode="email"
+                    autoFocus
+                  />
+                </label>
+                {resetErrorKey && <p className="form-error" role="alert">{t(resetErrorKey)}</p>}
+                <button type="submit" className="btn btn-primary btn-block" disabled={resetSubmitting}>
+                  {resetSubmitting ? t('auth.sendingResetLink') : t('auth.sendResetLink')}
+                </button>
+              </form>
+            )}
+            <div className="modal-actions">
+              <button type="button" className="btn btn-ghost btn-block" onClick={() => setShowForgotPassword(false)}>
+                {t('common.close')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
