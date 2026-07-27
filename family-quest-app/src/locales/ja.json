@@ -198,6 +198,11 @@
   "profile": {
     "editNameHeading": "表示名を変更"
   },
+  "settings": {
+    "heading": "設定",
+    "appearance": "画面",
+    "account": "アカウント"
+  },
   "language": {
     "label": "言語",
     "ko": "한국어",
