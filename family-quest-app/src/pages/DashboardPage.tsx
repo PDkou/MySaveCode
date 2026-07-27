@@ -25,7 +25,7 @@ export function DashboardPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { family, members } = useFamily();
+  const { family, members, avatarUrlByUserId } = useFamily();
   const { tasks, assigneesByTaskId, loading, refresh, requestDelete, completeTasks, togglePin } = useTasks();
 
   const [filter, setFilter] = useState<Filter>('open');
@@ -324,6 +324,11 @@ export function DashboardPage() {
               key={task.id}
               task={task}
               assigneeLabel={assigneeLabel(task.id)}
+              assigneePhotoUrl={
+                (assigneesByTaskId.get(task.id) ?? []).length === 1
+                  ? avatarUrlByUserId.get((assigneesByTaskId.get(task.id) ?? [])[0])
+                  : undefined
+              }
               creatorName={nameByUserId.get(task.created_by) ?? null}
               selectable={selectMode}
               selected={selectedIds.has(task.id)}

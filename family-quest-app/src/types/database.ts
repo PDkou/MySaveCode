@@ -19,6 +19,7 @@ export type ProfileRow = {
   id: string;
   display_name: string;
   preferred_language: AppLanguageCode;
+  avatar_path: string | null;
   created_at: string;
   updated_at: string;
 };

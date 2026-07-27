@@ -12,7 +12,7 @@ interface WeeklyBreakdownModalProps {
 
 export function WeeklyBreakdownModal({ onClose }: WeeklyBreakdownModalProps) {
   const { t } = useTranslation();
-  const { members } = useFamily();
+  const { members, avatarUrlByUserId } = useFamily();
   const { tasks } = useTasks();
 
   const STREAK_HIGHLIGHT_THRESHOLD = 3;
@@ -53,7 +53,7 @@ export function WeeklyBreakdownModal({ onClose }: WeeklyBreakdownModalProps) {
               {rows.map(({ member, count, pct, isMvp }) => (
                 <div key={member.user_id} className="weekly-breakdown-row">
                   <span className="weekly-breakdown-name">
-                    <AvatarChip name={member.display_name} size={18} />
+                    <AvatarChip name={member.display_name} size={18} photoUrl={avatarUrlByUserId.get(member.user_id)} />
                     {member.display_name}
                     {isMvp && <span className="weekly-breakdown-mvp" title={t('weeklyBreakdown.mvp')}>👑</span>}
                     {member.current_streak >= STREAK_HIGHLIGHT_THRESHOLD && (

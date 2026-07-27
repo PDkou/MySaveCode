@@ -347,6 +347,11 @@ a {
   flex-shrink: 0;
 }
 
+.avatar-chip-photo {
+  object-fit: cover;
+  background: var(--bg);
+}
+
 .task-card-assignee {
   display: inline-flex;
   align-items: center;
@@ -2491,4 +2496,38 @@ textarea {
 
 .settings-row-danger {
   color: var(--error);
+}
+
+.settings-photo-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.settings-photo-trigger-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--purple);
+}
+
+.settings-photo-trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

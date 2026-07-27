@@ -9,6 +9,7 @@ import { AvatarChip } from './AvatarChip';
 interface TaskCardProps {
   task: TaskRow;
   assigneeLabel: string;
+  assigneePhotoUrl?: string;
   creatorName: string | null;
   selectable?: boolean;
   selected?: boolean;
@@ -19,6 +20,7 @@ interface TaskCardProps {
 export function TaskCard({
   task,
   assigneeLabel,
+  assigneePhotoUrl,
   creatorName,
   selectable = false,
   selected = false,
@@ -66,7 +68,7 @@ export function TaskCard({
         </div>
         <div className="task-card-meta">
           <span className="task-card-assignee">
-            {showAssigneeAvatar && <AvatarChip name={assigneeLabel} size={18} />}
+            {showAssigneeAvatar && <AvatarChip name={assigneeLabel} size={18} photoUrl={assigneePhotoUrl} />}
             {t('dashboard.assignedTo', { name: assigneeLabel })}
           </span>
           <span>{t('dashboard.createdBy', { name: creatorName ?? '' })}</span>

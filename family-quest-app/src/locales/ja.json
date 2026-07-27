@@ -218,7 +218,15 @@
     }
   },
   "profile": {
-    "editNameHeading": "表示名を変更"
+    "editNameHeading": "表示名を変更",
+    "photoHeading": "プロフィール写真",
+    "photoChange": "写真を変更",
+    "photoUploading": "アップロード中...",
+    "error": {
+      "photoTooLarge": "写真の容量は5MB以下にしてください。",
+      "photoInvalidType": "画像ファイルのみ添付できます。",
+      "photoUploadFailed": "写真のアップロードに失敗しました。"
+    }
   },
   "settings": {
     "heading": "設定",

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
+import { getAvatarPhotoUrls } from '../lib/avatarPhotos';
 import type { FamilyMemberRow, FamilyRow } from '../types/database';
 
 export class FamilyActionError extends Error {
@@ -28,12 +29,14 @@ const activeFamilyStorageKey = (userId: string) => `familyquest.active-family.${
 
 export interface FamilyMember extends FamilyMemberRow {
   display_name: string;
+  avatar_path: string | null;
 }
 
 interface FamilyContextValue {
   family: FamilyRow | null;
   families: FamilyRow[];
   members: FamilyMember[];
+  avatarUrlByUserId: Map<string, string>;
   loading: boolean;
   createFamily: (name: string) => Promise<void>;
   joinFamily: (code: string) => Promise<void>;
@@ -50,6 +53,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   const [family, setFamily] = useState<FamilyRow | null>(null);
   const [families, setFamilies] = useState<FamilyRow[]>([]);
   const [members, setMembers] = useState<FamilyMember[]>([]);
+  const [avatarUrlByUserId, setAvatarUrlByUserId] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
 
   // preferredFamilyId lets createFamily/joinFamily/switchFamily jump
@@ -117,12 +121,13 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
       const memberIds = (memberRows ?? []).map((m) => m.user_id);
       const { data: profileRows, error: profilesErr } = memberIds.length
-        ? await supabase.from('profiles').select('id, display_name').in('id', memberIds)
+        ? await supabase.from('profiles').select('id, display_name, avatar_path').in('id', memberIds)
         : { data: [], error: null };
 
       if (profilesErr) throw profilesErr;
 
       const profileNameById = new Map((profileRows ?? []).map((p) => [p.id, p.display_name]));
+      const avatarPathById = new Map((profileRows ?? []).map((p) => [p.id, p.avatar_path as string | null]));
 
       setMembers(
         (memberRows ?? []).map((m) => ({
@@ -130,8 +135,20 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           // A per-family override (m.display_name) wins when set; otherwise
           // fall back to the account's global profile name.
           display_name: m.display_name?.trim() || profileNameById.get(m.user_id) || '',
+          avatar_path: avatarPathById.get(m.user_id) ?? null,
         })),
       );
+
+      const avatarPaths = Array.from(avatarPathById.values()).filter((p): p is string => !!p);
+      const urlByPath = await getAvatarPhotoUrls(avatarPaths);
+      const urlByUserId = new Map<string, string>();
+      avatarPathById.forEach((path, userId) => {
+        if (path) {
+          const url = urlByPath.get(path);
+          if (url) urlByUserId.set(userId, url);
+        }
+      });
+      setAvatarUrlByUserId(urlByUserId);
     } finally {
       setLoading(false);
     }
@@ -228,6 +245,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     family,
     families,
     members,
+    avatarUrlByUserId,
     loading,
     createFamily,
     joinFamily,
@@ -235,7 +253,10 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     updateMyDisplayName,
     switchFamily,
     refresh,
-  }), [family, families, members, loading, createFamily, joinFamily, renameFamily, updateMyDisplayName, switchFamily, refresh]);
+  }), [
+    family, families, members, avatarUrlByUserId, loading, createFamily, joinFamily, renameFamily,
+    updateMyDisplayName, switchFamily, refresh,
+  ]);
 
   return <FamilyContext.Provider value={value}>{children}</FamilyContext.Provider>;
 }
