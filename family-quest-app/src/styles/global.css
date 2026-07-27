@@ -45,6 +45,63 @@
   --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.4);
 }
 
+/* ---------- Color themes (accent palette, layered on top of light/dark) ----------
+   Only --purple/--purple-dark/--amber/--amber-dark are reskinned per theme --
+   --green/--error stay fixed everywhere since they carry semantic meaning
+   (done/overdue), not brand color. "purple" is the default and needs no
+   override block since :root above already is that palette. */
+:root[data-color-theme='pink'] {
+  --purple: #d1487a;
+  --purple-dark: #b83566;
+  --amber: #e0895f;
+  --amber-dark: #c96f47;
+}
+:root[data-theme='dark'][data-color-theme='pink'] {
+  --purple: #e87ba3;
+  --purple-dark: #f094b6;
+  --amber: #e8a06f;
+  --amber-dark: #edb488;
+}
+
+:root[data-color-theme='blue'] {
+  --purple: #3b7dd8;
+  --purple-dark: #2c66b8;
+  --amber: #35b4c1;
+  --amber-dark: #268f9a;
+}
+:root[data-theme='dark'][data-color-theme='blue'] {
+  --purple: #6ea3ea;
+  --purple-dark: #8ab6f0;
+  --amber: #5cd0dc;
+  --amber-dark: #7adde6;
+}
+
+:root[data-color-theme='green'] {
+  --purple: #6b8e4e;
+  --purple-dark: #56753d;
+  --amber: #c9a227;
+  --amber-dark: #ab8a1f;
+}
+:root[data-theme='dark'][data-color-theme='green'] {
+  --purple: #93b874;
+  --purple-dark: #a8c88d;
+  --amber: #dcbb4a;
+  --amber-dark: #e5c968;
+}
+
+:root[data-color-theme='orange'] {
+  --purple: #d9662f;
+  --purple-dark: #bd5322;
+  --amber: #e0a83a;
+  --amber-dark: #c48f28;
+}
+:root[data-theme='dark'][data-color-theme='orange'] {
+  --purple: #ef8c56;
+  --purple-dark: #f4a476;
+  --amber: #edc169;
+  --amber-dark: #f0cd85;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -2157,4 +2214,43 @@ textarea {
   line-height: 1;
   cursor: pointer;
   padding: 4px;
+}
+
+/* ---------- Color theme picker ---------- */
+
+.color-theme-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+}
+
+.color-theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.color-theme-swatch {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  box-shadow: var(--shadow-sm);
+}
+
+.color-theme-option-active .color-theme-swatch {
+  border-color: var(--navy);
+}
+
+.color-theme-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--navy);
 }

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth, AuthActionError } from '../context/AuthContext';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { ColorThemePicker } from '../components/ColorThemePicker';
 
 type Tab = 'login' | 'signup';
 
@@ -71,6 +72,7 @@ export function AuthPage() {
     <div className="screen auth-screen">
       <div className="auth-topbar">
         <ThemeToggle />
+        <ColorThemePicker />
         <LanguageSwitch />
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/help')}>
           {t('help.openButton')}

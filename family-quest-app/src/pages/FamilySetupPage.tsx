@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { ColorThemePicker } from '../components/ColorThemePicker';
 import { FamilyOnboardingForms } from '../components/FamilyOnboardingForms';
 
 export function FamilySetupPage() {
@@ -17,6 +18,7 @@ export function FamilySetupPage() {
         <h1 className="app-title">{t('app.name')}</h1>
         <div className="topbar-actions">
           <ThemeToggle />
+          <ColorThemePicker />
           <LanguageSwitch />
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/help')}>
             {t('help.openButton')}
