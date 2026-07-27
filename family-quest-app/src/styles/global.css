@@ -298,15 +298,84 @@ a {
 
 .due-datetime-fields {
   display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-.due-datetime-fields input[type='date'] {
-  flex: 1.3;
+/* ---------- Wheel time picker ---------- */
+
+.wheel-time-picker {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 0 8px;
 }
 
-.due-datetime-fields select {
+.wheel-time-picker::before,
+.wheel-time-picker::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 60px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wheel-time-picker::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--card), transparent);
+}
+
+.wheel-time-picker::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--card), transparent);
+}
+
+.wheel-column {
   flex: 1;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.wheel-column::-webkit-scrollbar {
+  display: none;
+}
+
+.wheel-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: center;
+  font-size: 19px;
+  color: var(--muted-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.wheel-item-selected {
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.wheel-selection-band {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 40px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  pointer-events: none;
+  z-index: 2;
 }
 
 .checkbox-group {
