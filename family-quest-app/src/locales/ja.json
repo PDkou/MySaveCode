@@ -207,8 +207,15 @@
     "title": "通知",
     "empty": "新しい通知はありません。",
     "newComment": "{{name}}さんがコメントを残しました。",
-    "pushLabel": "期限リマインダー（端末通知）",
-    "pushDenied": "ブラウザの通知許可がオフになっています"
+    "pushLabel": "端末通知を受け取る",
+    "pushDenied": "ブラウザの通知許可がオフになっています",
+    "eventPrefs": {
+      "due": "期限間近の通知",
+      "created": "新しいクエスト割り当ての通知",
+      "completed": "完了通知",
+      "reopened": "進行中に戻した通知",
+      "comment": "コメント通知"
+    }
   },
   "profile": {
     "editNameHeading": "表示名を変更"

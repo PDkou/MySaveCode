@@ -93,6 +93,17 @@ export type PushSubscriptionRow = {
   created_at: string;
 };
 
+export type NotificationPrefsRow = {
+  user_id: string;
+  family_id: string;
+  notify_due: boolean;
+  notify_created: boolean;
+  notify_completed: boolean;
+  notify_reopened: boolean;
+  notify_comment: boolean;
+  updated_at: string;
+};
+
 export type TaskCommentRow = {
   id: string;
   task_id: string;
@@ -166,6 +177,12 @@ export type Database = {
         Insert: Partial<PushSubscriptionRow> &
           Pick<PushSubscriptionRow, 'user_id' | 'family_id' | 'endpoint' | 'p256dh' | 'auth_key'>;
         Update: Partial<PushSubscriptionRow>;
+        Relationships: [];
+      };
+      notification_prefs: {
+        Row: NotificationPrefsRow;
+        Insert: Partial<NotificationPrefsRow> & Pick<NotificationPrefsRow, 'user_id' | 'family_id'>;
+        Update: Partial<NotificationPrefsRow>;
         Relationships: [];
       };
       task_comments: {

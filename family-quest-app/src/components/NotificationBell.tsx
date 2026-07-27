@@ -6,8 +6,17 @@ import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { useNotifications } from '../hooks/useNotifications';
 import { formatDateTime } from '../lib/formatDate';
-import { getPushState, isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/pushNotifications';
-import type { PushState } from '../lib/pushNotifications';
+import {
+  getNotificationPrefs,
+  getPushState,
+  isPushSupported,
+  setNotificationPref,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from '../lib/pushNotifications';
+import type { NotificationEventType, PushState } from '../lib/pushNotifications';
+
+const EVENT_TYPES: NotificationEventType[] = ['due', 'created', 'completed', 'reopened', 'comment'];
 
 export function NotificationBell() {
   const { t, i18n } = useTranslation();
@@ -20,11 +29,31 @@ export function NotificationBell() {
   const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
   const [pushState, setPushState] = useState<PushState>('unsupported');
   const [pushBusy, setPushBusy] = useState(false);
+  const [eventPrefs, setEventPrefs] = useState<Record<NotificationEventType, boolean> | null>(null);
 
   useEffect(() => {
     if (!isPushSupported()) return;
     void getPushState().then(setPushState);
   }, []);
+
+  useEffect(() => {
+    if (!user || !family || pushState !== 'subscribed') {
+      setEventPrefs(null);
+      return;
+    }
+    void getNotificationPrefs(user.id, family.id).then(setEventPrefs);
+  }, [user, family, pushState]);
+
+  const handleEventPrefToggle = async (eventType: NotificationEventType) => {
+    if (!user || !family || !eventPrefs) return;
+    const next = !eventPrefs[eventType];
+    setEventPrefs({ ...eventPrefs, [eventType]: next });
+    try {
+      await setNotificationPref(user.id, family.id, eventType, next);
+    } catch {
+      setEventPrefs((prev) => (prev ? { ...prev, [eventType]: !next } : prev));
+    }
+  };
 
   const nameByUserId = useMemo(() => {
     const map = new Map<string, string>();
@@ -125,6 +154,25 @@ export function NotificationBell() {
                     <span className="push-switch-knob" />
                   </button>
                 )}
+              </div>
+            )}
+
+            {pushState === 'subscribed' && eventPrefs && (
+              <div className="notification-event-prefs">
+                {EVENT_TYPES.map((eventType) => (
+                  <div key={eventType} className="notification-push-row notification-event-pref-row">
+                    <span>{t(`notifications.eventPrefs.${eventType}`)}</span>
+                    <button
+                      type="button"
+                      className={`push-switch push-switch-small ${eventPrefs[eventType] ? 'push-switch-on' : ''}`}
+                      role="switch"
+                      aria-checked={eventPrefs[eventType]}
+                      onClick={() => void handleEventPrefToggle(eventType)}
+                    >
+                      <span className="push-switch-knob" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 

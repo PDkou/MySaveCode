@@ -993,6 +993,36 @@ textarea {
   transform: translateX(16px);
 }
 
+.notification-event-prefs {
+  padding: 0 6px 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-event-pref-row {
+  padding: 4px 0;
+  margin-bottom: 0;
+  border-bottom: none;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.push-switch-small {
+  width: 30px;
+  height: 18px;
+}
+
+.push-switch-small .push-switch-knob {
+  width: 14px;
+  height: 14px;
+}
+
+.push-switch-small.push-switch-on .push-switch-knob {
+  transform: translateX(12px);
+}
+
 .notification-list {
   list-style: none;
   margin: 0;
