@@ -35,6 +35,18 @@
     "signingUp": "登録中...",
     "signupSuccessConfirmEmail": "登録が完了しました。届いた確認メールのリンクを開いてからログインしてください。",
     "signupSuccessAutoLogin": "登録が完了しました。",
+    "forgotPasswordLink": "パスワードをお忘れですか?",
+    "forgotPasswordHeading": "パスワード再設定",
+    "sendResetLink": "再設定リンクを送信",
+    "sendingResetLink": "送信中...",
+    "forgotPasswordSent": "パスワード再設定リンクをメールで送信しました。受信トレイをご確認ください。",
+    "resetPasswordHeading": "新しいパスワードを設定",
+    "newPassword": "新しいパスワード",
+    "newPasswordPlaceholder": "6文字以上で入力",
+    "resetPasswordButton": "パスワードを変更する",
+    "resettingPassword": "変更中...",
+    "resetPasswordSuccess": "パスワードを変更しました。",
+    "resetPasswordContinue": "続ける",
     "error": {
       "invalidCredentials": "メールアドレスまたはパスワードが正しくありません。",
       "emailInUse": "このメールアドレスは既に使われています。",
@@ -44,6 +56,7 @@
       "emailRequired": "メールアドレスを入力してください。",
       "passwordRequired": "パスワードを入力してください。",
       "emailNotConfirmed": "メールアドレスの確認が必要です。受信トレイをご確認ください。",
+      "invalidResetLink": "リンクが無効か期限切れです。もう一度再設定をリクエストしてください。",
       "unknown": "ログインまたは登録に失敗しました。"
     }
   },
