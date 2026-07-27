@@ -142,6 +142,15 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               </label>
             </div>
             {photoErrorKey && <p className="form-error" role="alert">{t(photoErrorKey)}</p>}
+            {/* Temporary diagnostic only: a completely plain, always-visible
+                native file input (no label-wrap, no overlay, no hiding at
+                all) wired to the same handler, to isolate whether ANY file
+                input works at all on this page in the browser that's
+                failing, or whether the problem is elsewhere entirely. */}
+            <div className="settings-row">
+              <span style={{ fontSize: 12 }}>진단용 기본 버튼:</span>
+              <input type="file" accept="image/*" onChange={handleFileSelected} />
+            </div>
             {debugLog.length > 0 && (
               <pre className="profile-debug-log">
                 진단 로그 (스크린샷해서 알려주세요):{'\n'}
