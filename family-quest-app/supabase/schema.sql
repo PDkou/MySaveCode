@@ -116,6 +116,7 @@ create table if not exists public.tasks (
   -- specific days chosen" -- falls back to the original every-7-days-from
   -- due_at behavior instead of picking specific weekdays.
   recurrence_weekdays smallint[],
+  pinned boolean not null default false,
   due_reminder_sent_for timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -147,6 +148,9 @@ alter table public.tasks add column if not exists recurrence text not null defau
 -- Upgrades an already-deployed database from before weekday-specific
 -- weekly recurrence existed.
 alter table public.tasks add column if not exists recurrence_weekdays smallint[];
+
+-- Upgrades an already-deployed database from before pinning existed.
+alter table public.tasks add column if not exists pinned boolean not null default false;
 
 do $$
 begin

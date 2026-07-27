@@ -26,7 +26,7 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { family, members } = useFamily();
-  const { tasks, assigneesByTaskId, loading, refresh, requestDelete, completeTasks } = useTasks();
+  const { tasks, assigneesByTaskId, loading, refresh, requestDelete, completeTasks, togglePin } = useTasks();
 
   const [filter, setFilter] = useState<Filter>('open');
   const [onlyMine, setOnlyMine] = useState(false);
@@ -74,7 +74,9 @@ export function DashboardPage() {
     if (q) {
       result = result.filter((task) => task.title.toLowerCase().includes(q));
     }
-    return result;
+    // Pinned tasks float to the top -- stable sort keeps everything else in
+    // its existing due-date order within each group.
+    return [...result].sort((a, b) => Number(b.pinned) - Number(a.pinned));
   }, [tasks, filter, onlyMine, user, assigneesByTaskId, searchQuery]);
 
   const handleCopyInviteCode = async () => {
@@ -326,6 +328,7 @@ export function DashboardPage() {
               selectable={selectMode}
               selected={selectedIds.has(task.id)}
               onToggleSelect={toggleSelect}
+              onTogglePin={selectMode ? undefined : togglePin}
             />
           ))
         )}

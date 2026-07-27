@@ -13,6 +13,7 @@ interface TaskCardProps {
   selectable?: boolean;
   selected?: boolean;
   onToggleSelect?: (taskId: string) => void;
+  onTogglePin?: (taskId: string, pinned: boolean) => void;
 }
 
 export function TaskCard({
@@ -22,6 +23,7 @@ export function TaskCard({
   selectable = false,
   selected = false,
   onToggleSelect,
+  onTogglePin,
 }: TaskCardProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -33,49 +35,64 @@ export function TaskCard({
   const showAssigneeAvatar = assigneeLabel && assigneeLabel !== unassignedText && assigneeLabel !== everyoneText;
 
   return (
-    <button
-      type="button"
-      className={`task-card ${task.status === 'done' ? 'task-card-done' : ''} ${selected ? 'task-card-selected' : ''}`}
-      onClick={() => (selectable ? onToggleSelect?.(task.id) : navigate(`/task/${task.id}`))}
-    >
-      <div className="task-card-top">
-        {selectable && (
-          <input
-            type="checkbox"
-            className="task-card-checkbox"
-            checked={selected}
-            onChange={() => onToggleSelect?.(task.id)}
-            onClick={(e) => e.stopPropagation()}
-          />
-        )}
-        <span className={`status-badge status-${displayStatus}`}>
-          {displayStatus === 'done'
-            ? t('taskDetail.statusDone')
-            : displayStatus === 'scheduled'
-              ? t('taskDetail.statusScheduled')
-              : t('taskDetail.statusOpen')}
-        </span>
-        {isOverdue && <span className="status-badge status-overdue">{t('dashboard.overdue')}</span>}
-        {task.recurrence !== 'none' && (
-          <span className="status-badge status-recurring">{t(`taskForm.recurrence.${task.recurrence}`)}</span>
-        )}
-        <h3 className="task-card-title">{task.title}</h3>
-      </div>
-      <div className="task-card-meta">
-        <span className="task-card-assignee">
-          {showAssigneeAvatar && <AvatarChip name={assigneeLabel} size={18} />}
-          {t('dashboard.assignedTo', { name: assigneeLabel })}
-        </span>
-        <span>{t('dashboard.createdBy', { name: creatorName ?? '' })}</span>
-        {task.starts_at && (
-          <span>{t('dashboard.startsAt', { date: formatDateTime(task.starts_at, i18n.language) })}</span>
-        )}
-        <span className={isOverdue ? 'overdue-text' : undefined}>
-          {task.due_at
-            ? t('dashboard.dueAt', { date: formatDateTime(task.due_at, i18n.language) })
-            : t('dashboard.noDueDate')}
-        </span>
-      </div>
-    </button>
+    <div className={`task-card-wrap ${task.pinned ? 'task-card-pinned' : ''}`}>
+      <button
+        type="button"
+        className={`task-card ${task.status === 'done' ? 'task-card-done' : ''} ${selected ? 'task-card-selected' : ''}`}
+        onClick={() => (selectable ? onToggleSelect?.(task.id) : navigate(`/task/${task.id}`))}
+      >
+        <div className="task-card-top">
+          {selectable && (
+            <input
+              type="checkbox"
+              className="task-card-checkbox"
+              checked={selected}
+              onChange={() => onToggleSelect?.(task.id)}
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
+          <span className={`status-badge status-${displayStatus}`}>
+            {displayStatus === 'done'
+              ? t('taskDetail.statusDone')
+              : displayStatus === 'scheduled'
+                ? t('taskDetail.statusScheduled')
+                : t('taskDetail.statusOpen')}
+          </span>
+          {isOverdue && <span className="status-badge status-overdue">{t('dashboard.overdue')}</span>}
+          {task.recurrence !== 'none' && (
+            <span className="status-badge status-recurring">{t(`taskForm.recurrence.${task.recurrence}`)}</span>
+          )}
+          <h3 className="task-card-title">{task.title}</h3>
+        </div>
+        <div className="task-card-meta">
+          <span className="task-card-assignee">
+            {showAssigneeAvatar && <AvatarChip name={assigneeLabel} size={18} />}
+            {t('dashboard.assignedTo', { name: assigneeLabel })}
+          </span>
+          <span>{t('dashboard.createdBy', { name: creatorName ?? '' })}</span>
+          {task.starts_at && (
+            <span>{t('dashboard.startsAt', { date: formatDateTime(task.starts_at, i18n.language) })}</span>
+          )}
+          <span className={isOverdue ? 'overdue-text' : undefined}>
+            {task.due_at
+              ? t('dashboard.dueAt', { date: formatDateTime(task.due_at, i18n.language) })
+              : t('dashboard.noDueDate')}
+          </span>
+        </div>
+      </button>
+      {onTogglePin && (
+        <button
+          type="button"
+          className={`task-card-pin-toggle ${task.pinned ? 'task-card-pin-toggle-active' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onTogglePin(task.id, !task.pinned);
+          }}
+          aria-label={t(task.pinned ? 'dashboard.unpin' : 'dashboard.pin')}
+        >
+          📌
+        </button>
+      )}
+    </div>
   );
 }
