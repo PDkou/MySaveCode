@@ -161,6 +161,18 @@ export function DashboardPage() {
           <button
             type="button"
             className="btn btn-ghost btn-icon btn-sm"
+            onClick={() => navigate('/help')}
+            aria-label={t('help.openButton')}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.5 9a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 1.7-2.4 3.4" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon btn-sm"
             onClick={() => void signOut()}
             aria-label={t('auth.logout')}
           >

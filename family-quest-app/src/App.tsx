@@ -10,6 +10,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { TaskDetailPage } from './pages/TaskDetailPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { PhotoGalleryPage } from './pages/PhotoGalleryPage';
+import { HelpPage } from './pages/HelpPage';
 import { Spinner } from './components/Spinner';
 import { UndoSnackbar } from './components/UndoSnackbar';
 
@@ -93,6 +94,20 @@ function ProtectedGallery() {
   return <PhotoGalleryPage />;
 }
 
+function ProtectedHelp() {
+  const { session, initializing } = useAuth();
+
+  if (initializing) {
+    return <FullScreenLoading />;
+  }
+  if (!session) {
+    return <Navigate to="/" replace />;
+  }
+  // No family required -- the first section covers creating/joining one,
+  // so this page needs to be reachable from FamilySetupPage too.
+  return <HelpPage />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -100,6 +115,7 @@ function AppRoutes() {
       <Route path="/task/:taskId" element={<ProtectedTaskDetail />} />
       <Route path="/calendar" element={<ProtectedCalendar />} />
       <Route path="/gallery" element={<ProtectedGallery />} />
+      <Route path="/help" element={<ProtectedHelp />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -351,6 +351,45 @@ a {
   font-size: 13px;
 }
 
+.template-select {
+  width: 100%;
+}
+
+.template-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.template-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 5px 6px 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--navy);
+}
+
+.template-chip-remove {
+  background: none;
+  border: none;
+  color: var(--muted-light);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+@media (hover: hover) {
+  .template-chip-remove:hover {
+    color: var(--error);
+  }
+}
+
 .only-mine-toggle {
   display: flex;
   align-items: center;
@@ -1041,6 +1080,11 @@ textarea {
 .status-open {
   background: rgba(217, 148, 53, 0.15);
   color: var(--amber);
+}
+
+.status-scheduled {
+  background: rgba(111, 91, 211, 0.08);
+  color: var(--muted);
 }
 
 .status-done {
@@ -1881,4 +1925,54 @@ textarea {
 .gallery-item-meta {
   color: rgba(255, 255, 255, 0.85);
   font-size: 10px;
+}
+
+/* ---------- Help / manual ---------- */
+
+.help-heading {
+  font-size: 16px;
+  color: var(--navy);
+  margin: 0;
+}
+
+.help-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.help-section {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.help-section-title {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 15px;
+  list-style: none;
+}
+
+.help-section-title::-webkit-details-marker {
+  display: none;
+}
+
+.help-section-title::after {
+  content: '▾';
+  float: right;
+  color: var(--muted-light);
+}
+
+.help-section[open] .help-section-title::after {
+  content: '▴';
+}
+
+.help-section-body {
+  margin: 10px 0 0;
+  color: var(--navy);
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
 }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import type { TaskRow } from '../types/database';
 import { formatDateTime } from '../lib/formatDate';
+import { displayStatusForTask } from '../lib/taskStatus';
 import { AvatarChip } from './AvatarChip';
 
 interface TaskCardProps {
@@ -26,6 +27,7 @@ export function TaskCard({
   const navigate = useNavigate();
 
   const isOverdue = task.status === 'open' && !!task.due_at && new Date(task.due_at) < new Date();
+  const displayStatus = displayStatusForTask(task);
   const unassignedText = t('dashboard.unassigned');
   const everyoneText = t('taskForm.everyone');
   const showAssigneeAvatar = assigneeLabel && assigneeLabel !== unassignedText && assigneeLabel !== everyoneText;
@@ -46,8 +48,12 @@ export function TaskCard({
             onClick={(e) => e.stopPropagation()}
           />
         )}
-        <span className={`status-badge ${task.status === 'done' ? 'status-done' : 'status-open'}`}>
-          {task.status === 'done' ? t('taskDetail.statusDone') : t('taskDetail.statusOpen')}
+        <span className={`status-badge status-${displayStatus}`}>
+          {displayStatus === 'done'
+            ? t('taskDetail.statusDone')
+            : displayStatus === 'scheduled'
+              ? t('taskDetail.statusScheduled')
+              : t('taskDetail.statusOpen')}
         </span>
         {isOverdue && <span className="status-badge status-overdue">{t('dashboard.overdue')}</span>}
         {task.recurrence !== 'none' && (

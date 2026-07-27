@@ -107,6 +107,16 @@ export type MemberBadgeRow = {
   earned_at: string;
 };
 
+export type TaskTemplateRow = {
+  id: string;
+  family_id: string;
+  title: string;
+  details: string | null;
+  recurrence: TaskRecurrence;
+  created_by: string;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -164,6 +174,12 @@ export type Database = {
         Row: MemberBadgeRow;
         Insert: Partial<MemberBadgeRow> & Pick<MemberBadgeRow, 'family_id' | 'user_id' | 'badge_key'>;
         Update: Partial<MemberBadgeRow>;
+        Relationships: [];
+      };
+      task_templates: {
+        Row: TaskTemplateRow;
+        Insert: Partial<TaskTemplateRow> & Pick<TaskTemplateRow, 'family_id' | 'title' | 'created_by'>;
+        Update: Partial<TaskTemplateRow>;
         Relationships: [];
       };
     };
