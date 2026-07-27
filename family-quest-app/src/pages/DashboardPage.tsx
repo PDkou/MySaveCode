@@ -12,6 +12,7 @@ import { NewTaskModal } from '../components/NewTaskModal';
 import { EditFamilyNameModal } from '../components/EditFamilyNameModal';
 import { SettingsModal } from '../components/SettingsModal';
 import { InviteQrModal } from '../components/InviteQrModal';
+import { FamilyMembersModal } from '../components/FamilyMembersModal';
 import { MyStatsModal } from '../components/MyStatsModal';
 import { WeeklyBreakdownModal } from '../components/WeeklyBreakdownModal';
 import { Spinner } from '../components/Spinner';
@@ -34,6 +35,7 @@ export function DashboardPage() {
   const [showNewTask, setShowNewTask] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showInviteQr, setShowInviteQr] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
   const [showEditFamilyName, setShowEditFamilyName] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showWeekly, setShowWeekly] = useState(false);
@@ -176,6 +178,19 @@ export function DashboardPage() {
                 </svg>
               </button>
             )}
+            <button
+              type="button"
+              className="invite-qr-trigger"
+              onClick={() => setShowMembers(true)}
+              aria-label={t('family.membersHeading')}
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </button>
           </div>
         </div>
         <div className="topbar-actions">
@@ -349,6 +364,7 @@ export function DashboardPage() {
       {showInviteQr && family && (
         <InviteQrModal inviteCode={family.invite_code} onClose={() => setShowInviteQr(false)} />
       )}
+      {showMembers && <FamilyMembersModal onClose={() => setShowMembers(false)} />}
     </div>
   );
 }

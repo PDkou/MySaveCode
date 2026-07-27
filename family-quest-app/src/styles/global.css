@@ -2520,6 +2520,51 @@ textarea {
   cursor: not-allowed;
 }
 
+.family-member-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.family-member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.family-member-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.family-member-owner-tag {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-light);
+}
+
+.family-member-remove {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--error);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
