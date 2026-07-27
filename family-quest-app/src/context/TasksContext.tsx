@@ -24,6 +24,7 @@ interface TasksContextValue {
   loading: boolean;
   createTask: (input: NewTaskInput) => Promise<void>;
   completeTasks: (taskIds: string[]) => Promise<void>;
+  togglePin: (taskId: string, pinned: boolean) => Promise<void>;
   requestDelete: (taskIds: string[]) => void;
   pendingDeleteCount: number;
   undoPendingDelete: () => void;
@@ -145,6 +146,12 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [family, rawTasks, refresh]);
 
+  const togglePin = useCallback(async (taskId: string, pinned: boolean) => {
+    const { error } = await supabase.from('tasks').update({ pinned }).eq('id', taskId);
+    if (error) throw error;
+    await refresh();
+  }, [refresh]);
+
   const commitPendingDelete = useCallback(async (ids: string[]) => {
     if (pendingTimerRef.current !== null) {
       window.clearTimeout(pendingTimerRef.current);
@@ -226,11 +233,12 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     loading,
     createTask,
     completeTasks,
+    togglePin,
     requestDelete,
     pendingDeleteCount: pendingDeleteIds?.length ?? 0,
     undoPendingDelete,
     refresh,
-  }), [tasks, assigneesByTaskId, loading, createTask, completeTasks, requestDelete, pendingDeleteIds, undoPendingDelete, refresh]);
+  }), [tasks, assigneesByTaskId, loading, createTask, completeTasks, togglePin, requestDelete, pendingDeleteIds, undoPendingDelete, refresh]);
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
 }

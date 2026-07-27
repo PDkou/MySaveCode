@@ -61,6 +61,7 @@ export type TaskRow = {
   completion_photo_path: string | null;
   recurrence: TaskRecurrence;
   recurrence_weekdays: number[] | null;
+  pinned: boolean;
   created_at: string;
   updated_at: string;
 };

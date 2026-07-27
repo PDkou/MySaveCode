@@ -100,6 +100,8 @@
     "selectedCount": "{{count}}件選択中",
     "deleteSelected": "選択項目を削除",
     "completeSelected": "選択項目を完了にする",
+    "pin": "ピン留めする",
+    "unpin": "ピン留めを解除する",
     "searchPlaceholder": "クエストを検索..."
   },
   "taskForm": {

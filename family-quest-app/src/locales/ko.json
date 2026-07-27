@@ -100,6 +100,8 @@
     "selectedCount": "{{count}}개 선택됨",
     "deleteSelected": "선택 삭제",
     "completeSelected": "선택 완료처리",
+    "pin": "고정하기",
+    "unpin": "고정 해제하기",
     "searchPlaceholder": "퀘스트 검색..."
   },
   "taskForm": {
