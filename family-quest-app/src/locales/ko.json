@@ -95,7 +95,9 @@
     "weeklyCompleted": "이번 주 완료 {{count}}개",
     "selectButton": "선택",
     "selectedCount": "{{count}}개 선택됨",
-    "deleteSelected": "선택 삭제"
+    "deleteSelected": "선택 삭제",
+    "completeSelected": "선택 완료처리",
+    "searchPlaceholder": "퀘스트 검색..."
   },
   "taskForm": {
     "heading": "새 퀘스트 전달하기",
@@ -149,6 +151,7 @@
     "completeButton": "완료하기",
     "completing": "처리 중...",
     "reopenButton": "다시 진행하기",
+    "reopenConfirm": "완료를 취소하고 다시 진행 상태로 되돌릴까요?",
     "reopening": "변경 중...",
     "activityLog": "처리 기록",
     "noActivity": "기록이 없습니다.",
@@ -255,6 +258,10 @@
         "body": "우측 상단에서 언어(한국어/日本語), 다크모드, 가족방 이름을 바꿀 수 있어요."
       }
     ]
+  },
+  "install": {
+    "bannerText": "홈 화면에 추가하면 더 빠르게 열 수 있어요",
+    "installButton": "설치"
   },
   "gallery": {
     "openButton": "사진첩",

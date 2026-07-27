@@ -27,10 +27,11 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const { signOut, profile, user } = useAuth();
   const { family, members, updateMyDisplayName } = useFamily();
-  const { tasks, assigneesByTaskId, loading, refresh, requestDelete } = useTasks();
+  const { tasks, assigneesByTaskId, loading, refresh, requestDelete, completeTasks } = useTasks();
 
   const [filter, setFilter] = useState<Filter>('open');
   const [onlyMine, setOnlyMine] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showNewTask, setShowNewTask] = useState(false);
   const [showEditName, setShowEditName] = useState(false);
   const [showEditFamilyName, setShowEditFamilyName] = useState(false);
@@ -40,6 +41,7 @@ export function DashboardPage() {
 
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkCompleting, setBulkCompleting] = useState(false);
 
   const nameByUserId = useMemo(() => {
     const map = new Map<string, string>();
@@ -68,8 +70,12 @@ export function DashboardPage() {
     if (onlyMine && user) {
       result = result.filter((task) => (assigneesByTaskId.get(task.id) ?? []).includes(user.id));
     }
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      result = result.filter((task) => task.title.toLowerCase().includes(q));
+    }
     return result;
-  }, [tasks, filter, onlyMine, user, assigneesByTaskId]);
+  }, [tasks, filter, onlyMine, user, assigneesByTaskId, searchQuery]);
 
   const handleCopyInviteCode = async () => {
     if (!family) return;
@@ -107,6 +113,17 @@ export function DashboardPage() {
     if (selectedIds.size === 0) return;
     requestDelete(Array.from(selectedIds));
     exitSelectMode();
+  };
+
+  const handleBulkComplete = async () => {
+    if (selectedIds.size === 0 || bulkCompleting) return;
+    setBulkCompleting(true);
+    try {
+      await completeTasks(Array.from(selectedIds));
+      exitSelectMode();
+    } finally {
+      setBulkCompleting(false);
+    }
   };
 
   const emptyMessageKey =
@@ -216,6 +233,25 @@ export function DashboardPage() {
         </button>
       </div>
 
+      <div className="search-field">
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t('dashboard.searchPlaceholder')}
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            className="search-clear"
+            onClick={() => setSearchQuery('')}
+            aria-label={t('common.close')}
+          >
+            ×
+          </button>
+        )}
+      </div>
+
       <div className="filter-tabs" role="tablist">
         <button
           type="button"
@@ -261,6 +297,14 @@ export function DashboardPage() {
             />
             <span>{t('dashboard.selectedCount', { count: selectedIds.size })}</span>
           </label>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => void handleBulkComplete()}
+            disabled={selectedIds.size === 0 || bulkCompleting}
+          >
+            {t('dashboard.completeSelected')}
+          </button>
           <button
             type="button"
             className="btn btn-danger"

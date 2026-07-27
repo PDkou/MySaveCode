@@ -21,6 +21,7 @@ interface TasksContextValue {
   assigneesByTaskId: Map<string, string[]>;
   loading: boolean;
   createTask: (input: NewTaskInput) => Promise<void>;
+  completeTasks: (taskIds: string[]) => Promise<void>;
   requestDelete: (taskIds: string[]) => void;
   pendingDeleteCount: number;
   undoPendingDelete: () => void;
@@ -124,6 +125,22 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [family, user, refresh]);
 
+  // Bulk "mark as done" from the dashboard's select mode -- a faster,
+  // note-free counterpart to the single-task completion flow (which
+  // requires a completion note/photo). Only ever called on tasks that are
+  // still 'open': complete_task doesn't check that itself, and calling it
+  // again on an already-done task would re-award points/streak for it.
+  const completeTasks = useCallback(async (taskIds: string[]) => {
+    if (!family || taskIds.length === 0) return;
+    const openIds = rawTasks.filter((task) => taskIds.includes(task.id) && task.status === 'open').map((task) => task.id);
+    await Promise.all(
+      openIds.map((id) =>
+        supabase.rpc('complete_task', { p_task_id: id, p_completion_note: '', p_completion_photo_path: null }),
+      ),
+    );
+    await refresh();
+  }, [family, rawTasks, refresh]);
+
   const commitPendingDelete = useCallback(async (ids: string[]) => {
     if (pendingTimerRef.current !== null) {
       window.clearTimeout(pendingTimerRef.current);
@@ -204,11 +221,12 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     assigneesByTaskId,
     loading,
     createTask,
+    completeTasks,
     requestDelete,
     pendingDeleteCount: pendingDeleteIds?.length ?? 0,
     undoPendingDelete,
     refresh,
-  }), [tasks, assigneesByTaskId, loading, createTask, requestDelete, pendingDeleteIds, undoPendingDelete, refresh]);
+  }), [tasks, assigneesByTaskId, loading, createTask, completeTasks, requestDelete, pendingDeleteIds, undoPendingDelete, refresh]);
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
 }

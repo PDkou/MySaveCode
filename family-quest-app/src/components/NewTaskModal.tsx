@@ -59,6 +59,9 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
     setTitle(template.title);
     setDetails(template.details ?? '');
     setRecurrence(template.recurrence);
+    // A saved default, not a locked-in choice -- still just checkboxes the
+    // user can freely change afterward if this time's assignee differs.
+    setAssigneeIds(template.assignee_ids.filter((id) => members.some((m) => m.user_id === id)));
   };
 
   return (
@@ -72,6 +75,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
               currentTitle={title}
               currentDetails={details}
               currentRecurrence={recurrence}
+              currentAssigneeIds={assigneeIds}
               onApply={handleApplyTemplate}
             />
           )}

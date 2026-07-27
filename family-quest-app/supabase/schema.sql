@@ -1335,9 +1335,11 @@ for each row execute function public.notify_task_comment_event();
 --
 -- Lets a family save a frequently-repeated request ("분리수거 버리기", every
 -- week) once and pick it from a dropdown next time instead of retyping the
--- title/details/recurrence. Family-shared (any member can save or delete
--- one), plain table + RLS -- no RPC needed since there's no multi-step
--- write to keep atomic here.
+-- title/details/recurrence/assignees. Family-shared (any member can save or
+-- delete one), plain table + RLS -- no RPC needed since there's no
+-- multi-step write to keep atomic here. assignee_ids is just a default the
+-- client pre-fills the assignee checkboxes with; nothing here enforces it,
+-- so it's freely overridden per use.
 -- -----------------------------------------------------------------------------
 create table if not exists public.task_templates (
   id uuid primary key default gen_random_uuid(),
@@ -1345,11 +1347,16 @@ create table if not exists public.task_templates (
   title text not null,
   details text,
   recurrence text not null default 'none',
+  assignee_ids uuid[] not null default '{}',
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now(),
   constraint task_templates_title_not_blank check (length(trim(title)) > 0),
   constraint task_templates_recurrence_check check (recurrence in ('none', 'daily', 'weekly', 'monthly'))
 );
+
+-- Upgrades an already-deployed database from before templates remembered
+-- assignees.
+alter table public.task_templates add column if not exists assignee_ids uuid[] not null default '{}';
 
 create index if not exists task_templates_family_id_idx on public.task_templates (family_id);
 
