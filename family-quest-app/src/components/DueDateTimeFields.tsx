@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { WheelTimePicker } from './WheelTimePicker';
+import { TimePickerField } from './TimePickerField';
 
 interface DueDateTimeFieldsProps {
   value: string; // '' or 'yyyy-MM-ddTHH:mm' (same shape toDateTimeLocalValue produces)
@@ -37,7 +37,7 @@ export function DueDateTimeFields({ value, onChange }: DueDateTimeFieldsProps) {
   return (
     <div className="due-datetime-fields">
       <input type="date" lang={lang} value={datePart} onChange={(e) => handleDateChange(e.target.value)} />
-      <WheelTimePicker value={timePart || '09:00'} onChange={handleTimeChange} />
+      <TimePickerField value={timePart || '09:00'} onChange={handleTimeChange} />
     </div>
   );
 }
