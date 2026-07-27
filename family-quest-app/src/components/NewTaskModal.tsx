@@ -3,12 +3,14 @@ import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useTasks } from '../context/TasksContext';
+import { useFamily } from '../context/FamilyContext';
 import type { FamilyMember } from '../context/FamilyContext';
-import type { TaskRecurrence } from '../types/database';
+import type { TaskRecurrence, TaskTemplateRow } from '../types/database';
 import { AssigneeCheckboxes } from './AssigneeCheckboxes';
 import { AssigneeLotteryButton } from './AssigneeLotteryButton';
 import { RecurrenceSelect } from './RecurrenceSelect';
 import { DueDateTimeFields } from './DueDateTimeFields';
+import { TaskTemplatePicker } from './TaskTemplatePicker';
 
 interface NewTaskModalProps {
   members: FamilyMember[];
@@ -18,6 +20,7 @@ interface NewTaskModalProps {
 export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
   const { t } = useTranslation();
   const { createTask } = useTasks();
+  const { family } = useFamily();
 
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
@@ -52,11 +55,27 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
     }
   };
 
+  const handleApplyTemplate = (template: TaskTemplateRow) => {
+    setTitle(template.title);
+    setDetails(template.details ?? '');
+    setRecurrence(template.recurrence);
+  };
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2>{t('taskForm.heading')}</h2>
         <form onSubmit={handleSubmit} className="form">
+          {family && (
+            <TaskTemplatePicker
+              familyId={family.id}
+              currentTitle={title}
+              currentDetails={details}
+              currentRecurrence={recurrence}
+              onApply={handleApplyTemplate}
+            />
+          )}
+
           <label className="field">
             <span>{t('taskForm.title')}</span>
             <input

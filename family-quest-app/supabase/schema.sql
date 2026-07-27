@@ -22,6 +22,7 @@
 --  13. Push notifications (subscriptions table + due-reminder scheduling)
 --  14. Task comments (progress notes / replies / reactions)
 --  15. Event-driven push notifications (created/completed/reopened/comment)
+--  16. Task templates (quick-select saved request content)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -1328,6 +1329,58 @@ drop trigger if exists trg_notify_task_comment on public.task_comments;
 create trigger trg_notify_task_comment
 after insert on public.task_comments
 for each row execute function public.notify_task_comment_event();
+
+-- -----------------------------------------------------------------------------
+-- 16. Task templates (quick-select saved request content)
+--
+-- Lets a family save a frequently-repeated request ("분리수거 버리기", every
+-- week) once and pick it from a dropdown next time instead of retyping the
+-- title/details/recurrence. Family-shared (any member can save or delete
+-- one), plain table + RLS -- no RPC needed since there's no multi-step
+-- write to keep atomic here.
+-- -----------------------------------------------------------------------------
+create table if not exists public.task_templates (
+  id uuid primary key default gen_random_uuid(),
+  family_id uuid not null references public.families(id) on delete cascade,
+  title text not null,
+  details text,
+  recurrence text not null default 'none',
+  created_by uuid not null references auth.users(id),
+  created_at timestamptz not null default now(),
+  constraint task_templates_title_not_blank check (length(trim(title)) > 0),
+  constraint task_templates_recurrence_check check (recurrence in ('none', 'daily', 'weekly', 'monthly'))
+);
+
+create index if not exists task_templates_family_id_idx on public.task_templates (family_id);
+
+alter table public.task_templates enable row level security;
+
+drop policy if exists task_templates_select on public.task_templates;
+create policy task_templates_select on public.task_templates
+for select
+using (public.is_family_member(family_id));
+
+drop policy if exists task_templates_insert on public.task_templates;
+create policy task_templates_insert on public.task_templates
+for insert
+with check (
+  public.is_family_member(family_id)
+  and created_by = auth.uid()
+);
+
+drop policy if exists task_templates_delete on public.task_templates;
+create policy task_templates_delete on public.task_templates
+for delete
+using (public.is_family_member(family_id));
+
+grant select, insert, delete on public.task_templates to authenticated;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.task_templates;
+exception
+  when duplicate_object then null;
+end $$;
 
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification

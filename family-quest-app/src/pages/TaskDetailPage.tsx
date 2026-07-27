@@ -16,6 +16,7 @@ import { AvatarChip } from '../components/AvatarChip';
 import { Spinner } from '../components/Spinner';
 import { CelebrationOverlay } from '../components/CelebrationOverlay';
 import { getTaskPhotoUrl, TaskPhotoError, uploadTaskPhoto } from '../lib/taskPhotos';
+import { displayStatusForTask } from '../lib/taskStatus';
 import type { CompletionResult } from '../lib/gamification';
 import type { TaskRecurrence } from '../types/database';
 
@@ -286,6 +287,8 @@ export function TaskDetailPage() {
     );
   }
 
+  const displayStatus = displayStatusForTask(task);
+
   return (
     <div className="screen task-detail-screen">
       <div className="topbar">
@@ -293,8 +296,12 @@ export function TaskDetailPage() {
           {t('common.back')}
         </button>
         <div className="topbar-actions">
-          <span className={`status-badge ${task.status === 'done' ? 'status-done' : 'status-open'}`}>
-            {task.status === 'done' ? t('taskDetail.statusDone') : t('taskDetail.statusOpen')}
+          <span className={`status-badge status-${displayStatus}`}>
+            {displayStatus === 'done'
+              ? t('taskDetail.statusDone')
+              : displayStatus === 'scheduled'
+                ? t('taskDetail.statusScheduled')
+                : t('taskDetail.statusOpen')}
           </span>
           <button type="button" className="btn btn-ghost" onClick={startEditing}>
             {t('taskDetail.editButton')}
