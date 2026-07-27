@@ -7,6 +7,7 @@ import { useFamily } from '../context/FamilyContext';
 import { useTasks } from '../context/TasksContext';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { ColorThemePicker } from '../components/ColorThemePicker';
 import { NotificationBell } from '../components/NotificationBell';
 import { FamilySwitcher } from '../components/FamilySwitcher';
 import { TaskCard } from '../components/TaskCard';
@@ -174,6 +175,7 @@ export function DashboardPage() {
             </button>
           )}
           <ThemeToggle />
+          <ColorThemePicker />
           <LanguageSwitch />
           <button
             type="button"
