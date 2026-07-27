@@ -64,6 +64,8 @@
     "inviteCodeLabel": "초대 코드",
     "memberCount": "{{count}}명 참여 중",
     "shareHint": "이 코드를 가족에게 공유해서 함께 참여하세요.",
+    "qrHeading": "초대 QR코드",
+    "qrHint": "가족에게 이 QR코드를 스캔하게 하면 초대 코드가 자동으로 입력돼요.",
     "switcherTitle": "가족방 전환",
     "addAnother": "새 가족방 추가하기",
     "addAnotherHeading": "새 가족방 추가",
@@ -123,7 +125,18 @@
       "none": "반복 안 함",
       "daily": "매일",
       "weekly": "매주",
-      "monthly": "매달"
+      "monthly": "매달",
+      "weekdaysLabel": "반복 요일",
+      "weekdaysHint": "선택하지 않으면 매주 같은 요일에 반복돼요.",
+      "weekdayShort": {
+        "0": "일",
+        "1": "월",
+        "2": "화",
+        "3": "수",
+        "4": "목",
+        "5": "금",
+        "6": "토"
+      }
     },
     "submit": "전달하기",
     "submitting": "전달하는 중...",

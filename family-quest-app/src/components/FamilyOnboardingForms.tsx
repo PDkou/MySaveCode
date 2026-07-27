@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -19,6 +19,20 @@ export function FamilyOnboardingForms({ onSuccess }: FamilyOnboardingFormsProps)
   const [inviteCode, setInviteCode] = useState('');
   const [joining, setJoining] = useState(false);
   const [joinErrorKey, setJoinErrorKey] = useState<string | null>(null);
+
+  // Pre-fills the join code when this screen was reached by scanning an
+  // invite QR (see InviteQrModal) -- never auto-submits, the user still
+  // taps "참여하기" to confirm.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const scannedCode = params.get('joinCode');
+    if (scannedCode) {
+      setInviteCode(scannedCode.toUpperCase());
+      params.delete('joinCode');
+      const newSearch = params.toString();
+      window.history.replaceState(null, '', window.location.pathname + (newSearch ? `?${newSearch}` : ''));
+    }
+  }, []);
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

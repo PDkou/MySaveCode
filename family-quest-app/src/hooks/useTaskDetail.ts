@@ -13,6 +13,7 @@ export interface TaskEditInput {
   assigneeIds: string[];
   recurrence: TaskRecurrence;
   startsAt: string | null;
+  recurrenceWeekdays: number[] | null;
 }
 
 interface UseTaskDetailResult {
@@ -199,6 +200,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
       p_assignee_ids: input.assigneeIds,
       p_recurrence: input.recurrence,
       p_starts_at: input.startsAt,
+      p_recurrence_weekdays: input.recurrence === 'weekly' ? input.recurrenceWeekdays : null,
     });
     if (error) throw error;
 

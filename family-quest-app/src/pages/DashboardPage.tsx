@@ -11,6 +11,7 @@ import { TaskCard } from '../components/TaskCard';
 import { NewTaskModal } from '../components/NewTaskModal';
 import { EditFamilyNameModal } from '../components/EditFamilyNameModal';
 import { SettingsModal } from '../components/SettingsModal';
+import { InviteQrModal } from '../components/InviteQrModal';
 import { MyStatsModal } from '../components/MyStatsModal';
 import { WeeklyBreakdownModal } from '../components/WeeklyBreakdownModal';
 import { Spinner } from '../components/Spinner';
@@ -32,6 +33,7 @@ export function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewTask, setShowNewTask] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showInviteQr, setShowInviteQr] = useState(false);
   const [showEditFamilyName, setShowEditFamilyName] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showWeekly, setShowWeekly] = useState(false);
@@ -155,6 +157,21 @@ export function DashboardPage() {
             {family && (
               <button type="button" className="invite-code-chip" onClick={() => void handleCopyInviteCode()}>
                 {family.invite_code} {copied ? `(${t('common.copied')})` : ''}
+              </button>
+            )}
+            {family && (
+              <button
+                type="button"
+                className="invite-qr-trigger"
+                onClick={() => setShowInviteQr(true)}
+                aria-label={t('family.qrHeading')}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                  <path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z" />
+                </svg>
               </button>
             )}
           </div>
@@ -321,6 +338,9 @@ export function DashboardPage() {
       {showStats && <MyStatsModal onClose={() => setShowStats(false)} />}
       {showWeekly && <WeeklyBreakdownModal onClose={() => setShowWeekly(false)} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showInviteQr && family && (
+        <InviteQrModal inviteCode={family.invite_code} onClose={() => setShowInviteQr(false)} />
+      )}
     </div>
   );
 }

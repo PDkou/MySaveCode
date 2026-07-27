@@ -539,6 +539,37 @@ a {
   }
 }
 
+.weekday-checkboxes {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.weekday-chip {
+  flex: 1;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted-light);
+  cursor: pointer;
+}
+
+.weekday-chip-selected {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+
+.field-hint {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-light);
+  margin: 2px 0 0;
+}
+
 .only-mine-toggle {
   display: flex;
   align-items: center;
@@ -1030,6 +1061,56 @@ textarea {
   .invite-code-chip:hover {
     background: var(--ink-soft);
   }
+}
+
+.invite-qr-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .invite-qr-trigger:hover {
+    background: var(--ink-soft);
+  }
+}
+
+.invite-qr-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.invite-qr-image {
+  width: 200px;
+  height: 200px;
+  border-radius: 14px;
+  background: #fff;
+  padding: 8px;
+}
+
+.invite-qr-code {
+  margin: 0;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--navy);
+}
+
+.invite-qr-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
 }
 
 .dashboard-toolbar {

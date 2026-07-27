@@ -111,6 +111,11 @@ create table if not exists public.tasks (
   completion_note text,
   completion_photo_path text,
   recurrence text not null default 'none',
+  -- Only meaningful when recurrence = 'weekly'. 0=Sunday..6=Saturday
+  -- (matching Postgres's extract(dow from ...)). Null/empty means "no
+  -- specific days chosen" -- falls back to the original every-7-days-from
+  -- due_at behavior instead of picking specific weekdays.
+  recurrence_weekdays smallint[],
   due_reminder_sent_for timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -138,6 +143,10 @@ alter table public.tasks add column if not exists due_reminder_sent_for timestam
 -- No-op on a fresh install (the create table above already has the
 -- column/constraint) and no-op again once already applied.
 alter table public.tasks add column if not exists recurrence text not null default 'none';
+
+-- Upgrades an already-deployed database from before weekday-specific
+-- weekly recurrence existed.
+alter table public.tasks add column if not exists recurrence_weekdays smallint[];
 
 do $$
 begin
@@ -531,14 +540,16 @@ for each row execute function public.log_task_activity();
 -- inserts) rolls back everything instead of leaving a task behind with
 -- no assignees while the client reports the whole thing as failed.
 -- -----------------------------------------------------------------------------
--- Signatures below changed (added p_recurrence, later p_starts_at) from
--- earlier versions of this file; drop the old ones first so re-running
--- this script doesn't leave a stale overload behind that PostgREST could
--- ambiguously match.
+-- Signatures below changed (added p_recurrence, later p_starts_at,
+-- p_recurrence_weekdays) from earlier versions of this file; drop the old
+-- ones first so re-running this script doesn't leave a stale overload
+-- behind that PostgREST could ambiguously match.
 drop function if exists public.create_task(uuid, text, text, timestamptz, uuid[]);
 drop function if exists public.create_task(uuid, text, text, timestamptz, uuid[], text);
+drop function if exists public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz);
 drop function if exists public.update_task(uuid, text, text, timestamptz, uuid[]);
 drop function if exists public.update_task(uuid, text, text, timestamptz, uuid[], text);
+drop function if exists public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz);
 
 create or replace function public.create_task(
   p_family_id uuid,
@@ -547,7 +558,8 @@ create or replace function public.create_task(
   p_due_at timestamptz,
   p_assignee_ids uuid[],
   p_recurrence text default 'none',
-  p_starts_at timestamptz default null
+  p_starts_at timestamptz default null,
+  p_recurrence_weekdays smallint[] default null
 )
 returns public.tasks
 language plpgsql
@@ -577,8 +589,11 @@ begin
     v_recurrence := 'none';
   end if;
 
-  insert into public.tasks (family_id, title, details, created_by, due_at, recurrence, starts_at)
-  values (p_family_id, v_title, nullif(trim(coalesce(p_details, '')), ''), v_uid, p_due_at, v_recurrence, p_starts_at)
+  insert into public.tasks (family_id, title, details, created_by, due_at, recurrence, starts_at, recurrence_weekdays)
+  values (
+    p_family_id, v_title, nullif(trim(coalesce(p_details, '')), ''), v_uid, p_due_at, v_recurrence, p_starts_at,
+    case when v_recurrence = 'weekly' then p_recurrence_weekdays else null end
+  )
   returning * into v_task;
 
   if p_assignee_ids is not null then
@@ -600,7 +615,8 @@ create or replace function public.update_task(
   p_due_at timestamptz,
   p_assignee_ids uuid[],
   p_recurrence text default 'none',
-  p_starts_at timestamptz default null
+  p_starts_at timestamptz default null,
+  p_recurrence_weekdays smallint[] default null
 )
 returns public.tasks
 language plpgsql
@@ -641,7 +657,8 @@ begin
       details = nullif(trim(coalesce(p_details, '')), ''),
       due_at = p_due_at,
       recurrence = v_recurrence,
-      starts_at = p_starts_at
+      starts_at = p_starts_at,
+      recurrence_weekdays = case when v_recurrence = 'weekly' then p_recurrence_weekdays else null end
   where id = p_task_id
   returning * into v_task;
 
@@ -701,6 +718,7 @@ declare
   v_new_streak integer;
   v_new_completed_count integer;
   v_completed_hour integer;
+  v_weekday_offset integer;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -725,28 +743,45 @@ begin
   returning * into v_task;
 
   if v_task.recurrence <> 'none' then
-    v_next_due := case v_task.recurrence
-      when 'daily' then coalesce(v_task.due_at, now()) + interval '1 day'
-      when 'weekly' then coalesce(v_task.due_at, now()) + interval '7 days'
-      when 'monthly' then coalesce(v_task.due_at, now()) + interval '1 month'
-      else null
-    end;
+    if v_task.recurrence = 'weekly' and v_task.recurrence_weekdays is not null
+       and array_length(v_task.recurrence_weekdays, 1) > 0 then
+      -- Weekly-on-specific-weekdays: find the smallest number of days forward
+      -- (1-7) that lands on one of the chosen weekdays (0=Sun..6=Sat).
+      select min(offset_days) into v_weekday_offset
+      from generate_series(1, 7) as offset_days
+      where (extract(dow from coalesce(v_task.due_at, now()))::int + offset_days) % 7 = any(v_task.recurrence_weekdays);
 
-    -- Only advance starts_at if this task actually had one -- a recurring
-    -- task with no start date set stays that way each occurrence.
-    if v_task.starts_at is not null then
-      v_next_starts := case v_task.recurrence
-        when 'daily' then v_task.starts_at + interval '1 day'
-        when 'weekly' then v_task.starts_at + interval '7 days'
-        when 'monthly' then v_task.starts_at + interval '1 month'
+      v_next_due := coalesce(v_task.due_at, now()) + (coalesce(v_weekday_offset, 7) || ' days')::interval;
+
+      if v_task.starts_at is not null then
+        v_next_starts := v_task.starts_at + (coalesce(v_weekday_offset, 7) || ' days')::interval;
+      else
+        v_next_starts := null;
+      end if;
+    else
+      v_next_due := case v_task.recurrence
+        when 'daily' then coalesce(v_task.due_at, now()) + interval '1 day'
+        when 'weekly' then coalesce(v_task.due_at, now()) + interval '7 days'
+        when 'monthly' then coalesce(v_task.due_at, now()) + interval '1 month'
         else null
       end;
-    else
-      v_next_starts := null;
+
+      -- Only advance starts_at if this task actually had one -- a recurring
+      -- task with no start date set stays that way each occurrence.
+      if v_task.starts_at is not null then
+        v_next_starts := case v_task.recurrence
+          when 'daily' then v_task.starts_at + interval '1 day'
+          when 'weekly' then v_task.starts_at + interval '7 days'
+          when 'monthly' then v_task.starts_at + interval '1 month'
+          else null
+        end;
+      else
+        v_next_starts := null;
+      end if;
     end if;
 
-    insert into public.tasks (family_id, title, details, created_by, due_at, recurrence, starts_at)
-    values (v_task.family_id, v_task.title, v_task.details, v_task.created_by, v_next_due, v_task.recurrence, v_next_starts)
+    insert into public.tasks (family_id, title, details, created_by, due_at, recurrence, starts_at, recurrence_weekdays)
+    values (v_task.family_id, v_task.title, v_task.details, v_task.created_by, v_next_due, v_task.recurrence, v_next_starts, v_task.recurrence_weekdays)
     returning id into v_new_task_id;
 
     insert into public.task_assignees (task_id, family_id, user_id)
@@ -1066,15 +1101,15 @@ grant select on public.member_badges to authenticated;
 
 grant execute on function public.create_family_room(text) to authenticated;
 grant execute on function public.join_family_room(text) to authenticated;
-grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz) to authenticated;
-grant execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz) to authenticated;
+grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) to authenticated;
+grant execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) to authenticated;
 grant execute on function public.complete_task(uuid, text, text) to authenticated;
 grant execute on function public.reopen_task(uuid) to authenticated;
 
 revoke execute on function public.create_family_room(text) from anon, public;
 revoke execute on function public.join_family_room(text) from anon, public;
-revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz) from anon, public;
-revoke execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz) from anon, public;
+revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) from anon, public;
+revoke execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) from anon, public;
 revoke execute on function public.complete_task(uuid, text, text) from anon, public;
 revoke execute on function public.reopen_task(uuid) from anon, public;
 revoke execute on function public.is_family_member(uuid) from anon, public;

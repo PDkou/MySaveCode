@@ -60,6 +60,7 @@ export type TaskRow = {
   completion_note: string | null;
   completion_photo_path: string | null;
   recurrence: TaskRecurrence;
+  recurrence_weekdays: number[] | null;
   created_at: string;
   updated_at: string;
 };
@@ -204,6 +205,7 @@ export type Database = {
           p_assignee_ids: string[] | null;
           p_recurrence: TaskRecurrence;
           p_starts_at: string | null;
+          p_recurrence_weekdays: number[] | null;
         };
         Returns: TaskRow;
       };
@@ -216,6 +218,7 @@ export type Database = {
           p_assignee_ids: string[] | null;
           p_recurrence: TaskRecurrence;
           p_starts_at: string | null;
+          p_recurrence_weekdays: number[] | null;
         };
         Returns: TaskRow;
       };

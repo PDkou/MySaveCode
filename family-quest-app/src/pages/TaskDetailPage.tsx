@@ -11,6 +11,7 @@ import { formatDateTime, toDateTimeLocalValue } from '../lib/formatDate';
 import { AssigneeCheckboxes } from '../components/AssigneeCheckboxes';
 import { AssigneeLotteryButton } from '../components/AssigneeLotteryButton';
 import { RecurrenceSelect } from '../components/RecurrenceSelect';
+import { WeekdayCheckboxes } from '../components/WeekdayCheckboxes';
 import { DueDateTimeFields } from '../components/DueDateTimeFields';
 import { AvatarChip } from '../components/AvatarChip';
 import { Spinner } from '../components/Spinner';
@@ -51,6 +52,7 @@ export function TaskDetailPage() {
   const [editAssigneeIds, setEditAssigneeIds] = useState<string[]>([]);
   const [editHighlightedId, setEditHighlightedId] = useState<string | null>(null);
   const [editRecurrence, setEditRecurrence] = useState<TaskRecurrence>('none');
+  const [editRecurrenceWeekdays, setEditRecurrenceWeekdays] = useState<number[]>([]);
 
   const nameByUserId = useMemo(() => {
     const map = new Map<string, string>();
@@ -88,6 +90,7 @@ export function TaskDetailPage() {
     setEditDueAt(toDateTimeLocalValue(task.due_at));
     setEditAssigneeIds(assigneeIds);
     setEditRecurrence(task.recurrence);
+    setEditRecurrenceWeekdays(task.recurrence_weekdays ?? []);
     setErrorKey(null);
     setEditing(true);
   };
@@ -108,6 +111,7 @@ export function TaskDetailPage() {
         assigneeIds: editAssigneeIds,
         recurrence: editRecurrence,
         startsAt: editStartsAt ? new Date(editStartsAt).toISOString() : null,
+        recurrenceWeekdays: editRecurrence === 'weekly' && editRecurrenceWeekdays.length > 0 ? editRecurrenceWeekdays : null,
       });
       setEditing(false);
     } catch {
@@ -288,6 +292,14 @@ export function TaskDetailPage() {
             <RecurrenceSelect value={editRecurrence} onChange={setEditRecurrence} />
           </label>
 
+          {editRecurrence === 'weekly' && (
+            <div className="field">
+              <span>{t('taskForm.recurrence.weekdaysLabel')}</span>
+              <WeekdayCheckboxes selected={editRecurrenceWeekdays} onChange={setEditRecurrenceWeekdays} />
+              <p className="field-hint">{t('taskForm.recurrence.weekdaysHint')}</p>
+            </div>
+          )}
+
           {errorKey && <p className="form-error" role="alert">{t(errorKey)}</p>}
 
           <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
@@ -357,7 +369,19 @@ export function TaskDetailPage() {
         {task.recurrence !== 'none' && (
           <div>
             <span className="label">{t('taskForm.recurrence.label')}</span>
-            <span>{t(`taskForm.recurrence.${task.recurrence}`)}</span>
+            <span>
+              {t(`taskForm.recurrence.${task.recurrence}`)}
+              {task.recurrence === 'weekly' && task.recurrence_weekdays && task.recurrence_weekdays.length > 0 && (
+                <>
+                  {' '}
+                  ({task.recurrence_weekdays
+                    .slice()
+                    .sort()
+                    .map((day) => t(`taskForm.recurrence.weekdayShort.${day}`))
+                    .join(', ')})
+                </>
+              )}
+            </span>
           </div>
         )}
         <div>

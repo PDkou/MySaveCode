@@ -11,6 +11,7 @@ import { AssigneeLotteryButton } from './AssigneeLotteryButton';
 import { RecurrenceSelect } from './RecurrenceSelect';
 import { DueDateTimeFields } from './DueDateTimeFields';
 import { TaskTemplatePicker } from './TaskTemplatePicker';
+import { WeekdayCheckboxes } from './WeekdayCheckboxes';
 
 interface NewTaskModalProps {
   members: FamilyMember[];
@@ -29,6 +30,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
   const [startsAt, setStartsAt] = useState('');
   const [dueAt, setDueAt] = useState('');
   const [recurrence, setRecurrence] = useState<TaskRecurrence>('none');
+  const [recurrenceWeekdays, setRecurrenceWeekdays] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
 
@@ -48,6 +50,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
         dueAt: dueAt ? new Date(dueAt).toISOString() : null,
         recurrence,
         startsAt: startsAt ? new Date(startsAt).toISOString() : null,
+        recurrenceWeekdays: recurrence === 'weekly' && recurrenceWeekdays.length > 0 ? recurrenceWeekdays : null,
       });
       onClose();
     } catch {
@@ -136,6 +139,14 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
             <span>{t('taskForm.recurrence.label')}</span>
             <RecurrenceSelect value={recurrence} onChange={setRecurrence} />
           </label>
+
+          {recurrence === 'weekly' && (
+            <div className="field">
+              <span>{t('taskForm.recurrence.weekdaysLabel')}</span>
+              <WeekdayCheckboxes selected={recurrenceWeekdays} onChange={setRecurrenceWeekdays} />
+              <p className="field-hint">{t('taskForm.recurrence.weekdaysHint')}</p>
+            </div>
+          )}
 
           {errorKey && <p className="form-error" role="alert">{t(errorKey)}</p>}
 
