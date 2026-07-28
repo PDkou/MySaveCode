@@ -890,6 +890,9 @@ declare
   v_new_streak integer;
   v_new_completed_count integer;
   v_completed_hour integer;
+  v_member_count integer;
+  v_assignee_count integer;
+  v_award_points boolean;
   v_weekday_offset integer;
 begin
   if v_uid is null then
@@ -962,51 +965,69 @@ begin
     where ta.task_id = p_task_id;
   end if;
 
-  -- Gamification: points/streak/badges for whoever completed it.
+  -- Gamification: points/streak/badges for whoever completed it -- but
+  -- only when it was actually a "quest" (someone else asked). Self-created
+  -- and self-assigned-only tasks in a shared room would otherwise let
+  -- anyone farm unlimited points by repeatedly requesting-and-fulfilling
+  -- their own tasks, since no one else can dispute a request only they
+  -- ever saw. Two exceptions keep this from breaking legitimate cases: a
+  -- personal (1-member) room has no one else who could ever ask, and a
+  -- task assigned to everyone (or left unassigned -- "whoever gets to it")
+  -- is shared responsibility regardless of who created or finished it.
   select * into v_member from public.family_members where family_id = v_family_id and user_id = v_uid;
 
   if found then
-    v_new_streak := case
-      when v_member.last_completed_date = v_today then v_member.current_streak
-      when v_member.last_completed_date = v_today - 1 then v_member.current_streak + 1
-      else 1
-    end;
-    v_new_completed_count := v_member.completed_count + 1;
+    select count(*) into v_member_count from public.family_members where family_id = v_family_id;
+    select count(*) into v_assignee_count from public.task_assignees where task_id = p_task_id;
 
-    update public.family_members
-    set points = points + 10,
-        completed_count = v_new_completed_count,
-        current_streak = v_new_streak,
-        longest_streak = greatest(longest_streak, v_new_streak),
-        last_completed_date = v_today
-    where family_id = v_family_id and user_id = v_uid;
+    v_award_points := v_member_count <= 1
+      or v_assignee_count = 0
+      or v_assignee_count = v_member_count
+      or v_task.created_by <> v_uid;
 
-    if v_new_completed_count = 1 then
-      insert into public.member_badges (family_id, user_id, badge_key)
-      values (v_family_id, v_uid, 'first_quest') on conflict do nothing;
-    elsif v_new_completed_count = 10 then
-      insert into public.member_badges (family_id, user_id, badge_key)
-      values (v_family_id, v_uid, 'ten_quests') on conflict do nothing;
-    elsif v_new_completed_count = 50 then
-      insert into public.member_badges (family_id, user_id, badge_key)
-      values (v_family_id, v_uid, 'fifty_quests') on conflict do nothing;
-    end if;
+    if v_award_points then
+      v_new_streak := case
+        when v_member.last_completed_date = v_today then v_member.current_streak
+        when v_member.last_completed_date = v_today - 1 then v_member.current_streak + 1
+        else 1
+      end;
+      v_new_completed_count := v_member.completed_count + 1;
 
-    if v_new_streak = 3 then
-      insert into public.member_badges (family_id, user_id, badge_key)
-      values (v_family_id, v_uid, 'streak_3') on conflict do nothing;
-    elsif v_new_streak = 7 then
-      insert into public.member_badges (family_id, user_id, badge_key)
-      values (v_family_id, v_uid, 'streak_7') on conflict do nothing;
-    end if;
+      update public.family_members
+      set points = points + 10,
+          completed_count = v_new_completed_count,
+          current_streak = v_new_streak,
+          longest_streak = greatest(longest_streak, v_new_streak),
+          last_completed_date = v_today
+      where family_id = v_family_id and user_id = v_uid;
 
-    v_completed_hour := extract(hour from now());
-    if v_completed_hour < 7 then
-      insert into public.member_badges (family_id, user_id, badge_key)
-      values (v_family_id, v_uid, 'early_bird') on conflict do nothing;
-    elsif v_completed_hour >= 23 then
-      insert into public.member_badges (family_id, user_id, badge_key)
-      values (v_family_id, v_uid, 'night_owl') on conflict do nothing;
+      if v_new_completed_count = 1 then
+        insert into public.member_badges (family_id, user_id, badge_key)
+        values (v_family_id, v_uid, 'first_quest') on conflict do nothing;
+      elsif v_new_completed_count = 10 then
+        insert into public.member_badges (family_id, user_id, badge_key)
+        values (v_family_id, v_uid, 'ten_quests') on conflict do nothing;
+      elsif v_new_completed_count = 50 then
+        insert into public.member_badges (family_id, user_id, badge_key)
+        values (v_family_id, v_uid, 'fifty_quests') on conflict do nothing;
+      end if;
+
+      if v_new_streak = 3 then
+        insert into public.member_badges (family_id, user_id, badge_key)
+        values (v_family_id, v_uid, 'streak_3') on conflict do nothing;
+      elsif v_new_streak = 7 then
+        insert into public.member_badges (family_id, user_id, badge_key)
+        values (v_family_id, v_uid, 'streak_7') on conflict do nothing;
+      end if;
+
+      v_completed_hour := extract(hour from now());
+      if v_completed_hour < 7 then
+        insert into public.member_badges (family_id, user_id, badge_key)
+        values (v_family_id, v_uid, 'early_bird') on conflict do nothing;
+      elsif v_completed_hour >= 23 then
+        insert into public.member_badges (family_id, user_id, badge_key)
+        values (v_family_id, v_uid, 'night_owl') on conflict do nothing;
+      end if;
     end if;
   end if;
 
@@ -1037,6 +1058,7 @@ declare
   v_new_completed_count integer;
   v_streak_len integer;
   v_last_date date;
+  v_member_count integer;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -1061,17 +1083,37 @@ begin
   returning * into v_task;
 
   if v_completer_id is not null then
+    select count(*) into v_member_count from public.family_members where family_id = v_family_id;
+
+    -- Recompute from scratch, but only over tasks that would actually have
+    -- earned points under complete_task's rule above -- otherwise reopening
+    -- *any* task in the family would resurrect credit for self-created,
+    -- self-assigned-only tasks that were correctly denied it the first time.
     select count(*) into v_new_completed_count
-    from public.tasks
-    where family_id = v_family_id and completed_by = v_completer_id and status = 'done';
+    from public.tasks t
+    where t.family_id = v_family_id
+      and t.completed_by = v_completer_id
+      and t.status = 'done'
+      and (
+        v_member_count <= 1
+        or (select count(*) from public.task_assignees ta where ta.task_id = t.id) in (0, v_member_count)
+        or t.created_by <> t.completed_by
+      );
 
     -- Classic gaps-and-islands grouping: dates that are consecutive share
     -- the same (date - row_number) value, so the group containing the most
     -- recent date is exactly the current streak.
     with dates as (
-      select distinct completed_at::date as d
-      from public.tasks
-      where family_id = v_family_id and completed_by = v_completer_id and status = 'done'
+      select distinct t.completed_at::date as d
+      from public.tasks t
+      where t.family_id = v_family_id
+        and t.completed_by = v_completer_id
+        and t.status = 'done'
+        and (
+          v_member_count <= 1
+          or (select count(*) from public.task_assignees ta where ta.task_id = t.id) in (0, v_member_count)
+          or t.created_by <> t.completed_by
+        )
     ),
     grouped as (
       select d, d - (row_number() over (order by d))::int as grp

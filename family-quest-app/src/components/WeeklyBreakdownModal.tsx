@@ -5,6 +5,7 @@ import { useFamily } from '../context/FamilyContext';
 import { useTasks } from '../context/TasksContext';
 import { AvatarChip } from './AvatarChip';
 import { startOfThisWeek } from '../lib/formatDate';
+import { questCountsTowardRanking } from '../lib/questRules';
 
 interface WeeklyBreakdownModalProps {
   onClose: () => void;
@@ -22,7 +23,7 @@ function csvField(value: string): string {
 export function WeeklyBreakdownModal({ onClose }: WeeklyBreakdownModalProps) {
   const { t, i18n } = useTranslation();
   const { family, members, avatarUrlByUserId } = useFamily();
-  const { tasks } = useTasks();
+  const { tasks, assigneesByTaskId } = useTasks();
 
   const STREAK_HIGHLIGHT_THRESHOLD = 3;
 
@@ -31,9 +32,14 @@ export function WeeklyBreakdownModal({ onClose }: WeeklyBreakdownModalProps) {
   const completedThisWeek = useMemo(
     () =>
       tasks.filter(
-        (task) => task.status === 'done' && task.completed_at && task.completed_by && new Date(task.completed_at) >= weekStart,
+        (task) =>
+          task.status === 'done' &&
+          task.completed_at &&
+          task.completed_by &&
+          new Date(task.completed_at) >= weekStart &&
+          questCountsTowardRanking(task.created_by, task.completed_by, assigneesByTaskId.get(task.id)?.length ?? 0, members.length),
       ),
-    [tasks, weekStart],
+    [tasks, weekStart, assigneesByTaskId, members.length],
   );
 
   const rows = useMemo(() => {
