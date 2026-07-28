@@ -27,6 +27,7 @@
 --  18. Shop / character (points-shop items, purchase + equip)
 --  19. Titles (condition-based unlocks, equippable via the title slot)
 --  20. Idle tycoon (passive currency, upgrades, point exchange)
+--  21. Title symbol art (art pack v4)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -2684,6 +2685,37 @@ where not exists (
   select 1 from public.shop_items existing
   where existing.slot = seed.slot and existing.name = seed.name
 );
+
+-- -----------------------------------------------------------------------------
+-- 21. Title symbol art (art pack v4)
+--
+-- Assigns sprite_key to the 13 titles actually shipped so far (12 from
+-- section 19 + tycoon_maxed from section 20). Assets live in
+-- public/art/title_symbols/ (ART_HANDOFF.md's CLAUDE_HANDOFF_UI_TITLE_TYCOON
+-- companion pack). The pack's own title_manifest_76.json cyclically reuses
+-- 36 symbols across the full 76-title design, but hand-verified against the
+-- actual images: its reuse cycle for the "그외" tab is shifted one slot for
+-- these exact three keys -- point_rich.png (a winged coin) and
+-- shop_regular.png (a storefront) sat correctly-named but unused on two
+-- different, still-unshipped titles instead of the ones whose names
+-- literally match them. Assigned by hand below instead of following the
+-- manifest literally. The other 63 titles in the full design (12번 목록)
+-- remain backlog (GAMIFICATION_DESIGN.md 15) and aren't wired to art yet.
+-- -----------------------------------------------------------------------------
+
+update public.shop_items set sprite_key = '/art/title_symbols/first_request.png' where key = 'specific_first';
+update public.shop_items set sprite_key = '/art/title_symbols/dependable_worker.png' where key = 'specific_ten';
+update public.shop_items set sprite_key = '/art/title_symbols/trust.png' where key = 'specific_fifty';
+update public.shop_items set sprite_key = '/art/title_symbols/first_teamwork.png' where key = 'everyone_first';
+update public.shop_items set sprite_key = '/art/title_symbols/united_heart.png' where key = 'everyone_ten';
+update public.shop_items set sprite_key = '/art/title_symbols/team_flag.png' where key = 'everyone_fifty';
+update public.shop_items set sprite_key = '/art/title_symbols/first_victory.png' where key = 'first_come_first';
+update public.shop_items set sprite_key = '/art/title_symbols/speed_boot.png' where key = 'first_come_ten';
+update public.shop_items set sprite_key = '/art/title_symbols/quick_foot.png' where key = 'first_come_fifty';
+update public.shop_items set sprite_key = '/art/title_symbols/newcomer.png' where key = 'newcomer';
+update public.shop_items set sprite_key = '/art/title_symbols/point_rich.png' where key = 'xp_1000';
+update public.shop_items set sprite_key = '/art/title_symbols/shop_regular.png' where key = 'shop_regular';
+update public.shop_items set sprite_key = '/art/title_symbols/tycoon_master.png' where key = 'tycoon_maxed';
 
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import type { TaskRow } from '../types/database';
 import { formatDateTime } from '../lib/formatDate';
 import { displayStatusForTask } from '../lib/taskStatus';
+import { ArtIcon } from './ArtIcon';
 import { AvatarChip } from './AvatarChip';
 
 interface TaskCardProps {
@@ -92,7 +93,7 @@ export function TaskCard({
           }}
           aria-label={t(task.pinned ? 'dashboard.unpin' : 'dashboard.pin')}
         >
-          📌
+          <ArtIcon src="/art/ui/pin.png" size={16} />
         </button>
       )}
     </div>

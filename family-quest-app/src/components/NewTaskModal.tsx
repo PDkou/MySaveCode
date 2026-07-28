@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import type { FamilyMember } from '../context/FamilyContext';
 import type { TaskRecurrence, TaskTemplateRow } from '../types/database';
+import { ArtIcon } from './ArtIcon';
 import { AssigneeCheckboxes } from './AssigneeCheckboxes';
 import { AssigneeLotteryButton } from './AssigneeLotteryButton';
 import { RecurrenceSelect } from './RecurrenceSelect';
@@ -133,12 +134,23 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
               onChange={setAssigneeIds}
               highlightedId={highlightedId}
             />
-            <p className="field-hint">
-              {assigneeIds.length === 0
-                ? t('taskForm.assigneeHintFirstCome')
-                : assigneeIds.length === members.length
-                  ? t('taskForm.assigneeHintEveryone')
-                  : t('taskForm.assigneeHintSpecific')}
+            <p className="field-hint icon-text-row">
+              {assigneeIds.length === 0 ? (
+                <>
+                  <ArtIcon src="/art/ui/assignment_first.png" size={18} />
+                  {t('taskForm.assigneeHintFirstCome')}
+                </>
+              ) : assigneeIds.length === members.length ? (
+                <>
+                  <ArtIcon src="/art/ui/assignment_everyone.png" size={18} />
+                  {t('taskForm.assigneeHintEveryone')}
+                </>
+              ) : (
+                <>
+                  <ArtIcon src="/art/ui/assignment_specific.png" size={18} />
+                  {t('taskForm.assigneeHintSpecific')}
+                </>
+              )}
             </p>
           </div>
 
