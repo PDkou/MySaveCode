@@ -15,6 +15,63 @@ export type BadgeKey =
   | 'early_bird'
   | 'night_owl';
 
+export type CharacterSlot =
+  | 'body'
+  | 'head'
+  | 'background'
+  | 'title'
+  | 'weapon'
+  | 'shield'
+  | 'accessory1'
+  | 'accessory2'
+  | 'shoes'
+  | 'top'
+  | 'pants';
+
+export type ShopItemAcquisitionType = 'purchase' | 'title_condition';
+export type ShopItemCurrency = 'points' | 'tycoon';
+
+export type ShopItemRow = {
+  id: string;
+  slot: CharacterSlot;
+  name: string;
+  sprite_key: string;
+  acquisition_type: ShopItemAcquisitionType;
+  currency: ShopItemCurrency | null;
+  price: number | null;
+  sort_order: number;
+  created_at: string;
+};
+
+export type MemberOwnedItemRow = {
+  user_id: string;
+  family_id: string;
+  item_id: string;
+  acquired_at: string;
+};
+
+export type MemberEquippedItemRow = {
+  user_id: string;
+  family_id: string;
+  slot: CharacterSlot;
+  item_id: string;
+  equipped_at: string;
+};
+
+export type QuestPayoutKind = 'completion' | 'requester_bonus';
+
+export type QuestPayoutRow = {
+  id: string;
+  task_id: string;
+  family_id: string;
+  user_id: string;
+  points_delta: number;
+  xp_delta: number;
+  reputation_awarded: boolean;
+  kind: QuestPayoutKind;
+  created_at: string;
+};
+
 export type ProfileRow = {
   id: string;
   display_name: string;
@@ -211,6 +268,30 @@ export type Database = {
         Update: Partial<TaskTemplateRow>;
         Relationships: [];
       };
+      quest_payouts: {
+        Row: QuestPayoutRow;
+        Insert: Partial<QuestPayoutRow> & Pick<QuestPayoutRow, 'task_id' | 'family_id' | 'user_id' | 'points_delta' | 'kind'>;
+        Update: Partial<QuestPayoutRow>;
+        Relationships: [];
+      };
+      shop_items: {
+        Row: ShopItemRow;
+        Insert: Partial<ShopItemRow> & Pick<ShopItemRow, 'slot' | 'name' | 'sprite_key'>;
+        Update: Partial<ShopItemRow>;
+        Relationships: [];
+      };
+      member_owned_items: {
+        Row: MemberOwnedItemRow;
+        Insert: Partial<MemberOwnedItemRow> & Pick<MemberOwnedItemRow, 'user_id' | 'family_id' | 'item_id'>;
+        Update: Partial<MemberOwnedItemRow>;
+        Relationships: [];
+      };
+      member_equipped_items: {
+        Row: MemberEquippedItemRow;
+        Insert: Partial<MemberEquippedItemRow> & Pick<MemberEquippedItemRow, 'user_id' | 'family_id' | 'slot' | 'item_id'>;
+        Update: Partial<MemberEquippedItemRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -272,6 +353,18 @@ export type Database = {
       reopen_task: {
         Args: { p_task_id: string };
         Returns: TaskRow;
+      };
+      purchase_item: {
+        Args: { p_family_id: string; p_item_id: string };
+        Returns: void;
+      };
+      equip_item: {
+        Args: { p_family_id: string; p_item_id: string };
+        Returns: void;
+      };
+      unequip_item: {
+        Args: { p_family_id: string; p_slot: CharacterSlot };
+        Returns: void;
       };
     };
     Enums: Record<string, never>;

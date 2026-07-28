@@ -312,6 +312,35 @@
     "streak": "{{count}}日連続達成中! 🔥",
     "newBadgeHeading": "新しいバッジ獲得!"
   },
+  "shop": {
+    "openButton": "キャラクター / ショップ",
+    "heading": "キャラクターを着せ替える",
+    "balance": "保有ポイント {{balance}}",
+    "purchase": "{{price}}Pで購入",
+    "equip": "装着する",
+    "unequip": "装着解除",
+    "emptySlot": "まだ用意されたアイテムがありません。",
+    "slot": {
+      "body": "肌",
+      "head": "頭",
+      "background": "背景",
+      "title": "称号",
+      "weapon": "武器",
+      "shield": "盾",
+      "accessory1": "アクセサリー1",
+      "accessory2": "アクセサリー2",
+      "shoes": "靴",
+      "top": "上着",
+      "pants": "ボトムス"
+    },
+    "error": {
+      "alreadyOwned": "すでに持っているアイテムです。",
+      "insufficientPoints": "保有ポイントが足りません。",
+      "currencyNotAvailable": "まだ購入できないアイテムです。",
+      "itemNotOwned": "先に購入してから装着できます。",
+      "unknown": "リクエストを処理できませんでした。"
+    }
+  },
   "help": {
     "openButton": "ヘルプ",
     "heading": "ヘルプ",

@@ -13,6 +13,7 @@ import { FamilyMembersModal } from './FamilyMembersModal';
 import { PhotoCropModal } from './PhotoCropModal';
 import { AvatarChip } from './AvatarChip';
 import { AvatarPhotoError } from '../lib/avatarPhotos';
+import { CharacterShopModal } from './CharacterShopModal';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -29,6 +30,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const { family, members, updateMyDisplayName, refresh: refreshFamily } = useFamily();
   const [showEditName, setShowEditName] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [showShop, setShowShop] = useState(false);
   const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoErrorKey, setPhotoErrorKey] = useState<string | null>(null);
@@ -132,6 +134,11 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                 {t('family.membersHeading')}
               </button>
             )}
+            {family && (
+              <button type="button" className="settings-row-button" onClick={() => setShowShop(true)}>
+                {t('shop.openButton')}
+              </button>
+            )}
             <button
               type="button"
               className="settings-row-button settings-row-danger"
@@ -164,6 +171,8 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
       )}
 
       {showMembers && <FamilyMembersModal onClose={() => setShowMembers(false)} />}
+
+      {showShop && <CharacterShopModal onClose={() => setShowShop(false)} />}
 
       {pendingPhotoFile && (
         <PhotoCropModal
