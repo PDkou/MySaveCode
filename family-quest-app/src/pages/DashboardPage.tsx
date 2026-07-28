@@ -15,6 +15,7 @@ import { InviteQrModal } from '../components/InviteQrModal';
 import { MyStatsModal } from '../components/MyStatsModal';
 import { WeeklyBreakdownModal } from '../components/WeeklyBreakdownModal';
 import { TycoonModal } from '../components/TycoonModal';
+import { CharacterShopModal } from '../components/CharacterShopModal';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
 import { startOfThisWeek } from '../lib/formatDate';
@@ -39,6 +40,7 @@ export function DashboardPage() {
   const [showStats, setShowStats] = useState(false);
   const [showWeekly, setShowWeekly] = useState(false);
   const [showTycoon, setShowTycoon] = useState(false);
+  const [showShop, setShowShop] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const [selectMode, setSelectMode] = useState(false);
@@ -195,6 +197,16 @@ export function DashboardPage() {
               aria-label={t('tycoon.heading')}
             >
               <span aria-hidden="true">💰</span>
+            </button>
+          )}
+          {family && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-icon btn-sm"
+              onClick={() => setShowShop(true)}
+              aria-label={t('shop.openButton')}
+            >
+              <span aria-hidden="true">🛍️</span>
             </button>
           )}
           <NotificationBell />
@@ -358,6 +370,7 @@ export function DashboardPage() {
       {showStats && <MyStatsModal onClose={() => setShowStats(false)} />}
       {showWeekly && <WeeklyBreakdownModal onClose={() => setShowWeekly(false)} />}
       {showTycoon && <TycoonModal onClose={() => setShowTycoon(false)} />}
+      {showShop && <CharacterShopModal onClose={() => setShowShop(false)} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {showInviteQr && family && (
         <InviteQrModal inviteCode={family.invite_code} onClose={() => setShowInviteQr(false)} />
