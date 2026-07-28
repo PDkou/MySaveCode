@@ -20,6 +20,9 @@ export function FamilyOnboardingForms({ onSuccess }: FamilyOnboardingFormsProps)
   const [joining, setJoining] = useState(false);
   const [joinErrorKey, setJoinErrorKey] = useState<string | null>(null);
 
+  const [startingPersonal, setStartingPersonal] = useState(false);
+  const [personalErrorKey, setPersonalErrorKey] = useState<string | null>(null);
+
   // Pre-fills the join code when this screen was reached by scanning an
   // invite QR (see InviteQrModal) -- never auto-submits, the user still
   // taps "참여하기" to confirm.
@@ -53,6 +56,24 @@ export function FamilyOnboardingForms({ onSuccess }: FamilyOnboardingFormsProps)
     }
   };
 
+  // Every "family" is really just a shared task room -- nothing about the
+  // schema forces a second member. This skips the naming step entirely so
+  // someone who just wants their own private list isn't stuck filling out
+  // a "family name" field to get one (name can still be edited later from
+  // settings, same as any family room).
+  const handleStartPersonal = async () => {
+    setPersonalErrorKey(null);
+    setStartingPersonal(true);
+    try {
+      await createFamily(t('family.personalDefaultName'));
+      onSuccess?.();
+    } catch (err) {
+      setPersonalErrorKey(err instanceof FamilyActionError ? err.translationKey : 'family.error.unknown');
+    } finally {
+      setStartingPersonal(false);
+    }
+  };
+
   const handleJoin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setJoinErrorKey(null);
@@ -74,6 +95,24 @@ export function FamilyOnboardingForms({ onSuccess }: FamilyOnboardingFormsProps)
 
   return (
     <div className="family-setup-grid">
+      <div className="card family-personal-card">
+        <h3>{t('family.personalHeading')}</h3>
+        <p className="family-personal-desc">{t('family.personalDescription')}</p>
+        {personalErrorKey && <p className="form-error" role="alert">{t(personalErrorKey)}</p>}
+        <button
+          type="button"
+          className="btn btn-secondary btn-block"
+          onClick={() => void handleStartPersonal()}
+          disabled={startingPersonal}
+        >
+          {startingPersonal ? t('family.personalStarting') : t('family.personalButton')}
+        </button>
+      </div>
+
+      <div className="family-setup-divider">
+        <span>{t('family.orDivider')}</span>
+      </div>
+
       <form className="card" onSubmit={handleCreate}>
         <h3>{t('family.createHeading')}</h3>
         <label className="field">

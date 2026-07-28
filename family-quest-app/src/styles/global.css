@@ -831,6 +831,28 @@ textarea {
   font-size: 17px;
 }
 
+.family-personal-desc {
+  margin: -8px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.family-setup-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.family-setup-divider::before,
+.family-setup-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 /* ---------- Dashboard ---------- */
 
 .family-info {
