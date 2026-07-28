@@ -321,6 +321,8 @@
     "unequip": "装着解除",
     "emptySlot": "まだ用意されたアイテムがありません。",
     "locked": "🔒 未解放",
+    "owned": "所有中",
+    "buyInTycoonShop": "タイクーンショップで購入",
     "slot": {
       "body": "肌",
       "head": "頭",
@@ -339,6 +341,29 @@
       "insufficientPoints": "保有ポイントが足りません。",
       "currencyNotAvailable": "まだ購入できないアイテムです。",
       "itemNotOwned": "先に購入してから装着できます。",
+      "unknown": "リクエストを処理できませんでした。"
+    }
+  },
+  "tycoon": {
+    "heading": "放置タイクーン",
+    "ratePerMin": "毎分 {{rate}} 獲得",
+    "tapButton": "タップして+{{gain}}獲得",
+    "upgradeHeading": "生産アップグレード",
+    "level": "レベル {{level}} / {{max}}",
+    "upgradeButton": "{{cost}} でアップグレード",
+    "maxLevel": "最高レベル達成!",
+    "exchangeHeading": "ポイントに交換",
+    "exchangeRateHint": "{{rate}} ごとに1ポイントに交換されます。",
+    "exchangeRemaining": "本日の残り交換枠: {{count}}ポイント",
+    "exchangeButton": "{{points}}Pに交換",
+    "shopHeading": "タイクーンショップ",
+    "error": {
+      "tapTooFast": "早すぎます、少し待ってからもう一度押してください。",
+      "maxLevel": "すでに最高レベルです。",
+      "insufficientCurrency": "タイクーン通貨が足りません。",
+      "dailyCapReached": "本日の交換上限を超えました。",
+      "amountTooSmall": "交換するには少なすぎる量です。",
+      "invalidAmount": "正しい数量を入力してください。",
       "unknown": "リクエストを処理できませんでした。"
     }
   },

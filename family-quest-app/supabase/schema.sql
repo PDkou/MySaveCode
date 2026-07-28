@@ -26,6 +26,7 @@
 --  17. Overdue escalation + weekly summary push notifications
 --  18. Shop / character (points-shop items, purchase + equip)
 --  19. Titles (condition-based unlocks, equippable via the title slot)
+--  20. Idle tycoon (passive currency, upgrades, point exchange)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -2179,6 +2180,7 @@ declare
   v_uid uuid := auth.uid();
   v_item public.shop_items;
   v_balance integer;
+  v_tycoon_currency bigint;
   v_owned_count integer;
 begin
   if v_uid is null then
@@ -2198,21 +2200,29 @@ begin
     raise exception 'already_owned' using errcode = 'P0001';
   end if;
 
-  -- Only 'points' is wired up to an actual balance so far -- 'tycoon'
-  -- items can't be bought yet since the tycoon currency doesn't exist.
-  if v_item.currency <> 'points' then
+  if v_item.currency = 'points' then
+    select points into v_balance from public.family_members where family_id = p_family_id and user_id = v_uid;
+    if coalesce(v_balance, 0) < v_item.price then
+      raise exception 'insufficient_points' using errcode = 'P0001';
+    end if;
+
+    update public.family_members
+    set points = points - v_item.price,
+        lifetime_points_spent = lifetime_points_spent + v_item.price
+    where family_id = p_family_id and user_id = v_uid;
+  elsif v_item.currency = 'tycoon' then
+    -- section 20 -- settle passive accrual first so the balance check
+    -- below reflects everything earned up to this moment, not just
+    -- whatever was on hand at the last collect/tap/upgrade/exchange call.
+    select (public.sync_tycoon_currency(p_family_id, v_uid)).currency into v_tycoon_currency;
+    if v_tycoon_currency < v_item.price then
+      raise exception 'insufficient_points' using errcode = 'P0001';
+    end if;
+
+    update public.tycoon_state set currency = currency - v_item.price where user_id = v_uid and family_id = p_family_id;
+  else
     raise exception 'currency_not_available' using errcode = 'P0001';
   end if;
-
-  select points into v_balance from public.family_members where family_id = p_family_id and user_id = v_uid;
-  if coalesce(v_balance, 0) < v_item.price then
-    raise exception 'insufficient_points' using errcode = 'P0001';
-  end if;
-
-  update public.family_members
-  set points = points - v_item.price,
-      lifetime_points_spent = lifetime_points_spent + v_item.price
-  where family_id = p_family_id and user_id = v_uid;
 
   insert into public.member_owned_items (user_id, family_id, item_id) values (v_uid, p_family_id, p_item_id);
 
@@ -2404,6 +2414,275 @@ select * from (values
 ) as seed(slot, name, sprite_key, acquisition_type, key, sort_order)
 where not exists (
   select 1 from public.shop_items existing where existing.key = seed.key
+);
+
+-- -----------------------------------------------------------------------------
+-- 20. Idle tycoon (passive currency, upgrades, point exchange)
+--
+-- GAMIFICATION_DESIGN.md section 6. A cookie-clicker-style side loop, kept
+-- deliberately minor relative to actual quests (section 6-4): base
+-- production is 10 currency/min, doubling by level 10 (110/min); currency
+-- only converts one-way into points, capped at 25 points/day regardless of
+-- how much currency has piled up (the real safety valve -- the currency's
+-- own numbers can grow as large/flashy as later content allows without
+-- ever threatening that cap). Same (user_id, family_id) scoping as
+-- everything else in this file -- a personal room's tycoon is independent
+-- of a family room's.
+--
+-- 1 currency = 1/1000 point when exchanging (i.e. 1000 currency -> 1
+-- point) -- an arbitrary but fixed rate; GAMIFICATION_DESIGN.md 6-2/6-3
+-- numbers are all first-pass estimates pending real usage data.
+-- -----------------------------------------------------------------------------
+
+create table if not exists public.tycoon_state (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  family_id uuid not null references public.families(id) on delete cascade,
+  currency bigint not null default 0,
+  upgrade_level integer not null default 0,
+  -- Passive production is settled lazily (not ticked server-side) -- every
+  -- RPC below calls sync_tycoon_currency first, which credits elapsed time
+  -- since this timestamp (capped at 24h) and advances it by exactly the
+  -- duration that was actually converted to currency, not to now() --
+  -- leftover fractional time is preserved for the next sync instead of
+  -- being discarded, so frequent polling can't starve accrual by
+  -- repeatedly flooring a tiny elapsed duration to zero.
+  last_collected_at timestamptz not null default now(),
+  last_tap_at timestamptz,
+  exchanged_today integer not null default 0,
+  exchange_reset_date date not null default current_date,
+  created_at timestamptz not null default now(),
+  primary key (user_id, family_id),
+  constraint tycoon_state_currency_check check (currency >= 0),
+  constraint tycoon_state_upgrade_level_check check (upgrade_level >= 0 and upgrade_level <= 10)
+);
+
+alter table public.tycoon_state enable row level security;
+
+drop policy if exists tycoon_state_select on public.tycoon_state;
+create policy tycoon_state_select on public.tycoon_state
+for select
+using (public.is_family_member(family_id));
+
+grant select on public.tycoon_state to authenticated;
+
+-- Internal helper (not client-callable) -- settles passive accrual and
+-- returns the up-to-date row. Every RPC below calls this first so balance
+-- checks (upgrades, exchanges, tycoon-currency purchases) always see a
+-- current number.
+create or replace function public.sync_tycoon_currency(p_family_id uuid, p_user_id uuid)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_state public.tycoon_state;
+  v_rate_per_min integer;
+  v_elapsed_seconds double precision;
+  v_accrued bigint;
+begin
+  insert into public.tycoon_state (user_id, family_id) values (p_user_id, p_family_id) on conflict do nothing;
+  select * into v_state from public.tycoon_state where user_id = p_user_id and family_id = p_family_id;
+
+  v_rate_per_min := 10 + v_state.upgrade_level * 10;
+  v_elapsed_seconds := extract(epoch from least(now() - v_state.last_collected_at, interval '24 hours'));
+  v_accrued := floor(v_elapsed_seconds * v_rate_per_min / 60.0)::bigint;
+
+  if v_accrued > 0 then
+    update public.tycoon_state
+    set currency = currency + v_accrued,
+        last_collected_at = v_state.last_collected_at + make_interval(secs => (v_accrued * 60.0 / v_rate_per_min))
+    where user_id = p_user_id and family_id = p_family_id
+    returning * into v_state;
+  end if;
+
+  return v_state;
+end;
+$$;
+
+revoke execute on function public.sync_tycoon_currency(uuid, uuid) from public;
+
+create or replace function public.collect_tycoon_currency(p_family_id uuid)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  return public.sync_tycoon_currency(p_family_id, v_uid);
+end;
+$$;
+
+create or replace function public.tap_tycoon_currency(p_family_id uuid)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.tycoon_state;
+  v_now timestamptz := now();
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_state := public.sync_tycoon_currency(p_family_id, v_uid);
+
+  if v_state.last_tap_at is not null and v_now - v_state.last_tap_at < interval '2 seconds' then
+    raise exception 'tap_too_fast' using errcode = 'P0001';
+  end if;
+
+  update public.tycoon_state
+  set currency = currency + 3, last_tap_at = v_now
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  return v_state;
+end;
+$$;
+
+create or replace function public.upgrade_tycoon(p_family_id uuid)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.tycoon_state;
+  v_cost bigint;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_state := public.sync_tycoon_currency(p_family_id, v_uid);
+
+  if v_state.upgrade_level >= 10 then
+    raise exception 'max_level_reached' using errcode = 'P0001';
+  end if;
+
+  -- Cost doubles roughly every ~5 levels (base 100, x1.15 per level).
+  v_cost := round(100 * power(1.15, v_state.upgrade_level))::bigint;
+  if v_state.currency < v_cost then
+    raise exception 'insufficient_currency' using errcode = 'P0001';
+  end if;
+
+  update public.tycoon_state
+  set currency = currency - v_cost, upgrade_level = upgrade_level + 1
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  if v_state.upgrade_level = 10 then
+    perform public.grant_title(p_family_id, v_uid, 'tycoon_maxed');
+  end if;
+
+  return v_state;
+end;
+$$;
+
+create or replace function public.exchange_tycoon_currency(p_family_id uuid, p_currency_amount bigint)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.tycoon_state;
+  v_points integer;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_state := public.sync_tycoon_currency(p_family_id, v_uid);
+
+  if v_state.exchange_reset_date <> current_date then
+    update public.tycoon_state
+    set exchanged_today = 0, exchange_reset_date = current_date
+    where user_id = v_uid and family_id = p_family_id
+    returning * into v_state;
+  end if;
+
+  if p_currency_amount is null or p_currency_amount <= 0 or p_currency_amount > v_state.currency then
+    raise exception 'invalid_amount' using errcode = '22023';
+  end if;
+
+  v_points := floor(p_currency_amount / 1000.0)::integer;
+  if v_points <= 0 then
+    raise exception 'amount_too_small' using errcode = '22023';
+  end if;
+
+  -- The daily cap (GAMIFICATION_DESIGN.md 6-3), not the exchange rate, is
+  -- what keeps the tycoon from competing with actually doing quests --
+  -- reject outright rather than silently clamping, so the client can show
+  -- exactly how much room is left instead of guessing.
+  if v_state.exchanged_today + v_points > 25 then
+    raise exception 'daily_cap_reached' using errcode = 'P0001';
+  end if;
+
+  update public.tycoon_state
+  set currency = currency - (v_points * 1000), exchanged_today = exchanged_today + v_points
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  update public.family_members set points = points + v_points where family_id = p_family_id and user_id = v_uid;
+
+  return v_state;
+end;
+$$;
+
+grant execute on function public.collect_tycoon_currency(uuid) to authenticated;
+grant execute on function public.tap_tycoon_currency(uuid) to authenticated;
+grant execute on function public.upgrade_tycoon(uuid) to authenticated;
+grant execute on function public.exchange_tycoon_currency(uuid, bigint) to authenticated;
+
+revoke execute on function public.collect_tycoon_currency(uuid) from anon, public;
+revoke execute on function public.tap_tycoon_currency(uuid) from anon, public;
+revoke execute on function public.upgrade_tycoon(uuid) from anon, public;
+revoke execute on function public.exchange_tycoon_currency(uuid, bigint) from anon, public;
+
+insert into public.shop_items (slot, name, sprite_key, acquisition_type, key, sort_order)
+select * from (values
+  ('title', '방치의 신', '', 'title_condition', 'tycoon_maxed', 140)
+) as seed(slot, name, sprite_key, acquisition_type, key, sort_order)
+where not exists (
+  select 1 from public.shop_items existing where existing.key = seed.key
+);
+
+-- Tycoon-currency-only limited fashion items (section 6-5) -- rare/bonus
+-- relative to the points shop, priced against a ~14,400/day fully-idle
+-- baseline so they're a real mid-term goal, not an instant buy.
+insert into public.shop_items (slot, name, sprite_key, acquisition_type, currency, price, sort_order)
+select * from (values
+  ('head', '별빛 왕관', '✨', 'purchase', 'tycoon', 8000, 4),
+  ('background', '골드 러시', '#F4D35E', 'purchase', 'tycoon', 6000, 4),
+  ('weapon', '황금 낫', '🌾', 'purchase', 'tycoon', 10000, 4)
+) as seed(slot, name, sprite_key, acquisition_type, currency, price, sort_order)
+where not exists (
+  select 1 from public.shop_items existing
+  where existing.slot = seed.slot and existing.name = seed.name
 );
 
 -- =============================================================================

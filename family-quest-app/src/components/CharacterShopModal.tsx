@@ -157,6 +157,11 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
                     </button>
                   ) : item.acquisition_type === 'title_condition' ? (
                     <span className="shop-item-locked">{t('shop.locked')}</span>
+                  ) : item.currency === 'tycoon' ? (
+                    // Tycoon-currency items are bought from the tycoon
+                    // shop screen (TycoonModal.tsx) -- this points shop
+                    // still lists them so they can be equipped once owned.
+                    <span className="shop-item-locked">{t('shop.buyInTycoonShop')}</span>
                   ) : (
                     <button
                       type="button"

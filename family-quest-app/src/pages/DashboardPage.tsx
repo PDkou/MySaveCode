@@ -14,6 +14,7 @@ import { SettingsModal } from '../components/SettingsModal';
 import { InviteQrModal } from '../components/InviteQrModal';
 import { MyStatsModal } from '../components/MyStatsModal';
 import { WeeklyBreakdownModal } from '../components/WeeklyBreakdownModal';
+import { TycoonModal } from '../components/TycoonModal';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
 import { startOfThisWeek } from '../lib/formatDate';
@@ -37,6 +38,7 @@ export function DashboardPage() {
   const [showEditFamilyName, setShowEditFamilyName] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showWeekly, setShowWeekly] = useState(false);
+  const [showTycoon, setShowTycoon] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const [selectMode, setSelectMode] = useState(false);
@@ -183,6 +185,16 @@ export function DashboardPage() {
             <button type="button" className="btn btn-ghost btn-sm stats-chip" onClick={() => setShowStats(true)}>
               {`Lv.${levelForPoints(me.xp)}`}
               {me.current_streak > 0 ? ` 🔥${me.current_streak}` : ''}
+            </button>
+          )}
+          {family && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-icon btn-sm"
+              onClick={() => setShowTycoon(true)}
+              aria-label={t('tycoon.heading')}
+            >
+              <span aria-hidden="true">💰</span>
             </button>
           )}
           <NotificationBell />
@@ -345,6 +357,7 @@ export function DashboardPage() {
       )}
       {showStats && <MyStatsModal onClose={() => setShowStats(false)} />}
       {showWeekly && <WeeklyBreakdownModal onClose={() => setShowWeekly(false)} />}
+      {showTycoon && <TycoonModal onClose={() => setShowTycoon(false)} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {showInviteQr && family && (
         <InviteQrModal inviteCode={family.invite_code} onClose={() => setShowInviteQr(false)} />
