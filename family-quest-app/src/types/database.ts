@@ -43,6 +43,7 @@ export type FamilyMemberRow = {
   role: 'owner' | 'member';
   display_name: string | null;
   points: number;
+  xp: number;
   current_streak: number;
   longest_streak: number;
   last_completed_date: string | null;
@@ -66,6 +67,7 @@ export type TaskRow = {
   recurrence: TaskRecurrence;
   recurrence_weekdays: number[] | null;
   pinned: boolean;
+  stake_points: number;
   created_at: string;
   updated_at: string;
 };
@@ -242,6 +244,7 @@ export type Database = {
           p_recurrence: TaskRecurrence;
           p_starts_at: string | null;
           p_recurrence_weekdays: number[] | null;
+          p_stake_points?: number;
         };
         Returns: TaskRow;
       };

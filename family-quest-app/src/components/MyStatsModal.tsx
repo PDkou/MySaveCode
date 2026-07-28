@@ -44,9 +44,9 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
 
   if (!me) return null;
 
-  const level = levelForPoints(me.points);
-  const intoLevel = pointsIntoLevel(me.points);
-  const neededForLevel = pointsNeededForLevel(me.points);
+  const level = levelForPoints(me.xp);
+  const intoLevel = pointsIntoLevel(me.xp);
+  const neededForLevel = pointsNeededForLevel(me.xp);
   const progressPct = Math.round((intoLevel / neededForLevel) * 100);
 
   return (
@@ -63,6 +63,10 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
         </div>
 
         <div className="stats-row-group">
+          <div className="stats-stat">
+            <span className="stats-stat-value">{me.points}</span>
+            <span className="stats-stat-label">{t('stats.spendablePoints')}</span>
+          </div>
           <div className="stats-stat">
             <span className="stats-stat-value">{me.current_streak}</span>
             <span className="stats-stat-label">{t('stats.currentStreak')}</span>

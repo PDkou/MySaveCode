@@ -181,7 +181,7 @@ export function DashboardPage() {
         <div className="topbar-actions">
           {me && (
             <button type="button" className="btn btn-ghost btn-sm stats-chip" onClick={() => setShowStats(true)}>
-              {`Lv.${levelForPoints(me.points)}`}
+              {`Lv.${levelForPoints(me.xp)}`}
               {me.current_streak > 0 ? ` 🔥${me.current_streak}` : ''}
             </button>
           )}

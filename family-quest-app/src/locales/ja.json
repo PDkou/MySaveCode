@@ -120,7 +120,7 @@
     "emptyDone": "完了したクエストはありません。",
     "emptyAll": "まだクエストが登録されていません。",
     "assignedTo": "担当: {{name}}",
-    "unassigned": "担当者なし",
+    "unassigned": "先着順",
     "createdBy": "依頼者: {{name}}",
     "startsAt": "開始: {{date}}",
     "dueAt": "期限: {{date}}",
@@ -151,6 +151,11 @@
     "assignedTo": "担当者",
     "noAssignee": "担当者を指定しない",
     "everyone": "全員",
+    "assigneeHintFirstCome": "誰も選ばなければ先着順クエストになります — 先に完了した人が獲得します。",
+    "assigneeHintEveryone": "全員選択で協力型クエストになります — 完了時にポイントを分け合います。",
+    "assigneeHintSpecific": "特定の担当者へのクエストです — 完了した人がポイントを全額受け取ります。",
+    "stakePoints": "ポイントを賭ける",
+    "stakePointsHint": "保有ポイント {{balance}} — 完了した人がこのポイントを受け取ります。",
     "lotteryButton": "🎲 くじ引き",
     "lotteryPicking": "選んでいます...",
     "startsAt": "開始日 (任意)",
@@ -177,6 +182,7 @@
     "submitting": "登録中...",
     "error": {
       "titleRequired": "タイトルを入力してください。",
+      "insufficientPoints": "保有ポイントが足りません。賭けるポイントを減らしてください。",
       "unknown": "クエストの登録に失敗しました。"
     }
   },
@@ -367,6 +373,7 @@
   "stats": {
     "heading": "わたしの記録",
     "pointsToNext": "次のレベルまで {{current}}/{{total}}",
+    "spendablePoints": "保有ポイント",
     "currentStreak": "連続達成",
     "longestStreak": "最長記録",
     "completedCount": "累計完了",

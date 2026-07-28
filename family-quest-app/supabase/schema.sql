@@ -90,7 +90,12 @@ create table if not exists public.family_members (
   -- Gamification: all per-family-membership, same reasoning as display_name
   -- above -- a member's streak/points are earned within one family's quest
   -- list, not shared globally across every family they belong to.
+  -- points is spendable currency (goes up on quest payouts, down on quest
+  -- creation stakes and shop purchases); xp is a level indicator that only
+  -- ever goes up, earned alongside points but never spent -- see
+  -- GAMIFICATION_DESIGN.md section 2.
   points integer not null default 0,
+  xp integer not null default 0,
   current_streak integer not null default 0,
   longest_streak integer not null default 0,
   last_completed_date date,
@@ -113,6 +118,11 @@ alter table public.family_members add column if not exists display_name text;
 -- Upgrades an already-deployed database from before points/streaks/badges
 -- existed.
 alter table public.family_members add column if not exists points integer not null default 0;
+-- Upgrades an already-deployed database from before points/xp were split
+-- (GAMIFICATION_DESIGN.md section 2). Backfills xp from whatever points
+-- already accrued so existing levels don't reset to 0 on this migration.
+alter table public.family_members add column if not exists xp integer not null default 0;
+update public.family_members set xp = points where xp = 0 and points > 0;
 alter table public.family_members add column if not exists current_streak integer not null default 0;
 alter table public.family_members add column if not exists longest_streak integer not null default 0;
 alter table public.family_members add column if not exists last_completed_date date;
@@ -147,14 +157,27 @@ create table if not exists public.tasks (
   -- column since the two fire at different lead times and shouldn't
   -- suppress each other.
   overdue_notified_for timestamptz,
+  -- Points staked by the creator at creation time (see create_task),
+  -- deducted from their balance then, paid out at completion per
+  -- GAMIFICATION_DESIGN.md section 3/5. Always 0 in a 1-member personal
+  -- room, where staking doesn't apply.
+  stake_points integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint tasks_status_check check (status in ('open', 'done')),
   constraint tasks_title_not_blank check (length(trim(title)) > 0),
-  constraint tasks_recurrence_check check (recurrence in ('none', 'daily', 'weekly', 'monthly'))
+  constraint tasks_recurrence_check check (recurrence in ('none', 'daily', 'weekly', 'monthly')),
+  constraint tasks_stake_points_check check (stake_points >= 0)
 );
 
 alter table public.tasks add column if not exists completion_photo_path text;
+alter table public.tasks add column if not exists stake_points integer not null default 0;
+do $$
+begin
+  alter table public.tasks add constraint tasks_stake_points_check check (stake_points >= 0);
+exception
+  when duplicate_object then null;
+end $$;
 
 -- Optional "starts on" date, separate from due_at (the deadline). A task
 -- with a future starts_at reads as "예정" (scheduled) on the client
@@ -210,6 +233,33 @@ create table if not exists public.task_assignees (
 create index if not exists task_assignees_task_id_idx on public.task_assignees (task_id);
 create index if not exists task_assignees_family_id_idx on public.task_assignees (family_id);
 create index if not exists task_assignees_user_id_idx on public.task_assignees (user_id);
+
+-- A ledger of every points/xp payout complete_task has made, one row per
+-- (task, recipient, kind). Needed for two things award_quest_payout can't
+-- do from family_members alone: (a) reopen_task reversing exactly what a
+-- completion paid out, including split ("모두") payouts that went to more
+-- than one person for a single completion event; (b) any future per-task
+-- payout audit/history UI.
+create table if not exists public.quest_payouts (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid not null references public.tasks(id) on delete cascade,
+  family_id uuid not null references public.families(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  points_delta integer not null,
+  xp_delta integer not null default 0,
+  -- Separate from xp_delta > 0 on purpose -- a 0-stake "favor" quest still
+  -- awards reputation (completed_count/streak/badges) with xp_delta = 0,
+  -- and reopen_task needs to tell that apart from a payout that genuinely
+  -- carried no reputation at all (e.g. a self-claimed 선착/특정인 refund).
+  reputation_awarded boolean not null default false,
+  kind text not null,
+  created_at timestamptz not null default now(),
+  constraint quest_payouts_kind_check check (kind in ('completion', 'requester_bonus'))
+);
+
+create index if not exists quest_payouts_task_id_idx on public.quest_payouts (task_id);
+create index if not exists quest_payouts_family_id_idx on public.quest_payouts (family_id);
+create index if not exists quest_payouts_user_id_idx on public.quest_payouts (user_id);
 
 -- Upgrades an already-deployed database that still has the older single
 -- assigned_to / assigned_to_all columns: carry their data over into
@@ -723,6 +773,10 @@ drop function if exists public.update_task(uuid, text, text, timestamptz, uuid[]
 drop function if exists public.update_task(uuid, text, text, timestamptz, uuid[], text);
 drop function if exists public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz);
 
+-- p_stake_points added after the initial version -- see the drop below
+-- (same reasoning as complete_task's p_completion_photo_path).
+drop function if exists public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]);
+
 create or replace function public.create_task(
   p_family_id uuid,
   p_title text,
@@ -731,7 +785,8 @@ create or replace function public.create_task(
   p_assignee_ids uuid[],
   p_recurrence text default 'none',
   p_starts_at timestamptz default null,
-  p_recurrence_weekdays smallint[] default null
+  p_recurrence_weekdays smallint[] default null,
+  p_stake_points integer default 0
 )
 returns public.tasks
 language plpgsql
@@ -744,6 +799,9 @@ declare
   v_recurrence text := coalesce(p_recurrence, 'none');
   v_task public.tasks;
   v_assignee uuid;
+  v_member_count integer;
+  v_creator_points integer;
+  v_stake integer := greatest(coalesce(p_stake_points, 0), 0);
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -761,10 +819,29 @@ begin
     v_recurrence := 'none';
   end if;
 
-  insert into public.tasks (family_id, title, details, created_by, due_at, recurrence, starts_at, recurrence_weekdays)
+  select count(*) into v_member_count from public.family_members where family_id = p_family_id;
+
+  -- A personal (1-member) room has no one else to request from, so staking
+  -- doesn't mean anything there (GAMIFICATION_DESIGN.md section 3/5) --
+  -- creation stays free and the task is stored with 0 stake regardless of
+  -- what was passed in.
+  if v_member_count > 1 then
+    select points into v_creator_points from public.family_members where family_id = p_family_id and user_id = v_uid;
+    if coalesce(v_creator_points, 0) < v_stake then
+      raise exception 'insufficient_points' using errcode = 'P0001';
+    end if;
+    if v_stake > 0 then
+      update public.family_members set points = points - v_stake where family_id = p_family_id and user_id = v_uid;
+    end if;
+  else
+    v_stake := 0;
+  end if;
+
+  insert into public.tasks (family_id, title, details, created_by, due_at, recurrence, starts_at, recurrence_weekdays, stake_points)
   values (
     p_family_id, v_title, nullif(trim(coalesce(p_details, '')), ''), v_uid, p_due_at, v_recurrence, p_starts_at,
-    case when v_recurrence = 'weekly' then p_recurrence_weekdays else null end
+    case when v_recurrence = 'weekly' then p_recurrence_weekdays else null end,
+    v_stake
   )
   returning * into v_task;
 
@@ -848,20 +925,120 @@ begin
 end;
 $$;
 
+-- Internal helper, not callable directly by clients (see revoke below) --
+-- applies one payout to one recipient: always adds p_points to their
+-- spendable balance and logs it to quest_payouts, and additionally (only
+-- when p_award_reputation) adds the same amount to xp and runs the
+-- completed_count/streak/badge update that used to live inline in
+-- complete_task. Pulled out into its own function because "모두"
+-- (collaborative) tasks need to run this once per assignee instead of once
+-- per completion -- see complete_task below.
+create or replace function public.award_quest_payout(
+  p_family_id uuid,
+  p_user_id uuid,
+  p_points integer,
+  p_award_reputation boolean,
+  p_task_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_member public.family_members;
+  v_today date := current_date;
+  v_new_streak integer;
+  v_new_completed_count integer;
+  v_completed_hour integer;
+begin
+  select * into v_member from public.family_members where family_id = p_family_id and user_id = p_user_id;
+  if not found then
+    return;
+  end if;
+
+  update public.family_members
+  set points = points + p_points
+  where family_id = p_family_id and user_id = p_user_id;
+
+  insert into public.quest_payouts (task_id, family_id, user_id, points_delta, xp_delta, reputation_awarded, kind)
+  values (p_task_id, p_family_id, p_user_id, p_points, case when p_award_reputation then p_points else 0 end, p_award_reputation, 'completion');
+
+  if not p_award_reputation then
+    return;
+  end if;
+
+  v_new_streak := case
+    when v_member.last_completed_date = v_today then v_member.current_streak
+    when v_member.last_completed_date = v_today - 1 then v_member.current_streak + 1
+    else 1
+  end;
+  v_new_completed_count := v_member.completed_count + 1;
+
+  update public.family_members
+  set xp = xp + p_points,
+      completed_count = v_new_completed_count,
+      current_streak = v_new_streak,
+      longest_streak = greatest(longest_streak, v_new_streak),
+      last_completed_date = v_today
+  where family_id = p_family_id and user_id = p_user_id;
+
+  if v_new_completed_count = 1 then
+    insert into public.member_badges (family_id, user_id, badge_key)
+    values (p_family_id, p_user_id, 'first_quest') on conflict do nothing;
+  elsif v_new_completed_count = 10 then
+    insert into public.member_badges (family_id, user_id, badge_key)
+    values (p_family_id, p_user_id, 'ten_quests') on conflict do nothing;
+  elsif v_new_completed_count = 50 then
+    insert into public.member_badges (family_id, user_id, badge_key)
+    values (p_family_id, p_user_id, 'fifty_quests') on conflict do nothing;
+  end if;
+
+  if v_new_streak = 3 then
+    insert into public.member_badges (family_id, user_id, badge_key)
+    values (p_family_id, p_user_id, 'streak_3') on conflict do nothing;
+  elsif v_new_streak = 7 then
+    insert into public.member_badges (family_id, user_id, badge_key)
+    values (p_family_id, p_user_id, 'streak_7') on conflict do nothing;
+  end if;
+
+  v_completed_hour := extract(hour from now());
+  if v_completed_hour < 7 then
+    insert into public.member_badges (family_id, user_id, badge_key)
+    values (p_family_id, p_user_id, 'early_bird') on conflict do nothing;
+  elsif v_completed_hour >= 23 then
+    insert into public.member_badges (family_id, user_id, badge_key)
+    values (p_family_id, p_user_id, 'night_owl') on conflict do nothing;
+  end if;
+end;
+$$;
+
 -- Completing a task that has a recurrence spawns the next occurrence (same
 -- title/details/assignees, due date advanced by the interval) in the same
 -- transaction as the completion itself. p_completion_note is validated by
--- the client (required to complete), not re-validated here.
+-- the client (required to complete), not re-validated here. The recurring
+-- copy re-stakes from the creator (clamped to whatever they can currently
+-- afford) rather than reusing the original stake for free -- see the
+-- recurrence block below.
 --
--- Also awards the completer (not every assignee -- whoever actually tapped
--- "complete") gamification progress in the same transaction: +10 points,
--- completed_count +1, and a daily-streak update (continues if their last
--- completion was yesterday, stays put if it was already today, otherwise
--- resets to 1), then checks a handful of milestones and inserts any
--- newly-earned badges into member_badges. The return type deliberately
--- stays public.tasks (unchanged) to avoid a breaking API change -- the
--- client instead diffs the completer's family_members row (points/streak/
--- badge set) from before vs. after the call to drive the celebration UI.
+-- Gamification payout depends on how the task was assigned
+-- (GAMIFICATION_DESIGN.md section 3/5) -- worked out per-completion here,
+-- actually applied via award_quest_payout above:
+--   - 0 assignees (선착/first-come): completer takes the full stake; if
+--     they're also the creator, it's just returned to them (net zero, no
+--     reputation) instead of paid twice.
+--   - assignees = every current member (모두/everyone): the stake splits
+--     evenly across all of them (remainder lost to floor division), and
+--     everyone -- including the creator if they're one of the assignees --
+--     gets reputation, since it was genuinely a group effort.
+--   - anything else (specific person/people): the completer takes the full
+--     stake; same "return to self, no reputation" rule if they're also the
+--     creator, otherwise the creator additionally gets a 10% requester
+--     bonus (minted, not deducted from the completer) when the stake is
+--     >= 10.
+--   - a personal (1-member) room ignores all of this and just pays a flat
+--     10, matching the old behavior -- there's no one else to request
+--     from, so staking is meaningless there.
 --
 -- p_completion_photo_path added after the initial version of this
 -- function; drop the old 2-arg signature first (see the create_task /
@@ -885,14 +1062,13 @@ declare
   v_next_due timestamptz;
   v_next_starts timestamptz;
   v_new_task_id uuid;
-  v_today date := current_date;
-  v_member public.family_members;
-  v_new_streak integer;
-  v_new_completed_count integer;
-  v_completed_hour integer;
+  v_new_stake integer;
+  v_creator_points integer;
   v_member_count integer;
   v_assignee_count integer;
-  v_award_points boolean;
+  v_assignee_id uuid;
+  v_share integer;
+  v_requester_bonus integer;
   v_weekday_offset integer;
 begin
   if v_uid is null then
@@ -955,8 +1131,24 @@ begin
       end if;
     end if;
 
-    insert into public.tasks (family_id, title, details, created_by, due_at, recurrence, starts_at, recurrence_weekdays)
-    values (v_task.family_id, v_task.title, v_task.details, v_task.created_by, v_next_due, v_task.recurrence, v_next_starts, v_task.recurrence_weekdays)
+    -- Re-stake from the creator rather than reusing the just-paid-out
+    -- stake for free -- each occurrence is its own request. Clamped to
+    -- whatever they can currently afford (down to 0) instead of failing
+    -- outright, since this happens automatically inside a completion the
+    -- creator isn't necessarily the one triggering.
+    select count(*) into v_member_count from public.family_members where family_id = v_task.family_id;
+    if v_member_count > 1 then
+      select points into v_creator_points from public.family_members where family_id = v_task.family_id and user_id = v_task.created_by;
+      v_new_stake := least(v_task.stake_points, coalesce(v_creator_points, 0));
+      if v_new_stake > 0 then
+        update public.family_members set points = points - v_new_stake where family_id = v_task.family_id and user_id = v_task.created_by;
+      end if;
+    else
+      v_new_stake := 0;
+    end if;
+
+    insert into public.tasks (family_id, title, details, created_by, due_at, recurrence, starts_at, recurrence_weekdays, stake_points)
+    values (v_task.family_id, v_task.title, v_task.details, v_task.created_by, v_next_due, v_task.recurrence, v_next_starts, v_task.recurrence_weekdays, v_new_stake)
     returning id into v_new_task_id;
 
     insert into public.task_assignees (task_id, family_id, user_id)
@@ -965,68 +1157,46 @@ begin
     where ta.task_id = p_task_id;
   end if;
 
-  -- Gamification: points/streak/badges for whoever completed it -- but
-  -- only when it was actually a "quest" (someone else asked). Self-created
-  -- and self-assigned-only tasks in a shared room would otherwise let
-  -- anyone farm unlimited points by repeatedly requesting-and-fulfilling
-  -- their own tasks, since no one else can dispute a request only they
-  -- ever saw. Two exceptions keep this from breaking legitimate cases: a
-  -- personal (1-member) room has no one else who could ever ask, and a
-  -- task assigned to everyone (or left unassigned -- "whoever gets to it")
-  -- is shared responsibility regardless of who created or finished it.
-  select * into v_member from public.family_members where family_id = v_family_id and user_id = v_uid;
+  -- Payout -- see the big comment above the function for the full rule
+  -- table. assignment mode is read straight off task_assignees' current
+  -- row count, no separate column (GAMIFICATION_DESIGN.md section 3).
+  select count(*) into v_member_count from public.family_members where family_id = v_family_id;
+  select count(*) into v_assignee_count from public.task_assignees where task_id = p_task_id;
 
-  if found then
-    select count(*) into v_member_count from public.family_members where family_id = v_family_id;
-    select count(*) into v_assignee_count from public.task_assignees where task_id = p_task_id;
+  if v_member_count <= 1 then
+    perform public.award_quest_payout(v_family_id, v_uid, 10, true, p_task_id);
 
-    v_award_points := v_member_count <= 1
-      or v_assignee_count = 0
-      or v_assignee_count = v_member_count
-      or v_task.created_by <> v_uid;
+  elsif v_assignee_count = 0 then
+    -- 선착 (first-come): full stake to the completer; a creator who claims
+    -- their own 선착 task just gets their stake back, no reputation.
+    perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, v_task.created_by <> v_uid, p_task_id);
 
-    if v_award_points then
-      v_new_streak := case
-        when v_member.last_completed_date = v_today then v_member.current_streak
-        when v_member.last_completed_date = v_today - 1 then v_member.current_streak + 1
-        else 1
-      end;
-      v_new_completed_count := v_member.completed_count + 1;
+  elsif v_assignee_count = v_member_count then
+    -- 모두 (everyone/collaborative): split the stake evenly across every
+    -- current assignee, and everyone gets reputation -- including the
+    -- creator, if they're one of the assignees, since it was genuinely a
+    -- group effort rather than a self-request.
+    v_share := v_task.stake_points / v_assignee_count;
+    for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
+      perform public.award_quest_payout(v_family_id, v_assignee_id, v_share, true, p_task_id);
+    end loop;
 
-      update public.family_members
-      set points = points + 10,
-          completed_count = v_new_completed_count,
-          current_streak = v_new_streak,
-          longest_streak = greatest(longest_streak, v_new_streak),
-          last_completed_date = v_today
-      where family_id = v_family_id and user_id = v_uid;
-
-      if v_new_completed_count = 1 then
-        insert into public.member_badges (family_id, user_id, badge_key)
-        values (v_family_id, v_uid, 'first_quest') on conflict do nothing;
-      elsif v_new_completed_count = 10 then
-        insert into public.member_badges (family_id, user_id, badge_key)
-        values (v_family_id, v_uid, 'ten_quests') on conflict do nothing;
-      elsif v_new_completed_count = 50 then
-        insert into public.member_badges (family_id, user_id, badge_key)
-        values (v_family_id, v_uid, 'fifty_quests') on conflict do nothing;
-      end if;
-
-      if v_new_streak = 3 then
-        insert into public.member_badges (family_id, user_id, badge_key)
-        values (v_family_id, v_uid, 'streak_3') on conflict do nothing;
-      elsif v_new_streak = 7 then
-        insert into public.member_badges (family_id, user_id, badge_key)
-        values (v_family_id, v_uid, 'streak_7') on conflict do nothing;
-      end if;
-
-      v_completed_hour := extract(hour from now());
-      if v_completed_hour < 7 then
-        insert into public.member_badges (family_id, user_id, badge_key)
-        values (v_family_id, v_uid, 'early_bird') on conflict do nothing;
-      elsif v_completed_hour >= 23 then
-        insert into public.member_badges (family_id, user_id, badge_key)
-        values (v_family_id, v_uid, 'night_owl') on conflict do nothing;
+  else
+    -- 특정인 지정 (specific person/people): full stake to whoever actually
+    -- completed it. Same "return to self, no reputation" rule as 선착 if
+    -- the creator claims their own request; otherwise the creator also
+    -- gets a minted 10% requester bonus (not deducted from the completer)
+    -- once the stake is big enough for that to be a meaningful amount.
+    if v_task.created_by = v_uid then
+      perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, false, p_task_id);
+    else
+      perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, true, p_task_id);
+      if v_task.stake_points >= 10 then
+        v_requester_bonus := v_task.stake_points / 10;
+        update public.family_members set points = points + v_requester_bonus
+        where family_id = v_family_id and user_id = v_task.created_by;
+        insert into public.quest_payouts (task_id, family_id, user_id, points_delta, xp_delta, kind)
+        values (p_task_id, v_family_id, v_task.created_by, v_requester_bonus, 0, 'requester_bonus');
       end if;
     end if;
   end if;
@@ -1035,15 +1205,17 @@ begin
 end;
 $$;
 
--- Reopening a task undoes the completer's gamification progress from it --
+-- Reopening a task reverses every payout complete_task made for it --
 -- otherwise toggling complete/reopen/complete on the same task would let
--- points and streak climb forever. Rather than trying to precisely undo a
--- single complete_task call (which would need per-completion history we
--- don't keep), this recomputes the (former) completer's points/streak/
--- completed_count from their actual remaining 'done' tasks in this family,
--- so the numbers stay correct no matter how many times something gets
--- toggled. Already-earned badges are intentionally left alone -- an
--- achievement earned once stays earned, same as most gamification systems.
+-- points and streak climb forever. Driven entirely off quest_payouts
+-- (rather than re-deriving from task history like the old flat +10 model
+-- did) since a "모두" completion can pay out to more than one person at
+-- once -- there's no single "the completer" to recompute from anymore.
+-- Already-earned badges are intentionally left alone -- an achievement
+-- earned once stays earned, same as most gamification systems. The stake
+-- itself (deducted from the creator back at create_task) is deliberately
+-- NOT refunded here -- the task is still live and needs it there to pay
+-- out again whenever it's next completed.
 create or replace function public.reopen_task(p_task_id uuid)
 returns public.tasks
 language plpgsql
@@ -1055,10 +1227,10 @@ declare
   v_task public.tasks;
   v_family_id uuid;
   v_completer_id uuid;
+  v_payout record;
   v_new_completed_count integer;
   v_streak_len integer;
   v_last_date date;
-  v_member_count integer;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -1083,53 +1255,55 @@ begin
   returning * into v_task;
 
   if v_completer_id is not null then
-    select count(*) into v_member_count from public.family_members where family_id = v_family_id;
+    for v_payout in select * from public.quest_payouts where task_id = p_task_id loop
+      update public.family_members
+      set points = points - v_payout.points_delta
+      where family_id = v_payout.family_id and user_id = v_payout.user_id;
 
-    -- Recompute from scratch, but only over tasks that would actually have
-    -- earned points under complete_task's rule above -- otherwise reopening
-    -- *any* task in the family would resurrect credit for self-created,
-    -- self-assigned-only tasks that were correctly denied it the first time.
-    select count(*) into v_new_completed_count
-    from public.tasks t
-    where t.family_id = v_family_id
-      and t.completed_by = v_completer_id
-      and t.status = 'done'
-      and (
-        v_member_count <= 1
-        or (select count(*) from public.task_assignees ta where ta.task_id = t.id) in (0, v_member_count)
-        or t.created_by <> t.completed_by
-      );
+      if v_payout.reputation_awarded then
+        -- Recompute this recipient's completed_count/streak from their
+        -- remaining reputation-earning payouts (excluding this task's,
+        -- about to be deleted below) -- same gaps-and-islands grouping the
+        -- old flat-model recompute used, just sourced from the ledger
+        -- instead of scanning tasks.completed_by directly.
+        select count(*) into v_new_completed_count
+        from public.quest_payouts qp
+        join public.tasks t on t.id = qp.task_id
+        where qp.family_id = v_payout.family_id
+          and qp.user_id = v_payout.user_id
+          and qp.reputation_awarded
+          and qp.task_id <> p_task_id
+          and t.status = 'done';
 
-    -- Classic gaps-and-islands grouping: dates that are consecutive share
-    -- the same (date - row_number) value, so the group containing the most
-    -- recent date is exactly the current streak.
-    with dates as (
-      select distinct t.completed_at::date as d
-      from public.tasks t
-      where t.family_id = v_family_id
-        and t.completed_by = v_completer_id
-        and t.status = 'done'
-        and (
-          v_member_count <= 1
-          or (select count(*) from public.task_assignees ta where ta.task_id = t.id) in (0, v_member_count)
-          or t.created_by <> t.completed_by
+        with dates as (
+          select distinct t.completed_at::date as d
+          from public.quest_payouts qp
+          join public.tasks t on t.id = qp.task_id
+          where qp.family_id = v_payout.family_id
+            and qp.user_id = v_payout.user_id
+            and qp.reputation_awarded
+            and qp.task_id <> p_task_id
+            and t.status = 'done'
+        ),
+        grouped as (
+          select d, d - (row_number() over (order by d))::int as grp
+          from dates
         )
-    ),
-    grouped as (
-      select d, d - (row_number() over (order by d))::int as grp
-      from dates
-    )
-    select max(d), count(*) into v_last_date, v_streak_len
-    from grouped
-    where grp = (select grp from grouped order by d desc limit 1);
+        select max(d), count(*) into v_last_date, v_streak_len
+        from grouped
+        where grp = (select grp from grouped order by d desc limit 1);
 
-    update public.family_members
-    set points = v_new_completed_count * 10,
-        completed_count = v_new_completed_count,
-        current_streak = coalesce(v_streak_len, 0),
-        longest_streak = greatest(longest_streak, coalesce(v_streak_len, 0)),
-        last_completed_date = v_last_date
-    where family_id = v_family_id and user_id = v_completer_id;
+        update public.family_members
+        set xp = xp - v_payout.xp_delta,
+            completed_count = v_new_completed_count,
+            current_streak = coalesce(v_streak_len, 0),
+            longest_streak = greatest(longest_streak, coalesce(v_streak_len, 0)),
+            last_completed_date = v_last_date
+        where family_id = v_payout.family_id and user_id = v_payout.user_id;
+      end if;
+    end loop;
+
+    delete from public.quest_payouts where task_id = p_task_id;
   end if;
 
   return v_task;
@@ -1146,6 +1320,7 @@ alter table public.tasks enable row level security;
 alter table public.task_assignees enable row level security;
 alter table public.task_activities enable row level security;
 alter table public.member_badges enable row level security;
+alter table public.quest_payouts enable row level security;
 
 -- profiles: see your own row, see the display name of your family partner,
 -- only ever edit your own row.
@@ -1259,6 +1434,14 @@ create policy member_badges_select on public.member_badges
 for select
 using (public.is_family_member(family_id));
 
+-- quest_payouts is written only by complete_task/reopen_task (security
+-- definer, bypasses RLS) -- clients only ever read it, e.g. for a future
+-- per-task payout history view.
+drop policy if exists quest_payouts_select on public.quest_payouts;
+create policy quest_payouts_select on public.quest_payouts
+for select
+using (public.is_family_member(family_id));
+
 -- Storage: a private "task-photos" bucket for completion photos. Objects
 -- are uploaded by the client at the path "{family_id}/{task_id}/{file}",
 -- so membership can be checked from the first folder segment without a
@@ -1348,13 +1531,14 @@ grant select, insert, update, delete on public.tasks to authenticated;
 grant select, insert, delete on public.task_assignees to authenticated;
 grant select on public.task_activities to authenticated;
 grant select on public.member_badges to authenticated;
+grant select on public.quest_payouts to authenticated;
 
 grant execute on function public.create_family_room(text, text) to authenticated;
 grant execute on function public.join_family_room(text) to authenticated;
 grant execute on function public.leave_family(uuid) to authenticated;
 grant execute on function public.remove_family_member(uuid, uuid) to authenticated;
 grant execute on function public.regenerate_invite_code(uuid) to authenticated;
-grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) to authenticated;
+grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[], integer) to authenticated;
 grant execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) to authenticated;
 grant execute on function public.complete_task(uuid, text, text) to authenticated;
 grant execute on function public.reopen_task(uuid) to authenticated;
@@ -1364,13 +1548,17 @@ revoke execute on function public.join_family_room(text) from anon, public;
 revoke execute on function public.leave_family(uuid) from anon, public;
 revoke execute on function public.remove_family_member(uuid, uuid) from anon, public;
 revoke execute on function public.regenerate_invite_code(uuid) from anon, public;
-revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) from anon, public;
+revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[], integer) from anon, public;
 revoke execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) from anon, public;
 revoke execute on function public.complete_task(uuid, text, text) from anon, public;
 revoke execute on function public.reopen_task(uuid) from anon, public;
 revoke execute on function public.is_family_member(uuid) from anon, public;
 revoke execute on function public.get_my_family_id() from anon, public;
 revoke execute on function public.shares_family_with(uuid) from anon, public;
+-- Internal helper only -- called from within complete_task/reopen_task's
+-- security definer context, never directly by a client (it has no
+-- authorization checks of its own).
+revoke execute on function public.award_quest_payout(uuid, uuid, integer, boolean, uuid) from public;
 
 -- -----------------------------------------------------------------------------
 -- 12. Realtime publication

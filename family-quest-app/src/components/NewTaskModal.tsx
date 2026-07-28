@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useTasks } from '../context/TasksContext';
+import { useTasks, InsufficientPointsError } from '../context/TasksContext';
+import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import type { FamilyMember } from '../context/FamilyContext';
 import type { TaskRecurrence, TaskTemplateRow } from '../types/database';
@@ -22,6 +23,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
   const { t } = useTranslation();
   const { createTask } = useTasks();
   const { family } = useFamily();
+  const { user } = useAuth();
 
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');
@@ -31,8 +33,15 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
   const [dueAt, setDueAt] = useState('');
   const [recurrence, setRecurrence] = useState<TaskRecurrence>('none');
   const [recurrenceWeekdays, setRecurrenceWeekdays] = useState<number[]>([]);
+  const [stakePoints, setStakePoints] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
+
+  // Staking doesn't mean anything in a 1-member personal room -- there's no
+  // one else who could ever fulfill a request -- so the field is hidden
+  // there and create_task ignores whatever would've been sent anyway.
+  const stakingApplies = members.length > 1;
+  const myBalance = user ? members.find((m) => m.user_id === user.id)?.points ?? 0 : 0;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -51,10 +60,11 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
         recurrence,
         startsAt: startsAt ? new Date(startsAt).toISOString() : null,
         recurrenceWeekdays: recurrence === 'weekly' && recurrenceWeekdays.length > 0 ? recurrenceWeekdays : null,
+        stakePoints: stakingApplies ? Math.max(0, Math.floor(Number(stakePoints) || 0)) : 0,
       });
       onClose();
-    } catch {
-      setErrorKey('taskForm.error.unknown');
+    } catch (err) {
+      setErrorKey(err instanceof InsufficientPointsError ? 'taskForm.error.insufficientPoints' : 'taskForm.error.unknown');
     } finally {
       setSubmitting(false);
     }
@@ -123,7 +133,30 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
               onChange={setAssigneeIds}
               highlightedId={highlightedId}
             />
+            <p className="field-hint">
+              {assigneeIds.length === 0
+                ? t('taskForm.assigneeHintFirstCome')
+                : assigneeIds.length === members.length
+                  ? t('taskForm.assigneeHintEveryone')
+                  : t('taskForm.assigneeHintSpecific')}
+            </p>
           </div>
+
+          {stakingApplies && (
+            <label className="field">
+              <span>{t('taskForm.stakePoints')}</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={myBalance}
+                value={stakePoints}
+                onChange={(e) => setStakePoints(e.target.value)}
+                placeholder="0"
+              />
+              <p className="field-hint">{t('taskForm.stakePointsHint', { balance: myBalance })}</p>
+            </label>
+          )}
 
           <div className="field">
             <span>{t('taskForm.startsAt')}</span>
