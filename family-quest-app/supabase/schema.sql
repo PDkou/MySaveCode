@@ -24,6 +24,7 @@
 --  15. Event-driven push notifications (created/completed/reopened/comment)
 --  16. Task templates (quick-select saved request content)
 --  17. Overdue escalation + weekly summary push notifications
+--  18. Shop / character (points-shop items, purchase + equip)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -1979,6 +1980,254 @@ revoke all on public.notification_prefs from anon, public;
 --   );
 --   $$
 -- );
+
+-- -----------------------------------------------------------------------------
+-- 18. Shop / character (points-shop items, purchase + equip)
+--
+-- GAMIFICATION_DESIGN.md section 7. A per-(user, family) character built
+-- from up to 11 equipped slots. No real art yet -- sprite_key is either a
+-- CSS color (body/background/top/pants/shoes) or a single emoji
+-- (head/weapon/shield/accessory1/accessory2), rendered by
+-- src/components/CharacterSprite.tsx. Swapping in real art later only
+-- means changing what sprite_key maps to client-side, not this schema.
+--
+-- title (the 11th slot) has no purchasable items yet -- it's populated by
+-- condition-based unlocks, which is Phase 3 (GAMIFICATION_DESIGN.md
+-- section 8/12), not by anything in this section.
+--
+-- Only currency = 'points' items exist for now; 'tycoon' currency items
+-- wait on the tycoon itself (section 6) actually existing.
+-- -----------------------------------------------------------------------------
+
+create table if not exists public.shop_items (
+  id uuid primary key default gen_random_uuid(),
+  slot text not null,
+  name text not null,
+  sprite_key text not null,
+  acquisition_type text not null default 'purchase',
+  currency text,
+  price integer,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  constraint shop_items_slot_check check (
+    slot in ('body', 'head', 'background', 'title', 'weapon', 'shield', 'accessory1', 'accessory2', 'shoes', 'top', 'pants')
+  ),
+  constraint shop_items_acquisition_type_check check (acquisition_type in ('purchase', 'title_condition')),
+  constraint shop_items_currency_check check (currency is null or currency in ('points', 'tycoon')),
+  constraint shop_items_purchase_fields_check check (
+    (acquisition_type = 'purchase' and currency is not null and price is not null and price >= 0)
+    or (acquisition_type = 'title_condition' and currency is null and price is null)
+  )
+);
+
+create index if not exists shop_items_slot_idx on public.shop_items (slot, sort_order);
+
+create table if not exists public.member_owned_items (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  family_id uuid not null references public.families(id) on delete cascade,
+  item_id uuid not null references public.shop_items(id) on delete cascade,
+  acquired_at timestamptz not null default now(),
+  primary key (user_id, family_id, item_id)
+);
+
+create index if not exists member_owned_items_family_user_idx on public.member_owned_items (family_id, user_id);
+
+create table if not exists public.member_equipped_items (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  family_id uuid not null references public.families(id) on delete cascade,
+  slot text not null,
+  item_id uuid not null references public.shop_items(id) on delete cascade,
+  equipped_at timestamptz not null default now(),
+  primary key (user_id, family_id, slot)
+);
+
+create index if not exists member_equipped_items_family_user_idx on public.member_equipped_items (family_id, user_id);
+
+alter table public.shop_items enable row level security;
+alter table public.member_owned_items enable row level security;
+alter table public.member_equipped_items enable row level security;
+
+-- The catalog is the same for everyone -- no family-scoping to check.
+drop policy if exists shop_items_select on public.shop_items;
+create policy shop_items_select on public.shop_items
+for select
+using (true);
+
+-- Ownership/equipped state: visible to the whole room (that's the point of
+-- a character -- other members see it), written only through the RPCs
+-- below (both security definer, so client-side insert/update/delete grants
+-- are deliberately never given on these two tables).
+drop policy if exists member_owned_items_select on public.member_owned_items;
+create policy member_owned_items_select on public.member_owned_items
+for select
+using (public.is_family_member(family_id));
+
+drop policy if exists member_equipped_items_select on public.member_equipped_items;
+create policy member_equipped_items_select on public.member_equipped_items
+for select
+using (public.is_family_member(family_id));
+
+create or replace function public.purchase_item(p_family_id uuid, p_item_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_item public.shop_items;
+  v_balance integer;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select * into v_item from public.shop_items where id = p_item_id;
+  if v_item is null or v_item.acquisition_type <> 'purchase' then
+    raise exception 'item_not_purchasable' using errcode = 'P0001';
+  end if;
+
+  if exists (select 1 from public.member_owned_items where user_id = v_uid and family_id = p_family_id and item_id = p_item_id) then
+    raise exception 'already_owned' using errcode = 'P0001';
+  end if;
+
+  -- Only 'points' is wired up to an actual balance so far -- 'tycoon'
+  -- items can't be bought yet since the tycoon currency doesn't exist.
+  if v_item.currency <> 'points' then
+    raise exception 'currency_not_available' using errcode = 'P0001';
+  end if;
+
+  select points into v_balance from public.family_members where family_id = p_family_id and user_id = v_uid;
+  if coalesce(v_balance, 0) < v_item.price then
+    raise exception 'insufficient_points' using errcode = 'P0001';
+  end if;
+
+  update public.family_members set points = points - v_item.price where family_id = p_family_id and user_id = v_uid;
+
+  insert into public.member_owned_items (user_id, family_id, item_id) values (v_uid, p_family_id, p_item_id);
+end;
+$$;
+
+create or replace function public.equip_item(p_family_id uuid, p_item_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_slot text;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select slot into v_slot from public.shop_items where id = p_item_id;
+  if v_slot is null then
+    raise exception 'item_not_found' using errcode = 'P0002';
+  end if;
+
+  if not exists (select 1 from public.member_owned_items where user_id = v_uid and family_id = p_family_id and item_id = p_item_id) then
+    raise exception 'item_not_owned' using errcode = 'P0001';
+  end if;
+
+  insert into public.member_equipped_items (user_id, family_id, slot, item_id)
+  values (v_uid, p_family_id, v_slot, p_item_id)
+  on conflict (user_id, family_id, slot) do update set item_id = excluded.item_id, equipped_at = now();
+end;
+$$;
+
+create or replace function public.unequip_item(p_family_id uuid, p_slot text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  delete from public.member_equipped_items where user_id = v_uid and family_id = p_family_id and slot = p_slot;
+end;
+$$;
+
+grant select on public.shop_items to authenticated;
+grant select on public.member_owned_items to authenticated;
+grant select on public.member_equipped_items to authenticated;
+grant execute on function public.purchase_item(uuid, uuid) to authenticated;
+grant execute on function public.equip_item(uuid, uuid) to authenticated;
+grant execute on function public.unequip_item(uuid, text) to authenticated;
+
+revoke execute on function public.purchase_item(uuid, uuid) from anon, public;
+revoke execute on function public.equip_item(uuid, uuid) from anon, public;
+revoke execute on function public.unequip_item(uuid, text) from anon, public;
+
+-- Starter catalog, points-currency only, ~3-4 items per slot (title
+-- excluded -- see the section comment above). Deliberately small -- meant
+-- to prove the system works end to end, not to be the final content list
+-- (GAMIFICATION_DESIGN.md section 14 tracks that as still open). Guarded
+-- by name so re-running schema.sql doesn't duplicate rows.
+insert into public.shop_items (slot, name, sprite_key, acquisition_type, currency, price, sort_order)
+select * from (values
+  ('body', '기본 피부', '#F4C99B', 'purchase', 'points', 0, 0),
+  ('body', '하양 피부', '#FBEFE3', 'purchase', 'points', 20, 1),
+  ('body', '초코 피부', '#8C5A3B', 'purchase', 'points', 20, 2),
+  ('body', '파스텔 피부', '#E3C9F4', 'purchase', 'points', 40, 3),
+
+  ('background', '맑은 하늘', '#BEE3F8', 'purchase', 'points', 0, 0),
+  ('background', '노을', '#F8C9A3', 'purchase', 'points', 30, 1),
+  ('background', '밤하늘', '#2B2F52', 'purchase', 'points', 30, 2),
+  ('background', '민트', '#C6F0DE', 'purchase', 'points', 30, 3),
+
+  ('top', '기본 티셔츠', '#9CA3AF', 'purchase', 'points', 0, 0),
+  ('top', '빨강 후드', '#E14B4B', 'purchase', 'points', 25, 1),
+  ('top', '파랑 셔츠', '#3B82F6', 'purchase', 'points', 25, 2),
+  ('top', '노랑 니트', '#F4C542', 'purchase', 'points', 25, 3),
+
+  ('pants', '기본 바지', '#6B7280', 'purchase', 'points', 0, 0),
+  ('pants', '청바지', '#3D5A80', 'purchase', 'points', 20, 1),
+  ('pants', '체크 반바지', '#7A5C3E', 'purchase', 'points', 20, 2),
+
+  ('shoes', '기본 신발', '#4B5563', 'purchase', 'points', 0, 0),
+  ('shoes', '빨강 운동화', '#D1495B', 'purchase', 'points', 15, 1),
+  ('shoes', '하양 운동화', '#F3F4F6', 'purchase', 'points', 15, 2),
+
+  ('head', '민머리', '', 'purchase', 'points', 0, 0),
+  ('head', '왕관', '👑', 'purchase', 'points', 80, 1),
+  ('head', '모자', '🧢', 'purchase', 'points', 30, 2),
+  ('head', '리본', '🎀', 'purchase', 'points', 30, 3),
+
+  ('weapon', '맨손', '', 'purchase', 'points', 0, 0),
+  ('weapon', '검', '⚔️', 'purchase', 'points', 50, 1),
+  ('weapon', '지팡이', '🪄', 'purchase', 'points', 50, 2),
+  ('weapon', '망치', '🔨', 'purchase', 'points', 50, 3),
+
+  ('shield', '없음', '', 'purchase', 'points', 0, 0),
+  ('shield', '방패', '🛡️', 'purchase', 'points', 50, 1),
+
+  ('accessory1', '없음', '', 'purchase', 'points', 0, 0),
+  ('accessory1', '선글라스', '🕶️', 'purchase', 'points', 25, 1),
+  ('accessory1', '반지', '💍', 'purchase', 'points', 35, 2),
+
+  ('accessory2', '없음', '', 'purchase', 'points', 0, 0),
+  ('accessory2', '별', '⭐', 'purchase', 'points', 25, 1),
+  ('accessory2', '하트', '💗', 'purchase', 'points', 25, 2)
+) as seed(slot, name, sprite_key, acquisition_type, currency, price, sort_order)
+where not exists (
+  select 1 from public.shop_items existing
+  where existing.slot = seed.slot and existing.name = seed.name
+);
 
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification

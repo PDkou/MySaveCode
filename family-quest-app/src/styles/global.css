@@ -2682,3 +2682,143 @@ textarea {
   white-space: nowrap;
   border: 0;
 }
+
+/* ---------- Character sprite (placeholder, no real art yet) ---------- */
+
+.character-sprite {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.character-sprite-body,
+.character-sprite-top,
+.character-sprite-pants,
+.character-sprite-shoes {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 20%;
+}
+
+.character-sprite-body {
+  top: 8%;
+  border-radius: 50%;
+}
+
+.character-sprite-top {
+  top: 46%;
+}
+
+.character-sprite-pants {
+  top: 66%;
+}
+
+.character-sprite-shoes {
+  top: 84%;
+  border-radius: 30%;
+}
+
+.character-sprite-emoji {
+  position: absolute;
+  line-height: 1;
+}
+
+.character-sprite-head {
+  top: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.character-sprite-weapon {
+  top: 45%;
+  left: 4%;
+}
+
+.character-sprite-shield {
+  top: 45%;
+  right: 4%;
+}
+
+.character-sprite-accessory1 {
+  top: 30%;
+  left: 8%;
+}
+
+.character-sprite-accessory2 {
+  top: 30%;
+  right: 8%;
+}
+
+/* ---------- Shop / character modal ---------- */
+
+.shop-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.shop-balance {
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.shop-slot-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.shop-slot-tab {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.shop-slot-tab-active {
+  border-color: var(--purple);
+  color: var(--purple);
+  background: color-mix(in srgb, var(--purple) 12%, transparent);
+  font-weight: 700;
+}
+
+.shop-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.shop-item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.shop-item-row-equipped {
+  border-color: var(--purple);
+  background: color-mix(in srgb, var(--purple) 8%, transparent);
+}
+
+.shop-item-sprite {
+  font-size: 20px;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.shop-item-name {
+  flex: 1;
+  font-size: 14px;
+  color: var(--navy);
+}
