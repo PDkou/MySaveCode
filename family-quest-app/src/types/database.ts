@@ -24,11 +24,14 @@ export type ProfileRow = {
   updated_at: string;
 };
 
+export type FamilyRoomType = 'family' | 'business';
+
 export type FamilyRow = {
   id: string;
   name: string;
   invite_code: string;
   created_by: string;
+  room_type: FamilyRoomType;
   created_at: string;
   updated_at: string;
 };
@@ -102,6 +105,8 @@ export type NotificationPrefsRow = {
   notify_completed: boolean;
   notify_reopened: boolean;
   notify_comment: boolean;
+  notify_overdue: boolean;
+  notify_weekly_summary: boolean;
   updated_at: string;
 };
 
@@ -208,7 +213,7 @@ export type Database = {
     Views: Record<string, never>;
     Functions: {
       create_family_room: {
-        Args: { p_name: string };
+        Args: { p_name: string; p_room_type?: FamilyRoomType };
         Returns: FamilyRow;
       };
       join_family_room: {

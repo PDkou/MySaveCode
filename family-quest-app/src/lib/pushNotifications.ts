@@ -5,7 +5,7 @@ const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
 export type PushState = 'unsupported' | 'denied' | 'subscribed' | 'unsubscribed';
 
-export type NotificationEventType = 'due' | 'created' | 'completed' | 'reopened' | 'comment';
+export type NotificationEventType = 'due' | 'created' | 'completed' | 'reopened' | 'comment' | 'overdue' | 'weeklySummary';
 
 const DEFAULT_PREFS: Record<NotificationEventType, boolean> = {
   due: true,
@@ -13,6 +13,8 @@ const DEFAULT_PREFS: Record<NotificationEventType, boolean> = {
   completed: true,
   reopened: true,
   comment: true,
+  overdue: true,
+  weeklySummary: true,
 };
 
 // No row yet (the common case -- most people never touch these toggles)
@@ -20,7 +22,7 @@ const DEFAULT_PREFS: Record<NotificationEventType, boolean> = {
 export async function getNotificationPrefs(userId: string, familyId: string): Promise<Record<NotificationEventType, boolean>> {
   const { data } = await supabase
     .from('notification_prefs')
-    .select('notify_due, notify_created, notify_completed, notify_reopened, notify_comment')
+    .select('notify_due, notify_created, notify_completed, notify_reopened, notify_comment, notify_overdue, notify_weekly_summary')
     .eq('user_id', userId)
     .eq('family_id', familyId)
     .maybeSingle();
@@ -31,6 +33,8 @@ export async function getNotificationPrefs(userId: string, familyId: string): Pr
     completed: data.notify_completed,
     reopened: data.notify_reopened,
     comment: data.notify_comment,
+    overdue: data.notify_overdue,
+    weeklySummary: data.notify_weekly_summary,
   };
 }
 
@@ -46,6 +50,8 @@ export async function setNotificationPref(
     completed: { notify_completed: enabled },
     reopened: { notify_reopened: enabled },
     comment: { notify_comment: enabled },
+    overdue: { notify_overdue: enabled },
+    weeklySummary: { notify_weekly_summary: enabled },
   }[eventType];
   const { error } = await supabase
     .from('notification_prefs')

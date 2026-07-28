@@ -853,6 +853,29 @@ textarea {
   background: var(--border);
 }
 
+.family-purpose-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.family-purpose-option {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.family-purpose-option-active {
+  border-color: var(--purple);
+  color: var(--purple);
+  background: color-mix(in srgb, var(--purple) 12%, transparent);
+  font-weight: 600;
+}
+
 /* ---------- Dashboard ---------- */
 
 .family-info {

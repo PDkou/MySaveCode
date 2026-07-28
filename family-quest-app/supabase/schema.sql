@@ -23,6 +23,7 @@
 --  14. Task comments (progress notes / replies / reactions)
 --  15. Event-driven push notifications (created/completed/reopened/comment)
 --  16. Task templates (quick-select saved request content)
+--  17. Overdue escalation + weekly summary push notifications
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -56,9 +57,24 @@ create table if not exists public.families (
   name text not null,
   invite_code text not null unique,
   created_by uuid not null references auth.users(id),
+  -- Purely a feature-gate flag -- a 'business' room is otherwise an
+  -- ordinary family room (same tables, same RLS). Lets the client show
+  -- business-only UI (e.g. the weekly breakdown's CSV export) without
+  -- guessing from member count or room name.
+  room_type text not null default 'family',
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint families_room_type_check check (room_type in ('family', 'business'))
 );
+
+-- Upgrades an already-deployed database from before room_type existed.
+alter table public.families add column if not exists room_type text not null default 'family';
+do $$
+begin
+  alter table public.families add constraint families_room_type_check check (room_type in ('family', 'business'));
+exception
+  when duplicate_object then null;
+end $$;
 
 create table if not exists public.family_members (
   id uuid primary key default gen_random_uuid(),
@@ -126,6 +142,11 @@ create table if not exists public.tasks (
   recurrence_weekdays smallint[],
   pinned boolean not null default false,
   due_reminder_sent_for timestamptz,
+  -- Same "sent for this due_at" pattern as due_reminder_sent_for, but for
+  -- the overdue-escalation push (see section 13) -- kept as a separate
+  -- column since the two fire at different lead times and shouldn't
+  -- suppress each other.
+  overdue_notified_for timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint tasks_status_check check (status in ('open', 'done')),
@@ -147,6 +168,7 @@ alter table public.tasks add column if not exists starts_at timestamptz;
 -- until a reminder fires; if due_at is later edited, this stops matching
 -- the new due_at so a fresh reminder becomes eligible automatically.
 alter table public.tasks add column if not exists due_reminder_sent_for timestamptz;
+alter table public.tasks add column if not exists overdue_notified_for timestamptz;
 
 -- Upgrades an already-deployed database from before recurrence existed.
 -- No-op on a fresh install (the create table above already has the
@@ -413,7 +435,7 @@ begin
 end;
 $$;
 
-create or replace function public.create_family_room(p_name text)
+create or replace function public.create_family_room(p_name text, p_room_type text default 'family')
 returns public.families
 language plpgsql
 security definer
@@ -422,6 +444,7 @@ as $$
 declare
   v_uid uuid := auth.uid();
   v_name text := trim(coalesce(p_name, ''));
+  v_room_type text := coalesce(p_room_type, 'family');
   v_code text;
   v_family public.families;
   v_attempts integer := 0;
@@ -435,6 +458,10 @@ begin
     raise exception 'invalid_family_name' using errcode = '22023';
   end if;
 
+  if v_room_type not in ('family', 'business') then
+    raise exception 'invalid_room_type' using errcode = '22023';
+  end if;
+
   loop
     v_code := public.generate_invite_code();
     v_attempts := v_attempts + 1;
@@ -444,8 +471,8 @@ begin
     end if;
   end loop;
 
-  insert into public.families (name, invite_code, created_by)
-  values (v_name, v_code, v_uid)
+  insert into public.families (name, invite_code, created_by, room_type)
+  values (v_name, v_code, v_uid, v_room_type)
   returning * into v_family;
 
   select display_name into v_display_name from public.profiles where id = v_uid;
@@ -1280,7 +1307,7 @@ grant select, insert, delete on public.task_assignees to authenticated;
 grant select on public.task_activities to authenticated;
 grant select on public.member_badges to authenticated;
 
-grant execute on function public.create_family_room(text) to authenticated;
+grant execute on function public.create_family_room(text, text) to authenticated;
 grant execute on function public.join_family_room(text) to authenticated;
 grant execute on function public.leave_family(uuid) to authenticated;
 grant execute on function public.remove_family_member(uuid, uuid) to authenticated;
@@ -1290,7 +1317,7 @@ grant execute on function public.update_task(uuid, text, text, timestamptz, uuid
 grant execute on function public.complete_task(uuid, text, text) to authenticated;
 grant execute on function public.reopen_task(uuid) to authenticated;
 
-revoke execute on function public.create_family_room(text) from anon, public;
+revoke execute on function public.create_family_room(text, text) from anon, public;
 revoke execute on function public.join_family_room(text) from anon, public;
 revoke execute on function public.leave_family(uuid) from anon, public;
 revoke execute on function public.remove_family_member(uuid, uuid) from anon, public;
@@ -1660,9 +1687,18 @@ create table if not exists public.notification_prefs (
   notify_completed boolean not null default true,
   notify_reopened boolean not null default true,
   notify_comment boolean not null default true,
+  -- Escalation for a task that passed its due_at while still open (see
+  -- section 13's handleDueReminders) and the Monday-morning per-family
+  -- completion digest (see section 17).
+  notify_overdue boolean not null default true,
+  notify_weekly_summary boolean not null default true,
   updated_at timestamptz not null default now(),
   primary key (user_id, family_id)
 );
+
+-- Upgrades an already-deployed database from before these two existed.
+alter table public.notification_prefs add column if not exists notify_overdue boolean not null default true;
+alter table public.notification_prefs add column if not exists notify_weekly_summary boolean not null default true;
 
 alter table public.notification_prefs enable row level security;
 
@@ -1684,6 +1720,35 @@ with check (user_id = auth.uid());
 
 grant select, insert, update on public.notification_prefs to authenticated;
 revoke all on public.notification_prefs from anon, public;
+
+-- -----------------------------------------------------------------------------
+-- 17. Overdue escalation + weekly summary push notifications
+--
+-- Two more calls into the same send-due-reminders Edge Function (see section
+-- 13), on their own schedules:
+--   a. Overdue escalation piggybacks on the existing per-minute cron job --
+--      no new schedule needed, handleDueReminders (the function's empty-body
+--      path) now also checks for newly-overdue tasks on every run.
+--   b. Weekly summary needs its own schedule (once a week, not every
+--      minute), dispatched via a distinct request body so the function can
+--      tell it apart from the per-minute due-reminder call. Uncomment after
+--      deploying the updated Edge Function, same as section 13's job.
+-- -----------------------------------------------------------------------------
+
+-- select cron.schedule(
+--   'send-weekly-summary',
+--   '0 0 * * 1', -- Monday 00:00 UTC = Monday 09:00 KST/JST
+--   $$
+--   select net.http_post(
+--     url := 'https://<PROJECT_REF>.supabase.co/functions/v1/send-due-reminders',
+--     headers := jsonb_build_object(
+--       'Content-Type', 'application/json',
+--       'Authorization', 'Bearer <ANON_KEY>'
+--     ),
+--     body := '{"weekly_summary": true}'::jsonb
+--   );
+--   $$
+-- );
 
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification

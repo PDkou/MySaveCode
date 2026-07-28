@@ -70,9 +70,12 @@
     "personalButton": "個人用で始める",
     "personalStarting": "作成中...",
     "orDivider": "または一緒に使う",
-    "createHeading": "家族ルームを作成",
-    "createNameLabel": "家族ルーム名",
-    "createNamePlaceholder": "例: わが家",
+    "createHeading": "新しいルームを作成",
+    "createNameLabel": "ルーム名",
+    "createNamePlaceholder": "例: わが家、マーケティングチーム",
+    "purposeLabel": "用途",
+    "purposeFamily": "家族用",
+    "purposeBusiness": "会社・チーム用",
     "createButton": "作成する",
     "creating": "作成中...",
     "joinHeading": "家族ルームに参加",
@@ -244,7 +247,9 @@
       "created": "新しいクエスト割り当ての通知",
       "completed": "完了通知",
       "reopened": "進行中に戻した通知",
-      "comment": "コメント通知"
+      "comment": "コメント通知",
+      "overdue": "期限超過の通知",
+      "weeklySummary": "週間レポートの通知"
     }
   },
   "profile": {
@@ -353,7 +358,11 @@
     "empty": "今週完了したクエストはまだありません。",
     "total": "今週の家族全体の完了 {{count}}件",
     "mvp": "今週のMVP",
-    "streak": "{{count}}日連続達成中"
+    "streak": "{{count}}日連続達成中",
+    "exportCsv": "レポートをCSVで書き出す",
+    "csvTitle": "タイトル",
+    "csvAssignee": "担当者",
+    "csvCompletedAt": "完了日時"
   },
   "stats": {
     "heading": "わたしの記録",

@@ -16,7 +16,7 @@ import {
 } from '../lib/pushNotifications';
 import type { NotificationEventType, PushState } from '../lib/pushNotifications';
 
-const EVENT_TYPES: NotificationEventType[] = ['due', 'created', 'completed', 'reopened', 'comment'];
+const EVENT_TYPES: NotificationEventType[] = ['due', 'created', 'completed', 'reopened', 'comment', 'overdue', 'weeklySummary'];
 
 export function NotificationBell() {
   const { t, i18n } = useTranslation();

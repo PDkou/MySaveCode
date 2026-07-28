@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useFamily, FamilyActionError } from '../context/FamilyContext';
+import type { FamilyRoomType } from '../types/database';
 
 interface FamilyOnboardingFormsProps {
   onSuccess?: () => void;
@@ -13,6 +14,7 @@ export function FamilyOnboardingForms({ onSuccess }: FamilyOnboardingFormsProps)
   const { createFamily, joinFamily } = useFamily();
 
   const [familyName, setFamilyName] = useState('');
+  const [roomType, setRoomType] = useState<FamilyRoomType>('family');
   const [creating, setCreating] = useState(false);
   const [createErrorKey, setCreateErrorKey] = useState<string | null>(null);
 
@@ -46,7 +48,7 @@ export function FamilyOnboardingForms({ onSuccess }: FamilyOnboardingFormsProps)
     }
     setCreating(true);
     try {
-      await createFamily(familyName.trim());
+      await createFamily(familyName.trim(), roomType);
       setFamilyName('');
       onSuccess?.();
     } catch (err) {
@@ -125,6 +127,29 @@ export function FamilyOnboardingForms({ onSuccess }: FamilyOnboardingFormsProps)
             maxLength={60}
           />
         </label>
+        <div className="field">
+          <span>{t('family.purposeLabel')}</span>
+          <div className="family-purpose-toggle" role="radiogroup" aria-label={t('family.purposeLabel')}>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={roomType === 'family'}
+              className={`family-purpose-option ${roomType === 'family' ? 'family-purpose-option-active' : ''}`}
+              onClick={() => setRoomType('family')}
+            >
+              {t('family.purposeFamily')}
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={roomType === 'business'}
+              className={`family-purpose-option ${roomType === 'business' ? 'family-purpose-option-active' : ''}`}
+              onClick={() => setRoomType('business')}
+            >
+              {t('family.purposeBusiness')}
+            </button>
+          </div>
+        </div>
         {createErrorKey && <p className="form-error" role="alert">{t(createErrorKey)}</p>}
         <button type="submit" className="btn btn-primary btn-block" disabled={creating}>
           {creating ? t('family.creating') : t('family.createButton')}
