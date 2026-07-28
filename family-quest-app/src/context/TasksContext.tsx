@@ -49,8 +49,15 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[] | null>(null);
   const pendingTimerRef = useRef<number | null>(null);
 
-  const load = useCallback(async (familyId: string) => {
-    setLoading(true);
+  // `silent` skips the loading flag -- right for the very first load, but
+  // every task mutation (create/complete/pin/delete) also calls this via
+  // refresh(), and the realtime subscription below calls it on every
+  // postgres_changes event (including echoes of your own writes). None of
+  // those should swap the whole task list out for a spinner and back; the
+  // list should just update in place.
+  const load = useCallback(async (familyId: string, options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) setLoading(true);
     try {
       const [{ data: taskRows, error: tasksErr }, { data: assigneeRows, error: assigneesErr }] = await Promise.all([
         supabase
@@ -74,7 +81,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       setRawTasks(taskRows ?? []);
       setAssigneesByTaskId(map);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -94,14 +101,14 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'tasks', filter: `family_id=eq.${family.id}` },
         () => {
-          void load(family.id);
+          void load(family.id, { silent: true });
         },
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'task_assignees', filter: `family_id=eq.${family.id}` },
         () => {
-          void load(family.id);
+          void load(family.id, { silent: true });
         },
       )
       .subscribe();
@@ -113,7 +120,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     if (family) {
-      await load(family.id);
+      await load(family.id, { silent: true });
     }
   }, [family, load]);
 
