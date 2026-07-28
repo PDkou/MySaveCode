@@ -212,6 +212,27 @@ select cron.schedule(
 
 **`ERROR: schema "cron" does not exist`가 뜬다면**: `pg_cron` extension이 아직 안 켜진 것입니다. 위 3-1-0에서 `schema.sql`을 다시 실행했는데도 이 오류가 나면, SQL로 켜는 대신 대시보드에서 직접 켜세요 — 왼쪽 메뉴 **Database → Extensions** → 검색창에 `pg_cron` 입력 → 토글로 활성화 (`pg_net`도 같은 방법으로 활성화). 이후 위 `cron.schedule(...)` 블록을 다시 실행하면 됩니다.
 
+**마감 초과(에스컬레이션) 알림**은 별도 스케줄 없이 위 `send-due-reminders` 크론(매분 실행)에 얹혀서 함께 처리됩니다 — 추가 설정 불필요.
+
+**주간 리포트 알림**(매주 월요일 오전 9시)은 별도 스케줄이 하나 더 필요합니다. 위와 같은 SQL Editor에서 아래를 한 번 더 실행하세요:
+
+```sql
+select cron.schedule(
+  'send-weekly-summary',
+  '0 0 * * 1',
+  $$
+  select net.http_post(
+    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/send-due-reminders',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
+    ),
+    body := '{"weekly_summary": true}'::jsonb
+  );
+  $$
+);
+```
+
 ### 3-1-4. Vercel 환경변수 추가
 
 위 3단계 "배포 (Vercel 예시)"에서 `VITE_VAPID_PUBLIC_KEY`를 추가하지 않았다면 Vercel 프로젝트 설정 → Environment Variables에 추가 후 **Redeploy**.

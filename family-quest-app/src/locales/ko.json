@@ -70,10 +70,13 @@
     "personalButton": "개인용으로 시작하기",
     "personalStarting": "만드는 중...",
     "orDivider": "또는 함께 쓰기",
-    "createHeading": "새 가족방 만들기",
-    "createNameLabel": "가족방 이름",
-    "createNamePlaceholder": "예: 우리 가족",
-    "createButton": "가족방 만들기",
+    "createHeading": "새 방 만들기",
+    "createNameLabel": "방 이름",
+    "createNamePlaceholder": "예: 우리 가족, 마케팅팀",
+    "purposeLabel": "용도",
+    "purposeFamily": "가족용",
+    "purposeBusiness": "회사·팀용",
+    "createButton": "방 만들기",
     "creating": "만드는 중...",
     "joinHeading": "가족방 참여하기",
     "joinCodeLabel": "초대 코드 (8자리)",
@@ -244,7 +247,9 @@
       "created": "새 퀘스트 배정 알림",
       "completed": "완료 알림",
       "reopened": "다시 진행 알림",
-      "comment": "댓글 알림"
+      "comment": "댓글 알림",
+      "overdue": "마감 초과 알림",
+      "weeklySummary": "주간 리포트 알림"
     }
   },
   "profile": {
@@ -353,7 +358,11 @@
     "empty": "이번 주에 완료한 퀘스트가 아직 없습니다.",
     "total": "이번 주 가족 전체 완료 {{count}}개",
     "mvp": "이번 주 MVP",
-    "streak": "{{count}}일 연속 완료 중"
+    "streak": "{{count}}일 연속 완료 중",
+    "exportCsv": "리포트 CSV로 내보내기",
+    "csvTitle": "제목",
+    "csvAssignee": "담당자",
+    "csvCompletedAt": "완료 일시"
   },
   "stats": {
     "heading": "나의 기록",

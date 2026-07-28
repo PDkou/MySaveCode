@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
 import { getAvatarPhotoUrls } from '../lib/avatarPhotos';
-import type { FamilyMemberRow, FamilyRow } from '../types/database';
+import type { FamilyMemberRow, FamilyRoomType, FamilyRow } from '../types/database';
 
 export class FamilyActionError extends Error {
   translationKey: string;
@@ -41,7 +41,7 @@ interface FamilyContextValue {
   members: FamilyMember[];
   avatarUrlByUserId: Map<string, string>;
   loading: boolean;
-  createFamily: (name: string) => Promise<void>;
+  createFamily: (name: string, roomType?: FamilyRoomType) => Promise<void>;
   joinFamily: (code: string) => Promise<void>;
   renameFamily: (name: string) => Promise<void>;
   updateMyDisplayName: (name: string) => Promise<void>;
@@ -186,8 +186,8 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     [user, load],
   );
 
-  const createFamily = useCallback(async (name: string) => {
-    const { data, error } = await supabase.rpc('create_family_room', { p_name: name });
+  const createFamily = useCallback(async (name: string, roomType: FamilyRoomType = 'family') => {
+    const { data, error } = await supabase.rpc('create_family_room', { p_name: name, p_room_type: roomType });
     if (error) {
       throw new FamilyActionError(mapFamilyErrorToKey(error.message));
     }

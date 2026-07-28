@@ -33,7 +33,14 @@ interface PushSubscriptionRow {
   auth_key: string;
 }
 
-type NotifyColumn = 'notify_due' | 'notify_created' | 'notify_completed' | 'notify_reopened' | 'notify_comment';
+type NotifyColumn =
+  | 'notify_due'
+  | 'notify_created'
+  | 'notify_completed'
+  | 'notify_reopened'
+  | 'notify_comment'
+  | 'notify_overdue'
+  | 'notify_weekly_summary';
 
 // A missing notification_prefs row means "everything on" (most users never
 // touch these toggles), so this only ever *removes* ids whose row explicitly
@@ -141,7 +148,162 @@ async function handleDueReminders(supabase: SupabaseClient): Promise<Response> {
     await supabase.from('tasks').update({ due_reminder_sent_for: task.due_at }).eq('id', task.id);
   }
 
-  return new Response(JSON.stringify({ tasksChecked: eligibleTasks.length, notificationsSent: sentCount }), {
+  const escalationSentCount = await runOverdueEscalation(supabase, now);
+
+  return new Response(
+    JSON.stringify({
+      tasksChecked: eligibleTasks.length,
+      notificationsSent: sentCount + escalationSentCount,
+    }),
+    { status: 200, headers: { 'Content-Type': 'application/json' } },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Path 1b: overdue escalation -- piggybacks on the same per-minute cron as
+// the due reminder above, but fires later (once a task has actually gone
+// overdue while still open) and reaches the creator too, not just whoever
+// it's assigned to, since the point is raising the whole room's awareness
+// rather than a second nudge to the same person.
+// ---------------------------------------------------------------------------
+
+const ESCALATION_LEAD_MINUTES = 60;
+const ESCALATION_CATCHUP_WINDOW_MINUTES = 15;
+
+const OVERDUE_BODY_TEXT: Record<string, string> = {
+  ko: '마감이 지났는데 아직 완료되지 않았어요. 확인해주세요!',
+  ja: '期限を過ぎていますが、まだ完了していません。確認してください!',
+};
+
+async function runOverdueEscalation(supabase: SupabaseClient, now: Date): Promise<number> {
+  const leadMs = ESCALATION_LEAD_MINUTES * 60 * 1000;
+  const catchupMs = ESCALATION_CATCHUP_WINDOW_MINUTES * 60 * 1000;
+  const dueAtUpperBound = new Date(now.getTime() - leadMs).toISOString();
+  const dueAtLowerBound = new Date(now.getTime() - leadMs - catchupMs).toISOString();
+
+  const { data: overdueTasks } = await supabase
+    .from('tasks')
+    .select('id, title, family_id, created_by, due_at, overdue_notified_for')
+    .eq('status', 'open')
+    .lte('due_at', dueAtUpperBound)
+    .gt('due_at', dueAtLowerBound);
+
+  const eligibleTasks = (overdueTasks ?? []).filter((task) => task.overdue_notified_for !== task.due_at);
+  let sentCount = 0;
+
+  for (const task of eligibleTasks) {
+    const { data: assignees } = await supabase.from('task_assignees').select('user_id').eq('task_id', task.id);
+    const assigneeIds = (assignees ?? []).map((a) => a.user_id as string);
+    const recipientIds = Array.from(new Set([task.created_by as string, ...assigneeIds]));
+    const userIds = await filterByNotificationPref(supabase, task.family_id as string, recipientIds, 'notify_overdue');
+
+    if (userIds.length > 0) {
+      const [{ data: profiles }, { data: subscriptions }] = await Promise.all([
+        supabase.from('profiles').select('id, preferred_language').in('id', userIds),
+        supabase.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth_key').in('user_id', userIds),
+      ]);
+
+      const langById = new Map((profiles ?? []).map((p) => [p.id as string, p.preferred_language as string]));
+      const subsByLang = new Map<string, PushSubscriptionRow[]>();
+      for (const sub of (subscriptions ?? []) as PushSubscriptionRow[]) {
+        const lang = langById.get(sub.user_id) === 'ja' ? 'ja' : 'ko';
+        subsByLang.set(lang, [...(subsByLang.get(lang) ?? []), sub]);
+      }
+      for (const [lang, subs] of subsByLang) {
+        sentCount += await sendToSubscriptions(supabase, subs, { title: task.title, body: OVERDUE_BODY_TEXT[lang], taskId: task.id });
+      }
+    }
+
+    await supabase.from('tasks').update({ overdue_notified_for: task.due_at }).eq('id', task.id);
+  }
+
+  return sentCount;
+}
+
+// ---------------------------------------------------------------------------
+// Path 3: weekly summary -- a per-family completion digest sent once a week
+// to every opted-in member, dispatched on its own cron schedule (see schema
+// section 17) via a { weekly_summary: true } body, distinct from path 1's
+// empty-body call.
+// ---------------------------------------------------------------------------
+
+const WEEKLY_SUMMARY_TITLE: Record<string, string> = {
+  ko: '주간 리포트',
+  ja: '週間レポート',
+};
+
+function buildWeeklySummaryBody(lang: string, total: number, mvpName: string | null, mvpCount: number): string {
+  if (total === 0) {
+    return lang === 'ja' ? '今週完了したクエストはまだありません。' : '이번 주에 완료한 퀘스트가 아직 없어요.';
+  }
+  if (mvpName) {
+    return lang === 'ja'
+      ? `今週の完了は${total}件! MVPは${mvpName}さん(${mvpCount}件)`
+      : `이번 주 완료 ${total}개! MVP는 ${mvpName}님 (${mvpCount}개)`;
+  }
+  return lang === 'ja' ? `今週の完了は${total}件でした。` : `이번 주 완료 ${total}개예요.`;
+}
+
+async function handleWeeklySummary(supabase: SupabaseClient): Promise<Response> {
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: subscriptionFamilies } = await supabase.from('push_subscriptions').select('family_id');
+  const familyIds = Array.from(new Set((subscriptionFamilies ?? []).map((r) => r.family_id as string)));
+  let sentCount = 0;
+
+  for (const familyId of familyIds) {
+    const { data: completedTasks } = await supabase
+      .from('tasks')
+      .select('completed_by')
+      .eq('family_id', familyId)
+      .eq('status', 'done')
+      .gte('completed_at', weekAgo);
+
+    const total = (completedTasks ?? []).length;
+    const countByUser = new Map<string, number>();
+    (completedTasks ?? []).forEach((row) => {
+      const userId = row.completed_by as string | null;
+      if (!userId) return;
+      countByUser.set(userId, (countByUser.get(userId) ?? 0) + 1);
+    });
+
+    let mvpUserId: string | null = null;
+    let mvpCount = 0;
+    for (const [userId, count] of countByUser) {
+      if (count > mvpCount) {
+        mvpUserId = userId;
+        mvpCount = count;
+      }
+    }
+
+    const { data: memberRows } = await supabase.from('family_members').select('user_id').eq('family_id', familyId);
+    const memberIds = (memberRows ?? []).map((m) => m.user_id as string);
+    const recipientIds = await filterByNotificationPref(supabase, familyId, memberIds, 'notify_weekly_summary');
+    if (recipientIds.length === 0) continue;
+
+    const [{ data: profiles }, { data: subscriptions }, { data: mvpMember }] = await Promise.all([
+      supabase.from('profiles').select('id, preferred_language').in('id', recipientIds),
+      supabase.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth_key').in('user_id', recipientIds),
+      mvpUserId
+        ? supabase.from('family_members').select('display_name').eq('family_id', familyId).eq('user_id', mvpUserId).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+
+    const mvpName = (mvpMember?.display_name as string | null | undefined) ?? null;
+    const langById = new Map((profiles ?? []).map((p) => [p.id as string, p.preferred_language as string]));
+    const subsByLang = new Map<string, PushSubscriptionRow[]>();
+    for (const sub of (subscriptions ?? []) as PushSubscriptionRow[]) {
+      const lang = langById.get(sub.user_id) === 'ja' ? 'ja' : 'ko';
+      subsByLang.set(lang, [...(subsByLang.get(lang) ?? []), sub]);
+    }
+    for (const [lang, subs] of subsByLang) {
+      const body = buildWeeklySummaryBody(lang, total, mvpName, mvpCount);
+      sentCount += await sendToSubscriptions(supabase, subs, { title: WEEKLY_SUMMARY_TITLE[lang], body, taskId: '' });
+    }
+  }
+
+  return new Response(JSON.stringify({ familiesChecked: familyIds.length, notificationsSent: sentCount }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });
@@ -270,6 +432,10 @@ Deno.serve(async (req: Request) => {
 
   if (isTaskEventPayload(body)) {
     return handleTaskEvent(supabase, body);
+  }
+
+  if (body && typeof body === 'object' && (body as Record<string, unknown>).weekly_summary === true) {
+    return handleWeeklySummary(supabase);
   }
 
   return handleDueReminders(supabase);

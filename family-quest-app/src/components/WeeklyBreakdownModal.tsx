@@ -10,20 +10,36 @@ interface WeeklyBreakdownModalProps {
   onClose: () => void;
 }
 
+// Wraps a CSV field in quotes and escapes embedded quotes only when needed
+// -- keeps the common case (plain names/titles) readable if opened as text.
+function csvField(value: string): string {
+  if (/[",\n]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
 export function WeeklyBreakdownModal({ onClose }: WeeklyBreakdownModalProps) {
-  const { t } = useTranslation();
-  const { members, avatarUrlByUserId } = useFamily();
+  const { t, i18n } = useTranslation();
+  const { family, members, avatarUrlByUserId } = useFamily();
   const { tasks } = useTasks();
 
   const STREAK_HIGHLIGHT_THRESHOLD = 3;
 
+  const weekStart = useMemo(() => startOfThisWeek(), []);
+
+  const completedThisWeek = useMemo(
+    () =>
+      tasks.filter(
+        (task) => task.status === 'done' && task.completed_at && task.completed_by && new Date(task.completed_at) >= weekStart,
+      ),
+    [tasks, weekStart],
+  );
+
   const rows = useMemo(() => {
-    const weekStart = startOfThisWeek();
     const countByUser = new Map<string, number>();
-    tasks.forEach((task) => {
-      if (task.status !== 'done' || !task.completed_at || !task.completed_by) return;
-      if (new Date(task.completed_at) < weekStart) return;
-      countByUser.set(task.completed_by, (countByUser.get(task.completed_by) ?? 0) + 1);
+    completedThisWeek.forEach((task) => {
+      countByUser.set(task.completed_by!, (countByUser.get(task.completed_by!) ?? 0) + 1);
     });
     const rawMax = Math.max(0, ...Array.from(countByUser.values()));
     const maxCount = Math.max(1, rawMax);
@@ -35,9 +51,33 @@ export function WeeklyBreakdownModal({ onClose }: WeeklyBreakdownModalProps) {
         pct: Math.round((entry.count / maxCount) * 100),
         isMvp: rawMax > 0 && entry.count === rawMax,
       }));
-  }, [tasks, members]);
+  }, [completedThisWeek, members]);
 
   const total = rows.reduce((sum, row) => sum + row.count, 0);
+
+  const handleExportCsv = () => {
+    const nameByUserId = new Map(members.map((m) => [m.user_id, m.display_name]));
+    const header = [t('weeklyBreakdown.csvTitle'), t('weeklyBreakdown.csvAssignee'), t('weeklyBreakdown.csvCompletedAt')];
+    const lines = [header.map(csvField).join(',')];
+    completedThisWeek
+      .slice()
+      .sort((a, b) => new Date(a.completed_at!).getTime() - new Date(b.completed_at!).getTime())
+      .forEach((task) => {
+        const assigneeName = nameByUserId.get(task.completed_by!) ?? '';
+        const completedAt = new Date(task.completed_at!).toLocaleString(i18n.language === 'ja' ? 'ja-JP' : 'ko-KR');
+        lines.push([task.title, assigneeName, completedAt].map(csvField).join(','));
+      });
+    // Leading BOM so Excel (still the most common CSV opener) detects UTF-8
+    // instead of misreading Korean/Japanese text as a legacy codepage.
+    const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateLabel = weekStart.toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `weekly-report-${dateLabel}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -70,6 +110,12 @@ export function WeeklyBreakdownModal({ onClose }: WeeklyBreakdownModalProps) {
               ))}
             </div>
           </>
+        )}
+
+        {family?.room_type === 'business' && total > 0 && (
+          <button type="button" className="btn btn-secondary btn-block" onClick={handleExportCsv}>
+            {t('weeklyBreakdown.exportCsv')}
+          </button>
         )}
 
         <div className="modal-actions">
