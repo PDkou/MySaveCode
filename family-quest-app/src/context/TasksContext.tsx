@@ -14,7 +14,14 @@ export interface NewTaskInput {
   recurrence: TaskRecurrence;
   startsAt: string | null;
   recurrenceWeekdays: number[] | null;
+  stakePoints: number;
 }
+
+// Thrown by createTask specifically for create_task's 'insufficient_points'
+// error, so the form can show a targeted message instead of the generic
+// "something went wrong" -- everything else about task creation still just
+// throws the raw Supabase error, unchanged.
+export class InsufficientPointsError extends Error {}
 
 const UNDO_WINDOW_MS = 5000;
 
@@ -124,8 +131,12 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       p_recurrence: input.recurrence,
       p_starts_at: input.startsAt,
       p_recurrence_weekdays: input.recurrence === 'weekly' ? input.recurrenceWeekdays : null,
+      p_stake_points: input.stakePoints,
     });
-    if (error) throw error;
+    if (error) {
+      if (error.message?.includes('insufficient_points')) throw new InsufficientPointsError(error.message);
+      throw error;
+    }
 
     await refresh();
   }, [family, user, refresh]);

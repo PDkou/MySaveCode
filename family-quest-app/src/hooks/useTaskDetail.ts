@@ -135,7 +135,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     // the celebration UI can diff before vs. after -- complete_task itself
     // still returns just the task row (unchanged API), see schema.sql.
     const [{ data: prevMember }, { data: prevBadgeRows }] = await Promise.all([
-      supabase.from('family_members').select('points, current_streak').eq('family_id', familyId).eq('user_id', user.id).maybeSingle(),
+      supabase.from('family_members').select('points, xp, current_streak').eq('family_id', familyId).eq('user_id', user.id).maybeSingle(),
       supabase.from('member_badges').select('badge_key').eq('family_id', familyId).eq('user_id', user.id),
     ]);
     const prevBadgeKeys = new Set((prevBadgeRows ?? []).map((b) => b.badge_key));
@@ -155,7 +155,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     if (!prevMember) return null;
 
     const [{ data: newMember }, { data: newBadgeRows }] = await Promise.all([
-      supabase.from('family_members').select('points, current_streak').eq('family_id', familyId).eq('user_id', user.id).maybeSingle(),
+      supabase.from('family_members').select('points, xp, current_streak').eq('family_id', familyId).eq('user_id', user.id).maybeSingle(),
       supabase.from('member_badges').select('badge_key').eq('family_id', familyId).eq('user_id', user.id),
     ]);
     if (!newMember) return null;
@@ -163,8 +163,8 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     const newBadges = (newBadgeRows ?? [])
       .map((b) => b.badge_key as BadgeKey)
       .filter((key) => !prevBadgeKeys.has(key));
-    const prevLevel = levelForPoints(prevMember.points);
-    const newLevel = levelForPoints(newMember.points);
+    const prevLevel = levelForPoints(prevMember.xp);
+    const newLevel = levelForPoints(newMember.xp);
 
     return {
       pointsGained: newMember.points - prevMember.points,
