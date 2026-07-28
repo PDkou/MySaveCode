@@ -41,6 +41,7 @@ export type ShopItemRow = {
   price: number | null;
   sort_order: number;
   key: string | null;
+  hidden: boolean;
   created_at: string;
 };
 
@@ -90,6 +91,7 @@ export type ProfileRow = {
   display_name: string;
   preferred_language: AppLanguageCode;
   avatar_path: string | null;
+  birthday: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -122,6 +124,9 @@ export type FamilyMemberRow = {
   everyone_completed_count: number;
   first_come_completed_count: number;
   lifetime_points_spent: number;
+  last_seen_date: string | null;
+  login_streak: number;
+  last_heartbeat_at: string | null;
   joined_at: string;
 };
 
@@ -404,6 +409,14 @@ export type Database = {
       exchange_tycoon_currency: {
         Args: { p_family_id: string; p_currency_amount: number };
         Returns: TycoonStateRow;
+      };
+      record_login: {
+        Args: { p_family_id: string };
+        Returns: void;
+      };
+      tap_heartbeat: {
+        Args: { p_family_id: string };
+        Returns: void;
       };
     };
     Enums: Record<string, never>;

@@ -44,6 +44,7 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   setLanguage: (language: AppLanguageCode) => Promise<void>;
   updateDisplayName: (name: string) => Promise<void>;
+  updateBirthday: (birthday: string | null) => Promise<void>;
   updateAvatarPhoto: (blob: Blob) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
@@ -204,6 +205,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile((prev) => (prev ? { ...prev, display_name: trimmedName } : prev));
   }, [session]);
 
+  // Powers the "생일 선물" hidden title (GAMIFICATION_DESIGN.md section 13-B)
+  // -- purely optional, so null clears it rather than rejecting the update.
+  const updateBirthday = useCallback(async (birthday: string | null) => {
+    if (!session?.user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ birthday })
+      .eq('id', session.user.id);
+    if (error) {
+      throw new AuthActionError('auth.error.unknown');
+    }
+    setProfile((prev) => (prev ? { ...prev, birthday } : prev));
+  }, [session]);
+
   const updateAvatarPhoto = useCallback(async (blob: Blob) => {
     if (!session?.user) return;
     const userId = session.user.id;
@@ -256,13 +271,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     setLanguage,
     updateDisplayName,
+    updateBirthday,
     updateAvatarPhoto,
     sendPasswordReset,
     updatePassword,
     refreshProfile,
   }), [
     session, profile, avatarUrl, initializing, profileLoading, signUp, signIn, signOut, setLanguage,
-    updateDisplayName, updateAvatarPhoto, sendPasswordReset, updatePassword, refreshProfile,
+    updateDisplayName, updateBirthday, updateAvatarPhoto, sendPasswordReset, updatePassword, refreshProfile,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -2555,6 +2555,22 @@ textarea {
   color: var(--error);
 }
 
+.settings-date-input {
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--navy);
+  background: var(--surface-alt, transparent);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.settings-row-hint {
+  margin: -6px 0 0;
+  font-size: 12px;
+  color: var(--muted-light);
+}
+
 .profile-crop-hint {
   margin: -8px 0 0;
   font-size: 13px;

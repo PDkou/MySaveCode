@@ -186,6 +186,27 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     }
   }, [user, load, family]);
 
+  // Login-streak tracking (GAMIFICATION_DESIGN.md section 13-A) fires once
+  // per family per app session; the periodic heartbeat below is a separate,
+  // lighter-weight "still actively here" signal used for presence-based
+  // titles (section 13-C) -- keyed on family.id, not the family object
+  // itself, since load() creates a new family object on every refresh
+  // (including silent background ones) even when nothing changed.
+  const familyId = family?.id;
+  useEffect(() => {
+    if (!familyId) return;
+    void supabase.rpc('record_login', { p_family_id: familyId });
+  }, [familyId]);
+
+  useEffect(() => {
+    if (!familyId) return;
+    const tap = () => {
+      void supabase.rpc('tap_heartbeat', { p_family_id: familyId });
+    };
+    const interval = window.setInterval(tap, 25000);
+    return () => window.clearInterval(interval);
+  }, [familyId]);
+
   const switchFamily = useCallback(
     (familyId: string) => {
       if (!user) return;

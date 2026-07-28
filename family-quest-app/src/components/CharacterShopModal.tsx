@@ -80,7 +80,10 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
     return titleItemId ? itemsById.get(titleItemId)?.name ?? null : null;
   }, [equippedBySlot, itemsById]);
 
-  const slotItems = items.filter((i) => i.slot === activeSlot);
+  // Fully-hidden titles (GAMIFICATION_DESIGN.md section 8's "완전 히든 칭호")
+  // shouldn't even reveal their existence -- not shown as a locked row --
+  // until the owning condition actually grants them.
+  const slotItems = items.filter((i) => i.slot === activeSlot && (!i.hidden || ownedIds.has(i.id)));
 
   const handlePurchase = async (item: ShopItemRow) => {
     if (!family) return;

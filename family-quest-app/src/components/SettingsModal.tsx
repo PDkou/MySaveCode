@@ -25,13 +25,14 @@ interface SettingsModalProps {
 export function SettingsModal({ onClose }: SettingsModalProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, profile, avatarUrl, signOut, updateAvatarPhoto } = useAuth();
+  const { user, profile, avatarUrl, signOut, updateAvatarPhoto, updateBirthday } = useAuth();
   const { family, members, updateMyDisplayName, refresh: refreshFamily } = useFamily();
   const [showEditName, setShowEditName] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
   const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoErrorKey, setPhotoErrorKey] = useState<string | null>(null);
+  const [birthdayBusy, setBirthdayBusy] = useState(false);
 
   const currentName = useMemo(() => {
     if (!user) return '';
@@ -70,6 +71,20 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const goToHelp = () => {
     onClose();
     navigate('/help');
+  };
+
+  const handleBirthdayChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value || null;
+    setBirthdayBusy(true);
+    try {
+      await updateBirthday(value);
+    } catch {
+      // updateBirthday only fails on a real network/DB error -- the input
+      // simply reverts to profile.birthday below since the optimistic
+      // setProfile update never happened.
+    } finally {
+      setBirthdayBusy(false);
+    }
   };
 
   return (
@@ -127,6 +142,17 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               <span>{t('profile.editNameHeading')}</span>
               <span className="settings-row-value">{currentName}</span>
             </button>
+            <div className="settings-row">
+              <span>{t('profile.birthdayHeading')}</span>
+              <input
+                type="date"
+                className="settings-date-input"
+                value={profile?.birthday ?? ''}
+                disabled={birthdayBusy}
+                onChange={(e) => void handleBirthdayChange(e)}
+              />
+            </div>
+            <p className="settings-row-hint">{t('profile.birthdayHint')}</p>
             {family && (
               <button type="button" className="settings-row-button" onClick={() => setShowMembers(true)}>
                 {t('family.membersHeading')}

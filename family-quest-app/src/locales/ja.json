@@ -260,6 +260,8 @@
   },
   "profile": {
     "editNameHeading": "表示名を変更",
+    "birthdayHeading": "誕生日",
+    "birthdayHint": "任意入力です。誕生日にクエストを完了すると特別な称号がもらえます。",
     "photoHeading": "プロフィール写真",
     "photoChange": "写真を変更",
     "photoUploading": "アップロード中...",

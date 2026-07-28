@@ -27,6 +27,8 @@
 --  18. Shop / character (points-shop items, purchase + equip)
 --  19. Titles (condition-based unlocks, equippable via the title slot)
 --  20. Idle tycoon (passive currency, upgrades, point exchange)
+--  21. Shop item content expansion (batch 2)
+--  22. New title tracking (login streak, birthday, presence, weekly MVP) + more titles
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -1254,6 +1256,16 @@ begin
     -- their own 선착 task just gets their stake back, no reputation.
     perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, v_task.created_by <> v_uid, p_task_id, 'first_come');
 
+    -- 생일 선물 (hidden, 13-B): completed a 선착 quest on your own birthday.
+    if exists (
+      select 1 from public.profiles pr
+      where pr.id = v_uid and pr.birthday is not null
+        and extract(month from pr.birthday) = extract(month from current_date)
+        and extract(day from pr.birthday) = extract(day from current_date)
+    ) then
+      perform public.grant_title(v_family_id, v_uid, 'birthday_gift');
+    end if;
+
   elsif v_assignee_count = v_member_count then
     -- 모두 (everyone/collaborative): split the stake evenly across every
     -- current assignee, and everyone gets reputation -- including the
@@ -1263,6 +1275,21 @@ begin
     for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
       perform public.award_quest_payout(v_family_id, v_assignee_id, v_share, true, p_task_id, 'everyone');
     end loop;
+
+    -- 한자리에 (hidden, 13-C): everyone assigned was actively using the app
+    -- (heartbeat within the last 90s) at the moment this was completed --
+    -- see the section 22 comment for why this approximates presence
+    -- instead of using Realtime Presence channel state directly.
+    if v_assignee_count > 1 and not exists (
+      select 1 from public.family_members fm
+      join public.task_assignees ta on ta.user_id = fm.user_id and ta.task_id = p_task_id
+      where fm.family_id = v_family_id
+        and (fm.last_heartbeat_at is null or fm.last_heartbeat_at < now() - interval '90 seconds')
+    ) then
+      for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
+        perform public.grant_title(v_family_id, v_assignee_id, 'together_now');
+      end loop;
+    end if;
 
   else
     -- 특정인 지정 (specific person/people): full stake to whoever actually
@@ -2683,6 +2710,253 @@ select * from (values
 where not exists (
   select 1 from public.shop_items existing
   where existing.slot = seed.slot and existing.name = seed.name
+);
+
+-- -----------------------------------------------------------------------------
+-- 21. Shop item content expansion (batch 2)
+--
+-- GAMIFICATION_DESIGN.md 14/15 backlog: the Phase 2 starter catalog was
+-- deliberately small ("a starter set, not exhaustive"). This adds a second
+-- round of points-currency cosmetics to the same 10 slots, continuing each
+-- slot's sort_order past the tycoon-exclusive item already seeded at 4.
+-- -----------------------------------------------------------------------------
+
+insert into public.shop_items (slot, name, sprite_key, acquisition_type, currency, price, sort_order)
+select * from (values
+  ('body', '회색 피부', '#B8B8C2', 'purchase', 'points', 40, 5),
+  ('body', '민트 피부', '#A8DDD0', 'purchase', 'points', 40, 6),
+
+  ('background', '벚꽃', '#F7C8D9', 'purchase', 'points', 35, 5),
+  ('background', '오로라', '#8FE3D0', 'purchase', 'points', 45, 6),
+  ('background', '우주', '#1B1035', 'purchase', 'points', 45, 7),
+
+  ('top', '보라 후드', '#8B5FBF', 'purchase', 'points', 25, 4),
+  ('top', '줄무늬 셔츠', '#3B4B6B', 'purchase', 'points', 25, 5),
+  ('top', '정장 재킷', '#2B2B33', 'purchase', 'points', 45, 6),
+
+  ('pants', '검정 슬랙스', '#26262C', 'purchase', 'points', 25, 3),
+  ('pants', '멜빵바지', '#5C7A99', 'purchase', 'points', 30, 4),
+
+  ('shoes', '검정 구두', '#1F1F24', 'purchase', 'points', 20, 3),
+  ('shoes', '캠핑 부츠', '#6E4A2E', 'purchase', 'points', 25, 4),
+
+  ('head', '뿔테 안경', '🤓', 'purchase', 'points', 25, 5),
+  ('head', '고양이 귀', '🐱', 'purchase', 'points', 35, 6),
+
+  ('weapon', '활', '🏹', 'purchase', 'points', 50, 5),
+  ('weapon', '낚싯대', '🎣', 'purchase', 'points', 40, 6),
+
+  ('shield', '타워 방패', '🔰', 'purchase', 'points', 60, 2),
+
+  ('accessory1', '목걸이', '📿', 'purchase', 'points', 30, 3),
+  ('accessory1', '나비넥타이', '🎀', 'purchase', 'points', 25, 4),
+
+  ('accessory2', '네잎클로버', '🍀', 'purchase', 'points', 30, 3)
+) as seed(slot, name, sprite_key, acquisition_type, currency, price, sort_order)
+where not exists (
+  select 1 from public.shop_items existing
+  where existing.slot = seed.slot and existing.name = seed.name
+);
+
+-- -----------------------------------------------------------------------------
+-- 22. New title tracking (login streak, birthday, presence, weekly MVP) +
+--     more titles
+--
+-- GAMIFICATION_DESIGN.md section 13 (A/B/D) + a presence approximation for
+-- (C) -- the design doc's "실시간 접속 현황" called for Supabase Realtime
+-- Presence, but Presence channel state lives in the realtime server, not in
+-- Postgres, so it isn't queryable from a plpgsql function at all. Instead:
+-- a lightweight heartbeat column updated every ~30s by the client while a
+-- family room is open, checked for recency instead of true channel presence
+-- -- same practical effect ("is everyone actually here right now"), no new
+-- infrastructure beyond a timestamp column.
+--
+-- Exact thresholds below (7-day login streak, 3 weekly-MVP wins, a 90s
+-- heartbeat staleness window) weren't specified in the design doc -- picked
+-- as reasonable first-pass numbers, same as the tycoon balance constants,
+-- and adjustable later without any structural change.
+-- -----------------------------------------------------------------------------
+
+alter table public.family_members add column if not exists last_seen_date date;
+alter table public.family_members add column if not exists login_streak integer not null default 0;
+alter table public.family_members add column if not exists last_heartbeat_at timestamptz;
+alter table public.profiles add column if not exists birthday date;
+alter table public.shop_items add column if not exists hidden boolean not null default false;
+
+-- Called once per (family, day) on app load -- see record_login() below,
+-- which no-ops if already recorded today.
+create or replace function public.record_login(p_family_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_last_seen date;
+  v_new_streak integer;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select last_seen_date into v_last_seen from public.family_members
+  where family_id = p_family_id and user_id = v_uid;
+
+  if v_last_seen = current_date then
+    return; -- already recorded today
+  end if;
+
+  if v_last_seen = current_date - 1 then
+    update public.family_members
+    set last_seen_date = current_date, login_streak = login_streak + 1, last_heartbeat_at = now()
+    where family_id = p_family_id and user_id = v_uid
+    returning login_streak into v_new_streak;
+  else
+    update public.family_members
+    set last_seen_date = current_date, login_streak = 1, last_heartbeat_at = now()
+    where family_id = p_family_id and user_id = v_uid;
+    v_new_streak := 1;
+  end if;
+
+  -- 정착민 (13-A): 7 consecutive days logged in.
+  if v_new_streak = 7 then
+    perform public.grant_title(p_family_id, v_uid, 'settler');
+  end if;
+
+  -- 올빼미 접속자 (hidden, 13-A): logged in during the dead of night. Same
+  -- server-UTC hour check the existing early_bird/night_owl badges already
+  -- use -- no per-user timezone tracking anywhere in this schema.
+  if extract(hour from now()) >= 2 and extract(hour from now()) < 5 then
+    perform public.grant_title(p_family_id, v_uid, 'night_login');
+  end if;
+end;
+$$;
+
+grant execute on function public.record_login(uuid) to authenticated;
+revoke execute on function public.record_login(uuid) from anon, public;
+
+-- Cheap "I'm actively using the app right now" ping -- called on an
+-- interval by the client while a family room is open. Only ever read back
+-- for recency (see the 한자리에 check in complete_task below), never
+-- displayed as a real presence list.
+create or replace function public.tap_heartbeat(p_family_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  update public.family_members set last_heartbeat_at = now()
+  where family_id = p_family_id and user_id = v_uid;
+end;
+$$;
+
+grant execute on function public.tap_heartbeat(uuid) to authenticated;
+revoke execute on function public.tap_heartbeat(uuid) from anon, public;
+
+-- One row per (family, week): whoever had the most reputation-earning
+-- completions that week. Overwritten in place if a later run of
+-- compute_weekly_mvp() for the same week finds a higher count (handles the
+-- job running more than once, or a completion being backfilled).
+create table if not exists public.weekly_mvp_log (
+  family_id uuid not null references public.families(id) on delete cascade,
+  week_start date not null,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  completed_count integer not null default 0,
+  created_at timestamptz not null default now(),
+  primary key (family_id, week_start)
+);
+
+alter table public.weekly_mvp_log enable row level security;
+
+drop policy if exists weekly_mvp_log_select on public.weekly_mvp_log;
+create policy weekly_mvp_log_select on public.weekly_mvp_log
+for select
+using (public.is_family_member(family_id));
+
+grant select on public.weekly_mvp_log to authenticated;
+
+-- Scheduled weekly (see cron.schedule below) rather than computed on the
+-- fly -- reputation-earning completions in the past 7 days, ranked per
+-- family, top scorer wins that week's log row.
+create or replace function public.compute_weekly_mvp()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_week_start date := date_trunc('week', current_date)::date;
+  v_winner record;
+begin
+  insert into public.weekly_mvp_log (family_id, week_start, user_id, completed_count)
+  select family_id, v_week_start, user_id, cnt
+  from (
+    select family_id, user_id, count(*) as cnt,
+      row_number() over (partition by family_id order by count(*) desc) as rn
+    from public.quest_payouts
+    where kind = 'completion' and reputation_awarded = true
+      and created_at >= now() - interval '7 days'
+    group by family_id, user_id
+  ) ranked
+  where rn = 1
+  on conflict (family_id, week_start) do update
+    set user_id = excluded.user_id, completed_count = excluded.completed_count;
+
+  -- 연대감 (13-D): 3 weekly-MVP wins.
+  for v_winner in
+    select family_id, user_id from public.weekly_mvp_log where week_start = v_week_start
+  loop
+    if (select count(*) from public.weekly_mvp_log where user_id = v_winner.user_id) >= 3 then
+      perform public.grant_title(v_winner.family_id, v_winner.user_id, 'solidarity');
+    end if;
+  end loop;
+end;
+$$;
+
+revoke execute on function public.compute_weekly_mvp() from anon, public, authenticated;
+
+-- Self-contained (unlike the send-due-reminders cron block elsewhere in
+-- this file, this doesn't call out to an Edge Function, so it's scheduled
+-- live here) but still wrapped defensively -- pg_cron may not be enabled
+-- on this project (see the section 13 comment near the top of the file),
+-- in which case this just raises a notice instead of aborting the rest of
+-- the schema run.
+do $$
+begin
+  perform cron.unschedule('compute-weekly-mvp');
+exception when others then null;
+end $$;
+
+do $$
+begin
+  perform cron.schedule('compute-weekly-mvp', '5 0 * * 1', 'select public.compute_weekly_mvp();');
+exception when others then
+  raise notice 'pg_cron not enabled -- could not schedule compute_weekly_mvp automatically. Enable pg_cron from Database > Extensions in the Supabase dashboard, then run: select cron.schedule(''compute-weekly-mvp'', ''5 0 * * 1'', ''select public.compute_weekly_mvp();'');';
+end $$;
+
+insert into public.shop_items (slot, name, sprite_key, acquisition_type, key, hidden, sort_order)
+select * from (values
+  ('title', '정착민', '', 'title_condition', 'settler', false, 141),
+  ('title', '올빼미 접속자', '', 'title_condition', 'night_login', true, 142),
+  ('title', '생일 선물', '', 'title_condition', 'birthday_gift', true, 143),
+  ('title', '한자리에', '', 'title_condition', 'together_now', true, 144),
+  ('title', '연대감', '', 'title_condition', 'solidarity', false, 145)
+) as seed(slot, name, sprite_key, acquisition_type, key, hidden, sort_order)
+where not exists (
+  select 1 from public.shop_items existing where existing.key = seed.key
 );
 
 -- =============================================================================
