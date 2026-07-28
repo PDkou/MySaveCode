@@ -25,6 +25,7 @@
 --  16. Task templates (quick-select saved request content)
 --  17. Overdue escalation + weekly summary push notifications
 --  18. Shop / character (points-shop items, purchase + equip)
+--  19. Titles (condition-based unlocks, equippable via the title slot)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -101,6 +102,17 @@ create table if not exists public.family_members (
   longest_streak integer not null default 0,
   last_completed_date date,
   completed_count integer not null default 0,
+  -- Per-assignment-mode completion counts, tracked alongside
+  -- completed_count for the title tabs in GAMIFICATION_DESIGN.md section
+  -- 12 (특정인/모두/선착) -- only incremented in a shared (2+ member) room
+  -- when reputation was actually awarded, same gate as completed_count.
+  specific_completed_count integer not null default 0,
+  everyone_completed_count integer not null default 0,
+  first_come_completed_count integer not null default 0,
+  -- Lifetime total spent in the points shop -- unlike points itself (a
+  -- live balance that goes back up), this only ever grows, for the "손이
+  -- 큰 소비자" style titles.
+  lifetime_points_spent integer not null default 0,
   joined_at timestamptz not null default now(),
   constraint family_members_role_check check (role in ('owner', 'member')),
   constraint family_members_family_user_unique unique (family_id, user_id)
@@ -124,6 +136,12 @@ alter table public.family_members add column if not exists points integer not nu
 -- already accrued so existing levels don't reset to 0 on this migration.
 alter table public.family_members add column if not exists xp integer not null default 0;
 update public.family_members set xp = points where xp = 0 and points > 0;
+-- Upgrades an already-deployed database from before per-mode completion
+-- counts and lifetime spend existed (GAMIFICATION_DESIGN.md section 12/13).
+alter table public.family_members add column if not exists specific_completed_count integer not null default 0;
+alter table public.family_members add column if not exists everyone_completed_count integer not null default 0;
+alter table public.family_members add column if not exists first_come_completed_count integer not null default 0;
+alter table public.family_members add column if not exists lifetime_points_spent integer not null default 0;
 alter table public.family_members add column if not exists current_streak integer not null default 0;
 alter table public.family_members add column if not exists longest_streak integer not null default 0;
 alter table public.family_members add column if not exists last_completed_date date;
@@ -254,9 +272,23 @@ create table if not exists public.quest_payouts (
   -- carried no reputation at all (e.g. a self-claimed 선착/특정인 refund).
   reputation_awarded boolean not null default false,
   kind text not null,
+  -- Null for requester_bonus rows (that kind doesn't touch a mode counter)
+  -- and for anything predating this column. Lets reopen_task decrement the
+  -- right specific/everyone/first_come_completed_count when reversing --
+  -- see section 19's title grants, which key off those counters.
+  assignment_mode text,
   created_at timestamptz not null default now(),
-  constraint quest_payouts_kind_check check (kind in ('completion', 'requester_bonus'))
+  constraint quest_payouts_kind_check check (kind in ('completion', 'requester_bonus')),
+  constraint quest_payouts_assignment_mode_check check (assignment_mode is null or assignment_mode in ('personal', 'specific', 'everyone', 'first_come'))
 );
+
+alter table public.quest_payouts add column if not exists assignment_mode text;
+do $$
+begin
+  alter table public.quest_payouts add constraint quest_payouts_assignment_mode_check check (assignment_mode is null or assignment_mode in ('personal', 'specific', 'everyone', 'first_come'));
+exception
+  when duplicate_object then null;
+end $$;
 
 create index if not exists quest_payouts_task_id_idx on public.quest_payouts (task_id);
 create index if not exists quest_payouts_family_id_idx on public.quest_payouts (family_id);
@@ -531,6 +563,8 @@ begin
   insert into public.family_members (family_id, user_id, role, display_name)
   values (v_family.id, v_uid, 'owner', v_display_name);
 
+  perform public.grant_title(v_family.id, v_uid, 'newcomer');
+
   return v_family;
 end;
 $$;
@@ -568,6 +602,8 @@ begin
 
   insert into public.family_members (family_id, user_id, role, display_name)
   values (v_family.id, v_uid, 'member', v_display_name);
+
+  perform public.grant_title(v_family.id, v_uid, 'newcomer');
 
   return v_family;
 end;
@@ -939,7 +975,8 @@ create or replace function public.award_quest_payout(
   p_user_id uuid,
   p_points integer,
   p_award_reputation boolean,
-  p_task_id uuid
+  p_task_id uuid,
+  p_assignment_mode text default null
 )
 returns void
 language plpgsql
@@ -950,6 +987,7 @@ declare
   v_member public.family_members;
   v_today date := current_date;
   v_new_streak integer;
+  v_new_mode_count integer;
   v_new_completed_count integer;
   v_completed_hour integer;
 begin
@@ -962,8 +1000,8 @@ begin
   set points = points + p_points
   where family_id = p_family_id and user_id = p_user_id;
 
-  insert into public.quest_payouts (task_id, family_id, user_id, points_delta, xp_delta, reputation_awarded, kind)
-  values (p_task_id, p_family_id, p_user_id, p_points, case when p_award_reputation then p_points else 0 end, p_award_reputation, 'completion');
+  insert into public.quest_payouts (task_id, family_id, user_id, points_delta, xp_delta, reputation_awarded, kind, assignment_mode)
+  values (p_task_id, p_family_id, p_user_id, p_points, case when p_award_reputation then p_points else 0 end, p_award_reputation, 'completion', p_assignment_mode);
 
   if not p_award_reputation then
     return;
@@ -1010,6 +1048,49 @@ begin
   elsif v_completed_hour >= 23 then
     insert into public.member_badges (family_id, user_id, badge_key)
     values (p_family_id, p_user_id, 'night_owl') on conflict do nothing;
+  end if;
+
+  -- Per-mode completion counts + title grants (GAMIFICATION_DESIGN.md
+  -- section 12). grant_title is defined in section 19, further down this
+  -- file -- fine in plpgsql, callee existence is resolved at call time,
+  -- not at CREATE FUNCTION time.
+  if p_assignment_mode = 'specific' then
+    update public.family_members set specific_completed_count = specific_completed_count + 1
+    where family_id = p_family_id and user_id = p_user_id
+    returning specific_completed_count into v_new_mode_count;
+    if v_new_mode_count = 1 then
+      perform public.grant_title(p_family_id, p_user_id, 'specific_first');
+    elsif v_new_mode_count = 10 then
+      perform public.grant_title(p_family_id, p_user_id, 'specific_ten');
+    elsif v_new_mode_count = 50 then
+      perform public.grant_title(p_family_id, p_user_id, 'specific_fifty');
+    end if;
+  elsif p_assignment_mode = 'everyone' then
+    update public.family_members set everyone_completed_count = everyone_completed_count + 1
+    where family_id = p_family_id and user_id = p_user_id
+    returning everyone_completed_count into v_new_mode_count;
+    if v_new_mode_count = 1 then
+      perform public.grant_title(p_family_id, p_user_id, 'everyone_first');
+    elsif v_new_mode_count = 10 then
+      perform public.grant_title(p_family_id, p_user_id, 'everyone_ten');
+    elsif v_new_mode_count = 50 then
+      perform public.grant_title(p_family_id, p_user_id, 'everyone_fifty');
+    end if;
+  elsif p_assignment_mode = 'first_come' then
+    update public.family_members set first_come_completed_count = first_come_completed_count + 1
+    where family_id = p_family_id and user_id = p_user_id
+    returning first_come_completed_count into v_new_mode_count;
+    if v_new_mode_count = 1 then
+      perform public.grant_title(p_family_id, p_user_id, 'first_come_first');
+    elsif v_new_mode_count = 10 then
+      perform public.grant_title(p_family_id, p_user_id, 'first_come_ten');
+    elsif v_new_mode_count = 50 then
+      perform public.grant_title(p_family_id, p_user_id, 'first_come_fifty');
+    end if;
+  end if;
+
+  if v_member.xp + p_points >= 1000 and v_member.xp < 1000 then
+    perform public.grant_title(p_family_id, p_user_id, 'xp_1000');
   end if;
 end;
 $$;
@@ -1165,12 +1246,12 @@ begin
   select count(*) into v_assignee_count from public.task_assignees where task_id = p_task_id;
 
   if v_member_count <= 1 then
-    perform public.award_quest_payout(v_family_id, v_uid, 10, true, p_task_id);
+    perform public.award_quest_payout(v_family_id, v_uid, 10, true, p_task_id, 'personal');
 
   elsif v_assignee_count = 0 then
     -- 선착 (first-come): full stake to the completer; a creator who claims
     -- their own 선착 task just gets their stake back, no reputation.
-    perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, v_task.created_by <> v_uid, p_task_id);
+    perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, v_task.created_by <> v_uid, p_task_id, 'first_come');
 
   elsif v_assignee_count = v_member_count then
     -- 모두 (everyone/collaborative): split the stake evenly across every
@@ -1179,7 +1260,7 @@ begin
     -- group effort rather than a self-request.
     v_share := v_task.stake_points / v_assignee_count;
     for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
-      perform public.award_quest_payout(v_family_id, v_assignee_id, v_share, true, p_task_id);
+      perform public.award_quest_payout(v_family_id, v_assignee_id, v_share, true, p_task_id, 'everyone');
     end loop;
 
   else
@@ -1189,9 +1270,9 @@ begin
     -- gets a minted 10% requester bonus (not deducted from the completer)
     -- once the stake is big enough for that to be a meaningful amount.
     if v_task.created_by = v_uid then
-      perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, false, p_task_id);
+      perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, false, p_task_id, 'specific');
     else
-      perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, true, p_task_id);
+      perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, true, p_task_id, 'specific');
       if v_task.stake_points >= 10 then
         v_requester_bonus := v_task.stake_points / 10;
         update public.family_members set points = points + v_requester_bonus
@@ -1301,6 +1382,21 @@ begin
             longest_streak = greatest(longest_streak, coalesce(v_streak_len, 0)),
             last_completed_date = v_last_date
         where family_id = v_payout.family_id and user_id = v_payout.user_id;
+
+        -- Mode counters are plain running totals (not date-derived like
+        -- streak), so a straight decrement is correct -- no recompute
+        -- needed. Titles already granted from crossing a threshold stay
+        -- granted either way, same "earned once, kept" rule as badges.
+        if v_payout.assignment_mode = 'specific' then
+          update public.family_members set specific_completed_count = greatest(0, specific_completed_count - 1)
+          where family_id = v_payout.family_id and user_id = v_payout.user_id;
+        elsif v_payout.assignment_mode = 'everyone' then
+          update public.family_members set everyone_completed_count = greatest(0, everyone_completed_count - 1)
+          where family_id = v_payout.family_id and user_id = v_payout.user_id;
+        elsif v_payout.assignment_mode = 'first_come' then
+          update public.family_members set first_come_completed_count = greatest(0, first_come_completed_count - 1)
+          where family_id = v_payout.family_id and user_id = v_payout.user_id;
+        end if;
       end if;
     end loop;
 
@@ -1559,7 +1655,7 @@ revoke execute on function public.shares_family_with(uuid) from anon, public;
 -- Internal helper only -- called from within complete_task/reopen_task's
 -- security definer context, never directly by a client (it has no
 -- authorization checks of its own).
-revoke execute on function public.award_quest_payout(uuid, uuid, integer, boolean, uuid) from public;
+revoke execute on function public.award_quest_payout(uuid, uuid, integer, boolean, uuid, text) from public;
 
 -- -----------------------------------------------------------------------------
 -- 12. Realtime publication
@@ -2008,6 +2104,10 @@ create table if not exists public.shop_items (
   currency text,
   price integer,
   sort_order integer not null default 0,
+  -- Stable slug for title_condition items only -- grant_title() (section
+  -- 19) references titles by this instead of the generated uuid, the same
+  -- way member_badges.badge_key works. Null for ordinary purchase items.
+  key text unique,
   created_at timestamptz not null default now(),
   constraint shop_items_slot_check check (
     slot in ('body', 'head', 'background', 'title', 'weapon', 'shield', 'accessory1', 'accessory2', 'shoes', 'top', 'pants')
@@ -2019,6 +2119,8 @@ create table if not exists public.shop_items (
     or (acquisition_type = 'title_condition' and currency is null and price is null)
   )
 );
+
+alter table public.shop_items add column if not exists key text unique;
 
 create index if not exists shop_items_slot_idx on public.shop_items (slot, sort_order);
 
@@ -2077,6 +2179,7 @@ declare
   v_uid uuid := auth.uid();
   v_item public.shop_items;
   v_balance integer;
+  v_owned_count integer;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -2106,9 +2209,17 @@ begin
     raise exception 'insufficient_points' using errcode = 'P0001';
   end if;
 
-  update public.family_members set points = points - v_item.price where family_id = p_family_id and user_id = v_uid;
+  update public.family_members
+  set points = points - v_item.price,
+      lifetime_points_spent = lifetime_points_spent + v_item.price
+  where family_id = p_family_id and user_id = v_uid;
 
   insert into public.member_owned_items (user_id, family_id, item_id) values (v_uid, p_family_id, p_item_id);
+
+  select count(*) into v_owned_count from public.member_owned_items where user_id = v_uid and family_id = p_family_id;
+  if v_owned_count = 10 then
+    perform public.grant_title(p_family_id, v_uid, 'shop_regular');
+  end if;
 end;
 $$;
 
@@ -2227,6 +2338,72 @@ select * from (values
 where not exists (
   select 1 from public.shop_items existing
   where existing.slot = seed.slot and existing.name = seed.name
+);
+
+-- -----------------------------------------------------------------------------
+-- 19. Titles (condition-based unlocks, equippable via the title slot)
+--
+-- GAMIFICATION_DESIGN.md section 12 lists 76 titles across four tabs
+-- (특정인 지정/모두/선착/그외); this ships a correctly-working starter set
+-- (count-threshold titles only, the mechanically safe subset -- no timing
+-- windows, cross-room facts, or tycoon-dependent conditions, none of which
+-- can be verified without live testing this sandbox can't do) rather than
+-- guessing at all 76 blind. The rest stays a content backlog to add later
+-- with the same grant_title() pattern -- the infrastructure doesn't change,
+-- only which condition triggers which key.
+--
+-- Every title is inserted here with acquisition_type = 'title_condition'
+-- and a stable key; nothing about them is purchasable (see the
+-- shop_items_purchase_fields_check constraint in section 18).
+-- -----------------------------------------------------------------------------
+
+-- Grants a title (by its shop_items.key) if not already owned. Silently
+-- no-ops if the key doesn't exist (e.g. schema.sql was re-run with an
+-- older title catalog) or is already owned -- title grants are a side
+-- effect of gameplay actions, never something worth failing the whole
+-- transaction over.
+create or replace function public.grant_title(p_family_id uuid, p_user_id uuid, p_title_key text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_item_id uuid;
+begin
+  select id into v_item_id from public.shop_items where key = p_title_key and acquisition_type = 'title_condition';
+  if v_item_id is null then
+    return;
+  end if;
+
+  insert into public.member_owned_items (user_id, family_id, item_id)
+  values (p_user_id, p_family_id, v_item_id)
+  on conflict do nothing;
+end;
+$$;
+
+revoke execute on function public.grant_title(uuid, uuid, text) from public;
+
+insert into public.shop_items (slot, name, sprite_key, acquisition_type, key, sort_order)
+select * from (values
+  ('title', '첫 의뢰 완수', '', 'title_condition', 'specific_first', 100),
+  ('title', '믿음직한 일꾼', '', 'title_condition', 'specific_ten', 101),
+  ('title', '신뢰의 아이콘', '', 'title_condition', 'specific_fifty', 102),
+
+  ('title', '첫 협업', '', 'title_condition', 'everyone_first', 110),
+  ('title', '한마음 한뜻', '', 'title_condition', 'everyone_ten', 111),
+  ('title', '우리는 팀', '', 'title_condition', 'everyone_fifty', 112),
+
+  ('title', '첫 승리', '', 'title_condition', 'first_come_first', 120),
+  ('title', '스피드러너', '', 'title_condition', 'first_come_ten', 121),
+  ('title', '발 빠른 자', '', 'title_condition', 'first_come_fifty', 122),
+
+  ('title', '신입', '', 'title_condition', 'newcomer', 130),
+  ('title', '포인트 부자', '', 'title_condition', 'xp_1000', 131),
+  ('title', '상점 단골', '', 'title_condition', 'shop_regular', 132)
+) as seed(slot, name, sprite_key, acquisition_type, key, sort_order)
+where not exists (
+  select 1 from public.shop_items existing where existing.key = seed.key
 );
 
 -- =============================================================================

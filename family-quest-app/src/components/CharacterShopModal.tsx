@@ -62,10 +62,15 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
   const spritePreview = useMemo(() => {
     const preview: Partial<Record<CharacterSlot, string>> = {};
     for (const [slot, itemId] of equippedBySlot) {
+      if (slot === 'title') continue; // text label, not a visual sprite -- shown separately below
       const item = itemsById.get(itemId);
       if (item?.sprite_key) preview[slot] = item.sprite_key;
     }
     return preview;
+  }, [equippedBySlot, itemsById]);
+  const equippedTitleName = useMemo(() => {
+    const titleItemId = equippedBySlot.get('title');
+    return titleItemId ? itemsById.get(titleItemId)?.name ?? null : null;
   }, [equippedBySlot, itemsById]);
 
   const slotItems = items.filter((i) => i.slot === activeSlot);
@@ -110,7 +115,10 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
 
         <div className="shop-preview-row">
           <CharacterSprite equipped={spritePreview} size={96} />
-          <span className="shop-balance">{t('shop.balance', { balance: myBalance })}</span>
+          <div className="shop-preview-info">
+            <span className="shop-balance">{t('shop.balance', { balance: myBalance })}</span>
+            {equippedTitleName && <span className="shop-equipped-title">{equippedTitleName}</span>}
+          </div>
         </div>
 
         <div className="shop-slot-tabs">
@@ -147,6 +155,8 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
                     <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => void handleEquip(item)}>
                       {equipped ? t('shop.unequip') : t('shop.equip')}
                     </button>
+                  ) : item.acquisition_type === 'title_condition' ? (
+                    <span className="shop-item-locked">{t('shop.locked')}</span>
                   ) : (
                     <button
                       type="button"

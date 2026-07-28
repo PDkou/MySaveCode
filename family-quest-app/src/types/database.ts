@@ -40,6 +40,7 @@ export type ShopItemRow = {
   currency: ShopItemCurrency | null;
   price: number | null;
   sort_order: number;
+  key: string | null;
   created_at: string;
 };
 
@@ -105,6 +106,10 @@ export type FamilyMemberRow = {
   longest_streak: number;
   last_completed_date: string | null;
   completed_count: number;
+  specific_completed_count: number;
+  everyone_completed_count: number;
+  first_come_completed_count: number;
+  lifetime_points_spent: number;
   joined_at: string;
 };
 
