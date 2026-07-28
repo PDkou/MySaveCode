@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
-import { ArtIcon } from './ArtIcon';
 import { CharacterSprite } from './CharacterSprite';
 import {
   ShopActionError,
@@ -73,10 +72,6 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
     const titleItemId = equippedBySlot.get('title');
     return titleItemId ? itemsById.get(titleItemId)?.name ?? null : null;
   }, [equippedBySlot, itemsById]);
-  const equippedTitleSpriteKey = useMemo(() => {
-    const titleItemId = equippedBySlot.get('title');
-    return titleItemId ? itemsById.get(titleItemId)?.sprite_key ?? null : null;
-  }, [equippedBySlot, itemsById]);
 
   const slotItems = items.filter((i) => i.slot === activeSlot);
 
@@ -116,21 +111,13 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="shop-heading-row">
-          <ArtIcon src="/art/ui/character.png" size={28} />
-          <h2>{t('shop.heading')}</h2>
-        </div>
+        <h2>{t('shop.heading')}</h2>
 
         <div className="shop-preview-row">
           <CharacterSprite equipped={spritePreview} size={96} />
           <div className="shop-preview-info">
             <span className="shop-balance">{t('shop.balance', { balance: myBalance })}</span>
-            {equippedTitleName && (
-              <span className="shop-equipped-title">
-                {equippedTitleSpriteKey?.startsWith('/') && <ArtIcon src={equippedTitleSpriteKey} size={18} />}
-                {equippedTitleName}
-              </span>
-            )}
+            {equippedTitleName && <span className="shop-equipped-title">{equippedTitleName}</span>}
           </div>
         </div>
 
@@ -162,9 +149,7 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
               const busy = busyItemId === item.id;
               return (
                 <div key={item.id} className={`shop-item-row ${equipped ? 'shop-item-row-equipped' : ''}`}>
-                  <span className="shop-item-sprite">
-                    {item.sprite_key?.startsWith('/') ? <ArtIcon src={item.sprite_key} size={26} /> : item.sprite_key || '·'}
-                  </span>
+                  <span className="shop-item-sprite">{item.sprite_key || '·'}</span>
                   <span className="shop-item-name">{item.name}</span>
                   {owned ? (
                     <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => void handleEquip(item)}>

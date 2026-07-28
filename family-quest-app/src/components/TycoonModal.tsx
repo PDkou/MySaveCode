@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
-import { ArtIcon } from './ArtIcon';
 import {
   TycoonActionError,
   collectTycoonCurrency,
@@ -178,35 +177,18 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
         ) : (
           <>
             <div className="tycoon-currency-display">
-              <ArtIcon src="/art/tycoon/currency_tycoon.png" size={32} />
               <span className="tycoon-currency-amount">{displayedCurrency.toLocaleString()}</span>
-              <span className="tycoon-currency-rate icon-text-row">
-                <ArtIcon src="/art/tycoon/tycoon_production.png" size={16} />
-                {t('tycoon.ratePerMin', { rate: ratePerMin })}
-              </span>
+              <span className="tycoon-currency-rate">{t('tycoon.ratePerMin', { rate: ratePerMin })}</span>
             </div>
 
-            <button
-              type="button"
-              className="btn btn-primary btn-block icon-text-row"
-              style={{ justifyContent: 'center' }}
-              disabled={busy || tapCoolingDown}
-              onClick={() => void handleTap()}
-            >
-              <ArtIcon src="/art/tycoon/tycoon_tap.png" size={20} />
+            <button type="button" className="btn btn-primary btn-block" disabled={busy || tapCoolingDown} onClick={() => void handleTap()}>
               {t('tycoon.tapButton', { gain: TAP_GAIN })}
             </button>
 
             <div className="tycoon-section">
-              <p className="settings-section-title icon-text-row">
-                <ArtIcon src="/art/tycoon/tycoon_upgrade.png" size={16} />
-                {t('tycoon.upgradeHeading')}
-              </p>
+              <p className="settings-section-title">{t('tycoon.upgradeHeading')}</p>
               <div className="settings-row">
-                <span className="icon-text-row">
-                  {maxed && <ArtIcon src="/art/tycoon/tycoon_max.png" size={18} />}
-                  {t('tycoon.level', { level: state.upgrade_level, max: MAX_LEVEL })}
-                </span>
+                <span>{t('tycoon.level', { level: state.upgrade_level, max: MAX_LEVEL })}</span>
                 <button type="button" className="btn btn-secondary btn-sm" disabled={busy || maxed} onClick={() => void handleUpgrade()}>
                   {maxed ? t('tycoon.maxLevel') : t('tycoon.upgradeButton', { cost: upgradeCost })}
                 </button>
@@ -214,10 +196,7 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
             </div>
 
             <div className="tycoon-section">
-              <p className="settings-section-title icon-text-row">
-                <ArtIcon src="/art/tycoon/tycoon_exchange.png" size={16} />
-                {t('tycoon.exchangeHeading')}
-              </p>
+              <p className="settings-section-title">{t('tycoon.exchangeHeading')}</p>
               <p className="tycoon-exchange-hint">
                 {t('tycoon.exchangeRateHint', { rate: EXCHANGE_RATE })}
                 {' '}
@@ -255,9 +234,7 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
                     const itemBusy = busyItemId === item.id;
                     return (
                       <div key={item.id} className="shop-item-row">
-                        <span className="shop-item-sprite">
-                          {item.sprite_key?.startsWith('/') ? <ArtIcon src={item.sprite_key} size={26} /> : item.sprite_key || '·'}
-                        </span>
+                        <span className="shop-item-sprite">{item.sprite_key || '·'}</span>
                         <span className="shop-item-name">{item.name}</span>
                         {owned ? (
                           <span className="shop-item-locked">{t('shop.owned')}</span>

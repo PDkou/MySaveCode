@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { useTasks } from '../context/TasksContext';
-import { ArtIcon } from '../components/ArtIcon';
 import { NotificationBell } from '../components/NotificationBell';
 import { FamilySwitcher } from '../components/FamilySwitcher';
 import { TaskCard } from '../components/TaskCard';
@@ -228,12 +227,10 @@ export function DashboardPage() {
             <path d="M21 3v6h-6" />
           </svg>
         </button>
-        <button type="button" className="btn btn-ghost btn-sm icon-text-row" onClick={() => navigate('/calendar')}>
-          <ArtIcon src="/art/ui/calendar.png" size={18} />
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/calendar')}>
           {t('calendar.openButton')}
         </button>
-        <button type="button" className="btn btn-ghost btn-sm icon-text-row" onClick={() => navigate('/gallery')}>
-          <ArtIcon src="/art/ui/gallery.png" size={18} />
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/gallery')}>
           {t('gallery.openButton')}
         </button>
         <button
@@ -269,30 +266,27 @@ export function DashboardPage() {
           type="button"
           role="tab"
           aria-selected={filter === 'open'}
-          className={`filter-tab icon-text-row ${filter === 'open' ? 'filter-tab-active' : ''}`}
+          className={`filter-tab ${filter === 'open' ? 'filter-tab-active' : ''}`}
           onClick={() => setFilter('open')}
         >
-          <ArtIcon src="/art/ui/quest_open.png" size={16} />
           {t('dashboard.filterOpen')}
         </button>
         <button
           type="button"
           role="tab"
           aria-selected={filter === 'done'}
-          className={`filter-tab icon-text-row ${filter === 'done' ? 'filter-tab-active' : ''}`}
+          className={`filter-tab ${filter === 'done' ? 'filter-tab-active' : ''}`}
           onClick={() => setFilter('done')}
         >
-          <ArtIcon src="/art/ui/quest_done.png" size={16} />
           {t('dashboard.filterDone')}
         </button>
         <button
           type="button"
           role="tab"
           aria-selected={filter === 'all'}
-          className={`filter-tab icon-text-row ${filter === 'all' ? 'filter-tab-active' : ''}`}
+          className={`filter-tab ${filter === 'all' ? 'filter-tab-active' : ''}`}
           onClick={() => setFilter('all')}
         >
-          <ArtIcon src="/art/ui/quest_all.png" size={16} />
           {t('dashboard.filterAll')}
         </button>
       </div>

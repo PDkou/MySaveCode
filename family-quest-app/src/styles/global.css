@@ -2771,9 +2771,6 @@ textarea {
 }
 
 .shop-equipped-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
   font-size: 13px;
   color: var(--purple);
   font-weight: 700;
@@ -2888,31 +2885,4 @@ textarea {
 .tycoon-exchange-row input {
   flex: 1;
   min-width: 0;
-}
-
-/* ---------- Pre-rendered pixel-art icons (art pack v4) ---------- */
-
-.pixel-art-icon {
-  display: block;
-  object-fit: contain;
-  image-rendering: pixelated;
-  user-select: none;
-  pointer-events: none;
-  flex-shrink: 0;
-}
-
-.icon-text-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.shop-heading-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.shop-heading-row h2 {
-  margin: 0;
 }
