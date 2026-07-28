@@ -12,7 +12,7 @@ import {
   upgradeCostForLevel,
   upgradeTycoon,
 } from '../lib/tycoon';
-import { ShopActionError, getOwnedItemIds, getShopItems, purchaseItem } from '../lib/shop';
+import { ShopActionError, getOwnedItemIds, getShopItems, isHexColor, purchaseItem } from '../lib/shop';
 import type { ShopItemRow, TycoonStateRow } from '../types/database';
 
 interface TycoonModalProps {
@@ -234,7 +234,12 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
                     const itemBusy = busyItemId === item.id;
                     return (
                       <div key={item.id} className="shop-item-row">
-                        <span className="shop-item-sprite">{item.sprite_key || '·'}</span>
+                        <span
+                          className="shop-item-sprite"
+                          style={item.sprite_key && isHexColor(item.sprite_key) ? { backgroundColor: item.sprite_key } : undefined}
+                        >
+                          {item.sprite_key && isHexColor(item.sprite_key) ? '' : item.sprite_key || '·'}
+                        </span>
                         <span className="shop-item-name">{item.name}</span>
                         {owned ? (
                           <span className="shop-item-locked">{t('shop.owned')}</span>

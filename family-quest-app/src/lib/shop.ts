@@ -1,6 +1,16 @@
 import { supabase } from './supabaseClient';
 import type { CharacterSlot, MemberEquippedItemRow, ShopItemRow } from '../types/database';
 
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+
+// sprite_key is either a CSS hex color (body/background/top/pants/shoes) or
+// a single emoji (head/weapon/shield/accessory1/accessory2) -- callers need
+// to tell these apart to render a color swatch instead of printing the hex
+// string as literal text.
+export function isHexColor(value: string): boolean {
+  return HEX_COLOR_RE.test(value);
+}
+
 export class ShopActionError extends Error {
   translationKey: string;
 
