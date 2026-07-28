@@ -59,6 +59,18 @@ export type MemberEquippedItemRow = {
   equipped_at: string;
 };
 
+export type TycoonStateRow = {
+  user_id: string;
+  family_id: string;
+  currency: number;
+  upgrade_level: number;
+  last_collected_at: string;
+  last_tap_at: string | null;
+  exchanged_today: number;
+  exchange_reset_date: string;
+  created_at: string;
+};
+
 export type QuestPayoutKind = 'completion' | 'requester_bonus';
 
 export type QuestPayoutRow = {
@@ -297,6 +309,12 @@ export type Database = {
         Update: Partial<MemberEquippedItemRow>;
         Relationships: [];
       };
+      tycoon_state: {
+        Row: TycoonStateRow;
+        Insert: Partial<TycoonStateRow> & Pick<TycoonStateRow, 'user_id' | 'family_id'>;
+        Update: Partial<TycoonStateRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -370,6 +388,22 @@ export type Database = {
       unequip_item: {
         Args: { p_family_id: string; p_slot: CharacterSlot };
         Returns: void;
+      };
+      collect_tycoon_currency: {
+        Args: { p_family_id: string };
+        Returns: TycoonStateRow;
+      };
+      tap_tycoon_currency: {
+        Args: { p_family_id: string };
+        Returns: TycoonStateRow;
+      };
+      upgrade_tycoon: {
+        Args: { p_family_id: string };
+        Returns: TycoonStateRow;
+      };
+      exchange_tycoon_currency: {
+        Args: { p_family_id: string; p_currency_amount: number };
+        Returns: TycoonStateRow;
       };
     };
     Enums: Record<string, never>;
