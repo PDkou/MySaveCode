@@ -320,6 +320,7 @@
     "equip": "장착하기",
     "unequip": "장착 해제",
     "emptySlot": "아직 준비된 아이템이 없어요.",
+    "locked": "🔒 미해금",
     "slot": {
       "body": "피부",
       "head": "머리",

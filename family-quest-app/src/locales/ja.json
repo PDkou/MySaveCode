@@ -320,6 +320,7 @@
     "equip": "装着する",
     "unequip": "装着解除",
     "emptySlot": "まだ用意されたアイテムがありません。",
+    "locked": "🔒 未解放",
     "slot": {
       "body": "肌",
       "head": "頭",

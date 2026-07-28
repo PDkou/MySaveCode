@@ -2759,9 +2759,27 @@ textarea {
   gap: 16px;
 }
 
+.shop-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .shop-balance {
   font-weight: 700;
   color: var(--navy);
+}
+
+.shop-equipped-title {
+  font-size: 13px;
+  color: var(--purple);
+  font-weight: 700;
+}
+
+.shop-item-locked {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 4px 10px;
 }
 
 .shop-slot-tabs {
