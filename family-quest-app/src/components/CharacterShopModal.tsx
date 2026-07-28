@@ -10,6 +10,7 @@ import {
   getEquippedItems,
   getOwnedItemIds,
   getShopItems,
+  isHexColor,
   purchaseItem,
   unequipItem,
 } from '../lib/shop';
@@ -149,7 +150,12 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
               const busy = busyItemId === item.id;
               return (
                 <div key={item.id} className={`shop-item-row ${equipped ? 'shop-item-row-equipped' : ''}`}>
-                  <span className="shop-item-sprite">{item.sprite_key || '·'}</span>
+                  <span
+                    className="shop-item-sprite"
+                    style={item.sprite_key && isHexColor(item.sprite_key) ? { backgroundColor: item.sprite_key } : undefined}
+                  >
+                    {item.sprite_key && isHexColor(item.sprite_key) ? '' : item.sprite_key || '·'}
+                  </span>
                   <span className="shop-item-name">{item.name}</span>
                   {owned ? (
                     <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => void handleEquip(item)}>
