@@ -40,9 +40,15 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
 
   const myBalance = user ? members.find((m) => m.user_id === user.id)?.points ?? 0 : 0;
 
-  const load = async () => {
+  // `silent` skips the loading gate that swaps the whole item list out for
+  // "불러오는 중..." -- right for the very first load, but handlePurchase/
+  // handleEquip also call load() to pick up the item's new owned/equipped
+  // state, and re-showing that gate on every purchase/equip flashed the
+  // entire list out and back in for no reason.
+  const load = async (options?: { silent?: boolean }) => {
     if (!user || !family) return;
-    setLoading(true);
+    const silent = options?.silent ?? false;
+    if (!silent) setLoading(true);
     const [shopItems, owned, equipped] = await Promise.all([
       getShopItems(),
       getOwnedItemIds(user.id, family.id),
@@ -51,7 +57,7 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
     setItems(shopItems);
     setOwnedIds(owned);
     setEquippedBySlot(new Map(equipped.map((e) => [e.slot, e.item_id])));
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   useEffect(() => {
@@ -82,7 +88,7 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
     setBusyItemId(item.id);
     try {
       await purchaseItem(family.id, item.id);
-      await Promise.all([load(), refreshFamily()]);
+      await Promise.all([load({ silent: true }), refreshFamily()]);
     } catch (err) {
       setErrorKey(err instanceof ShopActionError ? err.translationKey : 'shop.error.unknown');
     } finally {
@@ -101,7 +107,7 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
       } else {
         await equipItem(family.id, item.id);
       }
-      await load();
+      await load({ silent: true });
     } catch (err) {
       setErrorKey(err instanceof ShopActionError ? err.translationKey : 'shop.error.unknown');
     } finally {
