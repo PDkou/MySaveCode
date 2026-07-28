@@ -65,8 +65,17 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   // preferredFamilyId lets createFamily/joinFamily/switchFamily jump
   // straight to the family that was just created/joined/picked, instead of
   // falling back to whatever was previously stored.
-  const load = useCallback(async (userId: string, preferredFamilyId?: string) => {
-    setLoading(true);
+  //
+  // `silent` skips the loading flag entirely -- App.tsx's route guards treat
+  // `loading` as "tear down the whole page and show a full-screen spinner",
+  // which is right for the very first load but was also firing on every
+  // refresh() call (e.g. after a shop purchase or avatar upload), unmounting
+  // the current page -- and whatever modal was open on it -- for the
+  // duration of the refetch. A background refresh of already-loaded data
+  // shouldn't blow away the screen the user is looking at.
+  const load = useCallback(async (userId: string, preferredFamilyId?: string, options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) setLoading(true);
     try {
       const { data: membershipRows, error: membershipErr } = await supabase
         .from('family_members')
@@ -156,7 +165,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       });
       setAvatarUrlByUserId(urlByUserId);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -173,7 +182,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     if (user) {
-      await load(user.id, family?.id);
+      await load(user.id, family?.id, { silent: true });
     }
   }, [user, load, family]);
 
