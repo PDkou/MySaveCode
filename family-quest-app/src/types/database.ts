@@ -127,6 +127,7 @@ export type FamilyMemberRow = {
   last_seen_date: string | null;
   login_streak: number;
   last_heartbeat_at: string | null;
+  equipped_badge_key: string | null;
   joined_at: string;
 };
 
@@ -415,6 +416,14 @@ export type Database = {
         Returns: void;
       };
       tap_heartbeat: {
+        Args: { p_family_id: string };
+        Returns: void;
+      };
+      equip_badge: {
+        Args: { p_family_id: string; p_badge_key: string };
+        Returns: void;
+      };
+      unequip_badge: {
         Args: { p_family_id: string };
         Returns: void;
       };

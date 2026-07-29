@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { supabase } from '../lib/supabaseClient';
-import { ALL_BADGE_KEYS, BADGE_EMOJI, levelForPoints, pointsIntoLevel, pointsNeededForLevel } from '../lib/gamification';
+import { ALL_BADGE_KEYS, BADGE_EMOJI, equipBadge, levelForPoints, pointsIntoLevel, pointsNeededForLevel, unequipBadge } from '../lib/gamification';
 import { ShopActionError, equipItem, getEquippedItems, getOwnedItemIds, getShopItems, unequipItem } from '../lib/shop';
 import type { BadgeKey, ShopItemRow } from '../types/database';
 
@@ -15,9 +15,11 @@ interface MyStatsModalProps {
 export function MyStatsModal({ onClose }: MyStatsModalProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { family, members } = useFamily();
+  const { family, members, refresh: refreshFamily } = useFamily();
   const [earnedKeys, setEarnedKeys] = useState<Set<BadgeKey>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [badgeBusyKey, setBadgeBusyKey] = useState<BadgeKey | null>(null);
+  const [badgeErrorKey, setBadgeErrorKey] = useState<string | null>(null);
 
   // Titles (칭호): pure unlock-gallery like badges, not a shop purchase flow
   // -- see GAMIFICATION_DESIGN.md section 8. They live in shop_items only
@@ -90,6 +92,24 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
     }
   };
 
+  const handleBadgeEquip = async (key: BadgeKey) => {
+    if (!family) return;
+    setBadgeErrorKey(null);
+    setBadgeBusyKey(key);
+    try {
+      if (me?.equipped_badge_key === key) {
+        await unequipBadge(family.id);
+      } else {
+        await equipBadge(family.id, key);
+      }
+      await refreshFamily();
+    } catch {
+      setBadgeErrorKey('shop.error.unknown');
+    } finally {
+      setBadgeBusyKey(null);
+    }
+  };
+
   if (!me) return null;
 
   const level = levelForPoints(me.xp);
@@ -131,20 +151,33 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
 
         <div className="stats-badges-section">
           <h3>{t('stats.badgeGallery')}</h3>
+          {badgeErrorKey && <p className="form-error" role="alert">{t(badgeErrorKey)}</p>}
           {loading ? (
             <p className="empty-message">{t('common.loading')}</p>
           ) : (
             <div className="badge-gallery-grid">
               {ALL_BADGE_KEYS.map((key) => {
                 const earned = earnedKeys.has(key);
+                const equipped = me.equipped_badge_key === key;
+                const busy = badgeBusyKey === key;
                 return (
                   <div
                     key={key}
-                    className={`badge-gallery-item ${earned ? 'badge-gallery-item-earned' : 'badge-gallery-item-locked'}`}
+                    className={`badge-gallery-item ${earned ? 'badge-gallery-item-earned' : 'badge-gallery-item-locked'} ${equipped ? 'badge-gallery-item-equipped' : ''}`}
                   >
                     <span className="badge-gallery-emoji">{BADGE_EMOJI[key]}</span>
                     <span className="badge-gallery-name">{t(`badges.${key}.name`)}</span>
                     <span className="badge-gallery-desc">{t(`badges.${key}.desc`)}</span>
+                    {earned && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        disabled={busy}
+                        onClick={() => void handleBadgeEquip(key)}
+                      >
+                        {equipped ? t('shop.unequip') : t('shop.equip')}
+                      </button>
+                    )}
                   </div>
                 );
               })}

@@ -2791,10 +2791,34 @@ textarea {
   color: var(--navy);
 }
 
-.shop-equipped-title {
-  font-size: 13px;
-  color: var(--purple);
+.shop-equipped-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shop-equipped-title-frame {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
   font-weight: 700;
+  color: var(--purple);
+  background: color-mix(in srgb, var(--purple) 12%, transparent);
+  border: 1px solid var(--purple);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.shop-equipped-badge-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 15px;
 }
 
 .shop-item-locked {
