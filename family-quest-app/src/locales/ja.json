@@ -155,7 +155,7 @@
     "assigneeHintEveryone": "全員選択で協力型クエストになります — 完了時に報酬を分け合います。",
     "assigneeHintSpecific": "特定の担当者へのクエストです — 完了した人が報酬を全額受け取ります。",
     "stakePoints": "依頼金を設定",
-    "stakePointsHint": "保有ポイント {{balance}} — 完了した人が報酬として受け取ります。",
+    "stakePointsHint": "保有ゴールド {{balance}} — 完了した人が報酬として受け取ります。",
     "lotteryButton": "🎲 くじ引き",
     "lotteryPicking": "選んでいます...",
     "startsAt": "開始日 (任意)",
@@ -182,7 +182,7 @@
     "submitting": "登録中...",
     "error": {
       "titleRequired": "タイトルを入力してください。",
-      "insufficientPoints": "保有ポイントが足りません。依頼金を減らしてください。",
+      "insufficientPoints": "保有ゴールドが足りません。依頼金を減らしてください。",
       "unknown": "クエストの登録に失敗しました。"
     }
   },
@@ -317,8 +317,8 @@
   "shop": {
     "openButton": "キャラクター / ショップ",
     "heading": "キャラクターを着せ替える",
-    "balance": "保有ポイント {{balance}}",
-    "purchase": "{{price}}Pで購入",
+    "balance": "保有ゴールド {{balance}}",
+    "purchase": "{{price}}Gで購入",
     "equip": "装着する",
     "unequip": "装着解除",
     "emptySlot": "まだ用意されたアイテムがありません。",
@@ -340,7 +340,7 @@
     },
     "error": {
       "alreadyOwned": "すでに持っているアイテムです。",
-      "insufficientPoints": "保有ポイントが足りません。",
+      "insufficientPoints": "保有ゴールドが足りません。",
       "currencyNotAvailable": "まだ購入できないアイテムです。",
       "itemNotOwned": "先に購入してから装着できます。",
       "unknown": "リクエストを処理できませんでした。"
@@ -354,10 +354,10 @@
     "level": "レベル {{level}} / {{max}}",
     "upgradeButton": "{{cost}} でアップグレード",
     "maxLevel": "最高レベル達成!",
-    "exchangeHeading": "ポイントに交換",
-    "exchangeRateHint": "{{rate}} ごとに1ポイントに交換されます。",
-    "exchangeRemaining": "本日の残り交換枠: {{count}}ポイント",
-    "exchangeButton": "{{points}}Pに交換",
+    "exchangeHeading": "ゴールドに交換",
+    "exchangeRateHint": "{{rate}} ごとに1ゴールドに交換されます。",
+    "exchangeRemaining": "本日の残り交換枠: {{count}}ゴールド",
+    "exchangeButton": "{{points}}Gに交換",
     "shopHeading": "タイクーンショップ",
     "error": {
       "tapTooFast": "早すぎます、少し待ってからもう一度押してください。",
@@ -395,7 +395,7 @@
       },
       {
         "title": "6. 楽しい要素",
-        "body": "クエストを完了するたびにポイントが貯まりレベルが上がります(レベルが上がるほど必要なポイントも増えます)。\n毎日完了すると連続記録(ストリーク)が貯まり、様々なバッジも集められます。\nダッシュボードの「Lv.X」チップをタップすると、自分の記録とバッジコレクションが見られます。\n「今週の完了」の文字をタップすると、家族別の完了状況が見られます。"
+        "body": "クエストを完了するたびにゴールドが貯まりレベルが上がります(レベルが上がるほど必要なゴールドも増えます)。\n毎日完了すると連続記録(ストリーク)が貯まり、様々なバッジも集められます。\nダッシュボードの「Lv.X」チップをタップすると、自分の記録とバッジコレクションが見られます。\n「今週の完了」の文字をタップすると、家族別の完了状況が見られます。"
       },
       {
         "title": "7. カレンダー & フォトギャラリー",
@@ -430,7 +430,7 @@
   "stats": {
     "heading": "わたしの記録",
     "pointsToNext": "次のレベルまで {{current}}/{{total}}",
-    "spendablePoints": "保有ポイント",
+    "spendablePoints": "保有ゴールド",
     "currentStreak": "連続達成",
     "longestStreak": "最長記録",
     "completedCount": "累計完了",

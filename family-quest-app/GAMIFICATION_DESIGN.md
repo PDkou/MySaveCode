@@ -16,7 +16,12 @@
 유지, UI 문구만 반영(`taskForm.stakePoints`/`stakePointsHint`, `celebration.pointsGained` 등 —
 자세한 내용은 15번 구현 현황 참고). **앞으로 이 문서를 포함해 "스테이크"라는 표현은 쓰지 않습니다** —
 1~14번 원문에 남아있는 기존 "스테이크" 표기는 설계 당시 기록이라 그대로 두었지만, 새로 쓰는 내용은
-전부 의뢰금/포상금으로 표기합니다. "포인트"라는 화폐 이름 자체를 바꿀지는 아직 미정입니다.
+전부 의뢰금/포상금으로 표기합니다.
+
+**화폐 명칭 변경 (2026-07-29 추가)**: "포인트"라는 화폐 이름 자체도 사용자 요청으로 **"골드"**로
+확정했습니다. UI에 노출되는 모든 "포인트"/"P" 표기를 "골드"/"G"로 교체(자세한 목록은 15번 Phase 10
+참고). 내부 DB 컬럼(`family_members.points`)·TS 필드명(`points`)·함수명(`levelForPoints` 등)은
+그대로 유지 — UI 문구만 대상입니다.
 
 ## 1. 정체성 원칙
 
@@ -482,6 +487,20 @@
 - 상점/타이쿤 화면의 일반 "포인트" 잔액 표시(`shop.balance`, `tycoon.*` 등)는 그대로 둠 — 이번
   변경은 퀘스트별로 거는/받는 금액에만 해당, 화폐 자체의 이름("포인트")은 아직 안 바뀜.
 - 내부 DB 컬럼(`tasks.stake_points`)·변수명은 안 건드림 — 사용자 대상 문구만 대상.
+
+### Phase 10 — 화폐 명칭 "포인트" → "골드" 전면 교체 (2026-07-29)
+- 사용자 요청으로 화폐 이름 자체를 "골드"로 확정 (Phase 9의 의뢰금/포상금과는 별개 결정 — 그건 같은
+  값을 관점별로 부르는 이름이고, 이번 건은 그 값의 화폐 단위 자체).
+- ko.json / ja.json에서 "포인트"/"ポイント"/약어 "P"가 등장하는 자리를 전부 "골드"/"ゴールド"/"G"로
+  교체. 변경된 키: `taskForm.stakePointsHint`, `taskForm.error.insufficientPoints`,
+  `shop.balance`, `shop.purchase`, `shop.error.insufficientPoints`, `tycoon.exchangeHeading`,
+  `tycoon.exchangeRateHint`, `tycoon.exchangeRemaining`, `tycoon.exchangeButton`,
+  `help.sections[5].body`(재미 요소 설명), `stats.spendablePoints`.
+- 내부 DB 컬럼(`family_members.points`, `points_delta`, `lifetime_points_spent`)·TS 타입
+  (`ShopItemCurrency = 'points' | 'tycoon'`)·함수명(`levelForPoints`, `pointsIntoLevel`,
+  `pointsNeededForLevel`)·변수명은 전부 그대로 — 이번에도 UI 문구만 대상, 스키마/코드 변경 없음.
+- `celebration.pointsGained`/`assigneeHint*`는 이미 Phase 9에서 "포상금"으로 바뀐 상태라 "포인트"
+  단어 자체가 없어서 이번엔 손댈 게 없었음.
 
 ### 전체 백로그 (설계는 끝났지만 구현 안 한 것)
 - **실제 캐릭터 아트 제작** — 인수인계 문서(`ART_HANDOFF.md`)는 완료, 실제 이미지 생성/통합은 미착수.
