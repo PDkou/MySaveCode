@@ -4,7 +4,18 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { supabase } from '../lib/supabaseClient';
-import { ALL_BADGE_KEYS, BADGE_EMOJI, equipBadge, levelForPoints, pointsIntoLevel, pointsNeededForLevel, unequipBadge } from '../lib/gamification';
+import {
+  ALL_BADGE_KEYS,
+  BADGE_EMOJI,
+  TITLE_CATEGORIES,
+  equipBadge,
+  levelForPoints,
+  pointsIntoLevel,
+  pointsNeededForLevel,
+  titleCategoryForKey,
+  unequipBadge,
+  type TitleCategory,
+} from '../lib/gamification';
 import { ShopActionError, equipItem, getEquippedItems, getOwnedItemIds, getShopItems, unequipItem } from '../lib/shop';
 import type { BadgeKey, ShopItemRow } from '../types/database';
 
@@ -30,6 +41,12 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
   const [equippedTitleId, setEquippedTitleId] = useState<string | null>(null);
   const [titleBusyId, setTitleBusyId] = useState<string | null>(null);
   const [titleErrorKey, setTitleErrorKey] = useState<string | null>(null);
+
+  // Badges + the 4 title theme tabs share one tab strip so the modal never
+  // needs the long vertical scroll of showing all of them stacked at once.
+  type GalleryTab = 'badges' | TitleCategory;
+  const GALLERY_TABS: GalleryTab[] = ['badges', ...TITLE_CATEGORIES];
+  const [activeTab, setActiveTab] = useState<GalleryTab>('badges');
 
   const me = useMemo(() => members.find((m) => m.user_id === user?.id) ?? null, [members, user]);
 
@@ -83,6 +100,8 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
   }, [familyId, userId]);
 
   const visibleTitleItems = titleItems.filter((i) => !i.hidden || ownedTitleIds.has(i.id));
+  const titleItemsForActiveTab =
+    activeTab === 'badges' ? [] : visibleTitleItems.filter((i) => titleCategoryForKey(i.key) === activeTab);
 
   const handleTitleEquip = async (item: ShopItemRow) => {
     if (!family) return;
@@ -159,31 +178,76 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
           </div>
         </div>
 
-        <div className="stats-badges-section">
-          <h3>{t('stats.badgeGallery')}</h3>
-          {badgeErrorKey && <p className="form-error" role="alert">{t(badgeErrorKey)}</p>}
-          {loading ? (
-            <p className="empty-message">{t('common.loading')}</p>
-          ) : (
+        <div className="stats-gallery-tabs" role="tablist">
+          {GALLERY_TABS.map((tabKey) => (
+            <button
+              key={tabKey}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tabKey}
+              className={`stats-gallery-tab ${activeTab === tabKey ? 'stats-gallery-tab-active' : ''}`}
+              onClick={() => setActiveTab(tabKey)}
+            >
+              {t(`stats.tab.${tabKey}`)}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'badges' ? (
+          <div className="stats-badges-section">
+            {badgeErrorKey && <p className="form-error" role="alert">{t(badgeErrorKey)}</p>}
+            {loading ? (
+              <p className="empty-message">{t('common.loading')}</p>
+            ) : (
+              <div className="badge-gallery-grid">
+                {ALL_BADGE_KEYS.map((key) => {
+                  const earned = earnedKeys.has(key);
+                  const equipped = me.equipped_badge_key === key;
+                  const busy = badgeBusyKey === key;
+                  return (
+                    <div
+                      key={key}
+                      className={`badge-gallery-item ${earned ? 'badge-gallery-item-earned' : 'badge-gallery-item-locked'} ${equipped ? 'badge-gallery-item-equipped' : ''}`}
+                    >
+                      <span className="badge-gallery-emoji">{BADGE_EMOJI[key]}</span>
+                      <span className="badge-gallery-name">{t(`badges.${key}.name`)}</span>
+                      <span className="badge-gallery-desc">{t(`badges.${key}.desc`)}</span>
+                      {earned && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          disabled={busy}
+                          onClick={() => void handleBadgeEquip(key)}
+                        >
+                          {equipped ? t('shop.unequip') : t('shop.equip')}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="stats-badges-section">
+            {titleErrorKey && <p className="form-error" role="alert">{t(titleErrorKey)}</p>}
             <div className="badge-gallery-grid">
-              {ALL_BADGE_KEYS.map((key) => {
-                const earned = earnedKeys.has(key);
-                const equipped = me.equipped_badge_key === key;
-                const busy = badgeBusyKey === key;
+              {titleItemsForActiveTab.map((item) => {
+                const owned = ownedTitleIds.has(item.id);
+                const equipped = equippedTitleId === item.id;
+                const busy = titleBusyId === item.id;
                 return (
                   <div
-                    key={key}
-                    className={`badge-gallery-item ${earned ? 'badge-gallery-item-earned' : 'badge-gallery-item-locked'} ${equipped ? 'badge-gallery-item-equipped' : ''}`}
+                    key={item.id}
+                    className={`badge-gallery-item ${owned ? 'badge-gallery-item-earned' : 'badge-gallery-item-locked'} ${equipped ? 'badge-gallery-item-equipped' : ''}`}
                   >
-                    <span className="badge-gallery-emoji">{BADGE_EMOJI[key]}</span>
-                    <span className="badge-gallery-name">{t(`badges.${key}.name`)}</span>
-                    <span className="badge-gallery-desc">{t(`badges.${key}.desc`)}</span>
-                    {earned && (
+                    <span className="badge-gallery-name">{owned ? item.name : t('shop.locked')}</span>
+                    {owned && (
                       <button
                         type="button"
                         className="btn btn-secondary btn-sm"
                         disabled={busy}
-                        onClick={() => void handleBadgeEquip(key)}
+                        onClick={() => void handleTitleEquip(item)}
                       >
                         {equipped ? t('shop.unequip') : t('shop.equip')}
                       </button>
@@ -192,38 +256,8 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
                 );
               })}
             </div>
-          )}
-        </div>
-
-        <div className="stats-badges-section">
-          <h3>{t('stats.titleGallery')}</h3>
-          {titleErrorKey && <p className="form-error" role="alert">{t(titleErrorKey)}</p>}
-          <div className="badge-gallery-grid">
-            {visibleTitleItems.map((item) => {
-              const owned = ownedTitleIds.has(item.id);
-              const equipped = equippedTitleId === item.id;
-              const busy = titleBusyId === item.id;
-              return (
-                <div
-                  key={item.id}
-                  className={`badge-gallery-item ${owned ? 'badge-gallery-item-earned' : 'badge-gallery-item-locked'} ${equipped ? 'badge-gallery-item-equipped' : ''}`}
-                >
-                  <span className="badge-gallery-name">{owned ? item.name : t('shop.locked')}</span>
-                  {owned && (
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      disabled={busy}
-                      onClick={() => void handleTitleEquip(item)}
-                    >
-                      {equipped ? t('shop.unequip') : t('shop.equip')}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
           </div>
-        </div>
+        )}
 
         <div className="modal-actions">
           <button type="button" className="btn btn-primary btn-block" onClick={onClose}>

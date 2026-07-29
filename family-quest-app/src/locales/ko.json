@@ -434,8 +434,13 @@
     "currentStreak": "연속 완료",
     "longestStreak": "최고 기록",
     "completedCount": "총 완료",
-    "badgeGallery": "뱃지 컬렉션",
-    "titleGallery": "칭호 컬렉션"
+    "tab": {
+      "badges": "뱃지",
+      "specific": "특정인 지정",
+      "everyone": "모두",
+      "firstCome": "선착",
+      "other": "그외"
+    }
   },
   "badges": {
     "first_quest": { "name": "첫 발걸음", "desc": "첫 퀘스트를 완료했어요" },

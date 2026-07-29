@@ -434,8 +434,13 @@
     "currentStreak": "連続達成",
     "longestStreak": "最長記録",
     "completedCount": "累計完了",
-    "badgeGallery": "バッジコレクション",
-    "titleGallery": "称号コレクション"
+    "tab": {
+      "badges": "バッジ",
+      "specific": "指名",
+      "everyone": "全員",
+      "firstCome": "先着",
+      "other": "その他"
+    }
   },
   "badges": {
     "first_quest": { "name": "はじめの一歩", "desc": "はじめてのクエストを完了しました" },
