@@ -121,8 +121,22 @@ create table if not exists public.family_members (
   lifetime_points_spent integer not null default 0,
   joined_at timestamptz not null default now(),
   constraint family_members_role_check check (role in ('owner', 'member')),
-  constraint family_members_family_user_unique unique (family_id, user_id)
+  constraint family_members_family_user_unique unique (family_id, user_id),
+  constraint family_members_points_check check (points >= 0)
 );
+
+-- Backstop for databases created before the check above existed -- the
+-- real fix for the TOCTOU race this guards against (concurrent spends
+-- both reading the same balance before either deducts) is making every
+-- points deduction one atomic "where points >= cost" UPDATE (see
+-- create_task/purchase_item); this constraint just guarantees the
+-- invariant holds even if a future codepath forgets that discipline.
+do $$
+begin
+  alter table public.family_members add constraint family_members_points_check check (points >= 0);
+exception
+  when duplicate_object then null;
+end $$;
 
 -- A user can belong to more than one family (e.g. their own household plus
 -- their and their spouse's parents' households); each family itself can
@@ -907,12 +921,21 @@ begin
   -- creation stays free and the task is stored with 0 stake regardless of
   -- what was passed in.
   if v_member_count > 1 then
-    select points into v_creator_points from public.family_members where family_id = p_family_id and user_id = v_uid;
-    if coalesce(v_creator_points, 0) < v_stake then
-      raise exception 'insufficient_points' using errcode = 'P0001';
-    end if;
+    -- The balance check and the deduction must be one atomic statement --
+    -- a separate "select balance, then update" (the previous shape here)
+    -- lets two concurrent create_task calls both read the same balance,
+    -- both pass the check, and both deduct, taking the balance negative.
+    -- "where points >= v_stake" makes the UPDATE itself the check: it
+    -- either succeeds as a single unit or matches zero rows.
     if v_stake > 0 then
-      update public.family_members set points = points - v_stake where family_id = p_family_id and user_id = v_uid;
+      update public.family_members
+      set points = points - v_stake
+      where family_id = p_family_id and user_id = v_uid and points >= v_stake
+      returning points into v_creator_points;
+
+      if not found then
+        raise exception 'insufficient_points' using errcode = 'P0001';
+      end if;
     end if;
   else
     v_stake := 0;
@@ -1308,14 +1331,24 @@ begin
     raise exception 'not_authenticated' using errcode = '28000';
   end if;
 
+  -- "where status = 'open'" (not just "where id = ...") is what makes this
+  -- safe against two racers completing the same task at once, or the same
+  -- caller double-submitting: the UPDATE takes the row lock, so a second
+  -- concurrent call blocks until the first commits, then matches zero rows
+  -- against the now-'done' status and hits "not found" below instead of
+  -- silently re-running the entire payout block a second time.
   update public.tasks
   set status = 'done',
       completed_at = now(),
       completed_by = v_uid,
       completion_note = nullif(trim(coalesce(p_completion_note, '')), ''),
       completion_photo_path = p_completion_photo_path
-  where id = p_task_id
+  where id = p_task_id and status = 'open'
   returning * into v_task;
+
+  if not found then
+    raise exception 'already_completed' using errcode = 'P0001';
+  end if;
 
   if v_task.recurrence <> 'none' then
     if v_task.recurrence = 'weekly' and v_task.recurrence_weekdays is not null
@@ -1365,7 +1398,12 @@ begin
       select points into v_creator_points from public.family_members where family_id = v_task.family_id and user_id = v_task.created_by;
       v_new_stake := least(v_task.stake_points, coalesce(v_creator_points, 0));
       if v_new_stake > 0 then
-        update public.family_members set points = points - v_new_stake where family_id = v_task.family_id and user_id = v_task.created_by;
+        -- greatest(..., 0): this reads the balance and deducts in two
+        -- separate steps (unlike create_task's atomic version) since it's
+        -- a side effect of completion, not a user-initiated spend the user
+        -- is concurrently racing against themselves on -- but the clamp
+        -- still guarantees points can never go negative even if it does.
+        update public.family_members set points = greatest(points - v_new_stake, 0) where family_id = v_task.family_id and user_id = v_task.created_by;
       end if;
     else
       v_new_stake := 0;
@@ -1624,6 +1662,19 @@ begin
     -- the creator claims their own request; otherwise the creator also
     -- gets a minted 10% requester bonus (not deducted from the completer)
     -- once the stake is big enough for that to be a meaningful amount.
+    --
+    -- The completer must actually be one of the designated assignees --
+    -- otherwise an uninvolved third party could race in and steal a
+    -- specific-person request meant for someone else (the creator claiming
+    -- their own request is still allowed below regardless of whether they
+    -- listed themselves as an assignee, since that path already nets to 0
+    -- points/0 reputation and isn't an abuse vector).
+    if v_task.created_by <> v_uid and not exists (
+      select 1 from public.task_assignees where task_id = p_task_id and user_id = v_uid
+    ) then
+      raise exception 'not_assigned' using errcode = 'P0001';
+    end if;
+
     if v_task.created_by = v_uid then
       perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, false, p_task_id, 'specific');
     else
@@ -2068,8 +2119,22 @@ grant select on public.family_members to authenticated;
 -- Column-restricted: only display_name is updatable client-side (see the
 -- family_members_update_self policy above), never role/family_id/user_id.
 grant update (display_name) on public.family_members to authenticated;
-grant select, insert, update, delete on public.tasks to authenticated;
-grant select, insert, delete on public.task_assignees to authenticated;
+-- Column-restricted, same discipline as family_members above: create/edit/
+-- complete/reopen all go through security-definer RPCs (create_task,
+-- update_task, complete_task, reopen_task), which run with the function
+-- owner's privileges and don't need a client-side grant at all. The only
+-- column the client legitimately writes directly is `pinned` (togglePin);
+-- an unrestricted grant here previously let any authenticated client PATCH
+-- stake_points/status/completed_by/created_by directly via PostgREST,
+-- bypassing every RPC's business logic entirely.
+grant select, delete on public.tasks to authenticated;
+grant update (pinned) on public.tasks to authenticated;
+-- Select-only: assignees are set by create_task/update_task (security
+-- definer) only. A direct client insert here (RLS only checks
+-- is_family_member, not task ownership or who's completing) would let
+-- anyone self-assign to a specific-person task to become eligible to
+-- complete it -- the same class of bug as the tasks grant above.
+grant select on public.task_assignees to authenticated;
 grant select on public.task_activities to authenticated;
 grant select on public.member_badges to authenticated;
 grant select on public.quest_payouts to authenticated;
@@ -2622,7 +2687,6 @@ as $$
 declare
   v_uid uuid := auth.uid();
   v_item public.shop_items;
-  v_balance integer;
   v_tycoon_currency bigint;
   v_owned_count integer;
   v_lifetime_spent integer;
@@ -2646,16 +2710,18 @@ begin
   end if;
 
   if v_item.currency = 'points' then
-    select points into v_balance from public.family_members where family_id = p_family_id and user_id = v_uid;
-    if coalesce(v_balance, 0) < v_item.price then
-      raise exception 'insufficient_points' using errcode = 'P0001';
-    end if;
-
+    -- Atomic check-and-deduct (see create_task's stake deduction for the
+    -- same reasoning) -- two concurrent purchases of different items could
+    -- otherwise both pass a separate balance check and take points negative.
     update public.family_members
     set points = points - v_item.price,
         lifetime_points_spent = lifetime_points_spent + v_item.price
-    where family_id = p_family_id and user_id = v_uid
+    where family_id = p_family_id and user_id = v_uid and points >= v_item.price
     returning lifetime_points_spent into v_lifetime_spent;
+
+    if not found then
+      raise exception 'insufficient_points' using errcode = 'P0001';
+    end if;
 
     -- 손이 큰 소비자 (13-2): shop-spending read of "big spender", distinct
     -- from 큰손's requester-stake read (create_task above).
@@ -3099,17 +3165,20 @@ begin
   end if;
 
   -- The daily cap (GAMIFICATION_DESIGN.md 6-3), not the exchange rate, is
-  -- what keeps the tycoon from competing with actually doing quests --
-  -- reject outright rather than silently clamping, so the client can show
-  -- exactly how much room is left instead of guessing.
-  if v_state.exchanged_today + v_points > 25 then
-    raise exception 'daily_cap_reached' using errcode = 'P0001';
-  end if;
-
+  -- what keeps the tycoon from competing with actually doing quests -- the
+  -- cap (and the currency balance) is re-checked as part of the same
+  -- atomic UPDATE below rather than as a separate preceding check, so two
+  -- concurrent exchanges can't both read the same exchanged_today/currency
+  -- and both push past the cap.
   update public.tycoon_state
   set currency = currency - (v_points * 1000), exchanged_today = exchanged_today + v_points
   where user_id = v_uid and family_id = p_family_id
+    and currency >= (v_points * 1000) and exchanged_today + v_points <= 25
   returning * into v_state;
+
+  if not found then
+    raise exception 'daily_cap_reached' using errcode = 'P0001';
+  end if;
 
   update public.family_members set points = points + v_points where family_id = p_family_id and user_id = v_uid;
 
