@@ -151,11 +151,11 @@
     "assignedTo": "担当者",
     "noAssignee": "担当者を指定しない",
     "everyone": "全員",
-    "assigneeHintFirstCome": "誰も選ばなければ先着順クエストになります — 先に完了した人が獲得します。",
-    "assigneeHintEveryone": "全員選択で協力型クエストになります — 完了時にポイントを分け合います。",
-    "assigneeHintSpecific": "特定の担当者へのクエストです — 完了した人がポイントを全額受け取ります。",
-    "stakePoints": "ポイントを賭ける",
-    "stakePointsHint": "保有ポイント {{balance}} — 完了した人がこのポイントを受け取ります。",
+    "assigneeHintFirstCome": "誰も選ばなければ先着順クエストになります — 先に完了した人が報酬を獲得します。",
+    "assigneeHintEveryone": "全員選択で協力型クエストになります — 完了時に報酬を分け合います。",
+    "assigneeHintSpecific": "特定の担当者へのクエストです — 完了した人が報酬を全額受け取ります。",
+    "stakePoints": "依頼金を設定",
+    "stakePointsHint": "保有ポイント {{balance}} — 完了した人が報酬として受け取ります。",
     "lotteryButton": "🎲 くじ引き",
     "lotteryPicking": "選んでいます...",
     "startsAt": "開始日 (任意)",
@@ -182,7 +182,7 @@
     "submitting": "登録中...",
     "error": {
       "titleRequired": "タイトルを入力してください。",
-      "insufficientPoints": "保有ポイントが足りません。賭けるポイントを減らしてください。",
+      "insufficientPoints": "保有ポイントが足りません。依頼金を減らしてください。",
       "unknown": "クエストの登録に失敗しました。"
     }
   },
@@ -309,7 +309,7 @@
       "完了! きっと家族みんなが感謝しています",
       "さすがです! 次のクエストも楽しみですね"
     ],
-    "pointsGained": "+{{points}}ポイント獲得!",
+    "pointsGained": "+{{points}} 報酬獲得!",
     "levelUp": "レベルアップ! Lv.{{level}}",
     "streak": "{{count}}日連続達成中! 🔥",
     "newBadgeHeading": "新しいバッジ獲得!"

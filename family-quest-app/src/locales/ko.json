@@ -151,11 +151,11 @@
     "assignedTo": "담당자",
     "noAssignee": "담당자 지정 안 함",
     "everyone": "모두",
-    "assigneeHintFirstCome": "아무도 선택하지 않으면 선착순 퀘스트가 돼요 — 먼저 완료하는 사람이 가져가요.",
-    "assigneeHintEveryone": "전원이 선택되면 모두형 퀘스트가 돼요 — 완료 시 포인트를 다같이 나눠 가져요.",
-    "assigneeHintSpecific": "특정인 지정 퀘스트예요 — 담당자 중 완료한 사람이 포인트를 전액 받아요.",
-    "stakePoints": "포인트 걸기",
-    "stakePointsHint": "보유 포인트 {{balance}} — 완료한 사람이 이 포인트를 받아요.",
+    "assigneeHintFirstCome": "아무도 선택하지 않으면 선착순 퀘스트가 돼요 — 먼저 완료하는 사람이 포상금을 가져가요.",
+    "assigneeHintEveryone": "전원이 선택되면 모두형 퀘스트가 돼요 — 완료 시 포상금을 다같이 나눠 가져요.",
+    "assigneeHintSpecific": "특정인 지정 퀘스트예요 — 담당자 중 완료한 사람이 포상금을 전액 받아요.",
+    "stakePoints": "의뢰금 설정",
+    "stakePointsHint": "보유 포인트 {{balance}} — 완료한 사람이 포상금으로 받아요.",
     "lotteryButton": "🎲 제비뽑기",
     "lotteryPicking": "뽑는 중...",
     "startsAt": "시작일 (선택)",
@@ -182,7 +182,7 @@
     "submitting": "전달하는 중...",
     "error": {
       "titleRequired": "제목을 입력해주세요.",
-      "insufficientPoints": "보유 포인트가 부족해요. 걸 포인트를 줄여주세요.",
+      "insufficientPoints": "보유 포인트가 부족해요. 의뢰금을 줄여주세요.",
       "unknown": "퀘스트를 등록하지 못했습니다."
     }
   },
@@ -309,7 +309,7 @@
       "완료! 가족 모두가 고마워할 거예요",
       "짱이에요! 다음 퀘스트도 기대할게요"
     ],
-    "pointsGained": "+{{points}} 포인트 획득!",
+    "pointsGained": "+{{points}} 포상금 획득!",
     "levelUp": "레벨 업! Lv.{{level}}",
     "streak": "{{count}}일 연속 완료 중! 🔥",
     "newBadgeHeading": "새 뱃지 획득!"
