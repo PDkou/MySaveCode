@@ -215,7 +215,8 @@
     "activity": {
       "created": "{{name}}さんがクエストを登録しました。",
       "completed": "{{name}}さんが完了にしました。",
-      "reopened": "{{name}}さんが進行中に戻しました。"
+      "reopened": "{{name}}さんが進行中に戻しました。",
+      "updated": "{{name}}さんがクエストを編集しました。"
     },
     "comments": "コメント・進捗メモ",
     "noComments": "まだコメントはありません。進捗を残したり、絵文字で応援してみましょう。",

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FamilyMember } from '../context/FamilyContext';
@@ -19,6 +19,15 @@ export function AssigneeLotteryButton({ members, onPick, onHighlightChange }: As
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
   const intervalRef = useRef<number | null>(null);
+
+  // If the modal that owns this button (and thus onHighlightChange/onPick's
+  // state) closes mid-animation, stop the interval instead of letting it
+  // keep firing into unmounted state.
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current !== null) window.clearInterval(intervalRef.current);
+    };
+  }, []);
 
   const handleClick = () => {
     if (picking || members.length < 2) return;

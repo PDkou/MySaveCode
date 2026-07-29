@@ -81,8 +81,12 @@ export function TaskTemplatePicker({
   };
 
   const handleDelete = async (templateId: string) => {
+    const previous = templates;
     setTemplates((prev) => prev.filter((tpl) => tpl.id !== templateId));
-    await supabase.from('task_templates').delete().eq('id', templateId);
+    const { error } = await supabase.from('task_templates').delete().eq('id', templateId);
+    // Was only optimistically hidden -- put it back if the delete didn't
+    // actually go through, so a failed delete doesn't silently disappear.
+    if (error) setTemplates(previous);
   };
 
   return (
