@@ -31,6 +31,7 @@
 --  22. New title tracking (login streak, birthday, presence, weekly MVP) + more titles
 --  23. Equippable badges
 --  24. Remaining 52 titles (13-2 draft, minus 6 dropped as too ambiguous)
+--  25. Revived titles (the 6 dropped from section 24)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -946,6 +947,17 @@ begin
     if v_total_stake >= 500 then
       perform public.grant_title(p_family_id, v_uid, 'big_spender_stake');
     end if;
+
+    -- 후한 인심 (13-2, revived): staking generously on an individual
+    -- 특정인 지정 quest (a big single ask, not the cumulative total 큰손
+    -- tracks) -- 5 quests staked at 50+ each, whether completed yet or not.
+    if v_stake >= 50 and (
+      select count(*) from public.tasks t
+      where t.family_id = p_family_id and t.created_by = v_uid and t.stake_points >= 50
+        and (select count(*) from public.task_assignees ta where ta.task_id = t.id) between 1 and v_member_count - 1
+    ) >= 5 then
+      perform public.grant_title(p_family_id, v_uid, 'generous_heart');
+    end if;
   end if;
 
   return v_task;
@@ -1161,6 +1173,12 @@ begin
       perform public.grant_title(p_family_id, p_user_id, 'first_come_fifty');
     elsif v_new_mode_count = 100 then
       perform public.grant_title(p_family_id, p_user_id, 'first_come_hundred');
+    elsif v_new_mode_count = 200 then
+      -- 무패행진 (13-2, revived): a higher tier above 독보적 존재, not a
+      -- true "no losses" streak -- the server has no way to tell when
+      -- someone else beat you to a 선착 quest, so this stays a cumulative
+      -- count like the rest of the ladder, just the new top rung.
+      perform public.grant_title(p_family_id, p_user_id, 'unbeaten_streak');
     end if;
 
     -- 완판 요정 (13-2, 선착 누적): total points ever earned specifically via
@@ -1678,6 +1696,23 @@ begin
           and qp.assignment_mode = 'specific' and qp.reputation_awarded and t.completion_photo_path is not null
       ) >= 15 then
         perform public.grant_title(v_family_id, v_uid, 'photo_chronicler');
+      end if;
+
+      -- 믿음의 리필 / 전담마크 (13-2, revived): how many times this exact
+      -- (requester, completer) pair has completed a 특정인 지정 quest
+      -- together -- granted to the completer, low tier then high tier.
+      -- 단골 사장님 (13-2, revived): the same pair count, granted to the
+      -- requester's side instead ("규칙적으로 같은 사람에게 의뢰하는 의뢰주").
+      select count(*) into v_mode_count
+      from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+      where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
+        and qp.assignment_mode = 'specific' and qp.reputation_awarded and t.created_by = v_task.created_by;
+      if v_mode_count >= 5 then
+        perform public.grant_title(v_family_id, v_uid, 'trust_refill');
+      end if;
+      if v_mode_count >= 20 then
+        perform public.grant_title(v_family_id, v_uid, 'assigned_specialist');
+        perform public.grant_title(v_family_id, v_task.created_by, 'regular_patron');
       end if;
     end if;
   end if;
@@ -3319,6 +3354,68 @@ grant select on public.weekly_mvp_log to authenticated;
 -- Scheduled weekly (see cron.schedule below) rather than computed on the
 -- fly -- reputation-earning completions in the past 7 days, ranked per
 -- family, top scorer wins that week's log row.
+-- 우리집 챔피언 (13-2, revived): unlike every other title, this one is
+-- contestable -- "1등 했는데 다음 주엔 아닐 수도 있으니" (user's own framing).
+-- Re-evaluated on the same weekly cadence as compute_weekly_mvp() below
+-- (which calls this): find each family's 모두형 completion leader, and if
+-- it's changed, revoke the title from whoever held it and hand it to the
+-- new leader. Ties (or fewer than 5 모두형 completions) leave the existing
+-- holder untouched rather than flapping.
+create or replace function public.update_family_champions()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_champion_item_id uuid;
+  v_family_id uuid;
+  v_leader_id uuid;
+  v_leader_count integer;
+  v_runner_up_count integer;
+  v_current_holder uuid;
+begin
+  select id into v_champion_item_id from public.shop_items where key = 'house_champion';
+  if v_champion_item_id is null then
+    return;
+  end if;
+
+  for v_family_id in select id from public.families loop
+    select user_id, everyone_completed_count into v_leader_id, v_leader_count
+    from public.family_members
+    where family_id = v_family_id
+    order by everyone_completed_count desc, user_id
+    limit 1;
+
+    select everyone_completed_count into v_runner_up_count
+    from public.family_members
+    where family_id = v_family_id and user_id <> v_leader_id
+    order by everyone_completed_count desc
+    limit 1;
+
+    select user_id into v_current_holder
+    from public.member_owned_items
+    where family_id = v_family_id and item_id = v_champion_item_id
+    limit 1;
+
+    if v_leader_id is not null and v_leader_count >= 5
+       and (v_runner_up_count is null or v_leader_count > v_runner_up_count)
+       and v_leader_id is distinct from v_current_holder
+    then
+      if v_current_holder is not null then
+        delete from public.member_owned_items
+        where family_id = v_family_id and item_id = v_champion_item_id and user_id = v_current_holder;
+        delete from public.member_equipped_items
+        where family_id = v_family_id and item_id = v_champion_item_id and user_id = v_current_holder;
+      end if;
+      perform public.grant_title(v_family_id, v_leader_id, 'house_champion');
+    end if;
+  end loop;
+end;
+$$;
+
+revoke execute on function public.update_family_champions() from anon, public, authenticated;
+
 create or replace function public.compute_weekly_mvp()
 returns void
 language plpgsql
@@ -3351,6 +3448,9 @@ begin
       perform public.grant_title(v_winner.family_id, v_winner.user_id, 'solidarity');
     end if;
   end loop;
+
+  -- 우리집 챔피언 (13-2): re-evaluated on the same weekly cadence.
+  perform public.update_family_champions();
 end;
 $$;
 
@@ -3574,6 +3674,36 @@ select * from (values
   ('title', '알림 매니아', '', 'title_condition', 'notification_maniac', false, 271),
   ('title', '사진첩 부자', '', 'title_condition', 'photo_album_rich', false, 272),
   ('title', '초대왕', '', 'title_condition', 'invite_king', true, 273)
+) as seed(slot, name, sprite_key, acquisition_type, key, hidden, sort_order)
+where not exists (
+  select 1 from public.shop_items existing where existing.key = seed.key
+);
+
+-- -----------------------------------------------------------------------------
+-- 25. Revived titles (the 6 dropped from section 24 as too ambiguous)
+--
+-- User clarified their intended meaning for all 6 -- see the 13-2 section
+-- of GAMIFICATION_DESIGN.md ("6개 재검토" entry) for the discussion:
+-- - 후한 인심: staking generously on individual 특정인 지정 quests (see
+--   create_task above), not the cumulative total 큰손 already tracks.
+-- - 전담마크 / 믿음의 리필: same (requester, completer) pair repeating on
+--   특정인 지정 quests, high tier / low tier (see complete_task above).
+-- - 단골 사장님: the same pair-repeat signal, granted to the requester side
+--   instead of the completer side.
+-- - 무패행진: a higher tier above 독보적 존재, not a literal "no losses"
+--   streak (see award_quest_payout above for why).
+-- - 우리집 챔피언: the one genuinely different case -- contestable, not
+--   permanent once earned (see update_family_champions() above).
+-- -----------------------------------------------------------------------------
+
+insert into public.shop_items (slot, name, sprite_key, acquisition_type, key, hidden, sort_order)
+select * from (values
+  ('title', '후한 인심', '', 'title_condition', 'generous_heart', false, 280),
+  ('title', '전담마크', '', 'title_condition', 'assigned_specialist', false, 281),
+  ('title', '믿음의 리필', '', 'title_condition', 'trust_refill', false, 282),
+  ('title', '단골 사장님', '', 'title_condition', 'regular_patron', false, 283),
+  ('title', '우리집 챔피언', '', 'title_condition', 'house_champion', false, 284),
+  ('title', '무패행진', '', 'title_condition', 'unbeaten_streak', false, 285)
 ) as seed(slot, name, sprite_key, acquisition_type, key, hidden, sort_order)
 where not exists (
   select 1 from public.shop_items existing where existing.key = seed.key
