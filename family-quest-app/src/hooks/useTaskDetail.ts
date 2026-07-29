@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -39,9 +39,16 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  // Guards against a slow fetch for a previous taskId (user navigated away
+  // to a different task before it resolved) overwriting the new task's
+  // state -- updated synchronously at the top of the effect below, before
+  // any of the new taskId's own fetches are even kicked off.
+  const currentTaskIdRef = useRef<string | undefined>(undefined);
+
   const loadTask = useCallback(async (id: string) => {
     const { data, error } = await supabase.from('tasks').select('*').eq('id', id).maybeSingle();
     if (error) throw error;
+    if (currentTaskIdRef.current !== id) return;
     setTask(data);
     setNotFound(!data);
   }, []);
@@ -49,6 +56,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
   const loadAssignees = useCallback(async (id: string) => {
     const { data, error } = await supabase.from('task_assignees').select('user_id').eq('task_id', id);
     if (error) throw error;
+    if (currentTaskIdRef.current !== id) return;
     setAssigneeIds((data ?? []).map((row) => row.user_id));
   }, []);
 
@@ -59,6 +67,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
       .eq('task_id', id)
       .order('created_at', { ascending: true });
     if (error) throw error;
+    if (currentTaskIdRef.current !== id) return;
     setActivities(data ?? []);
   }, []);
 
@@ -69,10 +78,12 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
       .eq('task_id', id)
       .order('created_at', { ascending: true });
     if (error) throw error;
+    if (currentTaskIdRef.current !== id) return;
     setComments(data ?? []);
   }, []);
 
   useEffect(() => {
+    currentTaskIdRef.current = taskId;
     if (!taskId) {
       setTask(null);
       setAssigneeIds([]);

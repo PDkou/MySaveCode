@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ConfettiBurst } from './ConfettiBurst';
@@ -15,10 +15,18 @@ interface CelebrationOverlayProps {
 export function CelebrationOverlay({ result, onDismiss }: CelebrationOverlayProps) {
   const { t } = useTranslation();
 
+  // The parent (TaskDetailPage) re-renders on every realtime activity/comment
+  // event while this overlay is up, minting a new `onDismiss` closure each
+  // time -- a dep-array timer would keep re-arming and never actually fire.
+  // A ref keeps the auto-dismiss tied to mount, not to the parent's renders.
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
+
   useEffect(() => {
-    const timer = setTimeout(onDismiss, AUTO_DISMISS_MS);
+    const timer = setTimeout(() => onDismissRef.current(), AUTO_DISMISS_MS);
     return () => clearTimeout(timer);
-  }, [onDismiss]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const message = useMemo(() => {
     const messages = t('celebration.messages', { returnObjects: true }) as string[];
