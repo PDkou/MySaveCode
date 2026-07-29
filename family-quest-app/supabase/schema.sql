@@ -29,6 +29,7 @@
 --  20. Idle tycoon (passive currency, upgrades, point exchange)
 --  21. Shop item content expansion (batch 2)
 --  22. New title tracking (login streak, birthday, presence, weekly MVP) + more titles
+--  23. Equippable badges
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -2958,6 +2959,74 @@ select * from (values
 where not exists (
   select 1 from public.shop_items existing where existing.key = seed.key
 );
+
+-- -----------------------------------------------------------------------------
+-- 23. Equippable badges
+--
+-- Badges (member_badges) were originally a one-time "congrats" collectible
+-- with no equip concept, unlike titles (shop_items/member_equipped_items).
+-- User request: let a badge be shown off the same way a title is, not just
+-- viewed once in the gallery. Badges aren't shop_items rows, so they can't
+-- reuse member_equipped_items (which is keyed on item_id -> shop_items) --
+-- a single nullable column on family_members is enough since only one badge
+-- can be equipped at a time, same as titles.
+-- -----------------------------------------------------------------------------
+
+alter table public.family_members add column if not exists equipped_badge_key text;
+
+create or replace function public.equip_badge(p_family_id uuid, p_badge_key text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  if not exists (
+    select 1 from public.member_badges
+    where family_id = p_family_id and user_id = v_uid and badge_key = p_badge_key
+  ) then
+    raise exception 'item_not_owned' using errcode = 'P0001';
+  end if;
+
+  update public.family_members set equipped_badge_key = p_badge_key
+  where family_id = p_family_id and user_id = v_uid;
+end;
+$$;
+
+create or replace function public.unequip_badge(p_family_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  update public.family_members set equipped_badge_key = null
+  where family_id = p_family_id and user_id = v_uid;
+end;
+$$;
+
+grant execute on function public.equip_badge(uuid, text) to authenticated;
+grant execute on function public.unequip_badge(uuid) to authenticated;
+revoke execute on function public.equip_badge(uuid, text) from anon, public;
+revoke execute on function public.unequip_badge(uuid) from anon, public;
 
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification

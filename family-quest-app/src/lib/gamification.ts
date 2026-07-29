@@ -1,3 +1,4 @@
+import { supabase } from './supabaseClient';
 import type { BadgeKey } from '../types/database';
 
 // Points/level are simple and purely derived on the client -- the server
@@ -61,6 +62,19 @@ export const BADGE_EMOJI: Record<BadgeKey, string> = {
   early_bird: '🌅',
   night_owl: '🦉',
 };
+
+// Badges were originally a one-time collectible with no equip concept --
+// unlike titles, only one can be equipped at a time (family_members.
+// equipped_badge_key), so equipping a new one implicitly replaces the last.
+export async function equipBadge(familyId: string, badgeKey: BadgeKey): Promise<void> {
+  const { error } = await supabase.rpc('equip_badge', { p_family_id: familyId, p_badge_key: badgeKey });
+  if (error) throw error;
+}
+
+export async function unequipBadge(familyId: string): Promise<void> {
+  const { error } = await supabase.rpc('unequip_badge', { p_family_id: familyId });
+  if (error) throw error;
+}
 
 // What the completer of a task gained, computed by diffing their
 // family_members row (and member_badges rows) from just before vs. just

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { CharacterSprite } from './CharacterSprite';
+import { BADGE_EMOJI } from '../lib/gamification';
 import {
   ShopActionError,
   equipItem,
@@ -14,7 +15,7 @@ import {
   purchaseItem,
   unequipItem,
 } from '../lib/shop';
-import type { CharacterSlot, ShopItemRow } from '../types/database';
+import type { BadgeKey, CharacterSlot, ShopItemRow } from '../types/database';
 
 interface CharacterShopModalProps {
   onClose: () => void;
@@ -40,7 +41,9 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
   const [errorKey, setErrorKey] = useState<string | null>(null);
 
-  const myBalance = user ? members.find((m) => m.user_id === user.id)?.points ?? 0 : 0;
+  const me = user ? members.find((m) => m.user_id === user.id) : undefined;
+  const myBalance = me?.points ?? 0;
+  const equippedBadgeKey = (me?.equipped_badge_key as BadgeKey | null) ?? null;
 
   // `silent` skips the loading gate that swaps the whole item list out for
   // "불러오는 중..." -- right for the very first load, but handlePurchase/
@@ -129,7 +132,18 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
           <CharacterSprite equipped={spritePreview} size={96} />
           <div className="shop-preview-info">
             <span className="shop-balance">{t('shop.balance', { balance: myBalance })}</span>
-            {equippedTitleName && <span className="shop-equipped-title">{equippedTitleName}</span>}
+            {/* Title and badge are deliberately separate visual slots -- a
+                framed nameplate for the title text vs. a round icon chip for
+                the badge -- rather than being merged into one label, since
+                they're independently equipped from different galleries. */}
+            <div className="shop-equipped-badges">
+              {equippedTitleName && <span className="shop-equipped-title-frame">{equippedTitleName}</span>}
+              {equippedBadgeKey && (
+                <span className="shop-equipped-badge-slot" title={t(`badges.${equippedBadgeKey}.name`)}>
+                  {BADGE_EMOJI[equippedBadgeKey]}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
