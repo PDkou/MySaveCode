@@ -76,6 +76,51 @@ export async function unequipBadge(familyId: string): Promise<void> {
   if (error) throw error;
 }
 
+// Title theme tabs, matching GAMIFICATION_DESIGN.md section 12's 4-tab
+// breakdown (76 titles total) -- `shop_items` has no category column, so
+// this static key->tab map is the only place that grouping exists.
+export type TitleCategory = 'specific' | 'everyone' | 'firstCome' | 'other';
+
+export const TITLE_CATEGORIES: TitleCategory[] = ['specific', 'everyone', 'firstCome', 'other'];
+
+const TITLE_KEYS_BY_CATEGORY: Record<TitleCategory, string[]> = {
+  specific: [
+    'specific_first', 'specific_ten', 'specific_fifty', 'specific_hundred',
+    'specific_three_hundred', 'specific_five_hundred', 'big_spender_stake',
+    'generous_heart', 'quick_response', 'dawn_delivery', 'plenty_to_spare',
+    'second_chance', 'comment_master', 'photo_chronicler', 'assigned_specialist',
+    'all_rounder', 'regular_patron', 'trust_refill', 'midnight_promise', 'touch_of_midnight',
+  ],
+  everyone: [
+    'everyone_first', 'everyone_ten', 'everyone_fifty', 'cleaning_crew',
+    'everyone_twenty_five', 'full_house', 'everyone_hundred', 'together_streak',
+    'one_team_spirit', 'deep_clean_day', 'house_champion', 'solidarity',
+    'office_harmony', 'textbook_teamwork', 'friendly_neighbor', 'reliable_backup',
+    'harmony_token', 'together_now', 'festival_night',
+  ],
+  firstCome: [
+    'first_come_first', 'first_come_ten', 'first_come_fifty', 'sharp_eyed',
+    'early_bird_hunter', 'first_come_twenty_five', 'first_come_hundred', 'bounty_hunter',
+    'quick_draw', 'unbeaten_streak', 'first_come_twenty', 'true_competitor',
+    'cutting_it_close', 'first_come_points_200', 'always_ahead_fc', 'dawn_chaser', 'birthday_gift',
+  ],
+  other: [
+    'newcomer', 'settler', 'hundred_days', 'level_10', 'level_30', 'xp_1000',
+    'big_spender_shop', 'shop_regular', 'fashionista', 'tycoon_maxed',
+    'diligent_farmer', 'thrifty', 'social_butterfly', 'my_space', 'boss',
+    'chatterbox', 'notification_maniac', 'photo_album_rich', 'night_login', 'invite_king',
+  ],
+};
+
+export function titleCategoryForKey(key: string | null): TitleCategory {
+  if (key) {
+    for (const category of TITLE_CATEGORIES) {
+      if (TITLE_KEYS_BY_CATEGORY[category].includes(key)) return category;
+    }
+  }
+  return 'other';
+}
+
 // What the completer of a task gained, computed by diffing their
 // family_members row (and member_badges rows) from just before vs. just
 // after calling complete_task -- see useTaskDetail.completeTask.

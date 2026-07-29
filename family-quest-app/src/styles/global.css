@@ -2189,6 +2189,30 @@ textarea {
   color: var(--navy);
 }
 
+.stats-gallery-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 12px;
+}
+
+.stats-gallery-tab {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.stats-gallery-tab-active {
+  border-color: var(--purple);
+  color: var(--purple);
+  background: color-mix(in srgb, var(--purple) 12%, transparent);
+  font-weight: 700;
+}
+
 .badge-gallery-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
