@@ -155,7 +155,7 @@
     "assigneeHintEveryone": "전원이 선택되면 모두형 퀘스트가 돼요 — 완료 시 포상금을 다같이 나눠 가져요.",
     "assigneeHintSpecific": "특정인 지정 퀘스트예요 — 담당자 중 완료한 사람이 포상금을 전액 받아요.",
     "stakePoints": "의뢰금 설정",
-    "stakePointsHint": "보유 포인트 {{balance}} — 완료한 사람이 포상금으로 받아요.",
+    "stakePointsHint": "보유 골드 {{balance}} — 완료한 사람이 포상금으로 받아요.",
     "lotteryButton": "🎲 제비뽑기",
     "lotteryPicking": "뽑는 중...",
     "startsAt": "시작일 (선택)",
@@ -182,7 +182,7 @@
     "submitting": "전달하는 중...",
     "error": {
       "titleRequired": "제목을 입력해주세요.",
-      "insufficientPoints": "보유 포인트가 부족해요. 의뢰금을 줄여주세요.",
+      "insufficientPoints": "보유 골드가 부족해요. 의뢰금을 줄여주세요.",
       "unknown": "퀘스트를 등록하지 못했습니다."
     }
   },
@@ -317,8 +317,8 @@
   "shop": {
     "openButton": "캐릭터 / 상점",
     "heading": "캐릭터 꾸미기",
-    "balance": "보유 포인트 {{balance}}",
-    "purchase": "{{price}}P 구매",
+    "balance": "보유 골드 {{balance}}",
+    "purchase": "{{price}}G 구매",
     "equip": "장착하기",
     "unequip": "장착 해제",
     "emptySlot": "아직 준비된 아이템이 없어요.",
@@ -340,7 +340,7 @@
     },
     "error": {
       "alreadyOwned": "이미 가지고 있는 아이템이에요.",
-      "insufficientPoints": "보유 포인트가 부족해요.",
+      "insufficientPoints": "보유 골드가 부족해요.",
       "currencyNotAvailable": "아직 구매할 수 없는 아이템이에요.",
       "itemNotOwned": "먼저 구매해야 장착할 수 있어요.",
       "unknown": "요청을 처리하지 못했어요."
@@ -354,10 +354,10 @@
     "level": "레벨 {{level}} / {{max}}",
     "upgradeButton": "{{cost}} 로 업그레이드",
     "maxLevel": "최고 레벨 달성!",
-    "exchangeHeading": "포인트로 교환",
-    "exchangeRateHint": "{{rate}} 당 1포인트로 교환돼요.",
-    "exchangeRemaining": "오늘 남은 교환 한도: {{count}}포인트",
-    "exchangeButton": "{{points}}P로 교환",
+    "exchangeHeading": "골드로 교환",
+    "exchangeRateHint": "{{rate}} 당 1골드로 교환돼요.",
+    "exchangeRemaining": "오늘 남은 교환 한도: {{count}}골드",
+    "exchangeButton": "{{points}}G로 교환",
     "shopHeading": "타이쿤 상점",
     "error": {
       "tapTooFast": "너무 빨라요, 잠시 후 다시 눌러주세요.",
@@ -395,7 +395,7 @@
       },
       {
         "title": "6. 재미 요소",
-        "body": "퀘스트를 완료할 때마다 포인트가 쌓이고 레벨이 올라가요 (레벨이 오를수록 더 많은 포인트가 필요해요).\n매일 완료하면 연속 기록(스트릭)이 쌓이고, 다양한 뱃지도 모을 수 있어요.\n대시보드의 \"Lv.X\" 칩을 누르면 내 기록과 뱃지 컬렉션을 볼 수 있어요.\n\"이번 주 완료\" 글자를 누르면 가족별 완료 현황을 볼 수 있어요."
+        "body": "퀘스트를 완료할 때마다 골드가 쌓이고 레벨이 올라가요 (레벨이 오를수록 더 많은 골드가 필요해요).\n매일 완료하면 연속 기록(스트릭)이 쌓이고, 다양한 뱃지도 모을 수 있어요.\n대시보드의 \"Lv.X\" 칩을 누르면 내 기록과 뱃지 컬렉션을 볼 수 있어요.\n\"이번 주 완료\" 글자를 누르면 가족별 완료 현황을 볼 수 있어요."
       },
       {
         "title": "7. 캘린더 & 사진첩",
@@ -430,7 +430,7 @@
   "stats": {
     "heading": "나의 기록",
     "pointsToNext": "다음 레벨까지 {{current}}/{{total}}",
-    "spendablePoints": "보유 포인트",
+    "spendablePoints": "보유 골드",
     "currentStreak": "연속 완료",
     "longestStreak": "최고 기록",
     "completedCount": "총 완료",
