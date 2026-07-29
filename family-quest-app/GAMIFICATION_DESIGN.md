@@ -502,6 +502,61 @@
 - `celebration.pointsGained`/`assigneeHint*`는 이미 Phase 9에서 "포상금"으로 바뀐 상태라 "포인트"
   단어 자체가 없어서 이번엔 손댈 게 없었음.
 
+### Phase 11 — 전체 코드 스캔: 백엔드 보안/경합 조건 수정 (2026-07-29)
+사용자 요청으로 프론트엔드(별도 배치, PR #86) + 백엔드를 각각 전체 스캔. 백엔드 쪽은 실제 악용
+가능한 취약점이 여럿 나와서 전부 로컬 Postgres로 재현 후 수정·검증했습니다.
+
+- **[치명적] `tasks`/`task_assignees` 권한이 컬럼 제한 없이 통째로 열려있었음**:
+  `family_members`는 `update (display_name)`처럼 컬럼 제한을 걸어뒀는데 `tasks`/`task_assignees`는
+  그 규율이 빠진 채 `grant select, insert, update, delete`가 그대로였음 — RLS는 `is_family_member`만
+  체크하지 소유권/컬럼은 안 봐서, PostgREST로 직접 `stake_points`/`status`/`completed_by`를 조작하거나
+  `task_assignees`에 자기 자신을 직접 끼워넣어 특정인 지정 퀘스트를 가로챌 수 있었음. `tasks`는
+  `select, delete` + `update (pinned)`만, `task_assignees`는 `select`만 남기고 나머지는 회수 —
+  생성/수정/완료/재오픈은 전부 security definer RPC라 클라이언트 권한이 애초에 필요 없었음.
+- **[치명적] `complete_task`가 이미 완료된 퀘스트를 다시 완료 처리할 수 있었음**: 완료 UPDATE에
+  `where status = 'open'` 조건이 없어서, 같은 사람이 두 번 호출하거나 선착 퀘스트를 두 명이 동시에
+  완료 시도하면 둘 다 성공해서 포인트/경험치/스트릭/칭호가 중복 지급됐음. `where id = ... and
+  status = 'open'` + `if not found then raise 'already_completed'`로 수정 — UPDATE 자체가 행 잠금을
+  거니 두 번째 호출은 첫 번째가 커밋된 뒤 0건을 보고 안전하게 실패.
+- **[높음] 특정인 지정 퀘스트를 담당자가 아닌 제3자가 가로챌 수 있었음**: `complete_task`의 특정인
+  지정 분기가 `created_by = 완료자`인지만 보고 실제 `task_assignees`에 있는지는 확인 안 함 — 담당자가
+  아닌 아무나 완료 처리하면 스테이크 전액 + 명성을 가로챌 수 있었음. `task_assignees`에 없고
+  의뢰자도 아니면 `not_assigned` 예외로 차단하도록 수정.
+- **[높음] 포인트 잔액 확인-후-차감이 원자적이지 않아 동시 요청으로 잔액이 음수가 될 수 있었음**:
+  `create_task`(스테이크 걸기)와 `purchase_item`(상점 구매) 둘 다 "잔액 조회 → 비교 →
+  UPDATE"가 별도 단계라, 같은 사람이 동시에 두 건을 요청하면 둘 다 같은(오래된) 잔액을 보고 통과해서
+  잔액이 마이너스로 떨어질 수 있었음. `update ... set points = points - 금액 where ... and points >=
+  금액`처럼 확인과 차감을 한 UPDATE로 합쳐서 원자적으로 만듦(0건이면 `insufficient_points`). 방어선으로
+  `family_members`에 `check (points >= 0)` 제약조건도 추가. 완료 시 자동 재스테이크(반복 퀘스트) 쪽은
+  사용자가 직접 경합시킬 표면이 아니라 `greatest(points - 금액, 0)`로 가볍게 클램프만 추가.
+- **[높음] 타이쿤 교환 하루 한도도 같은 패턴의 경합 조건**: `exchange_tycoon_currency`가 한도 확인 후
+  별도 UPDATE라 동시 교환 시 하루 25 한도를 넘길 수 있었음 — 확인 조건을 UPDATE의 WHERE절에 넣어
+  원자화.
+- **주간 요약 알림(엣지 함수)의 MVP 계산이 DB의 실제 기준과 어긋나 있었음**: `send-due-reminders`가
+  `tasks.completed_by`/`status='done'`으로 직접 세고 있었는데, 이건 `compute_weekly_mvp()`나 클라이언트
+  `WeeklyBreakdownModal`이 쓰는 "명성이 실제로 지급된 완료"(`quest_payouts` where
+  `kind='completion' and reputation_awarded`) 기준과 다름 — 셀프 완료(명성 0)가 MVP로 잘못 표시되거나,
+  모두형 퀘스트에서 실제 완료 트리거만 잡히고 나머지 참여자 기여가 누락되는 문제. `quest_payouts` 기준으로
+  통일. (엣지 함수라 이 수정은 소스에만 반영 — 실제 반영하려면 Supabase에 별도로 `functions deploy` 필요.)
+- **검증**: 로컬 Postgres 16에 스키마 전체 재적용(클린 + 재실행 idempotent 확인) 후, 실제 시나리오로
+  전부 재현: 담당자 아닌 사람의 가로채기 시도(차단 확인) → 진짜 담당자 완료(정상 지급) → 같은 사람
+  중복 완료 시도(차단, 잔액 불변 확인) → 클라이언트가 `stake_points` 직접 PATCH 시도(권한 거부) →
+  `pinned`는 여전히 직접 수정 가능(정상 동작 유지) → `task_assignees` 직접 self-insert 시도(권한 거부)
+  → 잔액 초과 생성/구매 시도(정상적으로 `insufficient_points`) → 모두형/선착형 정상 흐름 회귀 테스트
+  (지급 정상) → 상점 구매 정상 흐름 → `points` 음수 직접 쓰기 시도(제약조건 위반 확인) → 타이쿤 하루
+  한도 초과 요청(차단) 및 한도 내 요청(정상 처리) 확인.
+- **이번엔 안 건드리기로 한 것 (더 큰 설계 논의가 필요하거나 우선순위가 낮음)**:
+  - 담당 인원수 vs 방 인원수로 배정 방식(특정인/모두/선착)을 실시간으로 매번 다시 계산하는 구조라,
+    퀘스트가 열려있는 동안 가족 구성원이 들고나면 방식 자체가 바뀔 수 있음 (예: 모두형으로 배정했는데
+    누가 새로 들어와서 완료 시점엔 특정인 지정으로 계산됨). 별도 컬럼으로 생성 시점 방식을 고정하는
+    구조 변경이 필요해서 이번엔 보류.
+  - `reopen_task`가 반복 퀘스트 완료 시 자동 생성된 "다음 회차"와 그때 재스테이크된 포인트까지는
+    되돌리지 않음 — 반복 퀘스트를 완료 후 바로 재오픈하면 다음 회차 퀘스트와 재스테이크분이 남음.
+  - `push_subscriptions.endpoint`가 전역 유니크라 한 기기가 여러 가족방에 동시에 독립적으로 구독을
+    못 함(멀티 패밀리 사용자는 한 방만 알림 받음) — 이미 알고 있던 멀티 패밀리 관련 제약.
+  - 타이쿤 교환 하루 한도 리셋이 UTC 자정 기준(한국/일본 로컬 자정과 어긋남) — 타이쿤 시스템을 나중에
+    전체적으로 손보기로 한 방침에 따라 이번엔 보류 (프론트엔드 스캔 배치 PR #86에서도 동일하게 명시).
+
 ### 전체 백로그 (설계는 끝났지만 구현 안 한 것)
 - **실제 캐릭터 아트 제작** — 인수인계 문서(`ART_HANDOFF.md`)는 완료, 실제 이미지 생성/통합은 미착수.
 - 상점 아이템 콘텐츠 추가 확장 (배치2까지는 했지만 여전히 최종 카탈로그는 아님).

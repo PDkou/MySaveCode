@@ -253,18 +253,24 @@ async function handleWeeklySummary(supabase: SupabaseClient): Promise<Response> 
   let sentCount = 0;
 
   for (const familyId of familyIds) {
-    const { data: completedTasks } = await supabase
-      .from('tasks')
-      .select('completed_by')
+    // Sourced from quest_payouts (kind='completion' and reputation_awarded)
+    // rather than raw tasks.status='done'/completed_by, to match how
+    // compute_weekly_mvp() and the client's own WeeklyBreakdownModal define
+    // "completed this week" -- a self-completed specific/first-come quest
+    // sets tasks.completed_by but earns no reputation, and an "everyone"
+    // quest credits every assignee, not just whichever one triggered it.
+    const { data: payouts } = await supabase
+      .from('quest_payouts')
+      .select('user_id')
       .eq('family_id', familyId)
-      .eq('status', 'done')
-      .gte('completed_at', weekAgo);
+      .eq('kind', 'completion')
+      .eq('reputation_awarded', true)
+      .gte('created_at', weekAgo);
 
-    const total = (completedTasks ?? []).length;
+    const total = (payouts ?? []).length;
     const countByUser = new Map<string, number>();
-    (completedTasks ?? []).forEach((row) => {
-      const userId = row.completed_by as string | null;
-      if (!userId) return;
+    (payouts ?? []).forEach((row) => {
+      const userId = row.user_id as string;
       countByUser.set(userId, (countByUser.get(userId) ?? 0) + 1);
     });
 
