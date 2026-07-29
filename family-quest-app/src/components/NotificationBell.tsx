@@ -36,13 +36,17 @@ export function NotificationBell() {
     void getPushState().then(setPushState);
   }, []);
 
+  // Keyed on the ids, not the family/user objects themselves -- see the
+  // matching comment in MyStatsModal.tsx: depending on the objects here
+  // would refetch prefs on every unrelated FamilyContext refresh, not just
+  // when the active family/user actually changes.
   useEffect(() => {
-    if (!user || !family || pushState !== 'subscribed') {
+    if (!user?.id || !family?.id || pushState !== 'subscribed') {
       setEventPrefs(null);
       return;
     }
     void getNotificationPrefs(user.id, family.id).then(setEventPrefs);
-  }, [user, family, pushState]);
+  }, [user?.id, family?.id, pushState]);
 
   const handleEventPrefToggle = async (eventType: NotificationEventType) => {
     if (!user || !family || !eventPrefs) return;

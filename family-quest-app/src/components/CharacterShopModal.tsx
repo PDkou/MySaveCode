@@ -65,10 +65,16 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
     if (!silent) setLoading(false);
   };
 
+  // Keyed on the ids, not the family/user objects themselves -- see the
+  // matching comment in MyStatsModal.tsx: FamilyContext.load() mints a new
+  // family object on every refresh (including silent ones from unrelated
+  // actions elsewhere, e.g. equipping a badge), and depending on the object
+  // here would re-run this effect and flash the whole item list to
+  // "불러오는 중..." on every one of those.
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, family]);
+  }, [user?.id, family?.id]);
 
   const itemsById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
   const spritePreview = useMemo(() => {
