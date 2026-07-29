@@ -231,7 +231,7 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
         ) : (
           <div className="stats-badges-section">
             {titleErrorKey && <p className="form-error" role="alert">{t(titleErrorKey)}</p>}
-            <div className="badge-gallery-grid">
+            <div className="title-list">
               {titleItemsForActiveTab.map((item) => {
                 const owned = ownedTitleIds.has(item.id);
                 const equipped = equippedTitleId === item.id;
@@ -239,9 +239,10 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
                 return (
                   <div
                     key={item.id}
-                    className={`badge-gallery-item ${owned ? 'badge-gallery-item-earned' : 'badge-gallery-item-locked'} ${equipped ? 'badge-gallery-item-equipped' : ''}`}
+                    className={`title-row ${owned ? 'title-row-owned' : 'title-row-locked'} ${equipped ? 'title-row-equipped' : ''}`}
                   >
-                    <span className="badge-gallery-name">{owned ? item.name : t('shop.locked')}</span>
+                    <span className="title-row-icon" aria-hidden="true" />
+                    <span className="title-row-name">{owned ? item.name : t('shop.locked')}</span>
                     {owned && (
                       <button
                         type="button"

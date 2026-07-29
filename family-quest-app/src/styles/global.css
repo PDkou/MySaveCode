@@ -2256,6 +2256,58 @@ textarea {
   line-height: 1.3;
 }
 
+/* ---------- Title list (칭호) ---------- */
+/* One row per title instead of a 2-column grid -- a grid stretched every
+   locked (button-less, shorter) cell to match its owned (button, taller)
+   row-mate's height, leaving a lot of dead space in the locked side. A
+   single-column list means every row's height only depends on its own
+   content. */
+
+.title-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.title-row-locked {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+.title-row-equipped {
+  border-color: var(--purple);
+  background: color-mix(in srgb, var(--purple) 8%, var(--bg));
+}
+
+.title-row-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: var(--purple);
+}
+
+.title-row-locked .title-row-icon {
+  background: var(--muted-light);
+}
+
+.title-row-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
 /* ---------- Weekly per-member breakdown ---------- */
 
 .weekly-breakdown-total {
