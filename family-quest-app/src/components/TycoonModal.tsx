@@ -73,10 +73,16 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     }
   };
 
+  // Keyed on the ids, not the family/user objects themselves -- see the
+  // matching comment in MyStatsModal.tsx: FamilyContext.load() mints a new
+  // family object on every refresh (including silent ones from unrelated
+  // actions elsewhere), and depending on the object here would re-run this
+  // effect and flash the whole tycoon screen to "불러오는 중..." on every one
+  // of those.
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, family]);
+  }, [user?.id, family?.id]);
 
   useEffect(() => {
     if (!state) return;

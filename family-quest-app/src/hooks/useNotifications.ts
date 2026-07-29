@@ -64,30 +64,36 @@ export function useNotifications(): UseNotificationsResult {
     setComments(data ?? []);
   }, []);
 
+  // Keyed on family.id, not the family object itself -- FamilyContext.load()
+  // mints a new family object on every refresh (including silent background
+  // ones from unrelated actions elsewhere), which would otherwise tear down
+  // and recreate this realtime subscription -- and refetch both lists --
+  // on every one of those instead of only when the active family changes.
+  const familyId = family?.id;
   useEffect(() => {
-    if (!family) {
+    if (!familyId) {
       setActivities([]);
       setComments([]);
       return;
     }
 
-    void loadActivities(family.id);
-    void loadComments(family.id);
+    void loadActivities(familyId);
+    void loadComments(familyId);
 
     const channel = supabase
-      .channel(`notifications-${family.id}`)
+      .channel(`notifications-${familyId}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'task_activities', filter: `family_id=eq.${family.id}` },
+        { event: 'INSERT', schema: 'public', table: 'task_activities', filter: `family_id=eq.${familyId}` },
         () => {
-          void loadActivities(family.id);
+          void loadActivities(familyId);
         },
       )
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'task_comments', filter: `family_id=eq.${family.id}` },
+        { event: 'INSERT', schema: 'public', table: 'task_comments', filter: `family_id=eq.${familyId}` },
         () => {
-          void loadComments(family.id);
+          void loadComments(familyId);
         },
       )
       .subscribe();
@@ -95,7 +101,7 @@ export function useNotifications(): UseNotificationsResult {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [family, loadActivities, loadComments]);
+  }, [familyId, loadActivities, loadComments]);
 
   useEffect(() => {
     if (!user) {

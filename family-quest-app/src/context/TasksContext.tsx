@@ -85,30 +85,37 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Keyed on family.id, not the family object itself -- FamilyContext.load()
+  // mints a new family object on every refresh (including silent background
+  // ones triggered by totally unrelated actions elsewhere, e.g. equipping a
+  // badge), and depending on the object would tear down/recreate this
+  // realtime subscription and re-run the non-silent initial load on every
+  // one of those, flashing the whole task list to a spinner for no reason.
+  const familyId = family?.id;
   useEffect(() => {
-    if (!family) {
+    if (!familyId) {
       setRawTasks([]);
       setAssigneesByTaskId(new Map());
       setLoading(false);
       return;
     }
 
-    void load(family.id);
+    void load(familyId);
 
     const channel = supabase
-      .channel(`tasks-changes-${family.id}`)
+      .channel(`tasks-changes-${familyId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'tasks', filter: `family_id=eq.${family.id}` },
+        { event: '*', schema: 'public', table: 'tasks', filter: `family_id=eq.${familyId}` },
         () => {
-          void load(family.id, { silent: true });
+          void load(familyId, { silent: true });
         },
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'task_assignees', filter: `family_id=eq.${family.id}` },
+        { event: '*', schema: 'public', table: 'task_assignees', filter: `family_id=eq.${familyId}` },
         () => {
-          void load(family.id, { silent: true });
+          void load(familyId, { silent: true });
         },
       )
       .subscribe();
@@ -116,7 +123,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [family, load]);
+  }, [familyId, load]);
 
   const refresh = useCallback(async () => {
     if (family) {

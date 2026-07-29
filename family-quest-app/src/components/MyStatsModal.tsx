@@ -33,8 +33,18 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
 
   const me = useMemo(() => members.find((m) => m.user_id === user?.id) ?? null, [members, user]);
 
+  // Keyed on the ids, not the family/user objects themselves -- FamilyContext.
+  // load() mints new object references on every refresh (including silent
+  // background ones triggered by totally unrelated actions, e.g. equipping a
+  // badge calls refreshFamily() to pick up the new equipped_badge_key), and
+  // depending on the objects here would re-run this effect and flash the
+  // badge gallery to "불러오는 중..." on every one of those, not just when the
+  // badge list itself actually needs refetching.
+  const familyId = family?.id;
+  const userId = user?.id;
+
   useEffect(() => {
-    if (!family || !user) {
+    if (!familyId || !userId) {
       setLoading(false);
       return;
     }
@@ -43,8 +53,8 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
     void supabase
       .from('member_badges')
       .select('badge_key')
-      .eq('family_id', family.id)
-      .eq('user_id', user.id)
+      .eq('family_id', familyId)
+      .eq('user_id', userId)
       .then(({ data }) => {
         if (cancelled) return;
         setEarnedKeys(new Set((data ?? []).map((b) => b.badge_key as BadgeKey)));
@@ -53,7 +63,7 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
     return () => {
       cancelled = true;
     };
-  }, [family, user]);
+  }, [familyId, userId]);
 
   const loadTitles = async () => {
     if (!family || !user) return;
@@ -70,7 +80,7 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
   useEffect(() => {
     void loadTitles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [family, user]);
+  }, [familyId, userId]);
 
   const visibleTitleItems = titleItems.filter((i) => !i.hidden || ownedTitleIds.has(i.id));
 
