@@ -2213,63 +2213,20 @@ textarea {
   font-weight: 700;
 }
 
-.badge-gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-.badge-gallery-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 4px;
-  padding: 12px 8px;
-  border-radius: 14px;
-  background: var(--bg);
-}
-
-.badge-gallery-item-locked {
-  opacity: 0.4;
-  filter: grayscale(1);
-}
-
-.badge-gallery-item-equipped {
-  outline: 2px solid var(--purple);
-  outline-offset: -2px;
-}
-
-.badge-gallery-emoji {
-  font-size: 24px;
-}
-
-.badge-gallery-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--navy);
-}
-
-.badge-gallery-desc {
-  font-size: 10px;
-  color: var(--muted-light);
-  line-height: 1.3;
-}
-
-/* ---------- Title list (칭호) ---------- */
-/* One row per title instead of a 2-column grid -- a grid stretched every
+/* ---------- Title/badge list (칭호/뱃지) ---------- */
+/* One row per entry instead of a 2-column grid -- a grid stretched every
    locked (button-less, shorter) cell to match its owned (button, taller)
    row-mate's height, leaving a lot of dead space in the locked side. A
    single-column list means every row's height only depends on its own
-   content. */
+   content. Shared between the title tabs and the badge tab. */
 
-.title-list {
+.gallery-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.title-row {
+.gallery-row {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -2279,17 +2236,17 @@ textarea {
   background: var(--bg);
 }
 
-.title-row-locked {
+.gallery-row-locked {
   opacity: 0.5;
   filter: grayscale(1);
 }
 
-.title-row-equipped {
+.gallery-row-equipped {
   border-color: var(--purple);
   background: color-mix(in srgb, var(--purple) 8%, var(--bg));
 }
 
-.title-row-icon {
+.gallery-row-icon {
   flex-shrink: 0;
   width: 20px;
   height: 20px;
@@ -2297,15 +2254,35 @@ textarea {
   background: var(--purple);
 }
 
-.title-row-locked .title-row-icon {
+.gallery-row-locked .gallery-row-icon {
   background: var(--muted-light);
 }
 
-.title-row-name {
+.gallery-row-emoji {
+  flex-shrink: 0;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.gallery-row-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gallery-row-name {
   flex: 1;
   font-size: 13px;
   font-weight: 700;
   color: var(--navy);
+}
+
+.gallery-row-desc {
+  font-size: 11px;
+  color: var(--muted-light);
+  line-height: 1.3;
 }
 
 /* ---------- Weekly per-member breakdown ---------- */
