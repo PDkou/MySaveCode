@@ -30,6 +30,7 @@
 --  21. Shop item content expansion (batch 2)
 --  22. New title tracking (login streak, birthday, presence, weekly MVP) + more titles
 --  23. Equippable badges
+--  24. Remaining 52 titles (13-2 draft, minus 6 dropped as too ambiguous)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -536,6 +537,8 @@ declare
   v_family public.families;
   v_attempts integer := 0;
   v_display_name text;
+  v_room_count integer;
+  v_other_family_id uuid;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -569,6 +572,19 @@ begin
 
   perform public.grant_title(v_family.id, v_uid, 'newcomer');
 
+  -- 사장님 (13-2): created a business-type room themselves.
+  if v_room_type = 'business' then
+    perform public.grant_title(v_family.id, v_uid, 'boss');
+  end if;
+
+  -- 인싸 (재정의, 13-2): 3+ rooms -- grant to every room they're in.
+  select count(*) into v_room_count from public.family_members where user_id = v_uid;
+  if v_room_count >= 3 then
+    for v_other_family_id in select family_id from public.family_members where user_id = v_uid loop
+      perform public.grant_title(v_other_family_id, v_uid, 'social_butterfly');
+    end loop;
+  end if;
+
   return v_family;
 end;
 $$;
@@ -584,6 +600,9 @@ declare
   v_code text := upper(trim(coalesce(p_code, '')));
   v_family public.families;
   v_display_name text;
+  v_room_count integer;
+  v_other_family_id uuid;
+  v_owner_id uuid;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -608,6 +627,24 @@ begin
   values (v_family.id, v_uid, 'member', v_display_name);
 
   perform public.grant_title(v_family.id, v_uid, 'newcomer');
+
+  -- 인싸 (재정의, 13-2): 3+ rooms -- grant to every room they're in.
+  select count(*) into v_room_count from public.family_members where user_id = v_uid;
+  if v_room_count >= 3 then
+    for v_other_family_id in select family_id from public.family_members where user_id = v_uid loop
+      perform public.grant_title(v_other_family_id, v_uid, 'social_butterfly');
+    end loop;
+  end if;
+
+  -- 🔒 초대왕 (재정의, 13-2): room hits 5+ members -- goes to that room's
+  -- current owner, not the newly-joining member.
+  select count(*) into v_room_count from public.family_members where family_id = v_family.id;
+  if v_room_count >= 5 then
+    select user_id into v_owner_id from public.family_members where family_id = v_family.id and role = 'owner';
+    if v_owner_id is not null then
+      perform public.grant_title(v_family.id, v_owner_id, 'invite_king');
+    end if;
+  end if;
 
   return v_family;
 end;
@@ -843,6 +880,8 @@ declare
   v_member_count integer;
   v_creator_points integer;
   v_stake integer := greatest(coalesce(p_stake_points, 0), 0);
+  v_assignee_count integer;
+  v_total_stake bigint;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -892,6 +931,21 @@ begin
       values (v_task.id, p_family_id, v_assignee)
       on conflict do nothing;
     end loop;
+  end if;
+
+  -- 큰손 (13-2): cumulative stake put up as a requester specifically on
+  -- 특정인 지정 quests (1..member_count-1 assignees), regardless of whether
+  -- they've been completed yet -- a "big spender as requester" read,
+  -- distinct from 손이 큰 소비자's shop-spending one (purchase_item below).
+  v_assignee_count := coalesce(array_length(p_assignee_ids, 1), 0);
+  if v_member_count > 1 and v_assignee_count > 0 and v_assignee_count < v_member_count then
+    select coalesce(sum(t.stake_points), 0) into v_total_stake
+    from public.tasks t
+    where t.family_id = p_family_id and t.created_by = v_uid
+      and (select count(*) from public.task_assignees ta where ta.task_id = t.id) between 1 and v_member_count - 1;
+    if v_total_stake >= 500 then
+      perform public.grant_title(p_family_id, v_uid, 'big_spender_stake');
+    end if;
   end if;
 
   return v_task;
@@ -994,6 +1048,7 @@ declare
   v_new_mode_count integer;
   v_new_completed_count integer;
   v_completed_hour integer;
+  v_first_come_points bigint;
 begin
   select * into v_member from public.family_members where family_id = p_family_id and user_id = p_user_id;
   if not found then
@@ -1068,6 +1123,12 @@ begin
       perform public.grant_title(p_family_id, p_user_id, 'specific_ten');
     elsif v_new_mode_count = 50 then
       perform public.grant_title(p_family_id, p_user_id, 'specific_fifty');
+    elsif v_new_mode_count = 100 then
+      perform public.grant_title(p_family_id, p_user_id, 'specific_hundred');
+    elsif v_new_mode_count = 300 then
+      perform public.grant_title(p_family_id, p_user_id, 'specific_three_hundred');
+    elsif v_new_mode_count = 500 then
+      perform public.grant_title(p_family_id, p_user_id, 'specific_five_hundred');
     end if;
   elsif p_assignment_mode = 'everyone' then
     update public.family_members set everyone_completed_count = everyone_completed_count + 1
@@ -1077,8 +1138,12 @@ begin
       perform public.grant_title(p_family_id, p_user_id, 'everyone_first');
     elsif v_new_mode_count = 10 then
       perform public.grant_title(p_family_id, p_user_id, 'everyone_ten');
+    elsif v_new_mode_count = 25 then
+      perform public.grant_title(p_family_id, p_user_id, 'everyone_twenty_five');
     elsif v_new_mode_count = 50 then
       perform public.grant_title(p_family_id, p_user_id, 'everyone_fifty');
+    elsif v_new_mode_count = 100 then
+      perform public.grant_title(p_family_id, p_user_id, 'everyone_hundred');
     end if;
   elsif p_assignment_mode = 'first_come' then
     update public.family_members set first_come_completed_count = first_come_completed_count + 1
@@ -1088,13 +1153,57 @@ begin
       perform public.grant_title(p_family_id, p_user_id, 'first_come_first');
     elsif v_new_mode_count = 10 then
       perform public.grant_title(p_family_id, p_user_id, 'first_come_ten');
+    elsif v_new_mode_count = 20 then
+      perform public.grant_title(p_family_id, p_user_id, 'first_come_twenty');
+    elsif v_new_mode_count = 25 then
+      perform public.grant_title(p_family_id, p_user_id, 'first_come_twenty_five');
     elsif v_new_mode_count = 50 then
       perform public.grant_title(p_family_id, p_user_id, 'first_come_fifty');
+    elsif v_new_mode_count = 100 then
+      perform public.grant_title(p_family_id, p_user_id, 'first_come_hundred');
     end if;
+
+    -- 완판 요정 (13-2, 선착 누적): total points ever earned specifically via
+    -- first-come completions in this family, not overall points balance.
+    select coalesce(sum(points_delta), 0) into v_first_come_points
+    from public.quest_payouts
+    where family_id = p_family_id and user_id = p_user_id
+      and kind = 'completion' and assignment_mode = 'first_come';
+    if v_first_come_points >= 200 then
+      perform public.grant_title(p_family_id, p_user_id, 'first_come_points_200');
+    end if;
+  end if;
+
+  -- 팔방미인 (13-2): completed at least once via all three assignment
+  -- modes. Cheap enough to just check on every reputation-earning
+  -- completion rather than only when a specific counter changes.
+  if v_member.specific_completed_count + (case when p_assignment_mode = 'specific' then 1 else 0 end) >= 1
+     and v_member.everyone_completed_count + (case when p_assignment_mode = 'everyone' then 1 else 0 end) >= 1
+     and v_member.first_come_completed_count + (case when p_assignment_mode = 'first_come' then 1 else 0 end) >= 1
+  then
+    perform public.grant_title(p_family_id, p_user_id, 'all_rounder');
+  end if;
+
+  -- 레벨 10 / 레벨 30 달성 (13-2): thresholds mirror the client-side level
+  -- formula (LEVEL_BASE_POINTS=100, LEVEL_INCREMENT=50 in gamification.ts)
+  -- -- cumulative xp needed to reach level 10 is 2,700, level 30 is 23,200.
+  if v_member.xp + p_points >= 2700 and v_member.xp < 2700 then
+    perform public.grant_title(p_family_id, p_user_id, 'level_10');
+  end if;
+  if v_member.xp + p_points >= 23200 and v_member.xp < 23200 then
+    perform public.grant_title(p_family_id, p_user_id, 'level_30');
   end if;
 
   if v_member.xp + p_points >= 1000 and v_member.xp < 1000 then
     perform public.grant_title(p_family_id, p_user_id, 'xp_1000');
+  end if;
+
+  -- 알뜰살뜰 (13-2): a "hoarder" snapshot -- healthy points balance but
+  -- barely ever spent in the shop. lifetime_points_spent isn't touched by
+  -- this function, so v_member's value (selected before this function's
+  -- own point update) is still current.
+  if v_member.points + p_points >= 500 and v_member.lifetime_points_spent <= 50 then
+    perform public.grant_title(p_family_id, p_user_id, 'thrifty');
   end if;
 end;
 $$;
@@ -1156,6 +1265,17 @@ declare
   v_share integer;
   v_requester_bonus integer;
   v_weekday_offset integer;
+  v_seconds_since_created numeric;
+  v_seconds_until_due numeric;
+  v_completion_hour integer;
+  v_mode_count integer;
+  v_comment_count integer;
+  v_reopened_before boolean;
+  v_family_row public.families;
+  v_everyone_streak integer;
+  v_cleaning_count integer;
+  v_everyone_room_count integer;
+  v_other_family_id uuid;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -1267,6 +1387,82 @@ begin
       perform public.grant_title(v_family_id, v_uid, 'birthday_gift');
     end if;
 
+    -- 13-2 선착 탭: everything below only counts when someone other than
+    -- the creator actually raced for it -- self-claims already get no
+    -- reputation (see the award_quest_payout call above), so these
+    -- "competition"-flavored titles shouldn't count them either.
+    if v_task.created_by <> v_uid then
+      v_seconds_since_created := extract(epoch from (now() - v_task.created_at));
+      v_completion_hour := extract(hour from now());
+
+      -- 눈치 백단 / 전광석화 (speed).
+      if v_seconds_since_created <= 60 then
+        perform public.grant_title(v_family_id, v_uid, 'quick_draw');
+      end if;
+      if v_seconds_since_created <= 300 and (
+        select count(*) from public.quest_payouts
+        where family_id = v_family_id and user_id = v_uid and kind = 'completion'
+          and assignment_mode = 'first_come' and reputation_awarded
+      ) >= 10 then
+        perform public.grant_title(v_family_id, v_uid, 'sharp_eyed');
+      end if;
+
+      -- 얼리버드 헌터 / 🔒 새벽의 추격자 (time of day).
+      if v_completion_hour >= 5 and v_completion_hour < 8 and (
+        select count(*) from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+        where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
+          and qp.assignment_mode = 'first_come' and qp.reputation_awarded
+          and extract(hour from t.completed_at) >= 5 and extract(hour from t.completed_at) < 8
+      ) >= 5 then
+        perform public.grant_title(v_family_id, v_uid, 'early_bird_hunter');
+      end if;
+      if v_completion_hour >= 3 and v_completion_hour < 5 then
+        perform public.grant_title(v_family_id, v_uid, 'dawn_chaser');
+      end if;
+
+      -- 사냥꾼 (high-stake first-come wins).
+      if v_task.stake_points >= 50 and (
+        select count(*) from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+        where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
+          and qp.assignment_mode = 'first_come' and qp.reputation_awarded and t.stake_points >= 50
+      ) >= 5 then
+        perform public.grant_title(v_family_id, v_uid, 'bounty_hunter');
+      end if;
+
+      -- 진짜 승부사 (real competition -- room big enough that first-come
+      -- actually meant racing someone).
+      if v_member_count >= 3 then
+        select first_come_completed_count into v_mode_count from public.family_members
+        where family_id = v_family_id and user_id = v_uid;
+        if v_mode_count >= 10 then
+          perform public.grant_title(v_family_id, v_uid, 'true_competitor');
+        end if;
+      end if;
+
+      -- 방심은 금물 / 늘 한발 앞서 (against the due date).
+      if v_task.due_at is not null then
+        v_seconds_until_due := extract(epoch from (v_task.due_at - now()));
+        if v_seconds_until_due >= 0 and v_seconds_until_due <= 3600 and (
+          select count(*) from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+          where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
+            and qp.assignment_mode = 'first_come' and qp.reputation_awarded
+            and t.due_at is not null and t.completed_at <= t.due_at
+            and extract(epoch from (t.due_at - t.completed_at)) <= 3600
+        ) >= 5 then
+          perform public.grant_title(v_family_id, v_uid, 'cutting_it_close');
+        end if;
+        if v_seconds_until_due >= 86400 and (
+          select count(*) from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+          where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
+            and qp.assignment_mode = 'first_come' and qp.reputation_awarded
+            and t.due_at is not null and t.completed_at <= t.due_at
+            and extract(epoch from (t.due_at - t.completed_at)) >= 86400
+        ) >= 10 then
+          perform public.grant_title(v_family_id, v_uid, 'always_ahead_fc');
+        end if;
+      end if;
+    end if;
+
   elsif v_assignee_count = v_member_count then
     -- 모두 (everyone/collaborative): split the stake evenly across every
     -- current assignee, and everyone gets reputation -- including the
@@ -1292,6 +1488,118 @@ begin
       end loop;
     end if;
 
+    -- 13-2 모두 탭: attributes of this specific 모두형 completion, granted
+    -- to every assignee since it was a shared effort (same principle as
+    -- 한자리에 above and the payout split itself).
+
+    -- 전원 집합: this only happens when the whole (4+) family was on one job.
+    if v_member_count >= 4 then
+      for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
+        perform public.grant_title(v_family_id, v_assignee_id, 'full_house');
+      end loop;
+    end if;
+
+    -- 다 같이 청소 / 대청소의 날 (keyword match on the task title).
+    if v_task.title ilike '%청소%' then
+      for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
+        perform public.grant_title(v_family_id, v_assignee_id, 'cleaning_crew');
+      end loop;
+      select count(*) into v_cleaning_count
+      from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+      where qp.family_id = v_family_id and qp.kind = 'completion' and qp.assignment_mode = 'everyone'
+        and qp.reputation_awarded and t.title ilike '%청소%' and qp.task_id = p_task_id;
+      if v_cleaning_count >= 1 then
+        select count(*) into v_cleaning_count
+        from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+        where qp.family_id = v_family_id and qp.kind = 'completion' and qp.assignment_mode = 'everyone'
+          and qp.reputation_awarded and t.title ilike '%청소%';
+        if v_cleaning_count >= 5 then
+          for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
+            perform public.grant_title(v_family_id, v_assignee_id, 'deep_clean_day');
+          end loop;
+        end if;
+      end if;
+    end if;
+
+    -- 사내 화합 (business room) / 팀워크의 정석 (big-stake collaboration).
+    select * into v_family_row from public.families where id = v_family_id;
+    if v_family_row.room_type = 'business' then
+      for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
+        perform public.grant_title(v_family_id, v_assignee_id, 'office_harmony');
+      end loop;
+    end if;
+    if v_task.stake_points >= 100 then
+      for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
+        perform public.grant_title(v_family_id, v_assignee_id, 'textbook_teamwork');
+      end loop;
+    end if;
+
+    -- 🔒 축제의 밤 (late-night 모두형 completion).
+    if extract(hour from now()) >= 22 then
+      for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
+        perform public.grant_title(v_family_id, v_assignee_id, 'festival_night');
+      end loop;
+    end if;
+
+    -- 든든한 지원군 (helped without having requested it) / 화합의 증표
+    -- (requester joined in on their own 모두형 quest -- GAMIFICATION_DESIGN.md
+    -- section 3's core "의뢰자 포함 전원 인정" case) / 다정한 이웃 (redefined,
+    -- 13-2: 모두형 완료가 있는 방이 2개 이상이면 소속된 모든 방에 지급).
+    for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
+      if v_task.created_by <> v_assignee_id then
+        select count(*) into v_mode_count
+        from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+        where qp.family_id = v_family_id and qp.user_id = v_assignee_id and qp.kind = 'completion'
+          and qp.assignment_mode = 'everyone' and qp.reputation_awarded and t.created_by <> v_assignee_id;
+        if v_mode_count >= 10 then
+          perform public.grant_title(v_family_id, v_assignee_id, 'reliable_backup');
+        end if;
+      else
+        select count(*) into v_mode_count
+        from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+        where qp.family_id = v_family_id and qp.user_id = v_assignee_id and qp.kind = 'completion'
+          and qp.assignment_mode = 'everyone' and qp.reputation_awarded and t.created_by = v_assignee_id;
+        if v_mode_count >= 5 then
+          perform public.grant_title(v_family_id, v_assignee_id, 'harmony_token');
+        end if;
+      end if;
+
+      select count(distinct family_id) into v_everyone_room_count
+      from public.family_members
+      where user_id = v_assignee_id and everyone_completed_count > 0;
+      if v_everyone_room_count >= 2 then
+        for v_other_family_id in select family_id from public.family_members where user_id = v_assignee_id loop
+          perform public.grant_title(v_other_family_id, v_assignee_id, 'friendly_neighbor');
+        end loop;
+      end if;
+    end loop;
+
+    -- 원팀 정신: nobody on the team currently has a zero completion count.
+    if not exists (select 1 from public.family_members where family_id = v_family_id and completed_count = 0) then
+      for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
+        perform public.grant_title(v_family_id, v_assignee_id, 'one_team_spirit');
+      end loop;
+    end if;
+
+    -- 다함께 스트릭: family-wide (not per-user) streak of days with at
+    -- least one 모두형 completion -- see the new families columns below.
+    if v_family_row.everyone_streak_last_date = current_date then
+      v_everyone_streak := v_family_row.everyone_streak_days;
+    elsif v_family_row.everyone_streak_last_date = current_date - 1 then
+      update public.families set everyone_streak_days = everyone_streak_days + 1, everyone_streak_last_date = current_date
+      where id = v_family_id
+      returning everyone_streak_days into v_everyone_streak;
+    else
+      update public.families set everyone_streak_days = 1, everyone_streak_last_date = current_date
+      where id = v_family_id
+      returning everyone_streak_days into v_everyone_streak;
+    end if;
+    if v_everyone_streak = 7 then
+      for v_assignee_id in select user_id from public.family_members where family_id = v_family_id loop
+        perform public.grant_title(v_family_id, v_assignee_id, 'together_streak');
+      end loop;
+    end if;
+
   else
     -- 특정인 지정 (specific person/people): full stake to whoever actually
     -- completed it. Same "return to self, no reputation" rule as 선착 if
@@ -1309,7 +1617,79 @@ begin
         insert into public.quest_payouts (task_id, family_id, user_id, points_delta, xp_delta, kind)
         values (p_task_id, v_family_id, v_task.created_by, v_requester_bonus, 0, 'requester_bonus');
       end if;
+
+      -- 13-2 특정인 지정 탭: only for genuine completer<>requester cases,
+      -- same reasoning as the 선착 block above.
+      v_seconds_since_created := extract(epoch from (now() - v_task.created_at));
+      v_completion_hour := extract(hour from now());
+
+      -- 즉시 응답.
+      if v_seconds_since_created <= 600 and (
+        select count(*) from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+        where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
+          and qp.assignment_mode = 'specific' and qp.reputation_awarded
+          and extract(epoch from (t.completed_at - t.created_at)) <= 600
+      ) >= 5 then
+        perform public.grant_title(v_family_id, v_uid, 'quick_response');
+      end if;
+
+      -- 새벽 배송 / 🔒 한밤의 약속 / 🔒 자정의 손길 (time of day).
+      if v_completion_hour >= 4 and v_completion_hour < 7 and (
+        select count(*) from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+        where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
+          and qp.assignment_mode = 'specific' and qp.reputation_awarded
+          and extract(hour from t.completed_at) >= 4 and extract(hour from t.completed_at) < 7
+      ) >= 5 then
+        perform public.grant_title(v_family_id, v_uid, 'dawn_delivery');
+      end if;
+      if v_completion_hour >= 22 then
+        perform public.grant_title(v_family_id, v_uid, 'midnight_promise');
+      elsif v_completion_hour < 2 then
+        perform public.grant_title(v_family_id, v_uid, 'touch_of_midnight');
+      end if;
+
+      -- 여유만만 (finished with plenty of time to spare).
+      if v_task.due_at is not null and v_task.completed_at <= v_task.due_at - interval '24 hours' and (
+        select count(*) from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+        where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
+          and qp.assignment_mode = 'specific' and qp.reputation_awarded
+          and t.due_at is not null and t.completed_at <= t.due_at - interval '24 hours'
+      ) >= 10 then
+        perform public.grant_title(v_family_id, v_uid, 'plenty_to_spare');
+      end if;
+
+      -- 재도전 (this exact task had been reopened before this completion).
+      select exists(
+        select 1 from public.task_activities where task_id = p_task_id and action = 'reopened'
+      ) into v_reopened_before;
+      if v_reopened_before and (
+        select count(*) from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+        where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
+          and qp.assignment_mode = 'specific' and qp.reputation_awarded
+          and exists (select 1 from public.task_activities ta where ta.task_id = t.id and ta.action = 'reopened')
+      ) >= 5 then
+        perform public.grant_title(v_family_id, v_uid, 'second_chance');
+      end if;
+
+      -- 사진 기록가 (completion photos, scoped to 특정인 지정 completions).
+      if v_task.completion_photo_path is not null and (
+        select count(*) from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
+        where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
+          and qp.assignment_mode = 'specific' and qp.reputation_awarded and t.completion_photo_path is not null
+      ) >= 15 then
+        perform public.grant_title(v_family_id, v_uid, 'photo_chronicler');
+      end if;
     end if;
+  end if;
+
+  -- 사진첩 부자 (13-2, 그외 탭): completion photos across every assignment
+  -- mode in this family, not just 특정인 -- checked regardless of which
+  -- branch above ran, same "그외" spirit as 팔방미인/레벨 titles.
+  if v_task.completion_photo_path is not null and (
+    select count(*) from public.tasks
+    where family_id = v_family_id and completed_by = v_uid and completion_photo_path is not null
+  ) >= 30 then
+    perform public.grant_title(v_family_id, v_uid, 'photo_album_rich');
   end if;
 
   return v_task;
@@ -2210,6 +2590,8 @@ declare
   v_balance integer;
   v_tycoon_currency bigint;
   v_owned_count integer;
+  v_lifetime_spent integer;
+  v_owned_slot_count integer;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -2237,7 +2619,14 @@ begin
     update public.family_members
     set points = points - v_item.price,
         lifetime_points_spent = lifetime_points_spent + v_item.price
-    where family_id = p_family_id and user_id = v_uid;
+    where family_id = p_family_id and user_id = v_uid
+    returning lifetime_points_spent into v_lifetime_spent;
+
+    -- 손이 큰 소비자 (13-2): shop-spending read of "big spender", distinct
+    -- from 큰손's requester-stake read (create_task above).
+    if v_lifetime_spent >= 500 then
+      perform public.grant_title(p_family_id, v_uid, 'big_spender_shop');
+    end if;
   elsif v_item.currency = 'tycoon' then
     -- section 20 -- settle passive accrual first so the balance check
     -- below reflects everything earned up to this moment, not just
@@ -2257,6 +2646,16 @@ begin
   select count(*) into v_owned_count from public.member_owned_items where user_id = v_uid and family_id = p_family_id;
   if v_owned_count = 10 then
     perform public.grant_title(p_family_id, v_uid, 'shop_regular');
+  end if;
+
+  -- 패셔니스타 (13-2): owns at least one item in most cosmetic slots
+  -- (title excluded -- that's a separate, unlock-only concept).
+  select count(distinct si.slot) into v_owned_slot_count
+  from public.member_owned_items moi
+  join public.shop_items si on si.id = moi.item_id
+  where moi.user_id = v_uid and moi.family_id = p_family_id and si.slot <> 'title';
+  if v_owned_slot_count >= 8 then
+    perform public.grant_title(p_family_id, v_uid, 'fashionista');
   end if;
 end;
 $$;
@@ -2618,7 +3017,9 @@ begin
   where user_id = v_uid and family_id = p_family_id
   returning * into v_state;
 
-  if v_state.upgrade_level = 10 then
+  if v_state.upgrade_level = 5 then
+    perform public.grant_title(p_family_id, v_uid, 'diligent_farmer');
+  elsif v_state.upgrade_level = 10 then
     perform public.grant_title(p_family_id, v_uid, 'tycoon_maxed');
   end if;
 
@@ -2796,6 +3197,9 @@ declare
   v_uid uuid := auth.uid();
   v_last_seen date;
   v_new_streak integer;
+  v_joined_at timestamptz;
+  v_member_count integer;
+  v_notif public.notification_prefs;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -2833,6 +3237,29 @@ begin
   -- use -- no per-user timezone tracking anywhere in this schema.
   if extract(hour from now()) >= 2 and extract(hour from now()) < 5 then
     perform public.grant_title(p_family_id, v_uid, 'night_login');
+  end if;
+
+  -- 13-2 그외 탭: session-based snapshot checks, cheap enough to run once
+  -- per (family, day) alongside the streak update above.
+  select joined_at into v_joined_at from public.family_members where family_id = p_family_id and user_id = v_uid;
+  select count(*) into v_member_count from public.family_members where family_id = p_family_id;
+
+  -- 백일잔치.
+  if v_joined_at is not null and v_joined_at <= now() - interval '100 days' then
+    perform public.grant_title(p_family_id, v_uid, 'hundred_days');
+  end if;
+
+  -- 마이 스페이스: a solo (1-member) room, kept active for 30+ days.
+  if v_member_count = 1 and v_joined_at is not null and v_joined_at <= now() - interval '30 days' then
+    perform public.grant_title(p_family_id, v_uid, 'my_space');
+  end if;
+
+  -- 알림 매니아 (재정의): every notification toggle currently on.
+  select * into v_notif from public.notification_prefs where user_id = v_uid and family_id = p_family_id;
+  if found and v_notif.notify_due and v_notif.notify_created and v_notif.notify_completed
+     and v_notif.notify_reopened and v_notif.notify_comment and v_notif.notify_overdue
+     and v_notif.notify_weekly_summary then
+    perform public.grant_title(p_family_id, v_uid, 'notification_maniac');
   end if;
 end;
 $$;
@@ -3027,6 +3454,130 @@ grant execute on function public.equip_badge(uuid, text) to authenticated;
 grant execute on function public.unequip_badge(uuid) to authenticated;
 revoke execute on function public.equip_badge(uuid, text) from anon, public;
 revoke execute on function public.unequip_badge(uuid) from anon, public;
+
+-- -----------------------------------------------------------------------------
+-- 24. Remaining 52 titles (13-2 in GAMIFICATION_DESIGN.md)
+--
+-- Most of section 12's 76-title list is now handled inline in the existing
+-- RPCs (complete_task's three branches, award_quest_payout, create_task,
+-- purchase_item, upgrade_tycoon, create_family_room/join_family_room,
+-- record_login) since almost none of them need new tracked columns -- just
+-- new queries against tables that already exist. The two genuine exceptions:
+--
+-- - "다함께 스트릭" (family-wide streak of days with an 모두형 completion --
+--   see the new families columns below, updated in complete_task's 모두 branch).
+-- - "코멘트 장인"/"소통왕" (comment counts) need a trigger, since comments are
+--   inserted directly from the client (no wrapping RPC to hook into).
+--
+-- 6 titles from the original 58-item draft were dropped as too ambiguous
+-- to implement confidently from the name alone (no description text ever
+-- existed for any of these): 후한 인심, 전담마크, 믿음의 리필, 단골 사장님,
+-- 우리집 챔피언, 무패행진. Revisit if their intended meaning gets clarified.
+-- -----------------------------------------------------------------------------
+
+alter table public.families add column if not exists everyone_streak_days integer not null default 0;
+alter table public.families add column if not exists everyone_streak_last_date date;
+
+-- 코멘트 장인 / 소통왕: account-wide comment count (not scoped to one
+-- family), so -- same "grant to every room they're in" pattern as
+-- 인싸/다정한 이웃 -- granted in every family room the author belongs to.
+create or replace function public.handle_new_task_comment()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_comment_count integer;
+  v_family_id uuid;
+begin
+  select count(*) into v_comment_count from public.task_comments where author_id = new.author_id;
+  if v_comment_count >= 30 then
+    for v_family_id in select family_id from public.family_members where user_id = new.author_id loop
+      perform public.grant_title(v_family_id, new.author_id, 'comment_master');
+      if v_comment_count >= 50 then
+        perform public.grant_title(v_family_id, new.author_id, 'chatterbox');
+      end if;
+    end loop;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_task_comment_inserted on public.task_comments;
+create trigger on_task_comment_inserted
+after insert on public.task_comments
+for each row execute function public.handle_new_task_comment();
+
+-- New title catalog rows -- id-less keys matching every grant_title() call
+-- added above. hidden=true only for the two genuinely secret ones (한밤의
+-- 약속/자정의 손길/축제의 밤/새벽의 추격자 use the same "hidden until earned"
+-- treatment as the existing hidden titles in section 22).
+insert into public.shop_items (slot, name, sprite_key, acquisition_type, key, hidden, sort_order)
+select * from (values
+  -- 특정인 지정
+  ('title', '단골 일꾼', '', 'title_condition', 'specific_hundred', false, 200),
+  ('title', '척척박사', '', 'title_condition', 'specific_three_hundred', false, 201),
+  ('title', '의뢰의 달인', '', 'title_condition', 'specific_five_hundred', false, 202),
+  ('title', '큰손', '', 'title_condition', 'big_spender_stake', false, 203),
+  ('title', '즉시 응답', '', 'title_condition', 'quick_response', false, 204),
+  ('title', '새벽 배송', '', 'title_condition', 'dawn_delivery', false, 205),
+  ('title', '여유만만', '', 'title_condition', 'plenty_to_spare', false, 206),
+  ('title', '재도전', '', 'title_condition', 'second_chance', false, 207),
+  ('title', '코멘트 장인', '', 'title_condition', 'comment_master', false, 208),
+  ('title', '사진 기록가', '', 'title_condition', 'photo_chronicler', false, 209),
+  ('title', '팔방미인', '', 'title_condition', 'all_rounder', false, 210),
+  ('title', '한밤의 약속', '', 'title_condition', 'midnight_promise', true, 211),
+  ('title', '자정의 손길', '', 'title_condition', 'touch_of_midnight', true, 212),
+
+  -- 모두
+  ('title', '손발이 척척', '', 'title_condition', 'everyone_twenty_five', false, 220),
+  ('title', '전원 집합', '', 'title_condition', 'full_house', false, 221),
+  ('title', '협동조합장', '', 'title_condition', 'everyone_hundred', false, 222),
+  ('title', '다함께 스트릭', '', 'title_condition', 'together_streak', false, 223),
+  ('title', '원팀 정신', '', 'title_condition', 'one_team_spirit', false, 224),
+  ('title', '대청소의 날', '', 'title_condition', 'deep_clean_day', false, 225),
+  ('title', '사내 화합', '', 'title_condition', 'office_harmony', false, 226),
+  ('title', '팀워크의 정석', '', 'title_condition', 'textbook_teamwork', false, 227),
+  ('title', '다정한 이웃', '', 'title_condition', 'friendly_neighbor', false, 228),
+  ('title', '든든한 지원군', '', 'title_condition', 'reliable_backup', false, 229),
+  ('title', '화합의 증표', '', 'title_condition', 'harmony_token', false, 230),
+  ('title', '다 같이 청소', '', 'title_condition', 'cleaning_crew', false, 231),
+  ('title', '축제의 밤', '', 'title_condition', 'festival_night', true, 232),
+
+  -- 선착
+  ('title', '눈치 백단', '', 'title_condition', 'sharp_eyed', false, 240),
+  ('title', '얼리버드 헌터', '', 'title_condition', 'early_bird_hunter', false, 241),
+  ('title', '승부욕 만렙', '', 'title_condition', 'first_come_twenty_five', false, 242),
+  ('title', '독보적 존재', '', 'title_condition', 'first_come_hundred', false, 243),
+  ('title', '사냥꾼', '', 'title_condition', 'bounty_hunter', false, 244),
+  ('title', '전광석화', '', 'title_condition', 'quick_draw', false, 245),
+  ('title', '부지런한 새', '', 'title_condition', 'first_come_twenty', false, 246),
+  ('title', '진짜 승부사', '', 'title_condition', 'true_competitor', false, 247),
+  ('title', '방심은 금물', '', 'title_condition', 'cutting_it_close', false, 248),
+  ('title', '완판 요정', '', 'title_condition', 'first_come_points_200', false, 249),
+  ('title', '늘 한발 앞서', '', 'title_condition', 'always_ahead_fc', false, 250),
+  ('title', '새벽의 추격자', '', 'title_condition', 'dawn_chaser', true, 251),
+
+  -- 그외
+  ('title', '백일잔치', '', 'title_condition', 'hundred_days', false, 260),
+  ('title', '레벨 10 달성', '', 'title_condition', 'level_10', false, 261),
+  ('title', '레벨 30 달성', '', 'title_condition', 'level_30', false, 262),
+  ('title', '손이 큰 소비자', '', 'title_condition', 'big_spender_shop', false, 263),
+  ('title', '패셔니스타', '', 'title_condition', 'fashionista', false, 264),
+  ('title', '성실한 농부', '', 'title_condition', 'diligent_farmer', false, 265),
+  ('title', '알뜰살뜰', '', 'title_condition', 'thrifty', false, 266),
+  ('title', '인싸', '', 'title_condition', 'social_butterfly', false, 267),
+  ('title', '마이 스페이스', '', 'title_condition', 'my_space', false, 268),
+  ('title', '사장님', '', 'title_condition', 'boss', false, 269),
+  ('title', '소통왕', '', 'title_condition', 'chatterbox', false, 270),
+  ('title', '알림 매니아', '', 'title_condition', 'notification_maniac', false, 271),
+  ('title', '사진첩 부자', '', 'title_condition', 'photo_album_rich', false, 272),
+  ('title', '초대왕', '', 'title_condition', 'invite_king', true, 273)
+) as seed(slot, name, sprite_key, acquisition_type, key, hidden, sort_order)
+where not exists (
+  select 1 from public.shop_items existing where existing.key = seed.key
+);
 
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification
