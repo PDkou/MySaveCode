@@ -2211,6 +2211,11 @@ textarea {
   filter: grayscale(1);
 }
 
+.badge-gallery-item-equipped {
+  outline: 2px solid var(--purple);
+  outline-offset: -2px;
+}
+
 .badge-gallery-emoji {
   font-size: 24px;
 }

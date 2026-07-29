@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { supabase } from '../lib/supabaseClient';
 import { ALL_BADGE_KEYS, BADGE_EMOJI, levelForPoints, pointsIntoLevel, pointsNeededForLevel } from '../lib/gamification';
-import type { BadgeKey } from '../types/database';
+import { ShopActionError, equipItem, getEquippedItems, getOwnedItemIds, getShopItems, unequipItem } from '../lib/shop';
+import type { BadgeKey, ShopItemRow } from '../types/database';
 
 interface MyStatsModalProps {
   onClose: () => void;
@@ -17,6 +18,16 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
   const { family, members } = useFamily();
   const [earnedKeys, setEarnedKeys] = useState<Set<BadgeKey>>(new Set());
   const [loading, setLoading] = useState(true);
+
+  // Titles (칭호): pure unlock-gallery like badges, not a shop purchase flow
+  // -- see GAMIFICATION_DESIGN.md section 8. They live in shop_items only
+  // because grant_title()/equip_item() already existed for that table; this
+  // gallery hides that implementation detail from the UI entirely.
+  const [titleItems, setTitleItems] = useState<ShopItemRow[]>([]);
+  const [ownedTitleIds, setOwnedTitleIds] = useState<Set<string>>(new Set());
+  const [equippedTitleId, setEquippedTitleId] = useState<string | null>(null);
+  const [titleBusyId, setTitleBusyId] = useState<string | null>(null);
+  const [titleErrorKey, setTitleErrorKey] = useState<string | null>(null);
 
   const me = useMemo(() => members.find((m) => m.user_id === user?.id) ?? null, [members, user]);
 
@@ -41,6 +52,43 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
       cancelled = true;
     };
   }, [family, user]);
+
+  const loadTitles = async () => {
+    if (!family || !user) return;
+    const [allItems, owned, equipped] = await Promise.all([
+      getShopItems(),
+      getOwnedItemIds(user.id, family.id),
+      getEquippedItems(user.id, family.id),
+    ]);
+    setTitleItems(allItems.filter((i) => i.slot === 'title'));
+    setOwnedTitleIds(owned);
+    setEquippedTitleId(equipped.find((e) => e.slot === 'title')?.item_id ?? null);
+  };
+
+  useEffect(() => {
+    void loadTitles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [family, user]);
+
+  const visibleTitleItems = titleItems.filter((i) => !i.hidden || ownedTitleIds.has(i.id));
+
+  const handleTitleEquip = async (item: ShopItemRow) => {
+    if (!family) return;
+    setTitleErrorKey(null);
+    setTitleBusyId(item.id);
+    try {
+      if (equippedTitleId === item.id) {
+        await unequipItem(family.id, 'title');
+      } else {
+        await equipItem(family.id, item.id);
+      }
+      await loadTitles();
+    } catch (err) {
+      setTitleErrorKey(err instanceof ShopActionError ? err.translationKey : 'shop.error.unknown');
+    } finally {
+      setTitleBusyId(null);
+    }
+  };
 
   if (!me) return null;
 
@@ -102,6 +150,36 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
               })}
             </div>
           )}
+        </div>
+
+        <div className="stats-badges-section">
+          <h3>{t('stats.titleGallery')}</h3>
+          {titleErrorKey && <p className="form-error" role="alert">{t(titleErrorKey)}</p>}
+          <div className="badge-gallery-grid">
+            {visibleTitleItems.map((item) => {
+              const owned = ownedTitleIds.has(item.id);
+              const equipped = equippedTitleId === item.id;
+              const busy = titleBusyId === item.id;
+              return (
+                <div
+                  key={item.id}
+                  className={`badge-gallery-item ${owned ? 'badge-gallery-item-earned' : 'badge-gallery-item-locked'} ${equipped ? 'badge-gallery-item-equipped' : ''}`}
+                >
+                  <span className="badge-gallery-name">{owned ? item.name : t('shop.locked')}</span>
+                  {owned && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      disabled={busy}
+                      onClick={() => void handleTitleEquip(item)}
+                    >
+                      {equipped ? t('shop.unequip') : t('shop.equip')}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="modal-actions">
