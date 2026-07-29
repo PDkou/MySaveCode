@@ -20,10 +20,12 @@ interface CharacterShopModalProps {
   onClose: () => void;
 }
 
-// title has no purchasable items yet -- see GAMIFICATION_DESIGN.md section
-// 8/12 (condition-based unlocks, not built yet). Still listed as a tab so
-// the slot isn't invisible, just empty.
-const SLOTS: CharacterSlot[] = ['body', 'top', 'pants', 'shoes', 'head', 'weapon', 'shield', 'accessory1', 'accessory2', 'background', 'title'];
+// title is deliberately not a shop tab -- titles are unlock-only (never
+// purchasable) and are shown as an achievement gallery in MyStatsModal
+// instead, alongside badges. This modal still fetches title items (see
+// equippedTitleName below) purely to show which one is currently equipped
+// next to the character preview.
+const SLOTS: CharacterSlot[] = ['body', 'top', 'pants', 'shoes', 'head', 'weapon', 'shield', 'accessory1', 'accessory2', 'background'];
 
 export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
   const { t } = useTranslation();
