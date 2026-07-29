@@ -45,6 +45,25 @@ export async function getEquippedItems(userId: string, familyId: string): Promis
   return (data ?? []) as MemberEquippedItemRow[];
 }
 
+// Lighter than getShopItems() + getEquippedItems() together -- callers that
+// only need to show "which title is currently equipped" (e.g. the dashboard
+// header) don't need the whole shop catalog just to look up one name. Two
+// round trips instead of one join -- the hand-maintained Database type here
+// declares no table Relationships, so supabase-js can't type an embedded
+// `shop_items(name)` select the way a CLI-generated schema would.
+export async function getEquippedTitleName(userId: string, familyId: string): Promise<string | null> {
+  const { data: equipped } = await supabase
+    .from('member_equipped_items')
+    .select('item_id')
+    .eq('user_id', userId)
+    .eq('family_id', familyId)
+    .eq('slot', 'title')
+    .maybeSingle();
+  if (!equipped) return null;
+  const { data: item } = await supabase.from('shop_items').select('name').eq('id', equipped.item_id).maybeSingle();
+  return item?.name ?? null;
+}
+
 export async function purchaseItem(familyId: string, itemId: string): Promise<void> {
   const { error } = await supabase.rpc('purchase_item', { p_family_id: familyId, p_item_id: itemId });
   if (error) throw new ShopActionError(mapShopErrorToKey(error.message));

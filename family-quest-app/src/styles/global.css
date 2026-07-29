@@ -1205,6 +1205,33 @@ textarea {
   text-align: center;
 }
 
+.dashboard-equipped-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--purple);
+  background: color-mix(in srgb, var(--purple) 8%, var(--bg));
+  color: var(--purple);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dashboard-equipped-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.dashboard-equipped-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .dashboard-toolbar {
   display: flex;
   gap: 10px;

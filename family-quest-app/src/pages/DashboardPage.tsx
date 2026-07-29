@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,7 +19,9 @@ import { CharacterShopModal } from '../components/CharacterShopModal';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
 import { startOfThisWeek } from '../lib/formatDate';
-import { levelForPoints } from '../lib/gamification';
+import { BADGE_EMOJI, levelForPoints } from '../lib/gamification';
+import { getEquippedTitleName } from '../lib/shop';
+import type { BadgeKey } from '../types/database';
 
 type Filter = 'open' | 'done' | 'all';
 
@@ -46,6 +48,21 @@ export function DashboardPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkCompleting, setBulkCompleting] = useState(false);
+
+  // Equipped badge already lives on the family_members row (FamilyContext
+  // refreshes it after equip/unequip), but the equipped title is a separate
+  // shop_items lookup -- refetched below whenever MyStatsModal closes, since
+  // that's the only place titles get equipped/unequipped from.
+  const [equippedTitleName, setEquippedTitleName] = useState<string | null>(null);
+  const userId = user?.id;
+  const familyId = family?.id;
+  useEffect(() => {
+    if (!userId || !familyId) {
+      setEquippedTitleName(null);
+      return;
+    }
+    void getEquippedTitleName(userId, familyId).then(setEquippedTitleName);
+  }, [userId, familyId]);
 
   const nameByUserId = useMemo(() => {
     const map = new Map<string, string>();
@@ -224,6 +241,17 @@ export function DashboardPage() {
         </div>
       </div>
 
+      {me && (equippedTitleName || me.equipped_badge_key) && (
+        <button type="button" className="dashboard-equipped-chip" onClick={() => setShowStats(true)}>
+          {me.equipped_badge_key && (
+            <span className="dashboard-equipped-emoji" aria-hidden="true">
+              {BADGE_EMOJI[me.equipped_badge_key as BadgeKey]}
+            </span>
+          )}
+          {equippedTitleName && <span className="dashboard-equipped-title">{equippedTitleName}</span>}
+        </button>
+      )}
+
       <div className="dashboard-toolbar">
         <button type="button" className="btn btn-primary" onClick={() => setShowNewTask(true)}>
           {t('dashboard.newTask')}
@@ -367,7 +395,14 @@ export function DashboardPage() {
       {showEditFamilyName && family && (
         <EditFamilyNameModal currentName={family.name} onClose={() => setShowEditFamilyName(false)} />
       )}
-      {showStats && <MyStatsModal onClose={() => setShowStats(false)} />}
+      {showStats && (
+        <MyStatsModal
+          onClose={() => {
+            setShowStats(false);
+            if (userId && familyId) void getEquippedTitleName(userId, familyId).then(setEquippedTitleName);
+          }}
+        />
+      )}
       {showWeekly && <WeeklyBreakdownModal onClose={() => setShowWeekly(false)} />}
       {showTycoon && <TycoonModal onClose={() => setShowTycoon(false)} />}
       {showShop && <CharacterShopModal onClose={() => setShowShop(false)} />}
