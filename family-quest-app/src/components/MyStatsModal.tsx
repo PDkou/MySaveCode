@@ -6,7 +6,7 @@ import { useFamily } from '../context/FamilyContext';
 import { supabase } from '../lib/supabaseClient';
 import {
   ALL_BADGE_KEYS,
-  BADGE_EMOJI,
+  BADGE_ICON_SRC,
   TITLE_CATEGORIES,
   equipBadge,
   levelForPoints,
@@ -217,7 +217,7 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
                       key={key}
                       className={`gallery-row ${earned ? 'gallery-row-owned' : 'gallery-row-locked'} ${equipped ? 'gallery-row-equipped' : ''}`}
                     >
-                      <span className="gallery-row-emoji" aria-hidden="true">{BADGE_EMOJI[key]}</span>
+                      <img className="gallery-row-emoji" src={BADGE_ICON_SRC[key]} alt="" aria-hidden="true" />
                       <span className="gallery-row-text">
                         <span className="gallery-row-name">{t(`badges.${key}.name`)}</span>
                         <span className="gallery-row-desc">{t(`badges.${key}.desc`)}</span>
