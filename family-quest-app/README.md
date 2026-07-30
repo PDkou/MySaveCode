@@ -1,18 +1,39 @@
-# Family Quest (v0.1)
+# Family Quest
 
-가족이 실제로 쓰는 생활 퀘스트 공유 앱. React + Vite + TypeScript + Supabase 기반 PWA.
+가족(또는 개인/회사팀)이 실제로 쓰는 생활 퀘스트 공유 앱. React + Vite + TypeScript + Supabase 기반
+PWA. 설계 배경과 전체 구현 이력은 `GAMIFICATION_DESIGN.md`(게임화 시스템)를 참고하세요 — 이 문서는
+설치/배포/테스트 절차 중심입니다.
 
-- 이메일/비밀번호 회원가입·로그인
-- 가족방 생성(8자리 초대 코드) / 참여, 인원 제한 없음, 한 계정으로 여러 가족방 참여 가능 (우리 가족/친정/시댁 등)
-- 퀘스트(할 일) 등록 → 담당자 지정 → 완료 처리(결과 메모) → 필요 시 재오픈. 기한과 별도로 시작일도 지정 가능 (시작 전에는 "예정" 상태로 표시)
-- 처리 기록(누가 등록/완료/재오픈했는지) 자동 기록
-- 완료 시 컨페티 애니메이션 + 랜덤 축하 메시지, 포인트/레벨/연속완료(스트릭)/뱃지 컬렉션, 담당자 제비뽑기, 이번 주 가족별 완료 현황, 완료 사진첩
-- 자주 쓰는 의뢰 내용(담당자 포함) 저장 후 드롭다운으로 빠르게 등록, 앱 내 도움말
-- 퀘스트 검색, 일괄 완료 처리, 홈 화면 설치 유도 배너
+### 기본 기능
+- 이메일/비밀번호 회원가입·로그인 (비밀번호 찾기 포함)
+- 방 생성(8자리 초대 코드, QR 코드로도 공유 가능) / 참여, 인원 제한 없음, 한 계정으로 여러 방 참여
+  가능 (우리 가족/친정/시댁/회사팀 등). 방 종류는 **개인방**(혼자 쓰는 할 일 관리, 의뢰금 없이 무료)
+  / **가족방** / **회사방**(CSV 리포트 내보내기 가능) 3종
+- 퀘스트(할 일) 등록 → 담당자 지정(특정인/전원/선착순 중 자동 판별) → 완료 처리(결과 메모) → 필요 시
+  재오픈. 기한과 별도로 시작일도 지정 가능(시작 전엔 "예정" 상태), 반복(매일/매주 요일 지정/매월)
+  설정 가능
+- 처리 기록(누가 등록/완료/재오픈했는지) 자동 기록, 완료 건에 댓글(진행 메모/완료 반응) 작성
+- 자주 쓰는 의뢰 내용(담당자 포함) 저장 후 드롭다운으로 빠르게 재등록, 담당자 제비뽑기, 퀘스트
+  검색/핀 고정/일괄 선택-완료, 캘린더 뷰, 완료 사진 모아보기(사진첩)
+
+### 게임화 (자세한 설계는 `GAMIFICATION_DESIGN.md` 참고)
+- 공유 방(2인 이상)의 퀘스트는 의뢰금(등록 시 거는 골드, 최소 5골드)을 걸고, 완료하면 포상금으로
+  받음 — 완료자 전액 + 의뢰자에게 소액 환급 보너스. 레벨이 오를수록 필요 경험치도 늘어나는 성장형
+  레벨/경험치, 연속 완료 스트릭, 조건 달성형 뱃지, 76종 칭호(테마별 탭으로 구분) 수집
+- 완료 시 컨페티 애니메이션 + 랜덤 축하 메시지, 대시보드 헤더에 경험치 진행 바 + 보유 골드 상시 표시
+- 골드로 캐릭터 꾸미기(피부/배경/상의/하의/신발/머리/무기/방패/장신구 2종 슬롯) + 칭호/뱃지 장착,
+  방치형 "타이쿤" 시스템(탭하여 재화 획득 → 업그레이드 → 골드로 환전, 일일 상한 있음)
+- 이번 주 가족별 완료 현황(주간 리포트, MVP 하이라이트)
+
+### 알림 / 편의 기능
+- 기기 푸시 알림: 마감 임박, 담당 배정, 완료, 댓글, 마감 초과(에스컬레이션), 주간 요약 — 종류별로 켜고 끌 수 있음
+- 앱 내 알림 벨(읽음 처리), 앱 아이콘 배지(내 담당 미완료 건수)
+- 자주 쓰는 의뢰 템플릿, 앱 내 도움말, 홈 화면 설치 유도 배너
 - 라이트/다크 모드 + 5가지 색상 테마(퍼플/핑크/블루/그린/오렌지)
+- 프로필 사진 업로드(드래그/줌 크롭 포함), 방 이름 변경, 초대 코드 재발급, 멤버 내보내기/탈퇴
 - 한국어/일본어: 기기 언어 자동 감지 + 수동 전환, 선택한 언어는 프로필에도 저장
 - 홈 화면 설치 가능한 PWA (Android Chrome, iPhone Safari)
-- 가족방 데이터는 Supabase Row Level Security로 완전히 분리
+- 방 데이터는 Supabase Row Level Security로 완전히 분리
 
 ## 기술 스택
 
@@ -29,8 +50,12 @@
 family-quest-app/
   index.html
   vite.config.ts              # vite-plugin-pwa 설정 포함
+  ART_HANDOFF.md               # 캐릭터 아트 에셋 제작 인수인계 문서 (placeholder → 실제 이미지 교체용)
+  GAMIFICATION_DESIGN.md       # 게임화 시스템 설계 + 전체 구현 이력(Phase 1~N, 시간순)
   supabase/
-    schema.sql                 # 테이블/함수/트리거/RLS 전체 (한 번에 실행)
+    schema.sql                 # 테이블/함수/트리거/RLS 전체 (한 번에 실행, 재실행해도 안전)
+    functions/
+      send-due-reminders/      # 기기 푸시 알림 Edge Function (마감/배정/완료/댓글/에스컬레이션/주간요약)
   src/
     main.tsx
     App.tsx                    # 라우팅 + Provider 조립
@@ -38,25 +63,40 @@ family-quest-app/
     locales/{ko,ja}.json        # 전체 UI 문구
     lib/
       supabaseClient.ts         # Supabase 클라이언트 (publishable key만 사용)
-      formatDate.ts
+      formatDate.ts / lastRoute.ts
+      gamification.ts           # 레벨/경험치/뱃지 계산 (순수 함수, DB엔 raw points만 저장)
+      shop.ts                   # 상점 아이템 조회/장착 상태 + 칭호 다국어 표시명 헬퍼
+      tycoon.ts                 # 방치형 타이쿤 계산
+      questRules.ts             # 배정 방식 판별 등 퀘스트 관련 순수 로직
+      colorTheme.ts / theme.ts  # 색상 테마 / 라이트·다크 모드
+      pushNotifications.ts      # 기기 푸시 구독 등록/해제
+      avatarPhotos.ts / taskPhotos.ts  # 프로필/완료 사진 업로드
     types/database.ts           # 테이블/RPC 타입 (supabase-js 제네릭용)
     context/
       AuthContext.tsx           # 세션, 회원가입/로그인/로그아웃, 언어 저장
-      FamilyContext.tsx         # 가족방 조회/생성/참여
+      FamilyContext.tsx         # 방 조회/생성/참여, 여러 방 전환
       TasksContext.tsx          # 퀘스트 목록 + realtime 구독
-    hooks/useTaskDetail.ts       # 퀘스트 상세 + 처리 기록 + realtime 구독
+    hooks/
+      useTaskDetail.ts          # 퀘스트 상세 + 처리 기록 + realtime 구독
+      useNotifications.ts       # 알림 목록 + 읽음 처리
     pages/
-      AuthPage.tsx
+      AuthPage.tsx / ResetPasswordPage.tsx
       FamilySetupPage.tsx
-      DashboardPage.tsx
+      DashboardPage.tsx         # 헤더(캐릭터/경험치바/골드/아이콘) + 퀘스트 목록 + 필터
       TaskDetailPage.tsx
-    components/
-      LanguageSwitch.tsx
-      TaskCard.tsx
-      NewTaskModal.tsx
+      CalendarPage.tsx / PhotoGalleryPage.tsx / HelpPage.tsx
+    components/                 # 모달/카드/입력 컴포넌트 30여 개 — 대표적으로
+      TaskCard.tsx / NewTaskModal.tsx / TaskTemplatePicker.tsx
+      MyStatsModal.tsx          # 레벨/경험치/뱃지/칭호(테마별 탭) 컬렉션
+      CharacterShopModal.tsx / CharacterSprite.tsx  # 캐릭터 꾸미기 + placeholder 렌더링
+      TycoonModal.tsx
+      SettingsModal.tsx         # 테마/언어/초대코드/멤버관리 등 설정 통합
+      FamilySwitcher.tsx / AddFamilyModal.tsx / FamilyMembersModal.tsx
+      NotificationBell.tsx / InviteQrModal.tsx / WeeklyBreakdownModal.tsx
+      PhotoCropModal.tsx / InstallPromptBanner.tsx / ConfettiBurst.tsx
     styles/
       pretendard.css             # 자체 호스팅 Pretendard 가변 폰트 (@font-face, 92개 유니코드 서브셋)
-      global.css                 # 팔레트 + 모바일 우선 레이아웃
+      global.css                 # 팔레트(라이트/다크 + 5색 테마) + 모바일 우선 레이아웃
   public/
     icons/                       # PWA 아이콘 (192/512/apple-touch-icon)
     fonts/pretendard/            # Pretendard 서브셋 woff2 (실제 사용된 글자 범위만 다운로드됨)
@@ -64,7 +104,9 @@ family-quest-app/
   .env.example
 ```
 
-Supabase의 RLS/함수가 실제 규칙의 원천이고, React 쪽은 그 규칙을 호출하는 얇은 클라이언트입니다. 가족방 인원 제한, 1인 1가족방, 완료 기록 등은 모두 DB 쪽(트리거/RPC)에서 강제되며, 프런트엔드 검증은 사용자 경험을 위한 보조 수단일 뿐입니다.
+Supabase의 RLS/함수가 실제 규칙의 원천이고, React 쪽은 그 규칙을 호출하는 얇은 클라이언트입니다. 방
+인원 제한 없음, 의뢰금/포상금 지급, 완료 기록, 게임화(레벨/골드/타이쿤/상점) 등은 모두 DB 쪽(트리거/RPC)에서
+강제되며, 프런트엔드 검증은 사용자 경험을 위한 보조 수단일 뿐입니다.
 
 ---
 
@@ -85,7 +127,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P
 2. `supabase/schema.sql` 파일 내용을 그대로 붙여넣고 실행(Run)
    - 이 한 파일 안에 테이블 생성 → 트리거 → 함수(`create_family_room`, `join_family_room`) → RLS 정책 → 권한(GRANT) → Realtime 발행까지 순서대로 들어 있습니다.
    - 파일 맨 위 주석에 섹션별 설명이 있습니다. 재실행해도 안전하도록 `create or replace` / `drop policy if exists` 등을 사용했습니다.
-3. 에러 없이 끝나면 왼쪽 **Table Editor**에서 `profiles`, `families`, `family_members`, `tasks`, `task_activities` 5개 테이블이 보여야 합니다.
+3. 에러 없이 끝나면 왼쪽 **Table Editor**에서 `profiles`, `families`, `family_members`, `tasks`, `task_activities` 등 앱 전체가 쓰는 모든 테이블(게임화 관련 `shop_items`/`tycoon_state`/`member_owned_items` 등 포함, 총 17개)이 보여야 합니다.
 
 ### 1.2 Authentication 설정
 
@@ -290,15 +332,15 @@ supabase functions deploy send-due-reminders
 
 1. 회원가입 탭에서 표시 이름 / 이메일 / 비밀번호 입력 → 가입
 2. (이메일 인증이 켜져 있다면 메일 확인 후) 로그인
-3. 가족방 만들기 화면에서 가족방 이름 입력 → **가족방 만들기**
+3. 방 만들기 화면에서 방 이름 입력 → 종류(가족방/개인방/회사방) 선택 → **방 만들기**
 4. 대시보드 상단에서 8자리 초대 코드 확인 (탭하면 복사됨)
-5. **새 퀘스트 전달하기** → 제목/설명 입력
+5. **퀘스트 전달** → 제목/설명 입력
 6. B가 참여한 뒤, 새 퀘스트를 하나 더 만들며 담당자로 **B**를 지정
 
 ### 사용자 B
 
 1. 다른 브라우저(또는 시크릿 창)에서 별도 이메일로 회원가입 → 로그인
-2. 가족방 참여하기 화면에서 A가 준 8자리 코드 입력 → **참여하기**
+2. 방 참여하기 화면에서 A가 준 8자리 코드 입력 → **참여하기**
 3. 대시보드에서 A가 만든 퀘스트가 보이는지 확인
 4. 담당자로 지정된 퀘스트를 열어 **처리 결과**를 입력하고 **완료하기**
 
@@ -346,12 +388,12 @@ supabase functions deploy send-due-reminders
 
 ---
 
-## 7. v0.1에서 의도적으로 제외한 기능
+## 7. 아직 없는 기능
 
-음성 입력, 포인트/레벨, 3인 이상 가족방, 관리자 페이지, 앱스토어 정식 등록, 완전한 오프라인 모드. 기본판이 안정화된 뒤 추가할 수 있습니다.
+음성 입력, 관리자(운영자) 페이지, 앱스토어/플레이스토어 정식 등록, 완전한 오프라인 모드(네트워크 큐잉·충돌 병합 등). 그 외 v0.1 시점에 없었던 포인트/레벨/게임화 전반, 3인 이상 방, 개인방·회사방 종류, 다국어(한국어/일본어), 푸시 알림 등은 이후 단계적으로 구현되어 이미 기본 기능에 포함되어 있습니다 — 자세한 구현 이력은 `GAMIFICATION_DESIGN.md` 참고.
 
 ## 8. 알려진 제약
 
-- 이 저장소를 준비한 개발 환경은 외부 네트워크가 제한되어 있어 Supabase 프로젝트에 직접 접속해 end-to-end 테스트를 실행하지 못했습니다. SQL과 프런트엔드 코드는 각각 검토했지만, **위 5장·6장 절차는 실제 배포/로컬 환경에서 최초 1회 반드시 직접 실행**해 확인해주세요.
+- 이 코드베이스를 준비한 개발 환경은 외부 네트워크가 제한되어 있어, 실제 Supabase 프로젝트(Auth/JWT 세션, 실배포 RLS, Edge Function/pg_cron)에 직접 접속한 end-to-end 테스트는 아직 실행하지 못했습니다. `supabase/schema.sql` 변경 사항은 로컬 Postgres 16 인스턴스에 직접 적용해 함수/트리거/정책 동작을 검증해왔지만, 이는 실제 Supabase Auth 세션·네트워크 환경을 통한 검증을 대체하지 못합니다. **위 5장·6장 절차는 실제 배포/로컬 환경에서 최초 1회 반드시 직접 실행**해 확인해주세요.
 - 오프라인 모드는 지원하지 않습니다. 네트워크가 끊기면 각 화면에서 요청 실패가 노출됩니다(무한 로딩으로 멈추지 않음).
 - **푸시 알림(3-1)은 Edge Function/pg_cron 배포 단계까지 실제 Supabase 프로젝트에 붙여서 테스트하지 못했습니다.** SQL·Edge Function 코드·클라이언트 구독 로직은 각각 Supabase/Web Push 공식 문서 기준으로 작성했지만, 실배포 후 3-1-6 확인 절차를 꼭 직접 실행해보세요. 안 되면 Supabase 대시보드 **Edge Functions → send-due-reminders → Logs**에서 에러를 확인하는 게 가장 빠릅니다.
