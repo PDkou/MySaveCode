@@ -63,6 +63,19 @@ export const BADGE_EMOJI: Record<BadgeKey, string> = {
   night_owl: '🦉',
 };
 
+// Pixel-art medal icons (design/gamification-iconography.md), replacing the
+// system-emoji placeholders above wherever a badge is rendered visually.
+// BADGE_EMOJI is kept around for alt text.
+export const BADGE_ICON_SRC: Record<BadgeKey, string> = {
+  first_quest: '/badges/first_quest.png',
+  ten_quests: '/badges/ten_quests.png',
+  fifty_quests: '/badges/fifty_quests.png',
+  streak_3: '/badges/streak_3.png',
+  streak_7: '/badges/streak_7.png',
+  early_bird: '/badges/early_bird.png',
+  night_owl: '/badges/night_owl.png',
+};
+
 // Badges were originally a one-time collectible with no equip concept --
 // unlike titles, only one can be equipped at a time (family_members.
 // equipped_badge_key), so equipping a new one implicitly replaces the last.

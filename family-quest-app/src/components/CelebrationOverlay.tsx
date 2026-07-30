@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ConfettiBurst } from './ConfettiBurst';
-import { BADGE_EMOJI } from '../lib/gamification';
+import { BADGE_ICON_SRC } from '../lib/gamification';
 import type { CompletionResult } from '../lib/gamification';
 
 const AUTO_DISMISS_MS = 3200;
@@ -54,7 +54,7 @@ export function CelebrationOverlay({ result, onDismiss }: CelebrationOverlayProp
             <div className="celebration-badges-row">
               {result.newBadges.map((key) => (
                 <span key={key} className="celebration-badge">
-                  <span className="celebration-badge-emoji">{BADGE_EMOJI[key]}</span>
+                  <img className="celebration-badge-emoji" src={BADGE_ICON_SRC[key]} alt="" aria-hidden="true" />
                   {t(`badges.${key}.name`)}
                 </span>
               ))}

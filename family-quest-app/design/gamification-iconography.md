@@ -1,27 +1,34 @@
 # 뱃지 / 칭호 아이콘
 
-## 뱃지 (7종) — 기본 이모지 그대로
+## 뱃지 (7종) — ✅ 2026-07-30 실제 아이콘으로 교체 완료
 
-`src/lib/gamification.ts`의 `BADGE_EMOJI`:
+레퍼런스 시트 기반 프롬프트로 생성한 픽셀아트 원형 메달을 `public/badges/{key}.png`로 저장하고,
+`src/lib/gamification.ts`에 새로 추가한 `BADGE_ICON_SRC`(경로 맵)로 `MyStatsModal.tsx`/
+`CelebrationOverlay.tsx`/`CharacterShopModal.tsx`/`DashboardPage.tsx`의 뱃지 렌더링을 전부
+`<img>`로 교체했습니다. 기존 `BADGE_EMOJI`는 삭제하지 않고 alt 텍스트/문서 참고용으로 유지.
 
-| 뱃지 | 이모지 |
-|---|---|
-| first_quest (첫 퀘스트) | 🌱 |
-| ten_quests (10회 완료) | 🎖️ |
-| fifty_quests (50회 완료) | 🏆 |
-| streak_3 (3일 연속) | 🔥 |
-| streak_7 (7일 연속) | ⚡ |
-| early_bird (얼리버드) | 🌅 |
-| night_owl (올빼미) | 🦉 |
+| 뱃지 | 예전 이모지 | 실제 아이콘 |
+|---|---|---|
+| first_quest (첫 퀘스트) | 🌱 | `public/badges/first_quest.png` (새싹, 브론즈 톤 코인) |
+| ten_quests (10회 완료) | 🎖️ | `public/badges/ten_quests.png` (실버 코인 + 리본, 격자무늬로 "10" 표현) |
+| fifty_quests (50회 완료) | 🏆 | `public/badges/fifty_quests.png` (골드 코인 + 트로피) |
+| streak_3 (3일 연속) | 🔥 | `public/badges/streak_3.png` (골드 코인 + 불꽃) |
+| streak_7 (7일 연속) | ⚡ | `public/badges/streak_7.png` (브론즈 톤 코인 + 번개 — 원래 프롬프트는 골드 지정이었으나 실제 생성 결과는 streak_3와 톤이 비슷하게 나옴, 추후 재생성 고려) |
+| early_bird (얼리버드) | 🌅 | `public/badges/early_bird.png` (브론즈 코인 + 일출) |
+| night_owl (올빼미) | 🦉 | `public/badges/night_owl.png` (실버 코인 + 부엉이 얼굴) |
 
-전부 시스템 기본 이모지 폰트를 그대로 쓰고 있어서, 기기/OS별로 모양이 다르게 보입니다(안드로이드
-이모지와 iOS 이모지가 다름). 커스텀 아이콘(원형 메달/스티커 스타일 등, 일관된 하나의 그림체)으로
-교체하면 완성도가 올라갑니다. 7종뿐이라 캐릭터 아트보다 작업량이 훨씬 적습니다.
+**쓰이는 곳**: `MyStatsModal.tsx`(뱃지 갤러리 — 잠긴 뱃지는 기존 `.gallery-row-locked`의
+grayscale 필터가 이미지에도 그대로 적용됨), `CelebrationOverlay.tsx`(완료 시 축하 화면), `CharacterShopModal.tsx`
+(헤더의 장착된 뱃지 슬롯), `DashboardPage.tsx`(`.dashboard-equipped-chip`). `WeeklyBreakdownModal.tsx`는
+확인해보니 `BADGE_EMOJI`/`BADGE_ICON_SRC`를 아예 안 씀 — MVP 하이라이트는 이모지 없이 텍스트로만
+표시되고 있어서(별도 placeholder 아님) 이번 작업 범위 밖.
 
-**쓰이는 곳**: `MyStatsModal.tsx`(뱃지 갤러리), `CelebrationOverlay.tsx`(완료 시 축하 화면에서 새로
-딴 뱃지 표시), `WeeklyBreakdownModal.tsx`(주간 리포트 MVP 하이라이트)
+## 칭호 (76종) — 시각 요소가 아예 없음 (프레임 이미지는 받았지만 아직 미적용)
 
-## 칭호 (76종) — 시각 요소가 아예 없음
+이미지 3장(브론즈/실버/골드 프레임)은 생성해서 `public/titles/{bronze,silver,gold}.png`로 이미
+저장해뒀지만, **아직 어느 코드에도 연결하지 않았습니다** — 실제 코드에 붙이려면 76개 칭호 중 어떤
+게 브론즈/실버/골드인지 정하는 기준이 먼저 있어야 하는데, 지금 `shop_items` 스키마에는 그 "티어"를
+저장할 컬럼이 없습니다(4개 테마 탭 구분만 있음, `TitleCategory`). 아래 원래 텍스트는 그대로 둡니다.
 
 `shop_items` 테이블의 title 슬롯 76개는 순수 텍스트입니다 (예: "방치의 신", "신입" 등, 한국어/
 일본어 이름 각각 보유). 상점·대시보드 헤더 어디서도 아이콘/배경 없이 텍스트 칩(`.dashboard-
@@ -38,15 +45,19 @@ equipped-chip`)으로만 표시됩니다.
 **쓰이는 곳**: `MyStatsModal.tsx`(칭호 컬렉션, 테마별 탭), `DashboardPage.tsx`의
 `.dashboard-equipped-chip`(장착한 칭호를 헤더에 표시)
 
-## 화폐 아이콘 (골드/경험치) — 이것도 이모지 그대로
+## 화폐 아이콘 (골드/경험치) — ✅ 2026-07-30 헤더 XP바 위젯에 적용 완료
 
-앞의 두 항목을 정리하다가 같이 발견한 것: 골드(포인트)도 `DashboardPage.tsx`에서 💰 이모지를 그대로
-쓰고 있습니다(헤더의 XP바+골드 표시, 상점 잔액 표시 등 2곳). 경험치는 별도 아이콘 없이 숫자/진행
-바로만 표시됩니다. 뱃지와 마찬가지로 기기별 이모지 렌더링 차이 문제가 있고, 커스텀 코인/보석
-아이콘으로 바꾸면 레퍼런스 시트 하단의 "P x150"/"XP 200" 아이콘과 그대로 맞아떨어집니다.
+`public/currency/{points,xp}.png`로 저장, `DashboardPage.tsx`의 헤더 XP바+골드 위젯(`.dashboard-
+xp-gold-row`) 2곳(경험치 진행 텍스트 앞, 골드 잔액 숫자 앞)에 적용했습니다.
 
-**쓰이는 곳**: `DashboardPage.tsx`(헤더 골드 표시 2곳), `CharacterShopModal.tsx`(상점 잔액
-`shop.balance`), `TycoonModal.tsx`(타이쿤 재화 표시)
+**적용 안 한 곳(의도적으로 남겨둠)**:
+- `CharacterShopModal.tsx`의 상점 잔액(`shop.balance`)은 원래부터 이모지 없이 텍스트만 쓰고
+  있었음 — placeholder가 아니라서 이번 작업 범위 밖으로 남김 (원한다면 같은 `points.png`를 추가
+  가능).
+- `TycoonModal.tsx`의 💰 버튼(대시보드 아이콘 줄, 타이쿤 모달 여는 버튼)은 **일부러 안 바꿈** —
+  타이쿤은 `points`와 별개의 화폐 시스템이라, 방금 만든 "골드(포인트)" 아이콘을 그대로 쓰면 서로
+  다른 두 화폐를 같은 아이콘으로 표시해서 헷갈릴 수 있음. 타이쿤 전용 아이콘을 새로 만들 때 같이
+  교체하는 게 맞음.
 
 ## AI 이미지 생성 프롬프트
 

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { CharacterSprite } from './CharacterSprite';
-import { BADGE_EMOJI } from '../lib/gamification';
+import { BADGE_ICON_SRC } from '../lib/gamification';
 import {
   ShopActionError,
   equipItem,
@@ -148,7 +148,7 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
               {equippedTitleName && <span className="shop-equipped-title-frame">{equippedTitleName}</span>}
               {equippedBadgeKey && (
                 <span className="shop-equipped-badge-slot" title={t(`badges.${equippedBadgeKey}.name`)}>
-                  {BADGE_EMOJI[equippedBadgeKey]}
+                  <img src={BADGE_ICON_SRC[equippedBadgeKey]} alt={t(`badges.${equippedBadgeKey}.name`)} />
                 </span>
               )}
             </div>

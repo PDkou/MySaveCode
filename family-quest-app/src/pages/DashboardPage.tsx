@@ -20,7 +20,7 @@ import { CharacterSprite } from '../components/CharacterSprite';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
 import { startOfThisWeek } from '../lib/formatDate';
-import { BADGE_EMOJI, levelForPoints, pointsIntoLevel, pointsNeededForLevel } from '../lib/gamification';
+import { BADGE_ICON_SRC, levelForPoints, pointsIntoLevel, pointsNeededForLevel } from '../lib/gamification';
 import { getEquippedItems, getShopItems, shopItemDisplayName } from '../lib/shop';
 import type { BadgeKey, CharacterSlot } from '../types/database';
 
@@ -221,9 +221,12 @@ export function DashboardPage() {
                 <div className="dashboard-xp-bar-fill" style={{ width: `${xpProgressPct}%` }} />
               </div>
               <div className="dashboard-xp-gold-row">
-                <span>{t('stats.pointsToNext', { current: xpIntoLevel, total: xpNeededForLevel })}</span>
+                <span>
+                  <img className="dashboard-currency-icon" src="/currency/xp.png" alt="" aria-hidden="true" />{' '}
+                  {t('stats.pointsToNext', { current: xpIntoLevel, total: xpNeededForLevel })}
+                </span>
                 <span aria-label={t('shop.balance', { balance: me.points })}>
-                  <span aria-hidden="true">💰</span> {me.points}
+                  <img className="dashboard-currency-icon" src="/currency/points.png" alt="" aria-hidden="true" /> {me.points}
                 </span>
               </div>
             </div>
@@ -305,9 +308,12 @@ export function DashboardPage() {
         {me && (equippedTitleName || me.equipped_badge_key) && (
           <button type="button" className="dashboard-equipped-chip" onClick={() => setShowStats(true)}>
             {me.equipped_badge_key && (
-              <span className="dashboard-equipped-emoji" aria-hidden="true">
-                {BADGE_EMOJI[me.equipped_badge_key as BadgeKey]}
-              </span>
+              <img
+                className="dashboard-equipped-emoji"
+                src={BADGE_ICON_SRC[me.equipped_badge_key as BadgeKey]}
+                alt=""
+                aria-hidden="true"
+              />
             )}
             {equippedTitleName && <span className="dashboard-equipped-title">{equippedTitleName}</span>}
           </button>
