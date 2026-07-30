@@ -14,8 +14,12 @@ Node의 zlib만으로 PNG를 픽셀 단위로 직접 그려서 만든 임시 아
 
 ## 실제로 필요한 것
 
-- **브랜드 심볼 하나 확정**: "Family Quest" 앱을 대표하는 심플한 그래픽(현재의 "집" 모티프를
-  이어가도 되고, 완전히 새로 잡아도 됨) — 작은 크기(192px 이하)에서도 알아볼 수 있어야 함
+- **브랜드 심볼 하나 확정**: 현재의 "집" 모티프는 폐기 — 회사방(업무용)도 있는 앱이라 "가정집"으로
+  좁혀 보이는 상징은 안 맞습니다. **방패 + 체크마크** 조합으로 방향을 정했습니다: 방패는 레퍼런스
+  시트 아이콘 줄에 이미 있는 아이템(방패 코스메틱과 동일 그림체 재사용 가능)이라 캐릭터 아트와도
+  자연스럽게 이어지고, "지켜낸다"는 신뢰감과 "완료했다"는 성취감을 동시에 표현해서 가족/개인/회사
+  어디에 붙여도 어색하지 않습니다 — 아래 프롬프트 참고. 작은 크기(192px 이하)에서도 알아볼 수
+  있어야 함
 - 라이트/다크 모드 양쪽에서 어색하지 않은 배색 (지금은 네이비 고정 배경이라 다크모드 앱 전체
   팔레트와 안 어울릴 수 있음 — `styles/global.css`의 라이트/다크 팔레트 참고)
 - 최종 심볼이 나오면 기존 `generate-icons.cjs` 파이프라인의 손그림 로직을 실제 이미지 export로
@@ -82,18 +86,23 @@ Subject:
 > 4-point pixel sparkle/star sits after the word QUEST. White or transparent background,
 > centered horizontal lockup, no additional decoration.
 
-### 심볼 단독 버전 (192/512/apple-touch/배지 96px에 쓰는 실제 앱 아이콘)
+### 심볼 단독 버전 (192/512/apple-touch/배지 96px에 쓰는 실제 앱 아이콘) — 방패 + 체크마크
 
-로고 텍스트는 작은 사이즈(48px 이하)에서 읽히지 않으니, 텍스트 없는 단독 심볼이 필요합니다.
+로고 텍스트는 작은 사이즈(48px 이하)에서 읽히지 않으니, 텍스트 없는 단독 심볼이 필요합니다. "집"
+모티프 대신 **방패 + 체크마크**로 확정 — 가족/개인/회사방 어디에도 자연스럽고, 레퍼런스 시트의
+방패 아이콘과 같은 그림체를 재사용해서 캐릭터 아트(`character-art.md`의 shield 슬롯)와도 통일감이
+생깁니다.
 
 Subject:
 
-> A single square app-icon symbol with no text: a small pixel-art quest-scroll or flag icon
-> crossed with the small sword from the FAMILY QUEST logo, in the same 16-bit chibi pixel
-> style — bold black outline, flat cel-shaded colors, warm orange/gold and sky-blue accents
-> matching the logotype's own gradients, centered on a solid rounded-square navy background
-> (#182640, matching the app's existing icon background and `theme-color` meta tag) with
-> generous padding from the edges so it still reads clearly at 48x48px.
+> A single square app-icon symbol with no text: a small pixel-art shield (round-top,
+> wood-and-metal color scheme, same shield used in the "shield" cosmetic slot) with a bold
+> pixel checkmark inside it, in the same 16-bit chibi pixel style — bold black outline, flat
+> cel-shaded colors, warm gold/bronze rim on the shield with a bright green checkmark (same
+> green as the "EQUIP" button and checkmark icon in the reference sheet), centered on a solid
+> rounded-square navy background (#182640, matching the app's existing icon background and
+> `theme-color` meta tag) with generous padding from the edges so it still reads clearly at
+> 48x48px.
 
 이 심볼이 나오면 `scripts/generate-icons.cjs`의 손그림 로직 대신 이 이미지를 192/512/apple-touch/
 96(배지)로 리사이즈해서 넣으면 됩니다 — 리사이즈 파이프라인 자체는 그대로 재사용 가능.
