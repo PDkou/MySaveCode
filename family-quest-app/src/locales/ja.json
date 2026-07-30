@@ -155,7 +155,7 @@
     "assigneeHintEveryone": "全員選択で協力型クエストになります — 完了時に報酬を分け合います。",
     "assigneeHintSpecific": "特定の担当者へのクエストです — 完了した人が報酬を全額受け取ります。",
     "stakePoints": "依頼金を設定",
-    "stakePointsHint": "保有ゴールド {{balance}} — 完了した人が報酬として受け取ります。",
+    "stakePointsHint": "保有ゴールド {{balance}} — 完了した人が報酬として受け取ります。(最低5ゴールド)",
     "lotteryButton": "🎲 くじ引き",
     "lotteryPicking": "選んでいます...",
     "startsAt": "開始日 (任意)",
@@ -182,6 +182,7 @@
     "submitting": "登録中...",
     "error": {
       "titleRequired": "タイトルを入力してください。",
+      "stakeTooLow": "依頼金は最低5ゴールド以上に設定してください。",
       "insufficientPoints": "保有ゴールドが足りません。依頼金を減らしてください。",
       "unknown": "クエストの登録に失敗しました。"
     }
