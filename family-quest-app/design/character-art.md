@@ -38,6 +38,21 @@
 `design/` 아래 다른 문서에도 아래와 **동일한 스타일 고정 문단**이 들어 있습니다 — 어떤 문서를 먼저
 읽고 작업하든 같은 그림체가 나오게 하기 위함이니, 이 문단은 절대 수정하지 말고 그대로 재사용하세요.
 
+### 문서를 통째로 넘길 때 반드시 같이 줄 지시문 (중요)
+
+문서 링크나 내용만 던지면 GPT가 표를 한 줄씩 정확히 실행하지 않고 "전체 분위기"만 캐치해서 표에
+없는 아이템을 자유롭게 섞어 넣는 경우가 실제로 있었습니다. 문서와 함께 아래 지시문을 반드시 같이
+붙여넣으세요 (`design/` 아래 다른 문서에도 동일하게 들어 있는 지시문입니다):
+
+> This document contains one or more tables of image assets to generate. Treat each table row
+> as exactly one separate image — one row = one image, no more, no fewer. For each row, use
+> ONLY the exact text in the "Subject" column combined with the style-lock paragraph below;
+> do not invent, add, or substitute any item, character, or detail that is not explicitly in
+> that row's Subject text or the style-lock paragraph. Do not skip rows, merge multiple rows
+> into one image, or add extra "bonus" items beyond what the table lists. Go through the rows
+> in the order they appear, generate one image per row, and label each image with that row's
+> item name (leftmost column).
+
 ### 스타일 고정 (모든 프롬프트 맨 앞에 그대로 붙여넣기)
 
 > 16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
