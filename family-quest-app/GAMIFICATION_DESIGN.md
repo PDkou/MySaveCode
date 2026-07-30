@@ -628,6 +628,26 @@
   `.dashboard-topbar`/`.dashboard-topbar-row`/`.dashboard-icon-grid`라는 별도 이름으로 분리 — 공용
   클래스는 다시는 건드리지 않아도 되게 네임스페이스 분리. 대시보드+영향받은 5개 화면 전부 Playwright로
   재검증.
+- **후속 어색함 수정 (같은 날, 2차/3차)**: 사용자가 아이콘 묶음이 여전히 어색하다고 지적 — 처음엔
+  `align-items: flex-start`로 세로 정렬만 고쳤는데도 "안 됐다"는 답변. `AskUserQuestion`으로 재확인한
+  결과 진짜 문제는 아이콘 묶음과 캐릭터 카드 "사이"의 넓은 빈 공간(`justify-content: space-between`이
+  자식 2개를 좌우 끝으로 밀어붙인 것)이었음 — `flex-start`로 교체해 해결.
+
+### Phase 16 — 아이콘 한 줄 배치 + 툴바를 캐릭터 옆으로 (2026-07-30, 3차 피드백)
+- 사용자가 원하는 최종 모습을 손그림으로 다시 전달: (1) 아이콘 4개(Lv/타이쿤/알림/설정)를 2x2 그리드
+  대신 한 줄로 배치, (2) "새 퀘스트 전달하기/캘린더/사진첩/선택" 툴바 줄을 위로 끌어올려서 캐릭터 카드
+  옆(아이콘 줄 바로 아래)에 생기는 빈 공간을 채우기. `AskUserQuestion`으로 두 가지 다 명시적으로 확인
+  후 진행.
+- **구조 변경**: `dashboard-icon-grid`(2열 그리드) → `dashboard-icon-row`(한 줄 flex, `flex-wrap: nowrap`)로
+  교체. 기존에 `.dashboard-header`의 형제 섹션으로 대시보드 전체 폭을 쓰던 `.dashboard-toolbar`를
+  `dashboard-topbar-row` 안, 아이콘 줄 바로 아래로 이동 — 아이콘 줄 + 툴바를 `.dashboard-side-column`
+  으로 묶어서 캐릭터 카드와 나란히 한 행을 공유하게 함.
+- **폭 예산 문제와 해결**: 캐릭터 카드가 폭의 상당 부분을 차지하는 채로 아이콘 4개를 억지로 한 줄에
+  넣으니, 좁은 폰(360px)에서 "Lv.1🔥1" 칩이 남은 폭에 짓눌려 텍스트가 알약 안에서 줄바꿈되는 문제가
+  실측(Playwright `getBoundingClientRect`)으로 확인됨. `.stats-chip` 패딩을 좁히고 `white-space:
+  nowrap` 추가, 아이콘 줄 전용으로 `.btn-icon`을 36px→32px로 축소(전역 `.btn-icon.btn-sm`은 다른
+  화면들이 쓰므로 안 건드림), 아이콘 줄 간격 8px→4px로 줄여서 해결 — 360/390/430px 전부 줄바꿈 없이
+  한 줄에 들어감을 재확인.
 
 ### 전체 백로그 (설계는 끝났지만 구현 안 한 것)
 - **실제 캐릭터 아트 제작** — 인수인계 문서(`ART_HANDOFF.md`)는 완료, 실제 이미지 생성/통합은 미착수.

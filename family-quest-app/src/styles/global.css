@@ -770,19 +770,34 @@ textarea {
 }
 
 /* flex-start on both axes, not space-between/center: this row only has
-   two children (the icon grid and the character portrait), so
+   two children (the side column and the character portrait), so
    space-between pinned them to opposite edges and left a wide dead strip
    of background between them -- still awkward even after the vertical
    alignment fix (2026-07-30 follow-up feedback). flex-start lets the
-   character sit right next to the icon grid instead, with only the
-   explicit gap between them. Vertically, flex-start keeps the icon grid
-   -- much shorter than the portrait -- flush with its top instead of
-   floating in the middle. */
+   character sit right next to the side column instead, with only the
+   explicit gap between them. Vertically, flex-start keeps the side
+   column's top flush with the portrait's top instead of floating in the
+   middle. Gap kept modest (not the earlier 20px) since the side column
+   now also has to fit the icon row + toolbar in the width left over next
+   to the portrait. */
 .dashboard-topbar-row {
   display: flex;
   justify-content: flex-start;
   align-items: flex-start;
-  gap: 20px;
+  gap: 12px;
+}
+
+/* Holds the icon row + "new quest" toolbar so both sit beside the
+   character portrait instead of the toolbar running full-width below the
+   header -- pulls the toolbar up into what would otherwise be dead space
+   beside the portrait's lower half (2026-07-30 feedback, sketched by the
+   user). */
+.dashboard-side-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
 /* Sized with clamp() so it scales with the viewport instead of a fixed
@@ -845,18 +860,25 @@ textarea {
   flex-wrap: wrap;
 }
 
-/* Dashboard-only: a fixed 2x2 grid rather than a flex row that wraps
-   wherever it happens to run out of width -- with the character portrait
-   claiming more of the header's width (see .topbar-character), a
-   wrapping flex row left a single icon stranded alone on its own line at
-   common phone widths. The grid keeps this tidy at any width instead of
-   depending on exactly how much room is left over. */
-.dashboard-icon-grid {
-  display: grid;
-  grid-template-columns: repeat(2, auto);
-  gap: 8px;
+/* Dashboard-only: a single row (per user's follow-up sketch), not the
+   earlier 2x2 grid -- the grid read as its own separate block instead of
+   a natural continuation of the family-info line above it. no-wrap since
+   this is a short, fixed set of 4 icons; the side column it lives in
+   isn't so narrow that these need to reflow. */
+.dashboard-icon-row {
+  display: flex;
+  gap: 4px;
   align-items: center;
-  justify-content: start;
+  flex-wrap: nowrap;
+}
+
+/* Slightly smaller than the shared .btn-icon.btn-sm (36px) -- this row
+   has 4 items squeezed into the width left over next to the character
+   portrait, and the extra few px per icon is what keeps "Lv.1 🔥1" from
+   wrapping inside its pill at common phone widths. */
+.dashboard-icon-row .btn-icon {
+  width: 32px;
+  height: 32px;
 }
 
 .lang-switch {
@@ -2220,6 +2242,12 @@ textarea {
 .stats-chip {
   font-weight: 700;
   color: var(--amber);
+  /* Tighter than the shared .btn-sm padding -- this chip shares a single
+     row with 3 icon buttons + the character portrait, and the default
+     padding left too little room, squeezing the chip below its content
+     width and wrapping "Lv.1 🔥1" onto two lines inside the pill. */
+  padding: 9px 10px;
+  white-space: nowrap;
 }
 
 .stats-level-card {
