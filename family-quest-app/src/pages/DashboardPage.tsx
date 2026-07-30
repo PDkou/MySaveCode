@@ -165,8 +165,8 @@ export function DashboardPage() {
 
   return (
     <div className="screen dashboard-screen">
-      <div className="topbar">
-        <div className="topbar-main">
+      <div className="dashboard-header">
+        <div className="topbar">
           <div className="family-info">
             <div className="family-title-row">
               <FamilySwitcher />
@@ -206,59 +206,62 @@ export function DashboardPage() {
               )}
             </div>
           </div>
-          <div className="topbar-actions">
-            {me && (
-              <button type="button" className="btn btn-ghost btn-sm stats-chip" onClick={() => setShowStats(true)}>
-                {`Lv.${levelForPoints(me.xp)}`}
-                {me.current_streak > 0 ? ` 🔥${me.current_streak}` : ''}
-              </button>
-            )}
-            {family && (
+
+          <div className="topbar-row">
+            <div className="topbar-actions">
+              {me && (
+                <button type="button" className="btn btn-ghost btn-sm stats-chip" onClick={() => setShowStats(true)}>
+                  {`Lv.${levelForPoints(me.xp)}`}
+                  {me.current_streak > 0 ? ` 🔥${me.current_streak}` : ''}
+                </button>
+              )}
+              {family && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-icon btn-sm"
+                  onClick={() => setShowTycoon(true)}
+                  aria-label={t('tycoon.heading')}
+                >
+                  <span aria-hidden="true">💰</span>
+                </button>
+              )}
+              <NotificationBell />
               <button
                 type="button"
                 className="btn btn-ghost btn-icon btn-sm"
-                onClick={() => setShowTycoon(true)}
-                aria-label={t('tycoon.heading')}
+                onClick={() => setShowSettings(true)}
+                aria-label={t('settings.heading')}
               >
-                <span aria-hidden="true">💰</span>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+              </button>
+            </div>
+            {family && (
+              <button
+                type="button"
+                className="topbar-character"
+                onClick={() => setShowShop(true)}
+                aria-label={t('shop.openButton')}
+              >
+                <CharacterSprite equipped={equippedSprite} size={112} />
               </button>
             )}
-            <NotificationBell />
-            <button
-              type="button"
-              className="btn btn-ghost btn-icon btn-sm"
-              onClick={() => setShowSettings(true)}
-              aria-label={t('settings.heading')}
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-            </button>
           </div>
         </div>
-        {family && (
-          <button
-            type="button"
-            className="topbar-character"
-            onClick={() => setShowShop(true)}
-            aria-label={t('shop.openButton')}
-          >
-            <CharacterSprite equipped={equippedSprite} size={64} />
+
+        {me && (equippedTitleName || me.equipped_badge_key) && (
+          <button type="button" className="dashboard-equipped-chip" onClick={() => setShowStats(true)}>
+            {me.equipped_badge_key && (
+              <span className="dashboard-equipped-emoji" aria-hidden="true">
+                {BADGE_EMOJI[me.equipped_badge_key as BadgeKey]}
+              </span>
+            )}
+            {equippedTitleName && <span className="dashboard-equipped-title">{equippedTitleName}</span>}
           </button>
         )}
       </div>
-
-      {me && (equippedTitleName || me.equipped_badge_key) && (
-        <button type="button" className="dashboard-equipped-chip" onClick={() => setShowStats(true)}>
-          {me.equipped_badge_key && (
-            <span className="dashboard-equipped-emoji" aria-hidden="true">
-              {BADGE_EMOJI[me.equipped_badge_key as BadgeKey]}
-            </span>
-          )}
-          {equippedTitleName && <span className="dashboard-equipped-title">{equippedTitleName}</span>}
-        </button>
-      )}
 
       <div className="dashboard-toolbar">
         <button type="button" className="btn btn-primary" onClick={() => setShowNewTask(true)}>
@@ -290,59 +293,61 @@ export function DashboardPage() {
         </button>
       </div>
 
-      <div className="search-field">
-        <input
-          type="search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={t('dashboard.searchPlaceholder')}
-        />
-        {searchQuery && (
+      <div className="dashboard-filters">
+        <div className="search-field">
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('dashboard.searchPlaceholder')}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="search-clear"
+              onClick={() => setSearchQuery('')}
+              aria-label={t('common.close')}
+            >
+              ×
+            </button>
+          )}
+        </div>
+
+        <div className="filter-tabs" role="tablist">
           <button
             type="button"
-            className="search-clear"
-            onClick={() => setSearchQuery('')}
-            aria-label={t('common.close')}
+            role="tab"
+            aria-selected={filter === 'open'}
+            className={`filter-tab ${filter === 'open' ? 'filter-tab-active' : ''}`}
+            onClick={() => setFilter('open')}
           >
-            ×
+            {t('dashboard.filterOpen')}
           </button>
-        )}
-      </div>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === 'done'}
+            className={`filter-tab ${filter === 'done' ? 'filter-tab-active' : ''}`}
+            onClick={() => setFilter('done')}
+          >
+            {t('dashboard.filterDone')}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filter === 'all'}
+            className={`filter-tab ${filter === 'all' ? 'filter-tab-active' : ''}`}
+            onClick={() => setFilter('all')}
+          >
+            {t('dashboard.filterAll')}
+          </button>
+        </div>
 
-      <div className="filter-tabs" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={filter === 'open'}
-          className={`filter-tab ${filter === 'open' ? 'filter-tab-active' : ''}`}
-          onClick={() => setFilter('open')}
-        >
-          {t('dashboard.filterOpen')}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={filter === 'done'}
-          className={`filter-tab ${filter === 'done' ? 'filter-tab-active' : ''}`}
-          onClick={() => setFilter('done')}
-        >
-          {t('dashboard.filterDone')}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={filter === 'all'}
-          className={`filter-tab ${filter === 'all' ? 'filter-tab-active' : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          {t('dashboard.filterAll')}
-        </button>
+        <label className="only-mine-toggle">
+          <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine(e.target.checked)} />
+          <span>{t('dashboard.onlyMine')}</span>
+        </label>
       </div>
-
-      <label className="only-mine-toggle">
-        <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine(e.target.checked)} />
-        <span>{t('dashboard.onlyMine')}</span>
-      </label>
 
       {selectMode && (
         <div className="bulk-action-bar">

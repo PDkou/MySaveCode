@@ -734,33 +734,59 @@ textarea {
 
 /* ---------- Top bar / language switch ---------- */
 
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.topbar-main {
+/* Groups the topbar + equipped-title/badge chip into one visual header
+   block with its own tighter internal spacing, instead of relying on
+   .screen's flat 20px gap for everything -- that made the chip read as
+   just another disconnected section instead of part of the header
+   (2026-07-30 "UI isn't clean" feedback). */
+.dashboard-header {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-width: 0;
-  flex: 1;
 }
 
+/* A column, not a row: the family name/member-count line needs the full
+   width to itself (it wraps awkwardly if it has to share a row with the
+   character portrait), so only the icon row below it shares space with
+   the portrait. */
+.topbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.topbar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Sized with clamp() so it scales with the viewport instead of a fixed
+   pixel guess -- floor/ceiling keep it from shrinking below a thumb-sized
+   target on small phones or ballooning past what a header portrait needs
+   on large ones. Deliberately large enough to be the header's focal
+   point, framed with a card background, instead of a small icon floating
+   in otherwise-empty space (2026-07-30 feedback). */
 .topbar-character {
   flex-shrink: 0;
-  background: none;
-  border: none;
+  width: clamp(120px, 34vw, 160px);
+  height: clamp(120px, 34vw, 160px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
   padding: 0;
   cursor: pointer;
-  border-radius: 16px;
 }
 
 @media (hover: hover) {
   .topbar-character:hover {
-    background: var(--card);
+    border-color: var(--purple);
+    box-shadow: var(--shadow-md);
   }
 }
 
@@ -786,11 +812,18 @@ textarea {
   }
 }
 
+/* A fixed 2x2 grid rather than a flex row that wraps wherever it happens
+   to run out of width -- with the character portrait now claiming more of
+   the header's width (see .topbar-character), a wrapping flex row left a
+   single icon stranded alone on its own line at common phone widths. The
+   grid keeps this tidy at any width instead of depending on exactly how
+   much room is left over. */
 .topbar-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
   gap: 8px;
   align-items: center;
-  flex-wrap: wrap;
+  justify-content: start;
 }
 
 .lang-switch {
@@ -1244,6 +1277,15 @@ textarea {
 
 .dashboard-toolbar .btn-primary {
   flex: 1;
+}
+
+/* Search + filter tabs + "only mine" are one filtering unit -- grouped
+   with a tighter internal gap than .screen's flat 20px so they read as a
+   cluster instead of three unrelated sections (2026-07-30 UI pass). */
+.dashboard-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .search-field {
