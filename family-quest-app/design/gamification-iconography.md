@@ -37,3 +37,67 @@ equipped-chip`)으로만 표시됩니다.
 
 **쓰이는 곳**: `MyStatsModal.tsx`(칭호 컬렉션, 테마별 탭), `DashboardPage.tsx`의
 `.dashboard-equipped-chip`(장착한 칭호를 헤더에 표시)
+
+## 화폐 아이콘 (골드/경험치) — 이것도 이모지 그대로
+
+앞의 두 항목을 정리하다가 같이 발견한 것: 골드(포인트)도 `DashboardPage.tsx`에서 💰 이모지를 그대로
+쓰고 있습니다(헤더의 XP바+골드 표시, 상점 잔액 표시 등 2곳). 경험치는 별도 아이콘 없이 숫자/진행
+바로만 표시됩니다. 뱃지와 마찬가지로 기기별 이모지 렌더링 차이 문제가 있고, 커스텀 코인/보석
+아이콘으로 바꾸면 레퍼런스 시트 하단의 "P x150"/"XP 200" 아이콘과 그대로 맞아떨어집니다.
+
+**쓰이는 곳**: `DashboardPage.tsx`(헤더 골드 표시 2곳), `CharacterShopModal.tsx`(상점 잔액
+`shop.balance`), `TycoonModal.tsx`(타이쿤 재화 표시)
+
+## AI 이미지 생성 프롬프트
+
+`design/character-art.md`와 동일한 스타일 고정 문단을 그대로 씁니다 — 다르게 쓰면 캐릭터 아트와
+뱃지/아이콘의 그림체가 어긋납니다.
+
+### 스타일 고정 (모든 프롬프트 맨 앞에 그대로 붙여넣기)
+
+> 16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+> Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+> limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+> uniform black pixel outline around every shape (~2px at a 32-64px base resolution) — hard
+> pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+> (one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+> Flat cel-shading with exactly 3 tones per surface — one base tone, one lighter highlight
+> tone (upper-left), one darker shadow tone (lower-right) — single consistent light source
+> from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+> violent, sharp, or scary — toy-like and family-friendly even for "weapon" items (they are
+> pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+> 64x64px) then upscale with nearest-neighbor/no smoothing to the final export size — must
+> look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+> Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+> a set must share identical outline weight, shading logic, and proportions so the full set
+> reads as one unified sprite sheet.
+
+가능하면 레퍼런스 시트 이미지도 같이 첨부하세요. 특히 하단의 코인/보석 아이콘, 체크마크/자물쇠/
+보물상자 아이콘 줄이 아래 항목들의 정답 예시입니다.
+
+### 뱃지 7종 (원형 메달 프레임 통일)
+
+| 뱃지 | 현재 이모지 | Subject |
+|---|---|---|
+| first_quest | 🌱 | A circular medal badge icon with a bronze/wood-tone rim, a small sprouting green plant sprout inside — represents "first quest completed." |
+| ten_quests | 🎖️ | A circular medal badge icon with a silver rim and a small ribbon tail at the bottom, a simple stack-of-ten motif inside. |
+| fifty_quests | 🏆 | A circular medal badge icon with a gold rim, a small pixel trophy cup inside. |
+| streak_3 | 🔥 | A circular medal badge icon with a bronze rim, a small pixel flame inside (lower tier than streak_7). |
+| streak_7 | ⚡ | A circular medal badge icon with a gold rim, a small pixel lightning bolt inside (higher tier than streak_3). |
+| early_bird | 🌅 | A circular medal badge icon with a bronze rim, a small pixel sunrise (sun + horizon line) inside. |
+| night_owl | 🦉 | A circular medal badge icon with a silver rim, a small pixel owl face inside — color mood matches the night-sky background card in the reference sheet. |
+
+### 칭호 티어 프레임 (76종 텍스트 칭호를 감싸는 3단 프레임)
+
+| 티어 | Subject |
+|---|---|
+| 브론즈 프레임 | A small rectangular pill-shaped chip border asset, bronze-tone pixel border with subtle corner rivet details, transparent/empty center so a text label can sit inside it. |
+| 실버 프레임 | Same shape and style, silver-tone border. |
+| 골드 프레임 | Same shape and style, gold-tone border, slightly more ornate corner detail than silver. |
+
+### 화폐 아이콘 2종
+
+| 아이콘 | 현재 이모지 | Subject |
+|---|---|---|
+| 골드(포인트) | 💰 | A small pixel gold coin icon with a single glossy highlight pixel-block and a subtle embossed symbol in the center — matches the coin icon in the reference sheet exactly (labeled "P x150"). |
+| 경험치(XP) | (없음) | A small pixel blue gem/crystal icon with a glossy highlight facet — matches the blue gem icon in the reference sheet exactly (labeled "XP 200"). |
