@@ -745,17 +745,31 @@ textarea {
   gap: 10px;
 }
 
-/* A column, not a row: the family name/member-count line needs the full
-   width to itself (it wraps awkwardly if it has to share a row with the
-   character portrait), so only the icon row below it shares space with
-   the portrait. */
+/* Shared page-chrome row: HelpPage/CalendarPage/FamilySetupPage/
+   PhotoGalleryPage/TaskDetailPage all use .topbar + .topbar-actions for a
+   plain "back button (+ title) on the left, actions on the right" header
+   -- do not repurpose these for dashboard-only layout, that broke every
+   other page's header (2026-07-30 regression). Dashboard-specific header
+   structure lives in .dashboard-topbar / .dashboard-icon-grid below
+   instead, so this stays generic. */
 .topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* Dashboard-only: a column, not a row, because the family name/member-
+   count line needs the full width to itself (it wraps awkwardly if it
+   has to share a row with the character portrait) -- only the icon row
+   below it shares space with the portrait. */
+.dashboard-topbar {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.topbar-row {
+.dashboard-topbar-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -812,13 +826,23 @@ textarea {
   }
 }
 
-/* A fixed 2x2 grid rather than a flex row that wraps wherever it happens
-   to run out of width -- with the character portrait now claiming more of
-   the header's width (see .topbar-character), a wrapping flex row left a
-   single icon stranded alone on its own line at common phone widths. The
-   grid keeps this tidy at any width instead of depending on exactly how
-   much room is left over. */
+/* Shared page-chrome actions row (see .topbar above) -- CalendarPage's
+   3-item month nav and TaskDetailPage's status badge + icons both rely on
+   this being a plain wrapping flex row. */
 .topbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Dashboard-only: a fixed 2x2 grid rather than a flex row that wraps
+   wherever it happens to run out of width -- with the character portrait
+   claiming more of the header's width (see .topbar-character), a
+   wrapping flex row left a single icon stranded alone on its own line at
+   common phone widths. The grid keeps this tidy at any width instead of
+   depending on exactly how much room is left over. */
+.dashboard-icon-grid {
   display: grid;
   grid-template-columns: repeat(2, auto);
   gap: 8px;
