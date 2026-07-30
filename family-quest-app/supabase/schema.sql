@@ -921,21 +921,26 @@ begin
   -- creation stays free and the task is stored with 0 stake regardless of
   -- what was passed in.
   if v_member_count > 1 then
+    -- No free quests in a shared room -- every request needs a real stake,
+    -- 5 minimum (2026-07-30 decision). update_task never touches
+    -- stake_points, so this is the only place this needs enforcing.
+    if v_stake < 5 then
+      raise exception 'stake_too_low' using errcode = '22023';
+    end if;
+
     -- The balance check and the deduction must be one atomic statement --
     -- a separate "select balance, then update" (the previous shape here)
     -- lets two concurrent create_task calls both read the same balance,
     -- both pass the check, and both deduct, taking the balance negative.
     -- "where points >= v_stake" makes the UPDATE itself the check: it
     -- either succeeds as a single unit or matches zero rows.
-    if v_stake > 0 then
-      update public.family_members
-      set points = points - v_stake
-      where family_id = p_family_id and user_id = v_uid and points >= v_stake
-      returning points into v_creator_points;
+    update public.family_members
+    set points = points - v_stake
+    where family_id = p_family_id and user_id = v_uid and points >= v_stake
+    returning points into v_creator_points;
 
-      if not found then
-        raise exception 'insufficient_points' using errcode = 'P0001';
-      end if;
+    if not found then
+      raise exception 'insufficient_points' using errcode = 'P0001';
     end if;
   else
     v_stake := 0;

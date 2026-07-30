@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useTasks, InsufficientPointsError } from '../context/TasksContext';
+import { useTasks, InsufficientPointsError, StakeTooLowError } from '../context/TasksContext';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import type { FamilyMember } from '../context/FamilyContext';
@@ -33,7 +33,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
   const [dueAt, setDueAt] = useState('');
   const [recurrence, setRecurrence] = useState<TaskRecurrence>('none');
   const [recurrenceWeekdays, setRecurrenceWeekdays] = useState<number[]>([]);
-  const [stakePoints, setStakePoints] = useState('');
+  const [stakePoints, setStakePoints] = useState('10');
   const [submitting, setSubmitting] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
 
@@ -49,6 +49,13 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
       setErrorKey('taskForm.error.titleRequired');
       return;
     }
+    const stakeValue = stakingApplies ? Math.max(0, Math.floor(Number(stakePoints) || 0)) : 0;
+    // No free quests in a shared room -- create_task enforces this too, but
+    // catching it here avoids a round trip for the common typo/empty-field case.
+    if (stakingApplies && stakeValue < 5) {
+      setErrorKey('taskForm.error.stakeTooLow');
+      return;
+    }
     setErrorKey(null);
     setSubmitting(true);
     try {
@@ -60,11 +67,17 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
         recurrence,
         startsAt: startsAt ? new Date(startsAt).toISOString() : null,
         recurrenceWeekdays: recurrence === 'weekly' && recurrenceWeekdays.length > 0 ? recurrenceWeekdays : null,
-        stakePoints: stakingApplies ? Math.max(0, Math.floor(Number(stakePoints) || 0)) : 0,
+        stakePoints: stakeValue,
       });
       onClose();
     } catch (err) {
-      setErrorKey(err instanceof InsufficientPointsError ? 'taskForm.error.insufficientPoints' : 'taskForm.error.unknown');
+      setErrorKey(
+        err instanceof InsufficientPointsError
+          ? 'taskForm.error.insufficientPoints'
+          : err instanceof StakeTooLowError
+            ? 'taskForm.error.stakeTooLow'
+            : 'taskForm.error.unknown',
+      );
     } finally {
       setSubmitting(false);
     }
@@ -148,11 +161,11 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
               <input
                 type="number"
                 inputMode="numeric"
-                min={0}
+                min={5}
                 max={myBalance}
                 value={stakePoints}
                 onChange={(e) => setStakePoints(e.target.value)}
-                placeholder="0"
+                placeholder="10"
               />
               <p className="field-hint">{t('taskForm.stakePointsHint', { balance: myBalance })}</p>
             </label>

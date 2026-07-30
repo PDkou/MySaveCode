@@ -23,6 +23,11 @@ export interface NewTaskInput {
 // throws the raw Supabase error, unchanged.
 export class InsufficientPointsError extends Error {}
 
+// create_task's 'stake_too_low' -- no free quests in a shared room, 5
+// minimum. The form validates this client-side before submitting, so this
+// mainly guards a direct API call bypassing the UI.
+export class StakeTooLowError extends Error {}
+
 const UNDO_WINDOW_MS = 5000;
 
 interface TasksContextValue {
@@ -149,6 +154,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     });
     if (error) {
       if (error.message?.includes('insufficient_points')) throw new InsufficientPointsError(error.message);
+      if (error.message?.includes('stake_too_low')) throw new StakeTooLowError(error.message);
       throw error;
     }
 
