@@ -739,7 +739,29 @@ textarea {
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  flex-wrap: wrap;
+}
+
+.topbar-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.topbar-character {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 16px;
+}
+
+@media (hover: hover) {
+  .topbar-character:hover {
+    background: var(--card);
+  }
 }
 
 .app-title {
@@ -1134,25 +1156,6 @@ textarea {
 .notification-item-time {
   font-size: 11px;
   color: var(--muted-light);
-}
-
-.invite-code-chip {
-  background: var(--ink);
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  padding: 6px 12px;
-  font-family: 'SFMono-Regular', Consolas, monospace;
-  letter-spacing: 2px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-@media (hover: hover) {
-  .invite-code-chip:hover {
-    background: var(--ink-soft);
-  }
 }
 
 .invite-qr-trigger {

@@ -35,6 +35,9 @@ export type ShopItemRow = {
   id: string;
   slot: CharacterSlot;
   name: string;
+  // Japanese display name -- only titles have this populated so far (see
+  // GAMIFICATION_DESIGN.md Phase 13); null falls back to `name` (Korean).
+  name_ja: string | null;
   sprite_key: string;
   acquisition_type: ShopItemAcquisitionType;
   currency: ShopItemCurrency | null;

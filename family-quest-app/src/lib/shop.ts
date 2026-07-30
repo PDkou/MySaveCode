@@ -11,6 +11,14 @@ export function isHexColor(value: string): boolean {
   return HEX_COLOR_RE.test(value);
 }
 
+// shop_items.name is Korean-only; name_ja is populated for titles (see
+// GAMIFICATION_DESIGN.md Phase 13). Falls back to the Korean name when no
+// Japanese translation exists yet (e.g. cosmetic items) so nothing renders
+// blank.
+export function shopItemDisplayName(item: Pick<ShopItemRow, 'name' | 'name_ja'>, lang: string): string {
+  return lang === 'ja' ? item.name_ja ?? item.name : item.name;
+}
+
 export class ShopActionError extends Error {
   translationKey: string;
 
@@ -43,25 +51,6 @@ export async function getOwnedItemIds(userId: string, familyId: string): Promise
 export async function getEquippedItems(userId: string, familyId: string): Promise<MemberEquippedItemRow[]> {
   const { data } = await supabase.from('member_equipped_items').select('*').eq('user_id', userId).eq('family_id', familyId);
   return (data ?? []) as MemberEquippedItemRow[];
-}
-
-// Lighter than getShopItems() + getEquippedItems() together -- callers that
-// only need to show "which title is currently equipped" (e.g. the dashboard
-// header) don't need the whole shop catalog just to look up one name. Two
-// round trips instead of one join -- the hand-maintained Database type here
-// declares no table Relationships, so supabase-js can't type an embedded
-// `shop_items(name)` select the way a CLI-generated schema would.
-export async function getEquippedTitleName(userId: string, familyId: string): Promise<string | null> {
-  const { data: equipped } = await supabase
-    .from('member_equipped_items')
-    .select('item_id')
-    .eq('user_id', userId)
-    .eq('family_id', familyId)
-    .eq('slot', 'title')
-    .maybeSingle();
-  if (!equipped) return null;
-  const { data: item } = await supabase.from('shop_items').select('name').eq('id', equipped.item_id).maybeSingle();
-  return item?.name ?? null;
 }
 
 export async function purchaseItem(familyId: string, itemId: string): Promise<void> {
