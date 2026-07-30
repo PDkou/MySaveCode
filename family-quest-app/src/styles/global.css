@@ -1330,18 +1330,29 @@ textarea {
    padding here plus a shorter "퀘스트 전달"/"クエスト依頼" label (also
    matching the shorter label in the user's sketch; dashboard.newTask
    isn't used anywhere else) closes the gap. */
+/* A bit more space above than the grid's own 8px row-gap -- back to back
+   with the icon row right above it (same pill-button chrome), the two
+   rows read as one dense, undifferentiated block of buttons without it
+   (2026-07-30 UI pass). */
 .dashboard-toolbar {
   grid-area: tool;
   display: flex;
   gap: 6px;
   align-items: center;
   flex-wrap: nowrap;
+  margin-top: 4px;
 }
 
+/* white-space: nowrap + a slightly smaller font keeps this on one line --
+   left to wrap, it was two lines tall while every other button in the
+   row was one, an uneven, visibly "unfinished" row height (2026-07-30 UI
+   pass). */
 .dashboard-toolbar .btn-primary {
-  flex: 1.3;
+  flex: 1.6;
   padding-left: 8px;
   padding-right: 8px;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 .dashboard-toolbar .btn-ghost.btn-sm:not(.btn-icon) {
