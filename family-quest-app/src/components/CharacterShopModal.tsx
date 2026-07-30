@@ -13,6 +13,7 @@ import {
   getShopItems,
   isHexColor,
   purchaseItem,
+  shopItemDisplayName,
   unequipItem,
 } from '../lib/shop';
 import type { BadgeKey, CharacterSlot, ShopItemRow } from '../types/database';
@@ -29,7 +30,7 @@ interface CharacterShopModalProps {
 const SLOTS: CharacterSlot[] = ['body', 'top', 'pants', 'shoes', 'head', 'weapon', 'shield', 'accessory1', 'accessory2', 'background'];
 
 export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { family, members, refresh: refreshFamily } = useFamily();
 
@@ -88,8 +89,9 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
   }, [equippedBySlot, itemsById]);
   const equippedTitleName = useMemo(() => {
     const titleItemId = equippedBySlot.get('title');
-    return titleItemId ? itemsById.get(titleItemId)?.name ?? null : null;
-  }, [equippedBySlot, itemsById]);
+    const titleItem = titleItemId ? itemsById.get(titleItemId) : undefined;
+    return titleItem ? shopItemDisplayName(titleItem, i18n.language) : null;
+  }, [equippedBySlot, itemsById, i18n.language]);
 
   // Fully-hidden titles (GAMIFICATION_DESIGN.md section 8's "완전 히든 칭호")
   // shouldn't even reveal their existence -- not shown as a locked row --

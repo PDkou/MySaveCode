@@ -33,6 +33,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoErrorKey, setPhotoErrorKey] = useState<string | null>(null);
   const [birthdayBusy, setBirthdayBusy] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
 
   const currentName = useMemo(() => {
     if (!user) return '';
@@ -65,6 +66,18 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
       setPhotoErrorKey(err instanceof AvatarPhotoError ? err.translationKey : 'profile.error.photoUploadFailed');
     } finally {
       setPhotoBusy(false);
+    }
+  };
+
+  const handleCopyInviteCode = async () => {
+    if (!family) return;
+    try {
+      await navigator.clipboard.writeText(family.invite_code);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 1500);
+    } catch {
+      // Clipboard API can be unavailable (older iOS Safari without a user
+      // gesture context); the code is still visible on screen to copy by hand.
     }
   };
 
@@ -153,6 +166,14 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               />
             </div>
             <p className="settings-row-hint">{t('profile.birthdayHint')}</p>
+            {family && (
+              <button type="button" className="settings-row-button" onClick={() => void handleCopyInviteCode()}>
+                <span>{t('family.inviteCodeLabel')}</span>
+                <span className="settings-row-value">
+                  {family.invite_code} {codeCopied ? `(${t('common.copied')})` : ''}
+                </span>
+              </button>
+            )}
             {family && (
               <button type="button" className="settings-row-button" onClick={() => setShowMembers(true)}>
                 {t('family.membersHeading')}

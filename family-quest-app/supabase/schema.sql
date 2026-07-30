@@ -3778,6 +3778,100 @@ where not exists (
   select 1 from public.shop_items existing where existing.key = seed.key
 );
 
+-- -----------------------------------------------------------------------------
+-- 26. Title Japanese names (name_ja)
+--   `shop_items.name` was seeded Korean-only for every row -- equipping a
+--   title showed the Korean name regardless of the app's language setting.
+--   Titles are the only shop_items rows that carry actual player-facing
+--   flavor text (cosmetic items are just hex colors/emoji sprite_keys), so
+--   this is scoped to titles for now; the same gap exists for cosmetic item
+--   names if those ever grow real display names.
+-- -----------------------------------------------------------------------------
+
+alter table public.shop_items add column if not exists name_ja text;
+
+update public.shop_items as si
+set name_ja = v.name_ja
+from (values
+  ('specific_first', '初依頼達成'),
+  ('specific_ten', '頼れる働き者'),
+  ('specific_fifty', '信頼のアイコン'),
+  ('everyone_first', '初コラボ'),
+  ('everyone_ten', '心を一つに'),
+  ('everyone_fifty', '私たちはチーム'),
+  ('first_come_first', '初勝利'),
+  ('first_come_ten', 'スピードランナー'),
+  ('first_come_fifty', '足の速い者'),
+  ('newcomer', '新入り'),
+  ('xp_1000', 'ポイント長者'),
+  ('shop_regular', '常連客'),
+  ('tycoon_maxed', '放置の神'),
+  ('settler', '定住者'),
+  ('night_login', '夜更かしログイン'),
+  ('birthday_gift', '誕生日プレゼント'),
+  ('together_now', '同じ場所に'),
+  ('solidarity', '連帯感'),
+  ('specific_hundred', '常連の働き者'),
+  ('specific_three_hundred', '何でも博士'),
+  ('specific_five_hundred', '依頼の達人'),
+  ('big_spender_stake', '太っ腹'),
+  ('quick_response', '即レス'),
+  ('dawn_delivery', '早朝お届け'),
+  ('plenty_to_spare', '余裕綽々'),
+  ('second_chance', 'リベンジ'),
+  ('comment_master', 'コメント職人'),
+  ('photo_chronicler', '写真記録家'),
+  ('all_rounder', 'オールラウンダー'),
+  ('midnight_promise', '夜更けの約束'),
+  ('touch_of_midnight', '真夜中の手助け'),
+  ('everyone_twenty_five', 'あうんの呼吸'),
+  ('full_house', '全員集合'),
+  ('everyone_hundred', '協同組合長'),
+  ('together_streak', 'みんなでストリーク'),
+  ('one_team_spirit', 'ワンチーム精神'),
+  ('deep_clean_day', '大掃除の日'),
+  ('office_harmony', '社内和合'),
+  ('textbook_teamwork', 'チームワークの教科書'),
+  ('friendly_neighbor', '優しい隣人'),
+  ('reliable_backup', '頼れる助っ人'),
+  ('harmony_token', '和合の証'),
+  ('cleaning_crew', 'みんなで掃除'),
+  ('festival_night', '祭りの夜'),
+  ('sharp_eyed', '目端が利く'),
+  ('early_bird_hunter', '早起きハンター'),
+  ('first_come_twenty_five', '負けず嫌いMAX'),
+  ('first_come_hundred', '唯一無二の存在'),
+  ('bounty_hunter', '賞金稼ぎ'),
+  ('quick_draw', '電光石火'),
+  ('first_come_twenty', '早起きの鳥'),
+  ('true_competitor', '真の勝負師'),
+  ('cutting_it_close', '油断大敵'),
+  ('first_come_points_200', '完売の妖精'),
+  ('always_ahead_fc', '常に一歩リード'),
+  ('dawn_chaser', '夜明けの追跡者'),
+  ('hundred_days', '百日祝い'),
+  ('level_10', 'レベル10達成'),
+  ('level_30', 'レベル30達成'),
+  ('big_spender_shop', '気前のいい消費者'),
+  ('fashionista', 'ファッショニスタ'),
+  ('diligent_farmer', '勤勉な農夫'),
+  ('thrifty', '倹約家'),
+  ('social_butterfly', '人気者'),
+  ('my_space', 'マイスペース'),
+  ('boss', '社長'),
+  ('chatterbox', 'おしゃべり王'),
+  ('notification_maniac', '通知マニア'),
+  ('photo_album_rich', 'アルバム長者'),
+  ('invite_king', '招待王'),
+  ('generous_heart', '気前の良さ'),
+  ('assigned_specialist', '専属担当'),
+  ('trust_refill', '信頼のリフィル'),
+  ('regular_patron', '常連の依頼主'),
+  ('house_champion', '我が家のチャンピオン'),
+  ('unbeaten_streak', '無敗街道')
+) as v(key, name_ja)
+where si.key = v.key;
+
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification
 -- checklist that should be run against this schema before go-live.

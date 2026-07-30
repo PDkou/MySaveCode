@@ -16,7 +16,15 @@ import {
   unequipBadge,
   type TitleCategory,
 } from '../lib/gamification';
-import { ShopActionError, equipItem, getEquippedItems, getOwnedItemIds, getShopItems, unequipItem } from '../lib/shop';
+import {
+  ShopActionError,
+  equipItem,
+  getEquippedItems,
+  getOwnedItemIds,
+  getShopItems,
+  shopItemDisplayName,
+  unequipItem,
+} from '../lib/shop';
 import type { BadgeKey, ShopItemRow } from '../types/database';
 
 interface MyStatsModalProps {
@@ -24,7 +32,7 @@ interface MyStatsModalProps {
 }
 
 export function MyStatsModal({ onClose }: MyStatsModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { family, members, refresh: refreshFamily } = useFamily();
   const [earnedKeys, setEarnedKeys] = useState<Set<BadgeKey>>(new Set());
@@ -244,7 +252,7 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
                     className={`gallery-row ${owned ? 'gallery-row-owned' : 'gallery-row-locked'} ${equipped ? 'gallery-row-equipped' : ''}`}
                   >
                     <span className="gallery-row-icon" aria-hidden="true" />
-                    <span className="gallery-row-name">{owned ? item.name : t('shop.locked')}</span>
+                    <span className="gallery-row-name">{owned ? shopItemDisplayName(item, i18n.language) : t('shop.locked')}</span>
                     {owned && (
                       <button
                         type="button"

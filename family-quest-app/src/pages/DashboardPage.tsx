@@ -16,17 +16,18 @@ import { MyStatsModal } from '../components/MyStatsModal';
 import { WeeklyBreakdownModal } from '../components/WeeklyBreakdownModal';
 import { TycoonModal } from '../components/TycoonModal';
 import { CharacterShopModal } from '../components/CharacterShopModal';
+import { CharacterSprite } from '../components/CharacterSprite';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
 import { startOfThisWeek } from '../lib/formatDate';
 import { BADGE_EMOJI, levelForPoints } from '../lib/gamification';
-import { getEquippedTitleName } from '../lib/shop';
-import type { BadgeKey } from '../types/database';
+import { getEquippedItems, getShopItems, shopItemDisplayName } from '../lib/shop';
+import type { BadgeKey, CharacterSlot } from '../types/database';
 
 type Filter = 'open' | 'done' | 'all';
 
 export function DashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { family, members, avatarUrlByUserId } = useFamily();
@@ -43,26 +44,48 @@ export function DashboardPage() {
   const [showWeekly, setShowWeekly] = useState(false);
   const [showTycoon, setShowTycoon] = useState(false);
   const [showShop, setShowShop] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkCompleting, setBulkCompleting] = useState(false);
 
   // Equipped badge already lives on the family_members row (FamilyContext
-  // refreshes it after equip/unequip), but the equipped title is a separate
-  // shop_items lookup -- refetched below whenever MyStatsModal closes, since
-  // that's the only place titles get equipped/unequipped from.
+  // refreshes it after equip/unequip); the equipped title and cosmetic
+  // sprite come from shop_items/member_equipped_items instead -- refetched
+  // below whenever MyStatsModal (titles) or CharacterShopModal (cosmetics)
+  // closes, since those are the only places equips change.
   const [equippedTitleName, setEquippedTitleName] = useState<string | null>(null);
+  const [equippedSprite, setEquippedSprite] = useState<Partial<Record<CharacterSlot, string>>>({});
   const userId = user?.id;
   const familyId = family?.id;
-  useEffect(() => {
+
+  const loadEquipped = async () => {
     if (!userId || !familyId) {
       setEquippedTitleName(null);
+      setEquippedSprite({});
       return;
     }
-    void getEquippedTitleName(userId, familyId).then(setEquippedTitleName);
-  }, [userId, familyId]);
+    const [items, equipped] = await Promise.all([getShopItems(), getEquippedItems(userId, familyId)]);
+    const itemsById = new Map(items.map((i) => [i.id, i]));
+    const sprite: Partial<Record<CharacterSlot, string>> = {};
+    let titleName: string | null = null;
+    for (const e of equipped) {
+      const item = itemsById.get(e.item_id);
+      if (!item) continue;
+      if (e.slot === 'title') {
+        titleName = shopItemDisplayName(item, i18n.language);
+      } else if (item.sprite_key) {
+        sprite[e.slot] = item.sprite_key;
+      }
+    }
+    setEquippedTitleName(titleName);
+    setEquippedSprite(sprite);
+  };
+
+  useEffect(() => {
+    void loadEquipped();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, familyId, i18n.language]);
 
   const nameByUserId = useMemo(() => {
     const map = new Map<string, string>();
@@ -99,18 +122,6 @@ export function DashboardPage() {
     // its existing due-date order within each group.
     return [...result].sort((a, b) => Number(b.pinned) - Number(a.pinned));
   }, [tasks, filter, onlyMine, user, assigneesByTaskId, searchQuery]);
-
-  const handleCopyInviteCode = async () => {
-    if (!family) return;
-    try {
-      await navigator.clipboard.writeText(family.invite_code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Clipboard API can be unavailable (older iOS Safari without a user
-      // gesture context); the code is still visible on screen to copy by hand.
-    }
-  };
 
   const exitSelectMode = () => {
     setSelectMode(false);
@@ -155,90 +166,87 @@ export function DashboardPage() {
   return (
     <div className="screen dashboard-screen">
       <div className="topbar">
-        <div className="family-info">
-          <div className="family-title-row">
-            <FamilySwitcher />
-            <button
-              type="button"
-              className="btn btn-ghost btn-icon btn-sm"
-              onClick={() => setShowEditFamilyName(true)}
-              aria-label={t('family.editNameHeading')}
-            >
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-              </svg>
-            </button>
-          </div>
-          <div className="family-meta">
-            <span>{t('family.memberCount', { count: members.length })}</span>
-            <span>
-              <button type="button" className="family-meta-link" onClick={() => setShowWeekly(true)}>
-                {t('dashboard.weeklyCompleted', { count: weeklyCompletedCount })}
+        <div className="topbar-main">
+          <div className="family-info">
+            <div className="family-title-row">
+              <FamilySwitcher />
+              <button
+                type="button"
+                className="btn btn-ghost btn-icon btn-sm"
+                onClick={() => setShowEditFamilyName(true)}
+                aria-label={t('family.editNameHeading')}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
               </button>
-            </span>
-            {family && (
-              <button type="button" className="invite-code-chip" onClick={() => void handleCopyInviteCode()}>
-                {family.invite_code} {copied ? `(${t('common.copied')})` : ''}
+            </div>
+            <div className="family-meta">
+              <span>{t('family.memberCount', { count: members.length })}</span>
+              <span>
+                <button type="button" className="family-meta-link" onClick={() => setShowWeekly(true)}>
+                  {t('dashboard.weeklyCompleted', { count: weeklyCompletedCount })}
+                </button>
+              </span>
+              {family && (
+                <button
+                  type="button"
+                  className="invite-qr-trigger"
+                  onClick={() => setShowInviteQr(true)}
+                  aria-label={t('family.qrHeading')}
+                >
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="topbar-actions">
+            {me && (
+              <button type="button" className="btn btn-ghost btn-sm stats-chip" onClick={() => setShowStats(true)}>
+                {`Lv.${levelForPoints(me.xp)}`}
+                {me.current_streak > 0 ? ` 🔥${me.current_streak}` : ''}
               </button>
             )}
             {family && (
               <button
                 type="button"
-                className="invite-qr-trigger"
-                onClick={() => setShowInviteQr(true)}
-                aria-label={t('family.qrHeading')}
+                className="btn btn-ghost btn-icon btn-sm"
+                onClick={() => setShowTycoon(true)}
+                aria-label={t('tycoon.heading')}
               >
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="3" width="7" height="7" rx="1" />
-                  <rect x="3" y="14" width="7" height="7" rx="1" />
-                  <path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z" />
-                </svg>
+                <span aria-hidden="true">💰</span>
               </button>
             )}
+            <NotificationBell />
+            <button
+              type="button"
+              className="btn btn-ghost btn-icon btn-sm"
+              onClick={() => setShowSettings(true)}
+              aria-label={t('settings.heading')}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </button>
           </div>
         </div>
-        <div className="topbar-actions">
-          {me && (
-            <button type="button" className="btn btn-ghost btn-sm stats-chip" onClick={() => setShowStats(true)}>
-              {`Lv.${levelForPoints(me.xp)}`}
-              {me.current_streak > 0 ? ` 🔥${me.current_streak}` : ''}
-            </button>
-          )}
-          {family && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-icon btn-sm"
-              onClick={() => setShowTycoon(true)}
-              aria-label={t('tycoon.heading')}
-            >
-              <span aria-hidden="true">💰</span>
-            </button>
-          )}
-          {family && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-icon btn-sm"
-              onClick={() => setShowShop(true)}
-              aria-label={t('shop.openButton')}
-            >
-              <span aria-hidden="true">🛍️</span>
-            </button>
-          )}
-          <NotificationBell />
+        {family && (
           <button
             type="button"
-            className="btn btn-ghost btn-icon btn-sm"
-            onClick={() => setShowSettings(true)}
-            aria-label={t('settings.heading')}
+            className="topbar-character"
+            onClick={() => setShowShop(true)}
+            aria-label={t('shop.openButton')}
           >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
+            <CharacterSprite equipped={equippedSprite} size={64} />
           </button>
-        </div>
+        )}
       </div>
 
       {me && (equippedTitleName || me.equipped_badge_key) && (
@@ -399,13 +407,20 @@ export function DashboardPage() {
         <MyStatsModal
           onClose={() => {
             setShowStats(false);
-            if (userId && familyId) void getEquippedTitleName(userId, familyId).then(setEquippedTitleName);
+            void loadEquipped();
           }}
         />
       )}
       {showWeekly && <WeeklyBreakdownModal onClose={() => setShowWeekly(false)} />}
       {showTycoon && <TycoonModal onClose={() => setShowTycoon(false)} />}
-      {showShop && <CharacterShopModal onClose={() => setShowShop(false)} />}
+      {showShop && (
+        <CharacterShopModal
+          onClose={() => {
+            setShowShop(false);
+            void loadEquipped();
+          }}
+        />
+      )}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       {showInviteQr && family && (
         <InviteQrModal inviteCode={family.invite_code} onClose={() => setShowInviteQr(false)} />
