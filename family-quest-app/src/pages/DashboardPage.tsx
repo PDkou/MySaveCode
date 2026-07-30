@@ -166,7 +166,7 @@ export function DashboardPage() {
   return (
     <div className="screen dashboard-screen">
       <div className="dashboard-header">
-        <div className="topbar">
+        <div className="dashboard-topbar">
           <div className="family-info">
             <div className="family-title-row">
               <FamilySwitcher />
@@ -207,8 +207,8 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <div className="topbar-row">
-            <div className="topbar-actions">
+          <div className="dashboard-topbar-row">
+            <div className="dashboard-icon-grid">
               {me && (
                 <button type="button" className="btn btn-ghost btn-sm stats-chip" onClick={() => setShowStats(true)}>
                   {`Lv.${levelForPoints(me.xp)}`}
