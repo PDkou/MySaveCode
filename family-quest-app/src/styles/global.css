@@ -269,6 +269,7 @@ a {
 }
 
 .family-title-row {
+  grid-area: title;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -759,45 +760,27 @@ textarea {
   gap: 12px;
 }
 
-/* Dashboard-only: a column, not a row, because the family name/member-
-   count line needs the full width to itself (it wraps awkwardly if it
-   has to share a row with the character portrait) -- only the icon row
-   below it shares space with the portrait. */
+/* Grid, not nested flex boxes -- the user's own sketch places the
+   character portrait spanning the family-meta row and the icon row (so
+   its top lines up with the QR code button), while the title row and the
+   toolbar each run the full width above/below it. That shape needs
+   explicit placement, not a chain of flex wrappers guessing at it
+   (2026-07-30, 4th header-layout iteration). Named areas keep it
+   readable instead of counting grid line numbers. */
 .dashboard-topbar {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'title title'
+    'meta  char'
+    'icons char'
+    'tool  tool';
+  column-gap: 12px;
+  row-gap: 8px;
 }
 
-/* flex-start on both axes, not space-between/center: this row only has
-   two children (the side column and the character portrait), so
-   space-between pinned them to opposite edges and left a wide dead strip
-   of background between them -- still awkward even after the vertical
-   alignment fix (2026-07-30 follow-up feedback). flex-start lets the
-   character sit right next to the side column instead, with only the
-   explicit gap between them. Vertically, flex-start keeps the side
-   column's top flush with the portrait's top instead of floating in the
-   middle. Gap kept modest (not the earlier 20px) since the side column
-   now also has to fit the icon row + toolbar in the width left over next
-   to the portrait. */
-.dashboard-topbar-row {
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-/* Holds the icon row + "new quest" toolbar so both sit beside the
-   character portrait instead of the toolbar running full-width below the
-   header -- pulls the toolbar up into what would otherwise be dead space
-   beside the portrait's lower half (2026-07-30 feedback, sketched by the
-   user). */
-.dashboard-side-column {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-  flex: 1;
+.dashboard-icon-row {
+  grid-area: icons;
 }
 
 /* Sized with clamp() so it scales with the viewport instead of a fixed
@@ -805,11 +788,15 @@ textarea {
    target on small phones or ballooning past what a header portrait needs
    on large ones. Deliberately large enough to be the header's focal
    point, framed with a card background, instead of a small icon floating
-   in otherwise-empty space (2026-07-30 feedback). */
+   in otherwise-empty space (2026-07-30 feedback). Stretches to fill
+   whatever height the meta+icon rows it spans end up needing, rather
+   than a fixed height that could mismatch them. */
 .topbar-character {
+  grid-area: char;
   flex-shrink: 0;
   width: clamp(120px, 34vw, 160px);
-  height: clamp(120px, 34vw, 160px);
+  min-height: clamp(120px, 34vw, 160px);
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -988,23 +975,36 @@ textarea {
 
 /* ---------- Dashboard ---------- */
 
-.family-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
 .family-meta {
+  grid-area: meta;
   display: flex;
   gap: 10px;
   align-items: center;
   font-size: 13px;
   color: var(--muted);
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .family-meta > *:not(:last-child)::after {
+  content: '·';
+  margin-left: 10px;
+  color: var(--muted-light);
+}
+
+/* Groups "weekly completed" + the QR button so they wrap as one unit --
+   without this, a row that's just barely too narrow (this row now shares
+   its column with the character portrait) would wrap the flex container
+   between them, stranding the QR button alone on its own line
+   (2026-07-30, the same "orphaned icon" pattern fixed once already for
+   the header's icon row). */
+.family-meta-tail {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.family-meta-tail > *:not(:last-child)::after {
   content: '·';
   margin-left: 10px;
   color: var(--muted-light);
@@ -1323,15 +1323,38 @@ textarea {
   white-space: nowrap;
 }
 
+/* Single row (per user's sketch), not the old wrapping row -- this now
+   spans the full topbar width (grid-area: tool) instead of being
+   squeezed into the column beside the character portrait, but 5 controls
+   still don't fit on one line at the shared .btn padding -- tightened
+   padding here plus a shorter "퀘스트 전달"/"クエスト依頼" label (also
+   matching the shorter label in the user's sketch; dashboard.newTask
+   isn't used anywhere else) closes the gap. */
 .dashboard-toolbar {
+  grid-area: tool;
   display: flex;
-  gap: 10px;
+  gap: 6px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .dashboard-toolbar .btn-primary {
+  flex: 1.3;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.dashboard-toolbar .btn-ghost.btn-sm:not(.btn-icon) {
   flex: 1;
+  padding-left: 8px;
+  padding-right: 8px;
+  white-space: nowrap;
+}
+
+.dashboard-toolbar .btn-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
 }
 
 /* Search + filter tabs + "only mine" are one filtering unit -- grouped
