@@ -771,16 +771,53 @@ textarea {
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-areas:
-    'title title'
-    'meta  char'
-    'icons char'
-    'tool  tool';
+    'title  title'
+    'meta   char'
+    'xpgold char'
+    'icons  char'
+    'tool   tool';
   column-gap: 12px;
   row-gap: 8px;
 }
 
 .dashboard-icon-row {
   grid-area: icons;
+}
+
+/* Fills what used to be dead space next to the character portrait (the
+   grid gave that space to the portrait's height regardless) with an
+   actual XP bar + gold balance instead of leaving it blank (2026-07-30
+   feedback). Compact -- this column is only as wide as the character
+   portrait leaves it. */
+.dashboard-xp-gold {
+  grid-area: xpgold;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+}
+
+.dashboard-xp-bar-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.dashboard-xp-bar-fill {
+  height: 100%;
+  background: var(--amber);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.dashboard-xp-gold-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 /* Sized with clamp() so it scales with the viewport instead of a fixed
@@ -1296,12 +1333,14 @@ textarea {
   text-align: center;
 }
 
+/* align-self: stretch, not flex-start -- the user wanted this widened to
+   close to the full header width instead of hugging its own content
+   width (2026-07-30 feedback). */
 .dashboard-equipped-chip {
   display: flex;
   align-items: center;
   gap: 6px;
-  align-self: flex-start;
-  max-width: 100%;
+  align-self: stretch;
   padding: 5px 12px;
   border-radius: 999px;
   border: 1px solid var(--purple);
@@ -1334,11 +1373,16 @@ textarea {
    with the icon row right above it (same pill-button chrome), the two
    rows read as one dense, undifferentiated block of buttons without it
    (2026-07-30 UI pass). */
+/* flex-end, not center: .btn-primary is taller than its btn-sm/btn-icon
+   siblings (bigger base padding), so centering left its bottom edge
+   hanging lower than the rest of the row -- an uneven baseline the user
+   pointed out directly. Bottom-aligning fixes that without changing any
+   individual button's own size (2026-07-30 feedback). */
 .dashboard-toolbar {
   grid-area: tool;
   display: flex;
   gap: 6px;
-  align-items: center;
+  align-items: flex-end;
   flex-wrap: nowrap;
   margin-top: 4px;
 }

@@ -20,7 +20,7 @@ import { CharacterSprite } from '../components/CharacterSprite';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
 import { startOfThisWeek } from '../lib/formatDate';
-import { BADGE_EMOJI, levelForPoints } from '../lib/gamification';
+import { BADGE_EMOJI, levelForPoints, pointsIntoLevel, pointsNeededForLevel } from '../lib/gamification';
 import { getEquippedItems, getShopItems, shopItemDisplayName } from '../lib/shop';
 import type { BadgeKey, CharacterSlot } from '../types/database';
 
@@ -94,6 +94,13 @@ export function DashboardPage() {
   }, [members]);
 
   const me = useMemo(() => members.find((m) => m.user_id === user?.id) ?? null, [members, user]);
+
+  // Feeds the header's XP bar + gold display -- same pointsIntoLevel/
+  // pointsNeededForLevel math MyStatsModal's level card already uses, just
+  // rendered compactly enough to fit the header's icon/XP column.
+  const xpIntoLevel = me ? pointsIntoLevel(me.xp) : 0;
+  const xpNeededForLevel = me ? pointsNeededForLevel(me.xp) : 1;
+  const xpProgressPct = Math.round((xpIntoLevel / xpNeededForLevel) * 100);
 
   const weeklyCompletedCount = useMemo(() => {
     const weekStart = startOfThisWeek();
@@ -207,6 +214,20 @@ export function DashboardPage() {
               )}
             </div>
           </div>
+
+          {me && (
+            <div className="dashboard-xp-gold">
+              <div className="dashboard-xp-bar-track">
+                <div className="dashboard-xp-bar-fill" style={{ width: `${xpProgressPct}%` }} />
+              </div>
+              <div className="dashboard-xp-gold-row">
+                <span>{t('stats.pointsToNext', { current: xpIntoLevel, total: xpNeededForLevel })}</span>
+                <span aria-label={t('shop.balance', { balance: me.points })}>
+                  <span aria-hidden="true">💰</span> {me.points}
+                </span>
+              </div>
+            </div>
+          )}
 
           {family && (
             <button
