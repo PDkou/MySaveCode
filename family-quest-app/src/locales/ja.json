@@ -112,7 +112,7 @@
     }
   },
   "dashboard": {
-    "newTask": "新しく依頼する",
+    "newTask": "クエスト依頼",
     "filterOpen": "進行中",
     "filterDone": "完了",
     "filterAll": "すべて",

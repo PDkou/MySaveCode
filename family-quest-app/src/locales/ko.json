@@ -112,7 +112,7 @@
     }
   },
   "dashboard": {
-    "newTask": "새 퀘스트 전달하기",
+    "newTask": "퀘스트 전달",
     "filterOpen": "진행 중",
     "filterDone": "완료",
     "filterAll": "전체",
