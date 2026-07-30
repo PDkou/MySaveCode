@@ -769,10 +769,15 @@ textarea {
   gap: 10px;
 }
 
+/* flex-start, not center: the icon grid is much shorter than the
+   character portrait, and centering it left a floating gap above it that
+   disconnected it from the family-info row right above (2026-07-30
+   feedback -- circled as "awkward"). Aligning both to the top makes the
+   icon grid read as a direct continuation of the header instead. */
 .dashboard-topbar-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
 }
 
