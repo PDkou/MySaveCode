@@ -272,6 +272,7 @@
     "newComment": "{{name}}さんがコメントを残しました。",
     "pushLabel": "端末通知を受け取る",
     "pushDenied": "ブラウザの通知許可がオフになっています",
+    "eventPrefsToggle": "通知の詳細設定",
     "eventPrefs": {
       "due": "期限間近の通知",
       "created": "新しいクエスト割り当ての通知",
