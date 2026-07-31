@@ -323,18 +323,22 @@ export function DashboardPage() {
 
         {me && (equippedTitle || me.equipped_badge_key) && (
           <button type="button" className="dashboard-equipped-chip" onClick={() => setShowStats(true)}>
-            {me.equipped_badge_key && (
-              <img
-                className="dashboard-equipped-emoji"
-                src={BADGE_ICON_SRC[me.equipped_badge_key as BadgeKey]}
-                alt=""
-                aria-hidden="true"
-              />
-            )}
-            {equippedTitle && (
-              <TitleFrame tier={equippedTitle.tier}>
+            {equippedTitle ? (
+              <TitleFrame
+                tier={equippedTitle.tier}
+                badgeSrc={me.equipped_badge_key ? BADGE_ICON_SRC[me.equipped_badge_key as BadgeKey] : undefined}
+              >
                 <span className="dashboard-equipped-title">{equippedTitle.name}</span>
               </TitleFrame>
+            ) : (
+              me.equipped_badge_key && (
+                <img
+                  className="dashboard-equipped-emoji"
+                  src={BADGE_ICON_SRC[me.equipped_badge_key as BadgeKey]}
+                  alt=""
+                  aria-hidden="true"
+                />
+              )
             )}
           </button>
         )}

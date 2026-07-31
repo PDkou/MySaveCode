@@ -141,16 +141,26 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
           <CharacterSprite equipped={spritePreview} size={96} />
           <div className="shop-preview-info">
             <span className="shop-balance">{t('shop.balance', { balance: myBalance })}</span>
-            {/* Title and badge are deliberately separate visual slots -- a
-                framed nameplate for the title text vs. a round icon chip for
-                the badge -- rather than being merged into one label, since
-                they're independently equipped from different galleries. */}
+            {/* Badge and title are independently equipped from different
+                galleries, but when both are set they render as one
+                nameplate -- the badge sits inside the title's frame rather
+                than as a second disconnected chip (2026-08-01 feedback).
+                A badge with no title equipped still gets its own round
+                icon slot below. */}
             <div className="shop-equipped-badges">
-              {equippedTitleName && <TitleFrame tier={equippedTitleItem?.tier ?? null}>{equippedTitleName}</TitleFrame>}
-              {equippedBadgeKey && (
-                <span className="shop-equipped-badge-slot" title={t(`badges.${equippedBadgeKey}.name`)}>
-                  <img src={BADGE_ICON_SRC[equippedBadgeKey]} alt={t(`badges.${equippedBadgeKey}.name`)} />
-                </span>
+              {equippedTitleName ? (
+                <TitleFrame
+                  tier={equippedTitleItem?.tier ?? null}
+                  badgeSrc={equippedBadgeKey ? BADGE_ICON_SRC[equippedBadgeKey] : undefined}
+                >
+                  {equippedTitleName}
+                </TitleFrame>
+              ) : (
+                equippedBadgeKey && (
+                  <span className="shop-equipped-badge-slot" title={t(`badges.${equippedBadgeKey}.name`)}>
+                    <img src={BADGE_ICON_SRC[equippedBadgeKey]} alt={t(`badges.${equippedBadgeKey}.name`)} />
+                  </span>
+                )
               )}
             </div>
           </div>

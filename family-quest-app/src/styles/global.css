@@ -3113,6 +3113,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   white-space: nowrap;
   padding: 4px 16px;
   border-style: solid;
@@ -3120,6 +3121,17 @@ textarea {
   color: var(--navy);
   font-size: 12px;
   font-weight: 700;
+}
+
+/* Badge medal shown inside the frame (2026-08-01 feedback) -- sized to the
+   frame's own border thickness above, not the tiny standalone badge-slot
+   size, so it reads as part of the same nameplate instead of a mismatched
+   icon stuck in front of it. */
+.title-frame-badge {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .title-frame-bronze { border-image: url('/titles/bronze.png') 90 fill / 16px / 0 stretch; }
