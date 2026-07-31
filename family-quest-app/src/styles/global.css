@@ -884,22 +884,11 @@ textarea {
 
 /* Room name trigger specifically (not FamilySetupPage's plain app-name
    heading, which also uses .app-title but sits outside .family-title-row)
-   -- pulled out as its own pill so it doesn't get lost next to the member
-   count / QR text at the same visual weight. */
+   -- bolded and colored so it doesn't get lost next to the member count /
+   QR text at the same visual weight. */
 .family-title-row .app-title {
   font-weight: 800;
   color: var(--purple);
-  background: color-mix(in srgb, var(--purple) 12%, transparent);
-  border: 1px solid var(--purple);
-  border-radius: 999px;
-  padding: 4px 14px;
-}
-
-@media (hover: hover) {
-  .family-title-row .app-title-button:hover {
-    text-decoration: none;
-    background: color-mix(in srgb, var(--purple) 20%, transparent);
-  }
 }
 
 /* Shared page-chrome actions row (see .topbar above) -- CalendarPage's
