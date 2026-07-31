@@ -123,6 +123,12 @@ create table if not exists public.family_members (
   -- live balance that goes back up), this only ever grows, for the "손이
   -- 큰 소비자" style titles.
   lifetime_points_spent integer not null default 0,
+  -- Whether this membership has received the one-time starter point grant
+  -- (see create_family_room/join_family_room below) -- a persistent flag
+  -- rather than a "points = 0" check so it stays correct even for a member
+  -- who legitimately spends back down to 0 later, and so re-running this
+  -- schema against an already-migrated database never re-grants.
+  starter_grant_received boolean not null default false,
   joined_at timestamptz not null default now(),
   constraint family_members_role_check check (role in ('owner', 'member')),
   constraint family_members_family_user_unique unique (family_id, user_id),
@@ -170,6 +176,15 @@ alter table public.family_members add column if not exists current_streak intege
 alter table public.family_members add column if not exists longest_streak integer not null default 0;
 alter table public.family_members add column if not exists last_completed_date date;
 alter table public.family_members add column if not exists completed_count integer not null default 0;
+
+-- Upgrades an already-deployed database from before the starter point
+-- grant existed (see create_family_room/join_family_room below). One-time
+-- backfill for every membership that predates this column -- new rows
+-- created after this point already get starter_grant_received = true at
+-- insert time, so this UPDATE only ever matches the pre-existing backlog,
+-- never re-grants on a schema re-run.
+alter table public.family_members add column if not exists starter_grant_received boolean not null default false;
+update public.family_members set points = points + 20, starter_grant_received = true where starter_grant_received = false;
 
 create index if not exists family_members_family_id_idx on public.family_members (family_id);
 create index if not exists family_members_user_id_idx on public.family_members (user_id);
@@ -621,8 +636,14 @@ begin
 
   select display_name into v_display_name from public.profiles where id = v_uid;
 
-  insert into public.family_members (family_id, user_id, role, display_name)
-  values (v_family.id, v_uid, 'owner', v_display_name);
+  -- Starter grant (2026-07-31): a brand-new shared room otherwise has every
+  -- member sitting at 0 points, and create_task blocks any shared-room
+  -- quest under a 5-point stake (Phase 14) -- with nobody able to afford
+  -- even the minimum, the very first quest could never be created. 20
+  -- points covers a couple of minimum-stake quests to get the room's
+  -- economy moving.
+  insert into public.family_members (family_id, user_id, role, display_name, points, starter_grant_received)
+  values (v_family.id, v_uid, 'owner', v_display_name, 20, true);
 
   perform public.grant_title(v_family.id, v_uid, 'newcomer');
 
@@ -677,8 +698,9 @@ begin
 
   select display_name into v_display_name from public.profiles where id = v_uid;
 
-  insert into public.family_members (family_id, user_id, role, display_name)
-  values (v_family.id, v_uid, 'member', v_display_name);
+  -- Same starter grant as create_family_room -- see the comment there.
+  insert into public.family_members (family_id, user_id, role, display_name, points, starter_grant_received)
+  values (v_family.id, v_uid, 'member', v_display_name, 20, true);
 
   perform public.grant_title(v_family.id, v_uid, 'newcomer');
 
