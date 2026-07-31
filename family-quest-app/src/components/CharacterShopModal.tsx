@@ -161,8 +161,9 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
                 </TitleFrame>
               ) : (
                 equippedBadgeKey && (
-                  <span className="shop-equipped-badge-slot" title={t(`badges.${equippedBadgeKey}.name`)}>
-                    <img src={BADGE_ICON_SRC[equippedBadgeKey]} alt={t(`badges.${equippedBadgeKey}.name`)} />
+                  <span className="badge-chip">
+                    <img className="badge-chip-icon" src={BADGE_ICON_SRC[equippedBadgeKey]} alt="" aria-hidden="true" />
+                    {t(`badges.${equippedBadgeKey}.name`)}
                   </span>
                 )
               )}

@@ -1509,10 +1509,8 @@ textarea {
   flex: 1;
 }
 
-.dashboard-equipped-emoji {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
+.dashboard-equipped-chip .badge-chip {
+  flex: 1;
 }
 
 .dashboard-equipped-title {
@@ -3381,18 +3379,28 @@ textarea {
   padding: 3px 10px;
 }
 
-.shop-equipped-badge-slot {
+/* "Badge equipped, no title" nameplate (2026-08-01 feedback: felt bare/
+   empty as a lone unlabeled icon -- a bare 16px img in DashboardPage's
+   chip, a nameless icon-only circle here). Same nameplate idea as
+   .title-frame-fallback (icon + name in a pill) but in the amber accent
+   instead of purple, so a badge-only chip still reads as visually
+   distinct from a title-only one at a glance. */
+.badge-chip {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--bg);
-  border: 1px solid var(--border);
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+  border: 1px solid var(--amber);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-.shop-equipped-badge-slot img {
+.badge-chip-icon {
+  flex-shrink: 0;
   width: 18px;
   height: 18px;
   object-fit: contain;
