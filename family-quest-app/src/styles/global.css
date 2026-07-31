@@ -1320,10 +1320,41 @@ textarea {
   transform: translateX(16px);
 }
 
+/* Wraps the toggle + its expanded content -- see NotificationBell.tsx's
+   2026-08-01 comment: moved below the notification list and collapsed by
+   default so 7 rarely-touched preference rows don't push the actual
+   notifications (the reason the panel was opened) below the fold. */
+.notification-event-prefs-section {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.notification-event-prefs-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 6px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.notification-event-prefs-toggle svg {
+  transition: transform 0.15s ease;
+}
+
+.notification-event-prefs-chevron-open {
+  transform: rotate(180deg);
+}
+
 .notification-event-prefs {
-  padding: 0 6px 10px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid var(--border);
+  padding: 4px 6px 0;
   display: flex;
   flex-direction: column;
 }

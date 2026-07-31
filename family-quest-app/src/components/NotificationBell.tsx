@@ -30,6 +30,7 @@ export function NotificationBell() {
   const [pushState, setPushState] = useState<PushState>('unsupported');
   const [pushBusy, setPushBusy] = useState(false);
   const [eventPrefs, setEventPrefs] = useState<Record<NotificationEventType, boolean> | null>(null);
+  const [showEventPrefs, setShowEventPrefs] = useState(false);
 
   useEffect(() => {
     if (!isPushSupported()) return;
@@ -161,25 +162,6 @@ export function NotificationBell() {
               </div>
             )}
 
-            {pushState === 'subscribed' && eventPrefs && (
-              <div className="notification-event-prefs">
-                {EVENT_TYPES.map((eventType) => (
-                  <div key={eventType} className="notification-push-row notification-event-pref-row">
-                    <span>{t(`notifications.eventPrefs.${eventType}`)}</span>
-                    <button
-                      type="button"
-                      className={`push-switch push-switch-small ${eventPrefs[eventType] ? 'push-switch-on' : ''}`}
-                      role="switch"
-                      aria-checked={eventPrefs[eventType]}
-                      onClick={() => void handleEventPrefToggle(eventType)}
-                    >
-                      <span className="push-switch-knob" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
             {notifications.length === 0 ? (
               <p className="empty-message">{t('notifications.empty')}</p>
             ) : (
@@ -206,6 +188,56 @@ export function NotificationBell() {
                   </li>
                 ))}
               </ul>
+            )}
+
+            {/* Collapsed by default (2026-08-01 audit): with push subscribed,
+                these 7 rows used to render above the notification list --
+                on a real family's notification volume that pushed the list
+                (the actual reason to open this panel) almost entirely below
+                the fold. Rarely-touched settings belong behind a disclosure,
+                not ahead of the content someone opened the bell to see. */}
+            {pushState === 'subscribed' && eventPrefs && (
+              <div className="notification-event-prefs-section">
+                <button
+                  type="button"
+                  className="notification-event-prefs-toggle"
+                  aria-expanded={showEventPrefs}
+                  onClick={() => setShowEventPrefs((prev) => !prev)}
+                >
+                  {t('notifications.eventPrefsToggle')}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={showEventPrefs ? 'notification-event-prefs-chevron-open' : undefined}
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+                {showEventPrefs && (
+                  <div className="notification-event-prefs">
+                    {EVENT_TYPES.map((eventType) => (
+                      <div key={eventType} className="notification-push-row notification-event-pref-row">
+                        <span>{t(`notifications.eventPrefs.${eventType}`)}</span>
+                        <button
+                          type="button"
+                          className={`push-switch push-switch-small ${eventPrefs[eventType] ? 'push-switch-on' : ''}`}
+                          role="switch"
+                          aria-checked={eventPrefs[eventType]}
+                          onClick={() => void handleEventPrefToggle(eventType)}
+                        >
+                          <span className="push-switch-knob" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </>
