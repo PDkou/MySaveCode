@@ -258,7 +258,7 @@ Subject: A circular medal badge icon with a silver rim, a small pixel owl face i
 Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
 
-### 칭호 티어 프레임 (76종 텍스트 칭호를 감싸는 3단 프레임)
+### 칭호 티어 프레임 (76종 텍스트 칭호를 감싸는 6단 프레임)
 
 **8. 브론즈 프레임**
 
@@ -280,7 +280,7 @@ Transparent PNG background unless the asset IS a background/backdrop piece. Ever
 a set must share identical outline weight, shading logic, and proportions so the full set
 reads as one unified sprite sheet.
 
-Subject: A small rectangular pill-shaped chip border asset, bronze-tone pixel border with subtle corner rivet details, transparent/empty center so a text label can sit inside it.
+Subject: A small rectangular pill-shaped chip border asset, bronze-tone pixel border with subtle corner rivet details, transparent/empty center so a text label can sit inside it. Lowest tier of a 6-tier frame set (bronze / silver / gold / platinum / diamond / master), plainest and least decorated of the six.
 
 Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
@@ -305,7 +305,7 @@ Transparent PNG background unless the asset IS a background/backdrop piece. Ever
 a set must share identical outline weight, shading logic, and proportions so the full set
 reads as one unified sprite sheet.
 
-Subject: A small rectangular pill-shaped chip border asset, silver-tone pixel border with subtle corner rivet details, transparent/empty center so a text label can sit inside it.
+Subject: A small rectangular pill-shaped chip border asset, silver-tone pixel border with subtle corner rivet details, transparent/empty center so a text label can sit inside it. Second tier of a 6-tier frame set (bronze / silver / gold / platinum / diamond / master), same shape as the bronze frame, slightly brighter metal tone.
 
 Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
@@ -330,14 +330,89 @@ Transparent PNG background unless the asset IS a background/backdrop piece. Ever
 a set must share identical outline weight, shading logic, and proportions so the full set
 reads as one unified sprite sheet.
 
-Subject: A small rectangular pill-shaped chip border asset, gold-tone pixel border with subtle corner rivet details and slightly more ornate corner detail than the silver version, transparent/empty center so a text label can sit inside it.
+Subject: A small rectangular pill-shaped chip border asset, gold-tone pixel border with slightly more ornate corner detail than a silver frame, transparent/empty center so a text label can sit inside it. Third tier of a 6-tier frame set (bronze / silver / gold / platinum / diamond / master).
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+**11. 플래티넘 프레임**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A small rectangular pill-shaped chip border asset, cool platinum/silver-white tone pixel border with a subtle brushed-metal texture and slightly more angular corner accents than a gold frame, transparent/empty center so a text label can sit inside it. Fourth tier of a 6-tier frame set (bronze / silver / gold / platinum / diamond / master), visibly cooler and shinier than gold.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+**12. 다이아 프레임**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A small rectangular pill-shaped chip border asset, icy diamond blue-and-white pixel border with small sparkling facet highlights scattered along the edge, more ornate than a platinum frame, transparent/empty center so a text label can sit inside it. Fifth tier of a 6-tier frame set (bronze / silver / gold / platinum / diamond / master).
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+**13. 마스터 프레임**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A small rectangular pill-shaped chip border asset, deep royal purple-and-gold pixel border with an ornate filigree pattern and a small central gem accent, transparent/empty center so a text label can sit inside it. Highest and most elaborate tier of a 6-tier frame set (bronze / silver / gold / platinum / diamond / master) -- clearly the most eye-catching and premium-looking of the six, more decorated than the diamond frame.
 
 Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
 
 ### 화폐 아이콘 2종
 
-**11. 골드(포인트) -- 현재 placeholder: `💰`**
+**14. 골드(포인트) -- 현재 placeholder: `💰`**
 
 ```
 16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
@@ -362,7 +437,7 @@ Subject: A small pixel gold coin icon with a single glossy highlight pixel-block
 Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
 
-**12. 경험치(XP) -- 현재 placeholder: `없음`**
+**15. 경험치(XP) -- 현재 placeholder: `없음`**
 
 ```
 16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
