@@ -248,11 +248,14 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
                         </span>
                         <span className="shop-item-name">{item.name}</span>
                         {owned ? (
-                          <span className="shop-item-locked">{t('shop.owned')}</span>
+                          <span className="shop-item-locked">
+                            <img className="shop-item-locked-icon" src="/shop/owned-check.png" alt="" aria-hidden="true" />
+                            {t('shop.owned')}
+                          </span>
                         ) : (
                           <button
                             type="button"
-                            className="btn btn-primary btn-sm"
+                            className="shop-action-btn shop-action-btn-buy"
                             disabled={itemBusy || !affordable}
                             onClick={() => void handlePurchase(item)}
                           >
