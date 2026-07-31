@@ -2624,6 +2624,16 @@ textarea {
   object-fit: contain;
 }
 
+/* Same reasoning as .dashboard-equipped-chip .title-frame above -- without
+   this, the title chip sits at its own shrink-to-content width and the
+   equip/unequip button trails right after it instead of at the row's
+   right edge, unlike the badge rows where .gallery-row-text's flex: 1
+   already pushes the button flush right. Stretching the frame here makes
+   every gallery row's button land in the same place. */
+.gallery-row .title-frame {
+  flex: 1;
+}
+
 .gallery-row-text {
   flex: 1;
   display: flex;
