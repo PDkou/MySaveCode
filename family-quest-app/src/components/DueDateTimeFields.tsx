@@ -1,7 +1,5 @@
 import { useTranslation } from 'react-i18next';
 
-import { TimePickerField } from './TimePickerField';
-
 interface DueDateTimeFieldsProps {
   value: string; // '' or 'yyyy-MM-ddTHH:mm' (same shape toDateTimeLocalValue produces)
   onChange: (value: string) => void;
@@ -37,7 +35,7 @@ export function DueDateTimeFields({ value, onChange }: DueDateTimeFieldsProps) {
   return (
     <div className="due-datetime-fields">
       <input type="date" lang={lang} value={datePart} onChange={(e) => handleDateChange(e.target.value)} />
-      <TimePickerField value={timePart || '09:00'} onChange={handleTimeChange} />
+      <input type="time" lang={lang} value={timePart || '09:00'} onChange={(e) => handleTimeChange(e.target.value)} />
     </div>
   );
 }
