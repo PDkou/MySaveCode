@@ -3336,13 +3336,16 @@ textarea {
    width below, so the same slice works at every size we use this at.
    `color: var(--navy)` rather than a fixed color -- --navy is this app's
    existing adaptive dark-on-light/light-on-dark text color.
-   `background: var(--card)` (2026-08-01 feedback: the frame's interior is
-   transparent in the source art, so it looked "empty"/unfinished sitting
+   Base `background: var(--card)` (2026-08-01 feedback: the frame's interior
+   is transparent in the source art, so it looked "empty"/unfinished sitting
    directly on whatever surface it was placed on) -- --card rather than a
-   fixed fill since the six tier images span very different palettes
-   (gold's warm tones vs. diamond's cool blues etc.), so a single accent
-   color would clash with at least some of them; the app's own light/dark
-   card surface color reads as "filled" against any of them. */
+   fixed fill keeps the frame legible against any surface, and pairs with
+   --navy text for guaranteed contrast in both themes. Each
+   .title-frame-<tier> rule below then tints this base toward that tier's
+   own material color (a flat --card fill still read as "generic"/unfinished
+   once contrast was fixed -- 2026-08-01 follow-up feedback) -- kept as a
+   light tint mixed *into* --card, not a replacement, so the --navy/--card
+   contrast pairing this relies on isn't broken by the tint. */
 .title-frame {
   display: inline-flex;
   align-items: center;
@@ -3370,12 +3373,46 @@ textarea {
   object-fit: contain;
 }
 
-.title-frame-bronze { border-image: url('/titles/bronze.png') 90 fill / 8px / 0 stretch; }
-.title-frame-silver { border-image: url('/titles/silver.png') 90 fill / 8px / 0 stretch; }
-.title-frame-gold { border-image: url('/titles/gold.png') 90 fill / 8px / 0 stretch; }
-.title-frame-platinum { border-image: url('/titles/platinum.png') 90 fill / 8px / 0 stretch; }
-.title-frame-diamond { border-image: url('/titles/diamond.png') 90 fill / 8px / 0 stretch; }
-.title-frame-master { border-image: url('/titles/master.png') 90 fill / 8px / 0 stretch; }
+/* Per-tier fill tint (2026-08-01 follow-up feedback: a flat --card fill
+   fixed the "empty" frame but still read as generic/unfinished, since all
+   six tiers looked identical inside) -- each tier's tint color echoes its
+   border-image material from design/gamification-iconography.md (bronze
+   wood-tone, bright silver, warm gold, cool brushed platinum, icy diamond
+   sparkle, glossy obsidian+ember master). Mixed *into* var(--card) rather
+   than used as a flat fill so the --navy text color (tuned for contrast
+   against --card in both themes) stays legible -- a fixed tier color
+   wouldn't adapt between light/dark mode the way --card does. */
+.title-frame-bronze {
+  border-image: url('/titles/bronze.png') 90 fill / 8px / 0 stretch;
+  background: linear-gradient(160deg, color-mix(in srgb, #b5722a 24%, var(--card)), var(--card));
+}
+.title-frame-silver {
+  border-image: url('/titles/silver.png') 90 fill / 8px / 0 stretch;
+  background: linear-gradient(160deg, color-mix(in srgb, #9aa7b5 26%, var(--card)), var(--card));
+}
+.title-frame-gold {
+  border-image: url('/titles/gold.png') 90 fill / 8px / 0 stretch;
+  background: linear-gradient(160deg, color-mix(in srgb, #d4af37 28%, var(--card)), var(--card));
+}
+.title-frame-platinum {
+  border-image: url('/titles/platinum.png') 90 fill / 8px / 0 stretch;
+  background: linear-gradient(160deg, color-mix(in srgb, #8fb4d6 28%, var(--card)), var(--card));
+}
+.title-frame-diamond {
+  border-image: url('/titles/diamond.png') 90 fill / 8px / 0 stretch;
+  background: linear-gradient(160deg, color-mix(in srgb, #5cc8f0 30%, var(--card)), color-mix(in srgb, #bfe9fb 16%, var(--card)));
+}
+/* Master is the one deliberately theme-fixed exception: the source art is
+   "glossy obsidian-black with glowing ember cracks" (gamification-
+   iconography.md) regardless of light/dark mode -- mixing that into a
+   bright light-mode --card would wash out the obsidian identity, so this
+   tier keeps a constant dark plate + light text instead of following the
+   --navy/--card pairing the other five tiers use. */
+.title-frame-master {
+  border-image: url('/titles/master.png') 90 fill / 8px / 0 stretch;
+  background: radial-gradient(circle at 25% 20%, rgba(255, 138, 61, 0.35), transparent 55%), #16151c;
+  color: #f2e8da;
+}
 
 /* Only used if a title's tier is somehow null -- the old plain-pill look. */
 .title-frame-fallback {
