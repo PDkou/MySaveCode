@@ -3334,9 +3334,15 @@ textarea {
    stretch` slices 90px in from each edge of the (all six are ~640px wide)
    source images; that slice amount is independent of the rendered border
    width below, so the same slice works at every size we use this at.
-   `color: var(--navy)` rather than a fixed color -- the frame's interior is
-   transparent (shows whatever surface it sits on through), and --navy is
-   this app's existing adaptive dark-on-light/light-on-dark text color. */
+   `color: var(--navy)` rather than a fixed color -- --navy is this app's
+   existing adaptive dark-on-light/light-on-dark text color.
+   `background: var(--card)` (2026-08-01 feedback: the frame's interior is
+   transparent in the source art, so it looked "empty"/unfinished sitting
+   directly on whatever surface it was placed on) -- --card rather than a
+   fixed fill since the six tier images span very different palettes
+   (gold's warm tones vs. diamond's cool blues etc.), so a single accent
+   color would clash with at least some of them; the app's own light/dark
+   card surface color reads as "filled" against any of them. */
 .title-frame {
   display: inline-flex;
   align-items: center;
@@ -3346,6 +3352,7 @@ textarea {
   padding: 4px 20px;
   border-style: solid;
   border-width: 8px;
+  background: var(--card);
   color: var(--navy);
   font-size: 13px;
   font-weight: 700;
