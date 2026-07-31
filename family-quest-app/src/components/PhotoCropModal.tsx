@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ModalHeader } from './ModalHeader';
+
 interface PhotoCropModalProps {
   file: File;
   onCancel: () => void;
@@ -112,7 +114,7 @@ export function PhotoCropModal({ file, onCancel, onConfirm }: PhotoCropModalProp
   return (
     <div className="modal-backdrop" onClick={onCancel}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('profile.cropHeading')}</h2>
+        <ModalHeader title={t('profile.cropHeading')} onClose={onCancel} />
         <p className="profile-crop-hint">{t('profile.cropHint')}</p>
 
         <div

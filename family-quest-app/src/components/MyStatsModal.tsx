@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { TitleFrame } from './TitleFrame';
+import { ModalHeader } from './ModalHeader';
 import { supabase } from '../lib/supabaseClient';
 import {
   ALL_BADGE_KEYS,
@@ -158,7 +159,7 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('stats.heading')}</h2>
+        <ModalHeader title={t('stats.heading')} onClose={onClose} />
 
         <div className="stats-level-card">
           <span className="stats-level-badge">Lv.{level}</span>

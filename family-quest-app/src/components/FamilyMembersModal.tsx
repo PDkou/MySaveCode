@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { FamilyActionError, useFamily } from '../context/FamilyContext';
 import { AvatarChip } from './AvatarChip';
 import { ConfirmModal } from './ConfirmModal';
+import { ModalHeader } from './ModalHeader';
 
 interface FamilyMembersModalProps {
   onClose: () => void;
@@ -72,7 +73,7 @@ export function FamilyMembersModal({ onClose }: FamilyMembersModalProps) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('family.membersHeading')}</h2>
+        <ModalHeader title={t('family.membersHeading')} onClose={onClose} />
 
         <ul className="family-member-list">
           {members.map((member) => (

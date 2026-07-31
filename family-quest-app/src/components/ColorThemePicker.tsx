@@ -9,6 +9,7 @@ import {
   getInitialColorTheme,
 } from '../lib/colorTheme';
 import type { ColorTheme } from '../lib/colorTheme';
+import { ModalHeader } from './ModalHeader';
 
 export function ColorThemePicker() {
   const { t } = useTranslation();
@@ -49,7 +50,7 @@ export function ColorThemePicker() {
       {open && (
         <div className="modal-backdrop" onClick={() => setOpen(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{t('colorTheme.heading')}</h2>
+            <ModalHeader title={t('colorTheme.heading')} onClose={() => setOpen(false)} />
             <div className="color-theme-grid">
               {COLOR_THEME_KEYS.map((key) => (
                 <button

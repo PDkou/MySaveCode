@@ -14,6 +14,7 @@ import { RecurrenceSelect } from './RecurrenceSelect';
 import { DueDateTimeFields } from './DueDateTimeFields';
 import { TaskTemplatePicker } from './TaskTemplatePicker';
 import { WeekdayCheckboxes } from './WeekdayCheckboxes';
+import { ModalHeader } from './ModalHeader';
 
 interface NewTaskModalProps {
   members: FamilyMember[];
@@ -96,7 +97,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('taskForm.heading')}</h2>
+        <ModalHeader title={t('taskForm.heading')} onClose={onClose} />
         <form onSubmit={handleSubmit} className="form">
           {family && (
             <TaskTemplatePicker

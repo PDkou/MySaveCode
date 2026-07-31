@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ModalHeader } from './ModalHeader';
+
 interface EditNameModalProps {
   currentName: string;
   onSave: (name: string) => Promise<void>;
@@ -35,7 +37,7 @@ export function EditNameModal({ currentName, onSave, onClose }: EditNameModalPro
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('profile.editNameHeading')}</h2>
+        <ModalHeader title={t('profile.editNameHeading')} onClose={onClose} />
         <form onSubmit={handleSubmit} className="form">
           <label className="field">
             <span>{t('auth.displayName')}</span>

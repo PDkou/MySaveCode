@@ -12,6 +12,7 @@ import { EditNameModal } from './EditNameModal';
 import { FamilyMembersModal } from './FamilyMembersModal';
 import { PhotoCropModal } from './PhotoCropModal';
 import { OnboardingScreen } from './OnboardingScreen';
+import { ModalHeader } from './ModalHeader';
 import { AvatarChip } from './AvatarChip';
 import { AvatarPhotoError } from '../lib/avatarPhotos';
 
@@ -114,7 +115,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   return (
     <div className={`modal-backdrop ${childModalOpen ? 'modal-backdrop-hidden' : ''}`} onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('settings.heading')}</h2>
+        <ModalHeader title={t('settings.heading')} onClose={onClose} />
 
         <div className="settings-section">
           <p className="settings-section-title">{t('settings.appearance')}</p>
