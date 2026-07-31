@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useFamily, FamilyActionError } from '../context/FamilyContext';
+import { ModalHeader } from './ModalHeader';
 
 interface EditFamilyNameModalProps {
   currentName: string;
@@ -34,7 +35,7 @@ export function EditFamilyNameModal({ currentName, onClose }: EditFamilyNameModa
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('family.editNameHeading')}</h2>
+        <ModalHeader title={t('family.editNameHeading')} onClose={onClose} />
         <form onSubmit={handleSubmit} className="form">
           <label className="field">
             <span>{t('family.createNameLabel')}</span>

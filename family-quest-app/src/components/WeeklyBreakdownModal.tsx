@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
 import { useTasks } from '../context/TasksContext';
 import { AvatarChip } from './AvatarChip';
+import { ModalHeader } from './ModalHeader';
 import { startOfThisWeek } from '../lib/formatDate';
 import { questCountsTowardRanking } from '../lib/questRules';
 
@@ -88,7 +89,7 @@ export function WeeklyBreakdownModal({ onClose }: WeeklyBreakdownModalProps) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('weeklyBreakdown.heading')}</h2>
+        <ModalHeader title={t('weeklyBreakdown.heading')} onClose={onClose} />
 
         {total === 0 ? (
           <p className="empty-message">{t('weeklyBreakdown.empty')}</p>

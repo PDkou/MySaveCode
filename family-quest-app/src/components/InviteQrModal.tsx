@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import QRCode from 'qrcode';
 
+import { ModalHeader } from './ModalHeader';
+
 interface InviteQrModalProps {
   inviteCode: string;
   onClose: () => void;
@@ -28,7 +30,7 @@ export function InviteQrModal({ inviteCode, onClose }: InviteQrModalProps) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('family.qrHeading')}</h2>
+        <ModalHeader title={t('family.qrHeading')} onClose={onClose} />
         <div className="invite-qr-wrap">
           {dataUrl && <img src={dataUrl} alt={inviteCode} className="invite-qr-image" />}
           <p className="invite-qr-code">{inviteCode}</p>

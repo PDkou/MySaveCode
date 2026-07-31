@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { CharacterSprite } from './CharacterSprite';
 import { TitleFrame } from './TitleFrame';
+import { ModalHeader } from './ModalHeader';
 import { BADGE_ICON_SRC } from '../lib/gamification';
 import {
   ShopActionError,
@@ -135,7 +136,7 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('shop.heading')}</h2>
+        <ModalHeader title={t('shop.heading')} onClose={onClose} />
 
         <div className="shop-preview-row">
           <CharacterSprite equipped={spritePreview} size={96} />

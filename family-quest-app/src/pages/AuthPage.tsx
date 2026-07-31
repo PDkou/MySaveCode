@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAuth, AuthActionError } from '../context/AuthContext';
 import { SettingsModal } from '../components/SettingsModal';
+import { ModalHeader } from '../components/ModalHeader';
 
 type Tab = 'login' | 'signup';
 
@@ -201,7 +202,7 @@ export function AuthPage() {
       {showForgotPassword && (
         <div className="modal-backdrop" onClick={() => setShowForgotPassword(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{t('auth.forgotPasswordHeading')}</h2>
+            <ModalHeader title={t('auth.forgotPasswordHeading')} onClose={() => setShowForgotPassword(false)} />
             {resetSent ? (
               <p className="form-info" role="status">{t('auth.forgotPasswordSent')}</p>
             ) : (

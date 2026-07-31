@@ -1906,6 +1906,39 @@ textarea {
   font-size: 19px;
 }
 
+/* Sticky at the top for the same reason .modal-actions is sticky at the
+   bottom -- a long modal otherwise scrolls the close button out of view
+   along with everything else. Mirrors .modal-actions's technique: negative
+   margins cancel .modal's own 24px padding so the bar spans full width,
+   an opaque background stops content from showing through as it scrolls
+   underneath, and the border marks the boundary. */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: sticky;
+  top: -24px;
+  margin: -24px -24px 0;
+  padding: 24px 24px 12px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  z-index: 1;
+}
+
+.modal-header h2 {
+  /* h2 is normally a flex child in .modal's own column layout with no
+     extra width rules -- inside .modal-header it needs to not get pushed
+     around by a long heading, and to leave the close button its own space
+     rather than fighting it for width. */
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-close-btn {
+  flex-shrink: 0;
+}
+
 .confirm-modal-message {
   margin: 0;
   color: var(--navy);

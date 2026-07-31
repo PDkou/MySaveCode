@@ -13,6 +13,7 @@ import {
   upgradeTycoon,
 } from '../lib/tycoon';
 import { ShopActionError, getOwnedItemIds, getShopItems, isHexColor, purchaseItem } from '../lib/shop';
+import { ModalHeader } from './ModalHeader';
 import type { ShopItemRow, TycoonStateRow } from '../types/database';
 
 interface TycoonModalProps {
@@ -174,7 +175,7 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('tycoon.heading')}</h2>
+        <ModalHeader title={t('tycoon.heading')} onClose={onClose} />
 
         {errorKey && <p className="form-error" role="alert">{t(errorKey)}</p>}
 
