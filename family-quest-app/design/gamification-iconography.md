@@ -405,7 +405,7 @@ Transparent PNG background unless the asset IS a background/backdrop piece. Ever
 a set must share identical outline weight, shading logic, and proportions so the full set
 reads as one unified sprite sheet.
 
-Subject: A small rectangular pill-shaped chip border asset, deep royal purple-and-gold pixel border with an ornate filigree pattern and a small central gem accent, transparent/empty center so a text label can sit inside it. Highest and most elaborate tier of a 6-tier frame set (bronze / silver / gold / platinum / diamond / master) -- clearly the most eye-catching and premium-looking of the six, more decorated than the diamond frame.
+Subject: A small rectangular pill-shaped chip border asset, glossy obsidian-black volcanic-glass pixel border with thin glowing ember-orange cracks running through the glass, transparent/empty center so a text label can sit inside it. Highest tier of the current 6-tier frame set (bronze / silver / gold / platinum / diamond / master) -- sleek, dark, and mysterious rather than gaudy or ornate, deliberately understated compared to the diamond frame so an even rarer limited-edition frame can be added above it later without looking like a downgrade.
 
 Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
