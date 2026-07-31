@@ -3353,14 +3353,15 @@ textarea {
   font-weight: 700;
 }
 
-/* Badge medal shown inside the frame (2026-08-01 feedback) -- sized to the
-   frame's own border thickness above, not the tiny standalone badge-slot
-   size, so it reads as part of the same nameplate instead of a mismatched
-   icon stuck in front of it. */
+/* Badge medal shown inside the frame (2026-08-01 feedback). Sized to fit
+   within the same content-box height the frame already has without a
+   badge (line-height of the 13px title text + the 4px vertical padding)
+   -- badges larger than that stretched .title-frame taller only when one
+   was present, an inconsistency reported 2026-08-01. */
 .title-frame-badge {
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
 }
 
