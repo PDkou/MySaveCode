@@ -180,7 +180,7 @@ export function CalendarPage() {
         <div className="task-detail-section">
           <h2>{new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(selectedDate)}</h2>
           {selectedTasks.length === 0 ? (
-            <EmptyState message={t('calendar.noTasksOnDay')} />
+            <EmptyState message={t('calendar.noTasksOnDay')} illustration="/illustrations/empty-quests.png" />
           ) : (
             <div className="task-list">
               {selectedTasks.map((task) => (

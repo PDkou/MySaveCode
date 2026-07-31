@@ -183,8 +183,15 @@ export function DashboardPage() {
     }
   };
 
-  const emptyMessageKey =
-    filter === 'open' ? 'dashboard.emptyOpen' : filter === 'done' ? 'dashboard.emptyDone' : 'dashboard.emptyAll';
+  // Search-filtered-to-nothing gets its own illustration/message
+  // (design/ui-visual-system.md's "검색결과없음") distinct from a genuinely
+  // empty tab, since the fix for each is different (clear the search vs.
+  // create a quest).
+  const isEmptyFromSearch = searchQuery.trim() !== '' && filteredTasks.length === 0;
+  const emptyMessageKey = isEmptyFromSearch
+    ? 'dashboard.emptySearch'
+    : filter === 'open' ? 'dashboard.emptyOpen' : filter === 'done' ? 'dashboard.emptyDone' : 'dashboard.emptyAll';
+  const emptyIllustration = isEmptyFromSearch ? '/illustrations/empty-search.png' : '/illustrations/empty-quests.png';
 
   return (
     <div className="screen dashboard-screen">
@@ -435,7 +442,7 @@ export function DashboardPage() {
         {loading ? (
           <Spinner label={t('common.loading')} />
         ) : filteredTasks.length === 0 ? (
-          <EmptyState message={t(emptyMessageKey)} />
+          <EmptyState message={t(emptyMessageKey)} illustration={emptyIllustration} />
         ) : (
           filteredTasks.map((task) => (
             <TaskCard

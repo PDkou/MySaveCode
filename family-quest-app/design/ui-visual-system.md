@@ -13,29 +13,29 @@
 
 ## Placeholder 수준인 것
 
-### 빈 상태(Empty State) 일러스트
-`components/EmptyState.tsx`가 모든 "항목 없음" 화면(퀘스트 없음, 검색 결과 없음, 사진 없음 등)에서
-똑같은 손그림 SVG 하나만 씁니다 — 원 안에 점 두 개(눈) + 곡선(입) 이모티콘 느낌의 최소한의 도형.
-화면마다 다른 상황(예: "아직 등록된 퀘스트가 없어요" vs "검색 결과가 없어요")인데 시각적으로는
-구분이 안 됩니다. 상황별로 다른 일러스트를 주면 완성도가 올라가지만, 기능에 지장은 없어서
-우선순위는 낮습니다.
+### 빈 상태(Empty State) 일러스트 — ✅ 2026-08-02 상황별 일러스트로 교체 완료
+`components/EmptyState.tsx`가 `illustration` prop을 받아 상황별로 다른 이미지를 보여줍니다 —
+퀘스트 없음(`/illustrations/empty-quests.png`), 검색 결과 없음(`/illustrations/empty-search.png`,
+`DashboardPage.tsx`가 검색어가 있고 결과가 0개일 때만 이 쪽으로 분기), 사진 없음
+(`/illustrations/empty-photos.png`). `illustration`을 안 주는 호출부는 예전 손그림 SVG로 폴백.
 
 ### 온보딩 / 첫 실행 경험
 회원가입 직후 바로 방 만들기/참여하기 폼(`FamilyOnboardingForms.tsx`)으로 넘어갑니다 — 앱이 뭘
-하는 앱인지 설명하는 온보딩 화면이나 스플래시 비주얼이 없습니다. 처음 쓰는 사람 기준으로는 다소
-불친절할 수 있는 지점이지만, 지금은 가족 단위로 직접 안내하며 쓰는 상황이라 급하지 않습니다.
+하는 앱인지 설명하는 온보딩 화면이나 스플래시 비주얼이 없습니다. 일러스트
+(`public/illustrations/onboarding.png`)는 이미 받아뒀지만, 아직 이걸 보여줄 실제 온보딩 화면
+자체가 없어서 별도 작업으로 남겨둠 (단순 이미지 교체가 아니라 새 화면 하나를 만들어야 함).
 
-### 완료 축하 연출
-`ConfettiBurst.tsx`는 색깔 있는 `<div>` 사각형이 떨어지는 방식(라이브러리 없이 순수 CSS) — 종이
-조각 색종이가 아니라 단순 색상 블록입니다. 지금도 충분히 축하 느낌은 나지만, 실제 색종이/별 모양
-등으로 다양화하면 더 좋아질 수 있는 지점.
+### 완료 축하 연출 — ✅ 2026-08-02 실제 컨페티 이미지로 교체 완료
+`ConfettiBurst.tsx`가 색상 `<div>` 사각형 대신 실제 픽셀아트 파티클(`public/confetti/*.png` —
+금화/보석/별 + 5색 리본 조각)을 무작위로 골라 떨어뜨립니다. 낙하 애니메이션 로직 자체는 그대로.
 
-### 상점 아이템 상태 아이콘 (신규 발견)
-`CharacterShopModal.tsx`에서 아이템이 잠김/보유/장착 상태일 때 전부 텍스트로만 구분합니다 —
-잠긴 아이템은 `"잠김"` 텍스트, 보유 중인 아이템의 장착/해제 버튼은 `"장착"`/`"해제"` 텍스트 버튼일
-뿐 아이콘이 하나도 없습니다. 자물쇠/체크마크/버튼 아이콘을 넣으면 한눈에 상태를 구분하기 쉬워집니다.
+### 상점 아이템 상태 아이콘 — ✅ 2026-08-02 실제 아이콘/버튼 이미지로 교체 완료
+`CharacterShopModal.tsx`의 아이템 목록 행이 이제 자물쇠 아이콘(`/shop/locked.png`), 보유 중
+체크 배지(`/shop/owned-check.png`, 아이템 썸네일 우하단에 겹쳐 표시), 장착/해제 픽셀 버튼
+(`/shop/equip-button.png`, `/shop/unequip-button.png`, CSS 배경 이미지로 사용)을 씁니다.
 
-**쓰이는 곳**: `CharacterShopModal.tsx`의 아이템 목록 행 (`shop-item-locked`, 장착/해제 버튼)
+**쓰이는 곳**: `CharacterShopModal.tsx`의 아이템 목록 행 (`shop-item-locked`, `shop-item-sprite`,
+`shop-action-btn`)
 
 ## 관련 문서
 

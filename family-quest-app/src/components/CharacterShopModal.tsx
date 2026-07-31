@@ -199,14 +199,23 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
                     style={item.sprite_key && isHexColor(item.sprite_key) ? { backgroundColor: item.sprite_key } : undefined}
                   >
                     {item.sprite_key && isHexColor(item.sprite_key) ? '' : item.sprite_key || '·'}
+                    {owned && <img className="shop-item-owned-badge" src="/shop/owned-check.png" alt="" aria-hidden="true" />}
                   </span>
                   <span className="shop-item-name">{item.name}</span>
                   {owned ? (
-                    <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => void handleEquip(item)}>
+                    <button
+                      type="button"
+                      className={`shop-action-btn ${equipped ? 'shop-action-btn-unequip' : 'shop-action-btn-equip'}`}
+                      disabled={busy}
+                      onClick={() => void handleEquip(item)}
+                    >
                       {equipped ? t('shop.unequip') : t('shop.equip')}
                     </button>
                   ) : item.acquisition_type === 'title_condition' ? (
-                    <span className="shop-item-locked">{t('shop.locked')}</span>
+                    <span className="shop-item-locked">
+                      <img className="shop-item-locked-icon" src="/shop/locked.png" alt="" aria-hidden="true" />
+                      {t('shop.lockedLabel')}
+                    </span>
                   ) : item.currency === 'tycoon' ? (
                     // Tycoon-currency items are bought from the tycoon
                     // shop screen (TycoonModal.tsx) -- this points shop

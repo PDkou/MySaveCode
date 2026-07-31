@@ -65,7 +65,7 @@ export function PhotoGalleryPage() {
       {loading ? (
         <Spinner label={t('common.loading')} />
       ) : photoTasks.length === 0 ? (
-        <EmptyState message={t('gallery.empty')} />
+        <EmptyState message={t('gallery.empty')} illustration="/illustrations/empty-photos.png" />
       ) : (
         <div className="gallery-grid">
           {photoTasks.map((task) => {

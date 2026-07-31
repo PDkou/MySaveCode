@@ -119,6 +119,7 @@
     "emptyOpen": "진행 중인 퀘스트가 없습니다.",
     "emptyDone": "완료한 퀘스트가 없습니다.",
     "emptyAll": "아직 등록된 퀘스트가 없습니다.",
+    "emptySearch": "검색 결과가 없습니다.",
     "assignedTo": "담당: {{name}}",
     "unassigned": "선착순",
     "createdBy": "등록: {{name}}",
@@ -334,6 +335,7 @@
     "unequip": "장착 해제",
     "emptySlot": "아직 준비된 아이템이 없어요.",
     "locked": "🔒 미해금",
+    "lockedLabel": "미해금",
     "owned": "보유 중",
     "buyInTycoonShop": "타이쿤 상점에서 구매",
     "slot": {

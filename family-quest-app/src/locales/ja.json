@@ -119,6 +119,7 @@
     "emptyOpen": "進行中のクエストはありません。",
     "emptyDone": "完了したクエストはありません。",
     "emptyAll": "まだクエストが登録されていません。",
+    "emptySearch": "検索結果がありません。",
     "assignedTo": "担当: {{name}}",
     "unassigned": "先着順",
     "createdBy": "依頼者: {{name}}",
@@ -334,6 +335,7 @@
     "unequip": "装着解除",
     "emptySlot": "まだ用意されたアイテムがありません。",
     "locked": "🔒 未解放",
+    "lockedLabel": "未解放",
     "owned": "所有中",
     "buyInTycoonShop": "タイクーンショップで購入",
     "slot": {
