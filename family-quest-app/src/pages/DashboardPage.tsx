@@ -339,12 +339,15 @@ export function DashboardPage() {
               </TitleFrame>
             ) : (
               me.equipped_badge_key && (
-                <img
-                  className="dashboard-equipped-emoji"
-                  src={BADGE_ICON_SRC[me.equipped_badge_key as BadgeKey]}
-                  alt=""
-                  aria-hidden="true"
-                />
+                <span className="badge-chip">
+                  <img
+                    className="badge-chip-icon"
+                    src={BADGE_ICON_SRC[me.equipped_badge_key as BadgeKey]}
+                    alt=""
+                    aria-hidden="true"
+                  />
+                  {t(`badges.${me.equipped_badge_key}.name`)}
+                </span>
               )
             )}
           </button>
