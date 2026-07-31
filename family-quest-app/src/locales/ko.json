@@ -172,6 +172,7 @@
     "lotteryPicking": "뽑는 중...",
     "startsAt": "시작일 (선택)",
     "dueAt": "기한",
+    "allDay": "종일",
     "recurrence": {
       "label": "반복",
       "none": "반복 안 함",
@@ -345,7 +346,6 @@
     "equip": "장착하기",
     "unequip": "장착 해제",
     "emptySlot": "아직 준비된 아이템이 없어요.",
-    "locked": "🔒 미해금",
     "lockedLabel": "미해금",
     "owned": "보유 중",
     "buyInTycoonShop": "타이쿤 상점에서 구매",

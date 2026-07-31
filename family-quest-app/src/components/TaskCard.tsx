@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import type { TaskRow } from '../types/database';
-import { formatDateTime } from '../lib/formatDate';
+import { formatDueDateTime } from '../lib/formatDate';
 import { displayStatusForTask } from '../lib/taskStatus';
 import { AvatarChip } from './AvatarChip';
 
@@ -77,11 +77,11 @@ export function TaskCard({
           </span>
           <span>{t('dashboard.createdBy', { name: creatorName ?? '' })}</span>
           {task.starts_at && (
-            <span>{t('dashboard.startsAt', { date: formatDateTime(task.starts_at, i18n.language) })}</span>
+            <span>{t('dashboard.startsAt', { date: formatDueDateTime(task.starts_at, i18n.language, t('taskForm.allDay')) })}</span>
           )}
           <span className={isOverdue ? 'overdue-text' : undefined}>
             {task.due_at
-              ? t('dashboard.dueAt', { date: formatDateTime(task.due_at, i18n.language) })
+              ? t('dashboard.dueAt', { date: formatDueDateTime(task.due_at, i18n.language, t('taskForm.allDay')) })
               : t('dashboard.noDueDate')}
           </span>
         </div>

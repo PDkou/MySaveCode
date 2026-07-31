@@ -226,7 +226,7 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
                       {earned && (
                         <button
                           type="button"
-                          className="btn btn-secondary btn-sm"
+                          className={`shop-action-btn ${equipped ? 'shop-action-btn-unequip' : 'shop-action-btn-equip'}`}
                           disabled={busy}
                           onClick={() => void handleBadgeEquip(key)}
                         >
@@ -252,13 +252,13 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
                     key={item.id}
                     className={`gallery-row ${owned ? 'gallery-row-owned' : 'gallery-row-locked'} ${equipped ? 'gallery-row-equipped' : ''}`}
                   >
-                    <TitleFrame tier={item.tier}>
-                      {owned ? shopItemDisplayName(item, i18n.language) : t('shop.locked')}
+                    <TitleFrame tier={item.tier} badgeSrc={owned ? undefined : '/shop/locked.png'}>
+                      {owned ? shopItemDisplayName(item, i18n.language) : t('shop.lockedLabel')}
                     </TitleFrame>
                     {owned && (
                       <button
                         type="button"
-                        className="btn btn-secondary btn-sm"
+                        className={`shop-action-btn ${equipped ? 'shop-action-btn-unequip' : 'shop-action-btn-equip'}`}
                         disabled={busy}
                         onClick={() => void handleTitleEquip(item)}
                       >

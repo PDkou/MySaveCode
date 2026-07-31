@@ -35,6 +35,7 @@
 --  25. Revived titles (the 6 dropped from section 24)
 --  26. Quest expiration (overdue -> failed, stake refund, 3-day auto-delete)
 --  27. Title tiers (bronze/silver/gold/platinum/diamond/master frames)
+--  28. Hide redundant zero-cost starter cosmetics
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -4272,6 +4273,41 @@ from (values
   ('tycoon_maxed', 'diamond')
 ) as v(key, tier)
 where si.key = v.key;
+
+-- -----------------------------------------------------------------------------
+-- 28. Hide redundant zero-cost starter cosmetics
+--
+-- The 9 price-0 "기본"/"없음"/"민머리" rows seeded in section 18 (one per
+-- body/top/pants/shoes/head/weapon/shield/accessory1/accessory2 slot) exist
+-- purely as filler and turned out to be pointless: their sprite_key is
+-- either empty or exactly matches CharacterSprite.tsx's hardcoded fallback
+-- for an unequipped slot (DEFAULT_BODY/DEFAULT_TOP/DEFAULT_PANTS/
+-- DEFAULT_SHOES), so pressing 해제 (unequip) on any real item already
+-- produces the identical look for free -- there's nothing these items let a
+-- player do that unequip doesn't. Marking them hidden (rather than
+-- deleting) keeps them harmless for the rare account that already
+-- purchased/equipped one (CharacterShopModal's existing hidden-item filter
+-- still shows an item once owned) while keeping new/most players from ever
+-- seeing this dead entry at the top of every slot tab.
+--
+-- background's '맑은 하늘' (#BEE3F8) is deliberately excluded: it does NOT
+-- match CharacterSprite's DEFAULT_BACKGROUND (#E7E5DF) and is a real,
+-- distinct color choice, not a redundant default.
+-- -----------------------------------------------------------------------------
+
+update public.shop_items
+set hidden = true
+where acquisition_type = 'purchase' and price = 0 and (slot, name) in (
+  ('body', '기본 피부'),
+  ('top', '기본 티셔츠'),
+  ('pants', '기본 바지'),
+  ('shoes', '기본 신발'),
+  ('head', '민머리'),
+  ('weapon', '맨손'),
+  ('shield', '없음'),
+  ('accessory1', '없음'),
+  ('accessory2', '없음')
+);
 
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification

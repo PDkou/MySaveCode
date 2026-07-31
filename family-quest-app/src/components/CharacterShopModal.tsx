@@ -140,7 +140,10 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
         <div className="shop-preview-row">
           <CharacterSprite equipped={spritePreview} size={96} />
           <div className="shop-preview-info">
-            <span className="shop-balance">{t('shop.balance', { balance: myBalance })}</span>
+            <span className="shop-balance">
+              <img className="shop-balance-icon" src="/currency/points.png" alt="" aria-hidden="true" />
+              {t('shop.balance', { balance: myBalance })}
+            </span>
             {/* Badge and title are independently equipped from different
                 galleries, but when both are set they render as one
                 nameplate -- the badge sits inside the title's frame rather
@@ -224,7 +227,7 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
                   ) : (
                     <button
                       type="button"
-                      className="btn btn-primary btn-sm"
+                      className="shop-action-btn shop-action-btn-buy"
                       disabled={busy || !affordable}
                       onClick={() => void handlePurchase(item)}
                     >

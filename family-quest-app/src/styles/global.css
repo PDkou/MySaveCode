@@ -388,6 +388,26 @@ a {
   box-shadow: 0 0 0 3px rgba(111, 91, 211, 0.15);
 }
 
+.time-allday-toggle {
+  align-self: flex-start;
+  margin-bottom: 12px;
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--navy);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.time-allday-toggle[aria-pressed='true'] {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+
 /* ---------- Wheel time picker ---------- */
 
 .time-picker-manual-input {
@@ -2926,6 +2946,16 @@ textarea {
   color: var(--navy);
 }
 
+/* Without this, a wide control on the right (the birthday date input in
+   particular, whose native minimum width doesn't shrink) squeezes the
+   label span so far that the flex algorithm falls back to its CJK
+   line-break points -- e.g. "생일" wrapping to one character per line
+   instead of staying on a single row. */
+.settings-row > span:first-child {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .settings-row-button {
   display: flex;
   align-items: center;
@@ -3180,8 +3210,17 @@ textarea {
 }
 
 .shop-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-weight: 700;
   color: var(--navy);
+}
+
+.shop-balance-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 
 .shop-equipped-badges {
@@ -3302,6 +3341,20 @@ textarea {
 
 .shop-action-btn-unequip {
   background-image: url('/shop/unequip-button.png');
+}
+
+/* Purchase reuses the equip button's green pixel pill (same "positive,
+   affordable action" meaning) instead of the plain text-in-a-CSS-pill
+   .btn.btn-primary.btn-sm the shop used before -- but unlike 장착/해제,
+   price text length varies a lot ("15G 구매".."10000G 구매"), so this one
+   flexes width instead of the fixed 84px equip/unequip use. The pixel
+   asset isn't 9-sliced, so wider prices stretch its rounded corners
+   slightly -- acceptable at this size/detail level. */
+.shop-action-btn-buy {
+  background-image: url('/shop/equip-button.png');
+  width: auto;
+  min-width: 84px;
+  padding: 0 10px;
 }
 
 .shop-slot-tabs {

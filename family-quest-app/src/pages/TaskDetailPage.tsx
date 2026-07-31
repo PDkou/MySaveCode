@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { useTasks } from '../context/TasksContext';
 import { useTaskDetail } from '../hooks/useTaskDetail';
-import { formatDateTime, toDateTimeLocalValue } from '../lib/formatDate';
+import { formatDateTime, formatDueDateTime, toDateTimeLocalValue } from '../lib/formatDate';
 import { AssigneeCheckboxes } from '../components/AssigneeCheckboxes';
 import { AssigneeLotteryButton } from '../components/AssigneeLotteryButton';
 import { RecurrenceSelect } from '../components/RecurrenceSelect';
@@ -417,12 +417,12 @@ export function TaskDetailPage() {
         {task.starts_at && (
           <div>
             <span className="label">{t('taskDetail.startsAt')}</span>
-            <span>{formatDateTime(task.starts_at, i18n.language)}</span>
+            <span>{formatDueDateTime(task.starts_at, i18n.language, t('taskForm.allDay'))}</span>
           </div>
         )}
         <div>
           <span className="label">{t('taskDetail.dueAt')}</span>
-          <span>{task.due_at ? formatDateTime(task.due_at, i18n.language) : t('dashboard.noDueDate')}</span>
+          <span>{task.due_at ? formatDueDateTime(task.due_at, i18n.language, t('taskForm.allDay')) : t('dashboard.noDueDate')}</span>
         </div>
         {task.recurrence !== 'none' && (
           <div>
