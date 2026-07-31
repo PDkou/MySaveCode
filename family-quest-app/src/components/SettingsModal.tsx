@@ -11,6 +11,7 @@ import { LanguageSwitch } from './LanguageSwitch';
 import { EditNameModal } from './EditNameModal';
 import { FamilyMembersModal } from './FamilyMembersModal';
 import { PhotoCropModal } from './PhotoCropModal';
+import { OnboardingScreen } from './OnboardingScreen';
 import { AvatarChip } from './AvatarChip';
 import { AvatarPhotoError } from '../lib/avatarPhotos';
 
@@ -34,6 +35,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const [photoErrorKey, setPhotoErrorKey] = useState<string | null>(null);
   const [birthdayBusy, setBirthdayBusy] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [showOnboardingPreview, setShowOnboardingPreview] = useState(false);
 
   const currentName = useMemo(() => {
     if (!user) return '';
@@ -193,6 +195,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           <button type="button" className="settings-row-button" onClick={goToHelp}>
             {t('help.openButton')}
           </button>
+          <button type="button" className="settings-row-button" onClick={() => setShowOnboardingPreview(true)}>
+            {t('onboarding.replayButton')}
+          </button>
         </div>
 
         <div className="modal-actions">
@@ -218,6 +223,10 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           onCancel={() => setPendingPhotoFile(null)}
           onConfirm={(blob) => void handleCropConfirm(blob)}
         />
+      )}
+
+      {showOnboardingPreview && (
+        <OnboardingScreen onDismiss={() => setShowOnboardingPreview(false)} replay />
       )}
     </div>
   );

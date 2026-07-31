@@ -1,12 +1,26 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useAuth } from '../context/AuthContext';
 import { SettingsModal } from '../components/SettingsModal';
 import { FamilyOnboardingForms } from '../components/FamilyOnboardingForms';
+import { OnboardingScreen } from '../components/OnboardingScreen';
+import { hasSeenOnboarding, markOnboardingSeen } from '../lib/onboarding';
 
 export function FamilySetupPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [showSettings, setShowSettings] = useState(false);
+  // FamilySetupPage is also where returning users land if they ever leave
+  // every family (not just fresh signups) -- gating on a per-user "seen"
+  // flag rather than "no family yet" keeps this a true one-time welcome
+  // screen instead of replaying on every re-entry to this page.
+  const [showOnboarding, setShowOnboarding] = useState(() => !!user && !hasSeenOnboarding(user.id));
+
+  const dismissOnboarding = () => {
+    if (user) markOnboardingSeen(user.id);
+    setShowOnboarding(false);
+  };
 
   return (
     <div className="screen family-setup-screen">
@@ -35,6 +49,7 @@ export function FamilySetupPage() {
       <FamilyOnboardingForms />
 
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showOnboarding && <OnboardingScreen onDismiss={dismissOnboarding} />}
     </div>
   );
 }

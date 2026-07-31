@@ -19,11 +19,13 @@
 `DashboardPage.tsx`가 검색어가 있고 결과가 0개일 때만 이 쪽으로 분기), 사진 없음
 (`/illustrations/empty-photos.png`). `illustration`을 안 주는 호출부는 예전 손그림 SVG로 폴백.
 
-### 온보딩 / 첫 실행 경험
-회원가입 직후 바로 방 만들기/참여하기 폼(`FamilyOnboardingForms.tsx`)으로 넘어갑니다 — 앱이 뭘
-하는 앱인지 설명하는 온보딩 화면이나 스플래시 비주얼이 없습니다. 일러스트
-(`public/illustrations/onboarding.png`)는 이미 받아뒀지만, 아직 이걸 보여줄 실제 온보딩 화면
-자체가 없어서 별도 작업으로 남겨둠 (단순 이미지 교체가 아니라 새 화면 하나를 만들어야 함).
+### 온보딩 / 첫 실행 경험 — ✅ 2026-07-31 첫 실행 웰컴 화면 추가 완료
+`components/OnboardingScreen.tsx`가 일러스트(`public/illustrations/onboarding.png`) + 앱 이름/태그라인
++ 핵심 루프 3줄 요약(퀘스트 등록 → 완료 시 포인트/경험치 → 상점에서 캐릭터 꾸미기)을 보여주는
+전체 화면 오버레이입니다. `FamilySetupPage.tsx`에서 로그인한 사용자당 처음 한 번만(로컬스토리지
+`fq_onboarding_seen_{userId}` 플래그, `lib/onboarding.ts`) 자동으로 뜨고, 확인 버튼을 누르면 다시는
+자동으로 뜨지 않습니다. 설정 메뉴(`SettingsModal.tsx`)에 "온보딩 다시보기" 버튼을 둬서 언제든
+같은 화면을 미리보기로 다시 볼 수 있습니다 — 이건 플래그를 건드리지 않는 순수 미리보기용입니다.
 
 ### 완료 축하 연출 — ✅ 2026-08-02 실제 컨페티 이미지로 교체 완료
 `ConfettiBurst.tsx`가 색상 `<div>` 사각형 대신 실제 픽셀아트 파티클(`public/confetti/*.png` —
