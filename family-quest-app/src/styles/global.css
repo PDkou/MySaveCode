@@ -2507,18 +2507,6 @@ textarea {
   background: color-mix(in srgb, var(--purple) 8%, var(--bg));
 }
 
-.gallery-row-icon {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  background: var(--purple);
-}
-
-.gallery-row-locked .gallery-row-icon {
-  background: var(--muted-light);
-}
-
 .gallery-row-emoji {
   flex-shrink: 0;
   width: 28px;
@@ -3112,11 +3100,37 @@ textarea {
   gap: 6px;
 }
 
-.shop-equipped-title-frame {
+/* Title rarity frame (design/title-tiers.md) -- a border-image 9-slice so
+   the pixel-art pill stretches its straight middle to fit any title length
+   without distorting the fixed rounded end-caps. `90 fill / Npx / 0
+   stretch` slices 90px in from each edge of the (all six are ~640px wide)
+   source images; that slice amount is independent of the rendered border
+   width below, so the same slice works at every size we use this at.
+   `color: var(--navy)` rather than a fixed color -- the frame's interior is
+   transparent (shows whatever surface it sits on through), and --navy is
+   this app's existing adaptive dark-on-light/light-on-dark text color. */
+.title-frame {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  padding: 4px 16px;
+  border-style: solid;
+  border-width: 16px;
+  color: var(--navy);
   font-size: 12px;
   font-weight: 700;
+}
+
+.title-frame-bronze { border-image: url('/titles/bronze.png') 90 fill / 16px / 0 stretch; }
+.title-frame-silver { border-image: url('/titles/silver.png') 90 fill / 16px / 0 stretch; }
+.title-frame-gold { border-image: url('/titles/gold.png') 90 fill / 16px / 0 stretch; }
+.title-frame-platinum { border-image: url('/titles/platinum.png') 90 fill / 16px / 0 stretch; }
+.title-frame-diamond { border-image: url('/titles/diamond.png') 90 fill / 16px / 0 stretch; }
+.title-frame-master { border-image: url('/titles/master.png') 90 fill / 16px / 0 stretch; }
+
+/* Only used if a title's tier is somehow null -- the old plain-pill look. */
+.title-frame-fallback {
   color: var(--purple);
   background: color-mix(in srgb, var(--purple) 12%, transparent);
   border: 1px solid var(--purple);

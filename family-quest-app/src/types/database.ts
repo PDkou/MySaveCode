@@ -31,6 +31,11 @@ export type CharacterSlot =
 export type ShopItemAcquisitionType = 'purchase' | 'title_condition';
 export type ShopItemCurrency = 'points' | 'tycoon';
 
+// Cosmetic-only rarity ranking for titles (design/title-tiers.md) -- which
+// public/titles/{tier}.png frame to render around the title text. Null for
+// every non-title shop item.
+export type TitleTier = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'master';
+
 export type ShopItemRow = {
   id: string;
   slot: CharacterSlot;
@@ -45,6 +50,7 @@ export type ShopItemRow = {
   sort_order: number;
   key: string | null;
   hidden: boolean;
+  tier: TitleTier | null;
   created_at: string;
 };
 
