@@ -19,6 +19,14 @@ export function toDateTimeLocalValue(iso: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+// Default value for a brand-new task's date fields -- today's date, same
+// default 09:00 time DueDateTimeFields already falls back to elsewhere.
+export function todayDateTimeLocalValue(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T09:00`;
+}
+
 // Monday 00:00 of the current calendar week, local time.
 export function startOfThisWeek(): Date {
   const now = new Date();
