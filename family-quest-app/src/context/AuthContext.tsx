@@ -83,21 +83,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    let loadedUserId: string | null = null;
 
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       setSession(data.session);
       setInitializing(false);
       if (data.session?.user) {
+        loadedUserId = data.session.user.id;
         void loadProfile(data.session.user.id);
       }
     });
 
+    // Supabase refreshes the session (and fires this listener with a new
+    // session object) every time the tab regains focus, e.g. after
+    // alt-tabbing back -- not just on actual sign-in/out. Re-running
+    // loadProfile then would silently refetch the profile row + avatar URL
+    // on every one of those for no reason, so only do it when the signed-in
+    // user actually changed.
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
-      if (nextSession?.user) {
-        void loadProfile(nextSession.user.id);
+      const nextUserId = nextSession?.user?.id ?? null;
+      if (nextUserId) {
+        if (nextUserId !== loadedUserId) {
+          loadedUserId = nextUserId;
+          void loadProfile(nextUserId);
+        }
       } else {
+        loadedUserId = null;
         setProfile(null);
       }
     });

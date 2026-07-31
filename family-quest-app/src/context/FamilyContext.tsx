@@ -169,16 +169,23 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Keyed on user.id, not the user/session object itself -- Supabase
+  // refreshes the auth session (and mints a new session/user object) every
+  // time the tab regains focus, e.g. after alt-tabbing back. Depending on
+  // the object here would re-run this non-silent load and flash the whole
+  // app to a loading screen (App.tsx gates all routes on familyLoading) on
+  // every one of those, even though the actual signed-in user never changed.
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       setFamily(null);
       setFamilies([]);
       setMembers([]);
       setLoading(false);
       return;
     }
-    void load(user.id);
-  }, [user, load]);
+    void load(userId);
+  }, [userId, load]);
 
   const refresh = useCallback(async () => {
     if (user) {
