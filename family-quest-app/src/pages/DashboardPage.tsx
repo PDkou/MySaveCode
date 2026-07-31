@@ -19,6 +19,8 @@ import { CharacterShopModal } from '../components/CharacterShopModal';
 import { CharacterSprite } from '../components/CharacterSprite';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
+import { CelebrationOverlay } from '../components/CelebrationOverlay';
+import { useUnseenCelebration } from '../hooks/useUnseenCelebration';
 import { startOfThisWeek } from '../lib/formatDate';
 import { BADGE_ICON_SRC, levelForPoints, pointsIntoLevel, pointsNeededForLevel } from '../lib/gamification';
 import { getEquippedItems, getShopItems, shopItemDisplayName } from '../lib/shop';
@@ -58,6 +60,10 @@ export function DashboardPage() {
   const [equippedSprite, setEquippedSprite] = useState<Partial<Record<CharacterSlot, string>>>({});
   const userId = user?.id;
   const familyId = family?.id;
+
+  // Covers the async payout case: a requester confirming a report pays out
+  // to the completer, who might not even be looking at the app right now.
+  const { celebration: unseenCelebration, dismiss: dismissUnseenCelebration } = useUnseenCelebration(familyId, userId);
 
   const loadEquipped = async () => {
     if (!userId || !familyId) {
@@ -117,7 +123,16 @@ export function DashboardPage() {
   };
 
   const filteredTasks = useMemo(() => {
-    let result = filter === 'all' ? tasks : tasks.filter((task) => task.status === filter);
+    // 'pending_confirmation' counts as "진행중" here -- it's reported but
+    // still needs a requester's confirm/reject, so it belongs with the
+    // still-active tasks, not tucked away where only "전체" would show it.
+    // 'failed' never matches either tab -- only "전체" surfaces it.
+    let result =
+      filter === 'all'
+        ? tasks
+        : filter === 'open'
+          ? tasks.filter((task) => task.status === 'open' || task.status === 'pending_confirmation')
+          : tasks.filter((task) => task.status === filter);
     if (onlyMine && user) {
       result = result.filter((task) => (assigneesByTaskId.get(task.id) ?? []).includes(user.id));
     }
@@ -459,6 +474,7 @@ export function DashboardPage() {
       {showInviteQr && family && (
         <InviteQrModal inviteCode={family.invite_code} onClose={() => setShowInviteQr(false)} />
       )}
+      {unseenCelebration && <CelebrationOverlay result={unseenCelebration} onDismiss={dismissUnseenCelebration} />}
     </div>
   );
 }

@@ -15,7 +15,8 @@
 --   6. create_family_room / join_family_room RPCs
 --   7. (removed) Family member limit trigger
 --   8. Task activity log trigger
---   9. create_task / update_task / complete_task RPCs
+--   9. create_task / update_task / report_task_completion / confirm_task_completion /
+--      reject_task_completion / reopen_task RPCs
 --  10. Row Level Security policies
 --  11. Table/function grants
 --  12. Realtime publication
@@ -32,6 +33,7 @@
 --  23. Equippable badges
 --  24. Remaining 52 titles (13-2 draft, minus 6 dropped as too ambiguous)
 --  25. Revived titles (the 6 dropped from section 24)
+--  26. Quest expiration (overdue -> failed, stake refund, 3-day auto-delete)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -203,11 +205,19 @@ create table if not exists public.tasks (
   stake_points integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint tasks_status_check check (status in ('open', 'done')),
+  constraint tasks_status_check check (status in ('open', 'done', 'pending_confirmation', 'failed')),
   constraint tasks_title_not_blank check (length(trim(title)) > 0),
   constraint tasks_recurrence_check check (recurrence in ('none', 'daily', 'weekly', 'monthly')),
   constraint tasks_stake_points_check check (stake_points >= 0)
 );
+
+-- Upgrades an already-deployed database from before the two-step
+-- report/confirm flow ('pending_confirmation') and quest expiration
+-- ('failed') existed -- unlike the other constraints below, this one
+-- actually needs replacing (not just adding), so drop-then-add rather than
+-- the usual "add, catch duplicate_object" pattern.
+alter table public.tasks drop constraint if exists tasks_status_check;
+alter table public.tasks add constraint tasks_status_check check (status in ('open', 'done', 'pending_confirmation', 'failed'));
 
 alter table public.tasks add column if not exists completion_photo_path text;
 alter table public.tasks add column if not exists stake_points integer not null default 0;
@@ -298,11 +308,20 @@ create table if not exists public.quest_payouts (
   -- see section 19's title grants, which key off those counters.
   assignment_mode text,
   created_at timestamptz not null default now(),
+  -- Null = the recipient hasn't seen the celebration screen for this payout
+  -- yet. Needed because the two-step report/confirm flow means the person
+  -- who gets paid isn't necessarily the one looking at the app when the
+  -- payout actually happens (the requester confirms, elsewhere) -- the
+  -- client checks for the recipient's own unseen 'completion' rows on
+  -- load/navigation and shows the celebration then, same "clears once
+  -- seen" pattern the notification bell already uses.
+  celebration_seen_at timestamptz,
   constraint quest_payouts_kind_check check (kind in ('completion', 'requester_bonus')),
   constraint quest_payouts_assignment_mode_check check (assignment_mode is null or assignment_mode in ('personal', 'specific', 'everyone', 'first_come'))
 );
 
 alter table public.quest_payouts add column if not exists assignment_mode text;
+alter table public.quest_payouts add column if not exists celebration_seen_at timestamptz;
 do $$
 begin
   alter table public.quest_payouts add constraint quest_payouts_assignment_mode_check check (assignment_mode is null or assignment_mode in ('personal', 'specific', 'everyone', 'first_come'));
@@ -368,8 +387,13 @@ create table if not exists public.task_activities (
   action text not null,
   note text,
   created_at timestamptz not null default now(),
-  constraint task_activities_action_check check (action in ('created', 'completed', 'reopened', 'updated'))
+  constraint task_activities_action_check check (action in ('created', 'completed', 'reopened', 'updated', 'reported', 'rejected'))
 );
+
+-- Upgrades an already-deployed database from before the two-step
+-- report/confirm flow's 'reported'/'rejected' activity actions existed.
+alter table public.task_activities drop constraint if exists task_activities_action_check;
+alter table public.task_activities add constraint task_activities_action_check check (action in ('created', 'completed', 'reopened', 'updated', 'reported', 'rejected'));
 
 create index if not exists task_activities_task_id_idx on public.task_activities (task_id, created_at);
 create index if not exists task_activities_family_id_idx on public.task_activities (family_id);
@@ -828,9 +852,23 @@ begin
     insert into public.task_activities (task_id, family_id, actor_id, action, note)
     values (new.id, new.family_id, auth.uid(), 'created', null);
   elsif TG_OP = 'UPDATE' then
+    -- actor_id is new.completed_by (the person who did the work), not
+    -- auth.uid(), for the two "completed"/"reported" branches -- at confirm
+    -- time (pending_confirmation -> done) auth.uid() is the requester
+    -- confirming, not whoever actually completed it, and the activity log
+    -- entry should credit the doer either way.
     if old.status = 'open' and new.status = 'done' then
       insert into public.task_activities (task_id, family_id, actor_id, action, note)
-      values (new.id, new.family_id, auth.uid(), 'completed', new.completion_note);
+      values (new.id, new.family_id, new.completed_by, 'completed', new.completion_note);
+    elsif old.status = 'open' and new.status = 'pending_confirmation' then
+      insert into public.task_activities (task_id, family_id, actor_id, action, note)
+      values (new.id, new.family_id, new.completed_by, 'reported', new.completion_note);
+    elsif old.status = 'pending_confirmation' and new.status = 'done' then
+      insert into public.task_activities (task_id, family_id, actor_id, action, note)
+      values (new.id, new.family_id, new.completed_by, 'completed', new.completion_note);
+    elsif old.status = 'pending_confirmation' and new.status = 'open' then
+      insert into public.task_activities (task_id, family_id, actor_id, action, note)
+      values (new.id, new.family_id, auth.uid(), 'rejected', null);
     elsif old.status = 'done' and new.status = 'open' then
       insert into public.task_activities (task_id, family_id, actor_id, action, note)
       values (new.id, new.family_id, auth.uid(), 'reopened', null);
@@ -1042,7 +1080,11 @@ begin
       due_at = p_due_at,
       recurrence = v_recurrence,
       starts_at = p_starts_at,
-      recurrence_weekdays = case when v_recurrence = 'weekly' then p_recurrence_weekdays else null end
+      recurrence_weekdays = case when v_recurrence = 'weekly' then p_recurrence_weekdays else null end,
+      -- Editing a 'failed' task (e.g. pushing the due date out) implicitly
+      -- revives it -- otherwise it'd be stuck showing "실패" forever with
+      -- no way back to 'open' short of deleting and recreating it.
+      status = case when status = 'failed' then 'open' else status end
   where id = p_task_id
   returning * into v_task;
 
@@ -1074,7 +1116,13 @@ create or replace function public.award_quest_payout(
   p_points integer,
   p_award_reputation boolean,
   p_task_id uuid,
-  p_assignment_mode text default null
+  p_assignment_mode text default null,
+  -- When the work actually happened -- the two-step report/confirm flow
+  -- (finalize_task_completion) can call this well after the fact, and
+  -- streak/time-of-day badges should reflect when the quest was done, not
+  -- whenever a requester got around to confirming it. Defaults to now()
+  -- for any caller that doesn't pass it explicitly (none currently do).
+  p_completed_at timestamptz default now()
 )
 returns void
 language plpgsql
@@ -1083,7 +1131,7 @@ set search_path = public
 as $$
 declare
   v_member public.family_members;
-  v_today date := current_date;
+  v_today date := p_completed_at::date;
   v_new_streak integer;
   v_new_mode_count integer;
   v_new_completed_count integer;
@@ -1140,7 +1188,7 @@ begin
     values (p_family_id, p_user_id, 'streak_7') on conflict do nothing;
   end if;
 
-  v_completed_hour := extract(hour from now());
+  v_completed_hour := extract(hour from p_completed_at);
   if v_completed_hour < 7 then
     insert into public.member_badges (family_id, user_id, badge_key)
     values (p_family_id, p_user_id, 'early_bird') on conflict do nothing;
@@ -1254,17 +1302,11 @@ begin
 end;
 $$;
 
--- Completing a task that has a recurrence spawns the next occurrence (same
--- title/details/assignees, due date advanced by the interval) in the same
--- transaction as the completion itself. p_completion_note is validated by
--- the client (required to complete), not re-validated here. The recurring
--- copy re-stakes from the creator (clamped to whatever they can currently
--- afford) rather than reusing the original stake for free -- see the
--- recurrence block below.
---
+-- Completing a task is a two-step report/confirm flow (see
+-- report_task_completion below for exactly when confirmation is skipped).
 -- Gamification payout depends on how the task was assigned
--- (GAMIFICATION_DESIGN.md section 3/5) -- worked out per-completion here,
--- actually applied via award_quest_payout above:
+-- (GAMIFICATION_DESIGN.md section 3/5) -- worked out per-completion in
+-- finalize_task_completion below:
 --   - 0 assignees (선착/first-come): completer takes the full stake; if
 --     they're also the creator, it's just returned to them (net zero, no
 --     reputation) instead of paid twice.
@@ -1281,25 +1323,37 @@ $$;
 --     10, matching the old behavior -- there's no one else to request
 --     from, so staking is meaningless there.
 --
--- p_completion_photo_path added after the initial version of this
--- function; drop the old 2-arg signature first (see the create_task /
--- update_task comment above for why).
-drop function if exists public.complete_task(uuid, text);
-
-create or replace function public.complete_task(
-  p_task_id uuid,
-  p_completion_note text,
-  p_completion_photo_path text default null
-)
+-- Completing a task that has a recurrence spawns the next occurrence (same
+-- title/details/assignees, due date advanced by the interval) in the same
+-- transaction as the payout (finalize_task_completion), not the report --
+-- a report that's later rejected shouldn't have already spawned a next
+-- occurrence.
+-- Internal helper -- runs the actual payout (points/xp/streak/badges/titles)
+-- and, for a recurring task, spawns the next occurrence. Called either
+-- immediately by report_task_completion (self-claim / personal-room /
+-- 특정인·선착 completions that skip confirmation) or later by
+-- confirm_task_completion once a requester approves a report. Not callable
+-- directly by clients (see revoke below) -- report/confirm have already
+-- done the auth + state checks by the time this runs.
+--
+-- v_uid here is bound to the task's completed_by (whoever did the work),
+-- not auth.uid() -- confirm_task_completion's caller is the requester, not
+-- necessarily the completer, but every payout/title/reputation check below
+-- is about the completer. Likewise v_completion_moment is the report
+-- timestamp (task.completed_at), not "now" -- a requester confirming hours
+-- later shouldn't make a 3am completion look like it happened at noon for
+-- the time-of-day badges, or shift someone's streak day.
+create or replace function public.finalize_task_completion(p_task_id uuid)
 returns public.tasks
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
-  v_uid uuid := auth.uid();
   v_task public.tasks;
   v_family_id uuid;
+  v_uid uuid;
+  v_completion_moment timestamptz;
   v_next_due timestamptz;
   v_next_starts timestamptz;
   v_new_task_id uuid;
@@ -1323,37 +1377,10 @@ declare
   v_everyone_room_count integer;
   v_other_family_id uuid;
 begin
-  if v_uid is null then
-    raise exception 'not_authenticated' using errcode = '28000';
-  end if;
-
-  select family_id into v_family_id from public.tasks where id = p_task_id;
-  if v_family_id is null then
-    raise exception 'task_not_found' using errcode = 'P0002';
-  end if;
-
-  if not public.is_family_member(v_family_id) then
-    raise exception 'not_authenticated' using errcode = '28000';
-  end if;
-
-  -- "where status = 'open'" (not just "where id = ...") is what makes this
-  -- safe against two racers completing the same task at once, or the same
-  -- caller double-submitting: the UPDATE takes the row lock, so a second
-  -- concurrent call blocks until the first commits, then matches zero rows
-  -- against the now-'done' status and hits "not found" below instead of
-  -- silently re-running the entire payout block a second time.
-  update public.tasks
-  set status = 'done',
-      completed_at = now(),
-      completed_by = v_uid,
-      completion_note = nullif(trim(coalesce(p_completion_note, '')), ''),
-      completion_photo_path = p_completion_photo_path
-  where id = p_task_id and status = 'open'
-  returning * into v_task;
-
-  if not found then
-    raise exception 'already_completed' using errcode = 'P0001';
-  end if;
+  select * into v_task from public.tasks where id = p_task_id;
+  v_family_id := v_task.family_id;
+  v_uid := v_task.completed_by;
+  v_completion_moment := v_task.completed_at;
 
   if v_task.recurrence <> 'none' then
     if v_task.recurrence = 'weekly' and v_task.recurrence_weekdays is not null
@@ -1431,19 +1458,19 @@ begin
   select count(*) into v_assignee_count from public.task_assignees where task_id = p_task_id;
 
   if v_member_count <= 1 then
-    perform public.award_quest_payout(v_family_id, v_uid, 10, true, p_task_id, 'personal');
+    perform public.award_quest_payout(v_family_id, v_uid, 10, true, p_task_id, 'personal', v_completion_moment);
 
   elsif v_assignee_count = 0 then
     -- 선착 (first-come): full stake to the completer; a creator who claims
     -- their own 선착 task just gets their stake back, no reputation.
-    perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, v_task.created_by <> v_uid, p_task_id, 'first_come');
+    perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, v_task.created_by <> v_uid, p_task_id, 'first_come', v_completion_moment);
 
     -- 생일 선물 (hidden, 13-B): completed a 선착 quest on your own birthday.
     if exists (
       select 1 from public.profiles pr
       where pr.id = v_uid and pr.birthday is not null
-        and extract(month from pr.birthday) = extract(month from current_date)
-        and extract(day from pr.birthday) = extract(day from current_date)
+        and extract(month from pr.birthday) = extract(month from v_completion_moment)
+        and extract(day from pr.birthday) = extract(day from v_completion_moment)
     ) then
       perform public.grant_title(v_family_id, v_uid, 'birthday_gift');
     end if;
@@ -1453,8 +1480,8 @@ begin
     -- reputation (see the award_quest_payout call above), so these
     -- "competition"-flavored titles shouldn't count them either.
     if v_task.created_by <> v_uid then
-      v_seconds_since_created := extract(epoch from (now() - v_task.created_at));
-      v_completion_hour := extract(hour from now());
+      v_seconds_since_created := extract(epoch from (v_completion_moment - v_task.created_at));
+      v_completion_hour := extract(hour from v_completion_moment);
 
       -- 눈치 백단 / 전광석화 (speed).
       if v_seconds_since_created <= 60 then
@@ -1502,7 +1529,7 @@ begin
 
       -- 방심은 금물 / 늘 한발 앞서 (against the due date).
       if v_task.due_at is not null then
-        v_seconds_until_due := extract(epoch from (v_task.due_at - now()));
+        v_seconds_until_due := extract(epoch from (v_task.due_at - v_completion_moment));
         if v_seconds_until_due >= 0 and v_seconds_until_due <= 3600 and (
           select count(*) from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
           where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
@@ -1531,7 +1558,7 @@ begin
     -- group effort rather than a self-request.
     v_share := v_task.stake_points / v_assignee_count;
     for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
-      perform public.award_quest_payout(v_family_id, v_assignee_id, v_share, true, p_task_id, 'everyone');
+      perform public.award_quest_payout(v_family_id, v_assignee_id, v_share, true, p_task_id, 'everyone', v_completion_moment);
     end loop;
 
     -- 한자리에 (hidden, 13-C): everyone assigned was actively using the app
@@ -1542,7 +1569,7 @@ begin
       select 1 from public.family_members fm
       join public.task_assignees ta on ta.user_id = fm.user_id and ta.task_id = p_task_id
       where fm.family_id = v_family_id
-        and (fm.last_heartbeat_at is null or fm.last_heartbeat_at < now() - interval '90 seconds')
+        and (fm.last_heartbeat_at is null or fm.last_heartbeat_at < v_completion_moment - interval '90 seconds')
     ) then
       for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
         perform public.grant_title(v_family_id, v_assignee_id, 'together_now');
@@ -1596,7 +1623,7 @@ begin
     end if;
 
     -- 🔒 축제의 밤 (late-night 모두형 completion).
-    if extract(hour from now()) >= 22 then
+    if extract(hour from v_completion_moment) >= 22 then
       for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
         perform public.grant_title(v_family_id, v_assignee_id, 'festival_night');
       end loop;
@@ -1644,14 +1671,14 @@ begin
 
     -- 다함께 스트릭: family-wide (not per-user) streak of days with at
     -- least one 모두형 completion -- see the new families columns below.
-    if v_family_row.everyone_streak_last_date = current_date then
+    if v_family_row.everyone_streak_last_date = v_completion_moment::date then
       v_everyone_streak := v_family_row.everyone_streak_days;
-    elsif v_family_row.everyone_streak_last_date = current_date - 1 then
-      update public.families set everyone_streak_days = everyone_streak_days + 1, everyone_streak_last_date = current_date
+    elsif v_family_row.everyone_streak_last_date = v_completion_moment::date - 1 then
+      update public.families set everyone_streak_days = everyone_streak_days + 1, everyone_streak_last_date = v_completion_moment::date
       where id = v_family_id
       returning everyone_streak_days into v_everyone_streak;
     else
-      update public.families set everyone_streak_days = 1, everyone_streak_last_date = current_date
+      update public.families set everyone_streak_days = 1, everyone_streak_last_date = v_completion_moment::date
       where id = v_family_id
       returning everyone_streak_days into v_everyone_streak;
     end if;
@@ -1681,9 +1708,9 @@ begin
     end if;
 
     if v_task.created_by = v_uid then
-      perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, false, p_task_id, 'specific');
+      perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, false, p_task_id, 'specific', v_completion_moment);
     else
-      perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, true, p_task_id, 'specific');
+      perform public.award_quest_payout(v_family_id, v_uid, v_task.stake_points, true, p_task_id, 'specific', v_completion_moment);
       if v_task.stake_points >= 10 then
         v_requester_bonus := v_task.stake_points / 10;
         update public.family_members set points = points + v_requester_bonus
@@ -1694,8 +1721,8 @@ begin
 
       -- 13-2 특정인 지정 탭: only for genuine completer<>requester cases,
       -- same reasoning as the 선착 block above.
-      v_seconds_since_created := extract(epoch from (now() - v_task.created_at));
-      v_completion_hour := extract(hour from now());
+      v_seconds_since_created := extract(epoch from (v_completion_moment - v_task.created_at));
+      v_completion_hour := extract(hour from v_completion_moment);
 
       -- 즉시 응답.
       if v_seconds_since_created <= 600 and (
@@ -1783,9 +1810,158 @@ begin
     perform public.grant_title(v_family_id, v_uid, 'photo_album_rich');
   end if;
 
+  
+
+  update public.tasks set status = 'done' where id = p_task_id returning * into v_task;
   return v_task;
 end;
 $$;
+
+revoke execute on function public.finalize_task_completion(uuid) from anon, public, authenticated;
+
+-- Step 1 of completion: whoever did the work reports it done. Pays out
+-- immediately only when there's no meaningful "requester decides" step --
+-- a personal (1-member) room, or a 특정인/선착 quest the requester claimed
+-- for themselves (that already nets to 0 points/no reputation either way).
+-- Every other case -- including 모두형, even if the requester is one of the
+-- assignees, since the payout still reaches other people too -- goes to
+-- 'pending_confirmation' and waits for the requester to confirm or reject.
+create or replace function public.report_task_completion(
+  p_task_id uuid,
+  p_completion_note text,
+  p_completion_photo_path text default null
+)
+returns public.tasks
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_task public.tasks;
+  v_family_id uuid;
+  v_created_by uuid;
+  v_member_count integer;
+  v_assignee_count integer;
+  v_needs_confirmation boolean;
+  v_target_status text;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select family_id, created_by into v_family_id, v_created_by from public.tasks where id = p_task_id;
+  if v_family_id is null then
+    raise exception 'task_not_found' using errcode = 'P0002';
+  end if;
+
+  if not public.is_family_member(v_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select count(*) into v_member_count from public.family_members where family_id = v_family_id;
+  select count(*) into v_assignee_count from public.task_assignees where task_id = p_task_id;
+
+  v_needs_confirmation :=
+    v_member_count > 1
+    and (v_assignee_count = v_member_count or v_created_by <> v_uid);
+
+  v_target_status := case when v_needs_confirmation then 'pending_confirmation' else 'done' end;
+
+  -- "where status = 'open'" -- same double-submit/race guard complete_task
+  -- always had: the UPDATE takes the row lock, so a second concurrent call
+  -- blocks until this one commits, then matches zero rows and hits
+  -- 'already_completed' below instead of re-running the report.
+  update public.tasks
+  set status = v_target_status,
+      completed_at = now(),
+      completed_by = v_uid,
+      completion_note = nullif(trim(coalesce(p_completion_note, '')), ''),
+      completion_photo_path = p_completion_photo_path
+  where id = p_task_id and status = 'open'
+  returning * into v_task;
+
+  if not found then
+    raise exception 'already_completed' using errcode = 'P0001';
+  end if;
+
+  if not v_needs_confirmation then
+    v_task := public.finalize_task_completion(p_task_id);
+  end if;
+
+  return v_task;
+end;
+$$;
+
+-- Step 2a: the requester approves a reported completion -- runs the actual
+-- payout now, using the report's original completed_at/completed_by.
+create or replace function public.confirm_task_completion(p_task_id uuid)
+returns public.tasks
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_task public.tasks;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select * into v_task from public.tasks where id = p_task_id and status = 'pending_confirmation';
+  if v_task.id is null then
+    raise exception 'not_pending_confirmation' using errcode = 'P0001';
+  end if;
+
+  if v_task.created_by <> v_uid then
+    raise exception 'not_authorized' using errcode = '28000';
+  end if;
+
+  return public.finalize_task_completion(p_task_id);
+end;
+$$;
+
+-- Step 2b: the requester rejects a reported completion -- nothing was ever
+-- paid out for a 'pending_confirmation' task, so this is just a plain
+-- status reset, unlike reopen_task's ledger-reversal for an already-'done'
+-- (already paid) task.
+create or replace function public.reject_task_completion(p_task_id uuid)
+returns public.tasks
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_task public.tasks;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select * into v_task from public.tasks where id = p_task_id and status = 'pending_confirmation';
+  if v_task.id is null then
+    raise exception 'not_pending_confirmation' using errcode = 'P0001';
+  end if;
+
+  if v_task.created_by <> v_uid then
+    raise exception 'not_authorized' using errcode = '28000';
+  end if;
+
+  update public.tasks
+  set status = 'open',
+      completed_at = null,
+      completed_by = null,
+      completion_note = null,
+      completion_photo_path = null
+  where id = p_task_id
+  returning * into v_task;
+
+  return v_task;
+end;
+$$;
+
 
 -- Reopening a task reverses every payout complete_task made for it --
 -- otherwise toggling complete/reopen/complete on the same task would let
@@ -1827,19 +2003,33 @@ begin
     raise exception 'not_authenticated' using errcode = '28000';
   end if;
 
+  -- "where status = 'done'" guards against reopening a task that's still
+  -- 'pending_confirmation' (nothing paid out yet -- use reject_task_completion
+  -- for that) or already 'open'/'failed'.
   update public.tasks
   set status = 'open',
       completed_at = null,
       completed_by = null,
       completion_note = null,
       completion_photo_path = null
-  where id = p_task_id
+  where id = p_task_id and status = 'done'
   returning * into v_task;
+
+  if not found then
+    raise exception 'not_done' using errcode = 'P0001';
+  end if;
 
   if v_completer_id is not null then
     for v_payout in select * from public.quest_payouts where task_id = p_task_id loop
+      -- Clamped at 0, not a straight subtraction -- the recipient may have
+      -- already spent some or all of this payout (shop purchase, staking a
+      -- new task) by the time this reopen runs. Taking back only what's
+      -- still there and forgiving the rest is what lets the reopen succeed
+      -- at all; a bare "points - points_delta" can go negative and trip
+      -- family_members_points_check, aborting the whole reopen with a raw
+      -- constraint-violation error (the bug this comment replaced).
       update public.family_members
-      set points = points - v_payout.points_delta
+      set points = greatest(points - v_payout.points_delta, 0)
       where family_id = v_payout.family_id and user_id = v_payout.user_id;
 
       if v_payout.reputation_awarded then
@@ -1904,6 +2094,30 @@ begin
   end if;
 
   return v_task;
+end;
+$$;
+
+-- Marks one celebration-worthy payout as seen, so the client's "show the
+-- celebration screen for anything unseen" check on load/navigation stops
+-- surfacing it again. Row-scoped to the caller's own payouts -- there's no
+-- RLS update policy on quest_payouts (writes otherwise only happen via the
+-- security-definer completion RPCs), so this is the one narrow exception.
+create or replace function public.mark_celebration_seen(p_payout_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  update public.quest_payouts
+  set celebration_seen_at = now()
+  where id = p_payout_id and user_id = v_uid;
 end;
 $$;
 
@@ -2151,7 +2365,10 @@ grant execute on function public.remove_family_member(uuid, uuid) to authenticat
 grant execute on function public.regenerate_invite_code(uuid) to authenticated;
 grant execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[], integer) to authenticated;
 grant execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) to authenticated;
-grant execute on function public.complete_task(uuid, text, text) to authenticated;
+grant execute on function public.report_task_completion(uuid, text, text) to authenticated;
+grant execute on function public.confirm_task_completion(uuid) to authenticated;
+grant execute on function public.reject_task_completion(uuid) to authenticated;
+grant execute on function public.mark_celebration_seen(uuid) to authenticated;
 grant execute on function public.reopen_task(uuid) to authenticated;
 
 revoke execute on function public.create_family_room(text, text) from anon, public;
@@ -2161,15 +2378,18 @@ revoke execute on function public.remove_family_member(uuid, uuid) from anon, pu
 revoke execute on function public.regenerate_invite_code(uuid) from anon, public;
 revoke execute on function public.create_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[], integer) from anon, public;
 revoke execute on function public.update_task(uuid, text, text, timestamptz, uuid[], text, timestamptz, smallint[]) from anon, public;
-revoke execute on function public.complete_task(uuid, text, text) from anon, public;
+revoke execute on function public.report_task_completion(uuid, text, text) from anon, public;
+revoke execute on function public.confirm_task_completion(uuid) from anon, public;
+revoke execute on function public.reject_task_completion(uuid) from anon, public;
+revoke execute on function public.mark_celebration_seen(uuid) from anon, public;
 revoke execute on function public.reopen_task(uuid) from anon, public;
 revoke execute on function public.is_family_member(uuid) from anon, public;
 revoke execute on function public.get_my_family_id() from anon, public;
 revoke execute on function public.shares_family_with(uuid) from anon, public;
--- Internal helper only -- called from within complete_task/reopen_task's
+-- Internal helper only -- called from within finalize_task_completion's
 -- security definer context, never directly by a client (it has no
 -- authorization checks of its own).
-revoke execute on function public.award_quest_payout(uuid, uuid, integer, boolean, uuid, text) from public;
+revoke execute on function public.award_quest_payout(uuid, uuid, integer, boolean, uuid, text, timestamptz) from public;
 
 -- -----------------------------------------------------------------------------
 -- 12. Realtime publication
@@ -3876,6 +4096,69 @@ from (values
   ('unbeaten_streak', '無敗街道')
 ) as v(key, name_ja)
 where si.key = v.key;
+
+-- -----------------------------------------------------------------------------
+-- 26. Quest expiration -- overdue tasks fail, stakes refund, old failures
+--     get cleaned up
+-- -----------------------------------------------------------------------------
+
+-- Two sweeps in one function (kept together since they're always run on the
+-- same schedule below):
+--   1. An 'open' task whose due date has passed with nobody ever reporting
+--      it done fails, and whatever the creator staked on it comes back to
+--      them -- nobody benefited from the work not happening, so losing the
+--      points too would just be punitive on top of the quest not getting
+--      done. A task sitting in 'pending_confirmation' is left alone even
+--      past its due date -- someone DID report it, so "failed" (nothing
+--      happened) isn't true there; it stays resolvable via confirm/reject.
+--   2. A 'failed' task is kept around for 3 days (visible as a record of
+--      what didn't happen) before being deleted for good.
+-- Tasks with no due_at set never expire -- "기한 없음" is intentionally
+-- open-ended.
+create or replace function public.sweep_expired_tasks()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_task record;
+begin
+  for v_task in
+    update public.tasks
+    set status = 'failed'
+    where status = 'open' and due_at is not null and due_at < now()
+    returning id, family_id, created_by, stake_points
+  loop
+    if v_task.stake_points > 0 then
+      update public.family_members
+      set points = points + v_task.stake_points
+      where family_id = v_task.family_id and user_id = v_task.created_by;
+    end if;
+  end loop;
+
+  delete from public.tasks
+  where status = 'failed' and due_at is not null and due_at < now() - interval '3 days';
+end;
+$$;
+
+revoke execute on function public.sweep_expired_tasks() from anon, public, authenticated;
+
+-- Self-contained, same reasoning as compute-weekly-mvp above -- pg_cron may
+-- not be enabled on this project, in which case this just raises a notice
+-- instead of aborting the rest of the schema run.
+do $$
+begin
+  perform cron.unschedule('sweep-expired-tasks');
+exception when others then null;
+end $$;
+
+do $$
+begin
+  perform cron.schedule('sweep-expired-tasks', '0 * * * *', 'select public.sweep_expired_tasks();');
+exception when others then
+  raise notice 'pg_cron not enabled -- could not schedule sweep_expired_tasks automatically. Enable pg_cron from Database > Extensions in the Supabase dashboard, then run: select cron.schedule(''sweep-expired-tasks'', ''0 * * * *'', ''select public.sweep_expired_tasks();'');';
+end $$;
 
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification

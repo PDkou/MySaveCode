@@ -1702,9 +1702,19 @@ textarea {
   color: var(--muted);
 }
 
+.status-pending_confirmation {
+  background: color-mix(in srgb, var(--purple) 15%, transparent);
+  color: var(--purple);
+}
+
 .status-done {
   background: rgba(39, 137, 102, 0.15);
   color: var(--green);
+}
+
+.status-failed {
+  background: color-mix(in srgb, var(--error) 15%, transparent);
+  color: var(--error);
 }
 
 .status-overdue {
@@ -1818,6 +1828,20 @@ textarea {
   background: var(--card);
   border-radius: 20px;
   padding: 18px;
+}
+
+.pending-confirmation-panel {
+  border: 1px solid var(--purple);
+  background: color-mix(in srgb, var(--purple) 8%, var(--card));
+}
+
+.pending-confirmation-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pending-confirmation-actions .btn {
+  flex: 1;
 }
 
 .task-detail-section h2 {

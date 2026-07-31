@@ -163,15 +163,15 @@ export function TasksProvider({ children }: { children: ReactNode }) {
 
   // Bulk "mark as done" from the dashboard's select mode -- a faster,
   // note-free counterpart to the single-task completion flow (which
-  // requires a completion note/photo). Only ever called on tasks that are
-  // still 'open': complete_task doesn't check that itself, and calling it
-  // again on an already-done task would re-award points/streak for it.
+  // requires a completion note/photo). Pre-filtered to 'open' tasks here
+  // for clarity, though report_task_completion's own atomic status check
+  // would reject an already-reported/done one regardless.
   const completeTasks = useCallback(async (taskIds: string[]) => {
     if (!family || taskIds.length === 0) return;
     const openIds = rawTasks.filter((task) => taskIds.includes(task.id) && task.status === 'open').map((task) => task.id);
     await Promise.all(
       openIds.map((id) =>
-        supabase.rpc('complete_task', { p_task_id: id, p_completion_note: '', p_completion_photo_path: null }),
+        supabase.rpc('report_task_completion', { p_task_id: id, p_completion_note: '', p_completion_photo_path: null }),
       ),
     );
     await refresh();

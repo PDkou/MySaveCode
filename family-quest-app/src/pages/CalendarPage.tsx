@@ -145,7 +145,7 @@ export function CalendarPage() {
             const key = toDateKey(day);
             const inMonth = day.getMonth() === cursor.getMonth();
             const dayTasks = tasksByDateKey.get(key) ?? [];
-            const openCount = dayTasks.filter((task) => task.status === 'open').length;
+            const openCount = dayTasks.filter((task) => task.status === 'open' || task.status === 'pending_confirmation').length;
             const weekday = day.getDay();
             const thumbnailPath = thumbnailPathByDateKey.get(key);
             const thumbnailUrl = thumbnailPath ? photoUrlByPath.get(thumbnailPath) : undefined;

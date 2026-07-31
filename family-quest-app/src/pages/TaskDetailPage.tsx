@@ -29,8 +29,21 @@ export function TaskDetailPage() {
   const { user } = useAuth();
   const { family, members, avatarUrlByUserId } = useFamily();
   const { requestDelete } = useTasks();
-  const { task, assigneeIds, activities, comments, loading, notFound, completeTask, reopenTask, updateTask, addComment, deleteComment } =
-    useTaskDetail(taskId);
+  const {
+    task,
+    assigneeIds,
+    activities,
+    comments,
+    loading,
+    notFound,
+    reportTaskCompletion,
+    confirmTaskCompletion,
+    rejectTaskCompletion,
+    reopenTask,
+    updateTask,
+    addComment,
+    deleteComment,
+  } = useTaskDetail(taskId);
 
   const [completionNote, setCompletionNote] = useState('');
   const [completionPhotoFile, setCompletionPhotoFile] = useState<File | null>(null);
@@ -130,7 +143,7 @@ export function TaskDetailPage() {
     setCompletionPhotoFile(event.target.files?.[0] ?? null);
   };
 
-  const handleComplete = async (event: FormEvent<HTMLFormElement>) => {
+  const handleReport = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!completionNote.trim()) {
       setErrorKey('taskDetail.error.completionNoteRequired');
@@ -149,10 +162,38 @@ export function TaskDetailPage() {
           return;
         }
       }
-      const result = await completeTask(completionNote, photoPath);
+      const result = await reportTaskCompletion(completionNote, photoPath);
       setCompletionNote('');
       setCompletionPhotoFile(null);
+      // A result means it paid out immediately (self-claim / personal room)
+      // -- show the celebration. No result means it's sitting in
+      // 'pending_confirmation' now -- the "확인 대기중" banner below (driven
+      // straight off task.status) covers that, no separate toast needed.
       if (result) setCelebration(result);
+    } catch {
+      setErrorKey('taskDetail.error.unknown');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    setBusy(true);
+    setErrorKey(null);
+    try {
+      await confirmTaskCompletion();
+    } catch {
+      setErrorKey('taskDetail.error.unknown');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleReject = async () => {
+    setBusy(true);
+    setErrorKey(null);
+    try {
+      await rejectTaskCompletion();
     } catch {
       setErrorKey('taskDetail.error.unknown');
     } finally {
@@ -329,9 +370,13 @@ export function TaskDetailPage() {
           <span className={`status-badge status-${displayStatus}`}>
             {displayStatus === 'done'
               ? t('taskDetail.statusDone')
-              : displayStatus === 'scheduled'
-                ? t('taskDetail.statusScheduled')
-                : t('taskDetail.statusOpen')}
+              : displayStatus === 'pending_confirmation'
+                ? t('taskDetail.statusPendingConfirmation')
+                : displayStatus === 'failed'
+                  ? t('taskDetail.statusFailed')
+                  : displayStatus === 'scheduled'
+                    ? t('taskDetail.statusScheduled')
+                    : t('taskDetail.statusOpen')}
           </span>
           <button type="button" className="btn btn-ghost" onClick={startEditing}>
             {t('taskDetail.editButton')}
@@ -401,7 +446,7 @@ export function TaskDetailPage() {
           <span className="label">{t('taskDetail.createdAt')}</span>
           <span>{formatDateTime(task.created_at, i18n.language)}</span>
         </div>
-        {task.status === 'done' && (
+        {(task.status === 'done' || task.status === 'pending_confirmation') && (
           <div>
             <span className="label">{t('taskDetail.completedAt')}</span>
             <span>{formatDateTime(task.completed_at, i18n.language)}</span>
@@ -409,14 +454,14 @@ export function TaskDetailPage() {
         )}
       </div>
 
-      {task.status === 'done' && task.completion_note && (
+      {(task.status === 'done' || task.status === 'pending_confirmation') && task.completion_note && (
         <div className="task-detail-section">
           <h2>{t('taskDetail.completionNote')}</h2>
           <p>{task.completion_note}</p>
         </div>
       )}
 
-      {task.status === 'done' && photoUrl && (
+      {(task.status === 'done' || task.status === 'pending_confirmation') && photoUrl && (
         <div className="task-detail-section">
           <h2>{t('taskDetail.completionPhoto')}</h2>
           <a href={photoUrl} target="_blank" rel="noreferrer">
@@ -427,8 +472,8 @@ export function TaskDetailPage() {
 
       {errorKey && <p className="form-error" role="alert">{t(errorKey)}</p>}
 
-      {task.status === 'open' ? (
-        <form className="form task-detail-section" onSubmit={handleComplete}>
+      {task.status === 'open' && (
+        <form className="form task-detail-section" onSubmit={handleReport}>
           <h2>{t('taskDetail.completionNote')}</h2>
           <textarea
             value={completionNote}
@@ -445,7 +490,29 @@ export function TaskDetailPage() {
             {busy ? t('taskDetail.completing') : t('taskDetail.completeButton')}
           </button>
         </form>
-      ) : (
+      )}
+
+      {task.status === 'pending_confirmation' && (
+        <div className="task-detail-section pending-confirmation-panel">
+          {user?.id === task.created_by ? (
+            <>
+              <p>{t('taskDetail.pendingConfirmationRequesterMessage', { name: nameFor(task.completed_by) })}</p>
+              <div className="pending-confirmation-actions">
+                <button type="button" className="btn btn-ghost" onClick={() => void handleReject()} disabled={busy}>
+                  {t('taskDetail.rejectButton')}
+                </button>
+                <button type="button" className="btn btn-primary" onClick={() => void handleConfirm()} disabled={busy}>
+                  {busy ? t('taskDetail.confirming') : t('taskDetail.confirmButton')}
+                </button>
+              </div>
+            </>
+          ) : (
+            <p>{t('taskDetail.pendingConfirmationWaitingMessage')}</p>
+          )}
+        </div>
+      )}
+
+      {task.status === 'done' && (
         <button
           type="button"
           className="btn btn-secondary btn-block"

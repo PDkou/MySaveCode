@@ -1,6 +1,6 @@
 import type { TaskRow } from '../types/database';
 
-export type TaskDisplayStatus = 'scheduled' | 'open' | 'done';
+export type TaskDisplayStatus = 'scheduled' | 'open' | 'pending_confirmation' | 'done' | 'failed';
 
 function isFutureDay(dateString: string): boolean {
   const date = new Date(dateString);
@@ -17,7 +17,7 @@ function isFutureDay(dateString: string): boolean {
 // never changes. Prefers the explicit starts_at when set; falls back to
 // due_at for tasks that never got a start date (most one-off tasks).
 export function displayStatusForTask(task: Pick<TaskRow, 'status' | 'starts_at' | 'due_at'>): TaskDisplayStatus {
-  if (task.status === 'done') return 'done';
+  if (task.status === 'done' || task.status === 'pending_confirmation' || task.status === 'failed') return task.status;
   if (task.starts_at) {
     return isFutureDay(task.starts_at) ? 'scheduled' : 'open';
   }
