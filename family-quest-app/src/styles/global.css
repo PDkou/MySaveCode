@@ -1876,6 +1876,16 @@ textarea {
   animation: backdropIn 0.15s ease both;
 }
 
+/* Used by SettingsModal while a child modal (EditNameModal/
+   FamilyMembersModal/PhotoCropModal) is open on top of it -- without this,
+   two stacked translucent .modal-backdrops double-dim the page and the
+   settings sheet visibly peeks out above the (usually shorter) child
+   sheet. visibility (not display: none) keeps layout/state intact so the
+   settings modal reappears instantly once the child closes. */
+.modal-backdrop-hidden {
+  visibility: hidden;
+}
+
 .modal {
   background: var(--card);
   border-radius: 26px 26px 0 0;
@@ -1903,10 +1913,27 @@ textarea {
   line-height: 1.5;
 }
 
+/* Sticky footer -- without this, a long modal (NewTaskModal's form in
+   particular: template picker, title, details, assignees, stake, two
+   date/time pickers, recurrence...) leaves its primary/cancel buttons
+   scrolled fully out of view on load, with no visible cue they exist below.
+   position: sticky resolves against .modal's own scrolling box regardless
+   of DOM nesting depth (e.g. NewTaskModal's .modal-actions sits inside its
+   <form>), so this applies uniformly without each modal needing to opt in.
+   Negative margins cancel .modal's own 24px padding so the bar spans full
+   width and sits flush against the true bottom edge; the safe-area inset
+   keeps it clear of the home-indicator area on notched phones. Harmless on
+   short modals that never scroll -- sticky simply never activates there. */
 .modal-actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+  position: sticky;
+  bottom: -24px;
+  margin: 4px -24px -24px;
+  padding: 12px 24px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--card);
+  border-top: 1px solid var(--border);
 }
 
 .modal-actions .btn {

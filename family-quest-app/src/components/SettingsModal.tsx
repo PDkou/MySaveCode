@@ -37,6 +37,15 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   const [codeCopied, setCodeCopied] = useState(false);
   const [showOnboardingPreview, setShowOnboardingPreview] = useState(false);
 
+  // EditNameModal/FamilyMembersModal/PhotoCropModal are only ever opened
+  // from here -- each renders its own .modal-backdrop, so having this
+  // modal's backdrop stay visible underneath stacked two translucent
+  // bottom sheets with double-dimmed backgrounds and this modal's own
+  // sheet visibly peeking out above the shorter child sheet. Hiding (not
+  // unmounting, so none of this modal's own local state resets) this
+  // modal's chrome while a child is open avoids that.
+  const childModalOpen = showEditName || showMembers || !!pendingPhotoFile;
+
   const currentName = useMemo(() => {
     if (!user) return '';
     return members.find((m) => m.user_id === user.id)?.display_name || profile?.display_name || '';
@@ -103,7 +112,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className={`modal-backdrop ${childModalOpen ? 'modal-backdrop-hidden' : ''}`} onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h2>{t('settings.heading')}</h2>
 
