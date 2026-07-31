@@ -323,6 +323,19 @@ create table if not exists public.quest_payouts (
 
 alter table public.quest_payouts add column if not exists assignment_mode text;
 alter table public.quest_payouts add column if not exists celebration_seen_at timestamptz;
+-- One-time backfill for the celebration_seen_at column above: every payout
+-- that already existed when this column was introduced got celebration_seen_at
+-- = null, which the client reads as "show the celebration screen for this."
+-- Without this, every family with completion history from before this
+-- feature shipped would get the celebration overlay replayed once per old
+-- payout on every visit until the whole backlog drained -- exactly the
+-- "완료했어요 keeps popping up every time I open the app" bug reported
+-- 2026-07-31. Bounded to a fixed cutoff (not now()) so this stays a
+-- one-time historical cleanup on re-runs, not something that could ever
+-- mark a genuinely new, not-yet-shown celebration as seen.
+update public.quest_payouts
+set celebration_seen_at = created_at
+where celebration_seen_at is null and created_at < '2026-08-01 00:00:00+00';
 do $$
 begin
   alter table public.quest_payouts add constraint quest_payouts_assignment_mode_check check (assignment_mode is null or assignment_mode in ('personal', 'specific', 'everyone', 'first_come'));

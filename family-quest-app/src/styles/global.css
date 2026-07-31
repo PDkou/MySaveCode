@@ -3126,7 +3126,7 @@ textarea {
   white-space: nowrap;
   padding: 4px 20px;
   border-style: solid;
-  border-width: 10px;
+  border-width: 8px;
   color: var(--navy);
   font-size: 13px;
   font-weight: 700;
@@ -3143,12 +3143,12 @@ textarea {
   object-fit: contain;
 }
 
-.title-frame-bronze { border-image: url('/titles/bronze.png') 90 fill / 10px / 0 stretch; }
-.title-frame-silver { border-image: url('/titles/silver.png') 90 fill / 10px / 0 stretch; }
-.title-frame-gold { border-image: url('/titles/gold.png') 90 fill / 10px / 0 stretch; }
-.title-frame-platinum { border-image: url('/titles/platinum.png') 90 fill / 10px / 0 stretch; }
-.title-frame-diamond { border-image: url('/titles/diamond.png') 90 fill / 10px / 0 stretch; }
-.title-frame-master { border-image: url('/titles/master.png') 90 fill / 10px / 0 stretch; }
+.title-frame-bronze { border-image: url('/titles/bronze.png') 90 fill / 8px / 0 stretch; }
+.title-frame-silver { border-image: url('/titles/silver.png') 90 fill / 8px / 0 stretch; }
+.title-frame-gold { border-image: url('/titles/gold.png') 90 fill / 8px / 0 stretch; }
+.title-frame-platinum { border-image: url('/titles/platinum.png') 90 fill / 8px / 0 stretch; }
+.title-frame-diamond { border-image: url('/titles/diamond.png') 90 fill / 8px / 0 stretch; }
+.title-frame-master { border-image: url('/titles/master.png') 90 fill / 8px / 0 stretch; }
 
 /* Only used if a title's tier is somehow null -- the old plain-pill look. */
 .title-frame-fallback {
