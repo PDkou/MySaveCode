@@ -45,6 +45,16 @@ export function TimePickerField({ value, onChange }: TimePickerFieldProps) {
       {open && (
         <div className="modal-backdrop" onClick={() => setOpen(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
+            {/* Direct typing as a fast path alongside the wheel below --
+                native <input type="time"> already speaks the same 'HH:MM'
+                shape draft is in, so no conversion needed either way. */}
+            <input
+              type="time"
+              className="time-picker-manual-input"
+              lang={lang}
+              value={draft}
+              onChange={(e) => e.target.value && setDraft(e.target.value)}
+            />
             <WheelTimePicker value={draft} onChange={setDraft} />
             <div className="modal-actions">
               <button type="button" className="btn btn-primary btn-block" onClick={confirm}>

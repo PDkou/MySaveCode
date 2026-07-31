@@ -370,10 +370,12 @@ export function DashboardPage() {
           </button>
         </div>
 
-        <label className="only-mine-toggle">
-          <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine(e.target.checked)} />
-          <span>{t('dashboard.onlyMine')}</span>
-        </label>
+        {members.length > 1 && (
+          <label className="only-mine-toggle">
+            <input type="checkbox" checked={onlyMine} onChange={(e) => setOnlyMine(e.target.checked)} />
+            <span>{t('dashboard.onlyMine')}</span>
+          </label>
+        )}
       </div>
 
       {selectMode && (

@@ -6,6 +6,7 @@ import { useTasks, InsufficientPointsError, StakeTooLowError } from '../context/
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import type { FamilyMember } from '../context/FamilyContext';
+import { todayDateTimeLocalValue } from '../lib/formatDate';
 import type { TaskRecurrence, TaskTemplateRow } from '../types/database';
 import { AssigneeCheckboxes } from './AssigneeCheckboxes';
 import { AssigneeLotteryButton } from './AssigneeLotteryButton';
@@ -29,18 +30,18 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
   const [details, setDetails] = useState('');
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
-  const [startsAt, setStartsAt] = useState('');
-  const [dueAt, setDueAt] = useState('');
+  const [startsAt, setStartsAt] = useState(todayDateTimeLocalValue());
+  const [dueAt, setDueAt] = useState(todayDateTimeLocalValue());
   const [recurrence, setRecurrence] = useState<TaskRecurrence>('none');
   const [recurrenceWeekdays, setRecurrenceWeekdays] = useState<number[]>([]);
   const [stakePoints, setStakePoints] = useState('10');
   const [submitting, setSubmitting] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
 
-  // Staking doesn't mean anything in a 1-member personal room -- there's no
-  // one else who could ever fulfill a request -- so the field is hidden
-  // there and create_task ignores whatever would've been sent anyway.
-  const stakingApplies = members.length > 1;
+  // Staking and assignee-picking don't mean anything in a 1-member personal
+  // room -- there's no one else who could ever fulfill a request -- so both
+  // are hidden there and create_task ignores whatever would've been sent anyway.
+  const hasOtherMembers = members.length > 1;
   const myBalance = user ? members.find((m) => m.user_id === user.id)?.points ?? 0 : 0;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -49,10 +50,10 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
       setErrorKey('taskForm.error.titleRequired');
       return;
     }
-    const stakeValue = stakingApplies ? Math.max(0, Math.floor(Number(stakePoints) || 0)) : 0;
+    const stakeValue = hasOtherMembers ? Math.max(0, Math.floor(Number(stakePoints) || 0)) : 0;
     // No free quests in a shared room -- create_task enforces this too, but
     // catching it here avoids a round trip for the common typo/empty-field case.
-    if (stakingApplies && stakeValue < 5) {
+    if (hasOtherMembers && stakeValue < 5) {
       setErrorKey('taskForm.error.stakeTooLow');
       return;
     }
@@ -131,31 +132,33 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
             />
           </label>
 
-          <div className="field">
-            <div className="field-label-row">
-              <span>{t('taskForm.assignedTo')}</span>
-              <AssigneeLotteryButton
+          {hasOtherMembers && (
+            <div className="field">
+              <div className="field-label-row">
+                <span>{t('taskForm.assignedTo')}</span>
+                <AssigneeLotteryButton
+                  members={members}
+                  onHighlightChange={setHighlightedId}
+                  onPick={(userId) => setAssigneeIds([userId])}
+                />
+              </div>
+              <AssigneeCheckboxes
                 members={members}
-                onHighlightChange={setHighlightedId}
-                onPick={(userId) => setAssigneeIds([userId])}
+                selectedIds={assigneeIds}
+                onChange={setAssigneeIds}
+                highlightedId={highlightedId}
               />
+              <p className="field-hint">
+                {assigneeIds.length === 0
+                  ? t('taskForm.assigneeHintFirstCome')
+                  : assigneeIds.length === members.length
+                    ? t('taskForm.assigneeHintEveryone')
+                    : t('taskForm.assigneeHintSpecific')}
+              </p>
             </div>
-            <AssigneeCheckboxes
-              members={members}
-              selectedIds={assigneeIds}
-              onChange={setAssigneeIds}
-              highlightedId={highlightedId}
-            />
-            <p className="field-hint">
-              {assigneeIds.length === 0
-                ? t('taskForm.assigneeHintFirstCome')
-                : assigneeIds.length === members.length
-                  ? t('taskForm.assigneeHintEveryone')
-                  : t('taskForm.assigneeHintSpecific')}
-            </p>
-          </div>
+          )}
 
-          {stakingApplies && (
+          {hasOtherMembers && (
             <label className="field">
               <span>{t('taskForm.stakePoints')}</span>
               <input

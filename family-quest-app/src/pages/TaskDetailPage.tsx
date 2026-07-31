@@ -76,6 +76,11 @@ export function TaskDetailPage() {
     };
   }, [task?.completion_photo_path]);
 
+  // Assignee-picking doesn't mean anything in a 1-member personal room --
+  // there's no one else who could ever fulfill a request -- so the field is
+  // hidden there, matching NewTaskModal.
+  const hasOtherMembers = members.length > 1;
+
   const assigneeLabel = useMemo(() => {
     if (assigneeIds.length === 0) return t('dashboard.unassigned');
     if (assigneeIds.length > 1 && assigneeIds.length === members.length) return t('taskForm.everyone');
@@ -260,22 +265,24 @@ export function TaskDetailPage() {
             />
           </label>
 
-          <div className="field">
-            <div className="field-label-row">
-              <span>{t('taskForm.assignedTo')}</span>
-              <AssigneeLotteryButton
+          {hasOtherMembers && (
+            <div className="field">
+              <div className="field-label-row">
+                <span>{t('taskForm.assignedTo')}</span>
+                <AssigneeLotteryButton
+                  members={members}
+                  onHighlightChange={setEditHighlightedId}
+                  onPick={(userId) => setEditAssigneeIds([userId])}
+                />
+              </div>
+              <AssigneeCheckboxes
                 members={members}
-                onHighlightChange={setEditHighlightedId}
-                onPick={(userId) => setEditAssigneeIds([userId])}
+                selectedIds={editAssigneeIds}
+                onChange={setEditAssigneeIds}
+                highlightedId={editHighlightedId}
               />
             </div>
-            <AssigneeCheckboxes
-              members={members}
-              selectedIds={editAssigneeIds}
-              onChange={setEditAssigneeIds}
-              highlightedId={editHighlightedId}
-            />
-          </div>
+          )}
 
           <div className="field">
             <span>{t('taskForm.startsAt')}</span>

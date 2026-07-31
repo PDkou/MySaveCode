@@ -390,6 +390,12 @@ a {
 
 /* ---------- Wheel time picker ---------- */
 
+.time-picker-manual-input {
+  margin-bottom: 10px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 .wheel-time-picker {
   position: relative;
   display: flex;
