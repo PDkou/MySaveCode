@@ -48,76 +48,78 @@ Node의 zlib만으로 PNG를 픽셀 단위로 직접 그려서 만든 임시 아
 
 ## AI 이미지 생성 프롬프트
 
-레퍼런스 시트 맨 위의 "FAMILY QUEST" 로고 타이포가 이미 이 앱의 브랜드 방향을 정확히 보여줍니다 —
-아래는 그 로고를 그대로 재생성하는 프롬프트와, 앱 아이콘처럼 작은 크기에서 쓸 심볼 단독 버전
-프롬프트입니다. `design/character-art.md`/`gamification-iconography.md`와 동일한 스타일 고정
-문단을 앞에 붙여서 씁니다.
+레퍼런스 시트 맨 위의 "FAMILY QUEST" 로고 타이포가 이미 이 앱의 브랜드 방향을 정확히 보여줍니다 -- 아래는 그 로고를 그대로 재생성하는 프롬프트와, 앱 아이콘처럼 작은 크기에서 쓸 심볼 단독 버전 프롬프트입니다. `design/character-art.md`/`gamification-iconography.md`와 동일한 스타일 고정 문단을 앞에 붙여서 씁니다.
 
-### 문서를 통째로 넘길 때 반드시 같이 줄 지시문 (중요)
+"집" 모티프 대신 **방패 + 체크마크**로 방향을 확정했습니다 -- 방패는 레퍼런스 시트 아이콘 줄에 이미 있는 아이템(방패 코스메틱과 동일 그림체 재사용 가능)이라 캐릭터 아트와도 자연스럽게 이어지고, "지켜낸다"는 신뢰감과 "완료했다"는 성취감을 동시에 표현해서 가족/개인/회사 어디에 붙여도 어색하지 않습니다.
 
-문서 링크나 내용만 던지면 GPT가 표를 한 줄씩 정확히 실행하지 않고 "전체 분위기"만 캐치해서 표에
-없는 아이템을 자유롭게 섞어 넣는 경우가 실제로 있었습니다. 문서와 함께 아래 지시문을 반드시 같이
-붙여넣으세요 (`design/` 아래 다른 문서에도 동일하게 들어 있는 지시문입니다):
+### GPT에 넣는 방법 (중요 -- 표를 통째로 주지 마세요)
 
-> This document contains one or more tables of image assets to generate. Treat each table row
-> as exactly one separate image — one row = one image, no more, no fewer. For each row, use
-> ONLY the exact text in the "Subject" column combined with the style-lock paragraph below;
-> do not invent, add, or substitute any item, character, or detail that is not explicitly in
-> that row's Subject text or the style-lock paragraph. Do not skip rows, merge multiple rows
-> into one image, or add extra "bonus" items beyond what the table lists. Go through the rows
-> in the order they appear, generate one image per row, and label each image with that row's
-> item name (leftmost column).
+전에는 스타일 고정 문단 + "한 줄 = 한 이미지" 지시문 + 표 전체를 한 번에 던졌는데, 그렇게 해도
+GPT가 표를 정확히 한 줄씩 순회하지 못하고 항목을 섞거나(임의로 다른 아이템을 합성) 빼먹거나
+없는 항목을 추가하는 일이 반복됐습니다. 표 자체를 읽고 실행하는 걸 맡기는 방식이 근본 원인이라
+판단해서, 아래는 **항목마다 이미 완성된 프롬프트 하나씩**으로 미리 다 풀어놨습니다.
 
-### 스타일 고정 (모든 프롬프트 맨 앞에 그대로 붙여넣기)
-
-> 16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
-> Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
-> limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
-> uniform black pixel outline around every shape (~2px at a 32-64px base resolution) — hard
-> pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
-> (one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
-> Flat cel-shading with exactly 3 tones per surface — one base tone, one lighter highlight
-> tone (upper-left), one darker shadow tone (lower-right) — single consistent light source
-> from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
-> violent, sharp, or scary — toy-like and family-friendly even for "weapon" items (they are
-> pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
-> 64x64px) then upscale with nearest-neighbor/no smoothing to the final export size — must
-> look like true pixel art up close, not a smooth illustration pretending to be pixelated.
-> Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
-> a set must share identical outline weight, shading logic, and proportions so the full set
-> reads as one unified sprite sheet.
+사용법:
+1. 아래에서 만들고 싶은 항목의 코드 블록 하나를 통째로 복사합니다.
+2. **새 메시지로, 항목 하나당 하나씩** GPT에 붙여넣습니다 (표나 문서 전체를 붙여넣지 않기 -- 한
+   번에 여러 항목을 요청할수록 섞일 확률이 올라갑니다).
+3. 레퍼런스 시트 이미지를 첨부할 수 있는 도구라면 매 요청마다 같이 첨부하세요.
+4. 그래도 결과물에 요청 안 한 요소가 섞여 있으면, 그 이미지는 버리고 같은 프롬프트로 새 대화를
+   시작해서 다시 시도하세요 (같은 대화 안에서 재시도하면 이전에 잘못 만든 결과에 이어서 또 섞는
+   경우가 있었습니다).
 
 ### 전체 로고 타이포 (마케팅용, 실제 앱 아이콘엔 아래 심볼 단독 버전을 씀)
 
-Subject:
+**1. FAMILY QUEST 로고 타이포**
 
-> A pixel-art game logotype reading "FAMILY QUEST" in two words. Chunky, rounded 16-bit
-> pixel-art bitmap font, thick black outline around every letter. The word "FAMILY" uses a
-> warm gradient fill from bright yellow at the top to orange to reddish-brown at the bottom
-> of each letter, in flat pixel-banded steps (not a smooth gradient). Between the two words,
-> a small pixel-art sword icon (short blade, simple hilt, same sword as the "weapon" slot
-> asset) tilted diagonally. The word "QUEST" uses a cool gradient fill from pale sky blue at
-> the top to medium blue at the bottom of each letter, same flat pixel-banded style. A small
-> 4-point pixel sparkle/star sits after the word QUEST. White or transparent background,
-> centered horizontal lockup, no additional decoration.
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
 
-### 심볼 단독 버전 (192/512/apple-touch/배지 96px에 쓰는 실제 앱 아이콘) — 방패 + 체크마크
+Subject: A pixel-art game logotype reading "FAMILY QUEST" in two words. Chunky, rounded 16-bit pixel-art bitmap font, thick black outline around every letter. The word "FAMILY" uses a warm gradient fill from bright yellow at the top to orange to reddish-brown at the bottom of each letter, in flat pixel-banded steps (not a smooth gradient). Between the two words, a small pixel-art sword icon (short blade, simple hilt, same sword as the "weapon" slot asset) tilted diagonally. The word "QUEST" uses a cool gradient fill from pale sky blue at the top to medium blue at the bottom of each letter, same flat pixel-banded style. A small 4-point pixel sparkle/star sits after the word QUEST. White or transparent background, centered horizontal lockup, no additional decoration.
 
-로고 텍스트는 작은 사이즈(48px 이하)에서 읽히지 않으니, 텍스트 없는 단독 심볼이 필요합니다. "집"
-모티프 대신 **방패 + 체크마크**로 확정 — 가족/개인/회사방 어디에도 자연스럽고, 레퍼런스 시트의
-방패 아이콘과 같은 그림체를 재사용해서 캐릭터 아트(`character-art.md`의 shield 슬롯)와도 통일감이
-생깁니다.
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
 
-Subject:
+### 심볼 단독 버전 (192/512/apple-touch/배지 96px에 쓰는 실제 앱 아이콘) -- 방패 + 체크마크
 
-> A single square app-icon symbol with no text: a small pixel-art shield (round-top,
-> wood-and-metal color scheme, same shield used in the "shield" cosmetic slot) with a bold
-> pixel checkmark inside it, in the same 16-bit chibi pixel style — bold black outline, flat
-> cel-shaded colors, warm gold/bronze rim on the shield with a bright green checkmark (same
-> green as the "EQUIP" button and checkmark icon in the reference sheet), centered on a solid
-> rounded-square navy background (#182640, matching the app's existing icon background and
-> `theme-color` meta tag) with generous padding from the edges so it still reads clearly at
-> 48x48px.
+**2. 앱 아이콘 심볼 (방패+체크마크)**
 
-이 심볼이 나오면 `scripts/generate-icons.cjs`의 손그림 로직 대신 이 이미지를 192/512/apple-touch/
-96(배지)로 리사이즈해서 넣으면 됩니다 — 리사이즈 파이프라인 자체는 그대로 재사용 가능.
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A single square app-icon symbol with no text: a small pixel-art shield (round-top, wood-and-metal color scheme, same shield used in the "shield" cosmetic slot) with a bold pixel checkmark inside it, in the same 16-bit chibi pixel style -- bold black outline, flat cel-shaded colors, warm gold/bronze rim on the shield with a bright green checkmark (same green as the "EQUIP" button and checkmark icon in the reference sheet), centered on a solid rounded-square navy background (#182640, matching the app's existing icon background and theme-color meta tag) with generous padding from the edges so it still reads clearly at 48x48px.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+이 심볼이 나오면 `scripts/generate-icons.cjs`의 손그림 로직 대신 이 이미지를 192/512/apple-touch/96(배지)로 리사이즈해서 넣으면 됩니다 -- 리사이즈 파이프라인 자체는 그대로 재사용 가능.

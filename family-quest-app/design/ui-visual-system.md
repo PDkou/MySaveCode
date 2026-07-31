@@ -45,73 +45,328 @@
 
 ## AI 이미지 생성 프롬프트
 
-`design/character-art.md`/`gamification-iconography.md`/`branding-app-icon.md`와 동일한 스타일
-고정 문단을 그대로 씁니다.
+`design/character-art.md`/`gamification-iconography.md`/`branding-app-icon.md`와 동일한 스타일 고정 문단을 그대로 씁니다.
 
-### 문서를 통째로 넘길 때 반드시 같이 줄 지시문 (중요)
+### GPT에 넣는 방법 (중요 -- 표를 통째로 주지 마세요)
 
-문서 링크나 내용만 던지면 GPT가 표를 한 줄씩 정확히 실행하지 않고 "전체 분위기"만 캐치해서 표에
-없는 아이템을 자유롭게 섞어 넣는 경우가 실제로 있었습니다. 문서와 함께 아래 지시문을 반드시 같이
-붙여넣으세요 (`design/` 아래 다른 문서에도 동일하게 들어 있는 지시문입니다):
+전에는 스타일 고정 문단 + "한 줄 = 한 이미지" 지시문 + 표 전체를 한 번에 던졌는데, 그렇게 해도
+GPT가 표를 정확히 한 줄씩 순회하지 못하고 항목을 섞거나(임의로 다른 아이템을 합성) 빼먹거나
+없는 항목을 추가하는 일이 반복됐습니다. 표 자체를 읽고 실행하는 걸 맡기는 방식이 근본 원인이라
+판단해서, 아래는 **항목마다 이미 완성된 프롬프트 하나씩**으로 미리 다 풀어놨습니다.
 
-> This document contains one or more tables of image assets to generate. Treat each table row
-> as exactly one separate image — one row = one image, no more, no fewer. For each row, use
-> ONLY the exact text in the "Subject" column combined with the style-lock paragraph below;
-> do not invent, add, or substitute any item, character, or detail that is not explicitly in
-> that row's Subject text or the style-lock paragraph. Do not skip rows, merge multiple rows
-> into one image, or add extra "bonus" items beyond what the table lists. Go through the rows
-> in the order they appear, generate one image per row, and label each image with that row's
-> item name (leftmost column).
-
-### 스타일 고정 (모든 프롬프트 맨 앞에 그대로 붙여넣기)
-
-> 16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
-> Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
-> limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
-> uniform black pixel outline around every shape (~2px at a 32-64px base resolution) — hard
-> pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
-> (one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
-> Flat cel-shading with exactly 3 tones per surface — one base tone, one lighter highlight
-> tone (upper-left), one darker shadow tone (lower-right) — single consistent light source
-> from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
-> violent, sharp, or scary — toy-like and family-friendly even for "weapon" items (they are
-> pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
-> 64x64px) then upscale with nearest-neighbor/no smoothing to the final export size — must
-> look like true pixel art up close, not a smooth illustration pretending to be pixelated.
-> Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
-> a set must share identical outline weight, shading logic, and proportions so the full set
-> reads as one unified sprite sheet.
+사용법:
+1. 아래에서 만들고 싶은 항목의 코드 블록 하나를 통째로 복사합니다.
+2. **새 메시지로, 항목 하나당 하나씩** GPT에 붙여넣습니다 (표나 문서 전체를 붙여넣지 않기 -- 한
+   번에 여러 항목을 요청할수록 섞일 확률이 올라갑니다).
+3. 레퍼런스 시트 이미지를 첨부할 수 있는 도구라면 매 요청마다 같이 첨부하세요.
+4. 그래도 결과물에 요청 안 한 요소가 섞여 있으면, 그 이미지는 버리고 같은 프롬프트로 새 대화를
+   시작해서 다시 시도하세요 (같은 대화 안에서 재시도하면 이전에 잘못 만든 결과에 이어서 또 섞는
+   경우가 있었습니다).
 
 ### 빈 상태(Empty State) 일러스트 3종
 
-| 상황 | Subject |
-|---|---|
-| 퀘스트 없음 | A small pixel-art empty wooden quest-board / signpost with a blank sheet of paper pinned to it, calm and friendly mood, roughly square composition, small enough to sit above one line of text in a mobile app. |
-| 검색 결과 없음 | A small chibi magnifying glass icon with a puzzled expression drawn using the same simple round dot-eye style, looking at empty space. |
-| 사진 없음 | A small pixel-art picture frame icon, empty/blank canvas inside, simple standing easel shape. |
+**1. 퀘스트 없음**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A small pixel-art empty wooden quest-board / signpost with a blank sheet of paper pinned to it, calm and friendly mood, roughly square composition, small enough to sit above one line of text in a mobile app.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+**2. 검색 결과 없음**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A small chibi magnifying glass icon with a puzzled expression drawn using the same simple round dot-eye style, looking at empty space.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+**3. 사진 없음**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A small pixel-art picture frame icon, empty/blank canvas inside, simple standing easel shape.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
 
 ### 상점 상태 아이콘 3종 (레퍼런스 시트 하단 아이콘 줄과 동일한 그림체)
 
-| 상태 | Subject |
-|---|---|
-| 잠김 | A small closed padlock icon, matches the gray padlock icon in the reference sheet, simple keyhole detail. |
-| 보유 중(체크) | A small green checkmark icon inside a rounded badge, matches the green checkmark icon in the reference sheet. |
-| 장착 버튼 | A small pixel-style button asset with the label area left blank for text overlay, green rounded-rectangle pill shape with a thick black outline and a lighter green highlight band along the top edge — matches the "EQUIP" button in the reference sheet exactly. Make a second variant in gray/red tone for the "해제/UNEQUIP" state. |
+**4. 잠김**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A small closed padlock icon, matches the gray padlock icon in the reference sheet, simple keyhole detail.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+**5. 보유 중(체크)**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A small green checkmark icon inside a rounded badge, matches the green checkmark icon in the reference sheet.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+**6. 장착 버튼 (초록)**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A small pixel-style button asset with the label area left blank for text overlay, green rounded-rectangle pill shape with a thick black outline and a lighter green highlight band along the top edge -- matches the "EQUIP" button in the reference sheet exactly.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+**7. 해제 버튼 (회색/빨강)**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A small pixel-style button asset with the label area left blank for text overlay, same rounded-rectangle pill shape and thick black outline as the EQUIP button, but in a gray/red tone instead of green, for a "해제/UNEQUIP" (unequip) state.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
 
 ### 온보딩 일러스트
 
-Subject:
+**8. 첫 실행 환영 장면**
 
-> A simple welcoming pixel-art scene for a first-launch screen: a small chibi family group
-> (2-3 characters in the app's mascot style, mixing a couple of the outfit/hair variants from
-> the character-art set) standing together next to a quest signpost, warm daytime background
-> (reuse the daytime tree backdrop from the background-slot assets), inviting and cozy mood.
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A simple welcoming pixel-art scene for a first-launch screen: a small chibi family group (2-3 characters in the app's mascot style, mixing a couple of the outfit/hair variants from the character-art set) standing together next to a quest signpost, warm daytime background (reuse the daytime tree backdrop from the background-slot assets), inviting and cozy mood.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
 
 ### 컨페티 조각 4종 (완료 축하 연출용)
 
-| 조각 | Subject |
-|---|---|
-| 금화 | A tiny gold coin sprite (reuse the currency coin icon from `gamification-iconography.md`), sized small enough to scatter as a falling particle. |
-| 보석 | A tiny blue gem sprite (reuse the XP gem icon), same small particle scale. |
-| 별 | A tiny gold sparkle/star sprite (reuse the accessory2 star icon from `character-art.md`). |
-| 리본 조각 | A tiny colored ribbon/confetti square piece, flat single-color pixel square with a thin black outline, in 3-4 alternate accent colors matching the app's theme colors (purple/pink/blue/green/orange). |
+**9. 금화**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A tiny gold coin sprite (reuse the currency coin icon from gamification-iconography.md), sized small enough to scatter as a falling particle.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+**10. 보석**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A tiny blue gem sprite (reuse the XP gem icon from gamification-iconography.md), same small particle scale.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+**11. 별**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A tiny gold sparkle/star sprite (reuse the accessory2 star icon from character-art.md).
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+**12. 리본 조각 (퍼플)**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A tiny colored ribbon/confetti square piece, flat single-color pixel square with a thin black outline, filled with the app's purple theme accent color. (This same shape gets recolored into pink/blue/green/orange variants separately, matching the app's other theme accent colors -- generate one square per color as its own image.)
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
