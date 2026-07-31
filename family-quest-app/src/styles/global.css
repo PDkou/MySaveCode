@@ -3124,11 +3124,11 @@ textarea {
   justify-content: center;
   gap: 8px;
   white-space: nowrap;
-  padding: 6px 20px;
+  padding: 4px 20px;
   border-style: solid;
-  border-width: 22px;
+  border-width: 14px;
   color: var(--navy);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -3138,17 +3138,17 @@ textarea {
    icon stuck in front of it. */
 .title-frame-badge {
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   object-fit: contain;
 }
 
-.title-frame-bronze { border-image: url('/titles/bronze.png') 90 fill / 22px / 0 stretch; }
-.title-frame-silver { border-image: url('/titles/silver.png') 90 fill / 22px / 0 stretch; }
-.title-frame-gold { border-image: url('/titles/gold.png') 90 fill / 22px / 0 stretch; }
-.title-frame-platinum { border-image: url('/titles/platinum.png') 90 fill / 22px / 0 stretch; }
-.title-frame-diamond { border-image: url('/titles/diamond.png') 90 fill / 22px / 0 stretch; }
-.title-frame-master { border-image: url('/titles/master.png') 90 fill / 22px / 0 stretch; }
+.title-frame-bronze { border-image: url('/titles/bronze.png') 90 fill / 14px / 0 stretch; }
+.title-frame-silver { border-image: url('/titles/silver.png') 90 fill / 14px / 0 stretch; }
+.title-frame-gold { border-image: url('/titles/gold.png') 90 fill / 14px / 0 stretch; }
+.title-frame-platinum { border-image: url('/titles/platinum.png') 90 fill / 14px / 0 stretch; }
+.title-frame-diamond { border-image: url('/titles/diamond.png') 90 fill / 14px / 0 stretch; }
+.title-frame-master { border-image: url('/titles/master.png') 90 fill / 14px / 0 stretch; }
 
 /* Only used if a title's tier is somehow null -- the old plain-pill look. */
 .title-frame-fallback {
