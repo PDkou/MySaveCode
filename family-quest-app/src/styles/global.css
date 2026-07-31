@@ -1358,19 +1358,19 @@ textarea {
 
 /* align-self: stretch, not flex-start -- the user wanted this widened to
    close to the full header width instead of hugging its own content
-   width (2026-07-30 feedback). */
+   width (2026-07-30 feedback).
+   No border/background/pill of its own (2026-08-01 feedback) -- the badge
+   icon and the title's own .title-frame already carry plenty of visual
+   weight; wrapping them in another rounded pill on top just read as "a
+   frame inside a frame." This is a plain layout container now. */
 .dashboard-equipped-chip {
   display: flex;
   align-items: center;
   gap: 6px;
   align-self: stretch;
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--purple);
-  background: color-mix(in srgb, var(--purple) 8%, var(--bg));
-  color: var(--purple);
-  font-size: 12px;
-  font-weight: 700;
+  padding: 4px 0;
+  border: none;
+  background: none;
   cursor: pointer;
 }
 
