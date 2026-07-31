@@ -1540,6 +1540,12 @@ textarea {
   padding: 0;
 }
 
+.empty-state-illustration {
+  width: 96px;
+  height: auto;
+  object-fit: contain;
+}
+
 .spinner-wrap {
   display: flex;
   flex-direction: column;
@@ -2258,7 +2264,7 @@ textarea {
 .confetti-piece {
   position: absolute;
   top: -10px;
-  border-radius: 2px;
+  height: auto;
   opacity: 0.9;
   animation-name: confettiFall;
   animation-timing-function: ease-in;
@@ -3177,9 +3183,50 @@ textarea {
 }
 
 .shop-item-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12px;
   color: var(--muted);
   padding: 4px 10px;
+}
+
+.shop-item-locked-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+/* Pixel-art equip/unequip buttons (design/ui-visual-system.md) -- fixed
+   size rather than stretched like .title-frame, since these sit at a
+   uniform width in every shop row (no variable-length content to fit). */
+.shop-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 30px;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.shop-action-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.shop-action-btn-equip {
+  background-image: url('/shop/equip-button.png');
+}
+
+.shop-action-btn-unequip {
+  background-image: url('/shop/unequip-button.png');
 }
 
 .shop-slot-tabs {
@@ -3229,6 +3276,7 @@ textarea {
 }
 
 .shop-item-sprite {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3237,6 +3285,15 @@ textarea {
   height: 28px;
   border-radius: 8px;
   flex-shrink: 0;
+}
+
+.shop-item-owned-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
 }
 
 .shop-item-name {
