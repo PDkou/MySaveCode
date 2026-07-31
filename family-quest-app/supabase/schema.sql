@@ -34,6 +34,7 @@
 --  24. Remaining 52 titles (13-2 draft, minus 6 dropped as too ambiguous)
 --  25. Revived titles (the 6 dropped from section 24)
 --  26. Quest expiration (overdue -> failed, stake refund, 3-day auto-delete)
+--  27. Title tiers (bronze/silver/gold/platinum/diamond/master frames)
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -4159,6 +4160,105 @@ begin
 exception when others then
   raise notice 'pg_cron not enabled -- could not schedule sweep_expired_tasks automatically. Enable pg_cron from Database > Extensions in the Supabase dashboard, then run: select cron.schedule(''sweep-expired-tasks'', ''0 * * * *'', ''select public.sweep_expired_tasks();'');';
 end $$;
+
+-- -----------------------------------------------------------------------------
+-- 27. Title tiers (bronze/silver/gold/platinum/diamond/master frames)
+--
+-- design/title-tiers.md has the full reasoning: every title's real
+-- grant_title() condition (completion counts, time windows, streaks) was
+-- pulled from this file and ranked into 6 tiers. This column is purely
+-- cosmetic (which frame image to show around the title text client-side,
+-- see public/titles/{tier}.png) -- it has no effect on unlock conditions,
+-- which are unchanged.
+-- -----------------------------------------------------------------------------
+
+alter table public.shop_items add column if not exists tier text;
+
+alter table public.shop_items drop constraint if exists shop_items_tier_check;
+alter table public.shop_items add constraint shop_items_tier_check
+  check (tier is null or tier in ('bronze', 'silver', 'gold', 'platinum', 'diamond', 'master'));
+
+update public.shop_items si
+set tier = v.tier
+from (values
+  ('specific_first', 'bronze'),
+  ('all_rounder', 'bronze'),
+  ('midnight_promise', 'bronze'),
+  ('specific_ten', 'silver'),
+  ('touch_of_midnight', 'silver'),
+  ('plenty_to_spare', 'silver'),
+  ('second_chance', 'silver'),
+  ('comment_master', 'silver'),
+  ('trust_refill', 'silver'),
+  ('specific_fifty', 'gold'),
+  ('big_spender_stake', 'gold'),
+  ('quick_response', 'gold'),
+  ('dawn_delivery', 'gold'),
+  ('photo_chronicler', 'gold'),
+  ('specific_hundred', 'platinum'),
+  ('assigned_specialist', 'platinum'),
+  ('regular_patron', 'platinum'),
+  ('specific_three_hundred', 'diamond'),
+  ('specific_five_hundred', 'master'),
+  ('generous_heart', 'silver'),
+  ('everyone_first', 'bronze'),
+  ('cleaning_crew', 'bronze'),
+  ('office_harmony', 'bronze'),
+  ('festival_night', 'bronze'),
+  ('everyone_ten', 'silver'),
+  ('full_house', 'silver'),
+  ('one_team_spirit', 'silver'),
+  ('textbook_teamwork', 'silver'),
+  ('harmony_token', 'silver'),
+  ('everyone_twenty_five', 'gold'),
+  ('everyone_fifty', 'gold'),
+  ('deep_clean_day', 'gold'),
+  ('friendly_neighbor', 'gold'),
+  ('reliable_backup', 'gold'),
+  ('everyone_hundred', 'platinum'),
+  ('together_streak', 'platinum'),
+  ('together_now', 'platinum'),
+  ('house_champion', 'diamond'),
+  ('solidarity', 'master'),
+  ('first_come_first', 'bronze'),
+  ('quick_draw', 'bronze'),
+  ('dawn_chaser', 'bronze'),
+  ('birthday_gift', 'bronze'),
+  ('first_come_ten', 'silver'),
+  ('sharp_eyed', 'silver'),
+  ('early_bird_hunter', 'silver'),
+  ('true_competitor', 'silver'),
+  ('always_ahead_fc', 'silver'),
+  ('first_come_twenty', 'gold'),
+  ('first_come_fifty', 'gold'),
+  ('first_come_twenty_five', 'gold'),
+  ('bounty_hunter', 'gold'),
+  ('cutting_it_close', 'gold'),
+  ('first_come_hundred', 'platinum'),
+  ('first_come_points_200', 'diamond'),
+  ('unbeaten_streak', 'master'),
+  ('newcomer', 'bronze'),
+  ('xp_1000', 'bronze'),
+  ('boss', 'bronze'),
+  ('notification_maniac', 'bronze'),
+  ('night_login', 'bronze'),
+  ('settler', 'silver'),
+  ('level_10', 'silver'),
+  ('shop_regular', 'silver'),
+  ('diligent_farmer', 'silver'),
+  ('social_butterfly', 'silver'),
+  ('my_space', 'silver'),
+  ('hundred_days', 'gold'),
+  ('big_spender_shop', 'gold'),
+  ('fashionista', 'gold'),
+  ('thrifty', 'gold'),
+  ('chatterbox', 'gold'),
+  ('photo_album_rich', 'gold'),
+  ('invite_king', 'gold'),
+  ('level_30', 'platinum'),
+  ('tycoon_maxed', 'diamond')
+) as v(key, tier)
+where si.key = v.key;
 
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification

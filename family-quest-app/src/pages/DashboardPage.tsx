@@ -20,11 +20,12 @@ import { CharacterSprite } from '../components/CharacterSprite';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
 import { CelebrationOverlay } from '../components/CelebrationOverlay';
+import { TitleFrame } from '../components/TitleFrame';
 import { useUnseenCelebration } from '../hooks/useUnseenCelebration';
 import { startOfThisWeek } from '../lib/formatDate';
 import { BADGE_ICON_SRC, levelForPoints, pointsIntoLevel, pointsNeededForLevel } from '../lib/gamification';
 import { getEquippedItems, getShopItems, shopItemDisplayName } from '../lib/shop';
-import type { BadgeKey, CharacterSlot } from '../types/database';
+import type { BadgeKey, CharacterSlot, TitleTier } from '../types/database';
 
 type Filter = 'open' | 'done' | 'all';
 
@@ -56,7 +57,7 @@ export function DashboardPage() {
   // sprite come from shop_items/member_equipped_items instead -- refetched
   // below whenever MyStatsModal (titles) or CharacterShopModal (cosmetics)
   // closes, since those are the only places equips change.
-  const [equippedTitleName, setEquippedTitleName] = useState<string | null>(null);
+  const [equippedTitle, setEquippedTitle] = useState<{ name: string; tier: TitleTier | null } | null>(null);
   const [equippedSprite, setEquippedSprite] = useState<Partial<Record<CharacterSlot, string>>>({});
   const userId = user?.id;
   const familyId = family?.id;
@@ -67,24 +68,24 @@ export function DashboardPage() {
 
   const loadEquipped = async () => {
     if (!userId || !familyId) {
-      setEquippedTitleName(null);
+      setEquippedTitle(null);
       setEquippedSprite({});
       return;
     }
     const [items, equipped] = await Promise.all([getShopItems(), getEquippedItems(userId, familyId)]);
     const itemsById = new Map(items.map((i) => [i.id, i]));
     const sprite: Partial<Record<CharacterSlot, string>> = {};
-    let titleName: string | null = null;
+    let title: { name: string; tier: TitleTier | null } | null = null;
     for (const e of equipped) {
       const item = itemsById.get(e.item_id);
       if (!item) continue;
       if (e.slot === 'title') {
-        titleName = shopItemDisplayName(item, i18n.language);
+        title = { name: shopItemDisplayName(item, i18n.language), tier: item.tier };
       } else if (item.sprite_key) {
         sprite[e.slot] = item.sprite_key;
       }
     }
-    setEquippedTitleName(titleName);
+    setEquippedTitle(title);
     setEquippedSprite(sprite);
   };
 
@@ -320,7 +321,7 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {me && (equippedTitleName || me.equipped_badge_key) && (
+        {me && (equippedTitle || me.equipped_badge_key) && (
           <button type="button" className="dashboard-equipped-chip" onClick={() => setShowStats(true)}>
             {me.equipped_badge_key && (
               <img
@@ -330,7 +331,11 @@ export function DashboardPage() {
                 aria-hidden="true"
               />
             )}
-            {equippedTitleName && <span className="dashboard-equipped-title">{equippedTitleName}</span>}
+            {equippedTitle && (
+              <TitleFrame tier={equippedTitle.tier}>
+                <span className="dashboard-equipped-title">{equippedTitle.name}</span>
+              </TitleFrame>
+            )}
           </button>
         )}
       </div>

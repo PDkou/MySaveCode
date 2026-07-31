@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { CharacterSprite } from './CharacterSprite';
+import { TitleFrame } from './TitleFrame';
 import { BADGE_ICON_SRC } from '../lib/gamification';
 import {
   ShopActionError,
@@ -87,11 +88,11 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
     }
     return preview;
   }, [equippedBySlot, itemsById]);
-  const equippedTitleName = useMemo(() => {
+  const equippedTitleItem = useMemo(() => {
     const titleItemId = equippedBySlot.get('title');
-    const titleItem = titleItemId ? itemsById.get(titleItemId) : undefined;
-    return titleItem ? shopItemDisplayName(titleItem, i18n.language) : null;
-  }, [equippedBySlot, itemsById, i18n.language]);
+    return titleItemId ? itemsById.get(titleItemId) ?? null : null;
+  }, [equippedBySlot, itemsById]);
+  const equippedTitleName = equippedTitleItem ? shopItemDisplayName(equippedTitleItem, i18n.language) : null;
 
   // Fully-hidden titles (GAMIFICATION_DESIGN.md section 8's "완전 히든 칭호")
   // shouldn't even reveal their existence -- not shown as a locked row --
@@ -145,7 +146,7 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
                 the badge -- rather than being merged into one label, since
                 they're independently equipped from different galleries. */}
             <div className="shop-equipped-badges">
-              {equippedTitleName && <span className="shop-equipped-title-frame">{equippedTitleName}</span>}
+              {equippedTitleName && <TitleFrame tier={equippedTitleItem?.tier ?? null}>{equippedTitleName}</TitleFrame>}
               {equippedBadgeKey && (
                 <span className="shop-equipped-badge-slot" title={t(`badges.${equippedBadgeKey}.name`)}>
                   <img src={BADGE_ICON_SRC[equippedBadgeKey]} alt={t(`badges.${equippedBadgeKey}.name`)} />

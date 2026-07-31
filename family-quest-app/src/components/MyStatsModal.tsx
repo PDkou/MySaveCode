@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
+import { TitleFrame } from './TitleFrame';
 import { supabase } from '../lib/supabaseClient';
 import {
   ALL_BADGE_KEYS,
@@ -251,8 +252,9 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
                     key={item.id}
                     className={`gallery-row ${owned ? 'gallery-row-owned' : 'gallery-row-locked'} ${equipped ? 'gallery-row-equipped' : ''}`}
                   >
-                    <span className="gallery-row-icon" aria-hidden="true" />
-                    <span className="gallery-row-name">{owned ? shopItemDisplayName(item, i18n.language) : t('shop.locked')}</span>
+                    <TitleFrame tier={item.tier}>
+                      {owned ? shopItemDisplayName(item, i18n.language) : t('shop.locked')}
+                    </TitleFrame>
                     {owned && (
                       <button
                         type="button"

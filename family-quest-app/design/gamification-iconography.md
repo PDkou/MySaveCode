@@ -23,19 +23,18 @@ grayscale 필터가 이미지에도 그대로 적용됨), `CelebrationOverlay.ts
 확인해보니 `BADGE_EMOJI`/`BADGE_ICON_SRC`를 아예 안 씀 — MVP 하이라이트는 이모지 없이 텍스트로만
 표시되고 있어서(별도 placeholder 아님) 이번 작업 범위 밖.
 
-## 칭호 (76종) — 시각 요소가 아예 없음 (프레임 이미지는 6장 다 받았지만 아직 미적용)
+## 칭호 (76종) — ✅ 2026-07-31 6단계 프레임으로 실제 연결 완료
 
-2026-07-31에 6단계 프레임(브론즈/실버/골드/플래티넘/다이아/마스터) 전부 생성해서
-`public/titles/{bronze,silver,gold,platinum,diamond,master}.png`로 저장해뒀지만, **아직 어느
-코드에도 연결하지 않았습니다** — 실제 코드에 붙이려면 76개 칭호 각각이 몇 티어인지 정하는 기준이
-먼저 있어야 하는데, 지금 `shop_items` 스키마에는 그 "티어"를 저장할 컬럼이 없습니다(4개 테마 탭
-구분만 있음, `TitleCategory`). 티어 배정 초안은 [`title-tiers.md`](./title-tiers.md)에 정리해뒀고,
-검토/확정되면 그 문서 기준으로 스키마에 컬럼을 추가하고 이 6장을 실제로 연결하면 됩니다. 아래 원래
-텍스트는 그대로 둡니다.
+6단계 프레임(브론즈/실버/골드/플래티넘/다이아/마스터, `public/titles/{tier}.png`)을
+[`title-tiers.md`](./title-tiers.md) 기준으로 `shop_items.tier` 컬럼에 채워 넣고, 실제 코드에
+연결했습니다. 프레임은 CSS `border-image` 9-slice(`.title-frame`/`.title-frame-{tier}`,
+`src/styles/global.css`)로 구현해서, 칭호 텍스트 길이에 상관없이 둥근 모서리는 고정된 채 가운데
+직선 구간만 늘어납니다. `src/components/TitleFrame.tsx`가 이 로직을 감싸는 공용 컴포넌트고,
+`MyStatsModal.tsx`(칭호 갤러리), `DashboardPage.tsx`(헤더 장착 칩), `CharacterShopModal.tsx`(상점
+미리보기) 세 곳 전부 여기로 통일했습니다.
 
-`shop_items` 테이블의 title 슬롯 76개는 순수 텍스트입니다 (예: "방치의 신", "신입" 등, 한국어/
-일본어 이름 각각 보유). 상점·대시보드 헤더 어디서도 아이콘/배경 없이 텍스트 칩(`.dashboard-
-equipped-chip`)으로만 표시됩니다.
+`shop_items` 테이블의 title 슬롯 76개는 텍스트(예: "방치의 신", "신입" 등, 한국어/일본어 이름 각각
+보유) + 티어 조합으로 표시됩니다.
 
 76개 전부에 개별 아이콘을 그리는 건 비현실적이지만, 아래처럼 **티어별로 묶어서** 최소한의 시각적
 구분을 주는 방향은 고려해볼 만합니다:

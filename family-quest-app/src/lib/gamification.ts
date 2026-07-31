@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import type { BadgeKey } from '../types/database';
+import type { BadgeKey, TitleTier } from '../types/database';
 
 // Points/level are simple and purely derived on the client -- the server
 // (finalize_task_completion RPC, see supabase/schema.sql section 9) only
@@ -88,6 +88,19 @@ export async function unequipBadge(familyId: string): Promise<void> {
   const { error } = await supabase.rpc('unequip_badge', { p_family_id: familyId });
   if (error) throw error;
 }
+
+// Title rarity frames (design/title-tiers.md) -- `shop_items.tier` picks
+// which of these to render behind the title text (see the `.title-frame`
+// CSS, a border-image 9-slice so the pill stretches to fit titles of any
+// length without distorting the fixed rounded end-caps).
+export const TITLE_FRAME_SRC: Record<TitleTier, string> = {
+  bronze: '/titles/bronze.png',
+  silver: '/titles/silver.png',
+  gold: '/titles/gold.png',
+  platinum: '/titles/platinum.png',
+  diamond: '/titles/diamond.png',
+  master: '/titles/master.png',
+};
 
 // Title theme tabs, matching GAMIFICATION_DESIGN.md section 12's 4-tab
 // breakdown (76 titles total) -- `shop_items` has no category column, so
