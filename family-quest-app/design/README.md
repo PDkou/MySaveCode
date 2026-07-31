@@ -11,9 +11,10 @@
 | 문서 | 요약 상태 |
 |---|---|
 | [`character-art.md`](./character-art.md) | 캐릭터가 CSS 도형 + 이모지 조합으로만 표현됨. 인수인계 스펙(색상값/슬롯 배치)은 완성, 실제 이미지 제작은 미착수 |
-| [`gamification-iconography.md`](./gamification-iconography.md) | 뱃지 7종은 기본 이모지 그대로, 칭호 76종은 시각 요소가 아예 없음(텍스트만) |
+| [`gamification-iconography.md`](./gamification-iconography.md) | 뱃지 7종은 실제 아이콘 적용 완료. 칭호 76종은 브론즈~마스터 프레임 이미지 6장 다 생성했지만, 어떤 칭호가 몇 티어인지 스키마에 저장할 컬럼이 없어서 아직 코드에 미연결 |
 | [`branding-app-icon.md`](./branding-app-icon.md) | 앱 아이콘/브랜드 심볼이 코드로 픽셀을 직접 찍어 그린 원+집 모양 도형 — 실제 로고 디자인 없음 |
 | [`ui-visual-system.md`](./ui-visual-system.md) | 색상 테마/타이포는 갖춰져 있으나, 온보딩·빈 상태 등 일러스트 요소는 최소한의 SVG 도형뿐 |
+| [`title-tiers.md`](./title-tiers.md) | 칭호 76종을 브론즈~마스터 6단계에 배정한 초안 — 검토/확정 대기 중 |
 
 ## 우선순위에 대한 참고
 
