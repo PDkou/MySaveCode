@@ -1374,6 +1374,15 @@ textarea {
   cursor: pointer;
 }
 
+/* Stretches to fill the chip's full (near-card-width) row instead of
+   shrinking to hug the title text -- 2026-08-01 feedback, matching the
+   old .dashboard-equipped-chip's own stretch behavior from before the
+   frame moved inside it. The 9-slice border-image stretches its middle
+   section to any width, so this is safe at any title length. */
+.dashboard-equipped-chip .title-frame {
+  flex: 1;
+}
+
 .dashboard-equipped-emoji {
   width: 16px;
   height: 16px;
