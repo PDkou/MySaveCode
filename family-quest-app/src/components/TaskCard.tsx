@@ -56,9 +56,13 @@ export function TaskCard({
           <span className={`status-badge status-${displayStatus}`}>
             {displayStatus === 'done'
               ? t('taskDetail.statusDone')
-              : displayStatus === 'scheduled'
-                ? t('taskDetail.statusScheduled')
-                : t('taskDetail.statusOpen')}
+              : displayStatus === 'pending_confirmation'
+                ? t('taskDetail.statusPendingConfirmation')
+                : displayStatus === 'failed'
+                  ? t('taskDetail.statusFailed')
+                  : displayStatus === 'scheduled'
+                    ? t('taskDetail.statusScheduled')
+                    : t('taskDetail.statusOpen')}
           </span>
           {isOverdue && <span className="status-badge status-overdue">{t('dashboard.overdue')}</span>}
           {task.recurrence !== 'none' && (

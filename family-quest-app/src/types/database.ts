@@ -1,6 +1,6 @@
 export type AppLanguageCode = 'ko' | 'ja';
 
-export type TaskStatus = 'open' | 'done';
+export type TaskStatus = 'open' | 'pending_confirmation' | 'done' | 'failed';
 
 export type TaskActivityAction = 'created' | 'completed' | 'reopened' | 'updated';
 
@@ -87,6 +87,7 @@ export type QuestPayoutRow = {
   reputation_awarded: boolean;
   kind: QuestPayoutKind;
   created_at: string;
+  celebration_seen_at: string | null;
 };
 
 export type ProfileRow = {
@@ -374,7 +375,7 @@ export type Database = {
         };
         Returns: TaskRow;
       };
-      complete_task: {
+      report_task_completion: {
         Args: {
           p_task_id: string;
           p_completion_note: string | null;
@@ -382,9 +383,21 @@ export type Database = {
         };
         Returns: TaskRow;
       };
+      confirm_task_completion: {
+        Args: { p_task_id: string };
+        Returns: TaskRow;
+      };
+      reject_task_completion: {
+        Args: { p_task_id: string };
+        Returns: TaskRow;
+      };
       reopen_task: {
         Args: { p_task_id: string };
         Returns: TaskRow;
+      };
+      mark_celebration_seen: {
+        Args: { p_payout_id: string };
+        Returns: void;
       };
       purchase_item: {
         Args: { p_family_id: string; p_item_id: string };

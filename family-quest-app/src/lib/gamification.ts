@@ -2,8 +2,8 @@ import { supabase } from './supabaseClient';
 import type { BadgeKey } from '../types/database';
 
 // Points/level are simple and purely derived on the client -- the server
-// (complete_task RPC, see supabase/schema.sql section 9) only ever tracks
-// raw points; there is no stored "level" column to keep in sync.
+// (finalize_task_completion RPC, see supabase/schema.sql section 9) only
+// ever tracks raw points; there is no stored "level" column to keep in sync.
 //
 // Each level requires more points than the last (level 1->2 costs
 // LEVEL_BASE_POINTS, 2->3 costs LEVEL_BASE_POINTS + LEVEL_INCREMENT, and so
@@ -136,7 +136,8 @@ export function titleCategoryForKey(key: string | null): TitleCategory {
 
 // What the completer of a task gained, computed by diffing their
 // family_members row (and member_badges rows) from just before vs. just
-// after calling complete_task -- see useTaskDetail.completeTask.
+// after -- see useTaskDetail.reportTaskCompletion (instant-payout path) and
+// useUnseenCelebration (the confirmed-later path).
 export interface CompletionResult {
   pointsGained: number;
   newPoints: number;

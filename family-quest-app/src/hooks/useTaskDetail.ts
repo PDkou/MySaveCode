@@ -23,7 +23,9 @@ interface UseTaskDetailResult {
   comments: TaskCommentRow[];
   loading: boolean;
   notFound: boolean;
-  completeTask: (completionNote: string, completionPhotoPath: string | null) => Promise<CompletionResult | null>;
+  reportTaskCompletion: (completionNote: string, completionPhotoPath: string | null) => Promise<CompletionResult | null>;
+  confirmTaskCompletion: () => Promise<void>;
+  rejectTaskCompletion: () => Promise<void>;
   reopenTask: () => Promise<void>;
   updateTask: (input: TaskEditInput) => Promise<void>;
   addComment: (body: string) => Promise<void>;
@@ -138,23 +140,26 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     };
   }, [taskId, loadTask, loadAssignees, loadActivities, loadComments]);
 
-  const completeTask = useCallback(async (completionNote: string, completionPhotoPath: string | null): Promise<CompletionResult | null> => {
+  // Step 1: report the work done. Only pays out (and returns a
+  // CompletionResult worth celebrating right here) when report_task_completion
+  // decides no confirmation is needed -- a self-claim or a personal room. For
+  // everything else the task lands in 'pending_confirmation' with no payout
+  // yet, so this returns null and the caller shows a lighter "reported,
+  // waiting for confirmation" message instead of the celebration screen.
+  const reportTaskCompletion = useCallback(async (completionNote: string, completionPhotoPath: string | null): Promise<CompletionResult | null> => {
     if (!taskId || !task || !user) return null;
     const familyId = task.family_id;
 
     // Snapshot the completer's points/streak/badges before the RPC runs so
-    // the celebration UI can diff before vs. after -- complete_task itself
-    // still returns just the task row (unchanged API), see schema.sql.
+    // the celebration UI can diff before vs. after, for the instant-payout
+    // path -- report_task_completion returns just the task row.
     const [{ data: prevMember }, { data: prevBadgeRows }] = await Promise.all([
       supabase.from('family_members').select('points, xp, current_streak').eq('family_id', familyId).eq('user_id', user.id).maybeSingle(),
       supabase.from('member_badges').select('badge_key').eq('family_id', familyId).eq('user_id', user.id),
     ]);
     const prevBadgeKeys = new Set((prevBadgeRows ?? []).map((b) => b.badge_key));
 
-    // RPC rather than a plain update: completing a recurring task also
-    // creates its next occurrence (copying assignees) in the same
-    // transaction as the completion.
-    const { error } = await supabase.rpc('complete_task', {
+    const { data: newTask, error } = await supabase.rpc('report_task_completion', {
       p_task_id: taskId,
       p_completion_note: completionNote.trim(),
       p_completion_photo_path: completionPhotoPath,
@@ -163,7 +168,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     await loadTask(taskId);
     await loadActivities(taskId);
 
-    if (!prevMember) return null;
+    if (newTask?.status !== 'done' || !prevMember) return null;
 
     const [{ data: newMember }, { data: newBadgeRows }] = await Promise.all([
       supabase.from('family_members').select('points, xp, current_streak').eq('family_id', familyId).eq('user_id', user.id).maybeSingle(),
@@ -187,6 +192,29 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
       newBadges,
     };
   }, [taskId, task, user, loadTask, loadActivities]);
+
+  // Step 2a: the requester approves -- this is where the payout actually
+  // happens. The confirmer isn't the one who gets paid, so there's no
+  // celebration result here; the completer sees theirs the next time they
+  // open the app (see the unseen-quest_payouts check wired up in
+  // TaskDetailPage/DashboardPage).
+  const confirmTaskCompletion = useCallback(async () => {
+    if (!taskId) return;
+    const { error } = await supabase.rpc('confirm_task_completion', { p_task_id: taskId });
+    if (error) throw error;
+    await loadTask(taskId);
+    await loadActivities(taskId);
+  }, [taskId, loadTask, loadActivities]);
+
+  // Step 2b: the requester rejects -- nothing was ever paid out, so this is
+  // just a status reset back to 'open'.
+  const rejectTaskCompletion = useCallback(async () => {
+    if (!taskId) return;
+    const { error } = await supabase.rpc('reject_task_completion', { p_task_id: taskId });
+    if (error) throw error;
+    await loadTask(taskId);
+    await loadActivities(taskId);
+  }, [taskId, loadTask, loadActivities]);
 
   const reopenTask = useCallback(async () => {
     if (!taskId) return;
@@ -246,7 +274,9 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     comments,
     loading,
     notFound,
-    completeTask,
+    reportTaskCompletion,
+    confirmTaskCompletion,
+    rejectTaskCompletion,
     reopenTask,
     updateTask,
     addComment,
