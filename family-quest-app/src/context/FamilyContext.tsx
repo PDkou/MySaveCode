@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { supabase } from '../lib/supabaseClient';
@@ -62,6 +62,19 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   const [avatarUrlByUserId, setAvatarUrlByUserId] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
 
+  // Guards against overlapping load() calls landing out of order -- e.g. the
+  // initial mount's load(userId) racing a refresh() fired right after (shop
+  // purchase, avatar upload, a second effect run), each hitting Supabase
+  // independently. Without this, whichever response happened to arrive
+  // *last* won regardless of which call was actually the newer one, so a
+  // slower earlier response could overwrite a faster later one and briefly
+  // show a stale/different family before the real one reasserted itself on
+  // the next render. Far more visible on a flaky mobile connection, where
+  // response ordering across two in-flight requests is much less reliable
+  // than on a fast, stable connection (2026-08-01 bug report: "a different
+  // room flashes on refresh, only noticeable on phone").
+  const loadSeqRef = useRef(0);
+
   // preferredFamilyId lets createFamily/joinFamily/switchFamily jump
   // straight to the family that was just created/joined/picked, instead of
   // falling back to whatever was previously stored.
@@ -75,15 +88,21 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   // shouldn't blow away the screen the user is looking at.
   const load = useCallback(async (userId: string, preferredFamilyId?: string, options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;
+    const mySeq = ++loadSeqRef.current;
+    // Bails out of committing any further state once a newer load() call
+    // has started -- this call's in-flight results are stale by definition.
+    const isStale = () => loadSeqRef.current !== mySeq;
     if (!silent) setLoading(true);
     try {
       const { data: membershipRows, error: membershipErr } = await supabase
         .from('family_members')
         .select('family_id, joined_at')
         .eq('user_id', userId)
-        .order('joined_at', { ascending: true });
+        .order('joined_at', { ascending: true })
+        .order('family_id', { ascending: true });
 
       if (membershipErr) throw membershipErr;
+      if (isStale()) return;
 
       if (!membershipRows || membershipRows.length === 0) {
         setFamilies([]);
@@ -99,6 +118,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         .in('id', familyIds);
 
       if (familiesErr) throw familiesErr;
+      if (isStale()) return;
 
       const familyById = new Map((familyRows ?? []).map((f) => [f.id, f]));
       // Preserve join order (oldest membership first) rather than whatever
@@ -133,6 +153,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         .order('joined_at', { ascending: true });
 
       if (membersErr) throw membersErr;
+      if (isStale()) return;
 
       const memberIds = (memberRows ?? []).map((m) => m.user_id);
       const { data: profileRows, error: profilesErr } = memberIds.length
@@ -140,6 +161,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         : { data: [], error: null };
 
       if (profilesErr) throw profilesErr;
+      if (isStale()) return;
 
       const profileNameById = new Map((profileRows ?? []).map((p) => [p.id, p.display_name]));
       const avatarPathById = new Map((profileRows ?? []).map((p) => [p.id, p.avatar_path as string | null]));
@@ -156,6 +178,8 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
       const avatarPaths = Array.from(avatarPathById.values()).filter((p): p is string => !!p);
       const urlByPath = await getAvatarPhotoUrls(avatarPaths);
+      if (isStale()) return;
+
       const urlByUserId = new Map<string, string>();
       avatarPathById.forEach((path, userId) => {
         if (path) {
@@ -165,7 +189,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       });
       setAvatarUrlByUserId(urlByUserId);
     } finally {
-      if (!silent) setLoading(false);
+      if (!silent && !isStale()) setLoading(false);
     }
   }, []);
 
