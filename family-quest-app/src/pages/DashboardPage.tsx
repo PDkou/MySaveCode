@@ -59,6 +59,17 @@ export function DashboardPage() {
   // closes, since those are the only places equips change.
   const [equippedTitle, setEquippedTitle] = useState<{ name: string; tier: TitleTier | null } | null>(null);
   const [equippedSprite, setEquippedSprite] = useState<Partial<Record<CharacterSlot, string>>>({});
+  // Tracks whether loadEquipped()'s first fetch for the current user/family
+  // has settled -- me.equipped_badge_key is already available synchronously
+  // from FamilyContext's members, but equippedTitle needs this separate
+  // shop_items/member_equipped_items round trip and starts out null on
+  // every mount/refresh. Without gating the chip render on this, a member
+  // with BOTH a badge and a title equipped would flash the plain badge-chip
+  // first (equippedTitle still null) and then flip to the title's frame a
+  // beat later (2026-08-01 bug report: "badge shows then flips to the
+  // title"). Hiding the chip until this resolves, instead of showing the
+  // wrong intermediate one, trades a brief delay for no incorrect flash.
+  const [equippedLoaded, setEquippedLoaded] = useState(false);
   const userId = user?.id;
   const familyId = family?.id;
 
@@ -70,8 +81,10 @@ export function DashboardPage() {
     if (!userId || !familyId) {
       setEquippedTitle(null);
       setEquippedSprite({});
+      setEquippedLoaded(true);
       return;
     }
+    setEquippedLoaded(false);
     const [items, equipped] = await Promise.all([getShopItems(), getEquippedItems(userId, familyId)]);
     const itemsById = new Map(items.map((i) => [i.id, i]));
     const sprite: Partial<Record<CharacterSlot, string>> = {};
@@ -87,6 +100,7 @@ export function DashboardPage() {
     }
     setEquippedTitle(title);
     setEquippedSprite(sprite);
+    setEquippedLoaded(true);
   };
 
   useEffect(() => {
@@ -328,7 +342,7 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {me && (equippedTitle || me.equipped_badge_key) && (
+        {me && equippedLoaded && (equippedTitle || me.equipped_badge_key) && (
           <button type="button" className="dashboard-equipped-chip" onClick={() => setShowStats(true)}>
             {equippedTitle ? (
               <TitleFrame
