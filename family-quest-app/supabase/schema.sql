@@ -352,6 +352,21 @@ alter table public.quest_payouts add column if not exists celebration_seen_at ti
 update public.quest_payouts
 set celebration_seen_at = created_at
 where celebration_seen_at is null and created_at < '2026-08-01 00:00:00+00';
+-- The 2026-07-31 backfill above only swept the *historical* backlog that
+-- existed when celebration_seen_at was introduced -- it didn't stop new
+-- orphans from accumulating, because finalize_task_completion() itself
+-- never set celebration_seen_at for the instant/no-confirmation-needed
+-- completion path (report_task_completion's own-report branch), only for
+-- rows explicitly dismissed through useUnseenCelebration. Every instant
+-- completion since then kept inserting another unseen row, reproducing
+-- the same "완료 축하 메시지가 계속 뜬다" bug again (reported 2026-08-02).
+-- finalize_task_completion now takes p_mark_seen_for and marks the
+-- reporting completer's own row seen at insert time, so this is again a
+-- one-time historical sweep (fixed cutoff, not now()) for the backlog that
+-- built up between the two fixes -- not something later re-runs rely on.
+update public.quest_payouts
+set celebration_seen_at = created_at
+where celebration_seen_at is null and created_at < '2026-08-02 12:00:00+00';
 do $$
 begin
   alter table public.quest_payouts add constraint quest_payouts_assignment_mode_check check (assignment_mode is null or assignment_mode in ('personal', 'specific', 'everyone', 'first_come'));
@@ -1380,7 +1395,7 @@ $$;
 -- timestamp (task.completed_at), not "now" -- a requester confirming hours
 -- later shouldn't make a 3am completion look like it happened at noon for
 -- the time-of-day badges, or shift someone's streak day.
-create or replace function public.finalize_task_completion(p_task_id uuid)
+create or replace function public.finalize_task_completion(p_task_id uuid, p_mark_seen_for uuid default null)
 returns public.tasks
 language plpgsql
 security definer
@@ -1849,12 +1864,28 @@ begin
 
   
 
+  -- p_mark_seen_for is only passed by report_task_completion's own-report,
+  -- no-confirmation-needed branch, where the completer sees their
+  -- celebration immediately client-side (useTaskDetail's diff-based
+  -- CompletionResult) -- confirm_task_completion leaves this null since the
+  -- confirmer isn't the completer and the async useUnseenCelebration flow
+  -- is what shows it to them later. Without this, every award_quest_payout
+  -- row above stayed celebration_seen_at = null forever regardless of path,
+  -- so useUnseenCelebration kept re-surfacing already-seen instant
+  -- completions as a growing backlog on every later dashboard load (2026-08
+  -- bug report: "the celebration confetti keeps popping up").
+  if p_mark_seen_for is not null then
+    update public.quest_payouts
+    set celebration_seen_at = now()
+    where task_id = p_task_id and user_id = p_mark_seen_for and kind = 'completion' and celebration_seen_at is null;
+  end if;
+
   update public.tasks set status = 'done' where id = p_task_id returning * into v_task;
   return v_task;
 end;
 $$;
 
-revoke execute on function public.finalize_task_completion(uuid) from anon, public, authenticated;
+revoke execute on function public.finalize_task_completion(uuid, uuid) from anon, public, authenticated;
 
 -- Step 1 of completion: whoever did the work reports it done. Pays out
 -- immediately only when there's no meaningful "requester decides" step --
@@ -1923,7 +1954,10 @@ begin
   end if;
 
   if not v_needs_confirmation then
-    v_task := public.finalize_task_completion(p_task_id);
+    -- v_uid: the reporter is the completer on this no-confirmation-needed
+    -- path, and useTaskDetail shows them the celebration immediately --
+    -- see the comment on finalize_task_completion's p_mark_seen_for.
+    v_task := public.finalize_task_completion(p_task_id, v_uid);
   end if;
 
   return v_task;
