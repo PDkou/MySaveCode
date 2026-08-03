@@ -54,6 +54,15 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[] | null>(null);
   const pendingTimerRef = useRef<number | null>(null);
 
+  // Guards against overlapping load() calls landing out of order -- this is
+  // called from the initial mount, from every mutation's refresh(), and from
+  // two separate realtime channels below, so a single completion can easily
+  // fire 2-3 overlapping loads. Without this, a slower earlier response could
+  // land after a faster later one and briefly flash a stale task list (e.g.
+  // a just-completed task flickering back to "open") -- same class of race
+  // as FamilyContext.load() had (2026-08 bug report).
+  const loadSeqRef = useRef(0);
+
   // `silent` skips the loading flag -- right for the very first load, but
   // every task mutation (create/complete/pin/delete) also calls this via
   // refresh(), and the realtime subscription below calls it on every
@@ -62,6 +71,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   // list should just update in place.
   const load = useCallback(async (familyId: string, options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;
+    const mySeq = ++loadSeqRef.current;
     if (!silent) setLoading(true);
     try {
       const [{ data: taskRows, error: tasksErr }, { data: assigneeRows, error: assigneesErr }] = await Promise.all([
@@ -75,6 +85,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       ]);
       if (tasksErr) throw tasksErr;
       if (assigneesErr) throw assigneesErr;
+      if (loadSeqRef.current !== mySeq) return;
 
       const map = new Map<string, string[]>();
       (assigneeRows ?? []).forEach((row) => {
@@ -86,7 +97,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       setRawTasks(taskRows ?? []);
       setAssigneesByTaskId(map);
     } finally {
-      if (!silent) setLoading(false);
+      if (!silent && loadSeqRef.current === mySeq) setLoading(false);
     }
   }, []);
 

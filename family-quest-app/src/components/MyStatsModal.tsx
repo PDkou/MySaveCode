@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../context/AuthContext';
@@ -92,13 +92,22 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
     };
   }, [familyId, userId]);
 
+  // Guards overlapping loadTitles() calls (mount effect + handleTitleEquip
+  // below) from landing out of order -- same class of race as
+  // FamilyContext.load() had (2026-08 bug report): a slow initial load
+  // resolving after a quick equip/unequip tap could overwrite the fresher
+  // state with stale data.
+  const loadTitlesSeqRef = useRef(0);
+
   const loadTitles = async () => {
     if (!family || !user) return;
+    const mySeq = ++loadTitlesSeqRef.current;
     const [allItems, owned, equipped] = await Promise.all([
       getShopItems(),
       getOwnedItemIds(user.id, family.id),
       getEquippedItems(user.id, family.id),
     ]);
+    if (loadTitlesSeqRef.current !== mySeq) return;
     setTitleItems(allItems.filter((i) => i.slot === 'title'));
     setOwnedTitleIds(owned);
     setEquippedTitleId(equipped.find((e) => e.slot === 'title')?.item_id ?? null);

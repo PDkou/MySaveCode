@@ -167,8 +167,13 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
   const ratePerMin = state ? rateForLevel(state.upgrade_level) : 0;
   const maxed = state ? state.upgrade_level >= MAX_LEVEL : false;
   const upgradeCost = state ? upgradeCostForLevel(state.upgrade_level) : 0;
-  const exchangedToday =
-    state && state.exchange_reset_date === new Date().toISOString().slice(0, 10) ? state.exchanged_today : 0;
+  // The server resets exchange_reset_date against the KST/JST (UTC+9) day,
+  // not UTC (see exchange_tycoon_currency in schema.sql) -- matching that
+  // here via a fixed +9h shift before formatting, rather than comparing
+  // against new Date().toISOString()'s UTC day, which would make this
+  // display "already reset" up to 9 hours before the server actually has.
+  const kstToday = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const exchangedToday = state && state.exchange_reset_date === kstToday ? state.exchanged_today : 0;
   const remainingDailyPoints = Math.max(0, DAILY_EXCHANGE_CAP - exchangedToday);
   const previewPoints = Math.floor((Math.floor(Number(exchangeAmount)) || 0) / EXCHANGE_RATE);
 

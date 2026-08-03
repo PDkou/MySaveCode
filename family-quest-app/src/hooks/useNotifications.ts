@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
@@ -42,25 +42,35 @@ export function useNotifications(): UseNotificationsResult {
   const [comments, setComments] = useState<TaskCommentRow[]>([]);
   const [lastSeen, setLastSeen] = useState<string | null>(null);
 
+  // Guard each list's overlapping fetches independently -- both are called
+  // from the mount effect and again from their own realtime INSERT channel
+  // below, so two fetches for the same list can land out of order and let a
+  // slower, staler response overwrite a fresher one (same class of race as
+  // FamilyContext.load() had, 2026-08 bug report).
+  const activitiesSeqRef = useRef(0);
+  const commentsSeqRef = useRef(0);
+
   const loadActivities = useCallback(async (familyId: string) => {
+    const mySeq = ++activitiesSeqRef.current;
     const { data, error } = await supabase
       .from('task_activities')
       .select('*')
       .eq('family_id', familyId)
       .order('created_at', { ascending: false })
       .limit(50);
-    if (error) return;
+    if (error || activitiesSeqRef.current !== mySeq) return;
     setActivities(data ?? []);
   }, []);
 
   const loadComments = useCallback(async (familyId: string) => {
+    const mySeq = ++commentsSeqRef.current;
     const { data, error } = await supabase
       .from('task_comments')
       .select('*')
       .eq('family_id', familyId)
       .order('created_at', { ascending: false })
       .limit(50);
-    if (error) return;
+    if (error || commentsSeqRef.current !== mySeq) return;
     setComments(data ?? []);
   }, []);
 
