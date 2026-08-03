@@ -146,6 +146,19 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
   // everything else the task lands in 'pending_confirmation' with no payout
   // yet, so this returns null and the caller shows a lighter "reported,
   // waiting for confirmation" message instead of the celebration screen.
+  //
+  // Claiming your own 특정인/선착 request nets to 0 points over the request's
+  // whole lifecycle (stake taken at creation, refunded back to the same
+  // balance on completion) *and* reputation_awarded=false server-side
+  // (finalize_task_completion/award_quest_payout in schema.sql), same as
+  // useUnseenCelebration's async flow already requires reputation_awarded=
+  // true before ever showing a celebration. This path wasn't checking that,
+  // so it showed a celebration with the stake refund displayed as
+  // "pointsGained" -- looking like a reward for a completion that, net,
+  // gained nothing (2026-08 bug report: "포인트는 안 들어오는데 축하 메시지엔
+  // 포인트가 표시됨"). award_quest_payout only touches xp when
+  // reputation_awarded is true, so an unchanged xp is a reliable signal
+  // that this was one of those refund-only payouts.
   const reportTaskCompletion = useCallback(async (completionNote: string, completionPhotoPath: string | null): Promise<CompletionResult | null> => {
     if (!taskId || !task || !user) return null;
     const familyId = task.family_id;
@@ -175,6 +188,7 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
       supabase.from('member_badges').select('badge_key').eq('family_id', familyId).eq('user_id', user.id),
     ]);
     if (!newMember) return null;
+    if (newMember.xp === prevMember.xp) return null;
 
     const newBadges = (newBadgeRows ?? [])
       .map((b) => b.badge_key as BadgeKey)
