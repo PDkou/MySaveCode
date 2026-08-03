@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../context/AuthContext';
@@ -48,6 +48,13 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
   const myBalance = me?.points ?? 0;
   const equippedBadgeKey = (me?.equipped_badge_key as BadgeKey | null) ?? null;
 
+  // Guards overlapping load() calls (mount effect + every purchase/equip
+  // handler below) from landing out of order -- a quick double-tap on two
+  // different items before the first request resolves could otherwise let
+  // the slower response win and show a stale owned/equipped state, same
+  // class of race as FamilyContext.load() had (2026-08 bug report).
+  const loadSeqRef = useRef(0);
+
   // `silent` skips the loading gate that swaps the whole item list out for
   // "불러오는 중..." -- right for the very first load, but handlePurchase/
   // handleEquip also call load() to pick up the item's new owned/equipped
@@ -56,12 +63,14 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
   const load = async (options?: { silent?: boolean }) => {
     if (!user || !family) return;
     const silent = options?.silent ?? false;
+    const mySeq = ++loadSeqRef.current;
     if (!silent) setLoading(true);
     const [shopItems, owned, equipped] = await Promise.all([
       getShopItems(),
       getOwnedItemIds(user.id, family.id),
       getEquippedItems(user.id, family.id),
     ]);
+    if (loadSeqRef.current !== mySeq) return;
     setItems(shopItems);
     setOwnedIds(owned);
     setEquippedBySlot(new Map(equipped.map((e) => [e.slot, e.item_id])));

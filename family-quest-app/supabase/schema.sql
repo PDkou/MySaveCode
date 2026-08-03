@@ -1380,6 +1380,99 @@ $$;
 -- transaction as the payout (finalize_task_completion), not the report --
 -- a report that's later rejected shouldn't have already spawned a next
 -- occurrence.
+--
+-- Extracted into its own function (used to live inline in
+-- finalize_task_completion only) so sweep_expired_tasks can also advance the
+-- recurrence chain when a recurring quest goes unclaimed past its due date
+-- -- previously only an actual completion ever spawned the next occurrence,
+-- so missing a single occurrence silently and permanently broke the whole
+-- recurring quest (2026-08 bug report: "반복 퀘스트가 기한 넘겨서 유찰되면
+-- 반복이 영구히 끊김").
+create or replace function public.spawn_next_recurrence(p_task public.tasks)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_next_due timestamptz;
+  v_next_starts timestamptz;
+  v_new_task_id uuid;
+  v_new_stake integer;
+  v_creator_points integer;
+  v_member_count integer;
+  v_weekday_offset integer;
+begin
+  if p_task.recurrence = 'none' then
+    return;
+  end if;
+
+  if p_task.recurrence = 'weekly' and p_task.recurrence_weekdays is not null
+     and array_length(p_task.recurrence_weekdays, 1) > 0 then
+    -- Weekly-on-specific-weekdays: find the smallest number of days forward
+    -- (1-7) that lands on one of the chosen weekdays (0=Sun..6=Sat).
+    select min(offset_days) into v_weekday_offset
+    from generate_series(1, 7) as offset_days
+    where (extract(dow from coalesce(p_task.due_at, now()))::int + offset_days) % 7 = any(p_task.recurrence_weekdays);
+
+    v_next_due := coalesce(p_task.due_at, now()) + (coalesce(v_weekday_offset, 7) || ' days')::interval;
+
+    if p_task.starts_at is not null then
+      v_next_starts := p_task.starts_at + (coalesce(v_weekday_offset, 7) || ' days')::interval;
+    else
+      v_next_starts := null;
+    end if;
+  else
+    v_next_due := case p_task.recurrence
+      when 'daily' then coalesce(p_task.due_at, now()) + interval '1 day'
+      when 'weekly' then coalesce(p_task.due_at, now()) + interval '7 days'
+      when 'monthly' then coalesce(p_task.due_at, now()) + interval '1 month'
+      else null
+    end;
+
+    -- Only advance starts_at if this task actually had one -- a recurring
+    -- task with no start date set stays that way each occurrence.
+    if p_task.starts_at is not null then
+      v_next_starts := case p_task.recurrence
+        when 'daily' then p_task.starts_at + interval '1 day'
+        when 'weekly' then p_task.starts_at + interval '7 days'
+        when 'monthly' then p_task.starts_at + interval '1 month'
+        else null
+      end;
+    else
+      v_next_starts := null;
+    end if;
+  end if;
+
+  -- Re-stake from the creator rather than reusing the just-paid-out stake
+  -- for free -- each occurrence is its own request. Clamped to whatever they
+  -- can currently afford (down to 0) instead of failing outright, since this
+  -- happens automatically inside a completion (or an expiry sweep) the
+  -- creator isn't necessarily the one triggering.
+  select count(*) into v_member_count from public.family_members where family_id = p_task.family_id;
+  if v_member_count > 1 then
+    select points into v_creator_points from public.family_members where family_id = p_task.family_id and user_id = p_task.created_by;
+    v_new_stake := least(p_task.stake_points, coalesce(v_creator_points, 0));
+    if v_new_stake > 0 then
+      update public.family_members set points = greatest(points - v_new_stake, 0) where family_id = p_task.family_id and user_id = p_task.created_by;
+    end if;
+  else
+    v_new_stake := 0;
+  end if;
+
+  insert into public.tasks (family_id, title, details, created_by, due_at, recurrence, starts_at, recurrence_weekdays, stake_points)
+  values (p_task.family_id, p_task.title, p_task.details, p_task.created_by, v_next_due, p_task.recurrence, v_next_starts, p_task.recurrence_weekdays, v_new_stake)
+  returning id into v_new_task_id;
+
+  insert into public.task_assignees (task_id, family_id, user_id)
+  select v_new_task_id, p_task.family_id, ta.user_id
+  from public.task_assignees ta
+  where ta.task_id = p_task.id;
+end;
+$$;
+
+revoke execute on function public.spawn_next_recurrence(public.tasks) from anon, public, authenticated;
+
 -- Internal helper -- runs the actual payout (points/xp/streak/badges/titles)
 -- and, for a recurring task, spawns the next occurrence. Called either
 -- immediately by report_task_completion (self-claim / personal-room /
@@ -1406,17 +1499,11 @@ declare
   v_family_id uuid;
   v_uid uuid;
   v_completion_moment timestamptz;
-  v_next_due timestamptz;
-  v_next_starts timestamptz;
-  v_new_task_id uuid;
-  v_new_stake integer;
-  v_creator_points integer;
   v_member_count integer;
   v_assignee_count integer;
   v_assignee_id uuid;
   v_share integer;
   v_requester_bonus integer;
-  v_weekday_offset integer;
   v_seconds_since_created numeric;
   v_seconds_until_due numeric;
   v_completion_hour integer;
@@ -1434,74 +1521,7 @@ begin
   v_uid := v_task.completed_by;
   v_completion_moment := v_task.completed_at;
 
-  if v_task.recurrence <> 'none' then
-    if v_task.recurrence = 'weekly' and v_task.recurrence_weekdays is not null
-       and array_length(v_task.recurrence_weekdays, 1) > 0 then
-      -- Weekly-on-specific-weekdays: find the smallest number of days forward
-      -- (1-7) that lands on one of the chosen weekdays (0=Sun..6=Sat).
-      select min(offset_days) into v_weekday_offset
-      from generate_series(1, 7) as offset_days
-      where (extract(dow from coalesce(v_task.due_at, now()))::int + offset_days) % 7 = any(v_task.recurrence_weekdays);
-
-      v_next_due := coalesce(v_task.due_at, now()) + (coalesce(v_weekday_offset, 7) || ' days')::interval;
-
-      if v_task.starts_at is not null then
-        v_next_starts := v_task.starts_at + (coalesce(v_weekday_offset, 7) || ' days')::interval;
-      else
-        v_next_starts := null;
-      end if;
-    else
-      v_next_due := case v_task.recurrence
-        when 'daily' then coalesce(v_task.due_at, now()) + interval '1 day'
-        when 'weekly' then coalesce(v_task.due_at, now()) + interval '7 days'
-        when 'monthly' then coalesce(v_task.due_at, now()) + interval '1 month'
-        else null
-      end;
-
-      -- Only advance starts_at if this task actually had one -- a recurring
-      -- task with no start date set stays that way each occurrence.
-      if v_task.starts_at is not null then
-        v_next_starts := case v_task.recurrence
-          when 'daily' then v_task.starts_at + interval '1 day'
-          when 'weekly' then v_task.starts_at + interval '7 days'
-          when 'monthly' then v_task.starts_at + interval '1 month'
-          else null
-        end;
-      else
-        v_next_starts := null;
-      end if;
-    end if;
-
-    -- Re-stake from the creator rather than reusing the just-paid-out
-    -- stake for free -- each occurrence is its own request. Clamped to
-    -- whatever they can currently afford (down to 0) instead of failing
-    -- outright, since this happens automatically inside a completion the
-    -- creator isn't necessarily the one triggering.
-    select count(*) into v_member_count from public.family_members where family_id = v_task.family_id;
-    if v_member_count > 1 then
-      select points into v_creator_points from public.family_members where family_id = v_task.family_id and user_id = v_task.created_by;
-      v_new_stake := least(v_task.stake_points, coalesce(v_creator_points, 0));
-      if v_new_stake > 0 then
-        -- greatest(..., 0): this reads the balance and deducts in two
-        -- separate steps (unlike create_task's atomic version) since it's
-        -- a side effect of completion, not a user-initiated spend the user
-        -- is concurrently racing against themselves on -- but the clamp
-        -- still guarantees points can never go negative even if it does.
-        update public.family_members set points = greatest(points - v_new_stake, 0) where family_id = v_task.family_id and user_id = v_task.created_by;
-      end if;
-    else
-      v_new_stake := 0;
-    end if;
-
-    insert into public.tasks (family_id, title, details, created_by, due_at, recurrence, starts_at, recurrence_weekdays, stake_points)
-    values (v_task.family_id, v_task.title, v_task.details, v_task.created_by, v_next_due, v_task.recurrence, v_next_starts, v_task.recurrence_weekdays, v_new_stake)
-    returning id into v_new_task_id;
-
-    insert into public.task_assignees (task_id, family_id, user_id)
-    select v_new_task_id, v_task.family_id, ta.user_id
-    from public.task_assignees ta
-    where ta.task_id = p_task_id;
-  end if;
+  perform public.spawn_next_recurrence(v_task);
 
   -- Payout -- see the big comment above the function for the full rule
   -- table. assignment mode is read straight off task_assignees' current
@@ -3282,6 +3302,16 @@ create table if not exists public.tycoon_state (
 
 alter table public.tycoon_state enable row level security;
 
+-- The daily exchange cap reset used to key off current_date, which on this
+-- (UTC-timezone) Postgres session means the cap actually reset at UTC
+-- midnight -- 9am in Korea/Japan, not local midnight (GAMIFICATION_DESIGN.md
+-- section 16, known-but-unfixed risk). Korea and Japan share the same
+-- UTC+9 offset with no DST, so 'Asia/Seoul' gives the right local day for
+-- both. exchange_tycoon_currency below now computes this explicitly rather
+-- than relying on current_date; this ALTER just keeps a fresh row's default
+-- consistent with that.
+alter table public.tycoon_state alter column exchange_reset_date set default ((now() at time zone 'Asia/Seoul')::date);
+
 drop policy if exists tycoon_state_select on public.tycoon_state;
 create policy tycoon_state_select on public.tycoon_state
 for select
@@ -3434,6 +3464,7 @@ declare
   v_uid uuid := auth.uid();
   v_state public.tycoon_state;
   v_points integer;
+  v_local_today date;
 begin
   if v_uid is null then
     raise exception 'not_authenticated' using errcode = '28000';
@@ -3444,9 +3475,12 @@ begin
 
   v_state := public.sync_tycoon_currency(p_family_id, v_uid);
 
-  if v_state.exchange_reset_date <> current_date then
+  -- Local (KST/JST, UTC+9) day, not current_date -- see the comment on the
+  -- exchange_reset_date default above.
+  v_local_today := (now() at time zone 'Asia/Seoul')::date;
+  if v_state.exchange_reset_date <> v_local_today then
     update public.tycoon_state
-    set exchanged_today = 0, exchange_reset_date = current_date
+    set exchanged_today = 0, exchange_reset_date = v_local_today
     where user_id = v_uid and family_id = p_family_id
     returning * into v_state;
   end if;
@@ -3763,8 +3797,13 @@ begin
     where family_id = v_family_id and item_id = v_champion_item_id
     limit 1;
 
+    -- v_runner_up_count is null means there's no other member at all (a
+    -- solo/personal room) rather than a real runner-up with 0 모두형
+    -- completions -- requiring it to be non-null (an actual competitor)
+    -- stops a 1-member room's sole member from winning "우리집 챔피언"
+    -- against no competition at all (2026-08 bug report).
     if v_leader_id is not null and v_leader_count >= 5
-       and (v_runner_up_count is null or v_leader_count > v_runner_up_count)
+       and v_runner_up_count is not null and v_leader_count > v_runner_up_count
        and v_leader_id is distinct from v_current_holder
     then
       if v_current_holder is not null then
@@ -3805,11 +3844,19 @@ begin
   on conflict (family_id, week_start) do update
     set user_id = excluded.user_id, completed_count = excluded.completed_count;
 
-  -- 연대감 (13-D): 3 weekly-MVP wins.
+  -- 연대감 (13-D): 3 weekly-MVP wins -- scoped to user_id *and* family_id,
+  -- like every other repeat-count title in this app (points/xp/streaks all
+  -- live per-family on family_members). Without the family_id filter, a
+  -- user in multiple families (schema section 43/multi-family support)
+  -- could combine wins from unrelated families to hit 3, instead of winning
+  -- 3 times within the same family (2026-08 bug report).
   for v_winner in
     select family_id, user_id from public.weekly_mvp_log where week_start = v_week_start
   loop
-    if (select count(*) from public.weekly_mvp_log where user_id = v_winner.user_id) >= 3 then
+    if (
+      select count(*) from public.weekly_mvp_log
+      where user_id = v_winner.user_id and family_id = v_winner.family_id
+    ) >= 3 then
       perform public.grant_title(v_winner.family_id, v_winner.user_id, 'solidarity');
     end if;
   end loop;
@@ -4186,6 +4233,11 @@ where si.key = v.key;
 --      what didn't happen) before being deleted for good.
 -- Tasks with no due_at set never expire -- "기한 없음" is intentionally
 -- open-ended.
+--
+-- A recurring task that expires this way also advances to its next
+-- occurrence via spawn_next_recurrence(), same as an actual completion does
+-- -- otherwise a single missed occurrence silently and permanently broke
+-- the whole recurring quest (2026-08 bug report).
 create or replace function public.sweep_expired_tasks()
 returns void
 language plpgsql
@@ -4193,19 +4245,21 @@ security definer
 set search_path = public
 as $$
 declare
-  v_task record;
+  v_task public.tasks;
 begin
   for v_task in
     update public.tasks
     set status = 'failed'
     where status = 'open' and due_at is not null and due_at < now()
-    returning id, family_id, created_by, stake_points
+    returning *
   loop
     if v_task.stake_points > 0 then
       update public.family_members
       set points = points + v_task.stake_points
       where family_id = v_task.family_id and user_id = v_task.created_by;
     end if;
+
+    perform public.spawn_next_recurrence(v_task);
   end loop;
 
   delete from public.tasks
