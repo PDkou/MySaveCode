@@ -87,6 +87,28 @@ async function sendToSubscriptions(
   return sentCount;
 }
 
+// Claims the right to send a task's due-reminder/overdue-escalation push
+// before actually sending it, via optimistic concurrency: the UPDATE only
+// matches if the sentinel column still holds the exact value this
+// invocation read moments ago, so a second cron invocation that started
+// before this one finished (this cron fires every minute -- see schema.sql
+// section 13/17 -- and a slow run under load could still be mid-flight when
+// the next one starts) loses the race and skips sending instead of
+// duplicating the notification (2026-08 bug report). The previous shape
+// (send first, mark "sent" afterward) had no such guard.
+async function claimNotificationSlot(
+  supabase: SupabaseClient,
+  taskId: string,
+  column: 'due_reminder_sent_for' | 'overdue_notified_for',
+  previousValue: string | null,
+  newValue: string,
+): Promise<boolean> {
+  let query = supabase.from('tasks').update({ [column]: newValue }).eq('id', taskId).eq('status', 'open');
+  query = previousValue === null ? query.is(column, null) : query.eq(column, previousValue);
+  const { data } = await query.select('id').maybeSingle();
+  return !!data;
+}
+
 // ---------------------------------------------------------------------------
 // Path 1: scheduled due-time reminders
 // ---------------------------------------------------------------------------
@@ -124,6 +146,15 @@ async function handleDueReminders(supabase: SupabaseClient): Promise<Response> {
   let sentCount = 0;
 
   for (const task of eligibleTasks) {
+    const claimed = await claimNotificationSlot(
+      supabase,
+      task.id,
+      'due_reminder_sent_for',
+      task.due_reminder_sent_for as string | null,
+      task.due_at as string,
+    );
+    if (!claimed) continue;
+
     const { data: assignees } = await supabase.from('task_assignees').select('user_id').eq('task_id', task.id);
     const assigneeIds = (assignees ?? []).map((a) => a.user_id as string);
     const userIds = await filterByNotificationPref(supabase, task.family_id as string, assigneeIds, 'notify_due');
@@ -144,8 +175,6 @@ async function handleDueReminders(supabase: SupabaseClient): Promise<Response> {
         sentCount += await sendToSubscriptions(supabase, subs, { title: task.title, body: DUE_BODY_TEXT[lang], taskId: task.id });
       }
     }
-
-    await supabase.from('tasks').update({ due_reminder_sent_for: task.due_at }).eq('id', task.id);
   }
 
   const escalationSentCount = await runOverdueEscalation(supabase, now);
@@ -192,6 +221,15 @@ async function runOverdueEscalation(supabase: SupabaseClient, now: Date): Promis
   let sentCount = 0;
 
   for (const task of eligibleTasks) {
+    const claimed = await claimNotificationSlot(
+      supabase,
+      task.id,
+      'overdue_notified_for',
+      task.overdue_notified_for as string | null,
+      task.due_at as string,
+    );
+    if (!claimed) continue;
+
     const { data: assignees } = await supabase.from('task_assignees').select('user_id').eq('task_id', task.id);
     const assigneeIds = (assignees ?? []).map((a) => a.user_id as string);
     const recipientIds = Array.from(new Set([task.created_by as string, ...assigneeIds]));
@@ -213,8 +251,6 @@ async function runOverdueEscalation(supabase: SupabaseClient, now: Date): Promis
         sentCount += await sendToSubscriptions(supabase, subs, { title: task.title, body: OVERDUE_BODY_TEXT[lang], taskId: task.id });
       }
     }
-
-    await supabase.from('tasks').update({ overdue_notified_for: task.due_at }).eq('id', task.id);
   }
 
   return sentCount;
