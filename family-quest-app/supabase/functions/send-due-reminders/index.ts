@@ -280,9 +280,22 @@ function buildWeeklySummaryBody(lang: string, total: number, mvpName: string | n
   return lang === 'ja' ? `今週の完了は${total}件でした。` : `이번 주 완료 ${total}개예요.`;
 }
 
+// Local (KST/JST, UTC+9) calendar week -- most recent Monday 00:00 local,
+// not a rolling "now - 7 days" UTC window. Matches WeeklyBreakdownModal.tsx's
+// startOfThisWeek() and compute_weekly_mvp()'s v_week_start in schema.sql;
+// this function previously used a plain 7-day rollback, so the "이번 주"
+// total/MVP in this push could disagree with what the same family saw by
+// opening the in-app weekly breakdown right after (2026-08 bug report).
+function startOfThisWeekKst(now: Date): Date {
+  const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const daysSinceMonday = (kstNow.getUTCDay() + 6) % 7;
+  const kstMonday = Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate() - daysSinceMonday);
+  return new Date(kstMonday - 9 * 60 * 60 * 1000);
+}
+
 async function handleWeeklySummary(supabase: SupabaseClient): Promise<Response> {
   const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const weekAgo = startOfThisWeekKst(now).toISOString();
 
   const { data: subscriptionFamilies } = await supabase.from('push_subscriptions').select('family_id');
   const familyIds = Array.from(new Set((subscriptionFamilies ?? []).map((r) => r.family_id as string)));

@@ -2889,7 +2889,8 @@ revoke all on public.notification_prefs from anon, public;
 
 -- select cron.schedule(
 --   'send-weekly-summary',
---   '0 0 * * 1', -- Monday 00:00 UTC = Monday 09:00 KST/JST
+--   '0 15 * * 0', -- Sunday 15:00 UTC = Monday 00:00 KST/JST, matching
+--                 -- compute_weekly_mvp's schedule/week boundary above
 --   $$
 --   select net.http_post(
 --     url := 'https://<PROJECT_REF>.supabase.co/functions/v1/send-due-reminders',
@@ -3827,7 +3828,15 @@ security definer
 set search_path = public
 as $$
 declare
-  v_week_start date := date_trunc('week', current_date)::date;
+  -- Local (KST/JST, UTC+9) calendar week, not a UTC-anchored one -- matches
+  -- WeeklyBreakdownModal.tsx's startOfThisWeek() (local Monday 00:00), which
+  -- computes the same "이번 주" MVP/count live in the app. Before this, this
+  -- function used current_date (UTC session default) and a rolling
+  -- "now() - 7 days" window, so the MVP crowned here (and shown in the
+  -- weekly summary push) could disagree with what a user saw in-app --
+  -- same UTC-vs-local-day class of bug as the tycoon daily cap fix.
+  v_week_start date := date_trunc('week', (now() at time zone 'Asia/Seoul')::date)::date;
+  v_week_start_utc timestamptz := v_week_start::timestamp at time zone 'Asia/Seoul';
   v_winner record;
 begin
   insert into public.weekly_mvp_log (family_id, week_start, user_id, completed_count)
@@ -3837,7 +3846,7 @@ begin
       row_number() over (partition by family_id order by count(*) desc) as rn
     from public.quest_payouts
     where kind = 'completion' and reputation_awarded = true
-      and created_at >= now() - interval '7 days'
+      and created_at >= v_week_start_utc
     group by family_id, user_id
   ) ranked
   where rn = 1
@@ -3880,11 +3889,15 @@ begin
 exception when others then null;
 end $$;
 
+-- '5 15 * * 0': Sunday 15:05 UTC = Monday 00:05 KST/JST -- fires right after
+-- local midnight so the week it computes (v_week_start above) has actually
+-- just ended, not '5 0 * * 1' (Monday 00:05 UTC = Monday 09:05 KST/JST),
+-- which ran 9 hours into the new local week.
 do $$
 begin
-  perform cron.schedule('compute-weekly-mvp', '5 0 * * 1', 'select public.compute_weekly_mvp();');
+  perform cron.schedule('compute-weekly-mvp', '5 15 * * 0', 'select public.compute_weekly_mvp();');
 exception when others then
-  raise notice 'pg_cron not enabled -- could not schedule compute_weekly_mvp automatically. Enable pg_cron from Database > Extensions in the Supabase dashboard, then run: select cron.schedule(''compute-weekly-mvp'', ''5 0 * * 1'', ''select public.compute_weekly_mvp();'');';
+  raise notice 'pg_cron not enabled -- could not schedule compute_weekly_mvp automatically. Enable pg_cron from Database > Extensions in the Supabase dashboard, then run: select cron.schedule(''compute-weekly-mvp'', ''5 15 * * 0'', ''select public.compute_weekly_mvp();'');';
 end $$;
 
 insert into public.shop_items (slot, name, sprite_key, acquisition_type, key, hidden, sort_order)
