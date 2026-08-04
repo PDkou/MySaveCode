@@ -2,7 +2,16 @@ export type AppLanguageCode = 'ko' | 'ja';
 
 export type TaskStatus = 'open' | 'pending_confirmation' | 'done' | 'failed';
 
-export type TaskActivityAction = 'created' | 'completed' | 'reopened' | 'updated';
+// Matches log_task_activity()'s trigger in schema.sql exactly -- 'updated'
+// is declared here and has a locale string, but nothing currently inserts
+// it (a plain title/details/assignee edit via update_task doesn't log an
+// activity at all, only status transitions do); kept since translations
+// already exist for it and it's harmless to leave declared. 'reported'/
+// 'rejected' were previously missing from this type despite the DB
+// actually producing them (report_task_completion's needs-confirmation
+// path, and confirm/reject) and the locale files already having
+// translations for both -- caught by a design-vs-implementation audit.
+export type TaskActivityAction = 'created' | 'reported' | 'completed' | 'rejected' | 'reopened' | 'updated';
 
 export type TaskRecurrence = 'none' | 'daily' | 'weekly' | 'monthly';
 
