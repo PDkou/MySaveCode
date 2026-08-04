@@ -4014,9 +4014,15 @@ revoke execute on function public.unequip_badge(uuid) from anon, public;
 alter table public.families add column if not exists everyone_streak_days integer not null default 0;
 alter table public.families add column if not exists everyone_streak_last_date date;
 
--- 코멘트 장인 / 소통왕: account-wide comment count (not scoped to one
--- family), so -- same "grant to every room they're in" pattern as
--- 인싸/다정한 이웃 -- granted in every family room the author belongs to.
+-- 코멘트 장인 / 소통왕: per-family comment count, like every other repeat-
+-- count title (photo_album_rich etc.) -- previously account-wide across
+-- every family the author belongs to, on the reasoning that it should
+-- follow 인싸/다정한 이웃's "grant in every room" pattern. Revisited
+-- 2026-08: 인싸/다정한 이웃 are inherently cross-family in what they measure
+-- (room count itself), whereas this counts a per-room activity (comments),
+-- so it belongs with the per-family majority instead. A proper global-vs-
+-- private title split is a bigger, deferred decision (see BACKLOG.md) --
+-- this just moves these two into the private/per-family bucket for now.
 create or replace function public.handle_new_task_comment()
 returns trigger
 language plpgsql
@@ -4025,16 +4031,15 @@ set search_path = public
 as $$
 declare
   v_comment_count integer;
-  v_family_id uuid;
 begin
-  select count(*) into v_comment_count from public.task_comments where author_id = new.author_id;
+  select count(*) into v_comment_count
+  from public.task_comments
+  where author_id = new.author_id and family_id = new.family_id;
   if v_comment_count >= 30 then
-    for v_family_id in select family_id from public.family_members where user_id = new.author_id loop
-      perform public.grant_title(v_family_id, new.author_id, 'comment_master');
-      if v_comment_count >= 50 then
-        perform public.grant_title(v_family_id, new.author_id, 'chatterbox');
-      end if;
-    end loop;
+    perform public.grant_title(new.family_id, new.author_id, 'comment_master');
+  end if;
+  if v_comment_count >= 50 then
+    perform public.grant_title(new.family_id, new.author_id, 'chatterbox');
   end if;
   return new;
 end;
