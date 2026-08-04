@@ -1240,7 +1240,13 @@ begin
     values (p_family_id, p_user_id, 'streak_7') on conflict do nothing;
   end if;
 
-  v_completed_hour := extract(hour from p_completed_at);
+  -- KST/JST (UTC+9) local hour, not server-session (UTC) hour -- this app
+  -- has no per-user timezone field, but it's ko/ja-only, so a fixed
+  -- Asia/Seoul offset (same as Japan, no DST in either) is the right
+  -- constant rather than raw extract(hour from ...) on a UTC timestamptz,
+  -- which was checking hours 9 ahead of what "새벽"/"밤" mean to an actual
+  -- user (2026-08 bug report/design-vs-code audit).
+  v_completed_hour := extract(hour from (p_completed_at at time zone 'Asia/Seoul'));
   if v_completed_hour < 7 then
     insert into public.member_badges (family_id, user_id, badge_key)
     values (p_family_id, p_user_id, 'early_bird') on conflict do nothing;
@@ -1553,7 +1559,7 @@ begin
     -- "competition"-flavored titles shouldn't count them either.
     if v_task.created_by <> v_uid then
       v_seconds_since_created := extract(epoch from (v_completion_moment - v_task.created_at));
-      v_completion_hour := extract(hour from v_completion_moment);
+      v_completion_hour := extract(hour from (v_completion_moment at time zone 'Asia/Seoul'));
 
       -- 눈치 백단 / 전광석화 (speed).
       if v_seconds_since_created <= 60 then
@@ -1572,7 +1578,8 @@ begin
         select count(*) from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
         where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
           and qp.assignment_mode = 'first_come' and qp.reputation_awarded
-          and extract(hour from t.completed_at) >= 5 and extract(hour from t.completed_at) < 8
+          and extract(hour from (t.completed_at at time zone 'Asia/Seoul')) >= 5
+          and extract(hour from (t.completed_at at time zone 'Asia/Seoul')) < 8
       ) >= 5 then
         perform public.grant_title(v_family_id, v_uid, 'early_bird_hunter');
       end if;
@@ -1695,7 +1702,7 @@ begin
     end if;
 
     -- 🔒 축제의 밤 (late-night 모두형 completion).
-    if extract(hour from v_completion_moment) >= 22 then
+    if extract(hour from (v_completion_moment at time zone 'Asia/Seoul')) >= 22 then
       for v_assignee_id in select user_id from public.task_assignees where task_id = p_task_id loop
         perform public.grant_title(v_family_id, v_assignee_id, 'festival_night');
       end loop;
@@ -1794,7 +1801,7 @@ begin
       -- 13-2 특정인 지정 탭: only for genuine completer<>requester cases,
       -- same reasoning as the 선착 block above.
       v_seconds_since_created := extract(epoch from (v_completion_moment - v_task.created_at));
-      v_completion_hour := extract(hour from v_completion_moment);
+      v_completion_hour := extract(hour from (v_completion_moment at time zone 'Asia/Seoul'));
 
       -- 즉시 응답.
       if v_seconds_since_created <= 600 and (
@@ -1811,7 +1818,8 @@ begin
         select count(*) from public.quest_payouts qp join public.tasks t on t.id = qp.task_id
         where qp.family_id = v_family_id and qp.user_id = v_uid and qp.kind = 'completion'
           and qp.assignment_mode = 'specific' and qp.reputation_awarded
-          and extract(hour from t.completed_at) >= 4 and extract(hour from t.completed_at) < 7
+          and extract(hour from (t.completed_at at time zone 'Asia/Seoul')) >= 4
+          and extract(hour from (t.completed_at at time zone 'Asia/Seoul')) < 7
       ) >= 5 then
         perform public.grant_title(v_family_id, v_uid, 'dawn_delivery');
       end if;
@@ -3667,10 +3675,13 @@ begin
     perform public.grant_title(p_family_id, v_uid, 'settler');
   end if;
 
-  -- 올빼미 접속자 (hidden, 13-A): logged in during the dead of night. Same
-  -- server-UTC hour check the existing early_bird/night_owl badges already
-  -- use -- no per-user timezone tracking anywhere in this schema.
-  if extract(hour from now()) >= 2 and extract(hour from now()) < 5 then
+  -- 올빼미 접속자 (hidden, 13-A): logged in during the dead of night. Fixed
+  -- Asia/Seoul offset, not raw server-UTC hour -- this app has no per-user
+  -- timezone field, but it's ko/ja-only (same UTC+9 offset, no DST in
+  -- either), so a fixed offset is the right fix rather than leaving this on
+  -- server time, which was checking 2-5am UTC (11am-2pm KST/JST) instead of
+  -- the actual dead of night (2026-08 bug report/design-vs-code audit).
+  if extract(hour from (now() at time zone 'Asia/Seoul')) >= 2 and extract(hour from (now() at time zone 'Asia/Seoul')) < 5 then
     perform public.grant_title(p_family_id, v_uid, 'night_login');
   end if;
 
