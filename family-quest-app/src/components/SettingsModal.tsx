@@ -18,13 +18,18 @@ import { AvatarPhotoError } from '../lib/avatarPhotos';
 
 interface SettingsModalProps {
   onClose: () => void;
+  // Only meaningful when SettingsModal is opened from the dashboard, where
+  // TutorialTour's spotlighted elements actually exist -- FamilySetupPage
+  // (before a family exists) also renders this modal and omits it, so the
+  // "튜토리얼 다시보기" row only appears where replaying it makes sense.
+  onReplayTutorial?: () => void;
 }
 
 // A single entry point for everything that used to be its own icon
 // button scattered across the top bar (theme, color theme, language,
 // profile name, logout, help) -- that row had grown to 6-8 buttons as
 // features piled up over this project.
-export function SettingsModal({ onClose }: SettingsModalProps) {
+export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, profile, avatarUrl, signOut, updateAvatarPhoto, updateBirthday } = useAuth();
@@ -208,6 +213,11 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           <button type="button" className="settings-row-button" onClick={() => setShowOnboardingPreview(true)}>
             {t('onboarding.replayButton')}
           </button>
+          {onReplayTutorial && (
+            <button type="button" className="settings-row-button" onClick={onReplayTutorial}>
+              {t('tutorial.replayButton')}
+            </button>
+          )}
         </div>
 
         <div className="modal-actions">

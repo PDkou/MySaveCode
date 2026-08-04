@@ -1107,6 +1107,70 @@ textarea {
   max-width: 380px;
 }
 
+/* ---------- Tutorial tour ---------- */
+
+/* Above everything, including the celebration overlay's z-index: 201 --
+   the guided tour should dominate the screen whenever it's active. */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+}
+
+.tutorial-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 38, 64, 0.5);
+}
+
+/* A transparent box whose oversized box-shadow paints the dim everywhere
+   *except* this rect -- the "spotlight cutout" look without actually
+   punching a hole in a real element. pointer-events: none so it doesn't
+   swallow clicks meant for .tutorial-backdrop underneath (the target
+   itself isn't meant to be interactive mid-tour; only Next/Skip are). */
+.tutorial-spotlight {
+  position: fixed;
+  border-radius: 14px;
+  box-shadow: 0 0 0 9999px rgba(24, 38, 64, 0.5);
+  background: transparent;
+  pointer-events: none;
+  transition: top 0.15s ease, left 0.15s ease, width 0.15s ease, height 0.15s ease;
+}
+
+.tutorial-tooltip {
+  position: fixed;
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow-lg);
+}
+
+.tutorial-step-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--purple);
+  margin-bottom: 6px;
+}
+
+.tutorial-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--navy);
+}
+
+.tutorial-body {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.tutorial-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 /* ---------- Family setup ---------- */
 
 .family-setup-intro {

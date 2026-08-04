@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,6 +11,7 @@ export function HelpPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const sections = t('help.sections', { returnObjects: true }) as HelpSection[];
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
     <div className="screen help-screen">
@@ -22,8 +24,19 @@ export function HelpPage() {
 
       <div className="help-list">
         {sections.map((section, i) => (
-          <details key={section.title} className="help-section" open={i === 0}>
-            <summary className="help-section-title">{section.title}</summary>
+          <details key={section.title} className="help-section" open={openIndex === i}>
+            {/* preventDefault so the browser's native toggle never fires --
+                open/closed state is fully driven by openIndex below, which
+                is how only one section stays open at a time. */}
+            <summary
+              className="help-section-title"
+              onClick={(e) => {
+                e.preventDefault();
+                setOpenIndex(openIndex === i ? null : i);
+              }}
+            >
+              {section.title}
+            </summary>
             <p className="help-section-body">{section.body}</p>
           </details>
         ))}
