@@ -126,6 +126,9 @@ button {
   font-family: inherit;
   word-break: keep-all;
   overflow-wrap: break-word;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 a {
@@ -507,6 +510,8 @@ a {
   border: 1px solid var(--border);
   border-radius: 10px;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .checkbox-row input[type='checkbox'] {
@@ -611,6 +616,8 @@ a {
   font-weight: 600;
   color: var(--navy);
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .only-mine-toggle input[type='checkbox'] {
