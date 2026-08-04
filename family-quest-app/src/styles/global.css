@@ -652,18 +652,26 @@ textarea {
   font-weight: 700;
 }
 
-/* Every variant gets a 2px border in a slightly darker/matching tone plus a
-   2px "ledge" shadow underneath it, and swaps to a pressed-in look on
-   :active (inset shadow instead of the ledge, nudged down 2px) -- a light
-   touch of the cel-shaded "single light source, raised surface" feel
+/* Every variant gets a thin border in a slightly darker/matching tone plus a
+   "ledge" shadow underneath it, and swaps to a pressed-in look on :active
+   (inset shadow instead of the ledge, nudged down) -- a light touch of the
+   cel-shaded "single light source, raised surface" feel
    design/gamification-iconography.md uses for the pixel-art title frames,
    without going as far as actual pixel-art borders (2026-08 feedback:
-   flat buttons read as a generic/plain other than being that one out).
-   Applied at the shared .btn-ghost/.btn-danger level (not one-off per
-   screen) so it reaches every "colorless" button already using those
-   classes too -- calendar nav arrows, the dashboard refresh icon, modal
-   close buttons, etc. -- not just the filled primary/secondary ones. */
+   flat buttons read as a generic/plain other than being that one out;
+   further 2026-08 feedback: the first pass was a touch too strong and the
+   bevel needs to scale with button size rather than reuse one fixed
+   thickness everywhere -- --btn-border-w/--btn-shadow-y/--btn-press-y let
+   .btn-sm below dial the same look down proportionally instead of
+   inheriting the full-size bevel at every scale). Applied at the shared
+   .btn-ghost/.btn-danger level (not one-off per screen) so it reaches
+   every "colorless" button already using those classes too -- calendar
+   nav arrows, the dashboard refresh icon, modal close buttons, etc. --
+   not just the filled primary/secondary ones. */
 .btn {
+  --btn-border-w: 1.5px;
+  --btn-shadow-y: 1.5px;
+  --btn-press-y: 1.5px;
   font-size: 16px;
   font-weight: 700;
   padding: 13px 19px;
@@ -681,49 +689,49 @@ textarea {
 .btn-primary {
   background: var(--purple);
   color: #fff;
-  border: 2px solid var(--purple-dark);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.3), 0 2px 0 var(--purple-dark);
+  border: var(--btn-border-w) solid var(--purple-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 var(--btn-shadow-y) 0 var(--purple-dark);
 }
 
 .btn-primary:active:not(:disabled) {
-  box-shadow: inset 0 1.5px 0 rgba(0, 0, 0, 0.15);
-  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.12);
+  transform: translateY(var(--btn-press-y));
 }
 
 .btn-secondary {
   background: var(--amber);
   color: #fff;
-  border: 2px solid var(--amber-dark);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.3), 0 2px 0 var(--amber-dark);
+  border: var(--btn-border-w) solid var(--amber-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 var(--btn-shadow-y) 0 var(--amber-dark);
 }
 
 .btn-secondary:active:not(:disabled) {
-  box-shadow: inset 0 1.5px 0 rgba(0, 0, 0, 0.15);
-  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.12);
+  transform: translateY(var(--btn-press-y));
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--navy);
-  border: 2px solid var(--border);
-  box-shadow: 0 2px 0 var(--border);
+  border: var(--btn-border-w) solid var(--border);
+  box-shadow: 0 var(--btn-shadow-y) 0 var(--border);
 }
 
 .btn-ghost:active:not(:disabled) {
   box-shadow: none;
-  transform: translateY(2px);
+  transform: translateY(var(--btn-press-y));
 }
 
 .btn-danger {
   background: transparent;
   color: var(--error);
-  border: 2px solid rgba(198, 74, 85, 0.35);
-  box-shadow: 0 2px 0 rgba(198, 74, 85, 0.35);
+  border: var(--btn-border-w) solid rgba(198, 74, 85, 0.35);
+  box-shadow: 0 var(--btn-shadow-y) 0 rgba(198, 74, 85, 0.35);
 }
 
 .btn-danger:active:not(:disabled) {
   box-shadow: none;
-  transform: translateY(2px);
+  transform: translateY(var(--btn-press-y));
 }
 
 @media (hover: hover) {
@@ -746,6 +754,9 @@ textarea {
 }
 
 .btn-sm {
+  --btn-border-w: 1px;
+  --btn-shadow-y: 1px;
+  --btn-press-y: 1px;
   padding: 9px 14px;
   font-size: 14px;
   border-radius: 12px;
