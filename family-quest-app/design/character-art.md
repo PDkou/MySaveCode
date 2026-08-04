@@ -1006,6 +1006,42 @@ into a small guide-character bubble without touching the edges.
 Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
 
-받은 PNG 4장은 각각 `public/mascot/tutorial-guide-default.png` / `tutorial-guide-right.png` /
-`tutorial-guide-left.png` / `tutorial-guide-up.png`로 저장해서 알려주면, `TutorialTour.tsx`에서
-스포트라이트 위치에 따라 이미지를 골라 붙이는 작업은 이어서 진행 가능합니다.
+**37. 튜토리얼 가이드 캐릭터 -- 인사하는 포즈 (투어 시작 전용)**
+
+투어 맨 처음, 아직 어떤 요소에도 스포트라이트를 비추기 전에 (`target: null`인 첫 스텝) 반갑게
+인사하는 용도로 별도 분리. 33번(설명 중 손짓)과 달리 오직 이 첫 인사 스텝에서만 쓰는 포즈입니다.
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: The same chibi bunny-eared girl mascot as the other tutorial-guide poses (long
+fluffy pink/cream rabbit ears, pale skin, pink cheek blush, pink-red ruffled dress, bare
+hands, brown shoes), front-facing, standing straight, one arm raised beside the head with an
+open palm waving hello, the other arm relaxed at the side, a warm welcoming stance (first
+impression / greeting pose, distinct from the mid-explanation hand gestures of the other
+tutorial-guide poses). Leave generous empty margin above the head and below the feet on a
+512x768 transparent canvas so the figure can be cropped into a small guide-character bubble
+without touching the edges.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+받은 PNG 5장은 각각 `public/mascot/tutorial-guide-default.png` / `tutorial-guide-right.png` /
+`tutorial-guide-left.png` / `tutorial-guide-up.png` / `tutorial-guide-hello.png`로 저장해서
+알려주면, `TutorialTour.tsx`에서 (1) 맨 앞에 인사 전용 첫 스텝을 추가하고 (2) 스포트라이트 위치에
+따라 나머지 이미지를 골라 붙이는 작업까지 이어서 진행 가능합니다.
