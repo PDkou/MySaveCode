@@ -21,10 +21,12 @@ import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
 import { CelebrationOverlay } from '../components/CelebrationOverlay';
 import { TitleFrame } from '../components/TitleFrame';
+import { TutorialTour } from '../components/TutorialTour';
 import { useUnseenCelebration } from '../hooks/useUnseenCelebration';
 import { startOfThisWeek } from '../lib/formatDate';
 import { BADGE_ICON_SRC, levelForPoints, pointsIntoLevel, pointsNeededForLevel } from '../lib/gamification';
 import { getEquippedItems, getShopItems, shopItemDisplayName } from '../lib/shop';
+import { hasSeenTutorial, markTutorialSeen } from '../lib/tutorial';
 import type { BadgeKey, CharacterSlot, TitleTier } from '../types/database';
 
 type Filter = 'open' | 'done' | 'all';
@@ -47,6 +49,7 @@ export function DashboardPage() {
   const [showWeekly, setShowWeekly] = useState(false);
   const [showTycoon, setShowTycoon] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -115,6 +118,22 @@ export function DashboardPage() {
   }, [members]);
 
   const me = useMemo(() => members.find((m) => m.user_id === user?.id) ?? null, [members, user]);
+
+  // First-run guided tour of the dashboard header controls -- gated on `me`
+  // (not just userId) so it only fires once FamilyContext has actually
+  // resolved this user as a member here, matching when the header buttons
+  // it targets (new task, calendar, notification bell, ...) are all
+  // present in the DOM for TutorialTour to find and spotlight.
+  useEffect(() => {
+    if (userId && me && !hasSeenTutorial(userId)) {
+      setShowTutorial(true);
+    }
+  }, [userId, me]);
+
+  const dismissTutorial = () => {
+    if (userId) markTutorialSeen(userId);
+    setShowTutorial(false);
+  };
 
   // Feeds the header's XP bar + gold display -- same pointsIntoLevel/
   // pointsNeededForLevel math MyStatsModal's level card already uses, just
@@ -273,6 +292,7 @@ export function DashboardPage() {
             <button
               type="button"
               className="topbar-character"
+              data-tutorial="character"
               onClick={() => setShowShop(true)}
               aria-label={t('shop.openButton')}
             >
@@ -301,6 +321,7 @@ export function DashboardPage() {
             <button
               type="button"
               className="btn btn-ghost btn-icon btn-sm"
+              data-tutorial="settings"
               onClick={() => setShowSettings(true)}
               aria-label={t('settings.heading')}
             >
@@ -312,7 +333,7 @@ export function DashboardPage() {
           </div>
 
           <div className="dashboard-toolbar">
-            <button type="button" className="btn btn-primary" onClick={() => setShowNewTask(true)}>
+            <button type="button" className="btn btn-primary" data-tutorial="new-task" onClick={() => setShowNewTask(true)}>
               {t('dashboard.newTask')}
             </button>
             <button
@@ -326,7 +347,7 @@ export function DashboardPage() {
                 <path d="M21 3v6h-6" />
               </svg>
             </button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/calendar')}>
+            <button type="button" className="btn btn-ghost btn-sm" data-tutorial="calendar" onClick={() => navigate('/calendar')}>
               {t('calendar.openButton')}
             </button>
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/gallery')}>
@@ -388,7 +409,7 @@ export function DashboardPage() {
           )}
         </div>
 
-        <div className="filter-tabs" role="tablist">
+        <div className="filter-tabs" role="tablist" data-tutorial="filters">
           <button
             type="button"
             role="tab"
@@ -503,11 +524,20 @@ export function DashboardPage() {
           }}
         />
       )}
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
+          onReplayTutorial={() => {
+            setShowSettings(false);
+            setShowTutorial(true);
+          }}
+        />
+      )}
       {showInviteQr && family && (
         <InviteQrModal inviteCode={family.invite_code} onClose={() => setShowInviteQr(false)} />
       )}
       {unseenCelebration && <CelebrationOverlay result={unseenCelebration} onDismiss={dismissUnseenCelebration} />}
+      {showTutorial && <TutorialTour onFinish={dismissTutorial} />}
     </div>
   );
 }
