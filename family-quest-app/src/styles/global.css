@@ -762,6 +762,11 @@ textarea {
   border-radius: 12px;
 }
 
+/* A straight offset "ledge" shadow (the rectangular .btn-* default) reads
+   as a lopsided ring on a circle -- thicker at the bottom, thin at the
+   top -- instead of the flat shelf it forms under a pill. A blurred,
+   near-symmetric shadow keeps the same raised/pressed language without
+   that artifact, regardless of which color variant it's paired with. */
 .btn-icon {
   display: inline-flex;
   align-items: center;
@@ -770,11 +775,21 @@ textarea {
   height: 40px;
   padding: 0;
   border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(24, 38, 64, 0.16);
+}
+
+.btn-icon:active:not(:disabled) {
+  box-shadow: 0 0.5px 1px rgba(24, 38, 64, 0.1);
 }
 
 .btn-icon.btn-sm {
   width: 36px;
   height: 36px;
+  box-shadow: 0 0.5px 1.5px rgba(24, 38, 64, 0.13);
+}
+
+.btn-icon.btn-sm:active:not(:disabled) {
+  box-shadow: 0 0.5px 0.75px rgba(24, 38, 64, 0.08);
 }
 
 .form-error {
