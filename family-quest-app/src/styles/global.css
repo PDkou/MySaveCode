@@ -1051,9 +1051,20 @@ textarea {
   text-align: center;
   gap: 14px;
   padding: calc(env(safe-area-inset-top, 0px) + 32px) 24px calc(env(safe-area-inset-bottom, 0px) + 32px);
-  /* The panel itself appears instantly (it's opaque and covers the
-     screen underneath immediately either way) -- the staggered reveal
-     below is on its *contents*, not a whole-screen fade. */
+  /* The panel itself appears instantly on open (it's opaque and covers
+     the screen underneath immediately either way) -- the staggered
+     reveal above is on its *contents*, not a whole-screen fade-in. On
+     the way out, though, it does fade as a whole (see .onboarding-closing
+     below) instead of vanishing the instant "시작하기"/닫기 is clicked. */
+  transition: opacity 0.25s ease;
+}
+
+/* Set by OnboardingScreen.tsx for the CLOSE_FADE_MS window between
+   clicking "시작하기"/닫기 and the parent actually unmounting this
+   component -- fades the whole panel out instead of it snapping away. */
+.onboarding-closing {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Sequenced entrance: hero image -> title/tagline/point cards one after

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface OnboardingScreenProps {
@@ -13,11 +14,24 @@ interface OnboardingScreenProps {
 // entry is an onboarding.pointNTitle/pointNDesc key pair.
 const POINT_COUNT = 4;
 
+// Matches .onboarding-screen's opacity transition duration in global.css.
+const CLOSE_FADE_MS = 250;
+
 export function OnboardingScreen({ onDismiss, replay = false }: OnboardingScreenProps) {
   const { t } = useTranslation();
+  // The parent unmounts this component the instant onDismiss fires (it's
+  // just `{showOnboarding && <OnboardingScreen .../>}`), so without this
+  // the screen snapped away instantly on "시작하기"/닫기 -- fade out first,
+  // then tell the parent to actually unmount.
+  const [isClosing, setIsClosing] = useState(false);
+  const handleDismiss = () => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(onDismiss, CLOSE_FADE_MS);
+  };
 
   return (
-    <div className="onboarding-screen">
+    <div className={`onboarding-screen${isClosing ? ' onboarding-closing' : ''}`}>
       <div className="onboarding-hero">
         <img className="onboarding-illustration" src="/illustrations/onboarding.png" alt="" aria-hidden="true" />
         {/* Same character (and same "hello" pose) that opens the
@@ -40,7 +54,7 @@ export function OnboardingScreen({ onDismiss, replay = false }: OnboardingScreen
 
       {!replay && <p className="onboarding-bridge-note">{t('onboarding.guideNote')}</p>}
 
-      <button type="button" className="btn btn-primary btn-block" onClick={onDismiss}>
+      <button type="button" className="btn btn-primary btn-block" onClick={handleDismiss}>
         {replay ? t('common.close') : t('onboarding.start')}
       </button>
     </div>
