@@ -917,8 +917,8 @@ reads as one unified sprite sheet.
 Character (identical across every tutorial-guide pose in this set -- reuse verbatim): a
 chibi bunny-eared girl mascot. Long fluffy rabbit ears, deep red-pink outer with cream-pink
 inner lining, drooping slightly outward to the sides. Pale skin, round pink blush marks on
-both cheeks, simple round black dot eyes. No mouth drawn at all -- not even a small line or
-dot, the lower face is blank like the other reference-sheet characters. A small gold ribbon
+both cheeks, simple round black dot eyes. A small round open mouth, cheerful and simple (like a tiny "o" or smile shape, matching the
+mouth style of the first-draft mascot images). A small gold ribbon
 bow clipped on the right ear and a matching gold ribbon bow-tie at the neckline -- this
 mascot's signature accessories, keep on every pose. A red dress with a lighter cream ruffled
 hem. Plain bare hands, no gloves, no weapon, no shield. Simple tan/brown shoes.
@@ -957,8 +957,8 @@ reads as one unified sprite sheet.
 Character (identical across every tutorial-guide pose in this set -- reuse verbatim): a
 chibi bunny-eared girl mascot. Long fluffy rabbit ears, deep red-pink outer with cream-pink
 inner lining, drooping slightly outward to the sides. Pale skin, round pink blush marks on
-both cheeks, simple round black dot eyes. No mouth drawn at all -- not even a small line or
-dot, the lower face is blank like the other reference-sheet characters. A small gold ribbon
+both cheeks, simple round black dot eyes. A small round open mouth, cheerful and simple (like a tiny "o" or smile shape, matching the
+mouth style of the first-draft mascot images). A small gold ribbon
 bow clipped on the right ear and a matching gold ribbon bow-tie at the neckline -- this
 mascot's signature accessories, keep on every pose. A red dress with a lighter cream ruffled
 hem. Plain bare hands, no gloves, no weapon, no shield. Simple tan/brown shoes.
@@ -997,8 +997,8 @@ reads as one unified sprite sheet.
 Character (identical across every tutorial-guide pose in this set -- reuse verbatim): a
 chibi bunny-eared girl mascot. Long fluffy rabbit ears, deep red-pink outer with cream-pink
 inner lining, drooping slightly outward to the sides. Pale skin, round pink blush marks on
-both cheeks, simple round black dot eyes. No mouth drawn at all -- not even a small line or
-dot, the lower face is blank like the other reference-sheet characters. A small gold ribbon
+both cheeks, simple round black dot eyes. A small round open mouth, cheerful and simple (like a tiny "o" or smile shape, matching the
+mouth style of the first-draft mascot images). A small gold ribbon
 bow clipped on the right ear and a matching gold ribbon bow-tie at the neckline -- this
 mascot's signature accessories, keep on every pose. A red dress with a lighter cream ruffled
 hem. Plain bare hands, no gloves, no weapon, no shield. Simple tan/brown shoes.
@@ -1038,8 +1038,8 @@ reads as one unified sprite sheet.
 Character (identical across every tutorial-guide pose in this set -- reuse verbatim): a
 chibi bunny-eared girl mascot. Long fluffy rabbit ears, deep red-pink outer with cream-pink
 inner lining, drooping slightly outward to the sides. Pale skin, round pink blush marks on
-both cheeks, simple round black dot eyes. No mouth drawn at all -- not even a small line or
-dot, the lower face is blank like the other reference-sheet characters. A small gold ribbon
+both cheeks, simple round black dot eyes. A small round open mouth, cheerful and simple (like a tiny "o" or smile shape, matching the
+mouth style of the first-draft mascot images). A small gold ribbon
 bow clipped on the right ear and a matching gold ribbon bow-tie at the neckline -- this
 mascot's signature accessories, keep on every pose. A red dress with a lighter cream ruffled
 hem. Plain bare hands, no gloves, no weapon, no shield. Simple tan/brown shoes.
@@ -1079,8 +1079,8 @@ reads as one unified sprite sheet.
 Character (identical across every tutorial-guide pose in this set -- reuse verbatim): a
 chibi bunny-eared girl mascot. Long fluffy rabbit ears, deep red-pink outer with cream-pink
 inner lining, drooping slightly outward to the sides. Pale skin, round pink blush marks on
-both cheeks, simple round black dot eyes. No mouth drawn at all -- not even a small line or
-dot, the lower face is blank like the other reference-sheet characters. A small gold ribbon
+both cheeks, simple round black dot eyes. A small round open mouth, cheerful and simple (like a tiny "o" or smile shape, matching the
+mouth style of the first-draft mascot images). A small gold ribbon
 bow clipped on the right ear and a matching gold ribbon bow-tie at the neckline -- this
 mascot's signature accessories, keep on every pose. A red dress with a lighter cream ruffled
 hem. Plain bare hands, no gloves, no weapon, no shield. Simple tan/brown shoes.
