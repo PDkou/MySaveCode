@@ -19,12 +19,14 @@ import { CelebrationOverlay } from '../components/CelebrationOverlay';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { getTaskPhotoUrl, TaskPhotoError, uploadTaskPhoto } from '../lib/taskPhotos';
 import { displayStatusForTask } from '../lib/taskStatus';
+import { useSmartBack } from '../lib/backNav';
 import type { CompletionResult } from '../lib/gamification';
 import type { TaskRecurrence } from '../types/database';
 
 export function TaskDetailPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const goBack = useSmartBack('/');
   const { taskId } = useParams<{ taskId: string }>();
   const { user } = useAuth();
   const { family, members, avatarUrlByUserId } = useFamily();
@@ -265,7 +267,7 @@ export function TaskDetailPage() {
   if (notFound || !task) {
     return (
       <div className="screen task-detail-screen">
-        <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)}>
+        <button type="button" className="btn btn-ghost" onClick={goBack}>
           {t('common.back')}
         </button>
         <p className="empty-message">{t('taskDetail.error.notFound')}</p>
@@ -363,7 +365,7 @@ export function TaskDetailPage() {
   return (
     <div className="screen task-detail-screen">
       <div className="topbar">
-        <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)}>
+        <button type="button" className="btn btn-ghost" onClick={goBack}>
           {t('common.back')}
         </button>
         <div className="topbar-actions">
