@@ -75,13 +75,6 @@
     "undo": "실행취소",
     "deletedToast": "{{count}}개 삭제됨"
   },
-  "exit": {
-    "confirmMessage": "앱을 종료하시겠습니까?",
-    "confirmButton": "종료",
-    "button": "앱 종료",
-    "goodbyeMessage": "안녕히 가세요! 👋",
-    "goodbyeHint": "뒤로가기를 한 번 더 누르거나, 최근 앱 목록에서 이 앱을 스와이프해서 완전히 종료해주세요."
-  },
   "auth": {
     "loginTab": "로그인",
     "signupTab": "회원가입",

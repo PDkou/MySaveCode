@@ -84,15 +84,6 @@ let suppressNextPopCount = 0;
 function ensureBackDismissListener() {
   if (popstateListenerAttached) return;
   popstateListenerAttached = true;
-  // popstate's target is window itself, with no ancestor/descendant tree
-  // to traverse -- capture vs. bubble phase makes no difference for
-  // listeners attached directly to it, only registration order does. This
-  // fires after react-router's own popstate listener (attached earlier,
-  // synchronously, before this ever gets a chance to run via an effect)
-  // has already fully reacted -- including any component this pop
-  // revealed having rendered and run its own effects. A route-mounted
-  // useBackDismiss caller relying on that ordering (DashboardPage's exit
-  // guard) has to account for it on its own end; see the comment there.
   window.addEventListener('popstate', () => {
     if (suppressNextPopCount > 0) {
       suppressNextPopCount -= 1;
@@ -103,23 +94,7 @@ function ensureBackDismissListener() {
   });
 }
 
-interface UseBackDismissOptions {
-  // Overlays (the default) should consume their pushed entry via
-  // history.back() when they close some other way, so the back-stack
-  // doesn't grow a dead step per overlay ever opened -- see the comment
-  // above. DashboardPage's own root exit-guard (see the bottom of this
-  // file) isn't an overlay, though: it "closes" (unmounts/deactivates)
-  // both when its own popstate fires *and* whenever the user navigates
-  // forward away from the dashboard to another route -- and in that
-  // second case, popping would immediately fight the very navigation
-  // that just happened (back to "/" right after clicking into, say,
-  // /calendar). Pass false there to just drop the bookkeeping entry and
-  // leave the already-pushed native history entry alone.
-  consumeOnClose?: boolean;
-}
-
-export function useBackDismiss(isOpen: boolean, onClose: () => void, options?: UseBackDismissOptions) {
-  const consumeOnClose = options?.consumeOnClose ?? true;
+export function useBackDismiss(isOpen: boolean, onClose: () => void) {
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
@@ -141,11 +116,10 @@ export function useBackDismiss(isOpen: boolean, onClose: () => void, options?: U
         // to consume.
         return;
       }
-      backDismissStack.splice(idx, 1);
-      if (!consumeOnClose) return;
       // Closed some other way (its own button, a selection, ...) --
       // remove the entry and pop the history entry pushed for it, so the
       // back-stack doesn't grow one dead step per overlay ever opened.
+      backDismissStack.splice(idx, 1);
       suppressNextPopCount += 1;
       window.history.back();
     };
