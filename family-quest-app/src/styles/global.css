@@ -1158,16 +1158,32 @@ textarea {
   margin-bottom: 8px;
 }
 
+/* Height-based sizing (not a fixed square + object-fit: contain) so every
+   pose renders at the same character height regardless of its source
+   canvas being portrait ("hello"/"up") or landscape ("default"/"left"/
+   "right") -- a square box was squashing the landscape poses down to
+   ~70% height, which read as the mascot randomly shrinking between
+   steps (2026-08-05). */
 .tutorial-mascot {
-  width: 56px;
-  height: 56px;
-  object-fit: contain;
+  width: auto;
   flex-shrink: 0;
 }
 
 .tutorial-tooltip-head-text {
   flex: 1;
   min-width: 0;
+}
+
+/* Mascot standing beside the spotlighted element itself (see the
+   side-anchor logic in TutorialTour.tsx) rather than inside the tooltip
+   card -- this is the "character right next to the button it's
+   explaining" placement. Fixed like the tooltip/spotlight so its
+   top/left are viewport coordinates. */
+.tutorial-mascot-side {
+  position: fixed;
+  width: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 10px rgba(24, 38, 64, 0.3));
 }
 
 .tutorial-step-count {
@@ -1178,9 +1194,13 @@ textarea {
 }
 
 .tutorial-title {
-  margin: 0;
+  margin: 0 0 6px;
   font-size: 16px;
   color: var(--navy);
+}
+
+.tutorial-tooltip-head-text .tutorial-title {
+  margin-bottom: 0;
 }
 
 .tutorial-body {
