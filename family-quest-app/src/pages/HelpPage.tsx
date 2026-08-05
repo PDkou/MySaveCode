@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+
+import { useSmartBack } from '../lib/backNav';
 
 interface HelpSection {
   title: string;
@@ -9,14 +10,14 @@ interface HelpSection {
 
 export function HelpPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const goBack = useSmartBack('/');
   const sections = t('help.sections', { returnObjects: true }) as HelpSection[];
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
     <div className="screen help-screen">
       <div className="topbar">
-        <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)}>
+        <button type="button" className="btn btn-ghost" onClick={goBack}>
           {t('common.back')}
         </button>
         <h1 className="help-heading">{t('help.heading')}</h1>
