@@ -1145,41 +1145,18 @@ textarea {
   box-shadow: var(--shadow-lg);
 }
 
-/* Mascot avatar sits fully inside the card (never overlapping the
-   spotlight cutout above it -- an earlier version let the mascot float
-   above the tooltip and it ended up covering the highlighted element
-   itself, 2026-08-05). A fixed square box + object-fit: contain keeps it a
-   consistent footprint regardless of which pose's aspect ratio (portrait
-   "hello"/"up" vs. landscape "default"/"left"/"right") is showing. */
-.tutorial-tooltip-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-/* Height-based sizing (not a fixed square + object-fit: contain) so every
-   pose renders at the same character height regardless of its source
-   canvas being portrait ("hello"/"up") or landscape ("default"/"left"/
-   "right") -- a square box was squashing the landscape poses down to
-   ~70% height, which read as the mascot randomly shrinking between
-   steps (2026-08-05). */
+/* Mascot is always a standalone floating element (never inside the
+   tooltip card, never off beside the target) -- one consistent placement
+   for every step, sitting snugly between the spotlight and the tooltip
+   (or just above the tooltip when there's no target). Fixed like the
+   tooltip/spotlight so its top/left are viewport coordinates. Height-based
+   sizing (not a fixed square + object-fit: contain) so every pose renders
+   at the same character height regardless of its source canvas being
+   portrait ("hello"/"up") or landscape ("default"/"left"/"right") --
+   squaring them off was squashing the landscape poses down to ~70%
+   height, which read as the mascot randomly shrinking between steps
+   (2026-08-05). */
 .tutorial-mascot {
-  width: auto;
-  flex-shrink: 0;
-}
-
-.tutorial-tooltip-head-text {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Mascot standing beside the spotlighted element itself (see the
-   side-anchor logic in TutorialTour.tsx) rather than inside the tooltip
-   card -- this is the "character right next to the button it's
-   explaining" placement. Fixed like the tooltip/spotlight so its
-   top/left are viewport coordinates. */
-.tutorial-mascot-side {
   position: fixed;
   width: auto;
   pointer-events: none;
@@ -1190,17 +1167,13 @@ textarea {
   font-size: 12px;
   font-weight: 700;
   color: var(--purple);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .tutorial-title {
   margin: 0 0 6px;
   font-size: 16px;
   color: var(--navy);
-}
-
-.tutorial-tooltip-head-text .tutorial-title {
-  margin-bottom: 0;
 }
 
 .tutorial-body {
