@@ -22,10 +22,12 @@ const STEPS: TutorialStep[] = [
 ];
 
 // Which of the 5 generated mascot poses (design/character-art.md #33-38) to
-// show next to the tooltip. Picked from the tooltip's own layout math below
-// rather than the raw target rect, so it reflects where the highlighted
-// element actually sits *relative to the tooltip* (which is what the arm
-// gesture needs to point at), not just where it sits on screen.
+// show. 'left'/'right' are kept in the asset map for a possible future use
+// but aren't picked below -- the mascot always stands in the same spot
+// relative to the spotlight/tooltip now (see the placement comment further
+// down), so the only poses actually needed are the ones for "target is
+// directly above" (up), "no target" (hello for the opening step, default
+// for the closing one).
 type MascotPose = 'hello' | 'default' | 'left' | 'right' | 'up';
 
 const MASCOT_SRC: Record<MascotPose, string> = {
@@ -93,69 +95,60 @@ export function TutorialTour({ onFinish }: TutorialTourProps) {
     : null;
 
   const tooltipWidth = Math.min(320, window.innerWidth - 32);
-  let tooltipStyle: { top?: number; bottom?: number; left: number } = { top: 0, left: 0 };
 
-  if (spot) {
-    const spaceBelow = window.innerHeight - (spot.top + spot.height);
-    const placement = spaceBelow > 170 ? 'below' : 'above';
-    const idealLeft = spot.left + spot.width / 2 - tooltipWidth / 2;
-    const left = Math.max(16, Math.min(idealLeft, window.innerWidth - tooltipWidth - 16));
-    tooltipStyle =
-      placement === 'below'
-        ? { top: spot.top + spot.height + 12, left }
-        : { bottom: window.innerHeight - spot.top + 12, left };
-  } else {
-    tooltipStyle = { top: window.innerHeight / 2 - 90, left: window.innerWidth / 2 - tooltipWidth / 2 };
-  }
-
-  // The mascot's placement mirrors the request "if it's pointing at the
-  // new-task button, stand right next to that button, pointing at it" --
-  // not just "somewhere near a generic tooltip." Two modes:
-  //
-  // - beside the target (mascotSide 'left'/'right' of the target rect,
-  //   pose points back at it) when the target is a real standalone button
-  //   with enough clear room on one side. Narrow icon buttons (bell,
-  //   settings) sit packed against siblings with no safe gap, so they're
-  //   excluded even if the raw viewport math has "room" -- a big mascot
-  //   there would just cover the next icon over.
-  // - inside the tooltip card (small standalone step, full-width target
-  //   like the filter tabs, or no target at all) when there's no good
-  //   side to stand on.
-  const SIDE_HEIGHT = 116; // mascot height when standing beside the target
-  const CARD_HEIGHT = 84; // mascot height when living inside the tooltip card
-  const SIDE_ASPECT = 1.483; // default/left/right source images: 712x480
-  const sideWidth = SIDE_HEIGHT * SIDE_ASPECT;
+  // The mascot is always a standalone floating element, positioned the same
+  // way on every step -- earlier versions put it beside the target for some
+  // steps and inside the tooltip card for others, which read as
+  // inconsistent (different treatment per step) and, for the side-of-target
+  // placement, disconnected from the tooltip explaining it. Now it always
+  // sits snugly between the spotlight and the tooltip (pose 'up', arm
+  // raised at whatever's highlighted directly above), or right above the
+  // tooltip when there's no target at all -- one shape, every time.
+  const MASCOT_HEIGHT = 108;
+  const HELLO_ASPECT = 0.667; // hello/up source images: 320x480 (portrait)
+  const DEFAULT_ASPECT = 1.483; // default source image: 712x480 (landscape)
   const gap = 10;
-  const edgeMargin = 12;
+  const edgeMargin = 16;
 
   let pose: MascotPose;
-  let sideMascotStyle: { top: number; left: number } | null = null;
+  let tooltipStyle: { top?: number; bottom?: number; left: number };
+  let mascotStyle: { top: number; left: number; height: number };
 
-  if (!spot) {
-    pose = stepIndex === 0 ? 'hello' : 'default';
-  } else {
-    const isNarrowTarget = spot.width < 60; // packed icon buttons -- never side-anchor these
-    const spaceRight = window.innerWidth - (spot.left + spot.width) - edgeMargin;
-    const spaceLeft = spot.left - edgeMargin;
+  if (spot) {
+    pose = 'up';
+    const mascotWidth = MASCOT_HEIGHT * HELLO_ASPECT;
+    // Estimated tooltip height (title + body + actions) -- same rough
+    // budget the old placement math used, just padded for the mascot now
+    // sitting in the gap too.
+    const neededBelow = MASCOT_HEIGHT + gap * 2 + 170;
+    const spaceBelow = window.innerHeight - (spot.top + spot.height);
+    const placement = spaceBelow > neededBelow ? 'below' : 'above';
 
-    if (!isNarrowTarget && spaceRight >= sideWidth) {
-      pose = 'left'; // mascot stands to the target's right, arm points back left at it
-      sideMascotStyle = {
-        top: Math.max(8, Math.min(spot.top + spot.height / 2 - SIDE_HEIGHT / 2, window.innerHeight - SIDE_HEIGHT - 8)),
-        left: spot.left + spot.width + gap,
-      };
-    } else if (!isNarrowTarget && spaceLeft >= sideWidth) {
-      pose = 'right'; // mascot stands to the target's left, arm points back right at it
-      sideMascotStyle = {
-        top: Math.max(8, Math.min(spot.top + spot.height / 2 - SIDE_HEIGHT / 2, window.innerHeight - SIDE_HEIGHT - 8)),
-        left: spot.left - sideWidth - gap,
-      };
+    const idealCenter = spot.left + spot.width / 2;
+    const mascotLeft = Math.max(edgeMargin, Math.min(idealCenter - mascotWidth / 2, window.innerWidth - mascotWidth - edgeMargin));
+    const tooltipLeft = Math.max(edgeMargin, Math.min(idealCenter - tooltipWidth / 2, window.innerWidth - tooltipWidth - edgeMargin));
+
+    if (placement === 'below') {
+      const mascotTop = spot.top + spot.height + gap;
+      mascotStyle = { top: mascotTop, left: mascotLeft, height: MASCOT_HEIGHT };
+      tooltipStyle = { top: mascotTop + MASCOT_HEIGHT + gap, left: tooltipLeft };
     } else {
-      // No safe side room (full-width target like the filter tabs, or a
-      // packed icon) -- fall back to the in-card avatar, pointing up at
-      // whatever's spotlighted above the tooltip.
-      pose = 'up';
+      // Rare in practice (every current target sits near the top of the
+      // screen, so there's always room below) -- no "point down" pose
+      // exists yet, so this uses the neutral explaining pose instead.
+      pose = 'default';
+      const mascotBottom = window.innerHeight - spot.top + gap;
+      mascotStyle = { top: mascotBottom - MASCOT_HEIGHT, left: mascotLeft, height: MASCOT_HEIGHT };
+      tooltipStyle = { bottom: window.innerHeight - (mascotBottom - MASCOT_HEIGHT) + gap, left: tooltipLeft };
     }
+  } else {
+    pose = stepIndex === 0 ? 'hello' : 'default';
+    const aspect = pose === 'hello' ? HELLO_ASPECT : DEFAULT_ASPECT;
+    const mascotWidth = MASCOT_HEIGHT * aspect;
+    const tooltipTop = window.innerHeight / 2 - 90;
+    const tooltipLeft = window.innerWidth / 2 - tooltipWidth / 2;
+    mascotStyle = { top: tooltipTop - MASCOT_HEIGHT - gap, left: tooltipLeft + tooltipWidth / 2 - mascotWidth / 2, height: MASCOT_HEIGHT };
+    tooltipStyle = { top: tooltipTop, left: tooltipLeft };
   }
 
   return (
@@ -167,29 +160,10 @@ export function TutorialTour({ onFinish }: TutorialTourProps) {
           style={{ top: spot.top, left: spot.left, width: spot.width, height: spot.height }}
         />
       )}
-      {sideMascotStyle && (
-        <img
-          className="tutorial-mascot-side"
-          src={MASCOT_SRC[pose]}
-          alt=""
-          aria-hidden="true"
-          style={{ top: sideMascotStyle.top, left: sideMascotStyle.left, height: SIDE_HEIGHT }}
-        />
-      )}
+      <img className="tutorial-mascot" src={MASCOT_SRC[pose]} alt="" aria-hidden="true" style={mascotStyle} />
       <div className="tutorial-tooltip" style={{ ...tooltipStyle, width: tooltipWidth }}>
-        {!sideMascotStyle && (
-          <div className="tutorial-tooltip-head">
-            <img className="tutorial-mascot" src={MASCOT_SRC[pose]} alt="" aria-hidden="true" style={{ height: CARD_HEIGHT }} />
-            <div className="tutorial-tooltip-head-text">
-              <div className="tutorial-step-count">{t('tutorial.stepCount', { current: stepIndex + 1, total: STEPS.length })}</div>
-              <h3 className="tutorial-title">{t(step.titleKey)}</h3>
-            </div>
-          </div>
-        )}
-        {sideMascotStyle && (
-          <div className="tutorial-step-count">{t('tutorial.stepCount', { current: stepIndex + 1, total: STEPS.length })}</div>
-        )}
-        {sideMascotStyle && <h3 className="tutorial-title">{t(step.titleKey)}</h3>}
+        <div className="tutorial-step-count">{t('tutorial.stepCount', { current: stepIndex + 1, total: STEPS.length })}</div>
+        <h3 className="tutorial-title">{t(step.titleKey)}</h3>
         <p className="tutorial-body">{t(step.bodyKey)}</p>
         <div className="tutorial-actions">
           <button type="button" className="btn btn-ghost btn-sm" onClick={onFinish}>
