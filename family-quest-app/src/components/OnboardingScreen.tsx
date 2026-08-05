@@ -31,7 +31,17 @@ export function OnboardingScreen({ onDismiss, replay = false }: OnboardingScreen
   };
 
   return (
-    <div className={`onboarding-screen${isClosing ? ' onboarding-closing' : ''}`}>
+    <div
+      className={`onboarding-screen${isClosing ? ' onboarding-closing' : ''}`}
+      // The Settings "다시보기" preview mounts this directly inside
+      // SettingsModal's own .modal-backdrop (which closes the *settings*
+      // modal on click) -- without stopping propagation here, any click on
+      // this screen's own background bubbled up and closed everything
+      // instantly, skipping the fade-out above and looking like "clicking
+      // anywhere dismisses it." This screen owns its own dismissal
+      // (button only) regardless of what it happens to be mounted inside.
+      onClick={(e) => e.stopPropagation()}
+    >
       <div className="onboarding-hero">
         <img className="onboarding-illustration" src="/illustrations/onboarding.png" alt="" aria-hidden="true" />
         {/* Same character (and same "hello" pose) that opens the
