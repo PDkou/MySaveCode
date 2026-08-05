@@ -75,11 +75,6 @@
     "undo": "元に戻す",
     "deletedToast": "{{count}}件削除しました"
   },
-  "exit": {
-    "confirmMessage": "アプリを終了しますか?",
-    "confirmButton": "終了",
-    "button": "アプリを終了"
-  },
   "auth": {
     "loginTab": "ログイン",
     "signupTab": "新規登録",

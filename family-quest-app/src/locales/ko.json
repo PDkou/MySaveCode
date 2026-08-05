@@ -75,11 +75,6 @@
     "undo": "실행취소",
     "deletedToast": "{{count}}개 삭제됨"
   },
-  "exit": {
-    "confirmMessage": "앱을 종료하시겠습니까?",
-    "confirmButton": "종료",
-    "button": "앱 종료"
-  },
   "auth": {
     "loginTab": "로그인",
     "signupTab": "회원가입",
