@@ -1063,6 +1063,14 @@ textarea {
   text-align: center;
   gap: 14px;
   padding: calc(env(safe-area-inset-top, 0px) + 32px) 24px calc(env(safe-area-inset-bottom, 0px) + 32px);
+  /* Same reasoning as the `button`/`label` user-select rules -- this is UI
+     chrome, not content anyone needs to select/copy, and a tap-and-drag
+     (e.g. flicking past a step) was selecting the heading/point text
+     instead of just registering as a tap. Plain <p>/<h1>/<h3> here aren't
+     covered by those element-level rules. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   /* The panel itself appears instantly on open (it's opaque and covers
      the screen underneath immediately either way) -- the staggered
      reveal above is on its *contents*, not a whole-screen fade-in. On
@@ -1207,6 +1215,12 @@ textarea {
   position: fixed;
   inset: 0;
   z-index: 300;
+  /* Same reasoning as .onboarding-screen -- tooltip copy is UI chrome, and
+     tapping "다음" with a slight drag was selecting the step text instead
+     of just advancing. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 @keyframes tutorial-fade-in {
