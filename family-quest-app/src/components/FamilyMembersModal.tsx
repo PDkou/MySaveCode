@@ -7,6 +7,7 @@ import { FamilyActionError, useFamily } from '../context/FamilyContext';
 import { AvatarChip } from './AvatarChip';
 import { ConfirmModal } from './ConfirmModal';
 import { ModalHeader } from './ModalHeader';
+import { useBackDismiss } from '../lib/backNav';
 
 interface FamilyMembersModalProps {
   onClose: () => void;
@@ -18,6 +19,7 @@ export function FamilyMembersModal({ onClose }: FamilyMembersModalProps) {
   const { user } = useAuth();
   const { family, members, avatarUrlByUserId, leaveFamily, removeMember, regenerateInviteCode } = useFamily();
   const [busy, setBusy] = useState(false);
+  useBackDismiss(true, onClose);
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);

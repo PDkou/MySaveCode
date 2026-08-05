@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useBackDismiss } from '../lib/backNav';
+
 interface OnboardingScreenProps {
   onDismiss: () => void;
   // Reused as an on-demand preview from Settings ("온보딩 다시보기") -- same
@@ -29,6 +31,10 @@ export function OnboardingScreen({ onDismiss, replay = false }: OnboardingScreen
     setIsClosing(true);
     setTimeout(onDismiss, CLOSE_FADE_MS);
   };
+  // Route the hardware/OS back button through the same fade-out path as
+  // the button, instead of the raw onDismiss -- otherwise back would skip
+  // the fade and snap the screen away the same way the click bug used to.
+  useBackDismiss(true, handleDismiss);
 
   return (
     <div

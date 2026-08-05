@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
+import { useBackDismiss } from '../lib/backNav';
+
 interface ConfirmModalProps {
   message: string;
   confirmLabel?: string;
@@ -9,6 +11,8 @@ interface ConfirmModalProps {
 
 export function ConfirmModal({ message, confirmLabel, onConfirm, onCancel }: ConfirmModalProps) {
   const { t } = useTranslation();
+  // Back button == cancel, same as tapping the backdrop or the "취소" button.
+  useBackDismiss(true, onCancel);
 
   return (
     <div className="modal-backdrop" onClick={onCancel}>

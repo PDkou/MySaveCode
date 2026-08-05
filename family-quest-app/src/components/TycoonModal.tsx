@@ -14,6 +14,7 @@ import {
 } from '../lib/tycoon';
 import { ShopActionError, getOwnedItemIds, getShopItems, isHexColor, purchaseItem } from '../lib/shop';
 import { ModalHeader } from './ModalHeader';
+import { useBackDismiss } from '../lib/backNav';
 import type { ShopItemRow, TycoonStateRow } from '../types/database';
 
 interface TycoonModalProps {
@@ -30,6 +31,7 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { family, refresh: refreshFamily } = useFamily();
+  useBackDismiss(true, onClose);
 
   const [state, setState] = useState<TycoonStateRow | null>(null);
   const [displayedCurrency, setDisplayedCurrency] = useState(0);

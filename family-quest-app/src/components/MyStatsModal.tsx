@@ -27,6 +27,7 @@ import {
   shopItemDisplayName,
   unequipItem,
 } from '../lib/shop';
+import { useBackDismiss } from '../lib/backNav';
 import type { BadgeKey, ShopItemRow } from '../types/database';
 
 interface MyStatsModalProps {
@@ -37,6 +38,7 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { family, members, refresh: refreshFamily } = useFamily();
+  useBackDismiss(true, onClose);
   const [earnedKeys, setEarnedKeys] = useState<Set<BadgeKey>>(new Set());
   const [loading, setLoading] = useState(true);
   const [badgeBusyKey, setBadgeBusyKey] = useState<BadgeKey | null>(null);

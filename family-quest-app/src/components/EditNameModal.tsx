@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ModalHeader } from './ModalHeader';
+import { useBackDismiss } from '../lib/backNav';
 
 interface EditNameModalProps {
   currentName: string;
@@ -12,6 +13,7 @@ interface EditNameModalProps {
 
 export function EditNameModal({ currentName, onSave, onClose }: EditNameModalProps) {
   const { t } = useTranslation();
+  useBackDismiss(true, onClose);
 
   const [name, setName] = useState(currentName);
   const [submitting, setSubmitting] = useState(false);
