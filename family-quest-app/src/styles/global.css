@@ -1051,16 +1051,33 @@ textarea {
   text-align: center;
   gap: 14px;
   padding: calc(env(safe-area-inset-top, 0px) + 32px) 24px calc(env(safe-area-inset-bottom, 0px) + 32px);
-  /* Reuses the tutorial tour's entrance keyframe (defined further down)
-     so the very first thing a new user sees doesn't just snap into
-     existence. */
-  animation: tutorial-fade-in 0.25s ease;
+  /* The panel itself appears instantly (it's opaque and covers the
+     screen underneath immediately either way) -- the staggered reveal
+     below is on its *contents*, not a whole-screen fade. */
+}
+
+/* Sequenced entrance: hero image -> title/tagline/point cards one after
+   another -> "시작하기" last, each its own animation-delay off the same
+   keyframe. `backwards` fill-mode holds each element's 0% (invisible)
+   state during its delay instead of flashing the settled state early.
+   Slower (0.4s vs. the tutorial tour's 0.2-0.3s) since this only plays
+   once per user, ever -- it's fine for it to take a beat. */
+@keyframes onboarding-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 }
 
 .onboarding-hero {
   position: relative;
   width: 100%;
   max-width: 340px;
+  /* Fade/rise only (not tutorial-pop-in's scale) -- .onboarding-mascot is
+     an absolutely-positioned child of this element with its own pop-in
+     animation, and scaling the parent would compound with that and look
+     like a double-bounce. */
+  animation: onboarding-rise-in 0.4s ease backwards;
 }
 
 .onboarding-illustration {
@@ -1073,9 +1090,8 @@ textarea {
 /* The tutorial tour's own "hello" pose, reused here as a small cameo so
    the guide feels like the same character across onboarding -> family
    setup -> the dashboard tutorial, instead of showing up out of nowhere
-   once the tutorial starts. animation-delay lets the hero illustration
-   settle first; `backwards` fill-mode holds the 0% (invisible) keyframe
-   during that delay instead of flashing the end state early. */
+   once the tutorial starts. Pops in shortly after the hero image itself
+   starts settling. */
 .onboarding-mascot {
   position: absolute;
   right: -6px;
@@ -1083,26 +1099,21 @@ textarea {
   height: 92px;
   width: auto;
   filter: drop-shadow(0 4px 10px rgba(24, 38, 64, 0.3));
-  animation: tutorial-pop-in 0.3s ease 0.15s backwards;
-}
-
-.onboarding-bridge-note {
-  color: var(--purple);
-  font-size: 13px;
-  font-weight: 600;
-  margin: -4px 0 4px;
+  animation: tutorial-pop-in 0.4s ease 0.15s backwards;
 }
 
 .onboarding-app-name {
   color: var(--navy);
   font-size: 24px;
   margin: 4px 0 0;
+  animation: onboarding-rise-in 0.4s ease 0.2s backwards;
 }
 
 .onboarding-tagline {
   color: var(--muted);
   font-size: 14px;
   margin: 0 0 8px;
+  animation: onboarding-rise-in 0.4s ease 0.28s backwards;
 }
 
 .onboarding-points {
@@ -1119,6 +1130,19 @@ textarea {
   background: var(--card);
   border-radius: 14px;
   padding: 12px 16px;
+  animation: onboarding-rise-in 0.4s ease backwards;
+}
+
+.onboarding-point:nth-child(1) {
+  animation-delay: 0.36s;
+}
+
+.onboarding-point:nth-child(2) {
+  animation-delay: 0.44s;
+}
+
+.onboarding-point:nth-child(3) {
+  animation-delay: 0.52s;
 }
 
 .onboarding-point h3 {
@@ -1134,9 +1158,18 @@ textarea {
   line-height: 1.4;
 }
 
+.onboarding-bridge-note {
+  color: var(--purple);
+  font-size: 13px;
+  font-weight: 600;
+  margin: -4px 0 4px;
+  animation: onboarding-rise-in 0.4s ease 0.6s backwards;
+}
+
 .onboarding-screen .btn {
   width: 100%;
   max-width: 380px;
+  animation: onboarding-rise-in 0.4s ease 0.68s backwards;
 }
 
 /* ---------- Tutorial tour ---------- */
@@ -1168,8 +1201,11 @@ textarea {
   background: rgba(24, 38, 64, 0.5);
   /* Plays once, when the tour first mounts -- .tutorial-tooltip/-mascot
      stay mounted across steps (only their position/pose props change), so
-     this never replays mid-tour. */
-  animation: tutorial-fade-in 0.2s ease;
+     this never replays mid-tour. Same sequenced-entrance idea as the
+     onboarding screen right before it (see .onboarding-* above): the
+     stage dims first, then the mascot appears, then the tooltip text
+     last -- rather than everything popping in across at once. */
+  animation: tutorial-fade-in 0.3s ease;
 }
 
 /* A transparent box whose oversized box-shadow paints the dim everywhere
@@ -1190,7 +1226,7 @@ textarea {
      last-target<->closing step boundaries. Without its own entrance it
      just snapped into existence there while everything else glided,
      the one spot left looking un-synced after the rest got animated. */
-  animation: tutorial-fade-in 0.2s ease;
+  animation: tutorial-fade-in 0.3s ease;
 }
 
 .tutorial-tooltip {
@@ -1204,7 +1240,12 @@ textarea {
      spotlight cutout was animated, so the tooltip and mascot visibly
      teleported a beat out of sync with it on every "다음" click. */
   transition: top 0.18s ease, left 0.18s ease, bottom 0.18s ease;
-  animation: tutorial-pop-in 0.2s ease;
+  /* Last to appear (see .tutorial-mascot's delay below) -- mirrors the
+     onboarding screen's picture-then-text sequencing: the character
+     shows up before the words do. `backwards` fill-mode holds the 0%
+     (invisible) keyframe during the delay instead of flashing the
+     settled state early. */
+  animation: tutorial-pop-in 0.4s ease 0.3s backwards;
 }
 
 /* Mascot is always a standalone floating element (never inside the
@@ -1224,7 +1265,9 @@ textarea {
   pointer-events: none;
   filter: drop-shadow(0 4px 10px rgba(24, 38, 64, 0.3));
   transition: top 0.18s ease, left 0.18s ease;
-  animation: tutorial-pop-in 0.2s ease;
+  /* Appears after the dim (0s) but before the tooltip (0.3s) -- see the
+     comments on those two rules. */
+  animation: tutorial-pop-in 0.35s ease 0.15s backwards;
 }
 
 .tutorial-step-count {
