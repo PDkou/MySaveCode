@@ -1219,13 +1219,20 @@ textarea {
   box-shadow: 0 0 0 9999px rgba(24, 38, 64, 0.5);
   background: transparent;
   pointer-events: none;
-  transition: top 0.18s ease, left 0.18s ease, width 0.18s ease, height 0.18s ease;
-  /* Unlike the tooltip/mascot (always mounted, so `transition` alone
-     handles moving between steps), this element mounts/unmounts as `spot`
-     goes null <-> non-null -- i.e. right at the welcome<->first-target and
+  /* Stepping fades the old step out and the new one in at its new
+     position (see .tutorial-step-fading + TutorialTour.tsx's goNext)
+     rather than gliding continuously between positions -- asked for
+     explicitly after the glide read as "always in motion." No position
+     transition here on purpose; top/left/width/height jump straight to
+     the new step's values while opacity is at 0 mid-fade, so the jump
+     itself is never visible. */
+  transition: opacity 0.18s ease;
+  /* Unlike the tooltip/mascot (always mounted, so the above handles
+     moving between steps), this element mounts/unmounts as `spot` goes
+     null <-> non-null -- i.e. right at the welcome<->first-target and
      last-target<->closing step boundaries. Without its own entrance it
-     just snapped into existence there while everything else glided,
-     the one spot left looking un-synced after the rest got animated. */
+     just snapped into existence there while everything else faded, the
+     one spot left looking un-synced after the rest got animated. */
   animation: tutorial-fade-in 0.45s ease;
 }
 
@@ -1235,17 +1242,23 @@ textarea {
   border-radius: 16px;
   padding: 16px 18px;
   box-shadow: var(--shadow-lg);
-  /* Glide to each step's new spot in step with .tutorial-spotlight and
-     .tutorial-mascot below, instead of snapping -- previously only the
-     spotlight cutout was animated, so the tooltip and mascot visibly
-     teleported a beat out of sync with it on every "다음" click. */
-  transition: top 0.18s ease, left 0.18s ease, bottom 0.18s ease;
+  /* See .tutorial-spotlight above -- fades out/in at each step instead
+     of gliding to the new position. */
+  transition: opacity 0.18s ease;
   /* Last to appear (see .tutorial-mascot's delay below) -- mirrors the
      onboarding screen's picture-then-text sequencing: the character
      shows up before the words do. `backwards` fill-mode holds the 0%
      (invisible) keyframe during the delay instead of flashing the
-     settled state early. */
+     settled state early. Mount-only, unlike the transition above --
+     never replays on a step change since this element stays mounted the
+     whole tour. */
   animation: tutorial-pop-in 0.6s ease 0.45s backwards;
+}
+
+/* Applied for the STEP_FADE_MS window between clicking "다음" and the
+   step actually changing (TutorialTour.tsx). */
+.tutorial-step-fading {
+  opacity: 0;
 }
 
 /* Mascot is always a standalone floating element (never inside the
@@ -1264,9 +1277,12 @@ textarea {
   width: auto;
   pointer-events: none;
   filter: drop-shadow(0 4px 10px rgba(24, 38, 64, 0.3));
-  transition: top 0.18s ease, left 0.18s ease;
+  /* See .tutorial-spotlight above -- fades out/in at each step instead
+     of gliding to the new position. */
+  transition: opacity 0.18s ease;
   /* Appears after the dim (0s) but before the tooltip (0.3s) -- see the
-     comments on those two rules. */
+     comments on those two rules. Mount-only, never replays on a step
+     change. */
   animation: tutorial-pop-in 0.55s ease 0.22s backwards;
 }
 

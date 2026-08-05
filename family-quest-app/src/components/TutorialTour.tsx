@@ -47,10 +47,22 @@ interface TutorialTourProps {
   onFinish: () => void;
 }
 
+// How long the outgoing step's spotlight/mascot/tooltip take to fade to
+// transparent before the step actually advances and the incoming ones fade
+// back in. Kept in one place since goNext's setTimeout has to match it.
+const STEP_FADE_MS = 180;
+
 export function TutorialTour({ onFinish }: TutorialTourProps) {
   const { t } = useTranslation();
   const [stepIndex, setStepIndex] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
+  // True for the STEP_FADE_MS window between clicking "다음" and the step
+  // actually changing -- drives .tutorial-step-fading below so stepping
+  // fades the old step out and the new one in instead of the
+  // spotlight/mascot/tooltip continuously gliding to their new position
+  // (2026-08-05: the glide read as "always in motion" and a plain
+  // fade-in/fade-out swap was asked for instead).
+  const [isStepFading, setIsStepFading] = useState(false);
   const step = STEPS[stepIndex];
 
   useLayoutEffect(() => {
@@ -85,7 +97,18 @@ export function TutorialTour({ onFinish }: TutorialTourProps) {
   }, [onFinish]);
 
   const isLast = stepIndex === STEPS.length - 1;
-  const goNext = () => (isLast ? onFinish() : setStepIndex((i) => i + 1));
+  const goNext = () => {
+    if (isLast) {
+      onFinish();
+      return;
+    }
+    if (isStepFading) return; // ignore extra clicks mid-transition
+    setIsStepFading(true);
+    setTimeout(() => {
+      setStepIndex((i) => i + 1);
+      setIsStepFading(false);
+    }, STEP_FADE_MS);
+  };
 
   const padding = 8;
   const spot: Rect | null = rect
@@ -185,14 +208,23 @@ export function TutorialTour({ onFinish }: TutorialTourProps) {
           doubled). */}
       {spot ? (
         <div
-          className="tutorial-spotlight"
+          className={`tutorial-spotlight${isStepFading ? ' tutorial-step-fading' : ''}`}
           style={{ top: spot.top, left: spot.left, width: spot.width, height: spot.height }}
         />
       ) : (
         <div className="tutorial-backdrop" />
       )}
-      <img className="tutorial-mascot" src={MASCOT_SRC[pose]} alt="" aria-hidden="true" style={mascotStyle} />
-      <div className="tutorial-tooltip" style={{ ...tooltipStyle, width: tooltipWidth }}>
+      <img
+        className={`tutorial-mascot${isStepFading ? ' tutorial-step-fading' : ''}`}
+        src={MASCOT_SRC[pose]}
+        alt=""
+        aria-hidden="true"
+        style={mascotStyle}
+      />
+      <div
+        className={`tutorial-tooltip${isStepFading ? ' tutorial-step-fading' : ''}`}
+        style={{ ...tooltipStyle, width: tooltipWidth }}
+      >
         <div className="tutorial-step-count">{t('tutorial.stepCount', { current: stepIndex + 1, total: STEPS.length })}</div>
         <h3 className="tutorial-title">{t(step.titleKey)}</h3>
         <p className="tutorial-body">{t(step.bodyKey)}</p>
@@ -200,7 +232,7 @@ export function TutorialTour({ onFinish }: TutorialTourProps) {
           <button type="button" className="btn btn-ghost btn-sm" onClick={onFinish}>
             {t('tutorial.skip')}
           </button>
-          <button type="button" className="btn btn-primary btn-sm" onClick={goNext}>
+          <button type="button" className="btn btn-primary btn-sm" onClick={goNext} disabled={isStepFading}>
             {isLast ? t('tutorial.done') : t('tutorial.next')}
           </button>
         </div>
