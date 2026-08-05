@@ -24,13 +24,16 @@ interface SettingsModalProps {
   // (before a family exists) also renders this modal and omits it, so the
   // "튜토리얼 다시보기" row only appears where replaying it makes sense.
   onReplayTutorial?: () => void;
+  // Same reasoning -- DashboardPage's own exit-confirm guard/dialog only
+  // exists there, so this row only appears when opened from the dashboard.
+  onExit?: () => void;
 }
 
 // A single entry point for everything that used to be its own icon
 // button scattered across the top bar (theme, color theme, language,
 // profile name, logout, help) -- that row had grown to 6-8 buttons as
 // features piled up over this project.
-export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps) {
+export function SettingsModal({ onClose, onReplayTutorial, onExit }: SettingsModalProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, profile, avatarUrl, signOut, updateAvatarPhoto, updateBirthday } = useAuth();
@@ -218,6 +221,17 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
           {onReplayTutorial && (
             <button type="button" className="settings-row-button" onClick={onReplayTutorial}>
               {t('tutorial.replayButton')}
+            </button>
+          )}
+          {/* iOS has no hardware/OS back button to trigger DashboardPage's
+              exit-confirm guard, so this is the only way those users can
+              reach the same "종료하시겠습니까?" flow Android gets for free
+              via back. Same reason onReplayTutorial is optional -- only
+              meaningful when opened from the dashboard, not from
+              AuthPage/FamilySetupPage's own SettingsModal instances. */}
+          {onExit && (
+            <button type="button" className="settings-row-button settings-row-danger" onClick={onExit}>
+              {t('exit.button')}
             </button>
           )}
         </div>
