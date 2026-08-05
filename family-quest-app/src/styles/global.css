@@ -131,6 +131,18 @@ button {
   -webkit-touch-callout: none;
 }
 
+/* Labels are used throughout the app as tappable custom controls (photo
+   upload trigger, checkbox rows, weekday chips, ...), not just static form
+   captions -- a tap-and-slight-drag was selecting the label text instead
+   of registering the tap, showing the OS text-selection handles. Blanket
+   rule here (mirroring the `button` one above) instead of chasing down
+   every individual clickable-label class one at a time. */
+label {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
 a {
   color: var(--purple);
 }
