@@ -1117,10 +1117,27 @@ textarea {
   z-index: 300;
 }
 
+@keyframes tutorial-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes tutorial-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(4px);
+  }
+}
+
 .tutorial-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(24, 38, 64, 0.5);
+  /* Plays once, when the tour first mounts -- .tutorial-tooltip/-mascot
+     stay mounted across steps (only their position/pose props change), so
+     this never replays mid-tour. */
+  animation: tutorial-fade-in 0.2s ease;
 }
 
 /* A transparent box whose oversized box-shadow paints the dim everywhere
@@ -1134,7 +1151,7 @@ textarea {
   box-shadow: 0 0 0 9999px rgba(24, 38, 64, 0.5);
   background: transparent;
   pointer-events: none;
-  transition: top 0.15s ease, left 0.15s ease, width 0.15s ease, height 0.15s ease;
+  transition: top 0.18s ease, left 0.18s ease, width 0.18s ease, height 0.18s ease;
 }
 
 .tutorial-tooltip {
@@ -1143,6 +1160,12 @@ textarea {
   border-radius: 16px;
   padding: 16px 18px;
   box-shadow: var(--shadow-lg);
+  /* Glide to each step's new spot in step with .tutorial-spotlight and
+     .tutorial-mascot below, instead of snapping -- previously only the
+     spotlight cutout was animated, so the tooltip and mascot visibly
+     teleported a beat out of sync with it on every "다음" click. */
+  transition: top 0.18s ease, left 0.18s ease, bottom 0.18s ease;
+  animation: tutorial-pop-in 0.2s ease;
 }
 
 /* Mascot is always a standalone floating element (never inside the
@@ -1161,6 +1184,8 @@ textarea {
   width: auto;
   pointer-events: none;
   filter: drop-shadow(0 4px 10px rgba(24, 38, 64, 0.3));
+  transition: top 0.18s ease, left 0.18s ease;
+  animation: tutorial-pop-in 0.2s ease;
 }
 
 .tutorial-step-count {
