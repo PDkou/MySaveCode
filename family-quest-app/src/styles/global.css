@@ -185,6 +185,30 @@ a {
   font-size: 16px;
 }
 
+/* Shown after "종료" is confirmed on the dashboard -- a bare PWA has no
+   way to force-close itself from script (see DashboardPage's
+   handleConfirmExit), so this replaces the dashboard with an honest
+   goodbye instead of a button that looked like it did nothing. */
+.exit-screen {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.exit-screen-message {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0;
+}
+
+.exit-screen-hint {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+}
+
 /* ---------- Auth ---------- */
 
 .auth-screen {
