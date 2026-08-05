@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { TimePickerField } from './TimePickerField';
+import { nowTimeValue, shiftLocalDateString } from '../lib/formatDate';
 
 interface DueDateTimeFieldsProps {
   value: string; // '' or 'yyyy-MM-ddTHH:mm' (same shape toDateTimeLocalValue produces)
@@ -26,18 +27,22 @@ export function DueDateTimeFields({ value, onChange }: DueDateTimeFieldsProps) {
       onChange('');
       return;
     }
-    onChange(`${newDate}T${timePart || '09:00'}`);
+    onChange(`${newDate}T${timePart || nowTimeValue()}`);
   };
 
-  const handleTimeChange = (newTime: string) => {
+  // dayDelta comes from TimePickerField/WheelTimePicker's hour wheel
+  // wrapping past its 23:59 -> 00:00 boundary (or back) -- shift the date
+  // along with it instead of silently landing on the same day at 00:0x
+  // after scrolling straight through midnight.
+  const handleTimeChange = (newTime: string, dayDelta?: number) => {
     const date = datePart || todayLocalDate();
-    onChange(`${date}T${newTime}`);
+    onChange(`${dayDelta ? shiftLocalDateString(date, dayDelta) : date}T${newTime}`);
   };
 
   return (
     <div className="due-datetime-fields">
       <input type="date" lang={lang} value={datePart} onChange={(e) => handleDateChange(e.target.value)} />
-      <TimePickerField value={timePart || '09:00'} onChange={handleTimeChange} />
+      <TimePickerField value={timePart || nowTimeValue()} onChange={handleTimeChange} />
     </div>
   );
 }
