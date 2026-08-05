@@ -108,9 +108,16 @@ export function TutorialTour({ onFinish }: TutorialTourProps) {
   // mascot cover the next icon over, and full-width targets (filter tabs)
   // have no side room at all.
   const MASCOT_HEIGHT = 112; // one size for every mode, so it never looks like it's jumping around
-  const HELLO_ASPECT = 0.667; // hello/up source images: 320x480 (portrait)
-  const SIDE_ASPECT = 1.483; // default/left/right source images: 712x480 (landscape)
-  const gap = 10;
+  // Re-cropped 2026-08-05: the first crop pass used a >0 alpha threshold,
+  // which kept a lot of each source image's soft halo/glow fringe as
+  // "content" -- for the hello/up poses that fringe was proportionally much
+  // bigger, so at the same box height the actual character rendered
+  // noticeably smaller than in the default/left/right poses. Re-cropped at
+  // an alpha>=128 threshold (ignoring the faint fringe) so every pose's
+  // character now fills its frame the same way; width:height ratios below
+  // are measured off those tight crops.
+  const POSE_ASPECT: Record<MascotPose, number> = { hello: 0.662, default: 0.659, right: 0.808, left: 0.812, up: 0.506 };
+  const gap = 4; // was 10 -- tightened per feedback that the mascot read as pointing from too far away
   const edgeMargin = 16;
 
   let pose: MascotPose;
@@ -118,7 +125,7 @@ export function TutorialTour({ onFinish }: TutorialTourProps) {
   let mascotStyle: { top: number; left: number; height: number };
 
   if (spot) {
-    const sideWidth = MASCOT_HEIGHT * SIDE_ASPECT;
+    const sideWidth = MASCOT_HEIGHT * POSE_ASPECT.left; // left/right share ~the same aspect
     const isNarrowTarget = spot.width < 60;
     const spaceRight = window.innerWidth - (spot.left + spot.width) - edgeMargin;
     const spaceLeft = spot.left - edgeMargin;
@@ -140,7 +147,7 @@ export function TutorialTour({ onFinish }: TutorialTourProps) {
       // No safe side room -- stand directly below the target instead,
       // still a floating mascot, just stacked rather than beside.
       pose = 'up';
-      const mascotWidth = MASCOT_HEIGHT * HELLO_ASPECT;
+      const mascotWidth = MASCOT_HEIGHT * POSE_ASPECT.up;
       const neededBelow = MASCOT_HEIGHT + gap * 2 + 170; // + rough tooltip height
       const spaceBelow = window.innerHeight - (spot.top + spot.height);
       const mascotLeft = Math.max(edgeMargin, Math.min(idealCenter - mascotWidth / 2, window.innerWidth - mascotWidth - edgeMargin));
@@ -160,8 +167,7 @@ export function TutorialTour({ onFinish }: TutorialTourProps) {
     }
   } else {
     pose = stepIndex === 0 ? 'hello' : 'default';
-    const aspect = pose === 'hello' ? HELLO_ASPECT : SIDE_ASPECT;
-    const mascotWidth = MASCOT_HEIGHT * aspect;
+    const mascotWidth = MASCOT_HEIGHT * POSE_ASPECT[pose];
     const tooltipTop = window.innerHeight / 2 - 90;
     const tooltipLeft = window.innerWidth / 2 - tooltipWidth / 2;
     mascotStyle = { top: tooltipTop - MASCOT_HEIGHT - gap, left: tooltipLeft + tooltipWidth / 2 - mascotWidth / 2, height: MASCOT_HEIGHT };
