@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useNavigationType } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
@@ -20,6 +20,7 @@ import { CharacterSprite } from '../components/CharacterSprite';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
 import { CelebrationOverlay } from '../components/CelebrationOverlay';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { TitleFrame } from '../components/TitleFrame';
 import { TutorialTour } from '../components/TutorialTour';
 import { useUnseenCelebration } from '../hooks/useUnseenCelebration';
@@ -27,6 +28,7 @@ import { startOfThisWeek } from '../lib/formatDate';
 import { BADGE_ICON_SRC, levelForPoints, pointsIntoLevel, pointsNeededForLevel } from '../lib/gamification';
 import { getEquippedItems, getShopItems, shopItemDisplayName } from '../lib/shop';
 import { hasSeenTutorial, markTutorialSeen } from '../lib/tutorial';
+import { useBackDismiss } from '../lib/backNav';
 import type { BadgeKey, CharacterSlot, TitleTier } from '../types/database';
 
 type Filter = 'open' | 'done' | 'all';
@@ -50,6 +52,87 @@ export function DashboardPage() {
   const [showTycoon, setShowTycoon] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  // Armed whenever the exit-confirm dialog isn't showing; false while it
+  // is (the dialog's own useBackDismiss handles back for that case) or
+  // permanently once "종료" has actually been confirmed (see
+  // handleConfirmExit) so the very next back press exits for real instead
+  // of asking again. Starts false, not true -- see the arming effect below.
+  const [exitGuardActive, setExitGuardActive] = useState(false);
+  const navigationType = useNavigationType();
+
+  // The dashboard is the app's landing screen -- hardware back here, with
+  // nothing else open, would otherwise let the OS silently exit/background
+  // the installed PWA (see backNav.ts). Ask first instead, matching the
+  // "한번 더 누르면 종료됩니다" pattern Android users already expect.
+  //
+  // Arming has to be staggered, not synchronous, when this mount was
+  // itself reached via a back press (navigationType 'POP' -- e.g.
+  // returning here from /calendar or a task detail page): react-router's
+  // own reaction to that same popstate is what mounts DashboardPage in the
+  // first place, and it fully resolves -- this component rendering,
+  // effects included -- before any *other* popstate listener gets a turn,
+  // regardless of registration order or capture/bubble phase (window is
+  // the event's own target, so phase ordering doesn't apply there; only
+  // registration order does, and react-router's internal listener is
+  // always attached first). Arming synchronously in that same mount would
+  // let this guard's own fresh push get treated as consumed by the very
+  // popstate that produced it -- popping straight through to the confirm
+  // dialog on what was actually just a normal "back to dashboard" press,
+  // with no second press involved (caught only by driving a real
+  // navigate-away-and-back cycle through actual react-router, not by
+  // reasoning about the code). A fresh macrotask is enough to land
+  // strictly after that dispatch has fully settled. A forward arrival
+  // (initial load, or navigating in via a link/button) has no such
+  // popstate in flight, so it arms immediately.
+  useEffect(() => {
+    if (navigationType === 'POP') {
+      const t = setTimeout(() => setExitGuardActive(true), 0);
+      return () => clearTimeout(t);
+    }
+    setExitGuardActive(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // consumeOnClose:false -- this isn't an overlay "closing," forward
+  // navigation away from the dashboard (e.g. into a task detail page)
+  // also deactivates it, and popping the pushed entry in that case would
+  // fight the very navigation that just happened.
+  useBackDismiss(
+    exitGuardActive,
+    () => {
+      setExitGuardActive(false);
+      setShowExitConfirm(true);
+    },
+    { consumeOnClose: false },
+  );
+
+  const handleCancelExit = () => {
+    setShowExitConfirm(false);
+    // Deferred, not immediate: cancelling unmounts the confirm dialog,
+    // whose own useBackDismiss consumes its entry via an async
+    // history.back() -- re-arming our own guard with a *synchronous*
+    // pushState() in that same tick races it. history.back() hasn't
+    // resolved yet, so our push lands on the still-current confirm-dialog
+    // entry instead of the one below it, and the pending back() then pops
+    // our brand-new guard instead of its intended target -- silently
+    // losing the guard (caught via an actual back-navigation E2E test,
+    // not by reasoning about the code). A macrotask is enough to let the
+    // pending navigation actually land first.
+    setTimeout(() => setExitGuardActive(true), 0);
+  };
+
+  const handleConfirmExit = () => {
+    setShowExitConfirm(false);
+    setExitGuardActive(false); // never re-arm -- let the next back actually exit
+    // Best-effort only: a plain script can't force-close an arbitrary
+    // browser tab, and this is a bare PWA with no native shell to call
+    // into. Some installed/standalone contexts do honor it when there's
+    // no history left to go back to; where it's a no-op, the guard being
+    // disarmed still means the very next back press exits for real
+    // instead of asking again.
+    window.close();
+  };
 
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -531,6 +614,10 @@ export function DashboardPage() {
             setShowSettings(false);
             setShowTutorial(true);
           }}
+          onExit={() => {
+            setShowSettings(false);
+            setShowExitConfirm(true);
+          }}
         />
       )}
       {showInviteQr && family && (
@@ -538,6 +625,14 @@ export function DashboardPage() {
       )}
       {unseenCelebration && <CelebrationOverlay result={unseenCelebration} onDismiss={dismissUnseenCelebration} />}
       {showTutorial && <TutorialTour onFinish={dismissTutorial} />}
+      {showExitConfirm && (
+        <ConfirmModal
+          message={t('exit.confirmMessage')}
+          confirmLabel={t('exit.confirmButton')}
+          onConfirm={handleConfirmExit}
+          onCancel={handleCancelExit}
+        />
+      )}
     </div>
   );
 }
