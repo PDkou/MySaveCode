@@ -1145,6 +1145,10 @@ textarea {
   animation-delay: 0.94s;
 }
 
+.onboarding-point:nth-child(4) {
+  animation-delay: 1.1s;
+}
+
 .onboarding-point h3 {
   color: var(--navy);
   font-size: 14px;
@@ -1163,13 +1167,13 @@ textarea {
   font-size: 13px;
   font-weight: 600;
   margin: -4px 0 4px;
-  animation: onboarding-rise-in 0.65s ease 1.1s backwards;
+  animation: onboarding-rise-in 0.65s ease 1.26s backwards;
 }
 
 .onboarding-screen .btn {
   width: 100%;
   max-width: 380px;
-  animation: onboarding-rise-in 0.65s ease 1.26s backwards;
+  animation: onboarding-rise-in 0.65s ease 1.42s backwards;
 }
 
 /* ---------- Tutorial tour ---------- */

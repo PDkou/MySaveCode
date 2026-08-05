@@ -7,6 +7,12 @@ interface OnboardingScreenProps {
   replay?: boolean;
 }
 
+// Mapped rather than unrolled so bumping the count (3 -> 4 here, per
+// request "늘려도 좋을 것 같아 한 4개까지는") is a one-line change instead of
+// copy-pasting another <div className="onboarding-point"> block. Each
+// entry is an onboarding.pointNTitle/pointNDesc key pair.
+const POINT_COUNT = 4;
+
 export function OnboardingScreen({ onDismiss, replay = false }: OnboardingScreenProps) {
   const { t } = useTranslation();
 
@@ -24,18 +30,12 @@ export function OnboardingScreen({ onDismiss, replay = false }: OnboardingScreen
       <p className="onboarding-tagline">{t('onboarding.tagline')}</p>
 
       <div className="onboarding-points">
-        <div className="onboarding-point">
-          <h3>{t('onboarding.point1Title')}</h3>
-          <p>{t('onboarding.point1Desc')}</p>
-        </div>
-        <div className="onboarding-point">
-          <h3>{t('onboarding.point2Title')}</h3>
-          <p>{t('onboarding.point2Desc')}</p>
-        </div>
-        <div className="onboarding-point">
-          <h3>{t('onboarding.point3Title')}</h3>
-          <p>{t('onboarding.point3Desc')}</p>
-        </div>
+        {Array.from({ length: POINT_COUNT }, (_, i) => i + 1).map((n) => (
+          <div className="onboarding-point" key={n}>
+            <h3>{t(`onboarding.point${n}Title`)}</h3>
+            <p>{t(`onboarding.point${n}Desc`)}</p>
+          </div>
+        ))}
       </div>
 
       {!replay && <p className="onboarding-bridge-note">{t('onboarding.guideNote')}</p>}
