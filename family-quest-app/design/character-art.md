@@ -887,11 +887,75 @@ Generate exactly one image, containing only the single item described in the Sub
 나머지 (1)(2)(4)(5)는 아래 프롬프트에서 문구를 강화했습니다. 캐릭터 묘사(귀/피부/리본/드레스/신발)
 문단을 5개 프롬프트에 토씨 하나 안 틀리고 동일하게 재사용하니 이것도 그대로 유지하세요.
 
-**같은 대화 안에서, 한 장씩 순서대로 보내기.** 5개를 한 메시지에 다 넣으면 GPT가 5포즈를 합친
-스프라이트 시트 한 장으로 뭉쳐버리는 경우가 있습니다. 대화는 이어가되(캐릭터 일관성 유지),
-메시지는 프롬프트 하나당 하나씩 나눠서 보내세요.
+**한 장씩 나눠 뽑았더니 매번 캐릭터가 미묘하게 달라짐 (귀 길이/색 톤/리본 위치 등) -> 그리드
+한 장으로 전환.** 같은 대화에서 이어 뽑아도 생성마다 결과가 흔들려서, 5포즈를 **한 이미지 안에
+그리드로 배치**해서 한 번의 생성으로 뽑는 33번 프롬프트를 우선 사용하세요. 같은 캐릭터를 같은
+호출 안에서 여러 번 그리게 하면 셀 사이에 디테일이 훨씬 잘 맞습니다. 그리드 결과물은 셀 좌표가
+고정돼 있어서 받은 다음 제가 파이썬으로 5장으로 잘라드릴 수 있습니다. (33번이 잘 안 나오면
+34~38번 개별 프롬프트로 하나씩 재시도하는 걸 대안으로 남겨둡니다.)
 
-**33. 튜토리얼 가이드 캐릭터 -- 인사하는 포즈 (투어 시작 전용)**
+**33. 튜토리얼 가이드 캐릭터 -- 5포즈 한 장 그리드 (권장)**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece.
+
+Character (must be drawn identically in all five cells below -- same proportions, same
+colors, same accessories, only the pose changes): a chibi bunny-eared girl mascot. Long
+fluffy rabbit ears, deep red-pink outer with cream-pink inner lining, drooping slightly
+outward to the sides. Pale skin, round pink blush marks on both cheeks, simple round black
+dot eyes, a small round open mouth (cheerful and simple, like a tiny "o" or smile shape). A
+small gold ribbon bow clipped on the right ear and a matching gold ribbon bow-tie at the
+neckline -- this mascot's signature accessories, identical in every cell. A red dress with a
+lighter cream ruffled hem. Plain bare hands, no gloves, no weapon, no shield. Simple
+tan/brown shoes.
+
+Layout: one single image, canvas exactly 1536x1536 pixels, transparent background, divided
+into an invisible 3-column x 2-row grid of equal 512x768 cells (no visible grid lines, no
+borders, no dividers, no labels, no text anywhere in the image). Each of the 5 cells below
+contains the character in full body, front-facing, centered in its cell with margin above
+the head and below the feet so nothing touches the cell edges or bleeds into a neighboring
+cell:
+
+- Cell 1 (top-left): Greeting pose -- one arm raised beside the head with an open palm
+  waving hello, the other arm relaxed at the side, a warm welcoming first-impression stance.
+- Cell 2 (top-middle): Default explaining pose -- both hands raised and open near chest
+  height, palms slightly outward, as if mid-sentence explaining something to the viewer.
+- Cell 3 (top-right): Point-right pose -- one arm extended straight out to the right,
+  perfectly horizontal at shoulder height, flat open hand with fingertips reaching almost to
+  the cell's right edge; the other hand rests near the chest.
+- Cell 4 (bottom-left): Point-left pose -- one arm extended straight out to the left,
+  perfectly horizontal at shoulder height, flat open hand with fingertips reaching almost to
+  the cell's left edge; the other hand rests near the chest.
+- Cell 5 (bottom-middle): Point-up pose -- head tilted slightly upward, one arm raised
+  straight up overhead (perfectly vertical, elbow locked), flat open hand with fingertips
+  reaching almost to the cell's top edge; the other hand rests near the chest.
+- Cell 6 (bottom-right): Leave completely empty -- fully transparent, no character, no
+  object, no decoration of any kind in this cell.
+
+Generate exactly one image containing exactly these six cells (five posed characters plus one empty cell) arranged in the 3x2 grid described above. Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here.
+```
+
+받으면 알려주세요 -- 셀 좌표가 (0,0)/(512,0)/(1024,0)/(0,768)/(512,768) 512x768로 고정이라
+바로 5장으로 크롭해드릴게요.
+
+**한 장씩 나눠 뽑을 때 (그리드가 잘 안 나올 경우의 대안):** 같은 대화 안에서 이어가되(캐릭터
+일관성 유지), 메시지는 프롬프트 하나당 하나씩 나눠서 보내세요. 5개를 한 메시지에 다 넣으면 GPT가
+5포즈를 합친 스프라이트 시트 한 장으로 뭉쳐버리는 경우가 있습니다.
+
+**34. 튜토리얼 가이드 캐릭터 -- 인사하는 포즈 (투어 시작 전용)**
 
 투어 맨 처음, 아직 어떤 요소에도 스포트라이트를 비추기 전에 (`target: null`인 첫 스텝) 반갑게
 인사하는 용도.
@@ -934,7 +998,7 @@ greeting, not a mid-sentence explaining gesture.
 Generate exactly one image, containing only the single item described above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
 
-**34. 튜토리얼 가이드 캐릭터 -- 기본 설명 포즈 (중앙/방향 없음)**
+**35. 튜토리얼 가이드 캐릭터 -- 기본 설명 포즈 (중앙/방향 없음)**
 
 ```
 16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
@@ -974,7 +1038,7 @@ wave and not a pointing gesture.
 Generate exactly one image, containing only the single item described above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
 
-**35. 튜토리얼 가이드 캐릭터 -- 오른쪽을 가리키며 설명하는 포즈**
+**36. 튜토리얼 가이드 캐릭터 -- 오른쪽을 가리키며 설명하는 포즈**
 
 ```
 16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
@@ -1015,7 +1079,7 @@ there" point. The other hand rests near the chest as if mid-sentence explaining.
 Generate exactly one image, containing only the single item described above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
 
-**36. 튜토리얼 가이드 캐릭터 -- 왼쪽을 가리키며 설명하는 포즈**
+**37. 튜토리얼 가이드 캐릭터 -- 왼쪽을 가리키며 설명하는 포즈**
 
 ```
 16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
@@ -1056,7 +1120,7 @@ there" point. The other hand rests near the chest as if mid-sentence explaining.
 Generate exactly one image, containing only the single item described above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
 
-**37. 튜토리얼 가이드 캐릭터 -- 위쪽을 가리키며 설명하는 포즈**
+**38. 튜토리얼 가이드 캐릭터 -- 위쪽을 가리키며 설명하는 포즈**
 
 ```
 16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
@@ -1098,7 +1162,8 @@ there" point. The other hand rests near the chest as if mid-sentence explaining.
 Generate exactly one image, containing only the single item described above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
 
-받은 PNG 5장은 각각 `public/mascot/tutorial-guide-hello.png` / `tutorial-guide-default.png` /
-`tutorial-guide-right.png` / `tutorial-guide-left.png` / `tutorial-guide-up.png`로 저장해서
-알려주면, `TutorialTour.tsx`에서 (1) 맨 앞에 인사 전용 첫 스텝을 추가하고 (2) 스포트라이트 위치에
-따라 나머지 이미지를 골라 붙이는 작업까지 이어서 진행 가능합니다.
+33번 그리드 결과물을 그대로 올려주면 (0,0)/(512,0)/(1024,0)/(0,768)/(512,768) 좌표로 5장 크롭해서
+`public/mascot/tutorial-guide-hello.png` / `-default.png` / `-right.png` / `-left.png` /
+`-up.png`로 저장하고, `TutorialTour.tsx`에서 (1) 맨 앞에 인사 전용 첫 스텝을 추가하고 (2) 스포트라이트
+위치에 따라 나머지 이미지를 골라 붙이는 작업까지 이어서 진행합니다. 34~38번 개별 프롬프트를 대신
+쓴 경우도 파일명 매핑은 동일합니다.
