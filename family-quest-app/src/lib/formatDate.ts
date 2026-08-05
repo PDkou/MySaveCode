@@ -3,13 +3,27 @@ const LOCALE_MAP: Record<string, string> = {
   ja: 'ja-JP',
 };
 
+// dateStyle/timeStyle can't be mixed with explicit field options
+// (hour/minute/hour12) in the same Intl.DateTimeFormat call -- formatted
+// separately and joined instead of a single `{ dateStyle, timeStyle }`
+// call, specifically so the time half can force 24-hour with no AM/PM.
+// `timeStyle: 'short'` (the previous approach) follows the locale
+// default instead, which for ko-KR is 12-hour with an 오전/오후 (AM/PM)
+// marker -- every due date/start date shown anywhere in the app (task
+// cards, task detail, ...) still read 12-hour after the wheel picker
+// itself switched to 24-hour (2026-08 bug report: "오전/오후가 여전히 나옴"
+// -- the picker *input* had changed, every *display* of an already-set
+// time hadn't).
+function formatTimeOnly(date: Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hour12: false }).format(date);
+}
+
 export function formatDateTime(iso: string | null, language: string): string {
   if (!iso) return '';
   const locale = LOCALE_MAP[language] ?? 'ko-KR';
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(iso));
+  const date = new Date(iso);
+  const dateLabel = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(date);
+  return `${dateLabel} ${formatTimeOnly(date, locale)}`;
 }
 
 // See TimePickerField.tsx's ALL_DAY_TIME comment -- 23:59 local time is the
