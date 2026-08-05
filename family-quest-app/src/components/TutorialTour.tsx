@@ -176,12 +176,20 @@ export function TutorialTour({ onFinish }: TutorialTourProps) {
 
   return (
     <div className="tutorial-overlay" role="dialog" aria-modal="true" aria-label={t('tutorial.heading')}>
-      <div className="tutorial-backdrop" />
-      {spot && (
+      {/* Exactly one of these two dims the screen -- never both. When there's
+          a spot, .tutorial-spotlight's oversized box-shadow already paints
+          the same rgba(24,38,64,0.5) dim everywhere outside the cutout,
+          so layering .tutorial-backdrop underneath it stacked two copies
+          of that dim there, reading as visibly darker on targeted steps
+          than on the untargeted welcome/closing ones (same color, just
+          doubled). */}
+      {spot ? (
         <div
           className="tutorial-spotlight"
           style={{ top: spot.top, left: spot.left, width: spot.width, height: spot.height }}
         />
+      ) : (
+        <div className="tutorial-backdrop" />
       )}
       <img className="tutorial-mascot" src={MASCOT_SRC[pose]} alt="" aria-hidden="true" style={mascotStyle} />
       <div className="tutorial-tooltip" style={{ ...tooltipStyle, width: tooltipWidth }}>
