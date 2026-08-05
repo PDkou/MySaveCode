@@ -1145,29 +1145,40 @@ textarea {
   box-shadow: var(--shadow-lg);
 }
 
-/* Mascot peeks above the top-left corner of the tooltip, like it's the one
-   talking. Height-capped with width auto so it keeps its own aspect ratio
-   regardless of which pose (portrait "hello"/"up" vs. landscape
-   "default"/"left"/"right") is showing. */
+/* Mascot avatar sits fully inside the card (never overlapping the
+   spotlight cutout above it -- an earlier version let the mascot float
+   above the tooltip and it ended up covering the highlighted element
+   itself, 2026-08-05). A fixed square box + object-fit: contain keeps it a
+   consistent footprint regardless of which pose's aspect ratio (portrait
+   "hello"/"up" vs. landscape "default"/"left"/"right") is showing. */
+.tutorial-tooltip-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
 .tutorial-mascot {
-  position: absolute;
-  left: -6px;
-  bottom: 100%;
-  height: 84px;
-  width: auto;
-  pointer-events: none;
-  filter: drop-shadow(0 4px 8px rgba(24, 38, 64, 0.25));
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.tutorial-tooltip-head-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .tutorial-step-count {
   font-size: 12px;
   font-weight: 700;
   color: var(--purple);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .tutorial-title {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 16px;
   color: var(--navy);
 }

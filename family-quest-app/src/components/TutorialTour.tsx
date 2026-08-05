@@ -145,9 +145,13 @@ export function TutorialTour({ onFinish }: TutorialTourProps) {
         />
       )}
       <div className="tutorial-tooltip" style={{ ...tooltipStyle, width: tooltipWidth }}>
-        <img className="tutorial-mascot" src={MASCOT_SRC[pose]} alt="" aria-hidden="true" />
-        <div className="tutorial-step-count">{t('tutorial.stepCount', { current: stepIndex + 1, total: STEPS.length })}</div>
-        <h3 className="tutorial-title">{t(step.titleKey)}</h3>
+        <div className="tutorial-tooltip-head">
+          <img className="tutorial-mascot" src={MASCOT_SRC[pose]} alt="" aria-hidden="true" />
+          <div className="tutorial-tooltip-head-text">
+            <div className="tutorial-step-count">{t('tutorial.stepCount', { current: stepIndex + 1, total: STEPS.length })}</div>
+            <h3 className="tutorial-title">{t(step.titleKey)}</h3>
+          </div>
+        </div>
         <p className="tutorial-body">{t(step.bodyKey)}</p>
         <div className="tutorial-actions">
           <button type="button" className="btn btn-ghost btn-sm" onClick={onFinish}>
