@@ -12,7 +12,14 @@ export function OnboardingScreen({ onDismiss, replay = false }: OnboardingScreen
 
   return (
     <div className="onboarding-screen">
-      <img className="onboarding-illustration" src="/illustrations/onboarding.png" alt="" aria-hidden="true" />
+      <div className="onboarding-hero">
+        <img className="onboarding-illustration" src="/illustrations/onboarding.png" alt="" aria-hidden="true" />
+        {/* Same character (and same "hello" pose) that opens the
+            dashboard tutorial right after this -- carries the guide
+            across both first-run screens instead of introducing it out
+            of nowhere once the user reaches the dashboard. */}
+        <img className="onboarding-mascot" src="/mascot/tutorial-guide-hello.png" alt="" aria-hidden="true" />
+      </div>
       <h1 className="onboarding-app-name">{t('app.name')}</h1>
       <p className="onboarding-tagline">{t('onboarding.tagline')}</p>
 
@@ -30,6 +37,8 @@ export function OnboardingScreen({ onDismiss, replay = false }: OnboardingScreen
           <p>{t('onboarding.point3Desc')}</p>
         </div>
       </div>
+
+      {!replay && <p className="onboarding-bridge-note">{t('onboarding.guideNote')}</p>}
 
       <button type="button" className="btn btn-primary btn-block" onClick={onDismiss}>
         {replay ? t('common.close') : t('onboarding.start')}

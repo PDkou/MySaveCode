@@ -1051,14 +1051,46 @@ textarea {
   text-align: center;
   gap: 14px;
   padding: calc(env(safe-area-inset-top, 0px) + 32px) 24px calc(env(safe-area-inset-bottom, 0px) + 32px);
+  /* Reuses the tutorial tour's entrance keyframe (defined further down)
+     so the very first thing a new user sees doesn't just snap into
+     existence. */
+  animation: tutorial-fade-in 0.25s ease;
+}
+
+.onboarding-hero {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
 }
 
 .onboarding-illustration {
   width: 100%;
-  max-width: 340px;
   height: auto;
   border-radius: 20px;
   object-fit: contain;
+}
+
+/* The tutorial tour's own "hello" pose, reused here as a small cameo so
+   the guide feels like the same character across onboarding -> family
+   setup -> the dashboard tutorial, instead of showing up out of nowhere
+   once the tutorial starts. animation-delay lets the hero illustration
+   settle first; `backwards` fill-mode holds the 0% (invisible) keyframe
+   during that delay instead of flashing the end state early. */
+.onboarding-mascot {
+  position: absolute;
+  right: -6px;
+  bottom: -14px;
+  height: 92px;
+  width: auto;
+  filter: drop-shadow(0 4px 10px rgba(24, 38, 64, 0.3));
+  animation: tutorial-pop-in 0.3s ease 0.15s backwards;
+}
+
+.onboarding-bridge-note {
+  color: var(--purple);
+  font-size: 13px;
+  font-weight: 600;
+  margin: -4px 0 4px;
 }
 
 .onboarding-app-name {
