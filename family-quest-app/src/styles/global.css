@@ -1152,6 +1152,13 @@ textarea {
   background: transparent;
   pointer-events: none;
   transition: top 0.18s ease, left 0.18s ease, width 0.18s ease, height 0.18s ease;
+  /* Unlike the tooltip/mascot (always mounted, so `transition` alone
+     handles moving between steps), this element mounts/unmounts as `spot`
+     goes null <-> non-null -- i.e. right at the welcome<->first-target and
+     last-target<->closing step boundaries. Without its own entrance it
+     just snapped into existence there while everything else glided,
+     the one spot left looking un-synced after the rest got animated. */
+  animation: tutorial-fade-in 0.2s ease;
 }
 
 .tutorial-tooltip {
