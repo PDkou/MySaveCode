@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import { FamilyOnboardingForms } from './FamilyOnboardingForms';
 import { ModalHeader } from './ModalHeader';
+import { useBackDismiss } from '../lib/backNav';
 
 interface AddFamilyModalProps {
   onClose: () => void;
@@ -9,6 +10,7 @@ interface AddFamilyModalProps {
 
 export function AddFamilyModal({ onClose }: AddFamilyModalProps) {
   const { t } = useTranslation();
+  useBackDismiss(true, onClose);
 
   return (
     <div className="modal-backdrop" onClick={onClose}>

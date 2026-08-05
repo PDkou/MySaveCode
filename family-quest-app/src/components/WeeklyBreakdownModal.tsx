@@ -7,6 +7,7 @@ import { AvatarChip } from './AvatarChip';
 import { ModalHeader } from './ModalHeader';
 import { startOfThisWeek } from '../lib/formatDate';
 import { questCountsTowardRanking } from '../lib/questRules';
+import { useBackDismiss } from '../lib/backNav';
 
 interface WeeklyBreakdownModalProps {
   onClose: () => void;
@@ -25,6 +26,7 @@ export function WeeklyBreakdownModal({ onClose }: WeeklyBreakdownModalProps) {
   const { t, i18n } = useTranslation();
   const { family, members, avatarUrlByUserId } = useFamily();
   const { tasks, assigneesByTaskId } = useTasks();
+  useBackDismiss(true, onClose);
 
   const STREAK_HIGHLIGHT_THRESHOLD = 3;
 

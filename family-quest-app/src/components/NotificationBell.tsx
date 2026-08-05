@@ -15,6 +15,7 @@ import {
   unsubscribeFromPush,
 } from '../lib/pushNotifications';
 import type { NotificationEventType, PushState } from '../lib/pushNotifications';
+import { useBackDismiss } from '../lib/backNav';
 
 const EVENT_TYPES: NotificationEventType[] = ['due', 'created', 'completed', 'reopened', 'comment', 'overdue', 'weeklySummary'];
 
@@ -26,6 +27,7 @@ export function NotificationBell() {
   const { notifications, unreadCount, markAllRead } = useNotifications();
   const bellRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  useBackDismiss(open, () => setOpen(false));
   const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
   const [pushState, setPushState] = useState<PushState>('unsupported');
   const [pushBusy, setPushBusy] = useState(false);

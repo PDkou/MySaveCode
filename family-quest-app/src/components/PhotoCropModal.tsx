@@ -3,6 +3,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ModalHeader } from './ModalHeader';
+import { useBackDismiss } from '../lib/backNav';
 
 interface PhotoCropModalProps {
   file: File;
@@ -18,6 +19,7 @@ export function PhotoCropModal({ file, onCancel, onConfirm }: PhotoCropModalProp
   const { t } = useTranslation();
   const imgRef = useRef<HTMLImageElement | null>(null);
   const dragRef = useRef<{ startX: number; startY: number; startOffsetX: number; startOffsetY: number } | null>(null);
+  useBackDismiss(true, onCancel);
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);

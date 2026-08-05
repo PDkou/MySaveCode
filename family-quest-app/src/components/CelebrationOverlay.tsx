@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ConfettiBurst } from './ConfettiBurst';
 import { BADGE_ICON_SRC } from '../lib/gamification';
 import type { CompletionResult } from '../lib/gamification';
+import { useBackDismiss } from '../lib/backNav';
 
 const AUTO_DISMISS_MS = 3200;
 
@@ -21,6 +22,7 @@ export function CelebrationOverlay({ result, onDismiss }: CelebrationOverlayProp
   // A ref keeps the auto-dismiss tied to mount, not to the parent's renders.
   const onDismissRef = useRef(onDismiss);
   onDismissRef.current = onDismiss;
+  useBackDismiss(true, onDismiss);
 
   useEffect(() => {
     const timer = setTimeout(() => onDismissRef.current(), AUTO_DISMISS_MS);

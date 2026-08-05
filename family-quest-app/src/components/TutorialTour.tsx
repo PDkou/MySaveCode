@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useBackDismiss } from '../lib/backNav';
+
 interface TutorialStep {
   // data-tutorial attribute value to spotlight, or null for a centered,
   // untargeted step (used for the opening welcome and closing "check
@@ -64,6 +66,9 @@ export function TutorialTour({ onFinish }: TutorialTourProps) {
   // fade-in/fade-out swap was asked for instead).
   const [isStepFading, setIsStepFading] = useState(false);
   const step = STEPS[stepIndex];
+  // No "previous step" concept exists here (only "다음"/skip) -- back
+  // exits the tour the same as the skip button, rather than stepping back.
+  useBackDismiss(true, onFinish);
 
   useLayoutEffect(() => {
     if (!step.target) {

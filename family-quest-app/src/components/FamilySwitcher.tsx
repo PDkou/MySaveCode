@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 
 import { useFamily } from '../context/FamilyContext';
 import { AddFamilyModal } from './AddFamilyModal';
+import { useBackDismiss } from '../lib/backNav';
 
 export function FamilySwitcher() {
   const { t } = useTranslation();
   const { family, families, switchFamily } = useFamily();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  useBackDismiss(open, () => setOpen(false));
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [showAdd, setShowAdd] = useState(false);
 

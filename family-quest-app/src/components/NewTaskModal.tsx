@@ -15,6 +15,7 @@ import { DueDateTimeFields } from './DueDateTimeFields';
 import { TaskTemplatePicker } from './TaskTemplatePicker';
 import { WeekdayCheckboxes } from './WeekdayCheckboxes';
 import { ModalHeader } from './ModalHeader';
+import { useBackDismiss } from '../lib/backNav';
 
 interface NewTaskModalProps {
   members: FamilyMember[];
@@ -26,6 +27,7 @@ export function NewTaskModal({ members, onClose }: NewTaskModalProps) {
   const { createTask } = useTasks();
   const { family } = useFamily();
   const { user } = useAuth();
+  useBackDismiss(true, onClose);
 
   const [title, setTitle] = useState('');
   const [details, setDetails] = useState('');

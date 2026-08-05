@@ -18,6 +18,7 @@ import {
   shopItemDisplayName,
   unequipItem,
 } from '../lib/shop';
+import { useBackDismiss } from '../lib/backNav';
 import type { BadgeKey, CharacterSlot, ShopItemRow } from '../types/database';
 
 interface CharacterShopModalProps {
@@ -35,6 +36,7 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { family, members, refresh: refreshFamily } = useFamily();
+  useBackDismiss(true, onClose);
 
   const [items, setItems] = useState<ShopItemRow[]>([]);
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());

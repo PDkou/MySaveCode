@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { WheelTimePicker } from './WheelTimePicker';
+import { useBackDismiss } from '../lib/backNav';
 
 interface TimePickerFieldProps {
   value: string; // 'HH:MM', 24-hour
@@ -34,6 +35,7 @@ export function TimePickerField({ value, onChange }: TimePickerFieldProps) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language.startsWith('ja') ? 'ja' : 'ko';
   const [open, setOpen] = useState(false);
+  useBackDismiss(open, () => setOpen(false));
   const [draft, setDraft] = useState(value);
   // Remembers the last specific time so toggling 종일 off restores it
   // instead of dumping the user back on a hardcoded 09:00.

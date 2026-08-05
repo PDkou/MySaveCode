@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useFamily, FamilyActionError } from '../context/FamilyContext';
 import { ModalHeader } from './ModalHeader';
+import { useBackDismiss } from '../lib/backNav';
 
 interface EditFamilyNameModalProps {
   currentName: string;
@@ -13,6 +14,7 @@ interface EditFamilyNameModalProps {
 export function EditFamilyNameModal({ currentName, onClose }: EditFamilyNameModalProps) {
   const { t } = useTranslation();
   const { renameFamily } = useFamily();
+  useBackDismiss(true, onClose);
 
   const [name, setName] = useState(currentName);
   const [submitting, setSubmitting] = useState(false);

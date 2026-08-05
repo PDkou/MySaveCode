@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth, AuthActionError } from '../context/AuthContext';
 import { SettingsModal } from '../components/SettingsModal';
 import { ModalHeader } from '../components/ModalHeader';
+import { useBackDismiss } from '../lib/backNav';
 
 type Tab = 'login' | 'signup';
 
@@ -22,6 +23,7 @@ export function AuthPage() {
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  useBackDismiss(showForgotPassword, () => setShowForgotPassword(false));
   const [resetEmail, setResetEmail] = useState('');
   const [resetSubmitting, setResetSubmitting] = useState(false);
   const [resetErrorKey, setResetErrorKey] = useState<string | null>(null);

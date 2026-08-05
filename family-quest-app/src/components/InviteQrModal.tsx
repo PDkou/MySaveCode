@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import QRCode from 'qrcode';
 
 import { ModalHeader } from './ModalHeader';
+import { useBackDismiss } from '../lib/backNav';
 
 interface InviteQrModalProps {
   inviteCode: string;
@@ -15,6 +16,7 @@ interface InviteQrModalProps {
 export function InviteQrModal({ inviteCode, onClose }: InviteQrModalProps) {
   const { t } = useTranslation();
   const [dataUrl, setDataUrl] = useState<string | null>(null);
+  useBackDismiss(true, onClose);
 
   useEffect(() => {
     const joinUrl = `${window.location.origin}/?joinCode=${inviteCode}`;

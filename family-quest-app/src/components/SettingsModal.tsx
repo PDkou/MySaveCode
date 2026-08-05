@@ -15,6 +15,7 @@ import { OnboardingScreen } from './OnboardingScreen';
 import { ModalHeader } from './ModalHeader';
 import { AvatarChip } from './AvatarChip';
 import { AvatarPhotoError } from '../lib/avatarPhotos';
+import { useBackDismiss } from '../lib/backNav';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -34,6 +35,7 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
   const navigate = useNavigate();
   const { user, profile, avatarUrl, signOut, updateAvatarPhoto, updateBirthday } = useAuth();
   const { family, members, updateMyDisplayName, refresh: refreshFamily } = useFamily();
+  useBackDismiss(true, onClose);
   const [showEditName, setShowEditName] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
   const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);

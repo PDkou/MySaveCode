@@ -10,11 +10,13 @@ import {
 } from '../lib/colorTheme';
 import type { ColorTheme } from '../lib/colorTheme';
 import { ModalHeader } from './ModalHeader';
+import { useBackDismiss } from '../lib/backNav';
 
 export function ColorThemePicker() {
   const { t } = useTranslation();
   const [theme, setTheme] = useState<ColorTheme>(getInitialColorTheme);
   const [open, setOpen] = useState(false);
+  useBackDismiss(open, () => setOpen(false));
 
   useEffect(() => {
     applyColorTheme(theme);
