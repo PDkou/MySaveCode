@@ -2707,6 +2707,24 @@ end $$;
 -- "send-due-reminders" -- a naming mishap during setup that stuck because
 -- Supabase slugs can't be renamed after creation). If you ever redeploy
 -- under the correct name, update the url here to match.
+--
+-- The net.http_post call in both triggers below is wrapped in its own
+-- exception handler -- these triggers fire *inside* the same transaction
+-- as the write that caused them (confirm_task_completion's own UPDATE on
+-- tasks, a comment insert, ...), and an AFTER trigger raising rolls back
+-- everything the outer statement already did. Without the handler, any
+-- hiccup in the notification pipeline (pg_net not enabled, a network
+-- blip, the Edge Function briefly down, a malformed row from some future
+-- edit) silently failed the *actual* action a user was trying to take --
+-- confirming a completed quest, posting a comment -- with nothing but a
+-- generic "처리 중 문제가 발생했습니다." on their screen and the real cause
+-- never surfacing anywhere (2026-08 bug report: "의뢰자가 퀘스트 성공 버튼을
+-- 누르면 처리에 실패했다고 뜬다" -- reproduced locally by isolating
+-- confirm_task_completion from a stubbed-out net.http_post: the payout
+-- logic itself was correct the whole time, only the notification call was
+-- ever failing). A push notification that doesn't go out is a minor,
+-- silent miss; a quest confirmation that doesn't go through looks and is
+-- reported as the app being broken.
 -- -----------------------------------------------------------------------------
 create or replace function public.notify_task_activity_event()
 returns trigger
@@ -2716,18 +2734,22 @@ set search_path = public
 as $$
 begin
   if new.action in ('created', 'completed', 'reopened') then
-    perform net.http_post(
-      url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service',
-      headers := jsonb_build_object(
-        'Content-Type', 'application/json',
-        'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
-      ),
-      body := jsonb_build_object(
-        'task_id', new.task_id,
-        'event', new.action,
-        'actor_id', new.actor_id
-      )
-    );
+    begin
+      perform net.http_post(
+        url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service',
+        headers := jsonb_build_object(
+          'Content-Type', 'application/json',
+          'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
+        ),
+        body := jsonb_build_object(
+          'task_id', new.task_id,
+          'event', new.action,
+          'actor_id', new.actor_id
+        )
+      );
+    exception when others then
+      null;
+    end;
   end if;
   return new;
 end;
@@ -2745,19 +2767,23 @@ security definer
 set search_path = public
 as $$
 begin
-  perform net.http_post(
-    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
-    ),
-    body := jsonb_build_object(
-      'task_id', new.task_id,
-      'event', 'comment',
-      'actor_id', new.author_id,
-      'comment_body', new.body
-    )
-  );
+  begin
+    perform net.http_post(
+      url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service',
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
+      ),
+      body := jsonb_build_object(
+        'task_id', new.task_id,
+        'event', 'comment',
+        'actor_id', new.author_id,
+        'comment_body', new.body
+      )
+    );
+  exception when others then
+    null;
+  end;
   return new;
 end;
 $$;
