@@ -53,9 +53,6 @@ export function DashboardPage() {
   const [showShop, setShowShop] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  // Set once "종료" is actually confirmed -- see handleConfirmExit for why
-  // this exists instead of trying to force the app closed.
-  const [exited, setExited] = useState(false);
   // Armed whenever the exit-confirm dialog isn't showing; false while it
   // is (the dialog's own useBackDismiss handles back for that case) or
   // permanently once "종료" has actually been confirmed (see
@@ -127,25 +124,33 @@ export function DashboardPage() {
 
   const handleConfirmExit = () => {
     setShowExitConfirm(false);
-    setExitGuardActive(false); // never re-arm
-    // window.close() and repeated history.back() calls were tried here
-    // first and both looked like they did nothing -- because they
-    // actually do nothing. "Back with no history left closes the app" is
-    // real, but it's Android's own handling of the *hardware* back
-    // button/gesture reading the WebView's canGoBack() directly; nothing
-    // hooks a plain JS history.back() call into that, even once it's
-    // truly exhausted every entry. window.close() has the same problem
-    // for a different reason (browsers only honor it for a window/tab the
-    // page itself opened via script, never a page the OS launched). There
-    // is no general JS API to force-close an installed PWA -- pretending
-    // otherwise just left the confirm button looking broken. Show a
-    // goodbye screen instead and let the user actually close the app
-    // themselves (physical back once more, or swiping it away) --
-    // honest about what a bare PWA can and can't do, and the guard being
-    // permanently disarmed above means that a real back press from here
-    // reaches Android's own "nothing left" handling untouched.
-    window.close(); // still harmless to try -- free in the rare context that does honor it
-    setExited(true);
+    setExitGuardActive(false); // never re-arm -- the next back exits for real
+    // Best-effort: some installed/standalone contexts honor this outright.
+    window.close();
+    // Closing the dialog above only consumes its own pushed entry
+    // automatically (its own useBackDismiss) -- landing back on a
+    // visually-unchanged dashboard with nothing seeming to have happened,
+    // which reads as "확인해도 아무 일도 안 일어남." Go further: through the
+    // exit guard's own entry (still sitting there if this dialog was
+    // opened via the exit button rather than an actual back press -- a
+    // back-triggered open already disarmed and popped it before the
+    // dialog ever showed) and the app's own root, so confirming actually
+    // looks and feels like leaving.
+    //
+    // Deferred, not immediate: the dialog's own unmount-triggered
+    // history.back() is async and hasn't resolved yet in this same tick
+    // -- racing it the same way handleCancelExit's re-arm would (see
+    // there). Once past that single macrotask, firing further back()
+    // calls back-to-back is safe -- unlike pushState racing a pending
+    // back(), sequential back() calls don't race each other (verified).
+    // Two, not one: harmless to overshoot if the guard's entry had
+    // already been consumed by an actual back press -- there's nothing
+    // meaningful before this app's own root in an installed PWA's own
+    // history anyway.
+    setTimeout(() => {
+      window.history.back();
+      window.history.back();
+    }, 0);
   };
 
   const [selectMode, setSelectMode] = useState(false);
@@ -322,20 +327,6 @@ export function DashboardPage() {
     ? 'dashboard.emptySearch'
     : filter === 'open' ? 'dashboard.emptyOpen' : filter === 'done' ? 'dashboard.emptyDone' : 'dashboard.emptyAll';
   const emptyIllustration = isEmptyFromSearch ? '/illustrations/empty-search.png' : '/illustrations/empty-quests.png';
-
-  // After every hook above -- not right after handleConfirmExit sets it --
-  // an early return before all of a component's hooks have run breaks the
-  // rule that the same hooks fire in the same order on every render (a
-  // couple of the useState/useEffect/useMemo calls above this line would
-  // silently stop running the instant "exited" flips true otherwise).
-  if (exited) {
-    return (
-      <div className="screen exit-screen">
-        <p className="exit-screen-message">{t('exit.goodbyeMessage')}</p>
-        <p className="exit-screen-hint">{t('exit.goodbyeHint')}</p>
-      </div>
-    );
-  }
 
   return (
     <div className="screen dashboard-screen">

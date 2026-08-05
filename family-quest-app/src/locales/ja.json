@@ -78,9 +78,7 @@
   "exit": {
     "confirmMessage": "アプリを終了しますか?",
     "confirmButton": "終了",
-    "button": "アプリを終了",
-    "goodbyeMessage": "またね! 👋",
-    "goodbyeHint": "もう一度戻るボタンを押すか、最近使ったアプリの一覧からこのアプリをスワイプして完全に終了してください。"
+    "button": "アプリを終了"
   },
   "auth": {
     "loginTab": "ログイン",
