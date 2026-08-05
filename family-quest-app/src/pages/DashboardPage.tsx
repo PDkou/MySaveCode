@@ -124,14 +124,33 @@ export function DashboardPage() {
 
   const handleConfirmExit = () => {
     setShowExitConfirm(false);
-    setExitGuardActive(false); // never re-arm -- let the next back actually exit
-    // Best-effort only: a plain script can't force-close an arbitrary
-    // browser tab, and this is a bare PWA with no native shell to call
-    // into. Some installed/standalone contexts do honor it when there's
-    // no history left to go back to; where it's a no-op, the guard being
-    // disarmed still means the very next back press exits for real
-    // instead of asking again.
+    setExitGuardActive(false); // never re-arm -- the next back exits for real
+    // Best-effort: some installed/standalone contexts honor this outright.
     window.close();
+    // Closing the dialog above only consumes its own pushed entry
+    // automatically (its own useBackDismiss) -- landing back on a
+    // visually-unchanged dashboard with nothing seeming to have happened,
+    // which reads as "확인해도 아무 일도 안 일어남." Go further: through the
+    // exit guard's own entry (still sitting there if this dialog was
+    // opened via the exit button rather than an actual back press -- a
+    // back-triggered open already disarmed and popped it before the
+    // dialog ever showed) and the app's own root, so confirming actually
+    // looks and feels like leaving.
+    //
+    // Deferred, not immediate: the dialog's own unmount-triggered
+    // history.back() is async and hasn't resolved yet in this same tick
+    // -- racing it the same way handleCancelExit's re-arm would (see
+    // there). Once past that single macrotask, firing further back()
+    // calls back-to-back is safe -- unlike pushState racing a pending
+    // back(), sequential back() calls don't race each other (verified).
+    // Two, not one: harmless to overshoot if the guard's entry had
+    // already been consumed by an actual back press -- there's nothing
+    // meaningful before this app's own root in an installed PWA's own
+    // history anyway.
+    setTimeout(() => {
+      window.history.back();
+      window.history.back();
+    }, 0);
   };
 
   const [selectMode, setSelectMode] = useState(false);
@@ -413,6 +432,23 @@ export function DashboardPage() {
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
             </button>
+            {/* Directly reachable, not buried in Settings -- this is the
+                only way to reach the "종료하시겠습니까?" flow on iOS, which
+                has no hardware/OS back button to trigger the guard below,
+                and it's the fastest path on Android too rather than
+                Settings > 앱 종료. */}
+            <button
+              type="button"
+              className="btn btn-ghost btn-icon btn-sm"
+              onClick={() => setShowExitConfirm(true)}
+              aria-label={t('exit.button')}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
           </div>
 
           <div className="dashboard-toolbar">
@@ -613,10 +649,6 @@ export function DashboardPage() {
           onReplayTutorial={() => {
             setShowSettings(false);
             setShowTutorial(true);
-          }}
-          onExit={() => {
-            setShowSettings(false);
-            setShowExitConfirm(true);
           }}
         />
       )}
