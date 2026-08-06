@@ -134,7 +134,7 @@
     "purposeBusiness": "会社・チーム用",
     "createButton": "作成する",
     "creating": "作成中...",
-    "joinHeading": "家族ルームに参加",
+    "joinHeading": "招待コードで参加",
     "joinCodeLabel": "招待コード（8桁）",
     "joinCodePlaceholder": "例: AB12CD34",
     "joinButton": "参加する",

@@ -3,7 +3,14 @@ import { clientsClaim } from 'workbox-core';
 import { createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 
+import { APP_MODE } from './lib/appMode';
+
 declare const self: ServiceWorkerGlobalScope;
+
+// Only a fallback for the rare case a push payload fails to parse as JSON
+// or omits a title -- see lib/appMode.ts's header comment for the
+// family-quest-app vs business-quest-app split this serves.
+const APP_NAME = APP_MODE === 'business' ? '컴퍼니 퀘스트' : 'Family Quest';
 
 self.skipWaiting();
 clientsClaim();
@@ -23,13 +30,13 @@ self.addEventListener('push', (event: PushEvent) => {
   try {
     payload = event.data?.json() ?? {};
   } catch {
-    payload = { title: 'Family Quest', body: event.data?.text() };
+    payload = { title: APP_NAME, body: event.data?.text() };
   }
 
   const url = payload.taskId ? `/task/${payload.taskId}` : '/';
 
   event.waitUntil(
-    self.registration.showNotification(payload.title ?? 'Family Quest', {
+    self.registration.showNotification(payload.title ?? APP_NAME, {
       body: payload.body ?? '',
       icon: '/icons/icon-192.png',
       // Android draws the status-bar/badge icon from the alpha channel only

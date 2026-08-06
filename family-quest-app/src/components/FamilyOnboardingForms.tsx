@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useFamily, FamilyActionError } from '../context/FamilyContext';
-import type { FamilyRoomType } from '../types/database';
+import { APP_MODE } from '../lib/appMode';
 
 interface FamilyOnboardingFormsProps {
   onSuccess?: () => void;
@@ -13,8 +13,12 @@ export function FamilyOnboardingForms({ onSuccess }: FamilyOnboardingFormsProps)
   const { t } = useTranslation();
   const { createFamily, joinFamily } = useFamily();
 
+  // 2026-08 family/business app split: each app build is locked to one
+  // room_type (family-quest-app -> 'family', business-quest-app ->
+  // 'business', see lib/appMode.ts) -- there's no longer an in-app toggle
+  // between the two, since a family-app user should never see a "회사/팀"
+  // option and vice versa.
   const [familyName, setFamilyName] = useState('');
-  const [roomType, setRoomType] = useState<FamilyRoomType>('family');
   const [creating, setCreating] = useState(false);
   const [createErrorKey, setCreateErrorKey] = useState<string | null>(null);
 
@@ -48,7 +52,7 @@ export function FamilyOnboardingForms({ onSuccess }: FamilyOnboardingFormsProps)
     }
     setCreating(true);
     try {
-      await createFamily(familyName.trim(), roomType);
+      await createFamily(familyName.trim(), APP_MODE);
       setFamilyName('');
       onSuccess?.();
     } catch (err) {
@@ -67,7 +71,7 @@ export function FamilyOnboardingForms({ onSuccess }: FamilyOnboardingFormsProps)
     setPersonalErrorKey(null);
     setStartingPersonal(true);
     try {
-      await createFamily(t('family.personalDefaultName'));
+      await createFamily(t('family.personalDefaultName'), APP_MODE);
       onSuccess?.();
     } catch (err) {
       setPersonalErrorKey(err instanceof FamilyActionError ? err.translationKey : 'family.error.unknown');
@@ -127,29 +131,6 @@ export function FamilyOnboardingForms({ onSuccess }: FamilyOnboardingFormsProps)
             maxLength={60}
           />
         </label>
-        <div className="field">
-          <span>{t('family.purposeLabel')}</span>
-          <div className="family-purpose-toggle" role="radiogroup" aria-label={t('family.purposeLabel')}>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={roomType === 'family'}
-              className={`family-purpose-option ${roomType === 'family' ? 'family-purpose-option-active' : ''}`}
-              onClick={() => setRoomType('family')}
-            >
-              {t('family.purposeFamily')}
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={roomType === 'business'}
-              className={`family-purpose-option ${roomType === 'business' ? 'family-purpose-option-active' : ''}`}
-              onClick={() => setRoomType('business')}
-            >
-              {t('family.purposeBusiness')}
-            </button>
-          </div>
-        </div>
         {createErrorKey && <p className="form-error" role="alert">{t(createErrorKey)}</p>}
         <button type="submit" className="btn btn-primary btn-block" disabled={creating}>
           {creating ? t('family.creating') : t('family.createButton')}
