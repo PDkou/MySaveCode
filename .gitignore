@@ -1,0 +1,4 @@
+# Root of the npm workspace (family-quest-app + business-quest-app, see
+# package.json's "workspaces") -- node_modules is hoisted here after the
+# 2026-08 app split. Doesn't affect the unrelated game/ (Godot) project.
+node_modules

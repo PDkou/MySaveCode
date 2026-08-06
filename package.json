@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "name": "mysavecode-monorepo",
+  "workspaces": [
+    "family-quest-app",
+    "business-quest-app"
+  ]
+}
