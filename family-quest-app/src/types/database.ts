@@ -82,11 +82,21 @@ export type TycoonStateRow = {
   user_id: string;
   family_id: string;
   currency: number;
+  // Superseded by the tycoon_buildings table (2026-08 buildings overhaul)
+  // -- upgrade_tycoon still exists server-side but is no longer called by
+  // the client, so this stays frozen at whatever it was. Left in place
+  // rather than dropped to avoid a destructive migration.
   upgrade_level: number;
-  // Number of times this tycoon has been reset via prestige_tycoon after
-  // hitting max level -- each point is a permanent +10% production
-  // multiplier (see rateForLevel in lib/tycoon.ts).
+  // Number of times this tycoon has been reset via prestige_tycoon.
+  // Each point is a permanent +10% production multiplier (see
+  // rateForBuildings in lib/tycoon.ts).
   prestige_level: number;
+  // Total currency ever produced (accrual + taps + lucky bonuses),
+  // never decremented by spending -- the gate for the next prestige
+  // (see tycoonPrestigeThreshold in lib/tycoon.ts). Added alongside the
+  // buildings system since "own everything" no longer has a single
+  // max-level line to check against.
+  lifetime_currency: number;
   last_collected_at: string;
   last_tap_at: string | null;
   exchanged_today: number;
@@ -102,12 +112,37 @@ export type FamilyTycoonStateRow = {
   currency: number;
   upgrade_level: number;
   prestige_level: number;
+  lifetime_currency: number;
   last_collected_at: string;
   last_tap_at: string | null;
   exchanged_today: number;
   exchange_reset_date: string;
   created_at: string;
 };
+
+// One row per (owner, building type) -- how many of that building the
+// tycoon owns. Building identity/cost/rate curves are hardcoded data (see
+// TYCOON_BUILDINGS in lib/tycoon.ts and tycoon_building_defs() in
+// schema.sql), same "data not code" spirit as shop_items.
+export type TycoonBuildingRow = {
+  user_id: string;
+  family_id: string;
+  building_id: string;
+  owned_count: number;
+};
+
+export type FamilyTycoonBuildingRow = {
+  family_id: string;
+  building_id: string;
+  owned_count: number;
+};
+
+// tap_tycoon_currency/tap_family_tycoon_currency return this composite
+// (not a bare state row) so the client can show an honest, server-decided
+// critical-hit celebration instead of guessing from a currency diff that
+// could also include ordinary idle accrual.
+export type TycoonTapResult = { state: TycoonStateRow; gained: number; is_critical: boolean };
+export type FamilyTycoonTapResult = { state: FamilyTycoonStateRow; gained: number; is_critical: boolean };
 
 export type QuestPayoutKind = 'completion' | 'requester_bonus';
 
@@ -365,6 +400,18 @@ export type Database = {
         Update: Partial<FamilyTycoonStateRow>;
         Relationships: [];
       };
+      tycoon_buildings: {
+        Row: TycoonBuildingRow;
+        Insert: Partial<TycoonBuildingRow> & Pick<TycoonBuildingRow, 'user_id' | 'family_id' | 'building_id'>;
+        Update: Partial<TycoonBuildingRow>;
+        Relationships: [];
+      };
+      family_tycoon_buildings: {
+        Row: FamilyTycoonBuildingRow;
+        Insert: Partial<FamilyTycoonBuildingRow> & Pick<FamilyTycoonBuildingRow, 'family_id' | 'building_id'>;
+        Update: Partial<FamilyTycoonBuildingRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -457,10 +504,14 @@ export type Database = {
       };
       tap_tycoon_currency: {
         Args: { p_family_id: string };
-        Returns: TycoonStateRow;
+        Returns: TycoonTapResult;
       };
       upgrade_tycoon: {
         Args: { p_family_id: string };
+        Returns: TycoonStateRow;
+      };
+      buy_tycoon_building: {
+        Args: { p_family_id: string; p_building_id: string };
         Returns: TycoonStateRow;
       };
       exchange_tycoon_currency: {
@@ -477,10 +528,14 @@ export type Database = {
       };
       tap_family_tycoon_currency: {
         Args: { p_family_id: string };
-        Returns: FamilyTycoonStateRow;
+        Returns: FamilyTycoonTapResult;
       };
       upgrade_family_tycoon: {
         Args: { p_family_id: string };
+        Returns: FamilyTycoonStateRow;
+      };
+      buy_family_tycoon_building: {
+        Args: { p_family_id: string; p_building_id: string };
         Returns: FamilyTycoonStateRow;
       };
       exchange_family_tycoon_currency: {
