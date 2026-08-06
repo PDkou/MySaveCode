@@ -10,7 +10,7 @@ declare const self: ServiceWorkerGlobalScope;
 // Only a fallback for the rare case a push payload fails to parse as JSON
 // or omits a title -- see lib/appMode.ts's header comment for the
 // family-quest-app vs business-quest-app split this serves.
-const APP_NAME = APP_MODE === 'business' ? '컴퍼니 퀘스트' : 'Family Quest';
+const APP_NAME = APP_MODE === 'business' ? 'Company Quest' : 'Family Quest';
 
 self.skipWaiting();
 clientsClaim();

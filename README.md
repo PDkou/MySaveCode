@@ -7,7 +7,7 @@ apps sharing one codebase (2026-08):
 - **`family-quest-app/`** — the "Family Quest" app, and also where the
   actual shared source lives (`src/`, `public/`, `supabase/schema.sql`).
   Build/dev/deploy this exactly as before.
-- **`business-quest-app/`** — "Company Quest" (컴퍼니 퀘스트), a thin sibling
+- **`business-quest-app/`** — "Company Quest", a thin sibling
   app for team/business use. Has its own `index.html`, `vite.config.ts`,
   PWA manifest/branding, and a two-file `src/` (`main.tsx`, `sw.ts`) — every
   other component/page/lib file is imported straight from
