@@ -453,29 +453,6 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     ratePerMin: familyState ? rateForBuildings(familyBuildings, familyState.prestige_level) : 0,
   };
 
-  const renderTown = (ownedMap: Record<string, number>) => {
-    const owned = TYCOON_BUILDINGS.filter((def) => (ownedMap[def.id] ?? 0) > 0);
-    if (owned.length === 0) return null;
-    return (
-      <div className="tycoon-town">
-        {owned.map((def) => {
-          const count = ownedMap[def.id] ?? 0;
-          const shown = Math.min(count, 12);
-          return (
-            <span key={def.id} className="tycoon-town-group">
-              {Array.from({ length: shown }, (_, i) => (
-                <span key={i} className="tycoon-town-icon">
-                  {def.emoji}
-                </span>
-              ))}
-              {count > shown && <span className="tycoon-town-overflow">+{count - shown}</span>}
-            </span>
-          );
-        })}
-      </div>
-    );
-  };
-
   const renderBuildingList = (
     ownedMap: Record<string, number>,
     currency: number,
@@ -490,6 +467,11 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
           const owned = ownedMap[def.id] ?? 0;
           const cost = tycoonBuildingCost(def, owned);
           const affordable = currency >= cost;
+          // Owned copies of *this* building render right on its own row --
+          // previously a combined "town" strip sat above the whole list
+          // mixing every building type together, which made it unclear
+          // which icons belonged to which building (2026-08 feedback).
+          const shownIcons = Math.min(owned, 10);
           return (
             <div key={def.id} className="tycoon-building-row">
               <span className="tycoon-building-emoji">{def.emoji}</span>
@@ -498,6 +480,16 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
                 <span className="tycoon-building-meta">
                   {t('tycoon.buildingOwned', { count: owned })} · {t('tycoon.buildingRate', { rate: def.baseRate * owned })}
                 </span>
+                {owned > 0 && (
+                  <span className="tycoon-building-icons">
+                    {Array.from({ length: shownIcons }, (_, i) => (
+                      <span key={i} className="tycoon-building-icon">
+                        {def.emoji}
+                      </span>
+                    ))}
+                    {owned > shownIcons && <span className="tycoon-building-icon-overflow">+{owned - shownIcons}</span>}
+                  </span>
+                )}
               </div>
               <button
                 type="button"
@@ -572,7 +564,6 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
               ) : (
                 <>
                   {luckyToast && <p className="tycoon-lucky-toast">{t('tycoon.luckyBonus')}</p>}
-                  {renderTown(buildings)}
 
                   <div className="tycoon-currency-display">
                     <span className="tycoon-currency-amount">{displayedCurrency.toLocaleString()}</span>
@@ -690,7 +681,6 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
               ) : (
                 <>
                   {familyLuckyToast && <p className="tycoon-lucky-toast">{t('tycoon.luckyBonus')}</p>}
-                  {renderTown(familyBuildings)}
 
                   <div className="tycoon-currency-display">
                     <span className="tycoon-currency-amount">{familyDisplayedCurrency.toLocaleString()}</span>
