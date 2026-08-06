@@ -5,35 +5,28 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import ko from '../locales/ko.json';
 import ja from '../locales/ja.json';
 import { APP_MODE } from '../lib/appMode';
+import { BUSINESS_OVERRIDES, deepMergeLocale } from './businessOverrides';
 
 export const SUPPORTED_LANGUAGES = ['ko', 'ja'] as const;
 export type AppLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 export const LANGUAGE_STORAGE_KEY = 'familyquest.language';
 
-// app.name/app.tagline are the one branding string pair every screen that
-// shows the app's own name reads from (AuthPage, etc.) -- overridden here
-// per app shell rather than duplicating the whole locale file, since
-// everything else in ko.json/ja.json is identical between the two apps.
-// See lib/appMode.ts's header comment for the family-quest-app vs
-// business-quest-app split this serves.
-//
-// name stays "Company Quest" (English) in both locales, matching
-// app.name's own existing pattern -- ko.json/ja.json both already keep
-// "Family Quest" in English regardless of UI language, only the tagline
-// is translated per locale.
-const BUSINESS_BRANDING = {
-  ko: { name: 'Company Quest', tagline: '팀과 함께하는 업무 퀘스트' },
-  ja: { name: 'Company Quest', tagline: 'チームでこなす業務クエスト' },
-};
-
+// Every family-specific string (app branding, room/member management
+// copy, celebration messages, the tycoon's family tab, help text, the
+// weekly breakdown, one badge name) gets a team/workspace-flavored
+// replacement in the business app -- see businessOverrides.ts for the
+// full list and why this is hand-written strings via a deep merge rather
+// than a mechanical find-and-replace over the JSON. See lib/appMode.ts's
+// header comment for the family-quest-app vs business-quest-app split
+// this serves.
 const resources = {
   ko: { translation: ko },
   ja: { translation: ja },
 };
 
 if (APP_MODE === 'business') {
-  resources.ko.translation = { ...ko, app: { ...ko.app, ...BUSINESS_BRANDING.ko } };
-  resources.ja.translation = { ...ja, app: { ...ja.app, ...BUSINESS_BRANDING.ja } };
+  resources.ko.translation = deepMergeLocale(ko, BUSINESS_OVERRIDES.ko);
+  resources.ja.translation = deepMergeLocale(ja, BUSINESS_OVERRIDES.ja);
 }
 
 void i18n
