@@ -16,9 +16,14 @@ export const LANGUAGE_STORAGE_KEY = 'familyquest.language';
 // everything else in ko.json/ja.json is identical between the two apps.
 // See lib/appMode.ts's header comment for the family-quest-app vs
 // business-quest-app split this serves.
+//
+// name stays "Company Quest" (English) in both locales, matching
+// app.name's own existing pattern -- ko.json/ja.json both already keep
+// "Family Quest" in English regardless of UI language, only the tagline
+// is translated per locale.
 const BUSINESS_BRANDING = {
-  ko: { name: '컴퍼니 퀘스트', tagline: '팀과 함께하는 업무 퀘스트' },
-  ja: { name: 'カンパニークエスト', tagline: 'チームでこなす業務クエスト' },
+  ko: { name: 'Company Quest', tagline: '팀과 함께하는 업무 퀘스트' },
+  ja: { name: 'Company Quest', tagline: 'チームでこなす業務クエスト' },
 };
 
 const resources = {

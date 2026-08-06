@@ -34,7 +34,7 @@ export default defineConfig({
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
         id: '/',
-        name: '컴퍼니 퀘스트',
+        name: 'Company Quest',
         short_name: 'CompanyQuest',
         description: '팀과 함께하는 업무 퀘스트 관리',
         start_url: '/',
