@@ -3940,3 +3940,132 @@ textarea {
   flex: 1;
   min-width: 0;
 }
+
+/* ---------- Tycoon buildings/prestige (2026-08 overhaul) ---------- */
+
+.tycoon-town {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  justify-content: center;
+  padding: 4px 0 0;
+}
+
+.tycoon-town-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tycoon-town-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.tycoon-town-overflow {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted-light);
+  margin-left: 2px;
+}
+
+.tycoon-tap-wrap {
+  position: relative;
+}
+
+@keyframes tycoonCritPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 4px) scale(0.85);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -6px) scale(1.05);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -14px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -22px) scale(1);
+  }
+}
+
+.tycoon-crit-flash {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  transform: translate(-50%, -22px);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--amber);
+  pointer-events: none;
+  animation: tycoonCritPop 1.4s ease both;
+  white-space: nowrap;
+}
+
+.tycoon-lucky-toast {
+  margin: 0 0 4px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--amber) 18%, transparent);
+  color: var(--amber-dark);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.tycoon-building-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tycoon-building-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tycoon-building-emoji {
+  font-size: 22px;
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+}
+
+.tycoon-building-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.tycoon-building-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.tycoon-building-meta {
+  font-size: 11px;
+  color: var(--muted-light);
+}
+
+.tycoon-prestige-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.tycoon-prestige-bar-fill {
+  height: 100%;
+  background: var(--purple);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
