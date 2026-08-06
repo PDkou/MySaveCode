@@ -3943,34 +3943,6 @@ textarea {
 
 /* ---------- Tycoon buildings/prestige (2026-08 overhaul) ---------- */
 
-.tycoon-town {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  justify-content: center;
-  padding: 4px 0 0;
-}
-
-.tycoon-town-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.tycoon-town-icon {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.tycoon-town-overflow {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted-light);
-  margin-left: 2px;
-}
-
 .tycoon-tap-wrap {
   position: relative;
 }
@@ -4054,6 +4026,30 @@ textarea {
 .tycoon-building-meta {
   font-size: 11px;
   color: var(--muted-light);
+}
+
+/* Owned copies of this building, rendered on its own row -- replaces the
+   old combined "town" strip that used to sit above the whole list mixing
+   every building type together (2026-08 feedback: show growth at the
+   building itself, not off to the side). */
+.tycoon-building-icons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 1px;
+  margin-top: 2px;
+}
+
+.tycoon-building-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.tycoon-building-icon-overflow {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted-light);
+  margin-left: 3px;
 }
 
 .tycoon-prestige-bar-track {
