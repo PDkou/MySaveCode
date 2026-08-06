@@ -417,43 +417,94 @@
     }
   },
   "tycoon": {
-    "heading": "放置タイクーン",
-    "modePersonal": "個人",
-    "modeFamily": "家族",
-    "familyHint": "家族全員で一緒に育てる共有タイクーンです。誰がタップしても同じ通貨が貯まります。",
-    "ratePerMin": "毎分 {{rate}} 獲得",
-    "tapButton": "タップして+{{gain}}獲得",
-    "criticalTap": "クリティカル! +{{gain}}",
-    "luckyBonus": "🎉 ラッキーボーナス発生!",
-    "buildingsHeading": "生産施設",
-    "buildings": {
-      "squirrel": "リス",
-      "rabbit": "ウサギ",
-      "fox": "キツネ",
-      "bear": "クマ",
-      "dragon": "ドラゴン"
+    "heading": "クエスト拠点",
+    "modePersonal": "自分の拠点",
+    "modeFamily": "共有拠点",
+    "familyHint": "メンバー全員で育てる独立した共有拠点です。タップ用の行動力は各自に分かれているため、ほかの人の操作を妨げません。",
+    "worldLabel": "成長中のクエスト拠点",
+    "worldLevel": "拠点 Lv.{{level}}",
+    "worldProgress": "成長要素 {{count}}個",
+    "ratePerMin": "毎分 {{rate}} 生産",
+    "energy": "行動力",
+    "energyRecharge": "行動力を回復中・3秒ごとに1",
+    "tapHint": "連続タップで拠点に活力を送ろう",
+    "tapButton": "活力を送る +{{gain}}",
+    "criticalTap": "大成功！ +{{gain}}",
+    "luckyBonus": "星明かりボーナス！ +{{gain}}",
+    "producersHeading": "成長要素",
+    "strategyHint": "要素ごとに役割が異なります",
+    "producers": {
+      "pathfinder_camp": {
+        "name": "開拓者キャンプ",
+        "effect": "所有数に応じて手動の活力報酬が増えます。"
+      },
+      "craft_workshop": {
+        "name": "クラフト工房",
+        "effect": "安定した自動生産の中心です。"
+      },
+      "trade_station": {
+        "name": "交易所",
+        "effect": "1個につき、すべての成長要素の生産量が2%増えます。"
+      },
+      "archive_tower": {
+        "name": "記録塔",
+        "effect": "1個につき、1分以上離れていた間の生産量が3%増えます。"
+      },
+      "starlight_beacon": {
+        "name": "星明かりビーコン",
+        "effect": "星明かりボーナスと大成功の発生確率が上がります。"
+      }
     },
-    "buildingOwned": "保有 {{count}}",
-    "buildingRate": "毎分 {{rate}}",
-    "buildingBuy": "{{cost}}で購入",
-    "prestigeHeading": "転生",
-    "prestigeCount": "転生 {{count}}回 · 生産量 +{{percent}}%",
-    "prestigeProgress": "累計獲得 {{current}} / {{required}}",
-    "prestigeButton": "転生する",
-    "prestigeConfirm": "これまでに購入した施設と通貨がすべてリセットされる代わりに、生産量が永久に10%増えます。転生しますか?",
-    "exchangeHeading": "ゴールドに交換",
-    "exchangeRateHint": "{{rate}} ごとに1ゴールドに交換されます。",
-    "exchangeRemaining": "本日の残り交換枠: {{count}}ゴールド",
+    "producerOwned": "所有 {{count}}",
+    "producerRate": "基本生産への貢献：毎分 {{rate}}",
+    "producerBuy": "{{cost}}で拡張",
+    "unlockAt": "累計生産 {{amount}}で解放",
+    "locked": "未解放",
+    "prestigeHeading": "新しい旅",
+    "prestigeCount": "旅 {{count}}回",
+    "prestigeProgress": "今回の旅 {{current}} / {{required}}",
+    "prestigeLockedHint": "今回の生産目標を達成すると、永続特性を選べます。",
+    "focusPrompt": "次の旅に残す永続特性を選んでください。",
+    "focus": {
+      "momentum": {
+        "name": "推進力",
+        "short": "推進力",
+        "description": "レベルごとに手動の活力報酬が25%増えます。"
+      },
+      "automation": {
+        "name": "自動化",
+        "short": "自動化",
+        "description": "レベルごとに自動生産量が8%増えます。"
+      },
+      "fortune": {
+        "name": "幸運",
+        "short": "幸運",
+        "description": "レベルごとに星明かりボーナスの確率が1ポイント増えます。"
+      }
+    },
+    "prestigeButton": "新しい旅を始める",
+    "prestigeConfirm": "現在の通貨と成長要素はリセットされ、「{{focus}}」が永久に強化されます。新しい旅を始めますか？",
+    "prestigeComplete": "新しい旅が開かれました！",
+    "prestigeResult": "旅 {{count}}回・{{focus}}を強化",
+    "exchangeHeading": "アプリゴールドに交換",
+    "exchangeRateHint": "{{rate}}ごとに1ゴールドへ交換されます。",
+    "exchangeRemaining": "本日の残り交換枠：{{count}}ゴールド",
     "exchangeButton": "{{points}}Gに交換",
+    "sharedRewardHeading": "共有通貨の保護",
+    "sharedRewardRule": "共有拠点の通貨は、特定メンバーの個人ゴールドには交換されません。全員に見える成長と新しい旅にだけ使われます。",
     "shopHeading": "タイクーンショップ",
     "error": {
-      "tapTooFast": "早すぎます、少し待ってからもう一度押してください。",
-      "notMaxed": "まだ転生の条件を満たしていません。",
+      "tapTooFast": "入力が速すぎます。少し待ってからもう一度押してください。",
+      "tapEnergyEmpty": "行動力が足りません。少し待つと回復します。",
+      "producerLocked": "まだ解放されていない成長要素です。",
+      "notMaxed": "まだ新しい旅の条件を満たしていません。",
       "insufficientCurrency": "タイクーン通貨が足りません。",
       "dailyCapReached": "本日の交換上限を超えました。",
       "amountTooSmall": "交換するには少なすぎる量です。",
       "invalidAmount": "正しい数量を入力してください。",
-      "invalidBuilding": "不明な施設です。",
+      "invalidProducer": "不明な成長要素です。",
+      "invalidPrestigeFocus": "正しい永続特性を選んでください。",
+      "familyExchangeDisabled": "共有拠点の通貨は個人ゴールドに交換できません。",
       "unknown": "リクエストを処理できませんでした。"
     }
   },
@@ -531,12 +582,33 @@
     }
   },
   "badges": {
-    "first_quest": { "name": "はじめの一歩", "desc": "はじめてのクエストを完了しました" },
-    "ten_quests": { "name": "がんばり屋", "desc": "クエストを10個完了しました" },
-    "fifty_quests": { "name": "家族のヒーロー", "desc": "クエストを50個完了しました" },
-    "streak_3": { "name": "3日連続", "desc": "3日連続でクエストを完了しました" },
-    "streak_7": { "name": "週間皆勤", "desc": "7日連続でクエストを完了しました" },
-    "early_bird": { "name": "早起きさん", "desc": "午前7時前にクエストを完了しました" },
-    "night_owl": { "name": "夜ふかしさん", "desc": "夜11時以降にクエストを完了しました" }
+    "first_quest": {
+      "name": "はじめの一歩",
+      "desc": "はじめてのクエストを完了しました"
+    },
+    "ten_quests": {
+      "name": "がんばり屋",
+      "desc": "クエストを10個完了しました"
+    },
+    "fifty_quests": {
+      "name": "家族のヒーロー",
+      "desc": "クエストを50個完了しました"
+    },
+    "streak_3": {
+      "name": "3日連続",
+      "desc": "3日連続でクエストを完了しました"
+    },
+    "streak_7": {
+      "name": "週間皆勤",
+      "desc": "7日連続でクエストを完了しました"
+    },
+    "early_bird": {
+      "name": "早起きさん",
+      "desc": "午前7時前にクエストを完了しました"
+    },
+    "night_owl": {
+      "name": "夜ふかしさん",
+      "desc": "夜11時以降にクエストを完了しました"
+    }
   }
 }

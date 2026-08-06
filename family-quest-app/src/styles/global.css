@@ -3895,173 +3895,709 @@ textarea {
   color: var(--navy);
 }
 
-/* ---------- Tycoon modal ---------- */
+/* ---------- Quest-world tycoon (section 31 redesign) ---------- */
+
+.tycoon-modal {
+  width: min(720px, calc(100vw - 24px));
+  max-height: min(92vh, 920px);
+  overflow-y: auto;
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--card) 94%, transparent),
+      color-mix(in srgb, var(--bg) 96%, transparent)
+    ),
+    var(--card);
+}
+
+.tycoon-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding-block: 4px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.tycoon-family-hint,
+.tycoon-shared-rule {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--purple) 24%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--purple) 8%, var(--card));
+  color: var(--navy);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.tycoon-world {
+  position: relative;
+  min-height: 210px;
+  margin: 10px 0;
+  overflow: hidden;
+  border: 3px solid color-mix(in srgb, var(--navy) 72%, #4a321e);
+  border-radius: 16px;
+  background: #79d8ef;
+  isolation: isolate;
+}
+
+.tycoon-world-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  transform: scale(1.03);
+}
+
+.tycoon-world-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 42%, rgba(12, 28, 37, 0.34));
+}
+
+.tycoon-world-level {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 9px;
+  border: 2px solid rgba(24, 38, 64, 0.72);
+  border-radius: 8px;
+  background: rgba(255, 250, 226, 0.9);
+  color: var(--navy);
+  box-shadow: 0 3px 0 rgba(24, 38, 64, 0.24);
+}
+
+.tycoon-world-level span {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.tycoon-world-level small {
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.tycoon-world-producers {
+  position: absolute;
+  inset: auto 8px 8px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: end;
+  gap: 2px;
+}
+
+.tycoon-world-producer,
+.tycoon-producer-art {
+  background-image: url("/art/tycoon/quest-producer-atlas.png");
+  background-repeat: no-repeat;
+  background-size: 500% 100%;
+  image-rendering: pixelated;
+  transform-origin: 50% 100%;
+}
+
+.tycoon-world-producer {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  opacity: 0.28;
+  filter: grayscale(0.9) brightness(0.72);
+}
+
+.tycoon-world-producer.is-owned {
+  opacity: 1;
+  filter: none;
+}
+
+.tycoon-world-producer.is-unlocked:not(.is-owned) {
+  opacity: 0.54;
+  filter: saturate(0.5);
+}
+
+.tycoon-world-producer b {
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  min-width: 23px;
+  padding: 2px 5px;
+  border: 1px solid rgba(24, 38, 64, 0.72);
+  border-radius: 999px;
+  background: rgba(255, 249, 221, 0.94);
+  color: var(--navy);
+  font-size: 9px;
+  text-align: center;
+}
+
+.tycoon-control-panel,
+.tycoon-section {
+  margin: 10px 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+}
 
 .tycoon-currency-display {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 16px 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .tycoon-currency-amount {
-  font-size: 32px;
-  font-weight: 800;
   color: var(--navy);
-  font-variant-numeric: tabular-nums;
+  font-size: clamp(25px, 7vw, 38px);
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.tycoon-currency-amount::after {
+  content: " ✦";
+  color: var(--amber);
+  font-size: 0.62em;
 }
 
 .tycoon-currency-rate {
+  color: var(--muted);
   font-size: 12px;
-  color: var(--muted-light);
+  font-weight: 700;
 }
 
-.tycoon-section {
-  display: flex;
-  flex-direction: column;
+.tycoon-energy-row {
+  display: grid;
+  grid-template-columns: auto minmax(80px, 1fr) auto;
+  align-items: center;
   gap: 8px;
-  padding: 14px 0;
-  border-top: 1px solid var(--border);
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 11px;
 }
 
-.tycoon-exchange-hint {
-  margin: 0;
-  font-size: 12px;
-  color: var(--muted-light);
+.tycoon-energy-track {
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--purple) 28%, var(--border));
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--purple) 8%, var(--bg));
 }
 
-.tycoon-exchange-row {
-  display: flex;
-  gap: 8px;
+.tycoon-energy-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--purple), var(--amber));
+  transition: width 0.22s ease;
 }
-
-.tycoon-exchange-row input {
-  flex: 1;
-  min-width: 0;
-}
-
-/* ---------- Tycoon buildings/prestige (2026-08 overhaul) ---------- */
 
 .tycoon-tap-wrap {
   position: relative;
 }
 
-@keyframes tycoonCritPop {
+.tycoon-tap-button {
+  position: relative;
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  width: 100%;
+  min-height: 66px;
+  padding: 6px 14px 6px 8px;
+  overflow: hidden;
+  border: 3px solid color-mix(in srgb, var(--purple-dark) 78%, var(--navy));
+  border-radius: 13px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--purple) 82%, white),
+    var(--purple-dark)
+  );
+  color: #fff;
+  box-shadow:
+    0 5px 0 color-mix(in srgb, var(--purple-dark) 60%, var(--navy)),
+    inset 0 2px 0 rgba(255, 255, 255, 0.32);
+  cursor: pointer;
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    filter 0.15s ease;
+}
+
+.tycoon-tap-button:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+
+.tycoon-tap-button:active:not(:disabled) {
+  transform: translateY(4px) scale(0.985);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--purple-dark) 60%, var(--navy)),
+    inset 0 2px 0 rgba(255, 255, 255, 0.22);
+}
+
+.tycoon-tap-button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+  opacity: 0.65;
+}
+
+.tycoon-tap-button img {
+  grid-row: 1 / 3;
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  object-position: left center;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.22));
+}
+
+.tycoon-tap-button span {
+  align-self: end;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.tycoon-tap-button small {
+  align-self: start;
+  margin-top: 1px;
+  font-size: 10px;
+  opacity: 0.86;
+}
+
+@keyframes tycoonTapRing {
   0% {
-    opacity: 0;
-    transform: translate(-50%, 4px) scale(0.85);
-  }
-  20% {
-    opacity: 1;
-    transform: translate(-50%, -6px) scale(1.05);
-  }
-  80% {
-    opacity: 1;
-    transform: translate(-50%, -14px) scale(1);
+    opacity: 0.75;
+    transform: translate(-50%, -50%) scale(0.35);
   }
   100% {
     opacity: 0;
+    transform: translate(-50%, -50%) scale(1.35);
+  }
+}
+
+.tycoon-tap-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 80px;
+  height: 80px;
+  border: 4px solid color-mix(in srgb, var(--amber) 78%, white);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: tycoonTapRing 0.42s ease-out both;
+}
+
+@keyframes tycoonCritPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 4px) scale(0.7) rotate(-4deg);
+  }
+  22% {
+    opacity: 1;
+    transform: translate(-50%, -10px) scale(1.15) rotate(2deg);
+  }
+  78% {
+    opacity: 1;
     transform: translate(-50%, -22px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -34px) scale(0.9);
   }
 }
 
 .tycoon-crit-flash {
   position: absolute;
+  z-index: 3;
   left: 50%;
-  top: -6px;
-  transform: translate(-50%, -22px);
-  font-size: 14px;
-  font-weight: 800;
+  top: -5px;
   color: var(--amber);
+  font-size: 16px;
+  font-weight: 950;
+  text-shadow:
+    0 2px 0 var(--navy),
+    1px 0 0 var(--navy),
+    -1px 0 0 var(--navy);
   pointer-events: none;
-  animation: tycoonCritPop 1.4s ease both;
   white-space: nowrap;
+  animation: tycoonCritPop 1.2s ease both;
+}
+
+@keyframes tycoonLuckyIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.92);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .tycoon-lucky-toast {
-  margin: 0 0 4px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--amber) 18%, transparent);
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 2px solid color-mix(in srgb, var(--amber) 70%, var(--navy));
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--amber) 18%, var(--card));
   color: var(--amber-dark);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 850;
   text-align: center;
+  animation: tycoonLuckyIn 0.38s ease-out both;
 }
 
-.tycoon-building-list {
+.tycoon-section-heading {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.tycoon-building-row {
-  display: flex;
+.tycoon-section-heading .settings-section-title {
+  margin: 0;
+}
+
+.tycoon-section-heading > span {
+  color: var(--muted-light);
+  font-size: 10px;
+}
+
+.tycoon-producer-list {
+  display: grid;
+  gap: 8px;
+}
+
+.tycoon-producer-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
+  min-height: 78px;
+  padding: 7px 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg) 36%, var(--card));
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
 }
 
-.tycoon-building-emoji {
-  font-size: 22px;
-  flex-shrink: 0;
-  width: 28px;
-  text-align: center;
+.tycoon-producer-card.is-unlocked:hover {
+  border-color: color-mix(in srgb, var(--purple) 44%, var(--border));
+  background: color-mix(in srgb, var(--purple) 4%, var(--card));
 }
 
-.tycoon-building-info {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  flex: 1;
+.tycoon-producer-card.is-locked {
+  opacity: 0.6;
+  filter: grayscale(0.6);
+}
+
+@keyframes tycoonPurchasePop {
+  0% {
+    transform: scale(0.94);
+  }
+  45% {
+    transform: scale(1.035);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.tycoon-producer-card.is-new {
+  border-color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 10%, var(--card));
+  animation: tycoonPurchasePop 0.62s cubic-bezier(0.2, 1.45, 0.3, 1) both;
+}
+
+.tycoon-producer-art {
+  display: block;
+  width: 66px;
+  height: 66px;
+}
+
+.tycoon-producer-info {
   min-width: 0;
 }
 
-.tycoon-building-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--navy);
-}
-
-.tycoon-building-meta {
-  font-size: 11px;
-  color: var(--muted-light);
-}
-
-/* Owned copies of this building, rendered on its own row -- replaces the
-   old combined "town" strip that used to sit above the whole list mixing
-   every building type together (2026-08 feedback: show growth at the
-   building itself, not off to the side). */
-.tycoon-building-icons {
+.tycoon-producer-info > div {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0 1px;
-  margin-top: 2px;
+  align-items: baseline;
+  gap: 6px;
 }
 
-.tycoon-building-icon {
+.tycoon-producer-info strong {
+  color: var(--navy);
   font-size: 14px;
-  line-height: 1;
 }
 
-.tycoon-building-icon-overflow {
+.tycoon-producer-info > div span {
+  color: var(--purple);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
+}
+
+.tycoon-producer-info p {
+  margin: 2px 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.tycoon-producer-info small {
   color: var(--muted-light);
-  margin-left: 3px;
+  font-size: 10px;
+}
+
+.tycoon-buy-button {
+  min-width: 92px;
+  white-space: nowrap;
+}
+
+@keyframes tycoonCampIdle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.7deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(0.7deg);
+  }
+}
+
+@keyframes tycoonWorkshopIdle {
+  0%,
+  72%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  78% {
+    transform: translateY(-2px) scale(1.025);
+  }
+  84% {
+    transform: translateY(0) scale(0.99);
+  }
+}
+
+@keyframes tycoonTradeIdle {
+  0%,
+  100% {
+    transform: translateX(-1px);
+  }
+  50% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes tycoonArchiveIdle {
+  0%,
+  100% {
+    transform: translateY(0);
+    filter: brightness(1);
+  }
+  50% {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+  }
+}
+
+@keyframes tycoonBeaconIdle {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.035);
+    filter: brightness(1.18);
+  }
+}
+
+.tycoon-motion-tap {
+  animation: tycoonCampIdle 2.3s ease-in-out var(--tycoon-delay, 0s) infinite;
+}
+.tycoon-motion-production {
+  animation: tycoonWorkshopIdle 2.1s ease-in-out var(--tycoon-delay, 0s)
+    infinite;
+}
+.tycoon-motion-synergy {
+  animation: tycoonTradeIdle 2.7s ease-in-out var(--tycoon-delay, 0s) infinite;
+}
+.tycoon-motion-offline {
+  animation: tycoonArchiveIdle 3.2s ease-in-out var(--tycoon-delay, 0s) infinite;
+}
+.tycoon-motion-fortune {
+  animation: tycoonBeaconIdle 1.8s ease-in-out var(--tycoon-delay, 0s) infinite;
 }
 
 .tycoon-prestige-bar-track {
-  height: 8px;
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--purple) 24%, var(--border));
   border-radius: 999px;
   background: var(--border);
-  overflow: hidden;
 }
 
 .tycoon-prestige-bar-fill {
   height: 100%;
-  background: var(--purple);
-  border-radius: 999px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--purple), var(--amber));
   transition: width 0.3s ease;
+}
+
+.tycoon-exchange-hint,
+.tycoon-prestige-locked,
+.tycoon-focus-prompt {
+  margin: 7px 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.tycoon-focus-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.tycoon-focus-summary span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--purple) 8%, var(--bg));
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.tycoon-focus-summary b {
+  color: var(--purple);
+}
+
+.tycoon-focus-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.tycoon-focus-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 74px;
+  padding: 8px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--navy);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    border-color 0.12s ease,
+    background 0.12s ease;
+}
+
+.tycoon-focus-card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--purple);
+  background: color-mix(in srgb, var(--purple) 7%, var(--card));
+}
+
+.tycoon-focus-card strong {
+  font-size: 12px;
+}
+
+.tycoon-focus-card span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.tycoon-exchange-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.tycoon-exchange-row input {
+  min-width: 0;
+}
+
+.tycoon-shared-rule strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--navy);
+}
+
+.tycoon-shared-rule p {
+  margin: 0;
+  color: var(--muted);
+}
+
+@keyframes tycoonPrestigeStar {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-35deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.18) rotate(8deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+.tycoon-prestige-star {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--amber);
+  font-size: 58px;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 3px 0 color-mix(in srgb, var(--amber-dark) 60%, var(--navy));
+  animation: tycoonPrestigeStar 0.72s cubic-bezier(0.2, 1.55, 0.3, 1) both;
+}
+
+.tycoon-prestige-celebration .celebration-card {
+  border: 3px solid var(--amber);
+}
+
+@media (max-width: 560px) {
+  .tycoon-world {
+    min-height: 180px;
+  }
+
+  .tycoon-producer-card {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .tycoon-producer-art {
+    width: 56px;
+    height: 56px;
+  }
+
+  .tycoon-buy-button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .tycoon-focus-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tycoon-focus-card {
+    min-height: 54px;
+  }
 }
