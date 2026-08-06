@@ -4474,6 +4474,462 @@ where acquisition_type = 'purchase' and price = 0 and (slot, name) in (
   ('accessory2', '없음')
 );
 
+-- -----------------------------------------------------------------------------
+-- 29. Tycoon overhaul: prestige loop + family-shared tycoon (2026-08)
+--
+-- Two changes to the idle tycoon (section 20), both from user feedback after
+-- trying the original: (a) MAX_LEVEL=10 was reached within a couple of
+-- days, leaving nothing to do once maxed -- extended to 40 with a steeper
+-- cost curve (1.15x/level -> 1.17x/level) and a prestige loop: resetting a
+-- maxed tycoon grants a permanent +10%/prestige production multiplier, so
+-- there's always a next goal. (b) the personal tycoon (per user_id +
+-- family_id) stays exactly as-is -- explicitly requested to stay
+-- solo-friendly -- but a *separate*, family-wide shared tycoon is added
+-- alongside it (family_tycoon_state, keyed on family_id only) for families
+-- who want to grow one thing together; every member's tap/collect/upgrade
+-- acts on the same shared row. The client (TycoonModal.tsx) shows both as
+-- tabs in one modal, but they are two fully independent tables/RPC sets --
+-- a family_tycoon_state row neither requires nor affects any member's
+-- personal tycoon_state row.
+-- -----------------------------------------------------------------------------
+
+-- 29-1. Personal tycoon: prestige_level + higher max level ------------------
+
+alter table public.tycoon_state add column if not exists prestige_level integer not null default 0;
+alter table public.tycoon_state drop constraint if exists tycoon_state_prestige_level_check;
+alter table public.tycoon_state add constraint tycoon_state_prestige_level_check check (prestige_level >= 0);
+
+alter table public.tycoon_state drop constraint if exists tycoon_state_upgrade_level_check;
+alter table public.tycoon_state add constraint tycoon_state_upgrade_level_check
+  check (upgrade_level >= 0 and upgrade_level <= 40);
+
+-- Rate now scales with prestige_level too (base 10 + level*10, +10% per
+-- prestige) -- everything else (lazy per-RPC accrual, 24h cap) is
+-- unchanged from section 20's original.
+create or replace function public.sync_tycoon_currency(p_family_id uuid, p_user_id uuid)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_state public.tycoon_state;
+  v_rate_per_min double precision;
+  v_elapsed_seconds double precision;
+  v_accrued bigint;
+begin
+  insert into public.tycoon_state (user_id, family_id) values (p_user_id, p_family_id) on conflict do nothing;
+  select * into v_state from public.tycoon_state where user_id = p_user_id and family_id = p_family_id;
+
+  v_rate_per_min := (10 + v_state.upgrade_level * 10) * (1 + v_state.prestige_level * 0.1);
+  v_elapsed_seconds := extract(epoch from least(now() - v_state.last_collected_at, interval '24 hours'));
+  v_accrued := floor(v_elapsed_seconds * v_rate_per_min / 60.0)::bigint;
+
+  if v_accrued > 0 then
+    update public.tycoon_state
+    set currency = currency + v_accrued,
+        last_collected_at = v_state.last_collected_at + make_interval(secs => (v_accrued * 60.0 / v_rate_per_min))
+    where user_id = p_user_id and family_id = p_family_id
+    returning * into v_state;
+  end if;
+
+  return v_state;
+end;
+$$;
+
+-- Cost curve steepened (1.15x -> 1.17x per level) now that there are 40
+-- levels instead of 10, same base of 100. Milestone titles: level 5
+-- unchanged, a new level-20 waypoint added, and tycoon_maxed moved from
+-- the old cap (10) to the new one (40).
+create or replace function public.upgrade_tycoon(p_family_id uuid)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.tycoon_state;
+  v_cost bigint;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_state := public.sync_tycoon_currency(p_family_id, v_uid);
+
+  if v_state.upgrade_level >= 40 then
+    raise exception 'max_level_reached' using errcode = 'P0001';
+  end if;
+
+  v_cost := round(100 * power(1.17, v_state.upgrade_level))::bigint;
+  if v_state.currency < v_cost then
+    raise exception 'insufficient_currency' using errcode = 'P0001';
+  end if;
+
+  update public.tycoon_state
+  set currency = currency - v_cost, upgrade_level = upgrade_level + 1
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  if v_state.upgrade_level = 5 then
+    perform public.grant_title(p_family_id, v_uid, 'diligent_farmer');
+  elsif v_state.upgrade_level = 20 then
+    perform public.grant_title(p_family_id, v_uid, 'tycoon_devoted');
+  elsif v_state.upgrade_level = 40 then
+    perform public.grant_title(p_family_id, v_uid, 'tycoon_maxed');
+  end if;
+
+  return v_state;
+end;
+$$;
+
+-- Resets a maxed personal tycoon back to level 0 / 0 currency in exchange
+-- for a permanent +10% production multiplier (applied in
+-- sync_tycoon_currency above) that stacks across every future prestige.
+-- First prestige from either the personal or the family tycoon (see 29-2)
+-- grants the shared 'tycoon_prestiged' title.
+create or replace function public.prestige_tycoon(p_family_id uuid)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.tycoon_state;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_state := public.sync_tycoon_currency(p_family_id, v_uid);
+
+  if v_state.upgrade_level < 40 then
+    raise exception 'not_maxed' using errcode = 'P0001';
+  end if;
+
+  update public.tycoon_state
+  set currency = 0, upgrade_level = 0, prestige_level = prestige_level + 1, last_collected_at = now()
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  if v_state.prestige_level = 1 then
+    perform public.grant_title(p_family_id, v_uid, 'tycoon_prestiged');
+  end if;
+
+  return v_state;
+end;
+$$;
+
+grant execute on function public.prestige_tycoon(uuid) to authenticated;
+revoke execute on function public.prestige_tycoon(uuid) from anon, public;
+
+-- 29-2. Family-shared tycoon --------------------------------------------
+
+create table if not exists public.family_tycoon_state (
+  family_id uuid primary key references public.families(id) on delete cascade,
+  currency bigint not null default 0,
+  upgrade_level integer not null default 0,
+  prestige_level integer not null default 0,
+  last_collected_at timestamptz not null default now(),
+  last_tap_at timestamptz,
+  exchanged_today integer not null default 0,
+  exchange_reset_date date not null default ((now() at time zone 'Asia/Seoul')::date),
+  created_at timestamptz not null default now(),
+  constraint family_tycoon_state_currency_check check (currency >= 0),
+  constraint family_tycoon_state_upgrade_level_check check (upgrade_level >= 0 and upgrade_level <= 40),
+  constraint family_tycoon_state_prestige_level_check check (prestige_level >= 0)
+);
+
+alter table public.family_tycoon_state enable row level security;
+
+drop policy if exists family_tycoon_state_select on public.family_tycoon_state;
+create policy family_tycoon_state_select on public.family_tycoon_state
+for select
+using (public.is_family_member(family_id));
+
+grant select on public.family_tycoon_state to authenticated;
+
+-- Internal helper, same lazy-accrual shape as sync_tycoon_currency above,
+-- just keyed on family_id alone since there is exactly one shared row per
+-- family.
+create or replace function public.sync_family_tycoon_currency(p_family_id uuid)
+returns public.family_tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_state public.family_tycoon_state;
+  v_rate_per_min double precision;
+  v_elapsed_seconds double precision;
+  v_accrued bigint;
+begin
+  insert into public.family_tycoon_state (family_id) values (p_family_id) on conflict do nothing;
+  select * into v_state from public.family_tycoon_state where family_id = p_family_id;
+
+  v_rate_per_min := (10 + v_state.upgrade_level * 10) * (1 + v_state.prestige_level * 0.1);
+  v_elapsed_seconds := extract(epoch from least(now() - v_state.last_collected_at, interval '24 hours'));
+  v_accrued := floor(v_elapsed_seconds * v_rate_per_min / 60.0)::bigint;
+
+  if v_accrued > 0 then
+    update public.family_tycoon_state
+    set currency = currency + v_accrued,
+        last_collected_at = v_state.last_collected_at + make_interval(secs => (v_accrued * 60.0 / v_rate_per_min))
+    where family_id = p_family_id
+    returning * into v_state;
+  end if;
+
+  return v_state;
+end;
+$$;
+
+revoke execute on function public.sync_family_tycoon_currency(uuid) from public;
+
+create or replace function public.collect_family_tycoon_currency(p_family_id uuid)
+returns public.family_tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  return public.sync_family_tycoon_currency(p_family_id);
+end;
+$$;
+
+-- The 2-second tap cooldown is shared across every member (one
+-- last_tap_at column, not one per tapper) -- deliberate: this is the
+-- family's one shared tycoon, not one per member, so "someone else just
+-- tapped, wait a beat" is part of the shared-toy feel rather than a bug.
+create or replace function public.tap_family_tycoon_currency(p_family_id uuid)
+returns public.family_tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_state public.family_tycoon_state;
+  v_now timestamptz := now();
+begin
+  if auth.uid() is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_state := public.sync_family_tycoon_currency(p_family_id);
+
+  if v_state.last_tap_at is not null and v_now - v_state.last_tap_at < interval '2 seconds' then
+    raise exception 'tap_too_fast' using errcode = 'P0001';
+  end if;
+
+  update public.family_tycoon_state
+  set currency = currency + 3, last_tap_at = v_now
+  where family_id = p_family_id
+  returning * into v_state;
+
+  return v_state;
+end;
+$$;
+
+-- Milestone titles credit whichever member happened to press the button
+-- that crossed the threshold -- same "first to trigger it" rule already
+-- used elsewhere for family-shared achievements (see e.g. first_come_*).
+create or replace function public.upgrade_family_tycoon(p_family_id uuid)
+returns public.family_tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.family_tycoon_state;
+  v_cost bigint;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_state := public.sync_family_tycoon_currency(p_family_id);
+
+  if v_state.upgrade_level >= 40 then
+    raise exception 'max_level_reached' using errcode = 'P0001';
+  end if;
+
+  v_cost := round(100 * power(1.17, v_state.upgrade_level))::bigint;
+  if v_state.currency < v_cost then
+    raise exception 'insufficient_currency' using errcode = 'P0001';
+  end if;
+
+  update public.family_tycoon_state
+  set currency = currency - v_cost, upgrade_level = upgrade_level + 1
+  where family_id = p_family_id
+  returning * into v_state;
+
+  if v_state.upgrade_level = 5 then
+    perform public.grant_title(p_family_id, v_uid, 'diligent_farmer');
+  elsif v_state.upgrade_level = 20 then
+    perform public.grant_title(p_family_id, v_uid, 'tycoon_devoted');
+  elsif v_state.upgrade_level = 40 then
+    perform public.grant_title(p_family_id, v_uid, 'tycoon_maxed');
+  end if;
+
+  return v_state;
+end;
+$$;
+
+-- Daily exchange cap (25 points) applies to the shared currency pool as a
+-- whole, not per member -- otherwise every member individually exchanging
+-- up to the personal cap would drain the shared pool N times as fast. The
+-- resulting points still land in the acting member's own family_members
+-- row, same as the personal tycoon's exchange.
+create or replace function public.exchange_family_tycoon_currency(p_family_id uuid, p_currency_amount bigint)
+returns public.family_tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.family_tycoon_state;
+  v_points integer;
+  v_local_today date;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_state := public.sync_family_tycoon_currency(p_family_id);
+
+  v_local_today := (now() at time zone 'Asia/Seoul')::date;
+  if v_state.exchange_reset_date <> v_local_today then
+    update public.family_tycoon_state
+    set exchanged_today = 0, exchange_reset_date = v_local_today
+    where family_id = p_family_id
+    returning * into v_state;
+  end if;
+
+  if p_currency_amount is null or p_currency_amount <= 0 or p_currency_amount > v_state.currency then
+    raise exception 'invalid_amount' using errcode = '22023';
+  end if;
+
+  v_points := floor(p_currency_amount / 1000.0)::integer;
+  if v_points <= 0 then
+    raise exception 'amount_too_small' using errcode = '22023';
+  end if;
+
+  update public.family_tycoon_state
+  set currency = currency - (v_points * 1000), exchanged_today = exchanged_today + v_points
+  where family_id = p_family_id
+    and currency >= (v_points * 1000) and exchanged_today + v_points <= 25
+  returning * into v_state;
+
+  if not found then
+    raise exception 'daily_cap_reached' using errcode = 'P0001';
+  end if;
+
+  update public.family_members set points = points + v_points where family_id = p_family_id and user_id = v_uid;
+
+  return v_state;
+end;
+$$;
+
+create or replace function public.prestige_family_tycoon(p_family_id uuid)
+returns public.family_tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.family_tycoon_state;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_state := public.sync_family_tycoon_currency(p_family_id);
+
+  if v_state.upgrade_level < 40 then
+    raise exception 'not_maxed' using errcode = 'P0001';
+  end if;
+
+  update public.family_tycoon_state
+  set currency = 0, upgrade_level = 0, prestige_level = prestige_level + 1, last_collected_at = now()
+  where family_id = p_family_id
+  returning * into v_state;
+
+  if v_state.prestige_level = 1 then
+    perform public.grant_title(p_family_id, v_uid, 'tycoon_prestiged');
+  end if;
+
+  return v_state;
+end;
+$$;
+
+grant execute on function public.collect_family_tycoon_currency(uuid) to authenticated;
+grant execute on function public.tap_family_tycoon_currency(uuid) to authenticated;
+grant execute on function public.upgrade_family_tycoon(uuid) to authenticated;
+grant execute on function public.exchange_family_tycoon_currency(uuid, bigint) to authenticated;
+grant execute on function public.prestige_family_tycoon(uuid) to authenticated;
+
+revoke execute on function public.collect_family_tycoon_currency(uuid) from anon, public;
+revoke execute on function public.tap_family_tycoon_currency(uuid) from anon, public;
+revoke execute on function public.upgrade_family_tycoon(uuid) from anon, public;
+revoke execute on function public.exchange_family_tycoon_currency(uuid, bigint) from anon, public;
+revoke execute on function public.prestige_family_tycoon(uuid) from anon, public;
+
+-- 29-3. New titles: level-20 waypoint + first-prestige milestone ------------
+
+insert into public.shop_items (slot, name, sprite_key, acquisition_type, key, sort_order)
+select * from (values
+  ('title', '몰입한 방치꾼', '', 'title_condition', 'tycoon_devoted', 900),
+  ('title', '전설의 환생자', '', 'title_condition', 'tycoon_prestiged', 901)
+) as seed(slot, name, sprite_key, acquisition_type, key, sort_order)
+where not exists (
+  select 1 from public.shop_items existing where existing.key = seed.key
+);
+
+update public.shop_items as si
+set name_ja = v.name_ja
+from (values
+  ('tycoon_devoted', '没頭する放置民'),
+  ('tycoon_prestiged', '伝説の転生者')
+) as v(key, name_ja)
+where si.key = v.key;
+
+update public.shop_items si
+set tier = v.tier
+from (values
+  ('tycoon_devoted', 'gold'),
+  ('tycoon_prestiged', 'master')
+) as v(key, tier)
+where si.key = v.key;
+
 -- =============================================================================
 -- End of schema. See README.md for the manual RLS/security verification
 -- checklist that should be run against this schema before go-live.
