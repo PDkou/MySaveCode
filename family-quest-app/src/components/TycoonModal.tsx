@@ -1,97 +1,108 @@
-import { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
 
-import { useAuth } from '../context/AuthContext';
-import { useFamily } from '../context/FamilyContext';
+import { useAuth } from "../context/AuthContext";
+import { useFamily } from "../context/FamilyContext";
 import {
-  TYCOON_BUILDINGS,
+  TYCOON_PRODUCERS,
   TycoonActionError,
   buyFamilyTycoonBuilding,
   buyTycoonBuilding,
   collectFamilyTycoonCurrency,
   collectTycoonCurrency,
-  exchangeFamilyTycoonCurrency,
   exchangeTycoonCurrency,
+  formatTycoonNumber,
   getFamilyTycoonBuildings,
   getTycoonBuildings,
   prestigeFamilyTycoon,
   prestigeTycoon,
   rateForBuildings,
   tapFamilyTycoonCurrency,
+  tapGainPreview,
   tapTycoonCurrency,
   tycoonBuildingCost,
   tycoonPrestigeThreshold,
-} from '../lib/tycoon';
-import { ShopActionError, getOwnedItemIds, getShopItems, isHexColor, purchaseItem } from '../lib/shop';
-import { ModalHeader } from './ModalHeader';
-import { ConfirmModal } from './ConfirmModal';
-import { useBackDismiss } from '../lib/backNav';
-import type { FamilyTycoonStateRow, ShopItemRow, TycoonStateRow } from '../types/database';
+} from "../lib/tycoon";
+import {
+  ShopActionError,
+  getOwnedItemIds,
+  getShopItems,
+  isHexColor,
+  purchaseItem,
+} from "../lib/shop";
+import { useBackDismiss } from "../lib/backNav";
+import type {
+  FamilyTycoonStateRow,
+  ShopItemRow,
+  TycoonPrestigeFocus,
+  TycoonStateRow,
+} from "../types/database";
+import { ConfettiBurst } from "./ConfettiBurst";
+import { ConfirmModal } from "./ConfirmModal";
+import { ModalHeader } from "./ModalHeader";
 
 interface TycoonModalProps {
   onClose: () => void;
 }
 
-const TAP_GAIN = 3;
-const TAP_COOLDOWN_MS = 2000;
-const EXCHANGE_RATE = 1000;
-const DAILY_EXCHANGE_CAP = 25;
-
-// Shared shape both TycoonStateRow (personal) and FamilyTycoonStateRow
-// (family-shared, 2026-08) satisfy -- lets the derived-display math below
-// run once per tab instead of being duplicated for each.
 interface TycoonLikeState {
   currency: number;
   prestige_level: number;
+  cycle_currency: number;
   lifetime_currency: number;
+  prestige_momentum: number;
+  prestige_automation: number;
+  prestige_fortune: number;
   exchanged_today: number;
   exchange_reset_date: string;
 }
 
-function deriveTycoonDisplay(state: TycoonLikeState | null, exchangeAmount: string) {
+type Mode = "personal" | "family";
+type PendingPrestige = { mode: Mode; focus: TycoonPrestigeFocus };
+type PrestigeCelebration = { level: number; focus: TycoonPrestigeFocus };
+
+const EXCHANGE_RATE = 1000;
+const DAILY_EXCHANGE_CAP = 25;
+const MAX_TAP_ENERGY = 20;
+const TAP_ENERGY_SECONDS = 3;
+const FOCUS_KEYS: TycoonPrestigeFocus[] = ["momentum", "automation", "fortune"];
+
+function deriveTycoonDisplay(
+  state: TycoonLikeState | null,
+  exchangeAmount = "",
+) {
   const required = state ? tycoonPrestigeThreshold(state.prestige_level) : 0;
-  const prestigeReady = state ? state.lifetime_currency >= required : false;
-  const prestigePct = required > 0 && state ? Math.min(100, Math.round((state.lifetime_currency / required) * 100)) : 0;
-  // The server resets exchange_reset_date against the KST/JST (UTC+9) day,
-  // not UTC -- matching that here via a fixed +9h shift before formatting,
-  // rather than comparing against new Date().toISOString()'s UTC day.
-  const kstToday = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const exchangedToday = state && state.exchange_reset_date === kstToday ? state.exchanged_today : 0;
+  const prestigeReady = state ? state.cycle_currency >= required : false;
+  const prestigePct =
+    required > 0 && state
+      ? Math.min(100, Math.round((state.cycle_currency / required) * 100))
+      : 0;
+  const localToday = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  const exchangedToday =
+    state && state.exchange_reset_date === localToday
+      ? state.exchanged_today
+      : 0;
   const remainingDailyPoints = Math.max(0, DAILY_EXCHANGE_CAP - exchangedToday);
-  const previewPoints = Math.floor((Math.floor(Number(exchangeAmount)) || 0) / EXCHANGE_RATE);
-  return { required, prestigeReady, prestigePct, remainingDailyPoints, previewPoints };
+  const previewPoints = Math.floor(
+    (Math.floor(Number(exchangeAmount)) || 0) / EXCHANGE_RATE,
+  );
+  return {
+    required,
+    prestigeReady,
+    prestigePct,
+    remainingDailyPoints,
+    previewPoints,
+  };
 }
 
-// Best-effort cross-session snapshot used only to detect the server's
-// random "lucky bonus" (schema.sql section 30's sync functions) so it can
-// be celebrated -- comparing against the last known currency/rate from
-// *before this mount* is the only way to catch it, since the modal only
-// syncs once on open and then ticks a purely local prediction while it
-// stays open. Never used for anything balance-affecting -- the server
-// remains the sole source of truth for currency itself.
-function readSnapshot(key: string): { currency: number; rate: number; at: number } | null {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as { currency: number; rate: number; at: number }) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeSnapshot(key: string, currency: number, rate: number) {
-  try {
-    localStorage.setItem(key, JSON.stringify({ currency, rate, at: Date.now() }));
-  } catch {
-    // best-effort only -- ignore quota/unavailable-storage errors
-  }
-}
-
-function detectLuckyBonus(key: string, actualCurrency: number): boolean {
-  const prev = readSnapshot(key);
-  if (!prev) return false;
-  const elapsedSeconds = (Date.now() - prev.at) / 1000;
-  const predicted = prev.currency + Math.floor((elapsedSeconds * prev.rate) / 60);
-  return actualCurrency - predicted > Math.max(50, predicted * 0.3);
+function producerArtStyle(index: number, delay = 0): CSSProperties {
+  return {
+    backgroundPosition: `${index * 25}% center`,
+    "--tycoon-delay": `${delay}s`,
+  } as CSSProperties;
 }
 
 export function TycoonModal({ onClose }: TycoonModalProps) {
@@ -100,133 +111,129 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
   const { family, refresh: refreshFamily } = useFamily();
   useBackDismiss(true, onClose);
 
-  // 2026-08 overhaul: the personal tycoon (per user+family) and the
-  // family-shared one (one row per family, everyone's actions feed the
-  // same pot) live as two tabs in one modal -- kept as genuinely separate
-  // state/tables/RPCs underneath (see schema.sql section 29) so members
-  // who'd rather play solo can just never touch the family tab.
-  const [mode, setMode] = useState<'personal' | 'family'>('personal');
-  const [confirmPrestige, setConfirmPrestige] = useState<'personal' | 'family' | null>(null);
+  const [mode, setMode] = useState<Mode>("personal");
+  const [pendingPrestige, setPendingPrestige] =
+    useState<PendingPrestige | null>(null);
+  const [prestigeCelebration, setPrestigeCelebration] =
+    useState<PrestigeCelebration | null>(null);
 
-  // ----- personal tycoon -----
   const [state, setState] = useState<TycoonStateRow | null>(null);
   const [buildings, setBuildings] = useState<Record<string, number>>({});
   const [displayedCurrency, setDisplayedCurrency] = useState(0);
+  const [tapEnergy, setTapEnergy] = useState(MAX_TAP_ENERGY);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [busyBuildingId, setBusyBuildingId] = useState<string | null>(null);
-  const [tapCoolingDown, setTapCoolingDown] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
-  const [exchangeAmount, setExchangeAmount] = useState('');
+  const [exchangeAmount, setExchangeAmount] = useState("");
   const [critGain, setCritGain] = useState<number | null>(null);
-  const [luckyToast, setLuckyToast] = useState(false);
-  // Local ticking display between server syncs -- the server is the source
-  // of truth (sync_tycoon_currency settles the real balance on every RPC),
-  // this is purely a cosmetic "number keeps growing" readout.
-  const syncedAtRef = useRef<number>(Date.now());
+  const [luckyGain, setLuckyGain] = useState<number | null>(null);
+  const [tapBurst, setTapBurst] = useState(0);
+  const [lastBoughtId, setLastBoughtId] = useState<string | null>(null);
+  const syncedAtRef = useRef(Date.now());
 
   const [shopItems, setShopItems] = useState<ShopItemRow[]>([]);
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
 
-  // ----- family tycoon -----
-  const [familyState, setFamilyState] = useState<FamilyTycoonStateRow | null>(null);
-  const [familyBuildings, setFamilyBuildings] = useState<Record<string, number>>({});
+  const [familyState, setFamilyState] = useState<FamilyTycoonStateRow | null>(
+    null,
+  );
+  const [familyBuildings, setFamilyBuildings] = useState<
+    Record<string, number>
+  >({});
   const [familyDisplayedCurrency, setFamilyDisplayedCurrency] = useState(0);
+  const [familyTapEnergy, setFamilyTapEnergy] = useState(MAX_TAP_ENERGY);
   const [familyLoading, setFamilyLoading] = useState(true);
   const [familyBusy, setFamilyBusy] = useState(false);
-  const [familyBusyBuildingId, setFamilyBusyBuildingId] = useState<string | null>(null);
-  const [familyTapCoolingDown, setFamilyTapCoolingDown] = useState(false);
+  const [familyBusyBuildingId, setFamilyBusyBuildingId] = useState<
+    string | null
+  >(null);
   const [familyErrorKey, setFamilyErrorKey] = useState<string | null>(null);
-  const [familyExchangeAmount, setFamilyExchangeAmount] = useState('');
   const [familyCritGain, setFamilyCritGain] = useState<number | null>(null);
-  const [familyLuckyToast, setFamilyLuckyToast] = useState(false);
-  const familySyncedAtRef = useRef<number>(Date.now());
+  const [familyLuckyGain, setFamilyLuckyGain] = useState<number | null>(null);
+  const [familyTapBurst, setFamilyTapBurst] = useState(0);
+  const [familyLastBoughtId, setFamilyLastBoughtId] = useState<string | null>(
+    null,
+  );
+  const familySyncedAtRef = useRef(Date.now());
 
-  const critTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const luckyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const familyCritTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const familyLuckyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  const feedbackTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(
     () => () => {
-      if (critTimerRef.current) clearTimeout(critTimerRef.current);
-      if (luckyTimerRef.current) clearTimeout(luckyTimerRef.current);
-      if (familyCritTimerRef.current) clearTimeout(familyCritTimerRef.current);
-      if (familyLuckyTimerRef.current) clearTimeout(familyLuckyTimerRef.current);
+      feedbackTimers.current.forEach(clearTimeout);
     },
     [],
   );
 
-  const flashCrit = (gain: number) => {
-    setCritGain(gain);
-    if (critTimerRef.current) clearTimeout(critTimerRef.current);
-    critTimerRef.current = setTimeout(() => setCritGain(null), 1400);
+  const later = (fn: () => void, ms: number) => {
+    const timer = setTimeout(fn, ms);
+    feedbackTimers.current.push(timer);
   };
 
-  const flashFamilyCrit = (gain: number) => {
-    setFamilyCritGain(gain);
-    if (familyCritTimerRef.current) clearTimeout(familyCritTimerRef.current);
-    familyCritTimerRef.current = setTimeout(() => setFamilyCritGain(null), 1400);
-  };
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTapEnergy((value) => Math.min(MAX_TAP_ENERGY, value + 1));
+      setFamilyTapEnergy((value) => Math.min(MAX_TAP_ENERGY, value + 1));
+    }, TAP_ENERGY_SECONDS * 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-  const flashLucky = () => {
-    setLuckyToast(true);
-    if (luckyTimerRef.current) clearTimeout(luckyTimerRef.current);
-    luckyTimerRef.current = setTimeout(() => setLuckyToast(false), 3000);
-  };
-
-  const flashFamilyLucky = () => {
-    setFamilyLuckyToast(true);
-    if (familyLuckyTimerRef.current) clearTimeout(familyLuckyTimerRef.current);
-    familyLuckyTimerRef.current = setTimeout(() => setFamilyLuckyToast(false), 3000);
-  };
-
-  const applyState = (next: TycoonStateRow, currentBuildings: Record<string, number>) => {
+  const applyState = (next: TycoonStateRow) => {
     setState(next);
     setDisplayedCurrency(next.currency);
     syncedAtRef.current = Date.now();
-    if (family && user) {
-      writeSnapshot(
-        `tycoon_snapshot_personal_${family.id}_${user.id}`,
-        next.currency,
-        rateForBuildings(currentBuildings, next.prestige_level),
-      );
-    }
   };
 
-  const applyFamilyState = (next: FamilyTycoonStateRow, currentBuildings: Record<string, number>) => {
+  const applyFamilyState = (next: FamilyTycoonStateRow) => {
     setFamilyState(next);
     setFamilyDisplayedCurrency(next.currency);
     familySyncedAtRef.current = Date.now();
-    if (family) {
-      writeSnapshot(
-        `tycoon_snapshot_family_${family.id}`,
-        next.currency,
-        rateForBuildings(currentBuildings, next.prestige_level),
-      );
-    }
+  };
+
+  const flashCrit = (gain: number, familyMode = false) => {
+    if (familyMode) setFamilyCritGain(gain);
+    else setCritGain(gain);
+    later(
+      () => (familyMode ? setFamilyCritGain(null) : setCritGain(null)),
+      1200,
+    );
+  };
+
+  const flashLucky = (gain: number, familyMode = false) => {
+    if (familyMode) setFamilyLuckyGain(gain);
+    else setLuckyGain(gain);
+    later(
+      () => (familyMode ? setFamilyLuckyGain(null) : setLuckyGain(null)),
+      3200,
+    );
   };
 
   const load = async () => {
     if (!family) return;
     setLoading(true);
     try {
-      const [tycoonState, buildingMap, items, owned] = await Promise.all([
+      const [collectResult, buildingMap, items, owned] = await Promise.all([
         collectTycoonCurrency(family.id),
         user ? getTycoonBuildings(family.id, user.id) : Promise.resolve({}),
         getShopItems(),
-        user ? getOwnedItemIds(user.id, family.id) : Promise.resolve(new Set<string>()),
+        user
+          ? getOwnedItemIds(user.id, family.id)
+          : Promise.resolve(new Set<string>()),
       ]);
-      if (user && detectLuckyBonus(`tycoon_snapshot_personal_${family.id}_${user.id}`, tycoonState.currency)) {
-        flashLucky();
-      }
       setBuildings(buildingMap);
-      applyState(tycoonState, buildingMap);
-      setShopItems(items.filter((i) => i.currency === 'tycoon'));
+      applyState(collectResult.state);
+      setTapEnergy(collectResult.tap_energy);
+      if (collectResult.is_lucky) flashLucky(collectResult.bonus_gained);
+      setShopItems(items.filter((item) => item.currency === "tycoon"));
       setOwnedIds(owned);
+      setErrorKey(null);
     } catch (err) {
-      setErrorKey(err instanceof TycoonActionError ? err.translationKey : 'tycoon.error.unknown');
+      setErrorKey(
+        err instanceof TycoonActionError
+          ? err.translationKey
+          : "tycoon.error.unknown",
+      );
     } finally {
       setLoading(false);
     }
@@ -236,26 +243,26 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     if (!family) return;
     setFamilyLoading(true);
     try {
-      const [tycoonState, buildingMap] = await Promise.all([
+      const [collectResult, buildingMap] = await Promise.all([
         collectFamilyTycoonCurrency(family.id),
         getFamilyTycoonBuildings(family.id),
       ]);
-      if (detectLuckyBonus(`tycoon_snapshot_family_${family.id}`, tycoonState.currency)) {
-        flashFamilyLucky();
-      }
       setFamilyBuildings(buildingMap);
-      applyFamilyState(tycoonState, buildingMap);
+      applyFamilyState(collectResult.state);
+      setFamilyTapEnergy(collectResult.tap_energy);
+      if (collectResult.is_lucky) flashLucky(collectResult.bonus_gained, true);
+      setFamilyErrorKey(null);
     } catch (err) {
-      setFamilyErrorKey(err instanceof TycoonActionError ? err.translationKey : 'tycoon.error.unknown');
+      setFamilyErrorKey(
+        err instanceof TycoonActionError
+          ? err.translationKey
+          : "tycoon.error.unknown",
+      );
     } finally {
       setFamilyLoading(false);
     }
   };
 
-  // Keyed on the ids, not the family/user objects themselves -- see the
-  // matching comment in MyStatsModal.tsx. Both tabs load up-front
-  // regardless of which one is active, so switching tabs never flashes
-  // "불러오는 중...".
   useEffect(() => {
     void load();
     void loadFamily();
@@ -264,58 +271,129 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
 
   useEffect(() => {
     if (!state) return;
-    const ratePerMin = rateForBuildings(buildings, state.prestige_level);
+    const rate = rateForBuildings(
+      buildings,
+      state.prestige_level,
+      state.prestige_automation,
+    );
     const tick = () => {
       const elapsedSeconds = (Date.now() - syncedAtRef.current) / 1000;
-      setDisplayedCurrency(state.currency + Math.floor((elapsedSeconds * ratePerMin) / 60));
+      setDisplayedCurrency(
+        Math.min(
+          9e15,
+          state.currency + Math.floor((elapsedSeconds * rate) / 60),
+        ),
+      );
     };
     tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
   }, [state, buildings]);
 
   useEffect(() => {
     if (!familyState) return;
-    const ratePerMin = rateForBuildings(familyBuildings, familyState.prestige_level);
+    const rate = rateForBuildings(
+      familyBuildings,
+      familyState.prestige_level,
+      familyState.prestige_automation,
+    );
     const tick = () => {
       const elapsedSeconds = (Date.now() - familySyncedAtRef.current) / 1000;
-      setFamilyDisplayedCurrency(familyState.currency + Math.floor((elapsedSeconds * ratePerMin) / 60));
+      setFamilyDisplayedCurrency(
+        Math.min(
+          9e15,
+          familyState.currency + Math.floor((elapsedSeconds * rate) / 60),
+        ),
+      );
     };
     tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
   }, [familyState, familyBuildings]);
 
   const handleTap = async () => {
-    if (!family || busy || tapCoolingDown) return;
-    setErrorKey(null);
+    if (!family || busy || tapEnergy <= 0) return;
     setBusy(true);
-    setTapCoolingDown(true);
-    setTimeout(() => setTapCoolingDown(false), TAP_COOLDOWN_MS);
+    setErrorKey(null);
+    setTapBurst((value) => value + 1);
     try {
       const result = await tapTycoonCurrency(family.id);
-      applyState(result.state, buildings);
+      applyState(result.state);
+      setTapEnergy(result.tap_energy);
       if (result.is_critical) flashCrit(result.gained);
     } catch (err) {
-      setErrorKey(err instanceof TycoonActionError ? err.translationKey : 'tycoon.error.unknown');
+      setErrorKey(
+        err instanceof TycoonActionError
+          ? err.translationKey
+          : "tycoon.error.unknown",
+      );
     } finally {
       setBusy(false);
     }
   };
 
+  const handleFamilyTap = async () => {
+    if (!family || familyBusy || familyTapEnergy <= 0) return;
+    setFamilyBusy(true);
+    setFamilyErrorKey(null);
+    setFamilyTapBurst((value) => value + 1);
+    try {
+      const result = await tapFamilyTycoonCurrency(family.id);
+      applyFamilyState(result.state);
+      setFamilyTapEnergy(result.tap_energy);
+      if (result.is_critical) flashCrit(result.gained, true);
+    } catch (err) {
+      setFamilyErrorKey(
+        err instanceof TycoonActionError
+          ? err.translationKey
+          : "tycoon.error.unknown",
+      );
+    } finally {
+      setFamilyBusy(false);
+    }
+  };
+
   const handleBuyBuilding = async (buildingId: string) => {
-    if (!family || busy || busyBuildingId) return;
-    setErrorKey(null);
+    if (!family || !user || busyBuildingId) return;
     setBusyBuildingId(buildingId);
+    setErrorKey(null);
     try {
       const next = await buyTycoonBuilding(family.id, buildingId);
-      const nextBuildings = { ...buildings, [buildingId]: (buildings[buildingId] ?? 0) + 1 };
-      setBuildings(nextBuildings);
-      applyState(next, nextBuildings);
+      const fresh = await getTycoonBuildings(family.id, user.id);
+      setBuildings(fresh);
+      applyState(next);
+      setLastBoughtId(buildingId);
+      later(() => setLastBoughtId(null), 850);
     } catch (err) {
-      setErrorKey(err instanceof TycoonActionError ? err.translationKey : 'tycoon.error.unknown');
+      setErrorKey(
+        err instanceof TycoonActionError
+          ? err.translationKey
+          : "tycoon.error.unknown",
+      );
     } finally {
       setBusyBuildingId(null);
+    }
+  };
+
+  const handleBuyFamilyBuilding = async (buildingId: string) => {
+    if (!family || familyBusyBuildingId) return;
+    setFamilyBusyBuildingId(buildingId);
+    setFamilyErrorKey(null);
+    try {
+      const next = await buyFamilyTycoonBuilding(family.id, buildingId);
+      const fresh = await getFamilyTycoonBuildings(family.id);
+      setFamilyBuildings(fresh);
+      applyFamilyState(next);
+      setFamilyLastBoughtId(buildingId);
+      later(() => setFamilyLastBoughtId(null), 850);
+    } catch (err) {
+      setFamilyErrorKey(
+        err instanceof TycoonActionError
+          ? err.translationKey
+          : "tycoon.error.unknown",
+      );
+    } finally {
+      setFamilyBusyBuildingId(null);
     }
   };
 
@@ -323,451 +401,591 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     if (!family || busy) return;
     const amount = Math.floor(Number(exchangeAmount));
     if (!amount || amount <= 0) return;
-    setErrorKey(null);
     setBusy(true);
+    setErrorKey(null);
     try {
       const next = await exchangeTycoonCurrency(family.id, amount);
-      applyState(next, buildings);
-      setExchangeAmount('');
+      applyState(next);
+      setExchangeAmount("");
       await refreshFamily();
     } catch (err) {
-      setErrorKey(err instanceof TycoonActionError ? err.translationKey : 'tycoon.error.unknown');
+      setErrorKey(
+        err instanceof TycoonActionError
+          ? err.translationKey
+          : "tycoon.error.unknown",
+      );
     } finally {
       setBusy(false);
     }
   };
 
-  const handlePrestige = async () => {
-    if (!family || busy) return;
-    setErrorKey(null);
-    setBusy(true);
+  const runConfirmedPrestige = async () => {
+    const target = pendingPrestige;
+    setPendingPrestige(null);
+    if (!target || !family) return;
+    const familyMode = target.mode === "family";
+    if (familyMode) setFamilyBusy(true);
+    else setBusy(true);
     try {
-      const next = await prestigeTycoon(family.id);
-      setBuildings({});
-      applyState(next, {});
+      const next = familyMode
+        ? await prestigeFamilyTycoon(family.id, target.focus)
+        : await prestigeTycoon(family.id, target.focus);
+      if (familyMode) {
+        setFamilyBuildings({});
+        applyFamilyState(next as FamilyTycoonStateRow);
+      } else {
+        setBuildings({});
+        applyState(next as TycoonStateRow);
+      }
+      setPrestigeCelebration({
+        level: next.prestige_level,
+        focus: target.focus,
+      });
     } catch (err) {
-      setErrorKey(err instanceof TycoonActionError ? err.translationKey : 'tycoon.error.unknown');
+      const key =
+        err instanceof TycoonActionError
+          ? err.translationKey
+          : "tycoon.error.unknown";
+      if (familyMode) setFamilyErrorKey(key);
+      else setErrorKey(key);
     } finally {
-      setBusy(false);
+      if (familyMode) setFamilyBusy(false);
+      else setBusy(false);
     }
   };
 
   const handlePurchase = async (item: ShopItemRow) => {
     if (!family) return;
-    setErrorKey(null);
     setBusyItemId(item.id);
+    setErrorKey(null);
     try {
       await purchaseItem(family.id, item.id);
-      const [tycoonState, owned] = await Promise.all([
+      const [collectResult, owned] = await Promise.all([
         collectTycoonCurrency(family.id),
-        user ? getOwnedItemIds(user.id, family.id) : Promise.resolve(new Set<string>()),
+        user
+          ? getOwnedItemIds(user.id, family.id)
+          : Promise.resolve(new Set<string>()),
       ]);
-      applyState(tycoonState, buildings);
+      applyState(collectResult.state);
+      setTapEnergy(collectResult.tap_energy);
       setOwnedIds(owned);
     } catch (err) {
-      setErrorKey(err instanceof ShopActionError ? err.translationKey : 'shop.error.unknown');
+      setErrorKey(
+        err instanceof ShopActionError
+          ? err.translationKey
+          : "shop.error.unknown",
+      );
     } finally {
       setBusyItemId(null);
     }
   };
 
-  const handleFamilyTap = async () => {
-    if (!family || familyBusy || familyTapCoolingDown) return;
-    setFamilyErrorKey(null);
-    setFamilyBusy(true);
-    setFamilyTapCoolingDown(true);
-    setTimeout(() => setFamilyTapCoolingDown(false), TAP_COOLDOWN_MS);
-    try {
-      const result = await tapFamilyTycoonCurrency(family.id);
-      applyFamilyState(result.state, familyBuildings);
-      if (result.is_critical) flashFamilyCrit(result.gained);
-    } catch (err) {
-      setFamilyErrorKey(err instanceof TycoonActionError ? err.translationKey : 'tycoon.error.unknown');
-    } finally {
-      setFamilyBusy(false);
-    }
-  };
-
-  const handleBuyFamilyBuilding = async (buildingId: string) => {
-    if (!family || familyBusy || familyBusyBuildingId) return;
-    setFamilyErrorKey(null);
-    setFamilyBusyBuildingId(buildingId);
-    try {
-      const next = await buyFamilyTycoonBuilding(family.id, buildingId);
-      const nextBuildings = { ...familyBuildings, [buildingId]: (familyBuildings[buildingId] ?? 0) + 1 };
-      setFamilyBuildings(nextBuildings);
-      applyFamilyState(next, nextBuildings);
-    } catch (err) {
-      setFamilyErrorKey(err instanceof TycoonActionError ? err.translationKey : 'tycoon.error.unknown');
-    } finally {
-      setFamilyBusyBuildingId(null);
-    }
-  };
-
-  const handleFamilyExchange = async () => {
-    if (!family || familyBusy) return;
-    const amount = Math.floor(Number(familyExchangeAmount));
-    if (!amount || amount <= 0) return;
-    setFamilyErrorKey(null);
-    setFamilyBusy(true);
-    try {
-      const next = await exchangeFamilyTycoonCurrency(family.id, amount);
-      applyFamilyState(next, familyBuildings);
-      setFamilyExchangeAmount('');
-      await refreshFamily();
-    } catch (err) {
-      setFamilyErrorKey(err instanceof TycoonActionError ? err.translationKey : 'tycoon.error.unknown');
-    } finally {
-      setFamilyBusy(false);
-    }
-  };
-
-  const handleFamilyPrestige = async () => {
-    if (!family || familyBusy) return;
-    setFamilyErrorKey(null);
-    setFamilyBusy(true);
-    try {
-      const next = await prestigeFamilyTycoon(family.id);
-      setFamilyBuildings({});
-      applyFamilyState(next, {});
-    } catch (err) {
-      setFamilyErrorKey(err instanceof TycoonActionError ? err.translationKey : 'tycoon.error.unknown');
-    } finally {
-      setFamilyBusy(false);
-    }
-  };
-
-  const runConfirmedPrestige = () => {
-    const target = confirmPrestige;
-    setConfirmPrestige(null);
-    if (target === 'personal') void handlePrestige();
-    else if (target === 'family') void handleFamilyPrestige();
-  };
-
-  const personal = {
+  const personalDisplay = {
     ...deriveTycoonDisplay(state, exchangeAmount),
-    ratePerMin: state ? rateForBuildings(buildings, state.prestige_level) : 0,
+    rate: state
+      ? rateForBuildings(
+          buildings,
+          state.prestige_level,
+          state.prestige_automation,
+        )
+      : 0,
+    tapGain: state ? tapGainPreview(buildings, state.prestige_momentum) : 2,
   };
-  const familyDisplay = {
-    ...deriveTycoonDisplay(familyState, familyExchangeAmount),
-    ratePerMin: familyState ? rateForBuildings(familyBuildings, familyState.prestige_level) : 0,
+  const sharedDisplay = {
+    ...deriveTycoonDisplay(familyState),
+    rate: familyState
+      ? rateForBuildings(
+          familyBuildings,
+          familyState.prestige_level,
+          familyState.prestige_automation,
+        )
+      : 0,
+    tapGain: familyState
+      ? tapGainPreview(familyBuildings, familyState.prestige_momentum)
+      : 2,
   };
 
-  const renderBuildingList = (
-    ownedMap: Record<string, number>,
+  const renderWorld = (owned: Record<string, number>, lifetime: number) => {
+    const totalOwned = Object.values(owned).reduce(
+      (sum, count) => sum + count,
+      0,
+    );
+    return (
+      <section className="tycoon-world" aria-label={t("tycoon.worldLabel")}>
+        <img
+          className="tycoon-world-bg"
+          src="/art/tycoon/quest-hub-scene.png"
+          alt=""
+          aria-hidden="true"
+        />
+        <div className="tycoon-world-shade" />
+        <div className="tycoon-world-level">
+          <span>
+            {t("tycoon.worldLevel", { level: 1 + Math.floor(totalOwned / 10) })}
+          </span>
+          <small>{t("tycoon.worldProgress", { count: totalOwned })}</small>
+        </div>
+        <div className="tycoon-world-producers" aria-hidden="true">
+          {TYCOON_PRODUCERS.map((def, index) => {
+            const ownedCount = owned[def.id] ?? 0;
+            const unlocked = lifetime >= def.unlockLifetime;
+            return (
+              <span
+                key={def.id}
+                className={[
+                  "tycoon-world-producer",
+                  ownedCount > 0 ? "is-owned" : "",
+                  unlocked ? "is-unlocked" : "is-locked",
+                  `tycoon-motion-${def.effectKey}`,
+                ].join(" ")}
+                style={producerArtStyle(def.atlasIndex, index * -0.37)}
+              >
+                {ownedCount > 0 && <b>×{ownedCount}</b>}
+              </span>
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
+
+  const renderTap = (
+    energy: number,
+    gain: number,
+    rate: number,
+    currency: number,
+    crit: number | null,
+    burst: number,
+    disabled: boolean,
+    onTap: () => void,
+  ) => (
+    <section className="tycoon-control-panel">
+      <div className="tycoon-currency-display">
+        <span className="tycoon-currency-amount">
+          {formatTycoonNumber(currency)}
+        </span>
+        <span className="tycoon-currency-rate">
+          {t("tycoon.ratePerMin", { rate: formatTycoonNumber(rate) })}
+        </span>
+      </div>
+      <div className="tycoon-energy-row">
+        <span>{t("tycoon.energy")}</span>
+        <div className="tycoon-energy-track">
+          <i style={{ width: `${(energy / MAX_TAP_ENERGY) * 100}%` }} />
+        </div>
+        <strong>
+          {energy}/{MAX_TAP_ENERGY}
+        </strong>
+      </div>
+      <div className="tycoon-tap-wrap">
+        <button
+          type="button"
+          className="tycoon-tap-button"
+          disabled={disabled || energy <= 0}
+          onClick={onTap}
+        >
+          <img
+            src="/art/tycoon/quest-producer-atlas.png"
+            alt=""
+            aria-hidden="true"
+          />
+          <span>{t("tycoon.tapButton", { gain })}</span>
+          <small>
+            {energy <= 0 ? t("tycoon.energyRecharge") : t("tycoon.tapHint")}
+          </small>
+        </button>
+        <span key={burst} className="tycoon-tap-ring" aria-hidden="true" />
+        {crit !== null && (
+          <span className="tycoon-crit-flash">
+            {t("tycoon.criticalTap", { gain: crit })}
+          </span>
+        )}
+      </div>
+    </section>
+  );
+
+  const renderProducerList = (
+    currentState: TycoonLikeState,
+    owned: Record<string, number>,
     currency: number,
     busyId: string | null,
+    lastBought: string | null,
     onBuy: (id: string) => void,
-    disabledAll: boolean,
   ) => (
-    <div className="tycoon-section">
-      <p className="settings-section-title">{t('tycoon.buildingsHeading')}</p>
-      <div className="tycoon-building-list">
-        {TYCOON_BUILDINGS.map((def) => {
-          const owned = ownedMap[def.id] ?? 0;
-          const cost = tycoonBuildingCost(def, owned);
-          const affordable = currency >= cost;
-          // Owned copies of *this* building render right on its own row --
-          // previously a combined "town" strip sat above the whole list
-          // mixing every building type together, which made it unclear
-          // which icons belonged to which building (2026-08 feedback).
-          const shownIcons = Math.min(owned, 10);
+    <section className="tycoon-section">
+      <div className="tycoon-section-heading">
+        <p className="settings-section-title">{t("tycoon.producersHeading")}</p>
+        <span>{t("tycoon.strategyHint")}</span>
+      </div>
+      <div className="tycoon-producer-list">
+        {TYCOON_PRODUCERS.map((def, index) => {
+          const ownedCount = owned[def.id] ?? 0;
+          const cost = tycoonBuildingCost(def, ownedCount);
+          const unlocked = currentState.lifetime_currency >= def.unlockLifetime;
           return (
-            <div key={def.id} className="tycoon-building-row">
-              <span className="tycoon-building-emoji">{def.emoji}</span>
-              <div className="tycoon-building-info">
-                <span className="tycoon-building-name">{t(`tycoon.buildings.${def.id}`)}</span>
-                <span className="tycoon-building-meta">
-                  {t('tycoon.buildingOwned', { count: owned })} · {t('tycoon.buildingRate', { rate: def.baseRate * owned })}
-                </span>
-                {owned > 0 && (
-                  <span className="tycoon-building-icons">
-                    {Array.from({ length: shownIcons }, (_, i) => (
-                      <span key={i} className="tycoon-building-icon">
-                        {def.emoji}
-                      </span>
-                    ))}
-                    {owned > shownIcons && <span className="tycoon-building-icon-overflow">+{owned - shownIcons}</span>}
+            <article
+              key={def.id}
+              className={[
+                "tycoon-producer-card",
+                unlocked ? "is-unlocked" : "is-locked",
+                lastBought === def.id ? "is-new" : "",
+              ].join(" ")}
+            >
+              <span
+                className={`tycoon-producer-art tycoon-motion-${def.effectKey}`}
+                style={producerArtStyle(def.atlasIndex, index * -0.29)}
+                aria-hidden="true"
+              />
+              <div className="tycoon-producer-info">
+                <div>
+                  <strong>{t(`tycoon.producers.${def.id}.name`)}</strong>
+                  <span>
+                    {t("tycoon.producerOwned", { count: ownedCount })}
                   </span>
-                )}
+                </div>
+                <p>{t(`tycoon.producers.${def.id}.effect`)}</p>
+                <small>
+                  {unlocked
+                    ? t("tycoon.producerRate", {
+                        rate: formatTycoonNumber(def.baseRate * ownedCount),
+                      })
+                    : t("tycoon.unlockAt", {
+                        amount: formatTycoonNumber(def.unlockLifetime),
+                      })}
+                </small>
               </div>
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
-                disabled={disabledAll || busyId === def.id || !affordable}
+                className="btn btn-secondary btn-sm tycoon-buy-button"
+                disabled={!unlocked || currency < cost || busyId !== null}
                 onClick={() => onBuy(def.id)}
               >
-                {t('tycoon.buildingBuy', { cost })}
+                {unlocked
+                  ? t("tycoon.producerBuy", { cost: formatTycoonNumber(cost) })
+                  : t("tycoon.locked")}
               </button>
-            </div>
+            </article>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 
-  const renderPrestigeSection = (
-    prestigeLevel: number,
-    lifetimeCurrency: number,
-    required: number,
-    ready: boolean,
-    pct: number,
-    onPrestige: () => void,
-    busyFlag: boolean,
+  const renderPrestige = (
+    currentState: TycoonLikeState,
+    display: ReturnType<typeof deriveTycoonDisplay>,
+    targetMode: Mode,
+    disabled: boolean,
   ) => (
-    <div className="tycoon-section">
-      <p className="settings-section-title">{t('tycoon.prestigeHeading')}</p>
-      <p className="tycoon-exchange-hint">{t('tycoon.prestigeCount', { count: prestigeLevel, percent: prestigeLevel * 10 })}</p>
+    <section className="tycoon-section tycoon-prestige-section">
+      <div className="tycoon-section-heading">
+        <p className="settings-section-title">{t("tycoon.prestigeHeading")}</p>
+        <span>
+          {t("tycoon.prestigeCount", { count: currentState.prestige_level })}
+        </span>
+      </div>
       <div className="tycoon-prestige-bar-track">
-        <div className="tycoon-prestige-bar-fill" style={{ width: `${pct}%` }} />
+        <div
+          className="tycoon-prestige-bar-fill"
+          style={{ width: `${display.prestigePct}%` }}
+        />
       </div>
       <p className="tycoon-exchange-hint">
-        {t('tycoon.prestigeProgress', { current: lifetimeCurrency.toLocaleString(), required: required.toLocaleString() })}
+        {t("tycoon.prestigeProgress", {
+          current: formatTycoonNumber(currentState.cycle_currency),
+          required: formatTycoonNumber(display.required),
+        })}
       </p>
-      {ready && (
-        <button type="button" className="btn btn-secondary btn-block" disabled={busyFlag} onClick={onPrestige}>
-          {t('tycoon.prestigeButton')}
-        </button>
+      <div className="tycoon-focus-summary">
+        {FOCUS_KEYS.map((focus) => (
+          <span key={focus}>
+            {t(`tycoon.focus.${focus}.short`)}{" "}
+            <b>
+              Lv.{currentState[`prestige_${focus}` as keyof TycoonLikeState]}
+            </b>
+          </span>
+        ))}
+      </div>
+      {display.prestigeReady ? (
+        <>
+          <p className="tycoon-focus-prompt">{t("tycoon.focusPrompt")}</p>
+          <div className="tycoon-focus-grid">
+            {FOCUS_KEYS.map((focus) => (
+              <button
+                key={focus}
+                type="button"
+                className="tycoon-focus-card"
+                disabled={disabled}
+                onClick={() => setPendingPrestige({ mode: targetMode, focus })}
+              >
+                <strong>{t(`tycoon.focus.${focus}.name`)}</strong>
+                <span>{t(`tycoon.focus.${focus}.description`)}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="tycoon-prestige-locked">
+          {t("tycoon.prestigeLockedHint")}
+        </p>
       )}
-    </div>
+    </section>
   );
+
+  const renderPersonal = () => {
+    if (loading || !state)
+      return <p className="empty-message">{t("common.loading")}</p>;
+    return (
+      <>
+        {errorKey && (
+          <p className="form-error" role="alert">
+            {t(errorKey)}
+          </p>
+        )}
+        {luckyGain !== null && (
+          <p className="tycoon-lucky-toast">
+            {t("tycoon.luckyBonus", { gain: formatTycoonNumber(luckyGain) })}
+          </p>
+        )}
+        {renderWorld(buildings, state.lifetime_currency)}
+        {renderTap(
+          tapEnergy,
+          personalDisplay.tapGain,
+          personalDisplay.rate,
+          displayedCurrency,
+          critGain,
+          tapBurst,
+          busy,
+          () => void handleTap(),
+        )}
+        {renderProducerList(
+          state,
+          buildings,
+          displayedCurrency,
+          busyBuildingId,
+          lastBoughtId,
+          (id) => void handleBuyBuilding(id),
+        )}
+        {renderPrestige(state, personalDisplay, "personal", busy)}
+        <section className="tycoon-section">
+          <p className="settings-section-title">
+            {t("tycoon.exchangeHeading")}
+          </p>
+          <p className="tycoon-exchange-hint">
+            {t("tycoon.exchangeRateHint", { rate: EXCHANGE_RATE })}{" "}
+            {t("tycoon.exchangeRemaining", {
+              count: personalDisplay.remainingDailyPoints,
+            })}
+          </p>
+          <div className="tycoon-exchange-row">
+            <input
+              type="number"
+              min={0}
+              inputMode="numeric"
+              value={exchangeAmount}
+              onChange={(event) => setExchangeAmount(event.target.value)}
+              placeholder="0"
+            />
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              disabled={
+                busy ||
+                personalDisplay.previewPoints <= 0 ||
+                personalDisplay.previewPoints >
+                  personalDisplay.remainingDailyPoints
+              }
+              onClick={() => void handleExchange()}
+            >
+              {t("tycoon.exchangeButton", {
+                points: personalDisplay.previewPoints,
+              })}
+            </button>
+          </div>
+        </section>
+        <section className="tycoon-section">
+          <p className="settings-section-title">{t("tycoon.shopHeading")}</p>
+          {shopItems.length === 0 ? (
+            <p className="empty-message">{t("shop.emptySlot")}</p>
+          ) : (
+            <div className="shop-item-list">
+              {shopItems.map((item) => {
+                const owned = ownedIds.has(item.id);
+                const affordable =
+                  item.price !== null && displayedCurrency >= item.price;
+                return (
+                  <div key={item.id} className="shop-item-row">
+                    <span
+                      className="shop-item-sprite"
+                      style={
+                        item.sprite_key && isHexColor(item.sprite_key)
+                          ? { backgroundColor: item.sprite_key }
+                          : undefined
+                      }
+                    >
+                      {item.sprite_key && isHexColor(item.sprite_key)
+                        ? ""
+                        : item.sprite_key || "·"}
+                    </span>
+                    <span className="shop-item-name">{item.name}</span>
+                    {owned ? (
+                      <span className="shop-item-locked">
+                        <img
+                          className="shop-item-locked-icon"
+                          src="/shop/owned-check.png"
+                          alt=""
+                          aria-hidden="true"
+                        />
+                        {t("shop.owned")}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="shop-action-btn shop-action-btn-buy"
+                        disabled={busyItemId === item.id || !affordable}
+                        onClick={() => void handlePurchase(item)}
+                      >
+                        {t("shop.purchase", { price: item.price })}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </>
+    );
+  };
+
+  const renderFamily = () => {
+    if (familyLoading || !familyState)
+      return <p className="empty-message">{t("common.loading")}</p>;
+    return (
+      <>
+        <p className="tycoon-family-hint">{t("tycoon.familyHint")}</p>
+        {familyErrorKey && (
+          <p className="form-error" role="alert">
+            {t(familyErrorKey)}
+          </p>
+        )}
+        {familyLuckyGain !== null && (
+          <p className="tycoon-lucky-toast">
+            {t("tycoon.luckyBonus", {
+              gain: formatTycoonNumber(familyLuckyGain),
+            })}
+          </p>
+        )}
+        {renderWorld(familyBuildings, familyState.lifetime_currency)}
+        {renderTap(
+          familyTapEnergy,
+          sharedDisplay.tapGain,
+          sharedDisplay.rate,
+          familyDisplayedCurrency,
+          familyCritGain,
+          familyTapBurst,
+          familyBusy,
+          () => void handleFamilyTap(),
+        )}
+        {renderProducerList(
+          familyState,
+          familyBuildings,
+          familyDisplayedCurrency,
+          familyBusyBuildingId,
+          familyLastBoughtId,
+          (id) => void handleBuyFamilyBuilding(id),
+        )}
+        {renderPrestige(familyState, sharedDisplay, "family", familyBusy)}
+        <section className="tycoon-section tycoon-shared-rule">
+          <strong>{t("tycoon.sharedRewardHeading")}</strong>
+          <p>{t("tycoon.sharedRewardRule")}</p>
+        </section>
+      </>
+    );
+  };
+
+  const confirmFocusName = pendingPrestige
+    ? t(`tycoon.focus.${pendingPrestige.focus}.name`)
+    : "";
 
   return (
     <>
       <div className="modal-backdrop" onClick={onClose}>
-        <div className="modal" onClick={(e) => e.stopPropagation()}>
-          <ModalHeader title={t('tycoon.heading')} onClose={onClose} />
-
-          <div className="tabs">
+        <div
+          className="modal tycoon-modal"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <ModalHeader title={t("tycoon.heading")} onClose={onClose} />
+          <div className="tabs tycoon-tabs">
             <button
               type="button"
-              className={mode === 'personal' ? 'tab tab-active' : 'tab'}
-              onClick={() => setMode('personal')}
+              className={mode === "personal" ? "tab tab-active" : "tab"}
+              onClick={() => setMode("personal")}
             >
-              {t('tycoon.modePersonal')}
+              {t("tycoon.modePersonal")}
             </button>
-            <button type="button" className={mode === 'family' ? 'tab tab-active' : 'tab'} onClick={() => setMode('family')}>
-              {t('tycoon.modeFamily')}
+            <button
+              type="button"
+              className={mode === "family" ? "tab tab-active" : "tab"}
+              onClick={() => setMode("family")}
+            >
+              {t("tycoon.modeFamily")}
             </button>
           </div>
-
-          {mode === 'personal' ? (
-            <>
-              {errorKey && (
-                <p className="form-error" role="alert">
-                  {t(errorKey)}
-                </p>
-              )}
-
-              {loading || !state ? (
-                <p className="empty-message">{t('common.loading')}</p>
-              ) : (
-                <>
-                  {luckyToast && <p className="tycoon-lucky-toast">{t('tycoon.luckyBonus')}</p>}
-
-                  <div className="tycoon-currency-display">
-                    <span className="tycoon-currency-amount">{displayedCurrency.toLocaleString()}</span>
-                    <span className="tycoon-currency-rate">
-                      {t('tycoon.ratePerMin', { rate: Math.round(personal.ratePerMin) })}
-                    </span>
-                  </div>
-
-                  <div className="tycoon-tap-wrap">
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-block"
-                      disabled={busy || tapCoolingDown}
-                      onClick={() => void handleTap()}
-                    >
-                      {t('tycoon.tapButton', { gain: TAP_GAIN })}
-                    </button>
-                    {critGain !== null && <span className="tycoon-crit-flash">{t('tycoon.criticalTap', { gain: critGain })}</span>}
-                  </div>
-
-                  {renderBuildingList(buildings, displayedCurrency, busyBuildingId, (id) => void handleBuyBuilding(id), busy)}
-
-                  {renderPrestigeSection(
-                    state.prestige_level,
-                    state.lifetime_currency,
-                    personal.required,
-                    personal.prestigeReady,
-                    personal.prestigePct,
-                    () => setConfirmPrestige('personal'),
-                    busy,
-                  )}
-
-                  <div className="tycoon-section">
-                    <p className="settings-section-title">{t('tycoon.exchangeHeading')}</p>
-                    <p className="tycoon-exchange-hint">
-                      {t('tycoon.exchangeRateHint', { rate: EXCHANGE_RATE })}{' '}
-                      {t('tycoon.exchangeRemaining', { count: personal.remainingDailyPoints })}
-                    </p>
-                    <div className="tycoon-exchange-row">
-                      <input
-                        type="number"
-                        min={0}
-                        inputMode="numeric"
-                        value={exchangeAmount}
-                        onChange={(e) => setExchangeAmount(e.target.value)}
-                        placeholder="0"
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        disabled={busy || personal.previewPoints <= 0 || personal.previewPoints > personal.remainingDailyPoints}
-                        onClick={() => void handleExchange()}
-                      >
-                        {t('tycoon.exchangeButton', { points: personal.previewPoints })}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="tycoon-section">
-                    <p className="settings-section-title">{t('tycoon.shopHeading')}</p>
-                    {shopItems.length === 0 ? (
-                      <p className="empty-message">{t('shop.emptySlot')}</p>
-                    ) : (
-                      <div className="shop-item-list">
-                        {shopItems.map((item) => {
-                          const owned = ownedIds.has(item.id);
-                          const affordable = item.price !== null && displayedCurrency >= item.price;
-                          const itemBusy = busyItemId === item.id;
-                          return (
-                            <div key={item.id} className="shop-item-row">
-                              <span
-                                className="shop-item-sprite"
-                                style={
-                                  item.sprite_key && isHexColor(item.sprite_key) ? { backgroundColor: item.sprite_key } : undefined
-                                }
-                              >
-                                {item.sprite_key && isHexColor(item.sprite_key) ? '' : item.sprite_key || '·'}
-                              </span>
-                              <span className="shop-item-name">{item.name}</span>
-                              {owned ? (
-                                <span className="shop-item-locked">
-                                  <img className="shop-item-locked-icon" src="/shop/owned-check.png" alt="" aria-hidden="true" />
-                                  {t('shop.owned')}
-                                </span>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="shop-action-btn shop-action-btn-buy"
-                                  disabled={itemBusy || !affordable}
-                                  onClick={() => void handlePurchase(item)}
-                                >
-                                  {t('shop.purchase', { price: item.price })}
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              <p className="tycoon-exchange-hint">{t('tycoon.familyHint')}</p>
-              {familyErrorKey && (
-                <p className="form-error" role="alert">
-                  {t(familyErrorKey)}
-                </p>
-              )}
-
-              {familyLoading || !familyState ? (
-                <p className="empty-message">{t('common.loading')}</p>
-              ) : (
-                <>
-                  {familyLuckyToast && <p className="tycoon-lucky-toast">{t('tycoon.luckyBonus')}</p>}
-
-                  <div className="tycoon-currency-display">
-                    <span className="tycoon-currency-amount">{familyDisplayedCurrency.toLocaleString()}</span>
-                    <span className="tycoon-currency-rate">
-                      {t('tycoon.ratePerMin', { rate: Math.round(familyDisplay.ratePerMin) })}
-                    </span>
-                  </div>
-
-                  <div className="tycoon-tap-wrap">
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-block"
-                      disabled={familyBusy || familyTapCoolingDown}
-                      onClick={() => void handleFamilyTap()}
-                    >
-                      {t('tycoon.tapButton', { gain: TAP_GAIN })}
-                    </button>
-                    {familyCritGain !== null && (
-                      <span className="tycoon-crit-flash">{t('tycoon.criticalTap', { gain: familyCritGain })}</span>
-                    )}
-                  </div>
-
-                  {renderBuildingList(
-                    familyBuildings,
-                    familyDisplayedCurrency,
-                    familyBusyBuildingId,
-                    (id) => void handleBuyFamilyBuilding(id),
-                    familyBusy,
-                  )}
-
-                  {renderPrestigeSection(
-                    familyState.prestige_level,
-                    familyState.lifetime_currency,
-                    familyDisplay.required,
-                    familyDisplay.prestigeReady,
-                    familyDisplay.prestigePct,
-                    () => setConfirmPrestige('family'),
-                    familyBusy,
-                  )}
-
-                  <div className="tycoon-section">
-                    <p className="settings-section-title">{t('tycoon.exchangeHeading')}</p>
-                    <p className="tycoon-exchange-hint">
-                      {t('tycoon.exchangeRateHint', { rate: EXCHANGE_RATE })}{' '}
-                      {t('tycoon.exchangeRemaining', { count: familyDisplay.remainingDailyPoints })}
-                    </p>
-                    <div className="tycoon-exchange-row">
-                      <input
-                        type="number"
-                        min={0}
-                        inputMode="numeric"
-                        value={familyExchangeAmount}
-                        onChange={(e) => setFamilyExchangeAmount(e.target.value)}
-                        placeholder="0"
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        disabled={
-                          familyBusy || familyDisplay.previewPoints <= 0 || familyDisplay.previewPoints > familyDisplay.remainingDailyPoints
-                        }
-                        onClick={() => void handleFamilyExchange()}
-                      >
-                        {t('tycoon.exchangeButton', { points: familyDisplay.previewPoints })}
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </>
-          )}
-
+          {mode === "personal" ? renderPersonal() : renderFamily()}
           <div className="modal-actions">
-            <button type="button" className="btn btn-primary btn-block" onClick={onClose}>
-              {t('common.close')}
+            <button
+              type="button"
+              className="btn btn-primary btn-block"
+              onClick={onClose}
+            >
+              {t("common.close")}
             </button>
           </div>
         </div>
       </div>
 
-      {confirmPrestige && (
+      {pendingPrestige && (
         <ConfirmModal
-          message={t('tycoon.prestigeConfirm')}
-          confirmLabel={t('tycoon.prestigeButton')}
-          onConfirm={runConfirmedPrestige}
-          onCancel={() => setConfirmPrestige(null)}
+          message={t("tycoon.prestigeConfirm", { focus: confirmFocusName })}
+          confirmLabel={t("tycoon.prestigeButton")}
+          onConfirm={() => void runConfirmedPrestige()}
+          onCancel={() => setPendingPrestige(null)}
         />
+      )}
+
+      {prestigeCelebration && (
+        <div
+          className="celebration-backdrop tycoon-prestige-celebration"
+          onClick={() => setPrestigeCelebration(null)}
+          role="presentation"
+        >
+          <ConfettiBurst />
+          <div
+            className="celebration-card"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <span className="tycoon-prestige-star" aria-hidden="true">
+              ✦
+            </span>
+            <p className="celebration-message">
+              {t("tycoon.prestigeComplete")}
+            </p>
+            <p className="celebration-levelup">
+              {t("tycoon.prestigeResult", {
+                count: prestigeCelebration.level,
+                focus: t(`tycoon.focus.${prestigeCelebration.focus}.name`),
+              })}
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary btn-block celebration-dismiss"
+              onClick={() => setPrestigeCelebration(null)}
+            >
+              {t("common.confirm")}
+            </button>
+          </div>
+        </div>
       )}
     </>
   );

@@ -3391,6 +3391,12 @@ $$;
 
 revoke execute on function public.sync_tycoon_currency(uuid, uuid) from public;
 
+-- Guarded with a drop first (not just create-or-replace) because section 31
+-- later changes this function's return type via its own drop+create -- a
+-- bare "create or replace" here would then fail on any subsequent full
+-- re-run of this file with "cannot change return type of existing
+-- function", once section 31's version is the one actually installed.
+drop function if exists public.collect_tycoon_currency(uuid);
 create or replace function public.collect_tycoon_currency(p_family_id uuid)
 returns public.tycoon_state
 language plpgsql
@@ -4671,6 +4677,9 @@ $$;
 
 revoke execute on function public.sync_family_tycoon_currency(uuid) from public;
 
+-- Same re-run-safety guard as collect_tycoon_currency above -- section 31
+-- changes this function's return type too.
+drop function if exists public.collect_family_tycoon_currency(uuid);
 create or replace function public.collect_family_tycoon_currency(p_family_id uuid)
 returns public.family_tycoon_state
 language plpgsql
@@ -5407,7 +5416,929 @@ begin
 end;
 $$;
 
+
 -- =============================================================================
--- End of schema. See README.md for the manual RLS/security verification
--- checklist that should be run against this schema before go-live.
+-- 31. Quest-world tycoon: strategic producers, fair shared play, safe sync
+--     (2026-08)
+--
+-- This is an append-only migration over sections 29/30. It deliberately keeps
+-- the existing table names and personal/family split, while replacing the
+-- animal catalog and fixing the economy/concurrency issues described in
+-- DIRECTION_CORRECTION.md.
+--
+-- IMPORTANT: this section changes RPC return shapes and prestige parameters.
+-- Deploy the matching TypeScript files in the same release.
+-- =============================================================================
+
+-- 31-1. New persistent progression fields -----------------------------------
+
+alter table public.tycoon_state add column if not exists cycle_currency bigint not null default 0;
+alter table public.tycoon_state add column if not exists prestige_momentum integer not null default 0;
+alter table public.tycoon_state add column if not exists prestige_automation integer not null default 0;
+alter table public.tycoon_state add column if not exists prestige_fortune integer not null default 0;
+alter table public.tycoon_state add column if not exists tap_energy integer not null default 20;
+alter table public.tycoon_state add column if not exists tap_energy_updated_at timestamptz not null default now();
+
+alter table public.family_tycoon_state add column if not exists cycle_currency bigint not null default 0;
+alter table public.family_tycoon_state add column if not exists prestige_momentum integer not null default 0;
+alter table public.family_tycoon_state add column if not exists prestige_automation integer not null default 0;
+alter table public.family_tycoon_state add column if not exists prestige_fortune integer not null default 0;
+
+alter table public.tycoon_state drop constraint if exists tycoon_state_cycle_currency_check;
+alter table public.tycoon_state add constraint tycoon_state_cycle_currency_check check (cycle_currency >= 0);
+alter table public.tycoon_state drop constraint if exists tycoon_state_prestige_focus_check;
+alter table public.tycoon_state add constraint tycoon_state_prestige_focus_check
+  check (prestige_momentum >= 0 and prestige_automation >= 0 and prestige_fortune >= 0);
+alter table public.tycoon_state drop constraint if exists tycoon_state_tap_energy_check;
+alter table public.tycoon_state add constraint tycoon_state_tap_energy_check check (tap_energy between 0 and 20);
+
+alter table public.family_tycoon_state drop constraint if exists family_tycoon_state_cycle_currency_check;
+alter table public.family_tycoon_state add constraint family_tycoon_state_cycle_currency_check check (cycle_currency >= 0);
+alter table public.family_tycoon_state drop constraint if exists family_tycoon_state_prestige_focus_check;
+alter table public.family_tycoon_state add constraint family_tycoon_state_prestige_focus_check
+  check (prestige_momentum >= 0 and prestige_automation >= 0 and prestige_fortune >= 0);
+
+-- Preserve existing players' historical effort by seeding one new-cycle goal
+-- from lifetime production. This only runs while cycle_currency is still zero.
+update public.tycoon_state
+set cycle_currency = least(
+  lifetime_currency,
+  least(9000000000000000::numeric, round(50000::numeric * power(1.6::numeric, greatest(prestige_level, 0))))::bigint
+)
+where cycle_currency = 0 and lifetime_currency > 0;
+
+update public.family_tycoon_state
+set cycle_currency = least(
+  lifetime_currency,
+  least(9000000000000000::numeric, round(50000::numeric * power(1.6::numeric, greatest(prestige_level, 0))))::bigint
+)
+where cycle_currency = 0 and lifetime_currency > 0;
+
+-- Shared tap energy is per member, not on the one shared state row. This also
+-- records contribution for future shared-reward designs without changing the
+-- current rule that shared currency cannot be converted into one person's gold.
+create table if not exists public.family_tycoon_tap_cooldowns (
+  family_id uuid not null references public.families(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  last_tap_at timestamptz,
+  tap_energy integer not null default 20,
+  tap_energy_updated_at timestamptz not null default now(),
+  contribution_currency bigint not null default 0,
+  primary key (family_id, user_id),
+  constraint family_tycoon_tap_energy_check check (tap_energy between 0 and 20),
+  constraint family_tycoon_contribution_check check (contribution_currency >= 0)
+);
+
+alter table public.family_tycoon_tap_cooldowns enable row level security;
+drop policy if exists family_tycoon_tap_cooldowns_select on public.family_tycoon_tap_cooldowns;
+create policy family_tycoon_tap_cooldowns_select on public.family_tycoon_tap_cooldowns
+for select
+using (user_id = auth.uid() and public.is_family_member(family_id));
+grant select on public.family_tycoon_tap_cooldowns to authenticated;
+
+-- 31-2. Migrate animal ids, then replace the catalog -------------------------
+
+insert into public.tycoon_buildings (user_id, family_id, building_id, owned_count)
+select
+  user_id,
+  family_id,
+  case building_id
+    when 'squirrel' then 'pathfinder_camp'
+    when 'rabbit' then 'craft_workshop'
+    when 'fox' then 'trade_station'
+    when 'bear' then 'archive_tower'
+    when 'dragon' then 'starlight_beacon'
+  end,
+  owned_count
+from public.tycoon_buildings
+where building_id in ('squirrel', 'rabbit', 'fox', 'bear', 'dragon')
+on conflict (user_id, family_id, building_id) do update
+set owned_count = greatest(public.tycoon_buildings.owned_count, excluded.owned_count);
+
+delete from public.tycoon_buildings
+where building_id in ('squirrel', 'rabbit', 'fox', 'bear', 'dragon');
+
+insert into public.family_tycoon_buildings (family_id, building_id, owned_count)
+select
+  family_id,
+  case building_id
+    when 'squirrel' then 'pathfinder_camp'
+    when 'rabbit' then 'craft_workshop'
+    when 'fox' then 'trade_station'
+    when 'bear' then 'archive_tower'
+    when 'dragon' then 'starlight_beacon'
+  end,
+  owned_count
+from public.family_tycoon_buildings
+where building_id in ('squirrel', 'rabbit', 'fox', 'bear', 'dragon')
+on conflict (family_id, building_id) do update
+set owned_count = greatest(public.family_tycoon_buildings.owned_count, excluded.owned_count);
+
+delete from public.family_tycoon_buildings
+where building_id in ('squirrel', 'rabbit', 'fox', 'bear', 'dragon');
+
+create or replace function public.tycoon_building_defs()
+returns table(building_id text, base_cost bigint, base_rate numeric, cost_mult numeric)
+language sql
+immutable
+set search_path = public
+as $$
+  values
+    ('pathfinder_camp', 20::bigint, 2::numeric, 1.13::numeric),
+    ('craft_workshop', 160::bigint, 9::numeric, 1.14::numeric),
+    ('trade_station', 1400::bigint, 40::numeric, 1.15::numeric),
+    ('archive_tower', 12000::bigint, 150::numeric, 1.16::numeric),
+    ('starlight_beacon', 95000::bigint, 550::numeric, 1.17::numeric)
+$$;
+
+create or replace function public.tycoon_producer_unlock(p_building_id text)
+returns bigint
+language sql
+immutable
+set search_path = public
+as $$
+  select case p_building_id
+    when 'pathfinder_camp' then 0::bigint
+    when 'craft_workshop' then 75::bigint
+    when 'trade_station' then 1000::bigint
+    when 'archive_tower' then 10000::bigint
+    when 'starlight_beacon' then 75000::bigint
+    else null
+  end
+$$;
+
+create or replace function public.tycoon_prestige_threshold(p_prestige_level integer)
+returns bigint
+language sql
+immutable
+set search_path = public
+as $$
+  select least(
+    9000000000000000::numeric,
+    round(50000::numeric * power(1.6::numeric, greatest(p_prestige_level, 0)))
+  )::bigint
+$$;
+
+-- 31-3. Explicit settlement results (no client-side lucky guessing) ----------
+
+drop type if exists public.tycoon_collect_result_v31 cascade;
+create type public.tycoon_collect_result_v31 as (
+  state public.tycoon_state,
+  gained bigint,
+  base_gained bigint,
+  bonus_gained bigint,
+  is_lucky boolean,
+  tap_energy integer
+);
+
+drop type if exists public.family_tycoon_collect_result_v31 cascade;
+create type public.family_tycoon_collect_result_v31 as (
+  state public.family_tycoon_state,
+  gained bigint,
+  base_gained bigint,
+  bonus_gained bigint,
+  is_lucky boolean,
+  tap_energy integer
+);
+
+create or replace function public.settle_tycoon_currency_v31(p_family_id uuid, p_user_id uuid)
+returns public.tycoon_collect_result_v31
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_state public.tycoon_state;
+  v_rate numeric := 0;
+  v_trade integer := 0;
+  v_archive integer := 0;
+  v_beacon integer := 0;
+  v_elapsed numeric := 0;
+  v_base bigint := 0;
+  v_bonus bigint := 0;
+  v_lucky boolean := false;
+  v_regen integer := 0;
+  v_energy integer := 20;
+  v_energy_at timestamptz;
+begin
+  insert into public.tycoon_state (user_id, family_id)
+  values (p_user_id, p_family_id)
+  on conflict do nothing;
+
+  select * into v_state
+  from public.tycoon_state
+  where user_id = p_user_id and family_id = p_family_id
+  for update;
+
+  select
+    coalesce(sum(tb.owned_count * def.base_rate), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'trade_station'), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'archive_tower'), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'starlight_beacon'), 0)
+  into v_rate, v_trade, v_archive, v_beacon
+  from public.tycoon_building_defs() def
+  left join public.tycoon_buildings tb
+    on tb.building_id = def.building_id
+   and tb.user_id = p_user_id
+   and tb.family_id = p_family_id;
+
+  v_rate := v_rate
+    * (1 + least(1::numeric, v_trade * 0.02))
+    * power(1.15::numeric, v_state.prestige_level)
+    * (1 + v_state.prestige_automation * 0.08);
+
+  v_elapsed := greatest(
+    0,
+    extract(epoch from least(now() - v_state.last_collected_at, interval '24 hours'))
+  );
+
+  if v_rate > 0 and v_elapsed > 0 then
+    v_base := floor(v_elapsed * v_rate / 60)::bigint;
+    if v_elapsed >= 60 then
+      v_base := floor(v_base * (1 + least(1.5::numeric, v_archive * 0.03)))::bigint;
+    end if;
+    if v_base > 0 and v_elapsed >= 30
+       and random() < least(0.20, 0.02 + v_beacon * 0.003 + v_state.prestige_fortune * 0.01) then
+      v_bonus := v_base * (2 + floor(random() * 3)::bigint);
+      v_lucky := true;
+    end if;
+  end if;
+
+  if v_state.tap_energy >= 20 then
+    v_energy := 20;
+    v_energy_at := now();
+  else
+    v_regen := floor(extract(epoch from now() - v_state.tap_energy_updated_at) / 3)::integer;
+    v_energy := least(20, v_state.tap_energy + greatest(0, v_regen));
+    if v_energy >= 20 then
+      v_energy_at := now();
+    else
+      v_energy_at := v_state.tap_energy_updated_at + make_interval(secs => greatest(0, v_regen) * 3);
+    end if;
+  end if;
+
+  update public.tycoon_state
+  set currency = least(9000000000000000::bigint, currency + v_base + v_bonus),
+      lifetime_currency = least(9000000000000000::bigint, lifetime_currency + v_base + v_bonus),
+      cycle_currency = least(9000000000000000::bigint, cycle_currency + v_base + v_bonus),
+      last_collected_at = now(),
+      tap_energy = v_energy,
+      tap_energy_updated_at = v_energy_at
+  where user_id = p_user_id and family_id = p_family_id
+  returning * into v_state;
+
+  return row(v_state, v_base + v_bonus, v_base, v_bonus, v_lucky, v_state.tap_energy)
+    ::public.tycoon_collect_result_v31;
+end;
+$$;
+
+create or replace function public.settle_family_tycoon_currency_v31(p_family_id uuid)
+returns public.family_tycoon_collect_result_v31
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.family_tycoon_state;
+  v_rate numeric := 0;
+  v_trade integer := 0;
+  v_archive integer := 0;
+  v_beacon integer := 0;
+  v_elapsed numeric := 0;
+  v_base bigint := 0;
+  v_bonus bigint := 0;
+  v_lucky boolean := false;
+  v_cooldown public.family_tycoon_tap_cooldowns;
+  v_regen integer := 0;
+  v_energy integer := 20;
+  v_energy_at timestamptz;
+begin
+  insert into public.family_tycoon_state (family_id)
+  values (p_family_id)
+  on conflict do nothing;
+
+  select * into v_state
+  from public.family_tycoon_state
+  where family_id = p_family_id
+  for update;
+
+  select
+    coalesce(sum(tb.owned_count * def.base_rate), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'trade_station'), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'archive_tower'), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'starlight_beacon'), 0)
+  into v_rate, v_trade, v_archive, v_beacon
+  from public.tycoon_building_defs() def
+  left join public.family_tycoon_buildings tb
+    on tb.building_id = def.building_id and tb.family_id = p_family_id;
+
+  v_rate := v_rate
+    * (1 + least(1::numeric, v_trade * 0.02))
+    * power(1.15::numeric, v_state.prestige_level)
+    * (1 + v_state.prestige_automation * 0.08);
+
+  v_elapsed := greatest(
+    0,
+    extract(epoch from least(now() - v_state.last_collected_at, interval '24 hours'))
+  );
+
+  if v_rate > 0 and v_elapsed > 0 then
+    v_base := floor(v_elapsed * v_rate / 60)::bigint;
+    if v_elapsed >= 60 then
+      v_base := floor(v_base * (1 + least(1.5::numeric, v_archive * 0.03)))::bigint;
+    end if;
+    if v_base > 0 and v_elapsed >= 30
+       and random() < least(0.20, 0.02 + v_beacon * 0.003 + v_state.prestige_fortune * 0.01) then
+      v_bonus := v_base * (2 + floor(random() * 3)::bigint);
+      v_lucky := true;
+    end if;
+  end if;
+
+  update public.family_tycoon_state
+  set currency = least(9000000000000000::bigint, currency + v_base + v_bonus),
+      lifetime_currency = least(9000000000000000::bigint, lifetime_currency + v_base + v_bonus),
+      cycle_currency = least(9000000000000000::bigint, cycle_currency + v_base + v_bonus),
+      last_collected_at = now()
+  where family_id = p_family_id
+  returning * into v_state;
+
+  insert into public.family_tycoon_tap_cooldowns (family_id, user_id)
+  values (p_family_id, v_uid)
+  on conflict do nothing;
+
+  select * into v_cooldown
+  from public.family_tycoon_tap_cooldowns
+  where family_id = p_family_id and user_id = v_uid
+  for update;
+
+  if v_cooldown.tap_energy >= 20 then
+    v_energy := 20;
+    v_energy_at := now();
+  else
+    v_regen := floor(extract(epoch from now() - v_cooldown.tap_energy_updated_at) / 3)::integer;
+    v_energy := least(20, v_cooldown.tap_energy + greatest(0, v_regen));
+    if v_energy >= 20 then
+      v_energy_at := now();
+    else
+      v_energy_at := v_cooldown.tap_energy_updated_at + make_interval(secs => greatest(0, v_regen) * 3);
+    end if;
+  end if;
+
+  update public.family_tycoon_tap_cooldowns
+  set tap_energy = v_energy, tap_energy_updated_at = v_energy_at
+  where family_id = p_family_id and user_id = v_uid;
+
+  return row(v_state, v_base + v_bonus, v_base, v_bonus, v_lucky, v_energy)
+    ::public.family_tycoon_collect_result_v31;
+end;
+$$;
+
+revoke execute on function public.settle_tycoon_currency_v31(uuid, uuid) from public, anon, authenticated;
+revoke execute on function public.settle_family_tycoon_currency_v31(uuid) from public, anon, authenticated;
+
+-- Legacy internal helpers remain for older server functions, but now use the
+-- safe, row-locked settlement path.
+create or replace function public.sync_tycoon_currency(p_family_id uuid, p_user_id uuid)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_result public.tycoon_collect_result_v31;
+begin
+  v_result := public.settle_tycoon_currency_v31(p_family_id, p_user_id);
+  return v_result.state;
+end;
+$$;
+
+create or replace function public.sync_family_tycoon_currency(p_family_id uuid)
+returns public.family_tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_result public.family_tycoon_collect_result_v31;
+begin
+  v_result := public.settle_family_tycoon_currency_v31(p_family_id);
+  return v_result.state;
+end;
+$$;
+
+revoke execute on function public.sync_tycoon_currency(uuid, uuid) from public, anon, authenticated;
+revoke execute on function public.sync_family_tycoon_currency(uuid) from public, anon, authenticated;
+
+drop function if exists public.collect_tycoon_currency(uuid);
+create function public.collect_tycoon_currency(p_family_id uuid)
+returns public.tycoon_collect_result_v31
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  return public.settle_tycoon_currency_v31(p_family_id, v_uid);
+end;
+$$;
+
+drop function if exists public.collect_family_tycoon_currency(uuid);
+create function public.collect_family_tycoon_currency(p_family_id uuid)
+returns public.family_tycoon_collect_result_v31
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  return public.settle_family_tycoon_currency_v31(p_family_id);
+end;
+$$;
+
+grant execute on function public.collect_tycoon_currency(uuid) to authenticated;
+grant execute on function public.collect_family_tycoon_currency(uuid) to authenticated;
+revoke execute on function public.collect_tycoon_currency(uuid) from anon, public;
+revoke execute on function public.collect_family_tycoon_currency(uuid) from anon, public;
+
+-- 31-4. Strategic producer purchasing with server-side unlock checks --------
+
+create or replace function public.buy_tycoon_building(p_family_id uuid, p_building_id text)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_result public.tycoon_collect_result_v31;
+  v_state public.tycoon_state;
+  v_def record;
+  v_owned integer := 0;
+  v_cost bigint;
+  v_unlock bigint;
+  v_total integer;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select * into v_def from public.tycoon_building_defs() where building_id = p_building_id;
+  v_unlock := public.tycoon_producer_unlock(p_building_id);
+  if v_def is null or v_unlock is null then
+    raise exception 'invalid_building' using errcode = '22023';
+  end if;
+
+  v_result := public.settle_tycoon_currency_v31(p_family_id, v_uid);
+  v_state := v_result.state;
+  if v_state.lifetime_currency < v_unlock then
+    raise exception 'producer_locked' using errcode = 'P0001';
+  end if;
+
+  select coalesce(owned_count, 0) into v_owned
+  from public.tycoon_buildings
+  where user_id = v_uid and family_id = p_family_id and building_id = p_building_id;
+
+  v_cost := least(
+    9000000000000000::numeric,
+    round(v_def.base_cost * power(v_def.cost_mult, coalesce(v_owned, 0)))
+  )::bigint;
+  if v_state.currency < v_cost then
+    raise exception 'insufficient_currency' using errcode = 'P0001';
+  end if;
+
+  insert into public.tycoon_buildings (user_id, family_id, building_id, owned_count)
+  values (v_uid, p_family_id, p_building_id, 1)
+  on conflict (user_id, family_id, building_id) do update
+  set owned_count = public.tycoon_buildings.owned_count + 1;
+
+  update public.tycoon_state
+  set currency = currency - v_cost
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  select coalesce(sum(owned_count), 0) into v_total
+  from public.tycoon_buildings
+  where user_id = v_uid and family_id = p_family_id;
+  if v_total = 10 then
+    perform public.grant_title(p_family_id, v_uid, 'tycoon_devoted');
+  elsif v_total = 30 then
+    perform public.grant_title(p_family_id, v_uid, 'tycoon_maxed');
+  end if;
+  return v_state;
+end;
+$$;
+
+create or replace function public.buy_family_tycoon_building(p_family_id uuid, p_building_id text)
+returns public.family_tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_result public.family_tycoon_collect_result_v31;
+  v_state public.family_tycoon_state;
+  v_def record;
+  v_owned integer := 0;
+  v_cost bigint;
+  v_unlock bigint;
+  v_total integer;
+  v_member record;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select * into v_def from public.tycoon_building_defs() where building_id = p_building_id;
+  v_unlock := public.tycoon_producer_unlock(p_building_id);
+  if v_def is null or v_unlock is null then
+    raise exception 'invalid_building' using errcode = '22023';
+  end if;
+
+  v_result := public.settle_family_tycoon_currency_v31(p_family_id);
+  v_state := v_result.state;
+  if v_state.lifetime_currency < v_unlock then
+    raise exception 'producer_locked' using errcode = 'P0001';
+  end if;
+
+  select coalesce(owned_count, 0) into v_owned
+  from public.family_tycoon_buildings
+  where family_id = p_family_id and building_id = p_building_id;
+
+  v_cost := least(
+    9000000000000000::numeric,
+    round(v_def.base_cost * power(v_def.cost_mult, coalesce(v_owned, 0)))
+  )::bigint;
+  if v_state.currency < v_cost then
+    raise exception 'insufficient_currency' using errcode = 'P0001';
+  end if;
+
+  insert into public.family_tycoon_buildings (family_id, building_id, owned_count)
+  values (p_family_id, p_building_id, 1)
+  on conflict (family_id, building_id) do update
+  set owned_count = public.family_tycoon_buildings.owned_count + 1;
+
+  update public.family_tycoon_state
+  set currency = currency - v_cost
+  where family_id = p_family_id
+  returning * into v_state;
+
+  select coalesce(sum(owned_count), 0) into v_total
+  from public.family_tycoon_buildings
+  where family_id = p_family_id;
+
+  if v_total in (10, 30) then
+    for v_member in
+      select user_id from public.family_members where family_id = p_family_id
+    loop
+      perform public.grant_title(
+        p_family_id,
+        v_member.user_id,
+        case when v_total = 10 then 'tycoon_devoted' else 'tycoon_maxed' end
+      );
+    end loop;
+  end if;
+  return v_state;
+end;
+$$;
+
+grant execute on function public.buy_tycoon_building(uuid, text) to authenticated;
+grant execute on function public.buy_family_tycoon_building(uuid, text) to authenticated;
+revoke execute on function public.buy_tycoon_building(uuid, text) from anon, public;
+revoke execute on function public.buy_family_tycoon_building(uuid, text) from anon, public;
+
+-- 31-5. Energy taps: responsive bursts, bounded manual income, per-user shared
+--        cooldowns -----------------------------------------------------------
+
+drop type if exists public.tycoon_tap_result cascade;
+create type public.tycoon_tap_result as (
+  state public.tycoon_state,
+  gained bigint,
+  is_critical boolean,
+  tap_energy integer
+);
+
+drop type if exists public.family_tycoon_tap_result cascade;
+create type public.family_tycoon_tap_result as (
+  state public.family_tycoon_state,
+  gained bigint,
+  is_critical boolean,
+  tap_energy integer
+);
+
+create function public.tap_tycoon_currency(p_family_id uuid)
+returns public.tycoon_tap_result
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_result public.tycoon_collect_result_v31;
+  v_state public.tycoon_state;
+  v_camps integer := 0;
+  v_beacons integer := 0;
+  v_now timestamptz := clock_timestamp();
+  v_gain bigint;
+  v_critical boolean;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  v_result := public.settle_tycoon_currency_v31(p_family_id, v_uid);
+  v_state := v_result.state;
+
+  if v_state.last_tap_at is not null and v_now - v_state.last_tap_at < interval '180 milliseconds' then
+    raise exception 'tap_too_fast' using errcode = 'P0001';
+  end if;
+  if v_state.tap_energy <= 0 then
+    raise exception 'tap_energy_empty' using errcode = 'P0001';
+  end if;
+
+  select coalesce(max(owned_count) filter (where building_id = 'pathfinder_camp'), 0),
+         coalesce(max(owned_count) filter (where building_id = 'starlight_beacon'), 0)
+  into v_camps, v_beacons
+  from public.tycoon_buildings
+  where user_id = v_uid and family_id = p_family_id;
+
+  v_gain := greatest(1, round((2 + sqrt(v_camps)) * (1 + v_state.prestige_momentum * 0.25)))::bigint;
+  v_critical := random() < least(0.35, 0.08 + v_beacons * 0.003 + v_state.prestige_fortune * 0.01);
+  if v_critical then v_gain := v_gain * 3; end if;
+
+  update public.tycoon_state
+  set currency = least(9000000000000000::bigint, currency + v_gain),
+      lifetime_currency = least(9000000000000000::bigint, lifetime_currency + v_gain),
+      cycle_currency = least(9000000000000000::bigint, cycle_currency + v_gain),
+      tap_energy = tap_energy - 1,
+      tap_energy_updated_at = case when tap_energy = 20 then v_now else tap_energy_updated_at end,
+      last_tap_at = v_now
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  return row(v_state, v_gain, v_critical, v_state.tap_energy)::public.tycoon_tap_result;
+end;
+$$;
+
+create function public.tap_family_tycoon_currency(p_family_id uuid)
+returns public.family_tycoon_tap_result
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_result public.family_tycoon_collect_result_v31;
+  v_state public.family_tycoon_state;
+  v_cooldown public.family_tycoon_tap_cooldowns;
+  v_camps integer := 0;
+  v_beacons integer := 0;
+  v_now timestamptz := clock_timestamp();
+  v_gain bigint;
+  v_critical boolean;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  v_result := public.settle_family_tycoon_currency_v31(p_family_id);
+  v_state := v_result.state;
+
+  select * into v_cooldown
+  from public.family_tycoon_tap_cooldowns
+  where family_id = p_family_id and user_id = v_uid
+  for update;
+
+  if v_cooldown.last_tap_at is not null and v_now - v_cooldown.last_tap_at < interval '180 milliseconds' then
+    raise exception 'tap_too_fast' using errcode = 'P0001';
+  end if;
+  if v_cooldown.tap_energy <= 0 then
+    raise exception 'tap_energy_empty' using errcode = 'P0001';
+  end if;
+
+  select coalesce(max(owned_count) filter (where building_id = 'pathfinder_camp'), 0),
+         coalesce(max(owned_count) filter (where building_id = 'starlight_beacon'), 0)
+  into v_camps, v_beacons
+  from public.family_tycoon_buildings
+  where family_id = p_family_id;
+
+  v_gain := greatest(1, round((2 + sqrt(v_camps)) * (1 + v_state.prestige_momentum * 0.25)))::bigint;
+  v_critical := random() < least(0.35, 0.08 + v_beacons * 0.003 + v_state.prestige_fortune * 0.01);
+  if v_critical then v_gain := v_gain * 3; end if;
+
+  update public.family_tycoon_state
+  set currency = least(9000000000000000::bigint, currency + v_gain),
+      lifetime_currency = least(9000000000000000::bigint, lifetime_currency + v_gain),
+      cycle_currency = least(9000000000000000::bigint, cycle_currency + v_gain)
+  where family_id = p_family_id
+  returning * into v_state;
+
+  update public.family_tycoon_tap_cooldowns
+  set tap_energy = tap_energy - 1,
+      tap_energy_updated_at = case when tap_energy = 20 then v_now else tap_energy_updated_at end,
+      last_tap_at = v_now,
+      contribution_currency = least(9000000000000000::bigint, contribution_currency + v_gain)
+  where family_id = p_family_id and user_id = v_uid
+  returning * into v_cooldown;
+
+  return row(v_state, v_gain, v_critical, v_cooldown.tap_energy)::public.family_tycoon_tap_result;
+end;
+$$;
+
+grant execute on function public.tap_tycoon_currency(uuid) to authenticated;
+grant execute on function public.tap_family_tycoon_currency(uuid) to authenticated;
+revoke execute on function public.tap_tycoon_currency(uuid) from anon, public;
+revoke execute on function public.tap_family_tycoon_currency(uuid) from anon, public;
+
+-- 31-6. Personal exchange is locked/serialized; shared exchange is disabled --
+
+create or replace function public.exchange_tycoon_currency(p_family_id uuid, p_currency_amount bigint)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_result public.tycoon_collect_result_v31;
+  v_state public.tycoon_state;
+  v_points integer;
+  v_local_today date := (now() at time zone 'Asia/Seoul')::date;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  v_result := public.settle_tycoon_currency_v31(p_family_id, v_uid);
+  v_state := v_result.state;
+
+  if v_state.exchange_reset_date <> v_local_today then
+    update public.tycoon_state
+    set exchanged_today = 0, exchange_reset_date = v_local_today
+    where user_id = v_uid and family_id = p_family_id
+    returning * into v_state;
+  end if;
+  if p_currency_amount is null or p_currency_amount <= 0 or p_currency_amount > v_state.currency then
+    raise exception 'invalid_amount' using errcode = '22023';
+  end if;
+  v_points := floor(p_currency_amount / 1000.0)::integer;
+  if v_points <= 0 then
+    raise exception 'amount_too_small' using errcode = '22023';
+  end if;
+
+  update public.tycoon_state
+  set currency = currency - (v_points * 1000),
+      exchanged_today = exchanged_today + v_points
+  where user_id = v_uid and family_id = p_family_id
+    and exchanged_today + v_points <= 25
+  returning * into v_state;
+  if not found then
+    raise exception 'daily_cap_reached' using errcode = 'P0001';
+  end if;
+
+  update public.family_members
+  set points = points + v_points
+  where family_id = p_family_id and user_id = v_uid;
+  return v_state;
+end;
+$$;
+
+create or replace function public.exchange_family_tycoon_currency(p_family_id uuid, p_currency_amount bigint)
+returns public.family_tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  raise exception 'family_exchange_disabled' using errcode = 'P0001';
+end;
+$$;
+
+grant execute on function public.exchange_tycoon_currency(uuid, bigint) to authenticated;
+grant execute on function public.exchange_family_tycoon_currency(uuid, bigint) to authenticated;
+revoke execute on function public.exchange_tycoon_currency(uuid, bigint) from anon, public;
+revoke execute on function public.exchange_family_tycoon_currency(uuid, bigint) from anon, public;
+
+-- 31-7. Prestige now grants a permanent player-chosen specialization --------
+
+drop function if exists public.prestige_tycoon(uuid);
+create or replace function public.prestige_tycoon(p_family_id uuid, p_focus text)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_result public.tycoon_collect_result_v31;
+  v_state public.tycoon_state;
+  v_required bigint;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if p_focus not in ('momentum', 'automation', 'fortune') then
+    raise exception 'invalid_prestige_focus' using errcode = '22023';
+  end if;
+
+  v_result := public.settle_tycoon_currency_v31(p_family_id, v_uid);
+  v_state := v_result.state;
+  v_required := public.tycoon_prestige_threshold(v_state.prestige_level);
+  if v_state.cycle_currency < v_required then
+    raise exception 'not_maxed' using errcode = 'P0001';
+  end if;
+
+  update public.tycoon_state
+  set currency = 0,
+      upgrade_level = 0,
+      prestige_level = prestige_level + 1,
+      cycle_currency = 0,
+      prestige_momentum = prestige_momentum + case when p_focus = 'momentum' then 1 else 0 end,
+      prestige_automation = prestige_automation + case when p_focus = 'automation' then 1 else 0 end,
+      prestige_fortune = prestige_fortune + case when p_focus = 'fortune' then 1 else 0 end,
+      last_collected_at = now(),
+      tap_energy = 20,
+      tap_energy_updated_at = now()
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  delete from public.tycoon_buildings where user_id = v_uid and family_id = p_family_id;
+  if v_state.prestige_level = 1 then
+    perform public.grant_title(p_family_id, v_uid, 'tycoon_prestiged');
+  end if;
+  return v_state;
+end;
+$$;
+
+drop function if exists public.prestige_family_tycoon(uuid);
+create or replace function public.prestige_family_tycoon(p_family_id uuid, p_focus text)
+returns public.family_tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_result public.family_tycoon_collect_result_v31;
+  v_state public.family_tycoon_state;
+  v_required bigint;
+  v_member record;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if p_focus not in ('momentum', 'automation', 'fortune') then
+    raise exception 'invalid_prestige_focus' using errcode = '22023';
+  end if;
+
+  v_result := public.settle_family_tycoon_currency_v31(p_family_id);
+  v_state := v_result.state;
+  v_required := public.tycoon_prestige_threshold(v_state.prestige_level);
+  if v_state.cycle_currency < v_required then
+    raise exception 'not_maxed' using errcode = 'P0001';
+  end if;
+
+  update public.family_tycoon_state
+  set currency = 0,
+      upgrade_level = 0,
+      prestige_level = prestige_level + 1,
+      cycle_currency = 0,
+      prestige_momentum = prestige_momentum + case when p_focus = 'momentum' then 1 else 0 end,
+      prestige_automation = prestige_automation + case when p_focus = 'automation' then 1 else 0 end,
+      prestige_fortune = prestige_fortune + case when p_focus = 'fortune' then 1 else 0 end,
+      last_collected_at = now()
+  where family_id = p_family_id
+  returning * into v_state;
+
+  delete from public.family_tycoon_buildings where family_id = p_family_id;
+  update public.family_tycoon_tap_cooldowns
+  set tap_energy = 20, tap_energy_updated_at = now(), last_tap_at = null
+  where family_id = p_family_id;
+
+  if v_state.prestige_level = 1 then
+    for v_member in
+      select user_id from public.family_members where family_id = p_family_id
+    loop
+      perform public.grant_title(p_family_id, v_member.user_id, 'tycoon_prestiged');
+    end loop;
+  end if;
+  return v_state;
+end;
+$$;
+
+grant execute on function public.prestige_tycoon(uuid, text) to authenticated;
+grant execute on function public.prestige_family_tycoon(uuid, text) to authenticated;
+revoke execute on function public.prestige_tycoon(uuid, text) from anon, public;
+revoke execute on function public.prestige_family_tycoon(uuid, text) from anon, public;
+
+-- =============================================================================
+-- End section 31. Re-run the full schema in Supabase before deploying the
+-- matching frontend; sections 29/30 remain intact for chronological rebuilds.
 -- =============================================================================

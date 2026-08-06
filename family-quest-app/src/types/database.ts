@@ -78,6 +78,13 @@ export type MemberEquippedItemRow = {
   equipped_at: string;
 };
 
+// Permanent prestige specialization the player picks on each reset (2026-08
+// quest-world producer redesign, section 31) -- momentum boosts tap gain,
+// automation boosts auto-production, fortune boosts lucky-bonus/critical
+// odds. One point in exactly one track per prestige (see prestige_tycoon /
+// prestige_family_tycoon in schema.sql).
+export type TycoonPrestigeFocus = 'momentum' | 'automation' | 'fortune';
+
 export type TycoonStateRow = {
   user_id: string;
   family_id: string;
@@ -88,15 +95,25 @@ export type TycoonStateRow = {
   // rather than dropped to avoid a destructive migration.
   upgrade_level: number;
   // Number of times this tycoon has been reset via prestige_tycoon.
-  // Each point is a permanent +10% production multiplier (see
-  // rateForBuildings in lib/tycoon.ts).
   prestige_level: number;
   // Total currency ever produced (accrual + taps + lucky bonuses),
-  // never decremented by spending -- the gate for the next prestige
-  // (see tycoonPrestigeThreshold in lib/tycoon.ts). Added alongside the
-  // buildings system since "own everything" no longer has a single
-  // max-level line to check against.
+  // never decremented by spending -- shown as the world's overall growth
+  // level (see tycoonPrestigeThreshold in lib/tycoon.ts).
   lifetime_currency: number;
+  // Currency produced since the last prestige only -- the actual gate for
+  // the *next* prestige (lifetime_currency keeps counting across resets).
+  // Added in section 31 alongside the permanent-focus prestige redesign.
+  cycle_currency: number;
+  // Permanent per-focus prestige levels (section 31) -- see
+  // TycoonPrestigeFocus above. Independent counters, not a single track:
+  // a player accumulates in whichever focus they picked each time.
+  prestige_momentum: number;
+  prestige_automation: number;
+  prestige_fortune: number;
+  // 0-20, regenerates 1 every 3s server-side (see settle_tycoon_currency_v31
+  // in schema.sql) -- replaces the old fixed 2s tap cooldown.
+  tap_energy: number;
+  tap_energy_updated_at: string;
   last_collected_at: string;
   last_tap_at: string | null;
   exchanged_today: number;
@@ -105,14 +122,20 @@ export type TycoonStateRow = {
 };
 
 // The family-shared idle tycoon (2026-08 overhaul) -- same shape as
-// TycoonStateRow minus user_id, since exactly one row exists per family and
-// every member's tap/collect/upgrade acts on it.
+// TycoonStateRow minus user_id/tap_energy*, since exactly one row exists per
+// family and every member's collect/upgrade acts on it, but each member's
+// own tap energy/cooldown is tracked separately in
+// family_tycoon_tap_cooldowns (section 31 fairness fix) rather than shared.
 export type FamilyTycoonStateRow = {
   family_id: string;
   currency: number;
   upgrade_level: number;
   prestige_level: number;
   lifetime_currency: number;
+  cycle_currency: number;
+  prestige_momentum: number;
+  prestige_automation: number;
+  prestige_fortune: number;
   last_collected_at: string;
   last_tap_at: string | null;
   exchanged_today: number;
@@ -122,7 +145,7 @@ export type FamilyTycoonStateRow = {
 
 // One row per (owner, building type) -- how many of that building the
 // tycoon owns. Building identity/cost/rate curves are hardcoded data (see
-// TYCOON_BUILDINGS in lib/tycoon.ts and tycoon_building_defs() in
+// TYCOON_PRODUCERS in lib/tycoon.ts and tycoon_building_defs() in
 // schema.sql), same "data not code" spirit as shop_items.
 export type TycoonBuildingRow = {
   user_id: string;
@@ -137,12 +160,46 @@ export type FamilyTycoonBuildingRow = {
   owned_count: number;
 };
 
+// Per-member tap energy/cooldown for the family-shared tycoon (section 31)
+// -- one row per (family, member), so members tap independently instead of
+// contending over one shared cooldown. contribution_currency is tracked for
+// future per-member attribution UI, not currently surfaced.
+export type FamilyTycoonTapCooldownRow = {
+  family_id: string;
+  user_id: string;
+  last_tap_at: string | null;
+  tap_energy: number;
+  tap_energy_updated_at: string;
+  contribution_currency: number;
+};
+
+// collect_tycoon_currency/collect_family_tycoon_currency return this
+// composite (not a bare state row) so the client shows an honest,
+// server-decided lucky-bonus celebration instead of guessing from a
+// currency diff that could also include ordinary tap gains.
+export type TycoonCollectResult = {
+  state: TycoonStateRow;
+  gained: number;
+  base_gained: number;
+  bonus_gained: number;
+  is_lucky: boolean;
+  tap_energy: number;
+};
+export type FamilyTycoonCollectResult = {
+  state: FamilyTycoonStateRow;
+  gained: number;
+  base_gained: number;
+  bonus_gained: number;
+  is_lucky: boolean;
+  tap_energy: number;
+};
+
 // tap_tycoon_currency/tap_family_tycoon_currency return this composite
 // (not a bare state row) so the client can show an honest, server-decided
 // critical-hit celebration instead of guessing from a currency diff that
 // could also include ordinary idle accrual.
-export type TycoonTapResult = { state: TycoonStateRow; gained: number; is_critical: boolean };
-export type FamilyTycoonTapResult = { state: FamilyTycoonStateRow; gained: number; is_critical: boolean };
+export type TycoonTapResult = { state: TycoonStateRow; gained: number; is_critical: boolean; tap_energy: number };
+export type FamilyTycoonTapResult = { state: FamilyTycoonStateRow; gained: number; is_critical: boolean; tap_energy: number };
 
 export type QuestPayoutKind = 'completion' | 'requester_bonus';
 
@@ -412,6 +469,12 @@ export type Database = {
         Update: Partial<FamilyTycoonBuildingRow>;
         Relationships: [];
       };
+      family_tycoon_tap_cooldowns: {
+        Row: FamilyTycoonTapCooldownRow;
+        Insert: Partial<FamilyTycoonTapCooldownRow> & Pick<FamilyTycoonTapCooldownRow, 'family_id' | 'user_id'>;
+        Update: Partial<FamilyTycoonTapCooldownRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -500,7 +563,7 @@ export type Database = {
       };
       collect_tycoon_currency: {
         Args: { p_family_id: string };
-        Returns: TycoonStateRow;
+        Returns: TycoonCollectResult;
       };
       tap_tycoon_currency: {
         Args: { p_family_id: string };
@@ -519,12 +582,12 @@ export type Database = {
         Returns: TycoonStateRow;
       };
       prestige_tycoon: {
-        Args: { p_family_id: string };
+        Args: { p_family_id: string; p_focus: TycoonPrestigeFocus };
         Returns: TycoonStateRow;
       };
       collect_family_tycoon_currency: {
         Args: { p_family_id: string };
-        Returns: FamilyTycoonStateRow;
+        Returns: FamilyTycoonCollectResult;
       };
       tap_family_tycoon_currency: {
         Args: { p_family_id: string };
@@ -538,12 +601,18 @@ export type Database = {
         Args: { p_family_id: string; p_building_id: string };
         Returns: FamilyTycoonStateRow;
       };
+      // Always raises 'family_exchange_disabled' server-side (section 31 --
+      // shared tycoon currency can no longer be converted to any one
+      // member's personal points, a fairness fix). Kept in the RPC surface
+      // rather than removed so an old cached client gets a clean error
+      // instead of a missing-function failure; the frontend no longer calls
+      // it (see lib/tycoon.ts, exchangeFamilyTycoonCurrency was removed).
       exchange_family_tycoon_currency: {
         Args: { p_family_id: string; p_currency_amount: number };
         Returns: FamilyTycoonStateRow;
       };
       prestige_family_tycoon: {
-        Args: { p_family_id: string };
+        Args: { p_family_id: string; p_focus: TycoonPrestigeFocus };
         Returns: FamilyTycoonStateRow;
       };
       record_login: {
