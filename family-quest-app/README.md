@@ -186,6 +186,23 @@ npm run preview # 빌드 결과물을 로컬에서 미리보기
 
 Netlify나 Cloudflare Pages를 쓸 경우도 동일합니다: 빌드 커맨드 `npm run build`, 출력 디렉터리 `dist`, 동일한 환경변수를 등록하면 됩니다.
 
+### 3-2. 회사용 앱(business-quest-app) 별도 배포
+
+2026-08부터 가족용/회사용이 완전히 분리된 두 개의 앱입니다 (`../README.md` 참고). Vercel에 **완전히 새로운 프로젝트**를 하나 더 만들어서 배포합니다 — 위 3번과 똑같이 New Project부터 다시 시작하되:
+
+1. **같은 GitHub 저장소**를 다시 import (New Project → 이미 연결된 저장소 목록에 다시 뜸)
+2. **Root Directory**를 `business-quest-app`으로 지정
+3. Framework Preset: **Vite** (자동 감지됨)
+4. Environment Variables — **family-quest-app과 완전히 같은 값**을 그대로 입력 (같은 Supabase 백엔드를 공유하므로):
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`
+   - `VITE_VAPID_PUBLIC_KEY` (선택)
+   - **`VITE_APP_MODE=business`** ← 이게 이번에 추가로 필요한 값. 안 넣으면 회사용 앱이 가족용처럼 동작합니다.
+5. Deploy
+6. 배포된 새 주소(family-quest-app과는 다른 도메인)를 Supabase **Authentication → URL Configuration**의 Redirect URLs에 **추가**(기존 family-quest-app 주소는 지우지 말고 같이 등록)
+
+두 프로젝트 다 같은 저장소의 같은 브랜치를 보고 있으므로, 이후 푸시 한 번으로 두 앱이 동시에 다시 배포됩니다 — 별도로 두 번 배포할 필요 없습니다.
+
 ---
 
 ## 3-1. 푸시 알림(기한 알림) 설정
