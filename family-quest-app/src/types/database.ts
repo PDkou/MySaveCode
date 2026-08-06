@@ -83,6 +83,25 @@ export type TycoonStateRow = {
   family_id: string;
   currency: number;
   upgrade_level: number;
+  // Number of times this tycoon has been reset via prestige_tycoon after
+  // hitting max level -- each point is a permanent +10% production
+  // multiplier (see rateForLevel in lib/tycoon.ts).
+  prestige_level: number;
+  last_collected_at: string;
+  last_tap_at: string | null;
+  exchanged_today: number;
+  exchange_reset_date: string;
+  created_at: string;
+};
+
+// The family-shared idle tycoon (2026-08 overhaul) -- same shape as
+// TycoonStateRow minus user_id, since exactly one row exists per family and
+// every member's tap/collect/upgrade acts on it.
+export type FamilyTycoonStateRow = {
+  family_id: string;
+  currency: number;
+  upgrade_level: number;
+  prestige_level: number;
   last_collected_at: string;
   last_tap_at: string | null;
   exchanged_today: number;
@@ -340,6 +359,12 @@ export type Database = {
         Update: Partial<TycoonStateRow>;
         Relationships: [];
       };
+      family_tycoon_state: {
+        Row: FamilyTycoonStateRow;
+        Insert: Partial<FamilyTycoonStateRow> & Pick<FamilyTycoonStateRow, 'family_id'>;
+        Update: Partial<FamilyTycoonStateRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -441,6 +466,30 @@ export type Database = {
       exchange_tycoon_currency: {
         Args: { p_family_id: string; p_currency_amount: number };
         Returns: TycoonStateRow;
+      };
+      prestige_tycoon: {
+        Args: { p_family_id: string };
+        Returns: TycoonStateRow;
+      };
+      collect_family_tycoon_currency: {
+        Args: { p_family_id: string };
+        Returns: FamilyTycoonStateRow;
+      };
+      tap_family_tycoon_currency: {
+        Args: { p_family_id: string };
+        Returns: FamilyTycoonStateRow;
+      };
+      upgrade_family_tycoon: {
+        Args: { p_family_id: string };
+        Returns: FamilyTycoonStateRow;
+      };
+      exchange_family_tycoon_currency: {
+        Args: { p_family_id: string; p_currency_amount: number };
+        Returns: FamilyTycoonStateRow;
+      };
+      prestige_family_tycoon: {
+        Args: { p_family_id: string };
+        Returns: FamilyTycoonStateRow;
       };
       record_login: {
         Args: { p_family_id: string };
