@@ -22,7 +22,15 @@ export type BadgeKey =
   | 'streak_3'
   | 'streak_7'
   | 'early_bird'
-  | 'night_owl';
+  | 'night_owl'
+  // Housework clicker deep-clean badges (section 36) -- capped at stage 25
+  // (complete_cleaner_stage only grants these 5; the 5-stage chapters keep
+  // going past stage 25 but stop minting new badge keys for it).
+  | 'cleaner_deep_clean_5'
+  | 'cleaner_deep_clean_10'
+  | 'cleaner_deep_clean_15'
+  | 'cleaner_deep_clean_20'
+  | 'cleaner_deep_clean_25';
 
 export type CharacterSlot =
   | 'body'
@@ -274,7 +282,16 @@ export type CleanerStateRow = {
   stage_progress: string;
   currency: string;
   lifetime_cleaning: string;
+  // Highest stage *reached* this run (resets on prestige) -- gates tool
+  // unlocks (buy_cleaner_tool). Not the same as max_completed_stage below;
+  // see section 36's comment in schema.sql for why they're split.
   max_stage: number;
+  // Highest stage *completed* this run (resets on prestige) -- what
+  // prestige eligibility/reward math actually uses.
+  max_completed_stage: number;
+  // Highest stage ever completed, across all prestige runs (never resets)
+  // -- what title grants (cleaner_king_10/cleaner_endless_25) use.
+  historical_max_completed_stage: number;
   prestige_count: number;
   prestige_stars: string;
   // null until the first cleaner_heartbeat call establishes a baseline --
@@ -321,13 +338,14 @@ export type CleanerStageCompleteResult = { state: CleanerStateRow; is_deep_clean
 
 // preview_cleaner_prestige is read-only -- shows what perform_cleaner_prestige
 // would do without mutating anything, per the doc's "no prestige without a
-// preview" rule. eligible mirrors max_stage >= 10 (perform_cleaner_prestige's
-// own gate), current_stars is state.prestige_stars echoed back for a
+// preview" rule. eligible mirrors max_completed_stage >= 10
+// (perform_cleaner_prestige's own gate -- stage 10 actually completed, not
+// merely entered), current_stars is state.prestige_stars echoed back for a
 // before/after comparison in the confirm UI.
 export type CleanerPrestigePreview = {
   would_stars: string;
   current_stars: string;
-  max_stage: number;
+  max_completed_stage: number;
   eligible: boolean;
 };
 
@@ -780,7 +798,11 @@ export type Database = {
         Returns: CleanerTapResult;
       };
       cleaner_heartbeat: {
-        Args: { p_family_id: string };
+        // p_session_start: true on the first tick after the heartbeat
+        // interval (re)starts (mount, or hidden -> visible) -- that call
+        // always resets the baseline with zero credit instead of crediting
+        // up to 15s for time spent hidden/closed. See section 36.
+        Args: { p_family_id: string; p_session_start?: boolean };
         Returns: CleanerStateRow;
       };
       buy_cleaner_tool: {
