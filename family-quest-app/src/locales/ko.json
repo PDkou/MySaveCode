@@ -573,6 +573,134 @@
       "unknown": "요청을 처리하지 못했어요."
     }
   },
+  "cleaner": {
+    "heading": "집안일 클리커",
+    "tapButton": "집안일하기",
+    "tapButtonGain": "+{{gain}}",
+    "tapHint": "눌러서 청소해요. 제한 없이 눌러도 돼요!",
+    "currency": "청소 포인트",
+    "ratePerSecond": "초당 +{{rate}}",
+    "stageLabel": "{{stage}}단계",
+    "stageInChapter": "{{current}}/5단계",
+    "stageProgress": "{{current}} / {{required}}",
+    "rooms": {
+      "living_room": "거실",
+      "kitchen": "주방",
+      "bathroom": "욕실",
+      "kids_room": "아이방",
+      "whole_house": "집 전체"
+    },
+    "stageCompleteToast": "{{room}} {{stage}}단계 완료!",
+    "deepClean": {
+      "heading": "대청소 완료!",
+      "subheading": "{{room}}가 반짝반짝해졌어요",
+      "rewardHeading": "보상",
+      "nextRoomButton": "다음 장소 시작"
+    },
+    "tools": {
+      "entryButton": "청소도구",
+      "sheetHeading": "청소도구",
+      "newToolToast": "새로운 청소도구 발견!",
+      "owned": "보유 {{count}}개",
+      "rate": "+{{rate}}/초",
+      "buyButton": "{{cost}}로 구매",
+      "toy_box": {
+        "name": "장난감 정리함",
+        "description": "가벼운 자동 정리를 도와줘요."
+      },
+      "feather_duster": {
+        "name": "먼지떨이",
+        "description": "탭할 때마다 조금 더 깨끗해져요."
+      },
+      "auto_broom": {
+        "name": "자동 빗자루",
+        "description": "중간 수준의 자동 청소를 해줘요."
+      },
+      "robot_vacuum": {
+        "name": "로봇청소기",
+        "description": "강력한 자동 청소를 해줘요."
+      },
+      "auto_mop": {
+        "name": "자동 물걸레",
+        "description": "주방을 자동으로 닦아줘요."
+      },
+      "dishwasher": {
+        "name": "식기세척기",
+        "description": "주방 전용 고성능 생산이에요."
+      },
+      "laundry_helper": {
+        "name": "빨래 도우미",
+        "description": "욕실 · 세탁 구간을 강화해줘요."
+      },
+      "helper_robot": {
+        "name": "만능 도우미 로봇",
+        "description": "가장 강력한 자동 청소 도구예요."
+      }
+    },
+    "prestige": {
+      "heading": "환생",
+      "lockedHint": "10단계를 완료하면 환생할 수 있어요.",
+      "previewTitle": "환생하시겠어요?",
+      "willReset": "청소 포인트, 단계 진행도, 보유한 청소도구가 초기화돼요.",
+      "willKeep": "반짝별, 영구 능력, 최고 기록, 칭호와 배지는 그대로 남아요.",
+      "starsGained": "반짝별 +{{count}}",
+      "starsBalance": "반짝별 {{count}}개",
+      "confirmButton": "환생하기",
+      "resultToast": "환생 완료! 반짝별 +{{count}}"
+    },
+    "upgrades": {
+      "heading": "영구 능력",
+      "starCost": "반짝별 {{cost}}",
+      "maxed": "완료",
+      "buyButton": "구매",
+      "stronger_hands_1": {
+        "name": "강한 손",
+        "description": "탭으로 얻는 청소 포인트가 25% 늘어나요."
+      },
+      "efficient_tools_1": {
+        "name": "효율적인 도구",
+        "description": "자동청소 생산량이 20% 늘어나요."
+      },
+      "starting_sparkles": {
+        "name": "시작의 반짝임",
+        "description": "환생 후 청소 포인트 100으로 시작해요."
+      },
+      "free_toy_box": {
+        "name": "무료 장난감 정리함",
+        "description": "환생 후 장난감 정리함을 1개 받고 시작해요."
+      },
+      "quick_living_room": {
+        "name": "빠른 거실 정리",
+        "description": "1~5단계에 필요한 청소량이 절반으로 줄어요."
+      },
+      "checkpoint_kitchen": {
+        "name": "주방 체크포인트",
+        "description": "환생 후 6단계(주방)부터 다시 시작해요."
+      },
+      "deep_clean_bonus": {
+        "name": "대청소 보너스",
+        "description": "대청소를 완료할 때마다 보유 포인트의 25%를 추가로 받아요."
+      }
+    },
+    "exchangeHeading": "앱 골드로 교환",
+    "exchangeRateHint": "{{rate}} 당 1골드로 교환돼요.",
+    "exchangeRemaining": "오늘 남은 교환 한도: {{count}}골드",
+    "exchangeButton": "{{points}}G로 교환",
+    "error": {
+      "invalidAmount": "올바른 수량을 입력해주세요.",
+      "invalidTool": "알 수 없는 청소도구예요.",
+      "invalidUpgrade": "알 수 없는 영구 능력이에요.",
+      "toolLocked": "아직 해금되지 않은 청소도구예요.",
+      "insufficientCurrency": "청소 포인트가 부족해요.",
+      "stageNotReady": "아직 이번 단계를 다 청소하지 못했어요.",
+      "prestigeLocked": "10단계를 완료하면 환생할 수 있어요.",
+      "upgradePrereqMissing": "먼저 필요한 능력을 구매해주세요.",
+      "notMaxed": "이미 최대로 보유하고 있어요.",
+      "amountTooSmall": "교환하기엔 너무 적은 양이에요.",
+      "dailyCapReached": "오늘의 교환 한도를 넘었어요.",
+      "unknown": "요청을 처리하지 못했어요."
+    }
+  },
   "help": {
     "openButton": "도움말",
     "heading": "도움말",

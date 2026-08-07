@@ -573,6 +573,134 @@
       "unknown": "リクエストを処理できませんでした。"
     }
   },
+  "cleaner": {
+    "heading": "家事クリッカー",
+    "tapButton": "家事をする",
+    "tapButtonGain": "+{{gain}}",
+    "tapHint": "タップして掃除しよう。制限なく連打してOK！",
+    "currency": "お掃除ポイント",
+    "ratePerSecond": "毎秒 +{{rate}}",
+    "stageLabel": "{{stage}}段階",
+    "stageInChapter": "{{current}}/5段階",
+    "stageProgress": "{{current}} / {{required}}",
+    "rooms": {
+      "living_room": "リビング",
+      "kitchen": "キッチン",
+      "bathroom": "浴室",
+      "kids_room": "子供部屋",
+      "whole_house": "家全体"
+    },
+    "stageCompleteToast": "{{room}} {{stage}}段階クリア！",
+    "deepClean": {
+      "heading": "大掃除完了！",
+      "subheading": "{{room}}がピカピカになりました",
+      "rewardHeading": "報酬",
+      "nextRoomButton": "次の場所へ進む"
+    },
+    "tools": {
+      "entryButton": "お掃除道具",
+      "sheetHeading": "お掃除道具",
+      "newToolToast": "新しいお掃除道具を発見！",
+      "owned": "所持数 {{count}}個",
+      "rate": "+{{rate}}/秒",
+      "buyButton": "{{cost}}で購入",
+      "toy_box": {
+        "name": "おもちゃ箱",
+        "description": "軽い自動片付けを手伝います。"
+      },
+      "feather_duster": {
+        "name": "羽根ばたき",
+        "description": "タップするたびに少しきれいになります。"
+      },
+      "auto_broom": {
+        "name": "自動ほうき",
+        "description": "中程度の自動お掃除をしてくれます。"
+      },
+      "robot_vacuum": {
+        "name": "ロボット掃除機",
+        "description": "強力な自動お掃除をしてくれます。"
+      },
+      "auto_mop": {
+        "name": "自動モップ",
+        "description": "キッチンを自動で拭いてくれます。"
+      },
+      "dishwasher": {
+        "name": "食器洗い機",
+        "description": "キッチン専用の高性能生産です。"
+      },
+      "laundry_helper": {
+        "name": "洗濯お手伝いさん",
+        "description": "浴室・洗濯エリアを強化します。"
+      },
+      "helper_robot": {
+        "name": "万能お手伝いロボット",
+        "description": "最も強力な自動お掃除道具です。"
+      }
+    },
+    "prestige": {
+      "heading": "生まれ変わり",
+      "lockedHint": "10段階を完了すると生まれ変われます。",
+      "previewTitle": "生まれ変わりますか？",
+      "willReset": "お掃除ポイント、段階の進み具合、所持しているお掃除道具がリセットされます。",
+      "willKeep": "きらめき星、永続能力、最高記録、称号とバッジはそのまま残ります。",
+      "starsGained": "きらめき星 +{{count}}",
+      "starsBalance": "きらめき星 {{count}}個",
+      "confirmButton": "生まれ変わる",
+      "resultToast": "生まれ変わり完了！ きらめき星 +{{count}}"
+    },
+    "upgrades": {
+      "heading": "永続能力",
+      "starCost": "きらめき星 {{cost}}",
+      "maxed": "完了",
+      "buyButton": "購入",
+      "stronger_hands_1": {
+        "name": "強い手",
+        "description": "タップで得るお掃除ポイントが25%増えます。"
+      },
+      "efficient_tools_1": {
+        "name": "効率的な道具",
+        "description": "自動お掃除の生産量が20%増えます。"
+      },
+      "starting_sparkles": {
+        "name": "始まりのきらめき",
+        "description": "生まれ変わり後、お掃除ポイント100からスタートします。"
+      },
+      "free_toy_box": {
+        "name": "無料のおもちゃ箱",
+        "description": "生まれ変わり後、おもちゃ箱を1個もらってスタートします。"
+      },
+      "quick_living_room": {
+        "name": "素早いリビング掃除",
+        "description": "1〜5段階に必要なお掃除量が半分になります。"
+      },
+      "checkpoint_kitchen": {
+        "name": "キッチンチェックポイント",
+        "description": "生まれ変わり後、6段階（キッチン）から再開します。"
+      },
+      "deep_clean_bonus": {
+        "name": "大掃除ボーナス",
+        "description": "大掃除を完了するたびに、所持ポイントの25%を追加でもらえます。"
+      }
+    },
+    "exchangeHeading": "アプリゴールドに交換",
+    "exchangeRateHint": "{{rate}} ごとに1ゴールドに交換されます。",
+    "exchangeRemaining": "本日の交換可能残り: {{count}}ゴールド",
+    "exchangeButton": "{{points}}Gに交換",
+    "error": {
+      "invalidAmount": "正しい数量を入力してください。",
+      "invalidTool": "不明なお掃除道具です。",
+      "invalidUpgrade": "不明な永続能力です。",
+      "toolLocked": "まだ解放されていないお掃除道具です。",
+      "insufficientCurrency": "お掃除ポイントが不足しています。",
+      "stageNotReady": "まだこの段階の掃除が終わっていません。",
+      "prestigeLocked": "10段階を完了すると生まれ変われます。",
+      "upgradePrereqMissing": "先に必要な能力を購入してください。",
+      "notMaxed": "すでに上限まで所持しています。",
+      "amountTooSmall": "交換するには少なすぎる量です。",
+      "dailyCapReached": "本日の交換上限を超えました。",
+      "unknown": "リクエストを処理できませんでした。"
+    }
+  },
   "help": {
     "openButton": "ヘルプ",
     "heading": "ヘルプ",
