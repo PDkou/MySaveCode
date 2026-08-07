@@ -118,10 +118,20 @@ body,
    scrollable/pannable -- which reads exactly like "the screen shifts
    sideways" even without any zoom involved. This doesn't fix whatever
    caused the overflow, but it stops it from being able to drag the page
-   sideways with it. */
+   sideways with it.
+   overscroll-behavior-x covers a second, gesture-level version of the same
+   symptom: it's not about layout overflow at all, but about a horizontal
+   drag inside some inner scrollable element (e.g. the tycoon shop's
+   producer carousel) reaching its own scroll boundary and "chaining" the
+   rest of the gesture up to the page -- which iOS Safari can interpret as
+   its edge-swipe back/forward navigation gesture, visibly sliding the
+   whole screen sideways even though nothing on the page is actually
+   overflowing. none stops that chain at the document boundary regardless
+   of which element the drag started on. */
 html,
 body {
   overflow-x: hidden;
+  overscroll-behavior-x: none;
 }
 
 body {
@@ -5331,6 +5341,12 @@ textarea {
   overflow-x: auto;
   padding: 3px 3px 10px;
   scroll-snap-type: x proximity;
+  /* Without this, dragging past either end of this horizontal carousel
+     lets the scroll "chain" up to the page itself -- on iOS Safari that
+     reads as the browser's edge-swipe back/forward gesture grabbing the
+     drag, which visibly slides the whole screen sideways. contain stops
+     the chain at this element's own boundary. */
+  overscroll-behavior-x: contain;
 }
 
 .personal-producer-tile {
