@@ -5673,7 +5673,9 @@ textarea {
 .personal-npc {
   position: absolute;
   z-index: 1;
-  aspect-ratio: 1 / 1;
+  /* Round 2 assets: 443x700 portrait frames (all three sprites share this
+     frame shape), not the original round's 362x362 square crop. */
+  aspect-ratio: 443 / 700;
   height: auto;
   transform: translate(-50%, -100%);
   background-repeat: no-repeat;

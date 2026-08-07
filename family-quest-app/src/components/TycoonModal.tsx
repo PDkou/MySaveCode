@@ -160,11 +160,23 @@ type PersonalNpcDef = {
   anchors: [PersonalNpcAnchor, PersonalNpcAnchor, PersonalNpcAnchor];
 };
 
+// Round 2 assets (2026-08): GPT rebuilt all three strips at 443x700/frame
+// (portrait, matching a standing character) instead of the original round's
+// 362x362 square crop -- and, more importantly, locked the feet/torso/head
+// to fixed coordinates across all 4 frames so only the eyes/working-arm/
+// tool actually move (verified: the feet-region pixels are byte-identical
+// across every frame in all three strips). The original square crop wasn't
+// spec'd that way, which is the likely real cause of the "sliding" look
+// fixed for the *rendering* side in the previous round (steps() -> React
+// state) -- if the source frames themselves shift the body, no amount of
+// correct frame-stepping fixes that. widthPct below is still (display CSS
+// px / 724) per the spec; height comes from aspect-ratio in global.css
+// (443/700, shared by all three since their frame shape matches).
 const PERSONAL_NPCS: PersonalNpcDef[] = [
   {
     id: "route_scout",
     asset: "/art/tycoon/npc-route-scout-idle.png",
-    widthPct: (92 / 724) * 100,
+    widthPct: (76 / 724) * 100,
     loopSeconds: 1.12,
     delaySeconds: -0.18,
     anchors: [
@@ -176,7 +188,7 @@ const PERSONAL_NPCS: PersonalNpcDef[] = [
   {
     id: "records_clerk",
     asset: "/art/tycoon/npc-records-clerk-work.png",
-    widthPct: (94 / 724) * 100,
+    widthPct: (76 / 724) * 100,
     loopSeconds: 1.36,
     delaySeconds: -0.72,
     anchors: [
@@ -188,23 +200,18 @@ const PERSONAL_NPCS: PersonalNpcDef[] = [
   {
     id: "craft_worker",
     asset: "/art/tycoon/npc-craft-worker-hammer.png",
-    widthPct: (104 / 724) * 100,
+    widthPct: (86 / 724) * 100,
     loopSeconds: 0.92,
     delaySeconds: -0.41,
-    // Y is deliberately NOT the spec's raw pixel anchor (548/542/536 -> ~74-
-    // 76%) -- confirmed by screenshot that .personal-work-button (which the
-    // flat background art has no way to know about) sits directly over that
-    // zone: it's centered, up to 66% wide, and spans roughly the box's
-    // bottom 35% (bottom: 37px, min-height: 76px, against the 330px mobile
-    // min-height this has to clear). At the raw anchor the sprite rendered
-    // half-stuck behind/on top of the button. 57-58% keeps it visually near
-    // the workbench while staying clear of the button on every box size the
-    // button's fixed-px footprint is checked against (mobile's 330px
-    // min-height is the tightest fit; taller boxes only get more margin).
+    // Back to the spec's raw pixel anchor (548/542/536 -> ~74-76%) -- the
+    // earlier deviation from this was only to dodge .personal-work-button,
+    // which no longer overlays the scene at all (moved to
+    // renderPersonalControls, below the scene box, not on top of it), so
+    // there's nothing left to clear here.
     anchors: [
-      { xPct: (180 / 724) * 100, yPct: 58 },
-      { xPct: (182 / 724) * 100, yPct: 57.5 },
-      { xPct: (180 / 724) * 100, yPct: 57 },
+      { xPct: (180 / 724) * 100, yPct: (548 / 724) * 100 },
+      { xPct: (182 / 724) * 100, yPct: (542 / 724) * 100 },
+      { xPct: (180 / 724) * 100, yPct: (536 / 724) * 100 },
     ],
   },
 ];
