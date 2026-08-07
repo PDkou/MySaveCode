@@ -3901,12 +3901,45 @@ textarea {
   width: min(720px, calc(100vw - 24px));
   max-height: min(92vh, 920px);
   overflow-y: auto;
+  /* Less card padding than a typical .modal (24px) -- this one's mostly a
+     full-bleed scene + compact cards, not form fields, so the standard
+     padding just ate into space better spent on content and made the
+     whole sheet feel more cramped than it needed to be. .modal-actions
+     below is overridden to match -- it hardcodes negative margins against
+     .modal's own 24px to bleed edge-to-edge, so changing this padding
+     without updating that override would misalign the close-button bar. */
+  padding: 16px 14px;
   background:
     linear-gradient(
       color-mix(in srgb, var(--card) 94%, transparent),
       color-mix(in srgb, var(--bg) 96%, transparent)
     ),
     var(--card);
+}
+
+.tycoon-modal .modal-actions {
+  bottom: -16px;
+  margin: 4px -14px -16px;
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 560px) {
+  .tycoon-modal {
+    /* Closer to full-screen on phones -- this is the main thing being
+       interacted with in the moment, not a quick settings tweak, so it
+       gets to use most of the viewport instead of leaving a visible
+       backdrop margin around a smaller card. */
+    width: 100vw;
+    max-height: 96vh;
+    border-radius: 20px 20px 0 0;
+    padding: 14px 10px;
+  }
+
+  .tycoon-modal .modal-actions {
+    bottom: -14px;
+    margin: 4px -10px -14px;
+    padding: 12px 10px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .tycoon-tabs {
@@ -5444,7 +5477,7 @@ textarea {
 
 @media (max-width: 560px) {
   .personal-tycoon-world {
-    min-height: 390px;
+    min-height: 330px;
   }
 
   .personal-world-hud {
