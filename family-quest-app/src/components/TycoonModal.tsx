@@ -741,6 +741,26 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
           <i className="effect-beacon">✦</i>
         </div>
 
+        {(errorKey || luckyGain !== null || surgeToast) && (
+          <div className="personal-toast-overlay">
+            {errorKey && (
+              <p className="form-error" role="alert">
+                {t(errorKey)}
+              </p>
+            )}
+            {luckyGain !== null && (
+              <p className="tycoon-lucky-toast">
+                {t("tycoon.luckyBonus", {
+                  gain: formatTycoonNumber(luckyGain),
+                })}
+              </p>
+            )}
+            {surgeToast && (
+              <p className="tycoon-surge-toast">{t("tycoon.surgeStarted")}</p>
+            )}
+          </div>
+        )}
+
         {combo > 1 && (
           <div className={`personal-combo ${combo >= 15 ? "is-hot" : ""}`}>
             <small>{t("tycoon.combo")}</small>
@@ -770,10 +790,23 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
           type="button"
           className="personal-work-button"
           disabled={tapEnergy <= 0}
-          onPointerDown={startPersonalHold}
+          onPointerDown={(event) => {
+            // Pointer capture keeps this element receiving the up/cancel
+            // events for this pointer no matter what moves underneath it
+            // (an error toast appearing, the modal reflowing, ...) -- see
+            // the .personal-toast-overlay change above for why that used to
+            // matter: a message pushing the layout down while holding could
+            // shift the button out from under the finger and cancel the
+            // hold. touch-action: none on this button (tycoon.css) stops
+            // the browser from also interpreting a held-and-slightly-moved
+            // touch as the start of a page scroll, which is what actually
+            // cancels a hold via pointercancel on most mobile browsers.
+            event.currentTarget.setPointerCapture(event.pointerId);
+            startPersonalHold();
+          }}
           onPointerUp={stopPersonalHold}
           onPointerCancel={stopPersonalHold}
-          onPointerLeave={stopPersonalHold}
+          onLostPointerCapture={stopPersonalHold}
           onContextMenu={(event) => event.preventDefault()}
           onKeyDown={(event) => {
             if ((event.key === " " || event.key === "Enter") && !event.repeat) {
@@ -1195,21 +1228,13 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
   const renderPersonal = () => {
     if (loading || !state)
       return <p className="empty-message">{t("common.loading")}</p>;
+    // errorKey/luckyGain/surgeToast render as an overlay *inside*
+    // renderPersonalWorld() (absolutely positioned, doesn't push layout)
+    // rather than here -- see the "personal-toast-overlay" comment there.
+    // A message appearing while the player is holding the work button used
+    // to shift the button down the page and cancel the hold.
     return (
       <>
-        {errorKey && (
-          <p className="form-error" role="alert">
-            {t(errorKey)}
-          </p>
-        )}
-        {luckyGain !== null && (
-          <p className="tycoon-lucky-toast">
-            {t("tycoon.luckyBonus", { gain: formatTycoonNumber(luckyGain) })}
-          </p>
-        )}
-        {surgeToast && (
-          <p className="tycoon-surge-toast">{t("tycoon.surgeStarted")}</p>
-        )}
         {renderPersonalWorld()}
         {renderPersonalProducerDock()}
         {renderPrestige(state, personalDisplay, "personal", busy)}

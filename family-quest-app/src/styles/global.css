@@ -3901,12 +3901,45 @@ textarea {
   width: min(720px, calc(100vw - 24px));
   max-height: min(92vh, 920px);
   overflow-y: auto;
+  /* Less card padding than a typical .modal (24px) -- this one's mostly a
+     full-bleed scene + compact cards, not form fields, so the standard
+     padding just ate into space better spent on content and made the
+     whole sheet feel more cramped than it needed to be. .modal-actions
+     below is overridden to match -- it hardcodes negative margins against
+     .modal's own 24px to bleed edge-to-edge, so changing this padding
+     without updating that override would misalign the close-button bar. */
+  padding: 16px 14px;
   background:
     linear-gradient(
       color-mix(in srgb, var(--card) 94%, transparent),
       color-mix(in srgb, var(--bg) 96%, transparent)
     ),
     var(--card);
+}
+
+.tycoon-modal .modal-actions {
+  bottom: -16px;
+  margin: 4px -14px -16px;
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 560px) {
+  .tycoon-modal {
+    /* Closer to full-screen on phones -- this is the main thing being
+       interacted with in the moment, not a quick settings tweak, so it
+       gets to use most of the viewport instead of leaving a visible
+       backdrop margin around a smaller card. */
+    width: 100vw;
+    max-height: 96vh;
+    border-radius: 20px 20px 0 0;
+    padding: 14px 10px;
+  }
+
+  .tycoon-modal .modal-actions {
+    bottom: -14px;
+    margin: 4px -10px -14px;
+    padding: 12px 10px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .tycoon-tabs {
@@ -4931,6 +4964,10 @@ textarea {
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  /* Stops the browser from treating a held-and-slightly-moved touch as the
+     start of a page scroll -- that scroll-gesture handoff is what actually
+     fires pointercancel and drops a hold-to-work press mid-hold. */
+  touch-action: none;
 }
 
 .personal-work-button:hover:not(:disabled) {
@@ -5066,6 +5103,25 @@ textarea {
   box-shadow: 0 3px 0 #27799c;
   font-size: 12px;
   animation: personalSurgeRibbon 0.45s steps(4) both;
+}
+
+.personal-toast-overlay {
+  position: absolute;
+  z-index: 4;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.personal-toast-overlay .form-error,
+.personal-toast-overlay .tycoon-lucky-toast,
+.personal-toast-overlay .tycoon-surge-toast {
+  margin: 0;
+  pointer-events: auto;
 }
 
 .personal-live-effects i {
@@ -5421,7 +5477,7 @@ textarea {
 
 @media (max-width: 560px) {
   .personal-tycoon-world {
-    min-height: 390px;
+    min-height: 330px;
   }
 
   .personal-world-hud {
