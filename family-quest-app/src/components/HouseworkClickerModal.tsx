@@ -229,11 +229,12 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
     sweepFrameTimers.current.forEach(clearTimeout);
     sweepFrameTimers.current = [];
-    // Steps through frames 1->2->3->4 over the same 220ms window the old
-    // cleanerSweep keyframe animation used, ~55ms per frame (frame 1 shows
-    // immediately, no timer needed for it).
+    // Steps through frames 1->2->3->4, ~90ms per frame (frame 1 shows
+    // immediately, no timer needed for it) -- was 55ms/frame (220ms total),
+    // which read as too fast/rushed; slowed to 360ms total to match the
+    // cleanerTapPunch CSS animation's own 0.36s duration.
     setSweepFrame(1);
-    const FRAME_MS = 55;
+    const FRAME_MS = 90;
     [2, 3, 4].forEach((frame, index) => {
       sweepFrameTimers.current.push(
         setTimeout(() => setSweepFrame(frame), FRAME_MS * (index + 1)),
@@ -242,7 +243,7 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     tapResetTimer.current = setTimeout(() => {
       setTapReaction("idle");
       tapResetTimer.current = null;
-    }, 220);
+    }, 360);
   };
 
   // Sole source of passive/tool income -- doc section 7: online-only, no
