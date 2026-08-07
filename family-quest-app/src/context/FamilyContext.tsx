@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
 import { getAvatarPhotoUrls } from '../lib/avatarPhotos';
+import { APP_MODE } from '../lib/appMode';
 import type { FamilyMemberRow, FamilyRoomType, FamilyRow } from '../types/database';
 
 export class FamilyActionError extends Error {
@@ -112,10 +113,20 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       }
 
       const familyIds = membershipRows.map((m) => m.family_id);
+      // family-quest-app and business-quest-app share one Supabase project
+      // (and so one auth.users table) -- an account that's a member of
+      // rooms in both apps (e.g. tested both with the same email) would
+      // otherwise see the *other* app's rooms bleed into this one's family
+      // switcher, since family_members carries no room_type of its own.
+      // Scoping this query to the current app's own room_type keeps each
+      // app showing only the rooms it's meant to. Membership rows for the
+      // other room_type still exist in the DB (this doesn't hide or
+      // delete them) -- they just don't surface here.
       const { data: familyRows, error: familiesErr } = await supabase
         .from('families')
         .select('*')
-        .in('id', familyIds);
+        .in('id', familyIds)
+        .eq('room_type', APP_MODE);
 
       if (familiesErr) throw familiesErr;
       if (isStale()) return;
