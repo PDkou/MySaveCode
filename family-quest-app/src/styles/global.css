@@ -3935,6 +3935,18 @@ textarea {
   max-height: min(92vh, 920px);
   overflow-y: auto;
   padding: 16px 14px;
+  /* .modal's base rule sets `gap: 16px` on this flex column for every
+     direct child. Each child below (.cleaner-stats-bar/.cleaner-gauge/
+     .cleaner-scene/.cleaner-tools-row) *also* carried its own
+     margin-bottom/margin, stacking on top of that 16px gap -- e.g. the
+     gauge-to-scene spacing was really 16 (gap) + 10 (gauge's own
+     margin-bottom) + 10 (scene's own margin-top) = 36px, not the ~16-24px
+     it visually needed. That doubled-up spacing, multiplied across every
+     child pair, was tall enough on real phone viewports to push this
+     single-screen layout into needing a vertical scroll. Tightened here
+     and the children's own margins zeroed out below so gap is the only
+     source of spacing. */
+  gap: 8px;
   /* Same fix as .tycoon-modal's (see the sideways-swipe saga elsewhere in
      this file's history) -- without an explicit touch-action, the default
      `auto` lets iOS's edge-swipe-back gesture hijack horizontal drags
@@ -3951,6 +3963,36 @@ textarea {
     var(--card);
 }
 
+/* Long-pressing the character, the currency numbers, room labels etc.
+   triggered the OS's native text-selection/copy callout -- this is a tap
+   game, not a document, so treat every element in the clicker's modal +
+   its two bottom sheets as non-selectable by default. The exchange-points
+   `<input>` is the one real text field in here and still needs normal
+   selection/paste behavior, so it (and any future text input in these
+   sheets) is carved back out below rather than disabled along with
+   everything else. */
+.cleaner-modal,
+.cleaner-modal *,
+.cleaner-tools-sheet,
+.cleaner-tools-sheet *,
+.cleaner-meta-sheet,
+.cleaner-meta-sheet * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.cleaner-modal input,
+.cleaner-modal textarea,
+.cleaner-tools-sheet input,
+.cleaner-tools-sheet textarea,
+.cleaner-meta-sheet input,
+.cleaner-meta-sheet textarea {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 .cleaner-loading {
   padding: 32px 0;
   color: var(--muted);
@@ -3962,7 +4004,10 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  /* No margin-bottom here -- .cleaner-modal's own `gap` already spaces
+     every direct child (see the comment there); an extra margin on top of
+     that gap was double-spacing the layout tall enough to force a
+     vertical scroll on real phone viewports. */
 }
 
 .cleaner-bank {
@@ -4026,10 +4071,9 @@ textarea {
   border: 2px solid var(--card);
 }
 
-.cleaner-gauge {
-  margin-bottom: 10px;
-}
-
+/* .cleaner-gauge itself carries no rules of its own -- see the
+   .cleaner-stats-bar comment above; spacing comes from .cleaner-modal's
+   flex `gap` alone, not a margin stacked on top of it. */
 .cleaner-gauge-label {
   display: flex;
   justify-content: space-between;
@@ -4072,7 +4116,8 @@ textarea {
   width: 100%;
   height: 0;
   padding-bottom: 100%;
-  margin: 10px 0 14px;
+  /* No margin here -- see .cleaner-stats-bar's comment; .cleaner-modal's
+     own flex `gap` already spaces this from its neighbors. */
   overflow: hidden;
   border: 3px solid #2d2633;
   border-radius: 18px;
@@ -4173,35 +4218,21 @@ textarea {
   animation: cleanerIdle 2.4s ease-in-out infinite;
 }
 
-.cleaner-sweep-sprite {
-  position: relative;
-  /* cleaner-girl-sweep-sheet.png's 4 frames are each 443x887 (~1:2, tall
-     and narrow) -- the old `width:100%; height:100%` forced every frame to
-     stretch to this box's own (52:73, ~0.71) aspect ratio, visibly
-     squishing the character. Sized here to preserve the frame's true 0.5
-     aspect ratio instead (this project avoids the CSS `aspect-ratio`
-     property after past cross-device issues -- see the .cleaner-scene
-     square-box comment above -- so the ratio is baked in as a fixed
-     percentage of this box's own dimensions: constraining by height,
-     0.4994 * 73% (this box's height, in scene-relative terms) / 52% (this
-     box's width, in scene-relative terms) ~= 70%). The parent's `display:
-     grid; place-items:center` centers the narrower result horizontally. */
-  width: 70%;
-  height: 100%;
-  background-image: url("/art/cleaner/cleaner-girl-sweep-sheet.png");
-  background-position: 0 0;
-  background-repeat: no-repeat;
-  background-size: 400% 100%;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 3px 0 rgba(20, 16, 26, 0.2));
-  animation: cleanerSweep 0.22s steps(1, end) both;
-}
-
-@keyframes cleanerSweep {
-  0% { background-position: 0% 0; }
-  25% { background-position: 33.333% 0; }
-  50% { background-position: 66.667% 0; }
-  75%, 100% { background-position: 100% 0; }
+/* Tap reaction now cycles through 4 individually-cropped <img> frames
+   (cleaner-girl-sweep-1.png..-4.png, stepped by JS in
+   HouseworkClickerModal.tsx) instead of stepping background-position
+   through a single sprite sheet. The old sheet's frames each carried
+   ~17-18% empty vertical padding below the character (vs ~5% for the idle
+   pose) plus zero-margin left/right edges on 3 of 4 frames -- read
+   together as the character floating during the tap animation and a
+   sliver of the adjacent frame's hair bleeding in on the left. The 4 files
+   here are cropped to one shared union bounding box (no per-frame jitter)
+   and just reuse .cleaner-sprite's own object-fit/object-position rules,
+   the same technique already proven correct for the idle pose -- this
+   class only opts out of the idle bob animation so it doesn't fight the
+   frame-swap. */
+.cleaner-sprite-tap {
+  animation: none;
 }
 
 .cleaner-clutter-layer {
@@ -4278,9 +4309,9 @@ textarea {
 }
 
 /* Every tap swaps the sprite pose (see tapReaction in
-   HouseworkClickerModal.tsx) from the idle image to the sweep-sheet
-   animation (.cleaner-sweep-sprite/cleanerSweep above) -- this just makes
-   the character render slightly larger while that's playing. */
+   HouseworkClickerModal.tsx) from the idle image to the cycling sweep-frame
+   images (.cleaner-sprite-tap above) -- this just makes the character
+   render slightly larger while that's playing. */
 .cleaner-character.is-tap { width: 58%; }
 
 .cleaner-gain-float {
@@ -4329,7 +4360,7 @@ textarea {
 .cleaner-tools-row {
   display: flex;
   justify-content: center;
-  margin-bottom: 10px;
+  /* No margin-bottom here -- see .cleaner-stats-bar's comment above. */
 }
 
 .cleaner-tools-entry {
