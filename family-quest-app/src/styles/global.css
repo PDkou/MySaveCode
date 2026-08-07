@@ -112,6 +112,18 @@ body,
   height: 100%;
 }
 
+/* Defensive: any single element that ends up even 1px wider than the
+   viewport (a layout bug, a long unbreakable string, a miscalculated
+   percentage width, ...) otherwise makes the whole page horizontally
+   scrollable/pannable -- which reads exactly like "the screen shifts
+   sideways" even without any zoom involved. This doesn't fix whatever
+   caused the overflow, but it stops it from being able to drag the page
+   sideways with it. */
+html,
+body {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -4838,7 +4850,25 @@ textarea {
    coincidence at one viewport width. */
 .personal-tycoon-world {
   position: relative;
+  /* width: 100% is not decorative -- every child in here (scene, NPCs,
+     live-effects, tap-feedback overlays) is position: absolute, so this
+     box has zero intrinsic content to size itself from. Without an
+     explicit width, aspect-ratio has to derive from whatever width this
+     flex item's auto-stretch sizing resolves to, and that width-then-
+     height ordering is exactly the kind of aspect-ratio+flexbox interop
+     corner case that's had real, version-dependent engine bugs -- seen in
+     practice: the box collapsing to ~0 height (just its own top+bottom
+     border, a hairline where the whole scene should be) on a real device,
+     while rendering correctly in this sandbox's own (newer) headless
+     Chromium. width: 100% removes the ambiguity outright -- the box has a
+     definite width from its own layout before aspect-ratio ever needs to
+     run, on any engine. min-height is a floor for browsers/webviews that
+     don't apply aspect-ratio at all: worse anchor precision in that case,
+     but a visible scene instead of a collapsed sliver. */
+  width: 100%;
   aspect-ratio: 1 / 1;
+  min-height: 260px;
+  box-sizing: border-box;
   margin: 10px 0 14px;
   overflow: hidden;
   border: 3px solid #2d2633;
