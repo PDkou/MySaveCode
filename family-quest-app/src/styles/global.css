@@ -4180,8 +4180,26 @@ textarea {
   left: 50%;
   bottom: 5%;
   transform: translateX(-50%);
-  display: grid;
-  place-items: center;
+  /* Was `display: grid; place-items: center;` -- Chromium mis-resolves a
+     percentage `height` on a centered (non-stretched) grid item that's a
+     replaced element (the sprite <img>) when its intrinsic aspect ratio
+     differs enough from the box's own aspect ratio: instead of using the
+     box's actual height, it falls back to computing height from the
+     percentage-resolved width via the image's own aspect ratio. The idle
+     image (1254x1254, square) happened to render at the right size by
+     coincidence; the sweep frames (403x584) did not -- their <img> laid
+     out ~13% taller than the box (247px vs 219px measured), which both
+     read as the character "growing" on tap and, because that inflated
+     box's aspect ratio then exactly matched the image's own, ate the
+     horizontal letterbox margin that was keeping the already
+     edge-touching hair clear of the box boundary -- reading as hair
+     clipped on the right. `display: flex` with the same visual centering
+     doesn't hit this quirk (verified via a Playwright measurement
+     harness: the sweep frame's computed height matches the box exactly,
+     219px, under flex). */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 52%;
   height: 73%;
   max-width: 260px;
@@ -4205,12 +4223,15 @@ textarea {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  /* cleaner-girl-idle.png is a square (1:1) crop but this box is portrait
-     (52% wide x 73% tall) -- object-fit's default center position left
-     equal empty space above and below the contained image, reading as the
-     character floating above the scene's floor. Bottom-anchor it instead
-     so its feet always sit on the box's own bottom edge, where the shadow
-     already is. */
+  /* cleaner-girl-idle.png was originally a square (1:1) crop with ~5%
+     transparent padding below the feet, but this box is portrait (52%
+     wide x 73% tall) -- object-fit's default center position left equal
+     empty space above and below the contained image on top of that source
+     padding, reading as the character floating above the scene's floor.
+     Bottom-anchor it so its feet sit on the box's own bottom edge (where
+     the shadow already is), and the source file itself is now cropped
+     tight to its content bbox (862x1121, no padding) so bottom-anchoring
+     actually puts the feet at the shadow instead of ~5% above it. */
   object-position: 50% 100%;
   image-rendering: pixelated;
   filter: drop-shadow(0 3px 0 rgba(20, 16, 26, 0.2));
