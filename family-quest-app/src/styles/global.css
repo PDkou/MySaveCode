@@ -4862,13 +4862,16 @@ textarea {
   );
 }
 
-.personal-world-hud {
-  position: absolute;
-  inset: 10px 10px auto;
+/* Bank + next-goal cards used to overlay the scene art (position: absolute
+   inside .personal-tycoon-world); moved to normal flow above it instead so
+   the scene box only shows the scene -- see renderPersonalStatsBar in
+   TycoonModal.tsx. */
+.personal-stats-bar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+  margin-bottom: 8px;
 }
 
 .personal-bank,
@@ -4950,22 +4953,35 @@ textarea {
   transition: width 0.25s steps(5);
 }
 
+/* Hold-to-work button + energy bar used to overlay the scene art
+   (position: absolute, anchored to the bottom of .personal-tycoon-world);
+   moved to normal flow below it instead -- see renderPersonalControls and
+   the "personal-controls" wrapper in TycoonModal.tsx. The press-down look
+   that used to come from nudging the absolute `bottom` offset is now a
+   plain transform: translateY, which works the same in flow layout; the
+   press state is driven by an explicit .is-active class (personalReaction
+   === "work") since the button is no longer a descendant of
+   .personal-tycoon-world for the old .is-work selector to reach. */
+.personal-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+
 .personal-work-button {
-  position: absolute;
-  left: 50%;
-  bottom: 37px;
   display: grid;
-  width: min(260px, 66%);
+  width: min(320px, 100%);
   min-height: 76px;
+  margin: 0;
   padding: 9px 18px 8px;
-  transform: translateX(-50%);
   border: 3px solid #2d2633;
   border-radius: 14px;
   background: #e68a2e;
   color: #fff8df;
   box-shadow:
     0 6px 0 #8c3f24,
-    0 10px 18px rgba(31, 22, 31, 0.28);
+    0 10px 18px rgba(31, 22, 31, 0.18);
   text-align: center;
   cursor: pointer;
   user-select: none;
@@ -4981,12 +4997,11 @@ textarea {
 }
 
 .personal-work-button:active:not(:disabled),
-.personal-tycoon-world.is-work .personal-work-button {
-  bottom: 33px;
+.personal-work-button.is-active {
+  transform: translateY(4px) scale(0.985);
   box-shadow:
     0 2px 0 #8c3f24,
     0 5px 10px rgba(31, 22, 31, 0.24);
-  transform: translateX(-50%) scale(0.985);
 }
 
 .personal-work-button span {
@@ -5012,24 +5027,25 @@ textarea {
   cursor: not-allowed;
 }
 
+/* Was white-on-dark text (text-shadow to stay legible over the scene art);
+   plain --muted/--navy now that it sits on the modal's own background
+   instead of overlaying the scene. */
 .personal-energy {
-  position: absolute;
-  right: 12px;
-  bottom: 10px;
   display: grid;
-  grid-template-columns: auto 82px 22px;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 5px;
-  color: white;
-  font-size: 9px;
-  font-weight: 900;
-  text-shadow: 0 2px 0 #2d2633;
+  gap: 6px;
+  width: min(320px, 100%);
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
 }
 
 .personal-energy > i {
-  width: 82px;
+  width: auto;
   margin: 0;
-  border-color: #fff0c5;
+  border-color: var(--border);
 }
 
 .personal-energy > i > b {
@@ -5507,10 +5523,6 @@ textarea {
     min-height: 330px;
   }
 
-  .personal-world-hud {
-    inset: 7px 7px auto;
-  }
-
   .personal-bank {
     min-width: 102px;
     padding: 6px 8px;
@@ -5525,15 +5537,11 @@ textarea {
   }
 
   .personal-work-button {
-    width: 72%;
+    width: min(320px, 92%);
   }
 
   .personal-energy {
-    grid-template-columns: auto 58px 18px;
-  }
-
-  .personal-energy > i {
-    width: 58px;
+    width: 92%;
   }
 
   .personal-producer-dock {
