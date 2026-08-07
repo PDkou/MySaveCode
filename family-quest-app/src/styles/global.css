@@ -4830,45 +4830,40 @@ textarea {
 
 /* ---------- Personal tycoon: playable workshop surface ---------- */
 
-/* aspect-ratio: 1/1, not a fixed min-height, is load-bearing here -- not
-   just cosmetic. .personal-tycoon-scene's background-size: 300% auto
-   scales to *width* (3x container width, "auto" height keeping the source
-   image's 3:1 aspect ratio), so each stage cell always renders as a square
-   sized to the container's WIDTH, regardless of the container's actual
-   height. With a fixed min-height (previously 430px/330px, independent of
-   the fluid width), that square essentially never matched the box's real
-   aspect ratio -- meaning every NPC's `top: Y%` (percentage of the box's
-   HEIGHT) was being applied to a differently-sized square than the one
-   actually on screen, and the mismatch changed with viewport width. Confirmed
-   wrong on a real device despite looking fine in this sandbox's specific
-   test viewport. Forcing the box itself to be a true square makes
-   container width == container height always, so the rendered art square
-   exactly fills the box with zero letterboxing/cropping, and every
-   percentage anchor (this box's own background-position centering, and
-   every PERSONAL_NPCS xPct/yPct in TycoonModal.tsx) resolves to exactly
-   the coordinate math it was written for -- by construction, not by
-   coincidence at one viewport width. */
+/* This box MUST be a true square -- not just visually, but exactly
+   width == height -- because .personal-tycoon-scene's background-size:
+   300% auto scales to *width* (3x container width, "auto" height keeping
+   the source image's 3:1 aspect ratio), so each stage cell always renders
+   as a square sized to the container's WIDTH regardless of the
+   container's actual height. Every PERSONAL_NPCS xPct/yPct in
+   TycoonModal.tsx (and this box's own background-position centering) is
+   plain percentage math against that square.
+
+   This went through two rounds already: a fixed min-height (mismatched
+   the fluid width at basically every viewport size) -> aspect-ratio: 1/1
+   with an explicit width (fixed the sandbox's own test, but on a real
+   device -- confirmed via a screenshot, after a full app restart, so not
+   a stale-cache artifact -- the box rendered at roughly a 2:3 ratio, not
+   square at all; aspect-ratio evidently isn't reliably honored on
+   whatever engine that device's browser/webview is running).
+
+   Switched to the "padding-bottom percentage" square trick instead:
+   height: 0 + padding-bottom: 100% (a percentage padding value is always
+   resolved against the containing block's WIDTH, never its height, per
+   the CSS box model spec) forces height == width unconditionally. This
+   has been supported identically by every CSS engine back to IE6 -- it
+   predates and doesn't depend on aspect-ratio at all, which is the whole
+   point: it can't have the version-dependent interop gap aspect-ratio
+   apparently does on this specific device. Every child (scene, NPCs,
+   live-effects, tap-feedback overlays) is position: absolute, so they
+   don't care that the box's own content-box height is 0 -- they
+   position against the padding box, which is exactly the square this
+   creates. */
 .personal-tycoon-world {
   position: relative;
-  /* width: 100% is not decorative -- every child in here (scene, NPCs,
-     live-effects, tap-feedback overlays) is position: absolute, so this
-     box has zero intrinsic content to size itself from. Without an
-     explicit width, aspect-ratio has to derive from whatever width this
-     flex item's auto-stretch sizing resolves to, and that width-then-
-     height ordering is exactly the kind of aspect-ratio+flexbox interop
-     corner case that's had real, version-dependent engine bugs -- seen in
-     practice: the box collapsing to ~0 height (just its own top+bottom
-     border, a hairline where the whole scene should be) on a real device,
-     while rendering correctly in this sandbox's own (newer) headless
-     Chromium. width: 100% removes the ambiguity outright -- the box has a
-     definite width from its own layout before aspect-ratio ever needs to
-     run, on any engine. min-height is a floor for browsers/webviews that
-     don't apply aspect-ratio at all: worse anchor precision in that case,
-     but a visible scene instead of a collapsed sliver. */
   width: 100%;
-  aspect-ratio: 1 / 1;
-  min-height: 260px;
-  box-sizing: border-box;
+  height: 0;
+  padding-bottom: 100%;
   margin: 10px 0 14px;
   overflow: hidden;
   border: 3px solid #2d2633;
