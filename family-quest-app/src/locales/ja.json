@@ -394,7 +394,7 @@
     "emptySlot": "まだ用意されたアイテムがありません。",
     "lockedLabel": "未解放",
     "owned": "所有中",
-    "buyInTycoonShop": "タイクーンショップで購入",
+    "buyInTycoonShop": "家事クリッカーで購入",
     "slot": {
       "body": "肌",
       "head": "頭",
@@ -686,6 +686,7 @@
     "exchangeRateHint": "{{rate}} ごとに1ゴールドに交換されます。",
     "exchangeRemaining": "本日の交換可能残り: {{count}}ゴールド",
     "exchangeButton": "{{points}}Gに交換",
+    "legacyShopHeading": "限定コスメティック",
     "error": {
       "invalidAmount": "正しい数量を入力してください。",
       "invalidTool": "不明なお掃除道具です。",

@@ -394,7 +394,7 @@
     "emptySlot": "아직 준비된 아이템이 없어요.",
     "lockedLabel": "미해금",
     "owned": "보유 중",
-    "buyInTycoonShop": "타이쿤 상점에서 구매",
+    "buyInTycoonShop": "집안일 클리커에서 구매",
     "slot": {
       "body": "피부",
       "head": "머리",
@@ -686,6 +686,7 @@
     "exchangeRateHint": "{{rate}} 당 1골드로 교환돼요.",
     "exchangeRemaining": "오늘 남은 교환 한도: {{count}}골드",
     "exchangeButton": "{{points}}G로 교환",
+    "legacyShopHeading": "한정 코스메틱",
     "error": {
       "invalidAmount": "올바른 수량을 입력해주세요.",
       "invalidTool": "알 수 없는 청소도구예요.",

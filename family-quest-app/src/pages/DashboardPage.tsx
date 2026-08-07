@@ -14,7 +14,7 @@ import { SettingsModal } from '../components/SettingsModal';
 import { InviteQrModal } from '../components/InviteQrModal';
 import { MyStatsModal } from '../components/MyStatsModal';
 import { WeeklyBreakdownModal } from '../components/WeeklyBreakdownModal';
-import { TycoonModal } from '../components/TycoonModal';
+import { HouseworkClickerModal } from '../components/HouseworkClickerModal';
 import { CharacterShopModal } from '../components/CharacterShopModal';
 import { CharacterSprite } from '../components/CharacterSprite';
 import { Spinner } from '../components/Spinner';
@@ -47,7 +47,7 @@ export function DashboardPage() {
   const [showEditFamilyName, setShowEditFamilyName] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showWeekly, setShowWeekly] = useState(false);
-  const [showTycoon, setShowTycoon] = useState(false);
+  const [showCleaner, setShowCleaner] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
@@ -311,10 +311,10 @@ export function DashboardPage() {
               <button
                 type="button"
                 className="btn btn-ghost btn-icon btn-sm"
-                onClick={() => setShowTycoon(true)}
-                aria-label={t('tycoon.heading')}
+                onClick={() => setShowCleaner(true)}
+                aria-label={t('cleaner.heading')}
               >
-                <span aria-hidden="true">💰</span>
+                <span aria-hidden="true">🧹</span>
               </button>
             )}
             <NotificationBell />
@@ -515,7 +515,7 @@ export function DashboardPage() {
         />
       )}
       {showWeekly && <WeeklyBreakdownModal onClose={() => setShowWeekly(false)} />}
-      {showTycoon && <TycoonModal onClose={() => setShowTycoon(false)} />}
+      {showCleaner && <HouseworkClickerModal onClose={() => setShowCleaner(false)} />}
       {showShop && (
         <CharacterShopModal
           onClose={() => {

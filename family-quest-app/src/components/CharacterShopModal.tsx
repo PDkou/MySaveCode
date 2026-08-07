@@ -233,9 +233,13 @@ export function CharacterShopModal({ onClose }: CharacterShopModalProps) {
                       {t('shop.lockedLabel')}
                     </span>
                   ) : item.currency === 'tycoon' ? (
-                    // Tycoon-currency items are bought from the tycoon
-                    // shop screen (TycoonModal.tsx) -- this points shop
-                    // still lists them so they can be equipped once owned.
+                    // 'tycoon' is a legacy currency key name (the personal
+                    // tycoon it originally referred to is gone -- see
+                    // schema.sql section 35) -- these items are now bought
+                    // with the housework clicker's currency, from a small
+                    // shop section inside HouseworkClickerModal's meta
+                    // sheet. This points shop still lists them here too so
+                    // they can be equipped once owned.
                     <span className="shop-item-locked">{t('shop.buyInTycoonShop')}</span>
                   ) : (
                     <button
