@@ -178,33 +178,51 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
       p_completion_photo_path: completionPhotoPath,
     });
     if (error) throw error;
-    await loadTask(taskId);
-    await loadActivities(taskId);
+
+    // The completion itself already succeeded server-side at this point --
+    // everything below is refreshing local state / building the optional
+    // celebration payload. A hiccup here (e.g. an iOS PWA suspending/
+    // aborting an in-flight fetch right after backgrounding, reported
+    // 2026-08: "퀘스트 완료 처리는 실제로 끝났는데 처리에 실패했다고 뜬다") shouldn't
+    // make an already-successful completion look like it failed -- same
+    // reasoning as the push-notification-trigger fix in schema.sql, just
+    // on the client side. Worst case we just skip the celebration screen.
+    try {
+      await loadTask(taskId);
+      await loadActivities(taskId);
+    } catch (err) {
+      console.error('report_task_completion succeeded but refreshing task/activities failed', err);
+    }
 
     if (newTask?.status !== 'done' || !prevMember) return null;
 
-    const [{ data: newMember }, { data: newBadgeRows }] = await Promise.all([
-      supabase.from('family_members').select('points, xp, current_streak').eq('family_id', familyId).eq('user_id', user.id).maybeSingle(),
-      supabase.from('member_badges').select('badge_key').eq('family_id', familyId).eq('user_id', user.id),
-    ]);
-    if (!newMember) return null;
-    if (newMember.xp === prevMember.xp) return null;
+    try {
+      const [{ data: newMember }, { data: newBadgeRows }] = await Promise.all([
+        supabase.from('family_members').select('points, xp, current_streak').eq('family_id', familyId).eq('user_id', user.id).maybeSingle(),
+        supabase.from('member_badges').select('badge_key').eq('family_id', familyId).eq('user_id', user.id),
+      ]);
+      if (!newMember) return null;
+      if (newMember.xp === prevMember.xp) return null;
 
-    const newBadges = (newBadgeRows ?? [])
-      .map((b) => b.badge_key as BadgeKey)
-      .filter((key) => !prevBadgeKeys.has(key));
-    const prevLevel = levelForPoints(prevMember.xp);
-    const newLevel = levelForPoints(newMember.xp);
+      const newBadges = (newBadgeRows ?? [])
+        .map((b) => b.badge_key as BadgeKey)
+        .filter((key) => !prevBadgeKeys.has(key));
+      const prevLevel = levelForPoints(prevMember.xp);
+      const newLevel = levelForPoints(newMember.xp);
 
-    return {
-      pointsGained: newMember.points - prevMember.points,
-      newPoints: newMember.points,
-      newLevel,
-      leveledUp: newLevel > prevLevel,
-      newStreak: newMember.current_streak,
-      streakIncreased: newMember.current_streak > prevMember.current_streak,
-      newBadges,
-    };
+      return {
+        pointsGained: newMember.points - prevMember.points,
+        newPoints: newMember.points,
+        newLevel,
+        leveledUp: newLevel > prevLevel,
+        newStreak: newMember.current_streak,
+        streakIncreased: newMember.current_streak > prevMember.current_streak,
+        newBadges,
+      };
+    } catch (err) {
+      console.error('report_task_completion succeeded but building the celebration payload failed', err);
+      return null;
+    }
   }, [taskId, task, user, loadTask, loadActivities]);
 
   // Step 2a: the requester approves -- this is where the payout actually
@@ -216,8 +234,15 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     if (!taskId) return;
     const { error } = await supabase.rpc('confirm_task_completion', { p_task_id: taskId });
     if (error) throw error;
-    await loadTask(taskId);
-    await loadActivities(taskId);
+    // Same reasoning as reportTaskCompletion above -- the confirmation (and
+    // its payout) already happened server-side; don't let a refresh hiccup
+    // make it look like it failed.
+    try {
+      await loadTask(taskId);
+      await loadActivities(taskId);
+    } catch (err) {
+      console.error('confirm_task_completion succeeded but refreshing task/activities failed', err);
+    }
   }, [taskId, loadTask, loadActivities]);
 
   // Step 2b: the requester rejects -- nothing was ever paid out, so this is
@@ -226,8 +251,12 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     if (!taskId) return;
     const { error } = await supabase.rpc('reject_task_completion', { p_task_id: taskId });
     if (error) throw error;
-    await loadTask(taskId);
-    await loadActivities(taskId);
+    try {
+      await loadTask(taskId);
+      await loadActivities(taskId);
+    } catch (err) {
+      console.error('reject_task_completion succeeded but refreshing task/activities failed', err);
+    }
   }, [taskId, loadTask, loadActivities]);
 
   const reopenTask = useCallback(async () => {
@@ -237,8 +266,12 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     // let those climb forever -- see reopen_task in schema.sql.
     const { error } = await supabase.rpc('reopen_task', { p_task_id: taskId });
     if (error) throw error;
-    await loadTask(taskId);
-    await loadActivities(taskId);
+    try {
+      await loadTask(taskId);
+      await loadActivities(taskId);
+    } catch (err) {
+      console.error('reopen_task succeeded but refreshing task/activities failed', err);
+    }
   }, [taskId, loadTask, loadActivities]);
 
   const updateTask = useCallback(async (input: TaskEditInput) => {
@@ -257,8 +290,12 @@ export function useTaskDetail(taskId: string | undefined): UseTaskDetailResult {
     });
     if (error) throw error;
 
-    await loadTask(taskId);
-    await loadAssignees(taskId);
+    try {
+      await loadTask(taskId);
+      await loadAssignees(taskId);
+    } catch (err) {
+      console.error('update_task succeeded but refreshing task/assignees failed', err);
+    }
   }, [taskId, loadTask, loadAssignees]);
 
   const addComment = useCallback(async (body: string) => {
