@@ -296,6 +296,40 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     feedbackTimers.current.push(timer);
   };
 
+  // Personal tycoon workshop NPC sprite frames (0-3), driven directly by
+  // React state rather than a CSS steps() animation -- a CSS
+  // animation-timing-function: steps(4) on background-position looked like
+  // the sprite sliding sideways instead of snapping between discrete poses
+  // on a real mobile browser (each NPC is only ~50px on screen against a
+  // background image 4x that width; steps() isn't guaranteed to render as
+  // a hard cut at that scale everywhere). Plain state-driven inline styles
+  // have no interpolation to get wrong -- each interval just jumps straight
+  // to the next frame index. delaySeconds staggers each NPC's start so the
+  // three loops don't visibly synchronize.
+  const [npcFrames, setNpcFrames] = useState<Record<string, number>>({});
+  useEffect(() => {
+    if (mode !== "personal") return;
+    const cleanups = PERSONAL_NPCS.map((npc) => {
+      const stepMs = (npc.loopSeconds * 1000) / 4;
+      const staggerMs = Math.abs(npc.delaySeconds * 1000) % (npc.loopSeconds * 1000);
+      let intervalId: ReturnType<typeof setInterval> | null = null;
+      const timeoutId = setTimeout(() => {
+        setNpcFrames((prev) => ({ ...prev, [npc.id]: 1 }));
+        intervalId = setInterval(() => {
+          setNpcFrames((prev) => ({
+            ...prev,
+            [npc.id]: ((prev[npc.id] ?? 0) + 1) % 4,
+          }));
+        }, stepMs);
+      }, staggerMs);
+      return () => {
+        clearTimeout(timeoutId);
+        if (intervalId) clearInterval(intervalId);
+      };
+    });
+    return () => cleanups.forEach((cleanup) => cleanup());
+  }, [mode]);
+
   // energy_flow (section 34) raises the personal tap-energy cap above the
   // flat 20 family keeps -- read through a ref inside the interval below so
   // buying a level mid-session takes effect without tearing down the timer.
@@ -873,6 +907,7 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
         />
         {PERSONAL_NPCS.map((npc) => {
           const anchor = npc.anchors[stage];
+          const frame = npcFrames[npc.id] ?? 0;
           return (
             <i
               key={npc.id}
@@ -884,8 +919,7 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
                   top: `${anchor.yPct}%`,
                   width: `${npc.widthPct}%`,
                   backgroundImage: `url("${npc.asset}")`,
-                  animationDuration: `${npc.loopSeconds}s`,
-                  animationDelay: `${npc.delaySeconds}s`,
+                  backgroundPositionX: `${(frame / 3) * 100}%`,
                 } as CSSProperties
               }
             />

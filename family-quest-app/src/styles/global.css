@@ -5653,6 +5653,15 @@ textarea {
 /* PERSONAL_NPCS in TycoonModal.tsx for per-stage anchor/timing data.      */
 /* ---------------------------------------------------------------------- */
 
+/* Frame stepping is driven by React state (see npcFrames in
+   TycoonModal.tsx) setting background-position-x directly, not a CSS
+   steps() animation -- a CSS animation-timing-function: steps(4) here
+   looked like the sprite sliding sideways rather than snapping between
+   discrete poses on at least one real mobile browser (the element is only
+   ~50px on screen against a 4x-wider background image, and steps() on
+   background-position apparently isn't guaranteed to render as a hard cut
+   at that scale everywhere). Plain state-driven inline styles have no
+   interpolation to get wrong. */
 .personal-npc {
   position: absolute;
   z-index: 1;
@@ -5662,19 +5671,7 @@ textarea {
   background-repeat: no-repeat;
   background-size: 400% 100%;
   image-rendering: pixelated;
-  animation-name: personalNpcStep;
-  animation-timing-function: steps(4);
-  animation-iteration-count: infinite;
   pointer-events: none;
-}
-
-@keyframes personalNpcStep {
-  from {
-    background-position: 0% 0;
-  }
-  to {
-    background-position: 100% 0;
-  }
 }
 
 @media (max-width: 560px) {
