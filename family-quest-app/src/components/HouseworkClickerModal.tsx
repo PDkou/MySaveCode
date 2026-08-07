@@ -74,6 +74,7 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   const [errorKey, setErrorKey] = useState<string | null>(null);
 
   const [tapReaction, setTapReaction] = useState<TapReaction>("idle");
+  const [tapMotionKey, setTapMotionKey] = useState(0);
   const [tapFloat, setTapFloat] = useState<{ id: number; gain: string } | null>(
     null,
   );
@@ -117,10 +118,12 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   const completingRef = useRef(false);
   const pendingAdvanceRef = useRef<CleanerStateRow | null>(null);
   const feedbackTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const tapResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
     () => () => {
       feedbackTimers.current.forEach(clearTimeout);
+      if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
     },
     [],
   );
@@ -209,7 +212,12 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     if (!family) return;
     tapBatchRef.current += 1;
     setTapReaction("tap");
-    later(() => setTapReaction("idle"), 220);
+    setTapMotionKey((current) => current + 1);
+    if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
+    tapResetTimer.current = setTimeout(() => {
+      setTapReaction("idle");
+      tapResetTimer.current = null;
+    }, 220);
   };
 
   // Sole source of passive/tool income -- doc section 7: online-only, no
@@ -547,20 +555,62 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
           </div>
 
           <section className={`cleaner-scene is-room-${room.id}`}>
+            <div className="cleaner-clutter-layer" aria-hidden="true">
+              {progressPct < 25 && (
+                <img
+                  className="cleaner-clutter cleaner-clutter-toys"
+                  src="/art/cleaner/clutter-toys.png"
+                  alt=""
+                />
+              )}
+              {progressPct < 50 && (
+                <img
+                  className="cleaner-clutter cleaner-clutter-papers"
+                  src="/art/cleaner/clutter-papers.png"
+                  alt=""
+                />
+              )}
+              {progressPct < 75 && (
+                <img
+                  className="cleaner-clutter cleaner-clutter-stain"
+                  src="/art/cleaner/clutter-stain.png"
+                  alt=""
+                />
+              )}
+              {progressPct < 100 && (
+                <img
+                  className="cleaner-clutter cleaner-clutter-dust"
+                  src="/art/cleaner/clutter-dust.png"
+                  alt=""
+                />
+              )}
+            </div>
             <div
               className={`cleaner-character ${tapReaction === "tap" ? "is-tap" : ""}`}
             >
               <div className="cleaner-shadow" />
-              <img
-                className="cleaner-sprite"
-                src={
-                  tapReaction === "tap"
-                    ? "/mascot/tutorial-guide-hello.png"
-                    : "/mascot/tutorial-guide-default.png"
-                }
-                alt=""
-              />
+              {tapReaction === "tap" ? (
+                <div
+                  key={tapMotionKey}
+                  className="cleaner-sweep-sprite"
+                  aria-hidden="true"
+                />
+              ) : (
+                <img
+                  className="cleaner-sprite"
+                  src="/art/cleaner/cleaner-girl-idle.png"
+                  alt=""
+                />
+              )}
             </div>
+            {(toolsOwned.robot_vacuum ?? 0) > 0 && (
+              <div className="cleaner-active-robot" aria-hidden="true">
+                <img src="/art/cleaner/robot-vacuum.png" alt="" />
+                {(toolsOwned.robot_vacuum ?? 0) > 1 && (
+                  <span>×{toolsOwned.robot_vacuum}</span>
+                )}
+              </div>
+            )}
             {tapFloat && (
               <span key={tapFloat.id} className="cleaner-gain-float">
                 +{formatCleanerNumber(tapFloat.gain)}

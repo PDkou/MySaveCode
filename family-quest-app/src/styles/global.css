@@ -4082,55 +4082,57 @@ textarea {
   transition: background 0.6s ease;
 }
 
-/* One backdrop tint per room -- doc section 4's five rooms -- cheap,
-   art-free progression/variety signal (no per-room background art this
-   round; the character itself is the only art asset, reused from the
-   app's own mascot per product direction). */
+.cleaner-scene.is-room-living_room {
+  background-color: #f5c466;
+  background-image: url("/art/cleaner/living-room-base-clean.png");
+  background-position: center;
+  background-size: cover;
+  image-rendering: pixelated;
+}
+
 .cleaner-scene.is-room-kitchen {
-  background: radial-gradient(
-      120% 90% at 50% 18%,
-      rgba(255, 246, 214, 0.4),
-      transparent 60%
-    ),
-    linear-gradient(180deg, #a3d1a8 0%, #7fbf8e 45%, #5c9e72 100%);
+  background-color: #f4b84d;
+  background-image: url("/art/cleaner/kitchen-base-clean.png");
+  background-position: center;
+  background-size: cover;
+  image-rendering: pixelated;
 }
 
 .cleaner-scene.is-room-bathroom {
-  background: radial-gradient(
-      120% 90% at 50% 18%,
-      rgba(224, 255, 250, 0.4),
-      transparent 60%
-    ),
-    linear-gradient(180deg, #8fd8d1 0%, #63b9b1 45%, #468f89 100%);
+  background-color: #79d2cf;
+  background-image: url("/art/cleaner/bathroom-base-clean.png");
+  background-position: center;
+  background-size: cover;
+  image-rendering: pixelated;
 }
 
 .cleaner-scene.is-room-kids_room {
-  background: radial-gradient(
-      120% 90% at 50% 18%,
-      rgba(255, 232, 246, 0.4),
-      transparent 60%
-    ),
-    linear-gradient(180deg, #e8a8d8 0%, #d17fc0 45%, #a95c9c 100%);
+  background-color: #70bde6;
+  background-image: url("/art/cleaner/kids-room-base-clean.png");
+  background-position: center;
+  background-size: cover;
+  image-rendering: pixelated;
 }
 
 .cleaner-scene.is-room-whole_house {
-  background: radial-gradient(
-      120% 90% at 50% 18%,
-      rgba(255, 226, 173, 0.45),
-      transparent 60%
-    ),
-    linear-gradient(180deg, #f0c988 0%, #e6a94f 45%, #c9822f 100%);
+  background-color: #d99545;
+  background-image: url("/art/cleaner/whole-house-base-clean.png");
+  background-position: center;
+  background-size: cover;
+  image-rendering: pixelated;
 }
 
 .cleaner-character {
   position: absolute;
   left: 50%;
-  bottom: 12%;
+  bottom: 5%;
   transform: translateX(-50%);
   display: grid;
   place-items: center;
-  width: 44%;
-  max-width: 220px;
+  width: 52%;
+  height: 73%;
+  max-width: 260px;
+  z-index: 4;
 }
 
 .cleaner-shadow {
@@ -4148,11 +4150,95 @@ textarea {
 .cleaner-sprite {
   position: relative;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain;
   image-rendering: pixelated;
   filter: drop-shadow(0 3px 0 rgba(20, 16, 26, 0.2));
   transform-origin: 50% 100%;
   animation: cleanerIdle 2.4s ease-in-out infinite;
+}
+
+.cleaner-sweep-sprite {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-image: url("/art/cleaner/cleaner-girl-sweep-sheet.png");
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  background-size: 400% 100%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 0 rgba(20, 16, 26, 0.2));
+  animation: cleanerSweep 0.22s steps(1, end) both;
+}
+
+@keyframes cleanerSweep {
+  0% { background-position: 0% 0; }
+  25% { background-position: 33.333% 0; }
+  50% { background-position: 66.667% 0; }
+  75%, 100% { background-position: 100% 0; }
+}
+
+.cleaner-clutter-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.cleaner-clutter {
+  position: absolute;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 0 rgba(73, 40, 25, 0.22));
+  animation: cleanerClutterOut 0.25s ease-out both;
+}
+
+.cleaner-clutter-toys { left: 2%; bottom: 3%; width: 34%; }
+.cleaner-clutter-papers { right: 2%; bottom: 13%; width: 29%; }
+.cleaner-clutter-stain { right: 24%; bottom: 1%; width: 25%; }
+.cleaner-clutter-dust { left: 7%; bottom: 31%; width: 24%; }
+
+@keyframes cleanerClutterOut {
+  from { opacity: 0; transform: translateY(5%) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.cleaner-active-robot {
+  position: absolute;
+  right: 5%;
+  bottom: 4%;
+  z-index: 5;
+  width: 18%;
+  pointer-events: none;
+  animation: cleanerRobotPatrol 2.8s ease-in-out infinite alternate;
+}
+
+.cleaner-active-robot img {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 0 rgba(73, 40, 25, 0.24));
+}
+
+.cleaner-active-robot span {
+  position: absolute;
+  right: -6px;
+  top: -7px;
+  min-width: 22px;
+  padding: 2px 5px;
+  border: 2px solid #3a1f2b;
+  border-radius: 999px;
+  background: #fff3bd;
+  color: #3a1f2b;
+  font-size: 11px;
+  font-weight: 950;
+  line-height: 1;
+  text-align: center;
+}
+
+@keyframes cleanerRobotPatrol {
+  from { transform: translateX(0) rotate(-1deg); }
+  to { transform: translateX(-34%) rotate(1deg); }
 }
 
 @keyframes cleanerIdle {
@@ -4170,9 +4256,7 @@ textarea {
    idle loop for its short duration -- doc's "연속으로 눌러도 애니메이션이
    자연스럽게 이어져야 한다" reads fine here since each tap just restarts the
    same short animation rather than queuing/stacking. */
-.cleaner-character.is-tap .cleaner-sprite {
-  animation: cleanerBounce 0.3s ease-out;
-}
+.cleaner-character.is-tap { width: 58%; }
 
 @keyframes cleanerBounce {
   0% {
