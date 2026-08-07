@@ -6877,3 +6877,413 @@ revoke execute on function public.join_family_room(text, text) from anon, public
 -- End section 33. Re-run the full schema in Supabase before deploying the
 -- matching frontend; sections 29-32 remain intact for chronological rebuilds.
 -- =============================================================================
+
+-- =============================================================================
+-- 34. Personal tycoon: prestige points + upgrade shop (2026-08)
+--
+-- Personal tycoon only -- family_tycoon_* is deliberately left untouched,
+-- per the standing "develop personal and family/group tycoon separately"
+-- direction. The family prestige flow keeps its original one-focus-per-
+-- prestige mechanic (prestige_family_tycoon(uuid, text) is unchanged).
+--
+-- Section 31 made 환생 (prestige) grant one permanent focus level, chosen
+-- once at the moment of resetting. That's a single all-or-nothing choice
+-- with no room to feel out a strategy, and it can't express anything beyond
+-- the three original stats. This section turns prestige into a currency:
+-- prestige_tycoon() always resets AND pays out "환생 포인트"
+-- (prestige_points, scaled by how far past the threshold the cycle went),
+-- and a new buy_tycoon_prestige_upgrade() RPC spends them on individual
+-- upgrade levels at any time -- not just at the reset moment. The three
+-- original stats (momentum/automation/fortune) become buyable upgrades
+-- themselves (existing players' levels are grandfathered as their current
+-- level, nothing is reset), alongside four new convenience upgrades
+-- (auto_tap/head_start/energy_flow/surge_master) that fold in the
+-- earlier-requested "upgrades shouldn't only be about earning power"
+-- feedback -- these make prestige cycles *feel* faster, not just produce
+-- faster, which is the actual "climb back up quicker each time" dopamine
+-- loop being asked for.
+--
+-- prestige_tycoon(uuid, text) is dropped in favor of prestige_tycoon(uuid)
+-- -- the focus argument no longer means anything, since a single prestige
+-- no longer grants a single stat pick.
+-- =============================================================================
+
+-- 34-1. New persistent fields -------------------------------------------------
+
+alter table public.tycoon_state add column if not exists prestige_points bigint not null default 0;
+alter table public.tycoon_state add column if not exists prestige_auto_tap integer not null default 0;
+alter table public.tycoon_state add column if not exists prestige_head_start integer not null default 0;
+alter table public.tycoon_state add column if not exists prestige_energy_flow integer not null default 0;
+alter table public.tycoon_state add column if not exists prestige_surge_master integer not null default 0;
+
+alter table public.tycoon_state drop constraint if exists tycoon_state_prestige_points_check;
+alter table public.tycoon_state add constraint tycoon_state_prestige_points_check check (prestige_points >= 0);
+alter table public.tycoon_state drop constraint if exists tycoon_state_prestige_upgrades_check;
+alter table public.tycoon_state add constraint tycoon_state_prestige_upgrades_check
+  check (prestige_auto_tap >= 0 and prestige_head_start >= 0 and prestige_energy_flow >= 0 and prestige_surge_master >= 0);
+
+-- energy_flow raises the tap-energy cap above the original flat 20 (+10 per
+-- level, up to +30 at max level 3) -- the check constraint has to reference
+-- the sibling column to allow that instead of hardcoding 20.
+alter table public.tycoon_state drop constraint if exists tycoon_state_tap_energy_check;
+alter table public.tycoon_state add constraint tycoon_state_tap_energy_check
+  check (tap_energy between 0 and 20 + prestige_energy_flow * 10);
+
+-- 34-2. Upgrade cost curve, shared by the buy RPC and (mirrored exactly)
+-- tycoonPrestigeUpgradeCost() in lib/tycoon.ts for the client-side preview --
+
+create or replace function public.tycoon_prestige_upgrade_cost(p_upgrade_id text, p_level integer)
+returns bigint
+language sql
+immutable
+as $$
+  select case p_upgrade_id
+    when 'momentum' then ceil(3 * power(1.6::numeric, greatest(0, p_level)))
+    when 'automation' then ceil(3 * power(1.6::numeric, greatest(0, p_level)))
+    when 'fortune' then ceil(4 * power(1.7::numeric, greatest(0, p_level)))
+    when 'auto_tap' then ceil(6 * power(2.2::numeric, greatest(0, p_level)))
+    when 'head_start' then ceil(5 * power(1.8::numeric, greatest(0, p_level)))
+    when 'energy_flow' then ceil(5 * power(1.9::numeric, greatest(0, p_level)))
+    when 'surge_master' then ceil(6 * power(2.0::numeric, greatest(0, p_level)))
+    else null
+  end::bigint;
+$$;
+
+-- 34-3. Prestige always resets and pays out points; the old p_focus arg is
+-- gone since a single prestige no longer grants a single stat pick --------
+
+drop function if exists public.prestige_tycoon(uuid, text);
+create or replace function public.prestige_tycoon(p_family_id uuid)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_result public.tycoon_collect_result_v31;
+  v_state public.tycoon_state;
+  v_required bigint;
+  v_points bigint;
+  v_cap integer;
+  v_head_start integer;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_result := public.settle_tycoon_currency_v31(p_family_id, v_uid);
+  v_state := v_result.state;
+  v_required := public.tycoon_prestige_threshold(v_state.prestige_level);
+  if v_state.cycle_currency < v_required then
+    raise exception 'not_maxed' using errcode = 'P0001';
+  end if;
+
+  -- Points scale with the square root of how much was produced this cycle
+  -- (not just whether the threshold was cleared) -- pushing a bit further
+  -- past the gate before cashing in the reset earns meaningfully more, with
+  -- diminishing returns so it's never worth grinding indefinitely.
+  v_points := greatest(1, floor(sqrt(v_state.cycle_currency::numeric / 8000)))::bigint;
+  v_cap := 20 + coalesce(v_state.prestige_energy_flow, 0) * 10;
+  v_head_start := coalesce(v_state.prestige_head_start, 0) * 5;
+
+  update public.tycoon_state
+  set currency = 0,
+      upgrade_level = 0,
+      prestige_level = prestige_level + 1,
+      cycle_currency = 0,
+      prestige_points = least(9000000000000000::bigint, prestige_points + v_points),
+      last_collected_at = now(),
+      tap_energy = v_cap,
+      tap_energy_updated_at = now()
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  delete from public.tycoon_buildings where user_id = v_uid and family_id = p_family_id;
+  -- head_start upgrade: skip the bare-dirt restart by handing back a few
+  -- free levels of the first producer immediately after the reset.
+  if v_head_start > 0 then
+    insert into public.tycoon_buildings (user_id, family_id, building_id, owned_count)
+    values (v_uid, p_family_id, 'pathfinder_camp', v_head_start)
+    on conflict (user_id, family_id, building_id)
+    do update set owned_count = excluded.owned_count;
+  end if;
+
+  if v_state.prestige_level = 1 then
+    perform public.grant_title(p_family_id, v_uid, 'tycoon_prestiged');
+  end if;
+  return v_state;
+end;
+$$;
+
+grant execute on function public.prestige_tycoon(uuid) to authenticated;
+revoke execute on function public.prestige_tycoon(uuid) from anon, public;
+
+-- 34-4. Spend prestige_points on an individual upgrade level ----------------
+
+create or replace function public.buy_tycoon_prestige_upgrade(p_family_id uuid, p_upgrade_id text)
+returns public.tycoon_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.tycoon_state;
+  v_level integer;
+  v_max_level integer;
+  v_cost bigint;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  if p_upgrade_id not in
+    ('momentum', 'automation', 'fortune', 'auto_tap', 'head_start', 'energy_flow', 'surge_master')
+  then
+    raise exception 'invalid_prestige_focus' using errcode = '22023';
+  end if;
+
+  select * into v_state from public.tycoon_state
+  where user_id = v_uid and family_id = p_family_id
+  for update;
+  if not found then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_level := case p_upgrade_id
+    when 'momentum' then v_state.prestige_momentum
+    when 'automation' then v_state.prestige_automation
+    when 'fortune' then v_state.prestige_fortune
+    when 'auto_tap' then v_state.prestige_auto_tap
+    when 'head_start' then v_state.prestige_head_start
+    when 'energy_flow' then v_state.prestige_energy_flow
+    when 'surge_master' then v_state.prestige_surge_master
+  end;
+
+  -- The three original power stats stay uncapped (as they always were);
+  -- the newer convenience upgrades are deliberately finite so they read as
+  -- "unlock and top off" rather than another infinite grind.
+  v_max_level := case p_upgrade_id
+    when 'auto_tap' then 3
+    when 'head_start' then 5
+    when 'energy_flow' then 3
+    when 'surge_master' then 3
+    else null
+  end;
+  if v_max_level is not null and v_level >= v_max_level then
+    raise exception 'not_maxed' using errcode = 'P0001';
+  end if;
+
+  v_cost := public.tycoon_prestige_upgrade_cost(p_upgrade_id, v_level);
+  if v_state.prestige_points < v_cost then
+    raise exception 'insufficient_currency' using errcode = 'P0001';
+  end if;
+
+  update public.tycoon_state
+  set prestige_points = prestige_points - v_cost,
+      prestige_momentum = prestige_momentum + case when p_upgrade_id = 'momentum' then 1 else 0 end,
+      prestige_automation = prestige_automation + case when p_upgrade_id = 'automation' then 1 else 0 end,
+      prestige_fortune = prestige_fortune + case when p_upgrade_id = 'fortune' then 1 else 0 end,
+      prestige_auto_tap = prestige_auto_tap + case when p_upgrade_id = 'auto_tap' then 1 else 0 end,
+      prestige_head_start = prestige_head_start + case when p_upgrade_id = 'head_start' then 1 else 0 end,
+      prestige_energy_flow = prestige_energy_flow + case when p_upgrade_id = 'energy_flow' then 1 else 0 end,
+      prestige_surge_master = prestige_surge_master + case when p_upgrade_id = 'surge_master' then 1 else 0 end
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  return v_state;
+end;
+$$;
+
+grant execute on function public.buy_tycoon_prestige_upgrade(uuid, text) to authenticated;
+revoke execute on function public.buy_tycoon_prestige_upgrade(uuid, text) from anon, public;
+
+-- 34-5. energy_flow raises the tap-energy cap; surge_master raises the
+-- surge trigger chance and duration -- both read through personal-only
+-- settle/tap so family_tycoon_state's flat-20/4%/20s numbers are untouched --
+
+create or replace function public.settle_tycoon_currency_v31(p_family_id uuid, p_user_id uuid)
+returns public.tycoon_collect_result_v31
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_state public.tycoon_state;
+  v_rate numeric := 0;
+  v_trade integer := 0;
+  v_archive integer := 0;
+  v_beacon integer := 0;
+  v_elapsed numeric := 0;
+  v_base bigint := 0;
+  v_bonus bigint := 0;
+  v_lucky boolean := false;
+  v_regen integer := 0;
+  v_cap integer := 20;
+  v_energy integer := 20;
+  v_energy_at timestamptz;
+begin
+  insert into public.tycoon_state (user_id, family_id)
+  values (p_user_id, p_family_id)
+  on conflict do nothing;
+
+  select * into v_state
+  from public.tycoon_state
+  where user_id = p_user_id and family_id = p_family_id
+  for update;
+
+  select
+    coalesce(sum(tb.owned_count * def.base_rate), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'trade_station'), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'archive_tower'), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'starlight_beacon'), 0)
+  into v_rate, v_trade, v_archive, v_beacon
+  from public.tycoon_building_defs() def
+  left join public.tycoon_buildings tb
+    on tb.building_id = def.building_id
+   and tb.user_id = p_user_id
+   and tb.family_id = p_family_id;
+
+  v_rate := v_rate
+    * (1 + least(1::numeric, v_trade * 0.02))
+    * power(1.15::numeric, v_state.prestige_level)
+    * (1 + v_state.prestige_automation * 0.08)
+    * (case when v_state.surge_until is not null and now() < v_state.surge_until then 2 else 1 end);
+
+  v_elapsed := greatest(
+    0,
+    extract(epoch from least(now() - v_state.last_collected_at, interval '24 hours'))
+  );
+
+  if v_rate > 0 and v_elapsed > 0 then
+    v_base := floor(v_elapsed * v_rate / 60)::bigint;
+    if v_elapsed >= 60 then
+      v_base := floor(v_base * (1 + least(1.5::numeric, v_archive * 0.03)))::bigint;
+    end if;
+    if v_base > 0 and v_elapsed >= 30
+       and random() < least(0.20, 0.02 + v_beacon * 0.003 + v_state.prestige_fortune * 0.01) then
+      v_bonus := v_base * (2 + floor(random() * 3)::bigint);
+      v_lucky := true;
+    end if;
+  end if;
+
+  v_cap := 20 + coalesce(v_state.prestige_energy_flow, 0) * 10;
+  if v_state.tap_energy >= v_cap then
+    v_energy := v_cap;
+    v_energy_at := now();
+  else
+    v_regen := floor(extract(epoch from now() - v_state.tap_energy_updated_at) / 3)::integer;
+    v_energy := least(v_cap, v_state.tap_energy + greatest(0, v_regen));
+    if v_energy >= v_cap then
+      v_energy_at := now();
+    else
+      v_energy_at := v_state.tap_energy_updated_at + make_interval(secs => greatest(0, v_regen) * 3);
+    end if;
+  end if;
+
+  update public.tycoon_state
+  set currency = least(9000000000000000::bigint, currency + v_base + v_bonus),
+      lifetime_currency = least(9000000000000000::bigint, lifetime_currency + v_base + v_bonus),
+      cycle_currency = least(9000000000000000::bigint, cycle_currency + v_base + v_bonus),
+      last_collected_at = now(),
+      tap_energy = v_energy,
+      tap_energy_updated_at = v_energy_at
+  where user_id = p_user_id and family_id = p_family_id
+  returning * into v_state;
+
+  return row(v_state, v_base + v_bonus, v_base, v_bonus, v_lucky, v_state.tap_energy)
+    ::public.tycoon_collect_result_v31;
+end;
+$$;
+
+create or replace function public.tap_tycoon_currency(p_family_id uuid)
+returns public.tycoon_tap_result
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_result public.tycoon_collect_result_v31;
+  v_state public.tycoon_state;
+  v_camps integer := 0;
+  v_beacons integer := 0;
+  v_now timestamptz := clock_timestamp();
+  v_gain bigint;
+  v_critical boolean;
+  v_combo integer;
+  v_combo_mult numeric;
+  v_surge_active boolean;
+  v_surge_roll boolean := false;
+  v_surge_chance numeric;
+  v_surge_seconds integer;
+  v_cap integer;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  v_result := public.settle_tycoon_currency_v31(p_family_id, v_uid);
+  v_state := v_result.state;
+
+  if v_state.last_tap_at is not null and v_now - v_state.last_tap_at < interval '180 milliseconds' then
+    raise exception 'tap_too_fast' using errcode = 'P0001';
+  end if;
+  if v_state.tap_energy <= 0 then
+    raise exception 'tap_energy_empty' using errcode = 'P0001';
+  end if;
+
+  select coalesce(max(owned_count) filter (where building_id = 'pathfinder_camp'), 0),
+         coalesce(max(owned_count) filter (where building_id = 'starlight_beacon'), 0)
+  into v_camps, v_beacons
+  from public.tycoon_buildings
+  where user_id = v_uid and family_id = p_family_id;
+
+  if v_state.last_tap_at is not null and v_now - v_state.last_tap_at <= interval '900 milliseconds' then
+    v_combo := least(v_state.tap_combo + 1, 30);
+  else
+    v_combo := 1;
+  end if;
+  v_combo_mult := 1 + least(v_combo - 1, 29) * 0.02;
+  v_surge_active := v_state.surge_until is not null and v_now < v_state.surge_until;
+
+  v_gain := greatest(1, round(
+    (2 + sqrt(v_camps)) * (1 + v_state.prestige_momentum * 0.25) * v_combo_mult
+    * (case when v_surge_active then 2 else 1 end)
+  ))::bigint;
+  v_critical := random() < least(0.35, 0.08 + v_beacons * 0.003 + v_state.prestige_fortune * 0.01);
+  if v_critical then v_gain := v_gain * 3; end if;
+
+  -- surge_master (section 34): +1pp trigger chance and +5s duration per level.
+  v_surge_chance := 0.04 + coalesce(v_state.prestige_surge_master, 0) * 0.01;
+  v_surge_seconds := 20 + coalesce(v_state.prestige_surge_master, 0) * 5;
+  if not v_surge_active and random() < v_surge_chance then
+    v_surge_roll := true;
+  end if;
+
+  v_cap := 20 + coalesce(v_state.prestige_energy_flow, 0) * 10;
+  update public.tycoon_state
+  set currency = least(9000000000000000::bigint, currency + v_gain),
+      lifetime_currency = least(9000000000000000::bigint, lifetime_currency + v_gain),
+      cycle_currency = least(9000000000000000::bigint, cycle_currency + v_gain),
+      tap_energy = tap_energy - 1,
+      tap_energy_updated_at = case when tap_energy = v_cap then v_now else tap_energy_updated_at end,
+      last_tap_at = v_now,
+      tap_combo = v_combo,
+      surge_until = case when v_surge_roll then v_now + make_interval(secs => v_surge_seconds) else surge_until end
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  return row(v_state, v_gain, v_critical, v_state.tap_energy, v_combo)::public.tycoon_tap_result;
+end;
+$$;
+
+grant execute on function public.settle_tycoon_currency_v31(uuid, uuid) to authenticated;
+grant execute on function public.tap_tycoon_currency(uuid) to authenticated;
+revoke execute on function public.settle_tycoon_currency_v31(uuid, uuid) from anon, public;
+revoke execute on function public.tap_tycoon_currency(uuid) from anon, public;
+
+-- =============================================================================
+-- End section 34. Re-run the full schema in Supabase before deploying the
+-- matching frontend; sections 29-33 remain intact for chronological rebuilds,
+-- and family_tycoon_* is untouched by this section.
+-- =============================================================================

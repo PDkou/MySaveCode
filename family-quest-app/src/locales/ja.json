@@ -513,6 +513,44 @@
     "prestigeConfirm": "現在の通貨と成長要素はリセットされ、「{{focus}}」が永久に強化されます。新しい旅を始めますか？",
     "prestigeComplete": "新しい旅が開かれました！",
     "prestigeResult": "旅 {{count}}回・{{focus}}を強化",
+    "prestigeButtonPoints": "新しい旅を始める・転生ポイント +{{points}}",
+    "prestigeConfirmPersonal": "現在の通貨と施設はリセットされ、転生ポイント{{points}}個を獲得します。新しい旅を始めますか？",
+    "prestigeResultPersonal": "旅 {{count}}回・転生ポイント +{{points}}",
+    "prestigePointsBalance": "転生ポイント",
+    "upgradeShopHeading": "転生ポイントで永久アップグレード",
+    "upgradeMaxed": "最大レベル",
+    "upgradeCost": "ポイント {{cost}}",
+    "autoTapActive": "自動採集が作動中です。",
+    "upgrade": {
+      "momentum": {
+        "name": "推進力",
+        "description": "レベルごとにタップの獲得量が25%増加します。"
+      },
+      "automation": {
+        "name": "自動化",
+        "description": "レベルごとに自動生産量が8%増加します。"
+      },
+      "fortune": {
+        "name": "幸運",
+        "description": "レベルごとにクリティカル・幸運ボーナス・サージ確率が1%pt増加します。"
+      },
+      "auto_tap": {
+        "name": "自動採集",
+        "description": "手を離していても自動で採集します。レベルごとに速度が上がります。"
+      },
+      "head_start": {
+        "name": "順調なスタート",
+        "description": "新しい旅を始めるとき、開拓キャンプを無料で受け取ります。レベルごとに+5。"
+      },
+      "energy_flow": {
+        "name": "活力拡張",
+        "description": "最大活力がレベルごとに10増え、長く採集できます。"
+      },
+      "surge_master": {
+        "name": "サージマスター",
+        "description": "生産サージの発動確率と持続時間がレベルごとに増加します。"
+      }
+    },
     "exchangeHeading": "アプリゴールドに交換",
     "exchangeRateHint": "{{rate}}ごとに1ゴールドへ交換されます。",
     "exchangeRemaining": "本日の残り交換枠：{{count}}ゴールド",

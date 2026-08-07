@@ -9,6 +9,7 @@ import {
   TycoonActionError,
   buyFamilyTycoonBuilding,
   buyTycoonBuilding,
+  buyTycoonPrestigeUpgrade,
   collectFamilyTycoonCurrency,
   collectTycoonCurrency,
   exchangeTycoonCurrency,
@@ -25,7 +26,11 @@ import {
   nextTycoonMilestone,
   tycoonBuildingCost,
   tycoonBuildingBulkCost,
+  tycoonEnergyCap,
+  tycoonPrestigePointsPreview,
   tycoonPrestigeThreshold,
+  tycoonPrestigeUpgradeCost,
+  tycoonPrestigeUpgradeMaxLevel,
 } from "../lib/tycoon";
 import {
   ShopActionError,
@@ -39,6 +44,7 @@ import type {
   FamilyTycoonStateRow,
   ShopItemRow,
   TycoonPrestigeFocus,
+  TycoonPrestigeUpgradeId,
   TycoonStateRow,
 } from "../types/database";
 import { ConfettiBurst } from "./ConfettiBurst";
@@ -69,8 +75,16 @@ interface TapFloat {
 }
 
 type Mode = "personal" | "family";
-type PendingPrestige = { mode: Mode; focus: TycoonPrestigeFocus };
-type PrestigeCelebration = { level: number; focus: TycoonPrestigeFocus };
+// Family still picks one focus at the moment of prestiging (unchanged,
+// section 31). Personal prestige (section 34) no longer takes a pick --
+// it always resets and pays out prestige_points, spent afterward in the
+// upgrade shop -- so its confirm/celebration state carries no focus.
+type PendingPrestige =
+  | { mode: "family"; focus: TycoonPrestigeFocus }
+  | { mode: "personal" };
+type PrestigeCelebration =
+  | { mode: "family"; level: number; focus: TycoonPrestigeFocus }
+  | { mode: "personal"; level: number; points: number };
 type PersonalReaction = "idle" | "work" | "critical" | "surge" | "purchase";
 
 const EXCHANGE_RATE = 1000;
@@ -78,6 +92,16 @@ const DAILY_EXCHANGE_CAP = 25;
 const MAX_TAP_ENERGY = 20;
 const TAP_ENERGY_SECONDS = 3;
 const FOCUS_KEYS: TycoonPrestigeFocus[] = ["momentum", "automation", "fortune"];
+// Personal-only upgrade shop (section 34) -- see TycoonPrestigeUpgradeId.
+const PRESTIGE_UPGRADE_KEYS: TycoonPrestigeUpgradeId[] = [
+  "momentum",
+  "automation",
+  "fortune",
+  "auto_tap",
+  "head_start",
+  "energy_flow",
+  "surge_master",
+];
 
 function deriveTycoonDisplay(
   state: TycoonLikeState | null,
@@ -146,6 +170,8 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
   const [shaking, setShaking] = useState(false);
   const [surgeToast, setSurgeToast] = useState(false);
   const [buyQuantity, setBuyQuantity] = useState<1 | 5>(1);
+  const [justUpgradedId, setJustUpgradedId] =
+    useState<TycoonPrestigeUpgradeId | null>(null);
   const [personalReaction, setPersonalReaction] =
     useState<PersonalReaction>("idle");
   const syncedAtRef = useRef(Date.now());
@@ -201,9 +227,17 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     feedbackTimers.current.push(timer);
   };
 
+  // energy_flow (section 34) raises the personal tap-energy cap above the
+  // flat 20 family keeps -- read through a ref inside the interval below so
+  // buying a level mid-session takes effect without tearing down the timer.
+  const personalEnergyCapRef = useRef(MAX_TAP_ENERGY);
+  useEffect(() => {
+    personalEnergyCapRef.current = tycoonEnergyCap(state?.prestige_energy_flow ?? 0);
+  }, [state?.prestige_energy_flow]);
+
   useEffect(() => {
     const timer = setInterval(() => {
-      setTapEnergy((value) => Math.min(MAX_TAP_ENERGY, value + 1));
+      setTapEnergy((value) => Math.min(personalEnergyCapRef.current, value + 1));
       setFamilyTapEnergy((value) => Math.min(MAX_TAP_ENERGY, value + 1));
     }, TAP_ENERGY_SECONDS * 1000);
     return () => clearInterval(timer);
@@ -431,6 +465,24 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     later(() => setPersonalReaction("idle"), 180);
   };
 
+  // auto_tap upgrade (section 34): a ref mirror of handleTap so the interval
+  // below always calls the latest closure (tapEnergy/state/family) instead
+  // of one captured when the interval was created.
+  const handleTapRef = useRef<() => void | Promise<void>>(() => {});
+  useEffect(() => {
+    handleTapRef.current = handleTap;
+  });
+
+  useEffect(() => {
+    const level = state?.prestige_auto_tap ?? 0;
+    if (level <= 0 || mode !== "personal") return;
+    const intervalMs = Math.max(700, 1800 - level * 400);
+    const timer = setInterval(() => {
+      if (!personalHoldingRef.current) void handleTapRef.current();
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [state?.prestige_auto_tap, mode]);
+
   const handleFamilyTap = async () => {
     if (!family || familyBusy || familyTapEnergy <= 0) return;
     setFamilyBusy(true);
@@ -561,20 +613,27 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     if (familyMode) setFamilyBusy(true);
     else setBusy(true);
     try {
-      const next = familyMode
-        ? await prestigeFamilyTycoon(family.id, target.focus)
-        : await prestigeTycoon(family.id, target.focus);
       if (familyMode) {
+        const next = await prestigeFamilyTycoon(family.id, target.focus);
         setFamilyBuildings({});
-        applyFamilyState(next as FamilyTycoonStateRow);
+        applyFamilyState(next);
+        setPrestigeCelebration({
+          mode: "family",
+          level: next.prestige_level,
+          focus: target.focus,
+        });
       } else {
+        const prevPoints = state?.prestige_points ?? 0;
+        const next = await prestigeTycoon(family.id);
         setBuildings({});
-        applyState(next as TycoonStateRow);
+        applyState(next);
+        setTapEnergy(next.tap_energy);
+        setPrestigeCelebration({
+          mode: "personal",
+          level: next.prestige_level,
+          points: Math.max(0, next.prestige_points - prevPoints),
+        });
       }
-      setPrestigeCelebration({
-        level: next.prestige_level,
-        focus: target.focus,
-      });
     } catch (err) {
       const key =
         err instanceof TycoonActionError
@@ -585,6 +644,29 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     } finally {
       if (familyMode) setFamilyBusy(false);
       else setBusy(false);
+    }
+  };
+
+  const handleBuyPrestigeUpgrade = async (upgradeId: TycoonPrestigeUpgradeId) => {
+    if (!family || busy) return;
+    setBusy(true);
+    setErrorKey(null);
+    try {
+      const next = await buyTycoonPrestigeUpgrade(family.id, upgradeId);
+      applyState(next);
+      // Brief pulse on the purchased card -- see .is-just-upgraded in
+      // global.css -- so spending points reads as an event, not a silent
+      // number change.
+      setJustUpgradedId(upgradeId);
+      later(() => setJustUpgradedId(null), 650);
+    } catch (err) {
+      setErrorKey(
+        err instanceof TycoonActionError
+          ? err.translationKey
+          : "tycoon.error.unknown",
+      );
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -616,6 +698,10 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
 
   const surging = isTycoonSurging(state?.surge_until);
   const familySurging = isTycoonSurging(familyState?.surge_until);
+  const personalEnergyCap = tycoonEnergyCap(state?.prestige_energy_flow ?? 0);
+  const personalPrestigePointsPreview = state
+    ? tycoonPrestigePointsPreview(state.cycle_currency)
+    : 0;
 
   const personalDisplay = {
     ...deriveTycoonDisplay(state, exchangeAmount),
@@ -825,10 +911,15 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
         <div className="personal-energy">
           <span>{t("tycoon.energy")}</span>
           <i>
-            <b style={{ width: `${(tapEnergy / MAX_TAP_ENERGY) * 100}%` }} />
+            <b style={{ width: `${(tapEnergy / personalEnergyCap) * 100}%` }} />
           </i>
-          <strong>{tapEnergy}</strong>
+          <strong>
+            {tapEnergy}/{personalEnergyCap}
+          </strong>
         </div>
+        {(state.prestige_auto_tap > 0) && (
+          <p className="personal-auto-tap-hint">{t("tycoon.autoTapActive")}</p>
+        )}
       </section>
     );
   };
@@ -1164,10 +1255,12 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     </section>
   );
 
+  // Family-only from here on (section 34) -- personal prestige moved to
+  // renderPersonalPrestige below, which pays out points instead of picking
+  // a focus directly.
   const renderPrestige = (
     currentState: TycoonLikeState,
     display: ReturnType<typeof deriveTycoonDisplay>,
-    targetMode: Mode,
     disabled: boolean,
   ) => (
     <section className="tycoon-section tycoon-prestige-section">
@@ -1209,7 +1302,7 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
                 type="button"
                 className="tycoon-focus-card"
                 disabled={disabled}
-                onClick={() => setPendingPrestige({ mode: targetMode, focus })}
+                onClick={() => setPendingPrestige({ mode: "family", focus })}
               >
                 <strong>{t(`tycoon.focus.${focus}.name`)}</strong>
                 <span>{t(`tycoon.focus.${focus}.description`)}</span>
@@ -1225,6 +1318,95 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     </section>
   );
 
+  // Personal-only (section 34): prestige always resets and pays out
+  // prestige_points; the three original stats plus four convenience
+  // upgrades are bought with those points here, any time -- not just at
+  // the reset moment, which is what renderPrestige's family-only
+  // pick-one-focus flow still does further down.
+  const renderPersonalPrestige = () => {
+    if (!state) return null;
+    return (
+      <section className="tycoon-section tycoon-prestige-section personal-prestige-section">
+        <div className="tycoon-section-heading">
+          <p className="settings-section-title">{t("tycoon.prestigeHeading")}</p>
+          <span>
+            {t("tycoon.prestigeCount", { count: state.prestige_level })}
+          </span>
+        </div>
+        <div className="tycoon-prestige-bar-track">
+          <div
+            className="tycoon-prestige-bar-fill"
+            style={{ width: `${personalDisplay.prestigePct}%` }}
+          />
+        </div>
+        <p className="tycoon-exchange-hint">
+          {t("tycoon.prestigeProgress", {
+            current: formatTycoonNumber(state.cycle_currency),
+            required: formatTycoonNumber(personalDisplay.required),
+          })}
+        </p>
+        <button
+          type="button"
+          className="btn btn-primary btn-block personal-prestige-btn"
+          disabled={!personalDisplay.prestigeReady || busy}
+          onClick={() => setPendingPrestige({ mode: "personal" })}
+        >
+          {personalDisplay.prestigeReady
+            ? t("tycoon.prestigeButtonPoints", {
+                points: personalPrestigePointsPreview,
+              })
+            : t("tycoon.prestigeLockedHint")}
+        </button>
+
+        <div className="personal-points-banner">
+          <span>{t("tycoon.prestigePointsBalance")}</span>
+          <strong>{formatTycoonNumber(state.prestige_points)}</strong>
+        </div>
+
+        <p className="tycoon-focus-prompt">{t("tycoon.upgradeShopHeading")}</p>
+        <div className="personal-upgrade-grid">
+          {PRESTIGE_UPGRADE_KEYS.map((upgradeId) => {
+            const level = state[
+              `prestige_${upgradeId}` as keyof TycoonStateRow
+            ] as number;
+            const maxLevel = tycoonPrestigeUpgradeMaxLevel(upgradeId);
+            const maxed = maxLevel !== null && level >= maxLevel;
+            const cost = tycoonPrestigeUpgradeCost(upgradeId, level);
+            const affordable = state.prestige_points >= cost;
+            return (
+              <article
+                key={upgradeId}
+                className={[
+                  "personal-upgrade-card",
+                  justUpgradedId === upgradeId ? "is-just-upgraded" : "",
+                ].join(" ")}
+              >
+                <header>
+                  <strong>{t(`tycoon.upgrade.${upgradeId}.name`)}</strong>
+                  <span>
+                    Lv.{level}
+                    {maxLevel !== null ? `/${maxLevel}` : ""}
+                  </span>
+                </header>
+                <p>{t(`tycoon.upgrade.${upgradeId}.description`)}</p>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  disabled={busy || maxed || !affordable}
+                  onClick={() => void handleBuyPrestigeUpgrade(upgradeId)}
+                >
+                  {maxed
+                    ? t("tycoon.upgradeMaxed")
+                    : t("tycoon.upgradeCost", { cost: formatTycoonNumber(cost) })}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
+
   const renderPersonal = () => {
     if (loading || !state)
       return <p className="empty-message">{t("common.loading")}</p>;
@@ -1237,7 +1419,7 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
       <>
         {renderPersonalWorld()}
         {renderPersonalProducerDock()}
-        {renderPrestige(state, personalDisplay, "personal", busy)}
+        {renderPersonalPrestige()}
         <section className="tycoon-section">
           <p className="settings-section-title">
             {t("tycoon.exchangeHeading")}
@@ -1377,7 +1559,7 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
           familyLastBoughtId,
           (id) => void handleBuyFamilyBuilding(id),
         )}
-        {renderPrestige(familyState, sharedDisplay, "family", familyBusy)}
+        {renderPrestige(familyState, sharedDisplay, familyBusy)}
         <section className="tycoon-section tycoon-shared-rule">
           <strong>{t("tycoon.sharedRewardHeading")}</strong>
           <p>{t("tycoon.sharedRewardRule")}</p>
@@ -1386,9 +1568,10 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     );
   };
 
-  const confirmFocusName = pendingPrestige
-    ? t(`tycoon.focus.${pendingPrestige.focus}.name`)
-    : "";
+  const confirmFocusName =
+    pendingPrestige && pendingPrestige.mode === "family"
+      ? t(`tycoon.focus.${pendingPrestige.focus}.name`)
+      : "";
 
   return (
     <>
@@ -1429,7 +1612,13 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
 
       {pendingPrestige && (
         <ConfirmModal
-          message={t("tycoon.prestigeConfirm", { focus: confirmFocusName })}
+          message={
+            pendingPrestige.mode === "family"
+              ? t("tycoon.prestigeConfirm", { focus: confirmFocusName })
+              : t("tycoon.prestigeConfirmPersonal", {
+                  points: personalPrestigePointsPreview,
+                })
+          }
           confirmLabel={t("tycoon.prestigeButton")}
           onConfirm={() => void runConfirmedPrestige()}
           onCancel={() => setPendingPrestige(null)}
@@ -1454,10 +1643,15 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
               {t("tycoon.prestigeComplete")}
             </p>
             <p className="celebration-levelup">
-              {t("tycoon.prestigeResult", {
-                count: prestigeCelebration.level,
-                focus: t(`tycoon.focus.${prestigeCelebration.focus}.name`),
-              })}
+              {prestigeCelebration.mode === "family"
+                ? t("tycoon.prestigeResult", {
+                    count: prestigeCelebration.level,
+                    focus: t(`tycoon.focus.${prestigeCelebration.focus}.name`),
+                  })
+                : t("tycoon.prestigeResultPersonal", {
+                    count: prestigeCelebration.level,
+                    points: prestigeCelebration.points,
+                  })}
             </p>
             <button
               type="button"

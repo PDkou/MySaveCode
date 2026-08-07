@@ -9,6 +9,7 @@ import type {
   TycoonBuildingRow,
   TycoonCollectResult,
   TycoonPrestigeFocus,
+  TycoonPrestigeUpgradeId,
   TycoonStateRow,
   TycoonTapResult,
 } from "../types/database";
@@ -210,6 +211,61 @@ export function isTycoonSurging(
   return !!surgeUntil && new Date(surgeUntil).getTime() > Date.now();
 }
 
+// Personal tycoon only (section 34) -- mirrors tycoon_prestige_upgrade_cost()
+// in schema.sql exactly, for the client-side price preview in the upgrade
+// shop. The server is always the authority on the actual charge.
+const PRESTIGE_UPGRADE_CURVE: Record<
+  TycoonPrestigeUpgradeId,
+  { base: number; growth: number }
+> = {
+  momentum: { base: 3, growth: 1.6 },
+  automation: { base: 3, growth: 1.6 },
+  fortune: { base: 4, growth: 1.7 },
+  auto_tap: { base: 6, growth: 2.2 },
+  head_start: { base: 5, growth: 1.8 },
+  energy_flow: { base: 5, growth: 1.9 },
+  surge_master: { base: 6, growth: 2.0 },
+};
+
+// Convenience upgrades are capped so they read as "unlock and top off"
+// rather than another infinite grind; the three power stats stay uncapped
+// (matches the check in buy_tycoon_prestige_upgrade in schema.sql).
+export const PRESTIGE_UPGRADE_MAX_LEVEL: Partial<
+  Record<TycoonPrestigeUpgradeId, number>
+> = {
+  auto_tap: 3,
+  head_start: 5,
+  energy_flow: 3,
+  surge_master: 3,
+};
+
+export function tycoonPrestigeUpgradeCost(
+  upgradeId: TycoonPrestigeUpgradeId,
+  level: number,
+): number {
+  const curve = PRESTIGE_UPGRADE_CURVE[upgradeId];
+  return Math.ceil(curve.base * Math.pow(curve.growth, Math.max(0, level)));
+}
+
+export function tycoonPrestigeUpgradeMaxLevel(
+  upgradeId: TycoonPrestigeUpgradeId,
+): number | null {
+  return PRESTIGE_UPGRADE_MAX_LEVEL[upgradeId] ?? null;
+}
+
+// Preview only, matches prestige_tycoon()'s payout formula in schema.sql --
+// points scale with sqrt of how far past the threshold the cycle went, so
+// pushing a bit further before cashing in the reset earns meaningfully more
+// with diminishing returns.
+export function tycoonPrestigePointsPreview(cycleCurrency: number): number {
+  return Math.max(1, Math.floor(Math.sqrt(Math.max(0, cycleCurrency) / 8000)));
+}
+
+// tap-energy cap grows with the energy_flow upgrade (+10/level, base 20).
+export function tycoonEnergyCap(energyFlowLevel: number): number {
+  return 20 + Math.max(0, energyFlowLevel) * 10;
+}
+
 export function tycoonPrestigeThreshold(prestigeLevel: number): number {
   return Math.min(
     SAFE_TYCOON_MAX,
@@ -269,12 +325,23 @@ export function exchangeTycoonCurrency(
   );
 }
 
-export function prestigeTycoon(
+// Personal tycoon only (section 34) -- prestige no longer takes a focus
+// pick, it always resets and pays out prestige_points. Spend those via
+// buyTycoonPrestigeUpgrade below. Family tycoon keeps the original
+// pick-one-focus prestigeFamilyTycoon further down, unchanged.
+export function prestigeTycoon(familyId: string): Promise<TycoonStateRow> {
+  return unwrap(supabase.rpc("prestige_tycoon", { p_family_id: familyId }));
+}
+
+export function buyTycoonPrestigeUpgrade(
   familyId: string,
-  focus: TycoonPrestigeFocus,
+  upgradeId: TycoonPrestigeUpgradeId,
 ): Promise<TycoonStateRow> {
   return unwrap(
-    supabase.rpc("prestige_tycoon", { p_family_id: familyId, p_focus: focus }),
+    supabase.rpc("buy_tycoon_prestige_upgrade", {
+      p_family_id: familyId,
+      p_upgrade_id: upgradeId,
+    }),
   );
 }
 
