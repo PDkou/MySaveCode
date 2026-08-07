@@ -3395,12 +3395,18 @@ textarea {
 
 .settings-date-input {
   font-family: inherit;
-  font-size: 14px;
+  /* Must stay >=16px: iOS Safari force-zooms the page on focus for any
+     text-entry input under 16px font-size, regardless of the viewport
+     meta tag's maximum-scale (Apple ignores that specifically for this
+     zoom-to-legibility behavior since iOS 10) -- this was the birthday
+     field triggering the "screen zooms and pans sideways on phone" bug.
+     Kept visually compact via padding instead of a smaller font. */
+  font-size: 16px;
   color: var(--navy);
   background: var(--surface-alt, transparent);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 5px 8px;
 }
 
 .settings-row-hint {
