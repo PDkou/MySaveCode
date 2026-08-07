@@ -75,6 +75,17 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
 
   const [tapReaction, setTapReaction] = useState<TapReaction>("idle");
   const [tapMotionKey, setTapMotionKey] = useState(0);
+  // Which of the 4 individually-cropped sweep frames (see
+  // public/art/cleaner/cleaner-girl-sweep-{1..4}.png) is showing right now.
+  // Stepped by hand via sweepFrameTimers below instead of a CSS
+  // background-position sprite-sheet animation -- the sheet's 4 frames each
+  // carried ~17-18% empty vertical padding plus zero-margin left/right
+  // edges on 3 of 4 frames, which read as the character floating during the
+  // tap reaction and showing a sliver of the neighboring frame's hair on
+  // the left. The 4 files here are cropped to a shared union bounding box
+  // and rendered through the exact same object-fit/object-position
+  // technique already proven correct for the idle pose.
+  const [sweepFrame, setSweepFrame] = useState(1);
   const [tapFloat, setTapFloat] = useState<{ id: number; gain: string } | null>(
     null,
   );
@@ -119,11 +130,13 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   const pendingAdvanceRef = useRef<CleanerStateRow | null>(null);
   const feedbackTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const tapResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sweepFrameTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(
     () => () => {
       feedbackTimers.current.forEach(clearTimeout);
       if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
+      sweepFrameTimers.current.forEach(clearTimeout);
     },
     [],
   );
@@ -214,6 +227,18 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     setTapReaction("tap");
     setTapMotionKey((current) => current + 1);
     if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
+    sweepFrameTimers.current.forEach(clearTimeout);
+    sweepFrameTimers.current = [];
+    // Steps through frames 1->2->3->4 over the same 220ms window the old
+    // cleanerSweep keyframe animation used, ~55ms per frame (frame 1 shows
+    // immediately, no timer needed for it).
+    setSweepFrame(1);
+    const FRAME_MS = 55;
+    [2, 3, 4].forEach((frame, index) => {
+      sweepFrameTimers.current.push(
+        setTimeout(() => setSweepFrame(frame), FRAME_MS * (index + 1)),
+      );
+    });
     tapResetTimer.current = setTimeout(() => {
       setTapReaction("idle");
       tapResetTimer.current = null;
@@ -590,10 +615,11 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
             >
               <div className="cleaner-shadow" />
               {tapReaction === "tap" ? (
-                <div
+                <img
                   key={tapMotionKey}
-                  className="cleaner-sweep-sprite"
-                  aria-hidden="true"
+                  className="cleaner-sprite cleaner-sprite-tap"
+                  src={`/art/cleaner/cleaner-girl-sweep-${sweepFrame}.png`}
+                  alt=""
                 />
               ) : (
                 <img
