@@ -191,10 +191,20 @@ const PERSONAL_NPCS: PersonalNpcDef[] = [
     widthPct: (104 / 724) * 100,
     loopSeconds: 0.92,
     delaySeconds: -0.41,
+    // Y is deliberately NOT the spec's raw pixel anchor (548/542/536 -> ~74-
+    // 76%) -- confirmed by screenshot that .personal-work-button (which the
+    // flat background art has no way to know about) sits directly over that
+    // zone: it's centered, up to 66% wide, and spans roughly the box's
+    // bottom 35% (bottom: 37px, min-height: 76px, against the 330px mobile
+    // min-height this has to clear). At the raw anchor the sprite rendered
+    // half-stuck behind/on top of the button. 57-58% keeps it visually near
+    // the workbench while staying clear of the button on every box size the
+    // button's fixed-px footprint is checked against (mobile's 330px
+    // min-height is the tightest fit; taller boxes only get more margin).
     anchors: [
-      { xPct: (180 / 724) * 100, yPct: (548 / 724) * 100 },
-      { xPct: (182 / 724) * 100, yPct: (542 / 724) * 100 },
-      { xPct: (180 / 724) * 100, yPct: (536 / 724) * 100 },
+      { xPct: (180 / 724) * 100, yPct: 58 },
+      { xPct: (182 / 724) * 100, yPct: 57.5 },
+      { xPct: (180 / 724) * 100, yPct: 57 },
     ],
   },
 ];
