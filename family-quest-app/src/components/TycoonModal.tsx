@@ -840,54 +840,99 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
       : 2,
   };
 
-  const renderPersonalWorld = () => {
+  // Personal tycoon's stage/next-goal derivation, shared by the stats bar
+  // (now outside the scene box) and the scene itself (needs `stage` for the
+  // background/NPC positioning). Computed once per render rather than
+  // inside either render function.
+  const personalTotalOwned = Object.values(buildings).reduce(
+    (sum, count) => sum + count,
+    0,
+  );
+  const personalStage =
+    state &&
+    (state.lifetime_currency >= 75000 || personalTotalOwned >= 75)
+      ? 2
+      : state &&
+          (state.lifetime_currency >= 1000 || personalTotalOwned >= 20)
+        ? 1
+        : 0;
+  const personalNextGoal = (() => {
     if (!state) return null;
-    const totalOwned = Object.values(buildings).reduce(
-      (sum, count) => sum + count,
-      0,
-    );
-    const stage =
-      state.lifetime_currency >= 75000 || totalOwned >= 75
-        ? 2
-        : state.lifetime_currency >= 1000 || totalOwned >= 20
-          ? 1
-          : 0;
     const nextLocked = TYCOON_PRODUCERS.find(
       (def) => state.lifetime_currency < def.unlockLifetime,
     );
     const prestige = deriveTycoonDisplay(state);
-    const nextGoal = prestige.prestigeReady
-      ? {
-          label: t("tycoon.personalGoalPrestige"),
-          detail: t("tycoon.personalGoalReady"),
-          progress: 100,
-        }
-      : nextLocked
-        ? {
-            label: t("tycoon.personalGoalUnlock", {
-              name: t(`tycoon.producers.${nextLocked.id}.name`),
-            }),
-            detail: t("tycoon.personalGoalRemaining", {
-              amount: formatTycoonNumber(
-                nextLocked.unlockLifetime - state.lifetime_currency,
-              ),
-            }),
-            progress: Math.min(
-              100,
-              Math.round(
-                (state.lifetime_currency / nextLocked.unlockLifetime) * 100,
-              ),
-            ),
-          }
-        : {
-            label: t("tycoon.personalGoalPrestige"),
-            detail: t("tycoon.personalGoalRemaining", {
-              amount: formatTycoonNumber(
-                Math.max(0, prestige.required - state.cycle_currency),
-              ),
-            }),
-            progress: prestige.prestigePct,
-          };
+    if (prestige.prestigeReady) {
+      return {
+        label: t("tycoon.personalGoalPrestige"),
+        detail: t("tycoon.personalGoalReady"),
+        progress: 100,
+      };
+    }
+    if (nextLocked) {
+      return {
+        label: t("tycoon.personalGoalUnlock", {
+          name: t(`tycoon.producers.${nextLocked.id}.name`),
+        }),
+        detail: t("tycoon.personalGoalRemaining", {
+          amount: formatTycoonNumber(
+            nextLocked.unlockLifetime - state.lifetime_currency,
+          ),
+        }),
+        progress: Math.min(
+          100,
+          Math.round(
+            (state.lifetime_currency / nextLocked.unlockLifetime) * 100,
+          ),
+        ),
+      };
+    }
+    return {
+      label: t("tycoon.personalGoalPrestige"),
+      detail: t("tycoon.personalGoalRemaining", {
+        amount: formatTycoonNumber(
+          Math.max(0, prestige.required - state.cycle_currency),
+        ),
+      }),
+      progress: prestige.prestigePct,
+    };
+  })();
+
+  // Bank + next-goal cards -- pulled out of the scene box (used to be an
+  // absolutely-positioned overlay on top of the artwork) so the scene can
+  // just be the scene, per "화면은 화면대로만 보고 싶다" feedback. Normal
+  // document flow now, sits above the scene.
+  const renderPersonalStatsBar = () => {
+    if (!state || !personalNextGoal) return null;
+    return (
+      <div className="personal-stats-bar">
+        <div className="personal-bank">
+          <small>{t("tycoon.personalCurrency")}</small>
+          <strong>{formatTycoonNumber(displayedCurrency)}</strong>
+          <span>
+            +{formatTycoonNumber(personalDisplay.rate)} / {t("tycoon.minute")}
+          </span>
+        </div>
+        <div className="personal-goal-card">
+          <span>{t("tycoon.personalNextGoal")}</span>
+          <strong>{personalNextGoal.label}</strong>
+          <small>{personalNextGoal.detail}</small>
+          <i>
+            <b style={{ width: `${personalNextGoal.progress}%` }} />
+          </i>
+        </div>
+      </div>
+    );
+  };
+
+  // The scene itself -- background art, animated NPCs, decorative
+  // live-effect glyphs, and momentary tap feedback (combo/float/crit/
+  // surge) that's inherent hit-feel tied to what's happening in the scene.
+  // No persistent buttons or HUD chrome in here anymore (see
+  // renderPersonalStatsBar/renderPersonalControls above/below).
+  const renderPersonalWorld = () => {
+    if (!state) return null;
+    const stage = personalStage;
 
     return (
       <section
@@ -925,23 +970,6 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
             />
           );
         })}
-        <div className="personal-world-hud">
-          <div className="personal-bank">
-            <small>{t("tycoon.personalCurrency")}</small>
-            <strong>{formatTycoonNumber(displayedCurrency)}</strong>
-            <span>
-              +{formatTycoonNumber(personalDisplay.rate)} / {t("tycoon.minute")}
-            </span>
-          </div>
-          <div className="personal-goal-card">
-            <span>{t("tycoon.personalNextGoal")}</span>
-            <strong>{nextGoal.label}</strong>
-            <small>{nextGoal.detail}</small>
-            <i>
-              <b style={{ width: `${nextGoal.progress}%` }} />
-            </i>
-          </div>
-        </div>
 
         <div className="personal-live-effects" aria-hidden="true">
           <i className="effect-map">!</i>
@@ -974,22 +1002,30 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
         {surging && (
           <div className="personal-surge-ribbon">{t("tycoon.surgeActive")}</div>
         )}
+      </section>
+    );
+  };
 
+  // Hold-to-work button + energy bar -- also pulled out of the scene box,
+  // now a normal-flow control strip below it.
+  const renderPersonalControls = () => {
+    if (!state) return null;
+    return (
+      <div className="personal-controls">
         <button
           type="button"
-          className="personal-work-button"
+          className={[
+            "personal-work-button",
+            personalReaction === "work" ? "is-active" : "",
+          ].join(" ")}
           disabled={tapEnergy <= 0}
           onPointerDown={(event) => {
             // Pointer capture keeps this element receiving the up/cancel
-            // events for this pointer no matter what moves underneath it
-            // (the modal reflowing, ...) -- error/lucky/surge messages now
-            // render as a fixed-position toast outside this whole section
-            // (see personalToastOverlay below), so they can no longer be
-            // the cause, but a held-and-slightly-moved touch can still look
-            // like the start of a page scroll to the browser, which is what
-            // touch-action: none on this button (global.css) guards against
-            // -- that's what actually cancels a hold via pointercancel on
-            // most mobile browsers.
+            // events for this pointer no matter what moves underneath it.
+            // touch-action: none (global.css) stops the browser from
+            // treating a held-and-slightly-moved touch as the start of a
+            // page scroll, which is what actually cancels a hold via
+            // pointercancel on most mobile browsers.
             event.currentTarget.setPointerCapture(event.pointerId);
             startPersonalHold();
           }}
@@ -1020,10 +1056,10 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
             {tapEnergy}/{personalEnergyCap}
           </strong>
         </div>
-        {(state.prestige_auto_tap > 0) && (
+        {state.prestige_auto_tap > 0 && (
           <p className="personal-auto-tap-hint">{t("tycoon.autoTapActive")}</p>
         )}
-      </section>
+      </div>
     );
   };
 
@@ -1548,7 +1584,9 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
       return <p className="empty-message">{t("common.loading")}</p>;
     return (
       <>
+        {renderPersonalStatsBar()}
         {renderPersonalWorld()}
+        {renderPersonalControls()}
         {renderPersonalProducerDock()}
         {renderPersonalPrestige()}
         <section className="tycoon-section">
