@@ -6342,3 +6342,436 @@ revoke execute on function public.prestige_family_tycoon(uuid, text) from anon, 
 -- End section 31. Re-run the full schema in Supabase before deploying the
 -- matching frontend; sections 29/30 remain intact for chronological rebuilds.
 -- =============================================================================
+
+-- =============================================================================
+-- 32. Tycoon feel pass: tap combos + production surges (2026-08)
+--
+-- Purely additive on top of section 31's producers/prestige. The settle
+-- functions (*_collect_result_v31) keep their existing return shape, so
+-- those stay plain "create or replace". The tap functions widen
+-- tycoon_tap_result/family_tycoon_tap_result with a new `combo` field
+-- (see 32-3), so those go back to the drop-type-then-create pattern
+-- section 31 already established for that same reason -- no bare
+-- "create or replace" anywhere in this file ever targets either of those
+-- two composite types, so this stays safe to re-run.
+--
+-- Tap combo: consecutive taps within 900ms of each other build a combo
+-- counter (cap 30, +2% gain per step beyond the first, so up to +58%);
+-- a gap longer than 900ms (including the pause while tap energy is empty)
+-- resets it back to 1. Tracked per-user: on tycoon_state for personal,
+-- on family_tycoon_tap_cooldowns for family (mirrors where tap_energy
+-- already lives for each).
+--
+-- Production surge: each tap has a 4% chance (only when not already
+-- surging) to start a 20-second window where the tycoon's idle production
+-- rate AND that tap's own gain are doubled. Surge state lives on
+-- tycoon_state / family_tycoon_state (shared, not per-member) since it's a
+-- global multiplier on the whole tycoon's output, not an individual's
+-- pace. No explicit expiry needed -- "is it active" is just
+-- surge_until > now(), and a new roll can only happen once it lapses.
+-- =============================================================================
+
+-- 32-1. New columns ----------------------------------------------------------
+
+alter table public.tycoon_state add column if not exists tap_combo integer not null default 0;
+alter table public.tycoon_state add column if not exists surge_until timestamptz;
+alter table public.family_tycoon_state add column if not exists surge_until timestamptz;
+alter table public.family_tycoon_tap_cooldowns add column if not exists tap_combo integer not null default 0;
+
+alter table public.tycoon_state drop constraint if exists tycoon_state_tap_combo_check;
+alter table public.tycoon_state add constraint tycoon_state_tap_combo_check check (tap_combo >= 0);
+alter table public.family_tycoon_tap_cooldowns drop constraint if exists family_tycoon_tap_cooldowns_tap_combo_check;
+alter table public.family_tycoon_tap_cooldowns add constraint family_tycoon_tap_cooldowns_tap_combo_check check (tap_combo >= 0);
+
+-- 32-2. Idle settlement applies the surge multiplier to the production rate -
+
+create or replace function public.settle_tycoon_currency_v31(p_family_id uuid, p_user_id uuid)
+returns public.tycoon_collect_result_v31
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_state public.tycoon_state;
+  v_rate numeric := 0;
+  v_trade integer := 0;
+  v_archive integer := 0;
+  v_beacon integer := 0;
+  v_elapsed numeric := 0;
+  v_base bigint := 0;
+  v_bonus bigint := 0;
+  v_lucky boolean := false;
+  v_regen integer := 0;
+  v_energy integer := 20;
+  v_energy_at timestamptz;
+begin
+  insert into public.tycoon_state (user_id, family_id)
+  values (p_user_id, p_family_id)
+  on conflict do nothing;
+
+  select * into v_state
+  from public.tycoon_state
+  where user_id = p_user_id and family_id = p_family_id
+  for update;
+
+  select
+    coalesce(sum(tb.owned_count * def.base_rate), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'trade_station'), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'archive_tower'), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'starlight_beacon'), 0)
+  into v_rate, v_trade, v_archive, v_beacon
+  from public.tycoon_building_defs() def
+  left join public.tycoon_buildings tb
+    on tb.building_id = def.building_id
+   and tb.user_id = p_user_id
+   and tb.family_id = p_family_id;
+
+  v_rate := v_rate
+    * (1 + least(1::numeric, v_trade * 0.02))
+    * power(1.15::numeric, v_state.prestige_level)
+    * (1 + v_state.prestige_automation * 0.08)
+    * (case when v_state.surge_until is not null and now() < v_state.surge_until then 2 else 1 end);
+
+  v_elapsed := greatest(
+    0,
+    extract(epoch from least(now() - v_state.last_collected_at, interval '24 hours'))
+  );
+
+  if v_rate > 0 and v_elapsed > 0 then
+    v_base := floor(v_elapsed * v_rate / 60)::bigint;
+    if v_elapsed >= 60 then
+      v_base := floor(v_base * (1 + least(1.5::numeric, v_archive * 0.03)))::bigint;
+    end if;
+    if v_base > 0 and v_elapsed >= 30
+       and random() < least(0.20, 0.02 + v_beacon * 0.003 + v_state.prestige_fortune * 0.01) then
+      v_bonus := v_base * (2 + floor(random() * 3)::bigint);
+      v_lucky := true;
+    end if;
+  end if;
+
+  if v_state.tap_energy >= 20 then
+    v_energy := 20;
+    v_energy_at := now();
+  else
+    v_regen := floor(extract(epoch from now() - v_state.tap_energy_updated_at) / 3)::integer;
+    v_energy := least(20, v_state.tap_energy + greatest(0, v_regen));
+    if v_energy >= 20 then
+      v_energy_at := now();
+    else
+      v_energy_at := v_state.tap_energy_updated_at + make_interval(secs => greatest(0, v_regen) * 3);
+    end if;
+  end if;
+
+  update public.tycoon_state
+  set currency = least(9000000000000000::bigint, currency + v_base + v_bonus),
+      lifetime_currency = least(9000000000000000::bigint, lifetime_currency + v_base + v_bonus),
+      cycle_currency = least(9000000000000000::bigint, cycle_currency + v_base + v_bonus),
+      last_collected_at = now(),
+      tap_energy = v_energy,
+      tap_energy_updated_at = v_energy_at
+  where user_id = p_user_id and family_id = p_family_id
+  returning * into v_state;
+
+  return row(v_state, v_base + v_bonus, v_base, v_bonus, v_lucky, v_state.tap_energy)
+    ::public.tycoon_collect_result_v31;
+end;
+$$;
+
+create or replace function public.settle_family_tycoon_currency_v31(p_family_id uuid)
+returns public.family_tycoon_collect_result_v31
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.family_tycoon_state;
+  v_rate numeric := 0;
+  v_trade integer := 0;
+  v_archive integer := 0;
+  v_beacon integer := 0;
+  v_elapsed numeric := 0;
+  v_base bigint := 0;
+  v_bonus bigint := 0;
+  v_lucky boolean := false;
+  v_cooldown public.family_tycoon_tap_cooldowns;
+  v_regen integer := 0;
+  v_energy integer := 20;
+  v_energy_at timestamptz;
+begin
+  insert into public.family_tycoon_state (family_id)
+  values (p_family_id)
+  on conflict do nothing;
+
+  select * into v_state
+  from public.family_tycoon_state
+  where family_id = p_family_id
+  for update;
+
+  select
+    coalesce(sum(tb.owned_count * def.base_rate), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'trade_station'), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'archive_tower'), 0),
+    coalesce(max(tb.owned_count) filter (where def.building_id = 'starlight_beacon'), 0)
+  into v_rate, v_trade, v_archive, v_beacon
+  from public.tycoon_building_defs() def
+  left join public.family_tycoon_buildings tb
+    on tb.building_id = def.building_id and tb.family_id = p_family_id;
+
+  v_rate := v_rate
+    * (1 + least(1::numeric, v_trade * 0.02))
+    * power(1.15::numeric, v_state.prestige_level)
+    * (1 + v_state.prestige_automation * 0.08)
+    * (case when v_state.surge_until is not null and now() < v_state.surge_until then 2 else 1 end);
+
+  v_elapsed := greatest(
+    0,
+    extract(epoch from least(now() - v_state.last_collected_at, interval '24 hours'))
+  );
+
+  if v_rate > 0 and v_elapsed > 0 then
+    v_base := floor(v_elapsed * v_rate / 60)::bigint;
+    if v_elapsed >= 60 then
+      v_base := floor(v_base * (1 + least(1.5::numeric, v_archive * 0.03)))::bigint;
+    end if;
+    if v_base > 0 and v_elapsed >= 30
+       and random() < least(0.20, 0.02 + v_beacon * 0.003 + v_state.prestige_fortune * 0.01) then
+      v_bonus := v_base * (2 + floor(random() * 3)::bigint);
+      v_lucky := true;
+    end if;
+  end if;
+
+  update public.family_tycoon_state
+  set currency = least(9000000000000000::bigint, currency + v_base + v_bonus),
+      lifetime_currency = least(9000000000000000::bigint, lifetime_currency + v_base + v_bonus),
+      cycle_currency = least(9000000000000000::bigint, cycle_currency + v_base + v_bonus),
+      last_collected_at = now()
+  where family_id = p_family_id
+  returning * into v_state;
+
+  insert into public.family_tycoon_tap_cooldowns (family_id, user_id)
+  values (p_family_id, v_uid)
+  on conflict do nothing;
+
+  select * into v_cooldown
+  from public.family_tycoon_tap_cooldowns
+  where family_id = p_family_id and user_id = v_uid
+  for update;
+
+  if v_cooldown.tap_energy >= 20 then
+    v_energy := 20;
+    v_energy_at := now();
+  else
+    v_regen := floor(extract(epoch from now() - v_cooldown.tap_energy_updated_at) / 3)::integer;
+    v_energy := least(20, v_cooldown.tap_energy + greatest(0, v_regen));
+    if v_energy >= 20 then
+      v_energy_at := now();
+    else
+      v_energy_at := v_cooldown.tap_energy_updated_at + make_interval(secs => greatest(0, v_regen) * 3);
+    end if;
+  end if;
+
+  update public.family_tycoon_tap_cooldowns
+  set tap_energy = v_energy, tap_energy_updated_at = v_energy_at
+  where family_id = p_family_id and user_id = v_uid;
+
+  return row(v_state, v_base + v_bonus, v_base, v_bonus, v_lucky, v_energy)
+    ::public.family_tycoon_collect_result_v31;
+end;
+$$;
+
+-- 32-3. Taps: combo multiplier + a chance to trigger a surge -----------------
+--
+-- Widens tycoon_tap_result/family_tycoon_tap_result with an explicit combo
+-- field, same reasoning as tap_energy already being a top-level field
+-- alongside state rather than something the client digs out of the row
+-- itself -- for the family variant this is the only way to surface it at
+-- all, since tap_combo lives on family_tycoon_tap_cooldowns (per-member),
+-- not on the shared family_tycoon_state row.
+
+drop type if exists public.tycoon_tap_result cascade;
+create type public.tycoon_tap_result as (
+  state public.tycoon_state,
+  gained bigint,
+  is_critical boolean,
+  tap_energy integer,
+  combo integer
+);
+
+drop type if exists public.family_tycoon_tap_result cascade;
+create type public.family_tycoon_tap_result as (
+  state public.family_tycoon_state,
+  gained bigint,
+  is_critical boolean,
+  tap_energy integer,
+  combo integer
+);
+
+create function public.tap_tycoon_currency(p_family_id uuid)
+returns public.tycoon_tap_result
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_result public.tycoon_collect_result_v31;
+  v_state public.tycoon_state;
+  v_camps integer := 0;
+  v_beacons integer := 0;
+  v_now timestamptz := clock_timestamp();
+  v_gain bigint;
+  v_critical boolean;
+  v_combo integer;
+  v_combo_mult numeric;
+  v_surge_active boolean;
+  v_surge_roll boolean := false;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  v_result := public.settle_tycoon_currency_v31(p_family_id, v_uid);
+  v_state := v_result.state;
+
+  if v_state.last_tap_at is not null and v_now - v_state.last_tap_at < interval '180 milliseconds' then
+    raise exception 'tap_too_fast' using errcode = 'P0001';
+  end if;
+  if v_state.tap_energy <= 0 then
+    raise exception 'tap_energy_empty' using errcode = 'P0001';
+  end if;
+
+  select coalesce(max(owned_count) filter (where building_id = 'pathfinder_camp'), 0),
+         coalesce(max(owned_count) filter (where building_id = 'starlight_beacon'), 0)
+  into v_camps, v_beacons
+  from public.tycoon_buildings
+  where user_id = v_uid and family_id = p_family_id;
+
+  if v_state.last_tap_at is not null and v_now - v_state.last_tap_at <= interval '900 milliseconds' then
+    v_combo := least(v_state.tap_combo + 1, 30);
+  else
+    v_combo := 1;
+  end if;
+  v_combo_mult := 1 + least(v_combo - 1, 29) * 0.02;
+  v_surge_active := v_state.surge_until is not null and v_now < v_state.surge_until;
+
+  v_gain := greatest(1, round(
+    (2 + sqrt(v_camps)) * (1 + v_state.prestige_momentum * 0.25) * v_combo_mult
+    * (case when v_surge_active then 2 else 1 end)
+  ))::bigint;
+  v_critical := random() < least(0.35, 0.08 + v_beacons * 0.003 + v_state.prestige_fortune * 0.01);
+  if v_critical then v_gain := v_gain * 3; end if;
+
+  if not v_surge_active and random() < 0.04 then
+    v_surge_roll := true;
+  end if;
+
+  update public.tycoon_state
+  set currency = least(9000000000000000::bigint, currency + v_gain),
+      lifetime_currency = least(9000000000000000::bigint, lifetime_currency + v_gain),
+      cycle_currency = least(9000000000000000::bigint, cycle_currency + v_gain),
+      tap_energy = tap_energy - 1,
+      tap_energy_updated_at = case when tap_energy = 20 then v_now else tap_energy_updated_at end,
+      last_tap_at = v_now,
+      tap_combo = v_combo,
+      surge_until = case when v_surge_roll then v_now + interval '20 seconds' else surge_until end
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  return row(v_state, v_gain, v_critical, v_state.tap_energy, v_combo)::public.tycoon_tap_result;
+end;
+$$;
+
+create function public.tap_family_tycoon_currency(p_family_id uuid)
+returns public.family_tycoon_tap_result
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_result public.family_tycoon_collect_result_v31;
+  v_state public.family_tycoon_state;
+  v_cooldown public.family_tycoon_tap_cooldowns;
+  v_camps integer := 0;
+  v_beacons integer := 0;
+  v_now timestamptz := clock_timestamp();
+  v_gain bigint;
+  v_critical boolean;
+  v_combo integer;
+  v_combo_mult numeric;
+  v_surge_active boolean;
+  v_surge_roll boolean := false;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  v_result := public.settle_family_tycoon_currency_v31(p_family_id);
+  v_state := v_result.state;
+
+  select * into v_cooldown
+  from public.family_tycoon_tap_cooldowns
+  where family_id = p_family_id and user_id = v_uid
+  for update;
+
+  if v_cooldown.last_tap_at is not null and v_now - v_cooldown.last_tap_at < interval '180 milliseconds' then
+    raise exception 'tap_too_fast' using errcode = 'P0001';
+  end if;
+  if v_cooldown.tap_energy <= 0 then
+    raise exception 'tap_energy_empty' using errcode = 'P0001';
+  end if;
+
+  select coalesce(max(owned_count) filter (where building_id = 'pathfinder_camp'), 0),
+         coalesce(max(owned_count) filter (where building_id = 'starlight_beacon'), 0)
+  into v_camps, v_beacons
+  from public.family_tycoon_buildings
+  where family_id = p_family_id;
+
+  if v_cooldown.last_tap_at is not null and v_now - v_cooldown.last_tap_at <= interval '900 milliseconds' then
+    v_combo := least(v_cooldown.tap_combo + 1, 30);
+  else
+    v_combo := 1;
+  end if;
+  v_combo_mult := 1 + least(v_combo - 1, 29) * 0.02;
+  v_surge_active := v_state.surge_until is not null and v_now < v_state.surge_until;
+
+  v_gain := greatest(1, round(
+    (2 + sqrt(v_camps)) * (1 + v_state.prestige_momentum * 0.25) * v_combo_mult
+    * (case when v_surge_active then 2 else 1 end)
+  ))::bigint;
+  v_critical := random() < least(0.35, 0.08 + v_beacons * 0.003 + v_state.prestige_fortune * 0.01);
+  if v_critical then v_gain := v_gain * 3; end if;
+
+  if not v_surge_active and random() < 0.04 then
+    v_surge_roll := true;
+  end if;
+
+  update public.family_tycoon_state
+  set currency = least(9000000000000000::bigint, currency + v_gain),
+      lifetime_currency = least(9000000000000000::bigint, lifetime_currency + v_gain),
+      cycle_currency = least(9000000000000000::bigint, cycle_currency + v_gain),
+      surge_until = case when v_surge_roll then v_now + interval '20 seconds' else surge_until end
+  where family_id = p_family_id
+  returning * into v_state;
+
+  update public.family_tycoon_tap_cooldowns
+  set tap_energy = tap_energy - 1,
+      tap_energy_updated_at = case when tap_energy = 20 then v_now else tap_energy_updated_at end,
+      last_tap_at = v_now,
+      tap_combo = v_combo,
+      contribution_currency = least(9000000000000000::bigint, contribution_currency + v_gain)
+  where family_id = p_family_id and user_id = v_uid
+  returning * into v_cooldown;
+
+  return row(v_state, v_gain, v_critical, v_cooldown.tap_energy, v_combo)::public.family_tycoon_tap_result;
+end;
+$$;
+
+grant execute on function public.tap_tycoon_currency(uuid) to authenticated;
+grant execute on function public.tap_family_tycoon_currency(uuid) to authenticated;
+revoke execute on function public.tap_tycoon_currency(uuid) from anon, public;
+revoke execute on function public.tap_family_tycoon_currency(uuid) from anon, public;
+
+-- =============================================================================
+-- End section 32. Re-run the full schema in Supabase before deploying the
+-- matching frontend; sections 29-31 remain intact for chronological rebuilds.
+-- =============================================================================

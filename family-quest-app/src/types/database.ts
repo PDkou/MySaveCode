@@ -114,6 +114,17 @@ export type TycoonStateRow = {
   // in schema.sql) -- replaces the old fixed 2s tap cooldown.
   tap_energy: number;
   tap_energy_updated_at: string;
+  // Consecutive-tap combo (section 32 feel pass) -- increments on each tap
+  // landing within 900ms of the last one, capped at 30 (+58% tap gain at
+  // max), resets to 1 on any longer gap. See tap_tycoon_currency in
+  // schema.sql; the multiplier math lives server-side, this is just the
+  // counter for display.
+  tap_combo: number;
+  // Non-null and in the future while a "production surge" is active
+  // (section 32) -- a ~4% per-tap chance, only while not already surging,
+  // to double both the idle production rate and that tap's own gain for
+  // 20 seconds. Compare against the client clock to show a countdown.
+  surge_until: string | null;
   last_collected_at: string;
   last_tap_at: string | null;
   exchanged_today: number;
@@ -122,10 +133,12 @@ export type TycoonStateRow = {
 };
 
 // The family-shared idle tycoon (2026-08 overhaul) -- same shape as
-// TycoonStateRow minus user_id/tap_energy*, since exactly one row exists per
-// family and every member's collect/upgrade acts on it, but each member's
-// own tap energy/cooldown is tracked separately in
-// family_tycoon_tap_cooldowns (section 31 fairness fix) rather than shared.
+// TycoonStateRow minus user_id/tap_energy*/tap_combo, since exactly one row
+// exists per family and every member's collect/upgrade acts on it, but each
+// member's own tap energy/cooldown/combo is tracked separately in
+// family_tycoon_tap_cooldowns (section 31 fairness fix, extended in section
+// 32) rather than shared. surge_until stays here though -- it's a
+// production-wide multiplier, not a per-member pace stat.
 export type FamilyTycoonStateRow = {
   family_id: string;
   currency: number;
@@ -136,6 +149,7 @@ export type FamilyTycoonStateRow = {
   prestige_momentum: number;
   prestige_automation: number;
   prestige_fortune: number;
+  surge_until: string | null;
   last_collected_at: string;
   last_tap_at: string | null;
   exchanged_today: number;
@@ -163,13 +177,16 @@ export type FamilyTycoonBuildingRow = {
 // Per-member tap energy/cooldown for the family-shared tycoon (section 31)
 // -- one row per (family, member), so members tap independently instead of
 // contending over one shared cooldown. contribution_currency is tracked for
-// future per-member attribution UI, not currently surfaced.
+// future per-member attribution UI, not currently surfaced. tap_combo
+// (section 32) is this member's own consecutive-tap streak, independent of
+// everyone else's -- same reasoning as tap_energy living here.
 export type FamilyTycoonTapCooldownRow = {
   family_id: string;
   user_id: string;
   last_tap_at: string | null;
   tap_energy: number;
   tap_energy_updated_at: string;
+  tap_combo: number;
   contribution_currency: number;
 };
 
@@ -197,9 +214,13 @@ export type FamilyTycoonCollectResult = {
 // tap_tycoon_currency/tap_family_tycoon_currency return this composite
 // (not a bare state row) so the client can show an honest, server-decided
 // critical-hit celebration instead of guessing from a currency diff that
-// could also include ordinary idle accrual.
-export type TycoonTapResult = { state: TycoonStateRow; gained: number; is_critical: boolean; tap_energy: number };
-export type FamilyTycoonTapResult = { state: FamilyTycoonStateRow; gained: number; is_critical: boolean; tap_energy: number };
+// could also include ordinary idle accrual. `combo` (section 32) is this
+// tap's resulting consecutive-tap streak -- for personal it's also on
+// state.tap_combo, but the family variant has no other way to surface it
+// since it lives on the per-member family_tycoon_tap_cooldowns row, not on
+// the shared FamilyTycoonStateRow.
+export type TycoonTapResult = { state: TycoonStateRow; gained: number; is_critical: boolean; tap_energy: number; combo: number };
+export type FamilyTycoonTapResult = { state: FamilyTycoonStateRow; gained: number; is_critical: boolean; tap_energy: number; combo: number };
 
 export type QuestPayoutKind = 'completion' | 'requester_bonus';
 

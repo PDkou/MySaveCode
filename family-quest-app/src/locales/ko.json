@@ -431,6 +431,9 @@
     "tapButton": "활력 보내기 +{{gain}}",
     "criticalTap": "대성공! +{{gain}}",
     "luckyBonus": "별빛 보너스! +{{gain}}",
+    "comboCount": "콤보 ×{{count}}",
+    "surgeStarted": "생산 폭증 발생! 20초간 생산량 2배",
+    "surgeActive": "생산 폭증 중 ×2",
     "producersHeading": "성장 요소",
     "strategyHint": "각 요소의 역할이 서로 달라요",
     "producers": {

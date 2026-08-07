@@ -15,6 +15,7 @@ import {
   formatTycoonNumber,
   getFamilyTycoonBuildings,
   getTycoonBuildings,
+  isTycoonSurging,
   prestigeFamilyTycoon,
   prestigeTycoon,
   rateForBuildings,
@@ -56,6 +57,13 @@ interface TycoonLikeState {
   prestige_fortune: number;
   exchanged_today: number;
   exchange_reset_date: string;
+  surge_until: string | null;
+}
+
+interface TapFloat {
+  id: number;
+  gain: number;
+  crit: boolean;
 }
 
 type Mode = "personal" | "family";
@@ -130,6 +138,10 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
   const [luckyGain, setLuckyGain] = useState<number | null>(null);
   const [tapBurst, setTapBurst] = useState(0);
   const [lastBoughtId, setLastBoughtId] = useState<string | null>(null);
+  const [combo, setCombo] = useState(1);
+  const [tapFloat, setTapFloat] = useState<TapFloat | null>(null);
+  const [shaking, setShaking] = useState(false);
+  const [surgeToast, setSurgeToast] = useState(false);
   const syncedAtRef = useRef(Date.now());
 
   const [shopItems, setShopItems] = useState<ShopItemRow[]>([]);
@@ -156,6 +168,10 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
   const [familyLastBoughtId, setFamilyLastBoughtId] = useState<string | null>(
     null,
   );
+  const [familyCombo, setFamilyCombo] = useState(1);
+  const [familyTapFloat, setFamilyTapFloat] = useState<TapFloat | null>(null);
+  const [familyShaking, setFamilyShaking] = useState(false);
+  const [familySurgeToast, setFamilySurgeToast] = useState(false);
   const familySyncedAtRef = useRef(Date.now());
 
   const feedbackTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -224,6 +240,7 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
       setBuildings(buildingMap);
       applyState(collectResult.state);
       setTapEnergy(collectResult.tap_energy);
+      setCombo(collectResult.state.tap_combo);
       if (collectResult.is_lucky) flashLucky(collectResult.bonus_gained);
       setShopItems(items.filter((item) => item.currency === "tycoon"));
       setOwnedIds(owned);
@@ -271,12 +288,13 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
 
   useEffect(() => {
     if (!state) return;
-    const rate = rateForBuildings(
-      buildings,
-      state.prestige_level,
-      state.prestige_automation,
-    );
     const tick = () => {
+      const rate = rateForBuildings(
+        buildings,
+        state.prestige_level,
+        state.prestige_automation,
+        isTycoonSurging(state.surge_until),
+      );
       const elapsedSeconds = (Date.now() - syncedAtRef.current) / 1000;
       setDisplayedCurrency(
         Math.min(
@@ -292,12 +310,13 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
 
   useEffect(() => {
     if (!familyState) return;
-    const rate = rateForBuildings(
-      familyBuildings,
-      familyState.prestige_level,
-      familyState.prestige_automation,
-    );
     const tick = () => {
+      const rate = rateForBuildings(
+        familyBuildings,
+        familyState.prestige_level,
+        familyState.prestige_automation,
+        isTycoonSurging(familyState.surge_until),
+      );
       const elapsedSeconds = (Date.now() - familySyncedAtRef.current) / 1000;
       setFamilyDisplayedCurrency(
         Math.min(
@@ -311,16 +330,43 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     return () => clearInterval(timer);
   }, [familyState, familyBuildings]);
 
+  const triggerShake = (familyMode = false) => {
+    if (familyMode) setFamilyShaking(true);
+    else setShaking(true);
+    later(() => (familyMode ? setFamilyShaking(false) : setShaking(false)), 420);
+  };
+
+  const flashSurgeToast = (familyMode = false) => {
+    if (familyMode) setFamilySurgeToast(true);
+    else setSurgeToast(true);
+    later(
+      () => (familyMode ? setFamilySurgeToast(false) : setSurgeToast(false)),
+      2600,
+    );
+  };
+
   const handleTap = async () => {
     if (!family || busy || tapEnergy <= 0) return;
     setBusy(true);
     setErrorKey(null);
-    setTapBurst((value) => value + 1);
+    const burstId = tapBurst + 1;
+    setTapBurst(burstId);
+    const wasSurging = isTycoonSurging(state?.surge_until);
     try {
       const result = await tapTycoonCurrency(family.id);
       applyState(result.state);
       setTapEnergy(result.tap_energy);
-      if (result.is_critical) flashCrit(result.gained);
+      setCombo(result.combo);
+      setTapFloat({ id: burstId, gain: result.gained, crit: result.is_critical });
+      later(() => setTapFloat(null), 900);
+      if (result.is_critical) {
+        flashCrit(result.gained);
+        triggerShake();
+      }
+      if (!wasSurging && isTycoonSurging(result.state.surge_until)) {
+        flashSurgeToast();
+        triggerShake();
+      }
     } catch (err) {
       setErrorKey(
         err instanceof TycoonActionError
@@ -336,12 +382,28 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     if (!family || familyBusy || familyTapEnergy <= 0) return;
     setFamilyBusy(true);
     setFamilyErrorKey(null);
-    setFamilyTapBurst((value) => value + 1);
+    const burstId = familyTapBurst + 1;
+    setFamilyTapBurst(burstId);
+    const wasSurging = isTycoonSurging(familyState?.surge_until);
     try {
       const result = await tapFamilyTycoonCurrency(family.id);
       applyFamilyState(result.state);
       setFamilyTapEnergy(result.tap_energy);
-      if (result.is_critical) flashCrit(result.gained, true);
+      setFamilyCombo(result.combo);
+      setFamilyTapFloat({
+        id: burstId,
+        gain: result.gained,
+        crit: result.is_critical,
+      });
+      later(() => setFamilyTapFloat(null), 900);
+      if (result.is_critical) {
+        flashCrit(result.gained, true);
+        triggerShake(true);
+      }
+      if (!wasSurging && isTycoonSurging(result.state.surge_until)) {
+        flashSurgeToast(true);
+        triggerShake(true);
+      }
     } catch (err) {
       setFamilyErrorKey(
         err instanceof TycoonActionError
@@ -480,6 +542,9 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     }
   };
 
+  const surging = isTycoonSurging(state?.surge_until);
+  const familySurging = isTycoonSurging(familyState?.surge_until);
+
   const personalDisplay = {
     ...deriveTycoonDisplay(state, exchangeAmount),
     rate: state
@@ -487,9 +552,12 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
           buildings,
           state.prestige_level,
           state.prestige_automation,
+          surging,
         )
       : 0,
-    tapGain: state ? tapGainPreview(buildings, state.prestige_momentum) : 2,
+    tapGain: state
+      ? tapGainPreview(buildings, state.prestige_momentum, combo, surging)
+      : 2,
   };
   const sharedDisplay = {
     ...deriveTycoonDisplay(familyState),
@@ -498,20 +566,33 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
           familyBuildings,
           familyState.prestige_level,
           familyState.prestige_automation,
+          familySurging,
         )
       : 0,
     tapGain: familyState
-      ? tapGainPreview(familyBuildings, familyState.prestige_momentum)
+      ? tapGainPreview(
+          familyBuildings,
+          familyState.prestige_momentum,
+          familyCombo,
+          familySurging,
+        )
       : 2,
   };
 
-  const renderWorld = (owned: Record<string, number>, lifetime: number) => {
+  const renderWorld = (
+    owned: Record<string, number>,
+    lifetime: number,
+    surging: boolean,
+  ) => {
     const totalOwned = Object.values(owned).reduce(
       (sum, count) => sum + count,
       0,
     );
     return (
-      <section className="tycoon-world" aria-label={t("tycoon.worldLabel")}>
+      <section
+        className={["tycoon-world", surging ? "is-surging" : ""].join(" ")}
+        aria-label={t("tycoon.worldLabel")}
+      >
         <img
           className="tycoon-world-bg"
           src="/art/tycoon/quest-hub-scene.png"
@@ -519,6 +600,11 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
           aria-hidden="true"
         />
         <div className="tycoon-world-shade" />
+        {surging && (
+          <div className="tycoon-surge-banner" role="status">
+            {t("tycoon.surgeActive")}
+          </div>
+        )}
         <div className="tycoon-world-level">
           <span>
             {t("tycoon.worldLevel", { level: 1 + Math.floor(totalOwned / 10) })}
@@ -549,60 +635,114 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     );
   };
 
-  const renderTap = (
-    energy: number,
-    gain: number,
-    rate: number,
-    currency: number,
-    crit: number | null,
-    burst: number,
-    disabled: boolean,
-    onTap: () => void,
-  ) => (
-    <section className="tycoon-control-panel">
-      <div className="tycoon-currency-display">
-        <span className="tycoon-currency-amount">
-          {formatTycoonNumber(currency)}
-        </span>
-        <span className="tycoon-currency-rate">
-          {t("tycoon.ratePerMin", { rate: formatTycoonNumber(rate) })}
-        </span>
-      </div>
-      <div className="tycoon-energy-row">
-        <span>{t("tycoon.energy")}</span>
-        <div className="tycoon-energy-track">
-          <i style={{ width: `${(energy / MAX_TAP_ENERGY) * 100}%` }} />
-        </div>
-        <strong>
-          {energy}/{MAX_TAP_ENERGY}
-        </strong>
-      </div>
-      <div className="tycoon-tap-wrap">
-        <button
-          type="button"
-          className="tycoon-tap-button"
-          disabled={disabled || energy <= 0}
-          onClick={onTap}
-        >
-          <img
-            src="/art/tycoon/quest-producer-atlas.png"
-            alt=""
-            aria-hidden="true"
-          />
-          <span>{t("tycoon.tapButton", { gain })}</span>
-          <small>
-            {energy <= 0 ? t("tycoon.energyRecharge") : t("tycoon.tapHint")}
-          </small>
-        </button>
-        <span key={burst} className="tycoon-tap-ring" aria-hidden="true" />
-        {crit !== null && (
-          <span className="tycoon-crit-flash">
-            {t("tycoon.criticalTap", { gain: crit })}
+  const renderTap = (props: {
+    energy: number;
+    gain: number;
+    rate: number;
+    currency: number;
+    crit: number | null;
+    burst: number;
+    disabled: boolean;
+    combo: number;
+    surging: boolean;
+    tapFloat: TapFloat | null;
+    shaking: boolean;
+    onTap: () => void;
+  }) => {
+    const {
+      energy,
+      gain,
+      rate,
+      currency,
+      crit,
+      burst,
+      disabled,
+      combo: comboCount,
+      surging,
+      tapFloat: float,
+      shaking: isShaking,
+      onTap,
+    } = props;
+    return (
+      <section className="tycoon-control-panel">
+        <div className="tycoon-currency-display">
+          <span
+            key={burst}
+            className={[
+              "tycoon-currency-amount",
+              surging ? "is-surging" : "",
+            ].join(" ")}
+          >
+            {formatTycoonNumber(currency)}
           </span>
+          <span className="tycoon-currency-rate">
+            {t("tycoon.ratePerMin", { rate: formatTycoonNumber(rate) })}
+            {surging && <b className="tycoon-surge-tag">×2</b>}
+          </span>
+        </div>
+        <div className="tycoon-energy-row">
+          <span>{t("tycoon.energy")}</span>
+          <div className="tycoon-energy-track">
+            <i style={{ width: `${(energy / MAX_TAP_ENERGY) * 100}%` }} />
+          </div>
+          <strong>
+            {energy}/{MAX_TAP_ENERGY}
+          </strong>
+        </div>
+        {comboCount > 1 && (
+          <div
+            key={comboCount}
+            className={[
+              "tycoon-combo-badge",
+              comboCount >= 15 ? "is-hot" : "",
+            ].join(" ")}
+          >
+            {t("tycoon.comboCount", { count: comboCount })}
+          </div>
         )}
-      </div>
-    </section>
-  );
+        <div
+          className={[
+            "tycoon-tap-wrap",
+            isShaking ? "is-shaking" : "",
+          ].join(" ")}
+        >
+          <button
+            type="button"
+            className="tycoon-tap-button"
+            disabled={disabled || energy <= 0}
+            onClick={onTap}
+          >
+            <img
+              src="/art/tycoon/quest-producer-atlas.png"
+              alt=""
+              aria-hidden="true"
+            />
+            <span>{t("tycoon.tapButton", { gain })}</span>
+            <small>
+              {energy <= 0 ? t("tycoon.energyRecharge") : t("tycoon.tapHint")}
+            </small>
+          </button>
+          <span key={burst} className="tycoon-tap-ring" aria-hidden="true" />
+          {float && (
+            <span
+              key={float.id}
+              className={[
+                "tycoon-tap-float",
+                float.crit ? "is-crit" : "",
+              ].join(" ")}
+            >
+              +{formatTycoonNumber(float.gain)}
+            </span>
+          )}
+          {crit !== null && (
+            <span className="tycoon-crit-flash">
+              {t("tycoon.criticalTap", { gain: crit })}
+            </span>
+          )}
+        </div>
+      </section>
+    );
+  };
 
   const renderProducerList = (
     currentState: TycoonLikeState,
@@ -747,17 +887,24 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
             {t("tycoon.luckyBonus", { gain: formatTycoonNumber(luckyGain) })}
           </p>
         )}
-        {renderWorld(buildings, state.lifetime_currency)}
-        {renderTap(
-          tapEnergy,
-          personalDisplay.tapGain,
-          personalDisplay.rate,
-          displayedCurrency,
-          critGain,
-          tapBurst,
-          busy,
-          () => void handleTap(),
+        {surgeToast && (
+          <p className="tycoon-surge-toast">{t("tycoon.surgeStarted")}</p>
         )}
+        {renderWorld(buildings, state.lifetime_currency, surging)}
+        {renderTap({
+          energy: tapEnergy,
+          gain: personalDisplay.tapGain,
+          rate: personalDisplay.rate,
+          currency: displayedCurrency,
+          crit: critGain,
+          burst: tapBurst,
+          disabled: busy,
+          combo,
+          surging,
+          tapFloat,
+          shaking,
+          onTap: () => void handleTap(),
+        })}
         {renderProducerList(
           state,
           buildings,
@@ -876,17 +1023,28 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
             })}
           </p>
         )}
-        {renderWorld(familyBuildings, familyState.lifetime_currency)}
-        {renderTap(
-          familyTapEnergy,
-          sharedDisplay.tapGain,
-          sharedDisplay.rate,
-          familyDisplayedCurrency,
-          familyCritGain,
-          familyTapBurst,
-          familyBusy,
-          () => void handleFamilyTap(),
+        {familySurgeToast && (
+          <p className="tycoon-surge-toast">{t("tycoon.surgeStarted")}</p>
         )}
+        {renderWorld(
+          familyBuildings,
+          familyState.lifetime_currency,
+          familySurging,
+        )}
+        {renderTap({
+          energy: familyTapEnergy,
+          gain: sharedDisplay.tapGain,
+          rate: sharedDisplay.rate,
+          currency: familyDisplayedCurrency,
+          crit: familyCritGain,
+          burst: familyTapBurst,
+          disabled: familyBusy,
+          combo: familyCombo,
+          surging: familySurging,
+          tapFloat: familyTapFloat,
+          shaking: familyShaking,
+          onTap: () => void handleFamilyTap(),
+        })}
         {renderProducerList(
           familyState,
           familyBuildings,
