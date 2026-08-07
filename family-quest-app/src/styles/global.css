@@ -4931,6 +4931,10 @@ textarea {
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  /* Stops the browser from treating a held-and-slightly-moved touch as the
+     start of a page scroll -- that scroll-gesture handoff is what actually
+     fires pointercancel and drops a hold-to-work press mid-hold. */
+  touch-action: none;
 }
 
 .personal-work-button:hover:not(:disabled) {
@@ -5066,6 +5070,25 @@ textarea {
   box-shadow: 0 3px 0 #27799c;
   font-size: 12px;
   animation: personalSurgeRibbon 0.45s steps(4) both;
+}
+
+.personal-toast-overlay {
+  position: absolute;
+  z-index: 4;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.personal-toast-overlay .form-error,
+.personal-toast-overlay .tycoon-lucky-toast,
+.personal-toast-overlay .tycoon-surge-toast {
+  margin: 0;
+  pointer-events: auto;
 }
 
 .personal-live-effects i {
