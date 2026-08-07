@@ -272,7 +272,10 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   }, [user, load, refresh]);
 
   const joinFamily = useCallback(async (code: string) => {
-    const { data, error } = await supabase.rpc('join_family_room', { p_code: code });
+    // Passing our own room_type lets the server reject joining a room
+    // meant for the other app (see schema section 33) instead of silently
+    // creating a membership that only the load() filter above would hide.
+    const { data, error } = await supabase.rpc('join_family_room', { p_code: code, p_room_type: APP_MODE });
     if (error) {
       throw new FamilyActionError(mapFamilyErrorToKey(error.message));
     }

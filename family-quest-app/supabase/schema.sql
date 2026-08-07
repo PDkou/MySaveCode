@@ -6775,3 +6775,105 @@ revoke execute on function public.tap_family_tycoon_currency(uuid) from anon, pu
 -- End section 32. Re-run the full schema in Supabase before deploying the
 -- matching frontend; sections 29-31 remain intact for chronological rebuilds.
 -- =============================================================================
+
+-- =============================================================================
+-- 33. Reject cross-app room joins by invite code (2026-08)
+--
+-- family-quest-app and business-quest-app share one Supabase project (and
+-- so one auth.users table) -- an account that enters a 'family' room's
+-- invite code while using business-quest-app (or vice versa) could
+-- previously join it anyway; the room just wouldn't surface in that app's
+-- UI afterward (see the frontend-only FamilyContext fix that shipped
+-- alongside this). This closes it server-side: join_family_room now takes
+-- the joining app's expected room_type and rejects a mismatch as if the
+-- code didn't exist at all (not a distinct "wrong app" error) -- an
+-- invite code for a room in the other app shouldn't reveal that a room
+-- exists there either.
+--
+-- p_room_type defaults to null (skip the check) rather than being
+-- required, so this stays safe to re-run against an older, not-yet-updated
+-- frontend during a rollout -- the check only activates once the client
+-- actually starts passing its APP_MODE.
+--
+-- Adding a parameter (even a defaulted one) makes this a distinct
+-- overload from the old join_family_room(text) as far as Postgres/
+-- PostgREST function-name resolution is concerned -- a bare "create or
+-- replace" would leave both signatures installed side by side and turn
+-- every 1-argument call ambiguous ("function is not unique"). The old
+-- one has to be dropped first.
+-- =============================================================================
+
+drop function if exists public.join_family_room(text);
+create or replace function public.join_family_room(p_code text, p_room_type text default null)
+returns public.families
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_code text := upper(trim(coalesce(p_code, '')));
+  v_family public.families;
+  v_display_name text;
+  v_room_count integer;
+  v_other_family_id uuid;
+  v_owner_id uuid;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  if length(v_code) <> 8 then
+    raise exception 'invalid_invite_code' using errcode = '22023';
+  end if;
+
+  select * into v_family from public.families where invite_code = v_code;
+  if not found then
+    raise exception 'family_not_found' using errcode = 'P0002';
+  end if;
+
+  if p_room_type is not null and v_family.room_type <> p_room_type then
+    raise exception 'family_not_found' using errcode = 'P0002';
+  end if;
+
+  if exists (select 1 from public.family_members where family_id = v_family.id and user_id = v_uid) then
+    raise exception 'already_in_this_family' using errcode = '23505';
+  end if;
+
+  select display_name into v_display_name from public.profiles where id = v_uid;
+
+  -- Same starter grant as create_family_room -- see the comment there.
+  insert into public.family_members (family_id, user_id, role, display_name, points, starter_grant_received)
+  values (v_family.id, v_uid, 'member', v_display_name, 20, true);
+
+  perform public.grant_title(v_family.id, v_uid, 'newcomer');
+
+  -- 인싸 (재정의, 13-2): 3+ rooms -- grant to every room they're in.
+  select count(*) into v_room_count from public.family_members where user_id = v_uid;
+  if v_room_count >= 3 then
+    for v_other_family_id in select family_id from public.family_members where user_id = v_uid loop
+      perform public.grant_title(v_other_family_id, v_uid, 'social_butterfly');
+    end loop;
+  end if;
+
+  -- 🔒 초대왕 (재정의, 13-2): room hits 5+ members -- goes to that room's
+  -- current owner, not the newly-joining member.
+  select count(*) into v_room_count from public.family_members where family_id = v_family.id;
+  if v_room_count >= 5 then
+    select user_id into v_owner_id from public.family_members where family_id = v_family.id and role = 'owner';
+    if v_owner_id is not null then
+      perform public.grant_title(v_family.id, v_owner_id, 'invite_king');
+    end if;
+  end if;
+
+  return v_family;
+end;
+$$;
+
+grant execute on function public.join_family_room(text, text) to authenticated;
+revoke execute on function public.join_family_room(text, text) from anon, public;
+
+-- =============================================================================
+-- End section 33. Re-run the full schema in Supabase before deploying the
+-- matching frontend; sections 29-32 remain intact for chronological rebuilds.
+-- =============================================================================
