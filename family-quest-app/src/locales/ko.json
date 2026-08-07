@@ -513,6 +513,44 @@
     "prestigeConfirm": "현재 재화와 성장 요소는 초기화되고 ‘{{focus}}’가 영구적으로 강화돼요. 새 여정을 시작할까요?",
     "prestigeComplete": "새로운 여정이 열렸어요!",
     "prestigeResult": "여정 {{count}}회 · {{focus}} 강화 완료",
+    "prestigeButtonPoints": "새 여정 시작 · 환생 포인트 +{{points}}",
+    "prestigeConfirmPersonal": "현재 재화와 시설은 초기화되고 환생 포인트 {{points}}개를 받아요. 새 여정을 시작할까요?",
+    "prestigeResultPersonal": "여정 {{count}}회 · 환생 포인트 +{{points}}",
+    "prestigePointsBalance": "환생 포인트",
+    "upgradeShopHeading": "환생 포인트로 영구 업그레이드",
+    "upgradeMaxed": "최대 레벨",
+    "upgradeCost": "포인트 {{cost}}",
+    "autoTapActive": "자동 채집이 작동 중이에요.",
+    "upgrade": {
+      "momentum": {
+        "name": "추진력",
+        "description": "레벨마다 탭 채집량이 25% 늘어나요."
+      },
+      "automation": {
+        "name": "자동화",
+        "description": "레벨마다 자동 생산량이 8% 늘어나요."
+      },
+      "fortune": {
+        "name": "행운",
+        "description": "레벨마다 크리티컬 · 행운 보너스 · 서지 확률이 1%p 늘어나요."
+      },
+      "auto_tap": {
+        "name": "자동 채집",
+        "description": "손을 떼고 있어도 자동으로 채집해요. 레벨마다 속도가 빨라져요."
+      },
+      "head_start": {
+        "name": "순조로운 출발",
+        "description": "새 여정을 시작할 때 개척 캠프를 무료로 받아요. 레벨마다 +5."
+      },
+      "energy_flow": {
+        "name": "활력 확장",
+        "description": "최대 활력이 레벨마다 10 늘어나 더 오래 채집할 수 있어요."
+      },
+      "surge_master": {
+        "name": "서지 마스터",
+        "description": "생산 서지 발동 확률과 지속시간이 레벨마다 늘어나요."
+      }
+    },
     "exchangeHeading": "앱 골드로 교환",
     "exchangeRateHint": "{{rate}} 당 1골드로 교환돼요.",
     "exchangeRemaining": "오늘 남은 교환 한도: {{count}}골드",

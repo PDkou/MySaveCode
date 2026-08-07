@@ -81,9 +81,32 @@ export type MemberEquippedItemRow = {
 // Permanent prestige specialization the player picks on each reset (2026-08
 // quest-world producer redesign, section 31) -- momentum boosts tap gain,
 // automation boosts auto-production, fortune boosts lucky-bonus/critical
-// odds. One point in exactly one track per prestige (see prestige_tycoon /
-// prestige_family_tycoon in schema.sql).
+// odds. One point in exactly one track per prestige. This stays the family
+// tycoon's mechanic (prestige_family_tycoon in schema.sql, unchanged); the
+// personal tycoon moved to the points-based TycoonPrestigeUpgradeId shop
+// below (section 34) -- momentum/automation/fortune are still the same
+// three stats there, just bought with prestige_points instead of picked.
 export type TycoonPrestigeFocus = 'momentum' | 'automation' | 'fortune';
+
+// Personal-tycoon-only upgrade shop (section 34). Spent with
+// buy_tycoon_prestige_upgrade against TycoonStateRow.prestige_points, which
+// prestige_tycoon() pays out on every reset. momentum/automation/fortune are
+// uncapped (same stats as TycoonPrestigeFocus, just repeatable purchases
+// now); the other four are convenience upgrades capped at a max level (see
+// tycoonPrestigeUpgradeMaxLevel in lib/tycoon.ts) so they read as
+// "unlock and top off" instead of another infinite grind:
+//   auto_tap     -- unlocks/speeds up hands-free auto-tapping
+//   head_start   -- free pathfinder_camp levels immediately after a reset
+//   energy_flow  -- raises the tap-energy cap above the base 20
+//   surge_master -- raises production-surge trigger chance and duration
+export type TycoonPrestigeUpgradeId =
+  | 'momentum'
+  | 'automation'
+  | 'fortune'
+  | 'auto_tap'
+  | 'head_start'
+  | 'energy_flow'
+  | 'surge_master';
 
 export type TycoonStateRow = {
   user_id: string;
@@ -110,8 +133,21 @@ export type TycoonStateRow = {
   prestige_momentum: number;
   prestige_automation: number;
   prestige_fortune: number;
-  // 0-20, regenerates 1 every 3s server-side (see settle_tycoon_currency_v31
-  // in schema.sql) -- replaces the old fixed 2s tap cooldown.
+  // 환생 포인트 (section 34) -- paid out by prestige_tycoon() on every reset,
+  // scaled by how far past the threshold cycle_currency reached. Spent via
+  // buy_tycoon_prestige_upgrade on the levels below (and on additional
+  // momentum/automation/fortune levels, which are otherwise identical to
+  // the family tycoon's picked-focus stats).
+  prestige_points: number;
+  // Convenience upgrade levels bought with prestige_points (section 34) --
+  // see TycoonPrestigeUpgradeId above for what each one does.
+  prestige_auto_tap: number;
+  prestige_head_start: number;
+  prestige_energy_flow: number;
+  prestige_surge_master: number;
+  // 0-(20 + prestige_energy_flow*10), regenerates 1 every 3s server-side
+  // (see settle_tycoon_currency_v31 in schema.sql) -- replaces the old
+  // fixed 2s tap cooldown. The cap grows with prestige_energy_flow.
   tap_energy: number;
   tap_energy_updated_at: string;
   // Consecutive-tap combo (section 32 feel pass) -- increments on each tap
@@ -602,8 +638,14 @@ export type Database = {
         Args: { p_family_id: string; p_currency_amount: number };
         Returns: TycoonStateRow;
       };
+      // p_focus is gone as of section 34 -- prestige always resets and pays
+      // out prestige_points now instead of granting one focus level.
       prestige_tycoon: {
-        Args: { p_family_id: string; p_focus: TycoonPrestigeFocus };
+        Args: { p_family_id: string };
+        Returns: TycoonStateRow;
+      };
+      buy_tycoon_prestige_upgrade: {
+        Args: { p_family_id: string; p_upgrade_id: TycoonPrestigeUpgradeId };
         Returns: TycoonStateRow;
       };
       collect_family_tycoon_currency: {

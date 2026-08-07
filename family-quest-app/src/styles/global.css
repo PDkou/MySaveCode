@@ -5513,3 +5513,108 @@ textarea {
     grid-auto-columns: 84%;
   }
 }
+
+/* ---------------------------------------------------------------------- */
+/* Personal tycoon prestige-points upgrade shop (section 34, 2026-08)      */
+/* ---------------------------------------------------------------------- */
+
+.personal-prestige-section .personal-prestige-btn {
+  margin: 10px 0 12px;
+}
+
+.personal-points-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0 12px;
+  padding: 9px 12px;
+  border: 2px solid color-mix(in srgb, var(--amber) 45%, var(--border));
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--amber) 14%, var(--card)),
+    color-mix(in srgb, var(--purple) 10%, var(--card))
+  );
+}
+
+.personal-points-banner span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.personal-points-banner strong {
+  color: var(--amber-dark, var(--amber));
+  font-size: 18px;
+}
+
+.personal-upgrade-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.personal-upgrade-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 9px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  transition:
+    transform 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.personal-upgrade-card header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.personal-upgrade-card header strong {
+  color: var(--navy);
+  font-size: 12px;
+}
+
+.personal-upgrade-card header span {
+  color: var(--purple);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.personal-upgrade-card p {
+  flex: 1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.personal-upgrade-card > button {
+  width: 100%;
+}
+
+/* Purchase pulse -- reuses the same "pop" keyframe the producer dock's
+   is-new tile already uses, so buying an upgrade reads as an event instead
+   of a silent number change (see handleBuyPrestigeUpgrade in
+   TycoonModal.tsx). */
+.personal-upgrade-card.is-just-upgraded {
+  animation: personalPurchasePop 0.7s steps(5);
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 25%, transparent);
+}
+
+.personal-auto-tap-hint {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .personal-upgrade-grid {
+    grid-template-columns: 1fr;
+  }
+}
