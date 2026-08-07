@@ -5105,12 +5105,20 @@ textarea {
   animation: personalSurgeRibbon 0.45s steps(4) both;
 }
 
+/* Floats above the whole modal (not just the scene box) so it reads
+   clearly against a plain background instead of getting lost over the
+   busy workshop art -- see renderPersonalToastOverlay in TycoonModal.tsx.
+   position: fixed keeps it just as immune to layout shift as the old
+   absolute-inside-the-scene placement (nothing in the modal's flow can
+   push a fixed element), so the hold-to-work button still can't get
+   cancelled by one of these appearing mid-hold. */
 .personal-toast-overlay {
-  position: absolute;
-  z-index: 4;
-  left: 8px;
-  right: 8px;
-  top: 8px;
+  position: fixed;
+  z-index: 60;
+  left: 50%;
+  top: max(10px, env(safe-area-inset-top, 0px));
+  width: min(92vw, 448px);
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -5122,6 +5130,19 @@ textarea {
 .personal-toast-overlay .tycoon-surge-toast {
   margin: 0;
   pointer-events: auto;
+}
+
+/* .form-error is plain colored text with no background elsewhere in the
+   app (fine inline in a form) -- floating over anything busy needs its
+   own opaque card, unlike tycoon-lucky-toast/tycoon-surge-toast which
+   already have one. */
+.personal-toast-overlay .form-error {
+  padding: 9px 12px;
+  border: 2px solid color-mix(in srgb, var(--error) 55%, var(--navy));
+  border-radius: 11px;
+  background: var(--card);
+  box-shadow: 0 4px 14px rgba(20, 16, 26, 0.28);
+  text-align: center;
 }
 
 .personal-live-effects i {
