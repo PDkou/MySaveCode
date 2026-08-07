@@ -4152,6 +4152,13 @@ textarea {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  /* cleaner-girl-idle.png is a square (1:1) crop but this box is portrait
+     (52% wide x 73% tall) -- object-fit's default center position left
+     equal empty space above and below the contained image, reading as the
+     character floating above the scene's floor. Bottom-anchor it instead
+     so its feet always sit on the box's own bottom edge, where the shadow
+     already is. */
+  object-position: 50% 100%;
   image-rendering: pixelated;
   filter: drop-shadow(0 3px 0 rgba(20, 16, 26, 0.2));
   transform-origin: 50% 100%;
@@ -4160,7 +4167,18 @@ textarea {
 
 .cleaner-sweep-sprite {
   position: relative;
-  width: 100%;
+  /* cleaner-girl-sweep-sheet.png's 4 frames are each 443x887 (~1:2, tall
+     and narrow) -- the old `width:100%; height:100%` forced every frame to
+     stretch to this box's own (52:73, ~0.71) aspect ratio, visibly
+     squishing the character. Sized here to preserve the frame's true 0.5
+     aspect ratio instead (this project avoids the CSS `aspect-ratio`
+     property after past cross-device issues -- see the .cleaner-scene
+     square-box comment above -- so the ratio is baked in as a fixed
+     percentage of this box's own dimensions: constraining by height,
+     0.4994 * 73% (this box's height, in scene-relative terms) / 52% (this
+     box's width, in scene-relative terms) ~= 70%). The parent's `display:
+     grid; place-items:center` centers the narrower result horizontally. */
+  width: 70%;
   height: 100%;
   background-image: url("/art/cleaner/cleaner-girl-sweep-sheet.png");
   background-position: 0 0;
