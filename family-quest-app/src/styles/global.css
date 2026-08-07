@@ -3939,6 +3939,13 @@ textarea {
   border-radius: 16px;
   background: #79d8ef;
   isolation: isolate;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tycoon-world.is-surging {
+  border-color: color-mix(in srgb, var(--amber) 80%, var(--navy));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 32%, transparent);
+  animation: tycoonSurgeGlow 1.6s ease-in-out infinite;
 }
 
 .tycoon-world-bg {
@@ -3955,6 +3962,44 @@ textarea {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, transparent 42%, rgba(12, 28, 37, 0.34));
+}
+
+@keyframes tycoonSurgeGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 22%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--amber) 42%, transparent);
+  }
+}
+
+@keyframes tycoonSurgeBannerIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.tycoon-surge-banner {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 10px;
+  padding: 5px 12px;
+  border: 2px solid color-mix(in srgb, var(--navy) 70%, black);
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--amber), color-mix(in srgb, var(--amber) 60%, #ff7a3d));
+  color: var(--navy);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  animation: tycoonSurgeBannerIn 0.28s ease-out both;
 }
 
 .tycoon-world-level {
@@ -4252,6 +4297,126 @@ textarea {
   font-weight: 850;
   text-align: center;
   animation: tycoonLuckyIn 0.38s ease-out both;
+}
+
+.tycoon-surge-toast {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 2px solid color-mix(in srgb, var(--navy) 70%, black);
+  border-radius: 11px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--amber) 30%, var(--card)), color-mix(in srgb, var(--amber) 12%, var(--card)));
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+  animation: tycoonLuckyIn 0.38s ease-out both;
+}
+
+.tycoon-currency-amount.is-surging {
+  color: var(--amber-dark);
+}
+
+.tycoon-surge-tag {
+  margin-left: 5px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--amber) 30%, var(--card));
+  color: var(--amber-dark);
+  font-size: 10px;
+  font-weight: 950;
+}
+
+@keyframes tycoonComboIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(4px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.tycoon-combo-badge {
+  align-self: center;
+  justify-self: center;
+  margin-bottom: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--purple) 20%, var(--card));
+  color: var(--purple-dark);
+  font-size: 12px;
+  font-weight: 950;
+  text-align: center;
+  animation: tycoonComboIn 0.22s ease-out both;
+}
+
+.tycoon-combo-badge.is-hot {
+  background: linear-gradient(90deg, var(--purple), var(--amber));
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+@keyframes tycoonTapFloat {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 6px) scale(0.85);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -6px) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -46px) scale(1);
+  }
+}
+
+.tycoon-tap-float {
+  position: absolute;
+  z-index: 3;
+  left: 28%;
+  top: 6px;
+  color: var(--purple-dark);
+  font-size: 15px;
+  font-weight: 950;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  white-space: nowrap;
+  animation: tycoonTapFloat 0.85s ease-out both;
+}
+
+.tycoon-tap-float.is-crit {
+  left: 50%;
+  color: var(--amber-dark);
+  font-size: 20px;
+}
+
+@keyframes tycoonShake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-4px, 1px) rotate(-1deg);
+  }
+  40% {
+    transform: translate(4px, -1px) rotate(1deg);
+  }
+  60% {
+    transform: translate(-3px, 1px) rotate(-0.6deg);
+  }
+  80% {
+    transform: translate(3px, -1px) rotate(0.6deg);
+  }
+}
+
+.tycoon-tap-wrap.is-shaking {
+  animation: tycoonShake 0.42s ease-in-out;
 }
 
 .tycoon-section-heading {

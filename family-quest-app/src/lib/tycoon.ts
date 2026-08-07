@@ -144,6 +144,7 @@ export function rateForBuildings(
   owned: Record<string, number>,
   prestigeLevel = 0,
   automationFocus = 0,
+  surging = false,
 ): number {
   const directRate = TYCOON_PRODUCERS.reduce(
     (sum, def) => sum + (owned[def.id] ?? 0) * def.baseRate,
@@ -153,21 +154,36 @@ export function rateForBuildings(
   return (
     directRate *
     tradeSynergy *
-    prestigeMultiplier(prestigeLevel, automationFocus)
+    prestigeMultiplier(prestigeLevel, automationFocus) *
+    (surging ? 2 : 1)
   );
 }
 
+// Mirrors tap_tycoon_currency/tap_family_tycoon_currency's gain formula in
+// schema.sql (section 32 combo + surge pass) closely enough for a preview
+// number on the tap button -- the server is always the authority on the
+// actual gain, this is display-only.
 export function tapGainPreview(
   owned: Record<string, number>,
   momentumFocus = 0,
+  comboCount = 1,
+  surging = false,
 ): number {
   const camps = Math.max(0, owned.pathfinder_camp ?? 0);
+  const comboMult = 1 + Math.min(Math.max(0, comboCount - 1), 29) * 0.02;
   return Math.max(
     1,
     Math.round(
-      (2 + Math.sqrt(camps)) * (1 + Math.max(0, momentumFocus) * 0.25),
+      (2 + Math.sqrt(camps)) *
+        (1 + Math.max(0, momentumFocus) * 0.25) *
+        comboMult *
+        (surging ? 2 : 1),
     ),
   );
+}
+
+export function isTycoonSurging(surgeUntil: string | null | undefined): boolean {
+  return !!surgeUntil && new Date(surgeUntil).getTime() > Date.now();
 }
 
 export function tycoonPrestigeThreshold(prestigeLevel: number): number {

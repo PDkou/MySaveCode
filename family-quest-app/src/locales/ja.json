@@ -431,6 +431,9 @@
     "tapButton": "活力を送る +{{gain}}",
     "criticalTap": "大成功！ +{{gain}}",
     "luckyBonus": "星明かりボーナス！ +{{gain}}",
+    "comboCount": "コンボ ×{{count}}",
+    "surgeStarted": "生産サージ発生！ 20秒間、生産量が2倍に",
+    "surgeActive": "サージ中 ×2",
     "producersHeading": "成長要素",
     "strategyHint": "要素ごとに役割が異なります",
     "producers": {
