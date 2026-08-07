@@ -4818,9 +4818,27 @@ textarea {
 
 /* ---------- Personal tycoon: playable workshop surface ---------- */
 
+/* aspect-ratio: 1/1, not a fixed min-height, is load-bearing here -- not
+   just cosmetic. .personal-tycoon-scene's background-size: 300% auto
+   scales to *width* (3x container width, "auto" height keeping the source
+   image's 3:1 aspect ratio), so each stage cell always renders as a square
+   sized to the container's WIDTH, regardless of the container's actual
+   height. With a fixed min-height (previously 430px/330px, independent of
+   the fluid width), that square essentially never matched the box's real
+   aspect ratio -- meaning every NPC's `top: Y%` (percentage of the box's
+   HEIGHT) was being applied to a differently-sized square than the one
+   actually on screen, and the mismatch changed with viewport width. Confirmed
+   wrong on a real device despite looking fine in this sandbox's specific
+   test viewport. Forcing the box itself to be a true square makes
+   container width == container height always, so the rendered art square
+   exactly fills the box with zero letterboxing/cropping, and every
+   percentage anchor (this box's own background-position centering, and
+   every PERSONAL_NPCS xPct/yPct in TycoonModal.tsx) resolves to exactly
+   the coordinate math it was written for -- by construction, not by
+   coincidence at one viewport width. */
 .personal-tycoon-world {
   position: relative;
-  min-height: 430px;
+  aspect-ratio: 1 / 1;
   margin: 10px 0 14px;
   overflow: hidden;
   border: 3px solid #2d2633;
@@ -5519,10 +5537,6 @@ textarea {
 }
 
 @media (max-width: 560px) {
-  .personal-tycoon-world {
-    min-height: 330px;
-  }
-
   .personal-bank {
     min-width: 102px;
     padding: 6px 8px;
