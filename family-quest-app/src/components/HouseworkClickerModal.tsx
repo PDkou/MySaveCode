@@ -11,7 +11,7 @@ import {
   buyCleanerUpgrade,
   cleanerHeartbeat,
   cleanerRoomForStage,
-  cleanerRequiredCleaning,
+  cleanerEffectiveRequiredCleaning,
   cleanerToolCost,
   completeCleanerStage,
   exchangeCleanerPoints,
@@ -195,7 +195,13 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     const interval = setInterval(() => {
       void flushTapBatch();
     }, TAP_BATCH_MS);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      // Flush whatever landed in the last (< TAP_BATCH_MS) window instead of
+      // dropping it -- without this, closing the modal or navigating away
+      // right after a tap could silently lose that tap's credit.
+      void flushTapBatch();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [family?.id]);
 
@@ -212,8 +218,8 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   useEffect(() => {
     if (!family) return;
     let interval: ReturnType<typeof setInterval> | null = null;
-    const tick = () => {
-      void cleanerHeartbeat(family.id)
+    const tick = (sessionStart: boolean) => {
+      void cleanerHeartbeat(family.id, sessionStart)
         .then((next) => setState(next))
         .catch(() => {
           // Heartbeat failures are silent -- a missed tick just means no
@@ -223,8 +229,13 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     };
     const start = () => {
       if (interval) return;
-      tick();
-      interval = setInterval(tick, HEARTBEAT_MS);
+      // sessionStart=true: this call always just resets the server's
+      // baseline with zero credit, even if last_heartbeat_at is old (e.g.
+      // the app was closed for hours) -- without this, every resume could
+      // credit up to 15s as if the player had been actively online the
+      // whole time. Only the interval's own later ticks (below) pass false.
+      tick(true);
+      interval = setInterval(() => tick(false), HEARTBEAT_MS);
     };
     const stop = () => {
       if (interval) {
@@ -257,7 +268,10 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   useEffect(() => {
     if (!state || !family || completingRef.current || deepCleanCelebration)
       return;
-    const required = cleanerRequiredCleaning(state.stage);
+    const required = cleanerEffectiveRequiredCleaning(
+      state.stage,
+      (upgradesOwned["quick_living_room"] ?? 0) > 0,
+    );
     if (BigInt(state.stage_progress) < required) return;
     completingRef.current = true;
     const finishedRoom = cleanerRoomForStage(state.stage);
@@ -287,7 +301,7 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, family?.id, deepCleanCelebration]);
+  }, [state, family?.id, deepCleanCelebration, upgradesOwned]);
 
   const dismissDeepClean = () => {
     if (pendingAdvanceRef.current) {
@@ -324,7 +338,8 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
       setPrestigePreview(preview);
     } catch {
       // Preview is best-effort display -- the prestige button itself still
-      // gates correctly off state.max_stage even if this fetch fails.
+      // gates correctly off state.max_completed_stage even if this fetch
+      // fails.
     }
     try {
       const [items, owned] = await Promise.all([
@@ -405,15 +420,24 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
 
   const handleExchange = async () => {
     if (!family || busyExchange) return;
-    const amount = Math.floor(Number(exchangeAmount));
-    if (!amount || amount <= 0) {
+    // Regex-validated non-negative integer string -> BigInt, never
+    // Number(exchangeAmount) -- this game's currency exceeds
+    // Number.MAX_SAFE_INTEGER well before stage 20, and Number() also
+    // silently accepts exponent notation/decimals/Infinity that a raw
+    // currency string should never contain.
+    if (!/^\d+$/.test(exchangeAmount)) {
+      setErrorKey("cleaner.error.invalidAmount");
+      return;
+    }
+    const amount = BigInt(exchangeAmount);
+    if (amount <= 0n) {
       setErrorKey("cleaner.error.invalidAmount");
       return;
     }
     setBusyExchange(true);
     setErrorKey(null);
     try {
-      const next = await exchangeCleanerPoints(family.id, String(amount));
+      const next = await exchangeCleanerPoints(family.id, amount.toString());
       setState(next);
       setExchangeAmount("");
     } catch (err) {
@@ -443,14 +467,20 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
 
   const room = cleanerRoomForStage(state.stage);
   const stageInChapter = ((state.stage - 1) % 5) + 1;
-  const required = cleanerRequiredCleaning(state.stage);
+  const hasQuickLivingRoom = (upgradesOwned["quick_living_room"] ?? 0) > 0;
+  const required = cleanerEffectiveRequiredCleaning(state.stage, hasQuickLivingRoom);
   const progressPct = required > 0n
     ? Math.min(100, Number((BigInt(state.stage_progress) * 100n) / required))
     : 0;
-  const ratePerSecond = CLEANER_TOOLS.reduce(
+  const hasEfficientTools = (upgradesOwned["efficient_tools_1"] ?? 0) > 0;
+  const baseRatePerSecond = CLEANER_TOOLS.reduce(
     (sum, tool) => sum + tool.baseRate * (toolsOwned[tool.id] ?? 0),
     0,
   );
+  // Mirrors cleaner_heartbeat's v_auto_mult in schema.sql -- the HUD used
+  // to show the pre-upgrade base rate even after buying efficient_tools_1,
+  // silently understating actual passive income by 20%.
+  const ratePerSecond = baseRatePerSecond * (hasEfficientTools ? 1.2 : 1);
   const visibleTools = visibleCleanerTools(state.max_stage);
   const hasAffordableNewTool = visibleTools.some((tool) => {
     const owned = toolsOwned[tool.id] ?? 0;
@@ -459,11 +489,18 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   });
   const ownedUpgradeIds = new Set(Object.keys(upgradesOwned));
   const visibleUpgrades = visibleCleanerUpgrades(ownedUpgradeIds);
-  const prestigeEligible = state.max_stage >= 10;
+  // max_completed_stage (stage 10 actually *completed*), not max_stage
+  // (merely *entered*) -- mirrors perform_cleaner_prestige's own gate.
+  // Using max_stage here let a player who'd only completed stage 9 see the
+  // prestige option a stage early.
+  const prestigeEligible = state.max_completed_stage >= 10;
 
-  const exchangePreviewPoints = Math.floor(
-    (Math.floor(Number(exchangeAmount)) || 0) / EXCHANGE_RATE,
-  );
+  // exchangeAmount is validated as a plain non-negative integer string
+  // (regex, not Number()) before any BigInt math -- Number() would lose
+  // precision past Number.MAX_SAFE_INTEGER, which this game's own currency
+  // growth curve exceeds by stage ~19.
+  const exchangeAmountBig = /^\d+$/.test(exchangeAmount) ? BigInt(exchangeAmount) : 0n;
+  const exchangePreviewPoints = exchangeAmountBig / BigInt(EXCHANGE_RATE);
   const remainingDailyExchange = Math.max(
     0,
     DAILY_EXCHANGE_CAP - state.exchanged_today,
@@ -555,6 +592,16 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
               type="button"
               className={`cleaner-tap-button ${tapReaction === "tap" ? "is-active" : ""}`}
               onPointerDown={handleTap}
+              onClick={(event) => {
+                // onPointerDown already handles every mouse/touch tap for
+                // low-latency feedback; a browser follows pointerdown with
+                // its own synthetic click, which would double-count if this
+                // handler fired for it too. event.detail is 0 only for a
+                // click synthesized from keyboard activation (Enter/Space on
+                // a focused button), never for a real pointer click -- so
+                // this only handles the keyboard path onPointerDown misses.
+                if (event.detail === 0) handleTap();
+              }}
               onContextMenu={(event) => event.preventDefault()}
             >
               {t("cleaner.tapButton")}
@@ -704,10 +751,10 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
               <button
                 type="button"
                 className="btn btn-primary"
-                disabled={busyExchange || exchangePreviewPoints <= 0}
+                disabled={busyExchange || exchangePreviewPoints <= 0n}
                 onClick={() => void handleExchange()}
               >
-                {t("cleaner.exchangeButton", { points: exchangePreviewPoints })}
+                {t("cleaner.exchangeButton", { points: exchangePreviewPoints.toString() })}
               </button>
             </div>
 

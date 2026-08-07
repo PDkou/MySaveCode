@@ -803,6 +803,26 @@
     "night_owl": {
       "name": "올빼미족",
       "desc": "밤 11시 이후에 퀘스트를 완료했어요"
+    },
+    "cleaner_deep_clean_5": {
+      "name": "첫 대청소",
+      "desc": "집안일 클리커에서 첫 대청소를 완료했어요"
+    },
+    "cleaner_deep_clean_10": {
+      "name": "청소왕의 길",
+      "desc": "집안일 클리커 10단계 대청소를 완료했어요"
+    },
+    "cleaner_deep_clean_15": {
+      "name": "반짝반짝 손길",
+      "desc": "집안일 클리커 15단계 대청소를 완료했어요"
+    },
+    "cleaner_deep_clean_20": {
+      "name": "구석구석 마스터",
+      "desc": "집안일 클리커 20단계 대청소를 완료했어요"
+    },
+    "cleaner_deep_clean_25": {
+      "name": "끝없는 대청소",
+      "desc": "집안일 클리커 25단계 대청소를 완료했어요"
     }
   }
 }

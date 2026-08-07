@@ -51,6 +51,14 @@ export const ALL_BADGE_KEYS: BadgeKey[] = [
   'streak_7',
   'early_bird',
   'night_owl',
+  // Housework clicker deep-clean badges (schema.sql section 36) -- granted
+  // by complete_cleaner_stage, capped at stage 25 (the 5-stage chapters
+  // keep going past that, but stop minting new badge keys for it).
+  'cleaner_deep_clean_5',
+  'cleaner_deep_clean_10',
+  'cleaner_deep_clean_15',
+  'cleaner_deep_clean_20',
+  'cleaner_deep_clean_25',
 ];
 
 export const BADGE_EMOJI: Record<BadgeKey, string> = {
@@ -61,11 +69,20 @@ export const BADGE_EMOJI: Record<BadgeKey, string> = {
   streak_7: '⚡',
   early_bird: '🌅',
   night_owl: '🦉',
+  cleaner_deep_clean_5: '🧽',
+  cleaner_deep_clean_10: '🧴',
+  cleaner_deep_clean_15: '🧼',
+  cleaner_deep_clean_20: '🪣',
+  cleaner_deep_clean_25: '✨',
 };
 
 // Pixel-art medal icons (design/gamification-iconography.md), replacing the
 // system-emoji placeholders above wherever a badge is rendered visually.
 // BADGE_EMOJI is kept around for alt text.
+//
+// The 5 cleaner_deep_clean_* icons below are plain placeholders (no real
+// art commissioned yet -- see CLEANER_ART_HANDOFF.md) so the badge gallery
+// doesn't render a broken image; swap these paths once real art lands.
 export const BADGE_ICON_SRC: Record<BadgeKey, string> = {
   first_quest: '/badges/first_quest.png',
   ten_quests: '/badges/ten_quests.png',
@@ -74,6 +91,11 @@ export const BADGE_ICON_SRC: Record<BadgeKey, string> = {
   streak_7: '/badges/streak_7.png',
   early_bird: '/badges/early_bird.png',
   night_owl: '/badges/night_owl.png',
+  cleaner_deep_clean_5: '/badges/cleaner_deep_clean_5.png',
+  cleaner_deep_clean_10: '/badges/cleaner_deep_clean_10.png',
+  cleaner_deep_clean_15: '/badges/cleaner_deep_clean_15.png',
+  cleaner_deep_clean_20: '/badges/cleaner_deep_clean_20.png',
+  cleaner_deep_clean_25: '/badges/cleaner_deep_clean_25.png',
 };
 
 // Badges were originally a one-time collectible with no equip concept --

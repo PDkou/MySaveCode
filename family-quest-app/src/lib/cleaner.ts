@@ -142,25 +142,30 @@ export interface CleanerUpgradeDef {
 }
 
 // Keep in exact sync with public.cleaner_upgrade_defs() in schema.sql
-// section 35 -- what each node actually does is implemented server-side
+// section 36 -- what each node actually does is implemented server-side
 // (apply_cleaner_taps/cleaner_heartbeat/complete_cleaner_stage/
 // perform_cleaner_prestige each check specific upgrade_ids by name, same
 // spirit as tycoon_state's named prestige_momentum/automation/fortune
 // columns rather than a generic multiplier engine). Names/descriptions live
 // in i18n (cleaner.upgrades.<id>.*), not here.
+//
+// Three short chains (section 36 gave these real prereq edges -- v1 had
+// every node visible from the start, which didn't match the doc's
+// "구입한 노드와 바로 다음 후보만 공개" rule):
+// click:      stronger_hands_1 -> quick_living_room -> checkpoint_kitchen
+// automation: efficient_tools_1 -> free_toy_box
+// reward:     starting_sparkles -> deep_clean_bonus
 export const CLEANER_UPGRADES: CleanerUpgradeDef[] = [
   { id: "stronger_hands_1", starCost: 1, maxLevel: 1, prereqUpgradeId: null },
+  { id: "quick_living_room", starCost: 4, maxLevel: 1, prereqUpgradeId: "stronger_hands_1" },
+  { id: "checkpoint_kitchen", starCost: 8, maxLevel: 1, prereqUpgradeId: "quick_living_room" },
   { id: "efficient_tools_1", starCost: 1, maxLevel: 1, prereqUpgradeId: null },
+  { id: "free_toy_box", starCost: 3, maxLevel: 1, prereqUpgradeId: "efficient_tools_1" },
   { id: "starting_sparkles", starCost: 2, maxLevel: 1, prereqUpgradeId: null },
-  { id: "free_toy_box", starCost: 3, maxLevel: 1, prereqUpgradeId: null },
-  { id: "quick_living_room", starCost: 4, maxLevel: 1, prereqUpgradeId: null },
-  { id: "checkpoint_kitchen", starCost: 8, maxLevel: 1, prereqUpgradeId: null },
-  { id: "deep_clean_bonus", starCost: 5, maxLevel: 1, prereqUpgradeId: null },
+  { id: "deep_clean_bonus", starCost: 5, maxLevel: 1, prereqUpgradeId: "starting_sparkles" },
 ];
 
-// Doc's "구입한 노드와 그 노드에 직접 연결된 다음 후보만 공개한다" rule --
-// none of the v1 nodes have a prereq, so this returns all 7 today, but
-// stays correct once a future node sets prereqUpgradeId.
+// Doc's "구입한 노드와 그 노드에 직접 연결된 다음 후보만 공개한다" rule.
 export function visibleCleanerUpgrades(ownedIds: Set<string>): CleanerUpgradeDef[] {
   return CLEANER_UPGRADES.filter(
     (upgrade) => ownedIds.has(upgrade.id) || upgrade.prereqUpgradeId === null || ownedIds.has(upgrade.prereqUpgradeId),
@@ -181,6 +186,20 @@ export function visibleCleanerUpgrades(ownedIds: Set<string>): CleanerUpgradeDef
 export function cleanerRequiredCleaning(stage: number): bigint {
   const safeStage = BigInt(Math.max(1, Math.floor(stage)));
   return 100n * 6n ** (safeStage - 1n);
+}
+
+// Mirrors public.cleaner_effective_required() in schema.sql section 36 --
+// quick_living_room halves the requirement for stages 1-5. The progress bar
+// and the auto-complete check in HouseworkClickerModal must use this (not
+// the bare cleanerRequiredCleaning above) so they agree with what the
+// server actually caps stage_progress at -- section 35 originally didn't,
+// which softlocked a quick_living_room owner's progress at 50%.
+export function cleanerEffectiveRequiredCleaning(
+  stage: number,
+  hasQuickLivingRoom: boolean,
+): bigint {
+  const base = cleanerRequiredCleaning(stage);
+  return stage <= 5 && hasQuickLivingRoom ? base / 2n : base;
 }
 
 const CLEANER_NUMBER_UNITS: { value: bigint; suffix: string }[] = [
@@ -252,8 +271,22 @@ export function applyCleanerTaps(
 // Call only while document.visibilityState === 'visible' -- the interval's
 // own presence is the online signal (see cleaner_heartbeat's comment in
 // schema.sql); this function itself has no visibility awareness.
-export function cleanerHeartbeat(familyId: string): Promise<CleanerStateRow> {
-  return unwrap(supabase.rpc("cleaner_heartbeat", { p_family_id: familyId }));
+//
+// sessionStart must be true for the very first call after the heartbeat
+// interval (re)starts (component mount, or hidden -> visible) -- that call
+// always just resets the server's baseline with zero credit, so time spent
+// hidden/closed never earns anything (section 36 fix; the interval's own
+// subsequent 5s-apart ticks pass sessionStart=false as normal).
+export function cleanerHeartbeat(
+  familyId: string,
+  sessionStart = false,
+): Promise<CleanerStateRow> {
+  return unwrap(
+    supabase.rpc("cleaner_heartbeat", {
+      p_family_id: familyId,
+      p_session_start: sessionStart,
+    }),
+  );
 }
 
 export function buyCleanerTool(

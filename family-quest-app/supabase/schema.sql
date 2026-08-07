@@ -8185,3 +8185,583 @@ revoke execute on function public.upgrade_family_tycoon(uuid) from authenticated
 -- family_tycoon_* objects remain intact in this file for chronological
 -- rebuilds, but are no longer reachable from the client after this section.
 -- =============================================================================
+
+-- =============================================================================
+-- Section 36 -- Housework clicker: critical fixes
+--
+-- Section 35 shipped functional but had 5 real bugs plus several smaller
+-- gaps, found by an external review and independently confirmed by reading
+-- the code before any of this was applied. Fixed in place (schema.sql stays
+-- append-only/non-destructive; this section only ADDs columns/functions and
+-- CREATE OR REPLACEs function bodies -- no data-deleting migration):
+--
+-- 1. Infinite prestige farming -- perform_cleaner_prestige never reset
+--    max_stage, so a fresh run at max_stage>=10 could prestige again with
+--    zero progress. Fixed by splitting "highest stage reached, resets each
+--    run" (max_stage, unchanged meaning, now actually reset on prestige)
+--    from "highest stage completed, resets each run" (new: max_completed_stage)
+--    and "highest stage ever completed, never resets" (new:
+--    historical_max_completed_stage). Prestige eligibility/reward now key
+--    off max_completed_stage; titles/records key off historical_max_completed_stage.
+-- 2. quick_living_room softlock -- apply_cleaner_taps capped stage_progress
+--    at the halved requirement, but the client's own progress/auto-complete
+--    check always compared against the full (unhalved) requirement, so a
+--    tap-only player who owned this upgrade could never reach the client's
+--    completion threshold. Fixed with one shared cleaner_effective_required()
+--    used by apply_cleaner_taps/cleaner_heartbeat/complete_cleaner_stage
+--    (previously cleaner_heartbeat didn't apply the halving at all -- another
+--    inconsistency), mirrored client-side in lib/cleaner.ts.
+-- 3. Small offline-income leak -- cleaner_heartbeat allowed up to 15s of
+--    credit on the very first call after the interval restarts, even if the
+--    app had been closed/hidden for hours. Fixed with an explicit
+--    p_session_start flag the client passes on the first tick after
+--    (re)starting the heartbeat interval; a session-start call always just
+--    resets the baseline with zero credit, same as the already-existing
+--    null-baseline case.
+-- 4. Off-by-one on prestige/title unlock -- max_stage means "entered this
+--    stage", so completing stage 9 (entering stage 10) already satisfied the
+--    ">= 10" checks before stage 10 was actually completed. Fixed by the
+--    same max_completed_stage/historical_max_completed_stage split as #1.
+-- 5. RLS on cleaner_state/cleaner_tools_owned/cleaner_upgrades_owned only
+--    checked is_family_member(family_id), so any family member could read
+--    another member's personal clicker progress directly. Fixed by adding
+--    user_id = auth.uid() to all three select policies (this is a personal
+--    minigame, unlike the shared-by-design tycoon tables that precedent was
+--    copied from).
+--
+-- Plus smaller gaps: the permanent-upgrade tree had no real prereq edges
+-- (all 7 nodes visible from the start); cleaner_deep_clean_* badges were
+-- never registered in the client badge catalog (and would be generated
+-- unbounded past stage 25); the automation title fired on any single tool's
+-- first purchase instead of a real production-rate threshold; the 5 new
+-- titles had no Japanese name; buy_cleaner_tool/heartbeat rate display
+-- didn't reflect efficient_tools_1's +20%. All fixed below.
+-- =============================================================================
+
+-- 36-1. New columns on cleaner_state ------------------------------------
+
+alter table public.cleaner_state add column if not exists max_completed_stage integer not null default 0;
+alter table public.cleaner_state add column if not exists historical_max_completed_stage integer not null default 0;
+
+-- Best-effort backfill for any rows written before this section existed --
+-- max_stage meant "highest stage reached", so the highest stage actually
+-- completed is at most max_stage - 1.
+update public.cleaner_state
+set max_completed_stage = greatest(max_completed_stage, max_stage - 1),
+    historical_max_completed_stage = greatest(historical_max_completed_stage, max_stage - 1)
+where max_stage > 1;
+
+-- 36-2. RLS -- personal minigame, not a shared/visible one (fix #5) ------
+
+drop policy if exists cleaner_state_select on public.cleaner_state;
+create policy cleaner_state_select on public.cleaner_state
+for select
+using (user_id = auth.uid() and public.is_family_member(family_id));
+
+drop policy if exists cleaner_tools_owned_select on public.cleaner_tools_owned;
+create policy cleaner_tools_owned_select on public.cleaner_tools_owned
+for select
+using (user_id = auth.uid() and public.is_family_member(family_id));
+
+drop policy if exists cleaner_upgrades_owned_select on public.cleaner_upgrades_owned;
+create policy cleaner_upgrades_owned_select on public.cleaner_upgrades_owned
+for select
+using (user_id = auth.uid() and public.is_family_member(family_id));
+
+-- 36-3. Shared effective-requirement helper (fix #2) ----------------------
+--
+-- Single source of truth for "how much stage_progress does this stage
+-- actually need, once quick_living_room's halving is applied" -- used by
+-- apply_cleaner_taps, cleaner_heartbeat and complete_cleaner_stage below,
+-- and mirrored client-side (cleanerEffectiveRequiredCleaning in
+-- lib/cleaner.ts) so the progress bar and auto-complete check agree with
+-- whatever the server actually caps stage_progress at.
+create or replace function public.cleaner_effective_required(p_stage integer, p_has_quick_living_room boolean)
+returns numeric
+language sql
+immutable
+set search_path = public
+as $$
+  select case
+    when p_stage <= 5 and p_has_quick_living_room then public.required_cleaning(p_stage) / 2
+    else public.required_cleaning(p_stage)
+  end
+$$;
+
+-- 36-4. Real prereq edges on the permanent-upgrade tree (gap: 3-1) --------
+--
+-- Three short chains instead of 7 independently-visible nodes, matching the
+-- doc's "구입한 노드와 바로 다음 후보만 공개" rule (visibleCleanerUpgrades in
+-- lib/cleaner.ts already reads prereq_upgrade_id -- it just had nothing to
+-- gate on until now). Keep CLEANER_UPGRADES in lib/cleaner.ts in sync.
+create or replace function public.cleaner_upgrade_defs()
+returns table(
+  upgrade_id text,
+  star_cost numeric,
+  max_level integer,
+  prereq_upgrade_id text
+)
+language sql
+immutable
+set search_path = public
+as $$
+  values
+    -- Click chain: +25% tap gain -> halved stage 1-5 requirement -> skip to
+    -- stage 6 on prestige.
+    ('stronger_hands_1', 1::numeric, 1, null::text),
+    ('quick_living_room', 4::numeric, 1, 'stronger_hands_1'),
+    ('checkpoint_kitchen', 8::numeric, 1, 'quick_living_room'),
+    -- Automation chain: +20% passive rate -> free starter tool on prestige.
+    ('efficient_tools_1', 1::numeric, 1, null::text),
+    ('free_toy_box', 3::numeric, 1, 'efficient_tools_1'),
+    -- Reward chain: start each cycle with currency -> deep-clean bonus.
+    ('starting_sparkles', 2::numeric, 1, null::text),
+    ('deep_clean_bonus', 5::numeric, 1, 'starting_sparkles')
+$$;
+
+-- 36-5. apply_cleaner_taps -- use the shared effective-required helper ----
+
+create or replace function public.apply_cleaner_taps(p_family_id uuid, p_tap_count integer)
+returns public.cleaner_tap_result
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.cleaner_state;
+  v_tap_count integer;
+  v_click_mult numeric := 1;
+  v_gain numeric;
+  v_required numeric;
+  v_has_quick_living_room boolean;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  if p_tap_count is null or p_tap_count <= 0 then
+    raise exception 'invalid_amount' using errcode = '22023';
+  end if;
+  v_tap_count := least(p_tap_count, 400);
+
+  insert into public.cleaner_state (user_id, family_id) values (v_uid, p_family_id) on conflict do nothing;
+  select * into v_state from public.cleaner_state where user_id = v_uid and family_id = p_family_id for update;
+
+  if exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'stronger_hands_1'
+  ) then
+    v_click_mult := 1.25;
+  end if;
+
+  v_gain := round(v_tap_count * v_click_mult);
+
+  v_has_quick_living_room := exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'quick_living_room'
+  );
+  v_required := public.cleaner_effective_required(v_state.stage, v_has_quick_living_room);
+
+  update public.cleaner_state
+  set currency = currency + v_gain,
+      lifetime_cleaning = lifetime_cleaning + v_gain,
+      stage_progress = least(v_required, stage_progress + v_gain)
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  return row(v_state, v_gain)::public.cleaner_tap_result;
+end;
+$$;
+
+-- 36-6. cleaner_heartbeat -- session-start flag (fix #3) + shared helper --
+--
+-- p_session_start is true for the first tick after the heartbeat interval
+-- (re)starts (component mount, or visibility hidden -> visible). That call
+-- always just resets the baseline with zero credit, exactly like the
+-- existing null-baseline case -- so time spent with the tab hidden or the
+-- app fully closed never earns anything, closing the up-to-15s leak the old
+-- version had on every resume.
+create or replace function public.cleaner_heartbeat(p_family_id uuid, p_session_start boolean default false)
+returns public.cleaner_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.cleaner_state;
+  v_now timestamptz := now();
+  v_elapsed_seconds numeric;
+  v_rate_per_sec numeric := 0;
+  v_auto_mult numeric := 1;
+  v_gain numeric;
+  v_required numeric;
+  v_has_quick_living_room boolean;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  insert into public.cleaner_state (user_id, family_id) values (v_uid, p_family_id) on conflict do nothing;
+  select * into v_state from public.cleaner_state where user_id = v_uid and family_id = p_family_id for update;
+
+  if p_session_start or v_state.last_heartbeat_at is null then
+    update public.cleaner_state set last_heartbeat_at = v_now
+    where user_id = v_uid and family_id = p_family_id
+    returning * into v_state;
+    return v_state;
+  end if;
+
+  v_elapsed_seconds := least(15, greatest(0, extract(epoch from (v_now - v_state.last_heartbeat_at))));
+
+  select coalesce(sum(def.base_rate * owned.owned_count), 0) into v_rate_per_sec
+  from public.cleaner_tools_owned owned
+  join public.cleaner_tool_defs() def on def.tool_id = owned.tool_id
+  where owned.user_id = v_uid and owned.family_id = p_family_id;
+
+  if exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'efficient_tools_1'
+  ) then
+    v_auto_mult := 1.20;
+  end if;
+
+  v_gain := round(v_rate_per_sec * v_auto_mult * v_elapsed_seconds);
+
+  v_has_quick_living_room := exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'quick_living_room'
+  );
+  v_required := public.cleaner_effective_required(v_state.stage, v_has_quick_living_room);
+
+  update public.cleaner_state
+  set currency = currency + v_gain,
+      lifetime_cleaning = lifetime_cleaning + v_gain,
+      stage_progress = least(v_required, stage_progress + v_gain),
+      last_heartbeat_at = v_now
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  return v_state;
+end;
+$$;
+
+grant execute on function public.cleaner_heartbeat(uuid, boolean) to authenticated;
+revoke execute on function public.cleaner_heartbeat(uuid, boolean) from anon, public;
+
+-- Old 1-arg signature is a separate overload as far as Postgres is
+-- concerned -- drop it so a stale cached client gets a clean missing-
+-- function error instead of silently calling the no-longer-used version.
+drop function if exists public.cleaner_heartbeat(uuid);
+
+-- 36-7. buy_cleaner_tool -- real automation-rate threshold (gap: 3-3) -----
+--
+-- cleaner_automation_pro_progress used to fire on any tool's first-ever
+-- purchase. Fires once total effective auto rate (post efficient_tools_1)
+-- crosses 100/sec instead -- roughly "a couple of mid-tier tools", a
+-- placeholder threshold that can be retuned once this is playtested.
+
+create or replace function public.buy_cleaner_tool(p_family_id uuid, p_tool_id text)
+returns public.cleaner_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.cleaner_state;
+  v_def record;
+  v_owned integer := 0;
+  v_cost numeric;
+  v_total_rate numeric;
+  v_auto_mult numeric := 1;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select * into v_def from public.cleaner_tool_defs() where tool_id = p_tool_id;
+  if v_def is null then
+    raise exception 'invalid_tool' using errcode = '22023';
+  end if;
+
+  insert into public.cleaner_state (user_id, family_id) values (v_uid, p_family_id) on conflict do nothing;
+  select * into v_state from public.cleaner_state where user_id = v_uid and family_id = p_family_id for update;
+
+  if v_state.max_stage < v_def.unlock_stage then
+    raise exception 'tool_locked' using errcode = 'P0001';
+  end if;
+
+  select owned_count into v_owned
+  from public.cleaner_tools_owned
+  where user_id = v_uid and family_id = p_family_id and tool_id = p_tool_id;
+  v_owned := coalesce(v_owned, 0);
+
+  v_cost := round(v_def.base_cost * power(v_def.cost_mult, v_owned));
+  if v_state.currency < v_cost then
+    raise exception 'insufficient_currency' using errcode = 'P0001';
+  end if;
+
+  insert into public.cleaner_tools_owned (user_id, family_id, tool_id, owned_count)
+  values (v_uid, p_family_id, p_tool_id, 1)
+  on conflict (user_id, family_id, tool_id) do update
+  set owned_count = public.cleaner_tools_owned.owned_count + 1;
+
+  update public.cleaner_state
+  set currency = currency - v_cost
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  select coalesce(sum(def.base_rate * owned.owned_count), 0) into v_total_rate
+  from public.cleaner_tools_owned owned
+  join public.cleaner_tool_defs() def on def.tool_id = owned.tool_id
+  where owned.user_id = v_uid and owned.family_id = p_family_id;
+
+  if exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'efficient_tools_1'
+  ) then
+    v_auto_mult := 1.20;
+  end if;
+
+  if v_total_rate * v_auto_mult >= 100 then
+    perform public.grant_title(p_family_id, v_uid, 'cleaner_automation_pro_progress');
+  end if;
+
+  return v_state;
+end;
+$$;
+
+grant execute on function public.buy_cleaner_tool(uuid, text) to authenticated;
+revoke execute on function public.buy_cleaner_tool(uuid, text) from anon, public;
+
+-- 36-8. complete_cleaner_stage -- shared helper + completed-stage tracking
+-- (fixes #2 gate, #4 off-by-one) + capped deep-clean badge (gap: 3-2) ------
+
+create or replace function public.complete_cleaner_stage(p_family_id uuid)
+returns public.cleaner_stage_complete_result
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.cleaner_state;
+  v_required numeric;
+  v_has_quick_living_room boolean;
+  v_is_deep_clean boolean;
+  v_bonus numeric := 0;
+  v_completed_stage integer;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select * into v_state from public.cleaner_state where user_id = v_uid and family_id = p_family_id for update;
+  if v_state is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_has_quick_living_room := exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'quick_living_room'
+  );
+  v_required := public.cleaner_effective_required(v_state.stage, v_has_quick_living_room);
+
+  if v_state.stage_progress < v_required then
+    raise exception 'stage_not_ready' using errcode = 'P0001';
+  end if;
+
+  v_completed_stage := v_state.stage;
+  v_is_deep_clean := (v_completed_stage % 5 = 0);
+
+  if v_is_deep_clean and exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'deep_clean_bonus'
+  ) then
+    v_bonus := round(v_state.currency * 0.25);
+  end if;
+
+  update public.cleaner_state
+  set stage = stage + 1,
+      stage_progress = 0,
+      max_stage = greatest(max_stage, stage + 1),
+      max_completed_stage = greatest(max_completed_stage, v_completed_stage),
+      historical_max_completed_stage = greatest(historical_max_completed_stage, v_completed_stage),
+      currency = currency + v_bonus
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  -- Deep-clean badges are only cataloged for stages 5/10/15/20/25 (see
+  -- gamification.ts ALL_BADGE_KEYS) -- doc's 5-stage chapters continue
+  -- forever, so cap the badge grant instead of minting an ever-growing set
+  -- of unregistered keys past stage 25. The celebration itself still fires
+  -- for every deep-clean stage regardless (is_deep_clean below is unrelated
+  -- to this cap).
+  if v_is_deep_clean and v_completed_stage <= 25 then
+    insert into public.member_badges (family_id, user_id, badge_key)
+    values (p_family_id, v_uid, 'cleaner_deep_clean_' || v_completed_stage)
+    on conflict do nothing;
+  end if;
+
+  if v_state.historical_max_completed_stage >= 10 then
+    perform public.grant_title(p_family_id, v_uid, 'cleaner_king_10');
+  end if;
+  if v_state.historical_max_completed_stage >= 25 then
+    perform public.grant_title(p_family_id, v_uid, 'cleaner_endless_25');
+  end if;
+  if v_completed_stage = 5 then
+    perform public.grant_title(p_family_id, v_uid, 'cleaner_first_step');
+  end if;
+
+  return row(v_state, v_is_deep_clean)::public.cleaner_stage_complete_result;
+end;
+$$;
+
+grant execute on function public.complete_cleaner_stage(uuid) to authenticated;
+revoke execute on function public.complete_cleaner_stage(uuid) from anon, public;
+
+-- 36-9. Prestige preview/perform -- key off max_completed_stage (fixes
+-- #1 infinite farming, #4 off-by-one) --------------------------------------
+
+drop type if exists public.cleaner_prestige_preview cascade;
+create type public.cleaner_prestige_preview as (
+  would_stars numeric,
+  current_stars numeric,
+  max_completed_stage integer,
+  eligible boolean
+);
+
+create or replace function public.preview_cleaner_prestige(p_family_id uuid)
+returns public.cleaner_prestige_preview
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.cleaner_state;
+  v_k integer;
+  v_would_stars numeric;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select * into v_state from public.cleaner_state where user_id = v_uid and family_id = p_family_id;
+  if v_state is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  v_k := greatest(0, (v_state.max_completed_stage / 5) - 1);
+  v_would_stars := v_k * (v_k + 3);
+
+  return row(
+    v_would_stars,
+    v_state.prestige_stars,
+    v_state.max_completed_stage,
+    v_state.max_completed_stage >= 10
+  )::public.cleaner_prestige_preview;
+end;
+$$;
+
+grant execute on function public.preview_cleaner_prestige(uuid) to authenticated;
+revoke execute on function public.preview_cleaner_prestige(uuid) from anon, public;
+
+-- Player-chosen, only callable once max_completed_stage >= 10 (stage 10
+-- actually completed, not merely entered). Resets stage/currency/tools AND
+-- max_stage/max_completed_stage for the new run -- historical_max_completed_stage,
+-- prestige_stars/prestige_count and all permanent upgrades are untouched, so
+-- a fresh run can't immediately re-prestige without real progress.
+create or replace function public.perform_cleaner_prestige(p_family_id uuid)
+returns public.cleaner_prestige_result
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.cleaner_state;
+  v_k integer;
+  v_stars_gained numeric;
+  v_start_stage integer := 1;
+  v_start_currency numeric := 0;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select * into v_state from public.cleaner_state where user_id = v_uid and family_id = p_family_id for update;
+  if v_state is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  if v_state.max_completed_stage < 10 then
+    raise exception 'prestige_locked' using errcode = 'P0001';
+  end if;
+
+  v_k := greatest(0, (v_state.max_completed_stage / 5) - 1);
+  v_stars_gained := v_k * (v_k + 3);
+
+  if exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'checkpoint_kitchen'
+  ) then
+    v_start_stage := 6;
+  end if;
+
+  if exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'starting_sparkles'
+  ) then
+    v_start_currency := 100;
+  end if;
+
+  delete from public.cleaner_tools_owned where user_id = v_uid and family_id = p_family_id;
+
+  if exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'free_toy_box'
+  ) then
+    insert into public.cleaner_tools_owned (user_id, family_id, tool_id, owned_count)
+    values (v_uid, p_family_id, 'toy_box', 1);
+  end if;
+
+  update public.cleaner_state
+  set stage = v_start_stage,
+      stage_progress = 0,
+      currency = v_start_currency,
+      max_stage = v_start_stage,
+      max_completed_stage = greatest(v_start_stage - 1, 0),
+      prestige_count = prestige_count + 1,
+      prestige_stars = prestige_stars + v_stars_gained,
+      last_heartbeat_at = null
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  perform public.grant_title(p_family_id, v_uid, 'cleaner_first_prestige');
+
+  return row(v_state, v_stars_gained)::public.cleaner_prestige_result;
+end;
+$$;
+
+grant execute on function public.perform_cleaner_prestige(uuid) to authenticated;
+revoke execute on function public.perform_cleaner_prestige(uuid) from anon, public;
+
+-- 36-10. Japanese title names for the 5 cleaner titles (gap: 3-4) ---------
+
+update public.shop_items
+set name_ja = v.name_ja
+from (values
+  ('cleaner_first_step', '片付けの第一歩'),
+  ('cleaner_king_10', 'わが家の掃除王'),
+  ('cleaner_first_prestige', 'きらめく手'),
+  ('cleaner_automation_pro_progress', '自動化のプロ'),
+  ('cleaner_endless_25', '終わりなき大掃除')
+) as v(key, name_ja)
+where public.shop_items.key = v.key;
+
+-- =============================================================================
+-- End section 36.
+-- =============================================================================
