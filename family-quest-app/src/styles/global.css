@@ -3929,6 +3929,17 @@ textarea {
   width: min(720px, calc(100vw - 24px));
   max-height: min(92vh, 920px);
   overflow-y: auto;
+  /* No element in this sheet actually needs horizontal panning except the
+     shop's producer carousel (which explicitly re-opens pan-x below) --
+     everything else (scene box, hold button, tabs, cards) was left at the
+     default touch-action: auto, which tells the browser a horizontal drag
+     ANYWHERE in the sheet is fair game for native handling. With nothing
+     to actually scroll sideways, iOS Safari's fallback for that is its
+     edge-swipe back/forward gesture, which is what was sliding the whole
+     screen sideways regardless of which part of the tycoon UI the drag
+     started on. Restricting to pan-y removes that invitation everywhere
+     except where it's explicitly re-added. */
+  touch-action: pan-y;
   /* Less card padding than a typical .modal (24px) -- this one's mostly a
      full-bleed scene + compact cards, not form fields, so the standard
      padding just ate into space better spent on content and made the
@@ -4883,7 +4894,13 @@ textarea {
     0 6px 0 #2d2633,
     0 10px 22px rgba(36, 29, 42, 0.18);
   isolation: isolate;
-  touch-action: manipulation;
+  /* Explicit pan-y instead of manipulation (which included pan-x) -- this
+     box has nothing that scrolls horizontally, so there's no reason to
+     leave pan-x on the table for iOS to offer to its edge-swipe gesture.
+     Matches .tycoon-modal's own restriction rather than relying on
+     ancestor/descendant touch-action resolution being consistent across
+     browsers. */
+  touch-action: pan-y;
 }
 
 .personal-tycoon-scene {
@@ -5341,6 +5358,12 @@ textarea {
   overflow-x: auto;
   padding: 3px 3px 10px;
   scroll-snap-type: x proximity;
+  /* .tycoon-modal above restricts the whole sheet to touch-action: pan-y --
+     this is the one element that actually needs horizontal panning, so it
+     re-opens pan-x for itself specifically (touch-action is resolved per
+     hit-tested element, not simply inherited, so this override only
+     applies to drags that start on the carousel itself). */
+  touch-action: pan-x;
   /* Without this, dragging past either end of this horizontal carousel
      lets the scroll "chain" up to the page itself -- on iOS Safari that
      reads as the browser's edge-swipe back/forward gesture grabbing the
