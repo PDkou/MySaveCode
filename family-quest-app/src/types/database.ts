@@ -258,6 +258,81 @@ export type FamilyTycoonCollectResult = {
 export type TycoonTapResult = { state: TycoonStateRow; gained: number; is_critical: boolean; tap_energy: number; combo: number };
 export type FamilyTycoonTapResult = { state: FamilyTycoonStateRow; gained: number; is_critical: boolean; tap_energy: number; combo: number };
 
+// Personal housework clicker (section 35) -- replaces the personal tycoon
+// above; the family tycoon is deprecated (RPC access revoked server-side,
+// not this client's concern anymore beyond no longer calling it). Currency
+// fields are numeric strings, not number -- Postgres `numeric` comes back
+// as a JSON string over PostgREST (no precision loss), and this game's own
+// required_cleaning() growth curve (100 * 6^(stage-1)) exceeds
+// Number.MAX_SAFE_INTEGER well before stage 20, unlike TycoonStateRow's
+// currency (bigint, fine as a plain number up to its own manual clamp).
+// Use BigInt(value) for arithmetic/comparisons, never Number(value).
+export type CleanerStateRow = {
+  user_id: string;
+  family_id: string;
+  stage: number;
+  stage_progress: string;
+  currency: string;
+  lifetime_cleaning: string;
+  max_stage: number;
+  prestige_count: number;
+  prestige_stars: string;
+  // null until the first cleaner_heartbeat call establishes a baseline --
+  // see cleaner_heartbeat in schema.sql, no lazy/offline settlement exists
+  // for this table (contrast tycoon_state's last_collected_at).
+  last_heartbeat_at: string | null;
+  exchanged_today: number;
+  exchange_reset_date: string;
+  created_at: string;
+};
+
+// One row per (owner, tool) -- how many of that auto-cleaning tool is
+// owned. Tool identity/cost/rate curves are hardcoded data (see
+// CLEANER_TOOLS in lib/cleaner.ts and cleaner_tool_defs() in schema.sql),
+// same "data not code" spirit as TycoonBuildingRow/shop_items.
+export type CleanerToolOwnedRow = {
+  user_id: string;
+  family_id: string;
+  tool_id: string;
+  owned_count: number;
+};
+
+// Permanent-upgrade tree (section 35) -- survives perform_cleaner_prestige,
+// unlike CleanerStateRow/CleanerToolOwnedRow which that RPC resets. See
+// CLEANER_UPGRADES in lib/cleaner.ts and cleaner_upgrade_defs() in
+// schema.sql for what each upgrade_id does.
+export type CleanerUpgradeOwnedRow = {
+  user_id: string;
+  family_id: string;
+  upgrade_id: string;
+  level: number;
+};
+
+// apply_cleaner_taps returns this composite (not a bare state row) so the
+// client can show the actual server-decided gain for this batch (post
+// click_level/permanent-upgrade multipliers) instead of assuming
+// tap_count * 1.
+export type CleanerTapResult = { state: CleanerStateRow; gained: string };
+
+// complete_cleaner_stage returns this composite so the client knows
+// whether to show the bigger deep-clean celebration (stage % 5 = 0) --
+// is_deep_clean is a display flag only, it never blocks/forces prestige.
+export type CleanerStageCompleteResult = { state: CleanerStateRow; is_deep_clean: boolean };
+
+// preview_cleaner_prestige is read-only -- shows what perform_cleaner_prestige
+// would do without mutating anything, per the doc's "no prestige without a
+// preview" rule. eligible mirrors max_stage >= 10 (perform_cleaner_prestige's
+// own gate), current_stars is state.prestige_stars echoed back for a
+// before/after comparison in the confirm UI.
+export type CleanerPrestigePreview = {
+  would_stars: string;
+  current_stars: string;
+  max_stage: number;
+  eligible: boolean;
+};
+
+export type CleanerPrestigeResult = { state: CleanerStateRow; stars_gained: string };
+
 export type QuestPayoutKind = 'completion' | 'requester_bonus';
 
 export type QuestPayoutRow = {
@@ -532,6 +607,24 @@ export type Database = {
         Update: Partial<FamilyTycoonTapCooldownRow>;
         Relationships: [];
       };
+      cleaner_state: {
+        Row: CleanerStateRow;
+        Insert: Partial<CleanerStateRow> & Pick<CleanerStateRow, 'user_id' | 'family_id'>;
+        Update: Partial<CleanerStateRow>;
+        Relationships: [];
+      };
+      cleaner_tools_owned: {
+        Row: CleanerToolOwnedRow;
+        Insert: Partial<CleanerToolOwnedRow> & Pick<CleanerToolOwnedRow, 'user_id' | 'family_id' | 'tool_id'>;
+        Update: Partial<CleanerToolOwnedRow>;
+        Relationships: [];
+      };
+      cleaner_upgrades_owned: {
+        Row: CleanerUpgradeOwnedRow;
+        Insert: Partial<CleanerUpgradeOwnedRow> & Pick<CleanerUpgradeOwnedRow, 'user_id' | 'family_id' | 'upgrade_id'>;
+        Update: Partial<CleanerUpgradeOwnedRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -677,6 +770,42 @@ export type Database = {
       prestige_family_tycoon: {
         Args: { p_family_id: string; p_focus: TycoonPrestigeFocus };
         Returns: FamilyTycoonStateRow;
+      };
+      get_cleaner_state: {
+        Args: { p_family_id: string };
+        Returns: CleanerStateRow;
+      };
+      apply_cleaner_taps: {
+        Args: { p_family_id: string; p_tap_count: number };
+        Returns: CleanerTapResult;
+      };
+      cleaner_heartbeat: {
+        Args: { p_family_id: string };
+        Returns: CleanerStateRow;
+      };
+      buy_cleaner_tool: {
+        Args: { p_family_id: string; p_tool_id: string };
+        Returns: CleanerStateRow;
+      };
+      complete_cleaner_stage: {
+        Args: { p_family_id: string };
+        Returns: CleanerStageCompleteResult;
+      };
+      preview_cleaner_prestige: {
+        Args: { p_family_id: string };
+        Returns: CleanerPrestigePreview;
+      };
+      perform_cleaner_prestige: {
+        Args: { p_family_id: string };
+        Returns: CleanerPrestigeResult;
+      };
+      buy_cleaner_upgrade: {
+        Args: { p_family_id: string; p_upgrade_id: string };
+        Returns: CleanerStateRow;
+      };
+      exchange_cleaner_points: {
+        Args: { p_family_id: string; p_currency_amount: string };
+        Returns: CleanerStateRow;
       };
       record_login: {
         Args: { p_family_id: string };
