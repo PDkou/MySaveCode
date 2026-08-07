@@ -130,6 +130,28 @@ export function tycoonBuildingCost(
   );
 }
 
+export function tycoonBuildingBulkCost(
+  def: TycoonProducerDef,
+  owned: number,
+  quantity: number,
+): number {
+  const safeQuantity = Math.max(1, Math.min(5, Math.floor(quantity)));
+  let total = 0;
+  for (let offset = 0; offset < safeQuantity; offset += 1) {
+    total = Math.min(
+      SAFE_TYCOON_MAX,
+      total + tycoonBuildingCost(def, owned + offset),
+    );
+  }
+  return total;
+}
+
+export const TYCOON_MILESTONES = [5, 10, 25, 50, 100] as const;
+
+export function nextTycoonMilestone(owned: number): number | null {
+  return TYCOON_MILESTONES.find((milestone) => owned < milestone) ?? null;
+}
+
 export function prestigeMultiplier(
   prestigeLevel: number,
   automationFocus = 0,
@@ -182,7 +204,9 @@ export function tapGainPreview(
   );
 }
 
-export function isTycoonSurging(surgeUntil: string | null | undefined): boolean {
+export function isTycoonSurging(
+  surgeUntil: string | null | undefined,
+): boolean {
   return !!surgeUntil && new Date(surgeUntil).getTime() > Date.now();
 }
 

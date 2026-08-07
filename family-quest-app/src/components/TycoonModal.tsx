@@ -22,7 +22,9 @@ import {
   tapFamilyTycoonCurrency,
   tapGainPreview,
   tapTycoonCurrency,
+  nextTycoonMilestone,
   tycoonBuildingCost,
+  tycoonBuildingBulkCost,
   tycoonPrestigeThreshold,
 } from "../lib/tycoon";
 import {
@@ -69,6 +71,7 @@ interface TapFloat {
 type Mode = "personal" | "family";
 type PendingPrestige = { mode: Mode; focus: TycoonPrestigeFocus };
 type PrestigeCelebration = { level: number; focus: TycoonPrestigeFocus };
+type PersonalReaction = "idle" | "work" | "critical" | "surge" | "purchase";
 
 const EXCHANGE_RATE = 1000;
 const DAILY_EXCHANGE_CAP = 25;
@@ -142,7 +145,15 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
   const [tapFloat, setTapFloat] = useState<TapFloat | null>(null);
   const [shaking, setShaking] = useState(false);
   const [surgeToast, setSurgeToast] = useState(false);
+  const [buyQuantity, setBuyQuantity] = useState<1 | 5>(1);
+  const [personalReaction, setPersonalReaction] =
+    useState<PersonalReaction>("idle");
   const syncedAtRef = useRef(Date.now());
+  const personalTapInFlightRef = useRef(false);
+  const personalHoldingRef = useRef(false);
+  const personalHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const [shopItems, setShopItems] = useState<ShopItemRow[]>([]);
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
@@ -178,6 +189,9 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
   useEffect(
     () => () => {
       feedbackTimers.current.forEach(clearTimeout);
+      if (personalHoldTimerRef.current) {
+        clearTimeout(personalHoldTimerRef.current);
+      }
     },
     [],
   );
@@ -333,7 +347,10 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
   const triggerShake = (familyMode = false) => {
     if (familyMode) setFamilyShaking(true);
     else setShaking(true);
-    later(() => (familyMode ? setFamilyShaking(false) : setShaking(false)), 420);
+    later(
+      () => (familyMode ? setFamilyShaking(false) : setShaking(false)),
+      420,
+    );
   };
 
   const flashSurgeToast = (familyMode = false) => {
@@ -346,9 +363,11 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
   };
 
   const handleTap = async () => {
-    if (!family || busy || tapEnergy <= 0) return;
+    if (!family || personalTapInFlightRef.current || tapEnergy <= 0) return;
+    personalTapInFlightRef.current = true;
     setBusy(true);
     setErrorKey(null);
+    setPersonalReaction("work");
     const burstId = tapBurst + 1;
     setTapBurst(burstId);
     const wasSurging = isTycoonSurging(state?.surge_until);
@@ -357,16 +376,28 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
       applyState(result.state);
       setTapEnergy(result.tap_energy);
       setCombo(result.combo);
-      setTapFloat({ id: burstId, gain: result.gained, crit: result.is_critical });
+      setTapFloat({
+        id: burstId,
+        gain: result.gained,
+        crit: result.is_critical,
+      });
       later(() => setTapFloat(null), 900);
       if (result.is_critical) {
+        setPersonalReaction("critical");
         flashCrit(result.gained);
         triggerShake();
       }
       if (!wasSurging && isTycoonSurging(result.state.surge_until)) {
+        setPersonalReaction("surge");
         flashSurgeToast();
         triggerShake();
       }
+      later(
+        () => {
+          if (!personalHoldingRef.current) setPersonalReaction("idle");
+        },
+        result.is_critical ? 720 : 360,
+      );
     } catch (err) {
       setErrorKey(
         err instanceof TycoonActionError
@@ -374,8 +405,30 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
           : "tycoon.error.unknown",
       );
     } finally {
+      personalTapInFlightRef.current = false;
       setBusy(false);
+      if (personalHoldingRef.current && tapEnergy > 1) {
+        personalHoldTimerRef.current = setTimeout(() => {
+          void handleTap();
+        }, 210);
+      }
     }
+  };
+
+  const startPersonalHold = () => {
+    personalHoldingRef.current = true;
+    if (personalHoldTimerRef.current)
+      clearTimeout(personalHoldTimerRef.current);
+    void handleTap();
+  };
+
+  const stopPersonalHold = () => {
+    personalHoldingRef.current = false;
+    if (personalHoldTimerRef.current) {
+      clearTimeout(personalHoldTimerRef.current);
+      personalHoldTimerRef.current = null;
+    }
+    later(() => setPersonalReaction("idle"), 180);
   };
 
   const handleFamilyTap = async () => {
@@ -415,26 +468,45 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
     }
   };
 
-  const handleBuyBuilding = async (buildingId: string) => {
+  const handleBuyBuilding = async (buildingId: string, quantity = 1) => {
     if (!family || !user || busyBuildingId) return;
     setBusyBuildingId(buildingId);
     setErrorKey(null);
+    let next: TycoonStateRow | null = null;
+    let purchaseError: unknown = null;
     try {
-      const next = await buyTycoonBuilding(family.id, buildingId);
+      for (let index = 0; index < quantity; index += 1) {
+        next = await buyTycoonBuilding(family.id, buildingId);
+      }
+    } catch (err) {
+      // ×5 buys this many sequentially over the real single-purchase RPC --
+      // if e.g. the 3rd of 5 fails (insufficient currency), the first two
+      // already succeeded server-side. Refreshing below regardless of this
+      // catch (instead of skipping straight to the error) makes sure the UI
+      // reflects what actually happened rather than looking like nothing
+      // was bought at all.
+      purchaseError = err;
+    }
+    try {
       const fresh = await getTycoonBuildings(family.id, user.id);
       setBuildings(fresh);
-      applyState(next);
-      setLastBoughtId(buildingId);
-      later(() => setLastBoughtId(null), 850);
+      if (next) applyState(next);
     } catch (err) {
+      console.error("buyTycoonBuilding succeeded (at least partially) but refreshing buildings failed", err);
+    }
+    if (purchaseError) {
       setErrorKey(
-        err instanceof TycoonActionError
-          ? err.translationKey
+        purchaseError instanceof TycoonActionError
+          ? purchaseError.translationKey
           : "tycoon.error.unknown",
       );
-    } finally {
-      setBusyBuildingId(null);
+    } else {
+      setLastBoughtId(buildingId);
+      setPersonalReaction("purchase");
+      later(() => setLastBoughtId(null), 850);
+      later(() => setPersonalReaction("idle"), 760);
     }
+    setBusyBuildingId(null);
   };
 
   const handleBuyFamilyBuilding = async (buildingId: string) => {
@@ -579,6 +651,256 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
       : 2,
   };
 
+  const renderPersonalWorld = () => {
+    if (!state) return null;
+    const totalOwned = Object.values(buildings).reduce(
+      (sum, count) => sum + count,
+      0,
+    );
+    const stage =
+      state.lifetime_currency >= 75000 || totalOwned >= 75
+        ? 2
+        : state.lifetime_currency >= 1000 || totalOwned >= 20
+          ? 1
+          : 0;
+    const nextLocked = TYCOON_PRODUCERS.find(
+      (def) => state.lifetime_currency < def.unlockLifetime,
+    );
+    const prestige = deriveTycoonDisplay(state);
+    const nextGoal = prestige.prestigeReady
+      ? {
+          label: t("tycoon.personalGoalPrestige"),
+          detail: t("tycoon.personalGoalReady"),
+          progress: 100,
+        }
+      : nextLocked
+        ? {
+            label: t("tycoon.personalGoalUnlock", {
+              name: t(`tycoon.producers.${nextLocked.id}.name`),
+            }),
+            detail: t("tycoon.personalGoalRemaining", {
+              amount: formatTycoonNumber(
+                nextLocked.unlockLifetime - state.lifetime_currency,
+              ),
+            }),
+            progress: Math.min(
+              100,
+              Math.round(
+                (state.lifetime_currency / nextLocked.unlockLifetime) * 100,
+              ),
+            ),
+          }
+        : {
+            label: t("tycoon.personalGoalPrestige"),
+            detail: t("tycoon.personalGoalRemaining", {
+              amount: formatTycoonNumber(
+                Math.max(0, prestige.required - state.cycle_currency),
+              ),
+            }),
+            progress: prestige.prestigePct,
+          };
+
+    return (
+      <section
+        className={[
+          "personal-tycoon-world",
+          `is-stage-${stage + 1}`,
+          `is-${personalReaction}`,
+          shaking ? "is-shaking" : "",
+          surging ? "is-surging" : "",
+        ].join(" ")}
+        aria-label={t("tycoon.worldLabel")}
+      >
+        <div
+          className="personal-tycoon-scene"
+          style={{ backgroundPosition: `${stage * 50}% center` }}
+          aria-hidden="true"
+        />
+        <div className="personal-world-hud">
+          <div className="personal-bank">
+            <small>{t("tycoon.personalCurrency")}</small>
+            <strong>{formatTycoonNumber(displayedCurrency)}</strong>
+            <span>
+              +{formatTycoonNumber(personalDisplay.rate)} / {t("tycoon.minute")}
+            </span>
+          </div>
+          <div className="personal-goal-card">
+            <span>{t("tycoon.personalNextGoal")}</span>
+            <strong>{nextGoal.label}</strong>
+            <small>{nextGoal.detail}</small>
+            <i>
+              <b style={{ width: `${nextGoal.progress}%` }} />
+            </i>
+          </div>
+        </div>
+
+        <div className="personal-live-effects" aria-hidden="true">
+          <i className="effect-map">!</i>
+          <i className="effect-hammer">✦</i>
+          <i className="effect-ledger">+</i>
+          <i className="effect-beacon">✦</i>
+        </div>
+
+        {combo > 1 && (
+          <div className={`personal-combo ${combo >= 15 ? "is-hot" : ""}`}>
+            <small>{t("tycoon.combo")}</small>
+            <strong>×{combo}</strong>
+          </div>
+        )}
+        {tapFloat && (
+          <span
+            key={tapFloat.id}
+            className={`personal-gain-float ${tapFloat.crit ? "is-crit" : ""}`}
+          >
+            +{formatTycoonNumber(tapFloat.gain)}
+          </span>
+        )}
+        {critGain !== null && (
+          <div className="personal-critical-banner">
+            {t("tycoon.criticalTap", {
+              gain: formatTycoonNumber(critGain),
+            })}
+          </div>
+        )}
+        {surging && (
+          <div className="personal-surge-ribbon">{t("tycoon.surgeActive")}</div>
+        )}
+
+        <button
+          type="button"
+          className="personal-work-button"
+          disabled={tapEnergy <= 0}
+          onPointerDown={startPersonalHold}
+          onPointerUp={stopPersonalHold}
+          onPointerCancel={stopPersonalHold}
+          onPointerLeave={stopPersonalHold}
+          onContextMenu={(event) => event.preventDefault()}
+          onKeyDown={(event) => {
+            if ((event.key === " " || event.key === "Enter") && !event.repeat) {
+              startPersonalHold();
+            }
+          }}
+          onKeyUp={(event) => {
+            if (event.key === " " || event.key === "Enter") stopPersonalHold();
+          }}
+        >
+          <span>{t("tycoon.personalHoldButton")}</span>
+          <strong>+{formatTycoonNumber(personalDisplay.tapGain)}</strong>
+          <small>{t("tycoon.personalHoldHint")}</small>
+        </button>
+
+        <div className="personal-energy">
+          <span>{t("tycoon.energy")}</span>
+          <i>
+            <b style={{ width: `${(tapEnergy / MAX_TAP_ENERGY) * 100}%` }} />
+          </i>
+          <strong>{tapEnergy}</strong>
+        </div>
+      </section>
+    );
+  };
+
+  const renderPersonalProducerDock = () => {
+    if (!state) return null;
+    const recommended = [...TYCOON_PRODUCERS].reverse().find((def) => {
+      const owned = buildings[def.id] ?? 0;
+      return (
+        state.lifetime_currency >= def.unlockLifetime &&
+        displayedCurrency >= tycoonBuildingBulkCost(def, owned, buyQuantity)
+      );
+    })?.id;
+
+    return (
+      <section className="personal-producer-section">
+        <div className="personal-dock-heading">
+          <div>
+            <small>{t("tycoon.personalInvest")}</small>
+            <strong>{t("tycoon.personalChooseGrowth")}</strong>
+          </div>
+          <div
+            className="personal-buy-toggle"
+            aria-label={t("tycoon.buyAmount")}
+          >
+            {([1, 5] as const).map((quantity) => (
+              <button
+                key={quantity}
+                type="button"
+                className={buyQuantity === quantity ? "is-active" : ""}
+                onClick={() => setBuyQuantity(quantity)}
+              >
+                ×{quantity}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="personal-producer-dock">
+          {TYCOON_PRODUCERS.map((def, index) => {
+            const owned = buildings[def.id] ?? 0;
+            const unlocked = state.lifetime_currency >= def.unlockLifetime;
+            const cost = tycoonBuildingBulkCost(def, owned, buyQuantity);
+            const milestone = nextTycoonMilestone(owned);
+            const canBuy = unlocked && displayedCurrency >= cost;
+            return (
+              <article
+                key={def.id}
+                className={[
+                  "personal-producer-tile",
+                  unlocked ? "is-unlocked" : "is-locked",
+                  canBuy ? "can-buy" : "",
+                  recommended === def.id ? "is-recommended" : "",
+                  lastBoughtId === def.id ? "is-new" : "",
+                ].join(" ")}
+              >
+                {recommended === def.id && (
+                  <span className="personal-recommended">
+                    {t("tycoon.recommended")}
+                  </span>
+                )}
+                <span
+                  className="tycoon-producer-art"
+                  style={producerArtStyle(def.atlasIndex, index * -0.29)}
+                  aria-hidden="true"
+                />
+                <div className="personal-producer-copy">
+                  <small>{t(`tycoon.effect.${def.effectKey}`)}</small>
+                  <strong>{t(`tycoon.producers.${def.id}.name`)}</strong>
+                  <p>{t(`tycoon.producers.${def.id}.effect`)}</p>
+                  <div>
+                    <b>Lv.{owned}</b>
+                    {milestone ? (
+                      <span>
+                        {t("tycoon.nextMilestone", {
+                          count: milestone - owned,
+                          target: milestone,
+                        })}
+                      </span>
+                    ) : (
+                      <span>{t("tycoon.milestoneComplete")}</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={!canBuy || busyBuildingId !== null}
+                  onClick={() => void handleBuyBuilding(def.id, buyQuantity)}
+                >
+                  {unlocked
+                    ? t("tycoon.personalBuy", {
+                        count: buyQuantity,
+                        cost: formatTycoonNumber(cost),
+                      })
+                    : t("tycoon.unlockAt", {
+                        amount: formatTycoonNumber(def.unlockLifetime),
+                      })}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
+
   const renderWorld = (
     owned: Record<string, number>,
     lifetime: number,
@@ -701,10 +1023,9 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
           </div>
         )}
         <div
-          className={[
-            "tycoon-tap-wrap",
-            isShaking ? "is-shaking" : "",
-          ].join(" ")}
+          className={["tycoon-tap-wrap", isShaking ? "is-shaking" : ""].join(
+            " ",
+          )}
         >
           <button
             type="button"
@@ -726,10 +1047,9 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
           {float && (
             <span
               key={float.id}
-              className={[
-                "tycoon-tap-float",
-                float.crit ? "is-crit" : "",
-              ].join(" ")}
+              className={["tycoon-tap-float", float.crit ? "is-crit" : ""].join(
+                " ",
+              )}
             >
               +{formatTycoonNumber(float.gain)}
             </span>
@@ -890,29 +1210,8 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
         {surgeToast && (
           <p className="tycoon-surge-toast">{t("tycoon.surgeStarted")}</p>
         )}
-        {renderWorld(buildings, state.lifetime_currency, surging)}
-        {renderTap({
-          energy: tapEnergy,
-          gain: personalDisplay.tapGain,
-          rate: personalDisplay.rate,
-          currency: displayedCurrency,
-          crit: critGain,
-          burst: tapBurst,
-          disabled: busy,
-          combo,
-          surging,
-          tapFloat,
-          shaking,
-          onTap: () => void handleTap(),
-        })}
-        {renderProducerList(
-          state,
-          buildings,
-          displayedCurrency,
-          busyBuildingId,
-          lastBoughtId,
-          (id) => void handleBuyBuilding(id),
-        )}
+        {renderPersonalWorld()}
+        {renderPersonalProducerDock()}
         {renderPrestige(state, personalDisplay, "personal", busy)}
         <section className="tycoon-section">
           <p className="settings-section-title">
