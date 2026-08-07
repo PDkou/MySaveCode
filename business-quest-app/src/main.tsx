@@ -5,6 +5,7 @@
 // importing everything from @core instead of relative paths.
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { registerSW } from 'virtual:pwa-register';
 
 import '@core/i18n';
 import '@core/styles/pretendard.css';
@@ -15,6 +16,21 @@ import { applyColorTheme, getInitialColorTheme } from '@core/lib/colorTheme.ts';
 
 applyTheme(getInitialTheme());
 applyColorTheme(getInitialColorTheme());
+
+// See family-quest-app/src/main.tsx's matching block for why this is
+// needed -- registerType: 'autoUpdate' in vite.config.ts does nothing on
+// its own without an actual registerSW() call driving it.
+const updateIntervalMs = 60_000;
+registerSW({
+  immediate: true,
+  onRegisteredSW(_swUrl, registration) {
+    if (!registration) return;
+    setInterval(() => {
+      if (registration.installing || !navigator.onLine) return;
+      void registration.update();
+    }, updateIntervalMs);
+  },
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
