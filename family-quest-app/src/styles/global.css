@@ -5645,3 +5645,44 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------------------------------------------------------------------- */
+/* Personal tycoon workshop NPCs (GPT art round 3, 2026-08)                */
+/* Sprite-strip idle loops layered over quest-workshop-stages.png, whose   */
+/* baked-in workers were removed in favor of these animated ones -- see    */
+/* PERSONAL_NPCS in TycoonModal.tsx for per-stage anchor/timing data.      */
+/* ---------------------------------------------------------------------- */
+
+.personal-npc {
+  position: absolute;
+  z-index: 1;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  transform: translate(-50%, -100%);
+  background-repeat: no-repeat;
+  background-size: 400% 100%;
+  image-rendering: pixelated;
+  animation-name: personalNpcStep;
+  animation-timing-function: steps(4);
+  animation-iteration-count: infinite;
+  pointer-events: none;
+}
+
+@keyframes personalNpcStep {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 100% 0;
+  }
+}
+
+@media (max-width: 560px) {
+  /* The scene box gets noticeably shorter on phones (see
+     .personal-tycoon-world's own max-width: 560px override) while staying
+     the same width, so the same width-relative NPC size reads too large
+     against the shrunk vertical space -- scale down a bit to match. */
+  .personal-npc {
+    transform: translate(-50%, -100%) scale(0.86);
+  }
+}

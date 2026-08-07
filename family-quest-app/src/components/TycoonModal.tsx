@@ -140,6 +140,65 @@ function producerArtStyle(index: number, delay = 0): CSSProperties {
   } as CSSProperties;
 }
 
+// Personal Quest Workshop NPCs (2026-08 GPT art round 3): three idle-loop
+// sprite-strip characters layered on top of quest-workshop-stages.png (which
+// no longer has any NPCs baked into its art -- see the no-npc background
+// swap alongside this). Anchor/display-size numbers below are converted
+// from generated-assets/NPC_ANIMATION_SPEC.md's pixel coordinates (against
+// the source art's native 724x724-per-stage cells) into percentages, so
+// they scale with .personal-tycoon-world regardless of its actual rendered
+// size -- same convention .personal-live-effects already uses for its
+// icons. loopSeconds/delaySeconds are also straight from that spec; the
+// negative delay stops the three loops from visibly synchronizing.
+type PersonalNpcAnchor = { xPct: number; yPct: number };
+type PersonalNpcDef = {
+  id: "route_scout" | "records_clerk" | "craft_worker";
+  asset: string;
+  widthPct: number;
+  loopSeconds: number;
+  delaySeconds: number;
+  anchors: [PersonalNpcAnchor, PersonalNpcAnchor, PersonalNpcAnchor];
+};
+
+const PERSONAL_NPCS: PersonalNpcDef[] = [
+  {
+    id: "route_scout",
+    asset: "/art/tycoon/npc-route-scout-idle.png",
+    widthPct: (92 / 724) * 100,
+    loopSeconds: 1.12,
+    delaySeconds: -0.18,
+    anchors: [
+      { xPct: (176 / 724) * 100, yPct: (386 / 724) * 100 },
+      { xPct: (166 / 724) * 100, yPct: (382 / 724) * 100 },
+      { xPct: (154 / 724) * 100, yPct: (376 / 724) * 100 },
+    ],
+  },
+  {
+    id: "records_clerk",
+    asset: "/art/tycoon/npc-records-clerk-work.png",
+    widthPct: (94 / 724) * 100,
+    loopSeconds: 1.36,
+    delaySeconds: -0.72,
+    anchors: [
+      { xPct: (520 / 724) * 100, yPct: (382 / 724) * 100 },
+      { xPct: (514 / 724) * 100, yPct: (376 / 724) * 100 },
+      { xPct: (510 / 724) * 100, yPct: (370 / 724) * 100 },
+    ],
+  },
+  {
+    id: "craft_worker",
+    asset: "/art/tycoon/npc-craft-worker-hammer.png",
+    widthPct: (104 / 724) * 100,
+    loopSeconds: 0.92,
+    delaySeconds: -0.41,
+    anchors: [
+      { xPct: (180 / 724) * 100, yPct: (548 / 724) * 100 },
+      { xPct: (182 / 724) * 100, yPct: (542 / 724) * 100 },
+      { xPct: (180 / 724) * 100, yPct: (536 / 724) * 100 },
+    ],
+  },
+];
+
 export function TycoonModal({ onClose }: TycoonModalProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -802,6 +861,26 @@ export function TycoonModal({ onClose }: TycoonModalProps) {
           style={{ backgroundPosition: `${stage * 50}% center` }}
           aria-hidden="true"
         />
+        {PERSONAL_NPCS.map((npc) => {
+          const anchor = npc.anchors[stage];
+          return (
+            <i
+              key={npc.id}
+              aria-hidden="true"
+              className={`personal-npc personal-npc-${npc.id}`}
+              style={
+                {
+                  left: `${anchor.xPct}%`,
+                  top: `${anchor.yPct}%`,
+                  width: `${npc.widthPct}%`,
+                  backgroundImage: `url("${npc.asset}")`,
+                  animationDuration: `${npc.loopSeconds}s`,
+                  animationDelay: `${npc.delaySeconds}s`,
+                } as CSSProperties
+              }
+            />
+          );
+        })}
         <div className="personal-world-hud">
           <div className="personal-bank">
             <small>{t("tycoon.personalCurrency")}</small>
