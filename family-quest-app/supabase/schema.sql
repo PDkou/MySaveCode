@@ -8765,3 +8765,31 @@ where public.shop_items.key = v.key;
 -- =============================================================================
 -- End section 36.
 -- =============================================================================
+
+-- =============================================================================
+-- Section 37 -- Deprecate the personal tycoon (dead-code cleanup pass)
+--
+-- The family-shared tycoon's RPCs were revoked in section 35 when the
+-- housework clicker replaced both; the *personal* tycoon's RPCs were left
+-- untouched at the time and flagged in several PR descriptions as an
+-- independent follow-up. lib/tycoon.ts and TycoonModal.tsx were already
+-- deleted from the client in that same cutover, so nothing has called any
+-- of these in a long time -- confirmed by grep across src/ finding zero
+-- .rpc('...tycoon...') or .from('tycoon_state'/'tycoon_buildings') call
+-- sites before writing this. Tables/data untouched (non-destructive-
+-- migration convention) -- only client execute access is revoked.
+-- upgrade_tycoon is included even though it was already superseded by
+-- tycoon_buildings well before this (confirmed zero call sites either way).
+-- =============================================================================
+
+revoke execute on function public.collect_tycoon_currency(uuid) from authenticated;
+revoke execute on function public.tap_tycoon_currency(uuid) from authenticated;
+revoke execute on function public.upgrade_tycoon(uuid) from authenticated;
+revoke execute on function public.buy_tycoon_building(uuid, text) from authenticated;
+revoke execute on function public.exchange_tycoon_currency(uuid, bigint) from authenticated;
+revoke execute on function public.prestige_tycoon(uuid) from authenticated;
+revoke execute on function public.buy_tycoon_prestige_upgrade(uuid, text) from authenticated;
+
+-- =============================================================================
+-- End section 37.
+-- =============================================================================

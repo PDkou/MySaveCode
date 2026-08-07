@@ -86,194 +86,15 @@ export type MemberEquippedItemRow = {
   equipped_at: string;
 };
 
-// Permanent prestige specialization the player picks on each reset (2026-08
-// quest-world producer redesign, section 31) -- momentum boosts tap gain,
-// automation boosts auto-production, fortune boosts lucky-bonus/critical
-// odds. One point in exactly one track per prestige. This stays the family
-// tycoon's mechanic (prestige_family_tycoon in schema.sql, unchanged); the
-// personal tycoon moved to the points-based TycoonPrestigeUpgradeId shop
-// below (section 34) -- momentum/automation/fortune are still the same
-// three stats there, just bought with prestige_points instead of picked.
-export type TycoonPrestigeFocus = 'momentum' | 'automation' | 'fortune';
-
-// Personal-tycoon-only upgrade shop (section 34). Spent with
-// buy_tycoon_prestige_upgrade against TycoonStateRow.prestige_points, which
-// prestige_tycoon() pays out on every reset. momentum/automation/fortune are
-// uncapped (same stats as TycoonPrestigeFocus, just repeatable purchases
-// now); the other four are convenience upgrades capped at a max level (see
-// tycoonPrestigeUpgradeMaxLevel in lib/tycoon.ts) so they read as
-// "unlock and top off" instead of another infinite grind:
-//   auto_tap     -- unlocks/speeds up hands-free auto-tapping
-//   head_start   -- free pathfinder_camp levels immediately after a reset
-//   energy_flow  -- raises the tap-energy cap above the base 20
-//   surge_master -- raises production-surge trigger chance and duration
-export type TycoonPrestigeUpgradeId =
-  | 'momentum'
-  | 'automation'
-  | 'fortune'
-  | 'auto_tap'
-  | 'head_start'
-  | 'energy_flow'
-  | 'surge_master';
-
-export type TycoonStateRow = {
-  user_id: string;
-  family_id: string;
-  currency: number;
-  // Superseded by the tycoon_buildings table (2026-08 buildings overhaul)
-  // -- upgrade_tycoon still exists server-side but is no longer called by
-  // the client, so this stays frozen at whatever it was. Left in place
-  // rather than dropped to avoid a destructive migration.
-  upgrade_level: number;
-  // Number of times this tycoon has been reset via prestige_tycoon.
-  prestige_level: number;
-  // Total currency ever produced (accrual + taps + lucky bonuses),
-  // never decremented by spending -- shown as the world's overall growth
-  // level (see tycoonPrestigeThreshold in lib/tycoon.ts).
-  lifetime_currency: number;
-  // Currency produced since the last prestige only -- the actual gate for
-  // the *next* prestige (lifetime_currency keeps counting across resets).
-  // Added in section 31 alongside the permanent-focus prestige redesign.
-  cycle_currency: number;
-  // Permanent per-focus prestige levels (section 31) -- see
-  // TycoonPrestigeFocus above. Independent counters, not a single track:
-  // a player accumulates in whichever focus they picked each time.
-  prestige_momentum: number;
-  prestige_automation: number;
-  prestige_fortune: number;
-  // 환생 포인트 (section 34) -- paid out by prestige_tycoon() on every reset,
-  // scaled by how far past the threshold cycle_currency reached. Spent via
-  // buy_tycoon_prestige_upgrade on the levels below (and on additional
-  // momentum/automation/fortune levels, which are otherwise identical to
-  // the family tycoon's picked-focus stats).
-  prestige_points: number;
-  // Convenience upgrade levels bought with prestige_points (section 34) --
-  // see TycoonPrestigeUpgradeId above for what each one does.
-  prestige_auto_tap: number;
-  prestige_head_start: number;
-  prestige_energy_flow: number;
-  prestige_surge_master: number;
-  // 0-(20 + prestige_energy_flow*10), regenerates 1 every 3s server-side
-  // (see settle_tycoon_currency_v31 in schema.sql) -- replaces the old
-  // fixed 2s tap cooldown. The cap grows with prestige_energy_flow.
-  tap_energy: number;
-  tap_energy_updated_at: string;
-  // Consecutive-tap combo (section 32 feel pass) -- increments on each tap
-  // landing within 900ms of the last one, capped at 30 (+58% tap gain at
-  // max), resets to 1 on any longer gap. See tap_tycoon_currency in
-  // schema.sql; the multiplier math lives server-side, this is just the
-  // counter for display.
-  tap_combo: number;
-  // Non-null and in the future while a "production surge" is active
-  // (section 32) -- a ~4% per-tap chance, only while not already surging,
-  // to double both the idle production rate and that tap's own gain for
-  // 20 seconds. Compare against the client clock to show a countdown.
-  surge_until: string | null;
-  last_collected_at: string;
-  last_tap_at: string | null;
-  exchanged_today: number;
-  exchange_reset_date: string;
-  created_at: string;
-};
-
-// The family-shared idle tycoon (2026-08 overhaul) -- same shape as
-// TycoonStateRow minus user_id/tap_energy*/tap_combo, since exactly one row
-// exists per family and every member's collect/upgrade acts on it, but each
-// member's own tap energy/cooldown/combo is tracked separately in
-// family_tycoon_tap_cooldowns (section 31 fairness fix, extended in section
-// 32) rather than shared. surge_until stays here though -- it's a
-// production-wide multiplier, not a per-member pace stat.
-export type FamilyTycoonStateRow = {
-  family_id: string;
-  currency: number;
-  upgrade_level: number;
-  prestige_level: number;
-  lifetime_currency: number;
-  cycle_currency: number;
-  prestige_momentum: number;
-  prestige_automation: number;
-  prestige_fortune: number;
-  surge_until: string | null;
-  last_collected_at: string;
-  last_tap_at: string | null;
-  exchanged_today: number;
-  exchange_reset_date: string;
-  created_at: string;
-};
-
-// One row per (owner, building type) -- how many of that building the
-// tycoon owns. Building identity/cost/rate curves are hardcoded data (see
-// TYCOON_PRODUCERS in lib/tycoon.ts and tycoon_building_defs() in
-// schema.sql), same "data not code" spirit as shop_items.
-export type TycoonBuildingRow = {
-  user_id: string;
-  family_id: string;
-  building_id: string;
-  owned_count: number;
-};
-
-export type FamilyTycoonBuildingRow = {
-  family_id: string;
-  building_id: string;
-  owned_count: number;
-};
-
-// Per-member tap energy/cooldown for the family-shared tycoon (section 31)
-// -- one row per (family, member), so members tap independently instead of
-// contending over one shared cooldown. contribution_currency is tracked for
-// future per-member attribution UI, not currently surfaced. tap_combo
-// (section 32) is this member's own consecutive-tap streak, independent of
-// everyone else's -- same reasoning as tap_energy living here.
-export type FamilyTycoonTapCooldownRow = {
-  family_id: string;
-  user_id: string;
-  last_tap_at: string | null;
-  tap_energy: number;
-  tap_energy_updated_at: string;
-  tap_combo: number;
-  contribution_currency: number;
-};
-
-// collect_tycoon_currency/collect_family_tycoon_currency return this
-// composite (not a bare state row) so the client shows an honest,
-// server-decided lucky-bonus celebration instead of guessing from a
-// currency diff that could also include ordinary tap gains.
-export type TycoonCollectResult = {
-  state: TycoonStateRow;
-  gained: number;
-  base_gained: number;
-  bonus_gained: number;
-  is_lucky: boolean;
-  tap_energy: number;
-};
-export type FamilyTycoonCollectResult = {
-  state: FamilyTycoonStateRow;
-  gained: number;
-  base_gained: number;
-  bonus_gained: number;
-  is_lucky: boolean;
-  tap_energy: number;
-};
-
-// tap_tycoon_currency/tap_family_tycoon_currency return this composite
-// (not a bare state row) so the client can show an honest, server-decided
-// critical-hit celebration instead of guessing from a currency diff that
-// could also include ordinary idle accrual. `combo` (section 32) is this
-// tap's resulting consecutive-tap streak -- for personal it's also on
-// state.tap_combo, but the family variant has no other way to surface it
-// since it lives on the per-member family_tycoon_tap_cooldowns row, not on
-// the shared FamilyTycoonStateRow.
-export type TycoonTapResult = { state: TycoonStateRow; gained: number; is_critical: boolean; tap_energy: number; combo: number };
-export type FamilyTycoonTapResult = { state: FamilyTycoonStateRow; gained: number; is_critical: boolean; tap_energy: number; combo: number };
-
 // Personal housework clicker (section 35) -- replaces the personal tycoon
-// above; the family tycoon is deprecated (RPC access revoked server-side,
-// not this client's concern anymore beyond no longer calling it). Currency
-// fields are numeric strings, not number -- Postgres `numeric` comes back
-// as a JSON string over PostgREST (no precision loss), and this game's own
-// required_cleaning() growth curve (100 * 6^(stage-1)) exceeds
-// Number.MAX_SAFE_INTEGER well before stage 20, unlike TycoonStateRow's
-// currency (bigint, fine as a plain number up to its own manual clamp).
+// (both personal and family tycoon types/tables/RPCs were removed from this
+// file once the clicker cutover shipped and nothing in src/ referenced them
+// anymore; the DB objects themselves are untouched -- RPC access is revoked
+// server-side per the non-destructive-migration convention, see schema.sql
+// sections 35-36). Currency fields are numeric strings, not number --
+// Postgres `numeric` comes back as a JSON string over PostgREST (no
+// precision loss), and this game's own required_cleaning() growth curve
+// (100 * 6^(stage-1)) exceeds Number.MAX_SAFE_INTEGER well before stage 20.
 // Use BigInt(value) for arithmetic/comparisons, never Number(value).
 export type CleanerStateRow = {
   user_id: string;
@@ -306,7 +127,7 @@ export type CleanerStateRow = {
 // One row per (owner, tool) -- how many of that auto-cleaning tool is
 // owned. Tool identity/cost/rate curves are hardcoded data (see
 // CLEANER_TOOLS in lib/cleaner.ts and cleaner_tool_defs() in schema.sql),
-// same "data not code" spirit as TycoonBuildingRow/shop_items.
+// same "data not code" spirit as shop_items.
 export type CleanerToolOwnedRow = {
   user_id: string;
   family_id: string;
@@ -595,36 +416,6 @@ export type Database = {
         Update: Partial<MemberEquippedItemRow>;
         Relationships: [];
       };
-      tycoon_state: {
-        Row: TycoonStateRow;
-        Insert: Partial<TycoonStateRow> & Pick<TycoonStateRow, 'user_id' | 'family_id'>;
-        Update: Partial<TycoonStateRow>;
-        Relationships: [];
-      };
-      family_tycoon_state: {
-        Row: FamilyTycoonStateRow;
-        Insert: Partial<FamilyTycoonStateRow> & Pick<FamilyTycoonStateRow, 'family_id'>;
-        Update: Partial<FamilyTycoonStateRow>;
-        Relationships: [];
-      };
-      tycoon_buildings: {
-        Row: TycoonBuildingRow;
-        Insert: Partial<TycoonBuildingRow> & Pick<TycoonBuildingRow, 'user_id' | 'family_id' | 'building_id'>;
-        Update: Partial<TycoonBuildingRow>;
-        Relationships: [];
-      };
-      family_tycoon_buildings: {
-        Row: FamilyTycoonBuildingRow;
-        Insert: Partial<FamilyTycoonBuildingRow> & Pick<FamilyTycoonBuildingRow, 'family_id' | 'building_id'>;
-        Update: Partial<FamilyTycoonBuildingRow>;
-        Relationships: [];
-      };
-      family_tycoon_tap_cooldowns: {
-        Row: FamilyTycoonTapCooldownRow;
-        Insert: Partial<FamilyTycoonTapCooldownRow> & Pick<FamilyTycoonTapCooldownRow, 'family_id' | 'user_id'>;
-        Update: Partial<FamilyTycoonTapCooldownRow>;
-        Relationships: [];
-      };
       cleaner_state: {
         Row: CleanerStateRow;
         Insert: Partial<CleanerStateRow> & Pick<CleanerStateRow, 'user_id' | 'family_id'>;
@@ -729,66 +520,14 @@ export type Database = {
         Args: { p_family_id: string; p_slot: CharacterSlot };
         Returns: void;
       };
-      collect_tycoon_currency: {
-        Args: { p_family_id: string };
-        Returns: TycoonCollectResult;
-      };
-      tap_tycoon_currency: {
-        Args: { p_family_id: string };
-        Returns: TycoonTapResult;
-      };
-      upgrade_tycoon: {
-        Args: { p_family_id: string };
-        Returns: TycoonStateRow;
-      };
-      buy_tycoon_building: {
-        Args: { p_family_id: string; p_building_id: string };
-        Returns: TycoonStateRow;
-      };
-      exchange_tycoon_currency: {
-        Args: { p_family_id: string; p_currency_amount: number };
-        Returns: TycoonStateRow;
-      };
-      // p_focus is gone as of section 34 -- prestige always resets and pays
-      // out prestige_points now instead of granting one focus level.
-      prestige_tycoon: {
-        Args: { p_family_id: string };
-        Returns: TycoonStateRow;
-      };
-      buy_tycoon_prestige_upgrade: {
-        Args: { p_family_id: string; p_upgrade_id: TycoonPrestigeUpgradeId };
-        Returns: TycoonStateRow;
-      };
-      collect_family_tycoon_currency: {
-        Args: { p_family_id: string };
-        Returns: FamilyTycoonCollectResult;
-      };
-      tap_family_tycoon_currency: {
-        Args: { p_family_id: string };
-        Returns: FamilyTycoonTapResult;
-      };
-      upgrade_family_tycoon: {
-        Args: { p_family_id: string };
-        Returns: FamilyTycoonStateRow;
-      };
-      buy_family_tycoon_building: {
-        Args: { p_family_id: string; p_building_id: string };
-        Returns: FamilyTycoonStateRow;
-      };
-      // Always raises 'family_exchange_disabled' server-side (section 31 --
-      // shared tycoon currency can no longer be converted to any one
-      // member's personal points, a fairness fix). Kept in the RPC surface
-      // rather than removed so an old cached client gets a clean error
-      // instead of a missing-function failure; the frontend no longer calls
-      // it (see lib/tycoon.ts, exchangeFamilyTycoonCurrency was removed).
-      exchange_family_tycoon_currency: {
-        Args: { p_family_id: string; p_currency_amount: number };
-        Returns: FamilyTycoonStateRow;
-      };
-      prestige_family_tycoon: {
-        Args: { p_family_id: string; p_focus: TycoonPrestigeFocus };
-        Returns: FamilyTycoonStateRow;
-      };
+      // Both the personal and family-shared tycoon RPCs (collect/tap/
+      // upgrade/buy_building/exchange/prestige, personal and family_-
+      // prefixed variants) were removed from this file once the housework
+      // clicker cutover shipped and lib/tycoon.ts was deleted -- nothing in
+      // src/ calls them anymore. Execute access is revoked server-side
+      // (schema.sql sections 35-36, non-destructive-migration convention:
+      // the RPCs/tables themselves still exist, just unreachable from an
+      // authenticated client and no longer described here).
       get_cleaner_state: {
         Args: { p_family_id: string };
         Returns: CleanerStateRow;

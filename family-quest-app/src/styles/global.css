@@ -3935,6 +3935,14 @@ textarea {
   max-height: min(92vh, 920px);
   overflow-y: auto;
   padding: 16px 14px;
+  /* Same fix as .tycoon-modal's (see the sideways-swipe saga elsewhere in
+     this file's history) -- without an explicit touch-action, the default
+     `auto` lets iOS's edge-swipe-back gesture hijack horizontal drags
+     anywhere in this sheet. .cleaner-modal is a new class (not a reuse of
+     .tycoon-modal), so it never inherited that earlier fix -- this sheet
+     has no horizontal-scrolling element of its own, so pan-y alone (no
+     pan-x carve-out needed, unlike .personal-producer-dock back then). */
+  touch-action: pan-y;
   background:
     linear-gradient(
       color-mix(in srgb, var(--card) 94%, transparent),
@@ -4270,26 +4278,10 @@ textarea {
 }
 
 /* Every tap swaps the sprite pose (see tapReaction in
-   HouseworkClickerModal.tsx) and replays this squash/bounce, overriding the
-   idle loop for its short duration -- doc's "연속으로 눌러도 애니메이션이
-   자연스럽게 이어져야 한다" reads fine here since each tap just restarts the
-   same short animation rather than queuing/stacking. */
+   HouseworkClickerModal.tsx) from the idle image to the sweep-sheet
+   animation (.cleaner-sweep-sprite/cleanerSweep above) -- this just makes
+   the character render slightly larger while that's playing. */
 .cleaner-character.is-tap { width: 58%; }
-
-@keyframes cleanerBounce {
-  0% {
-    transform: translateY(0) scale(1, 1);
-  }
-  35% {
-    transform: translateY(4%) scale(1.08, 0.9);
-  }
-  65% {
-    transform: translateY(-5%) scale(0.95, 1.07);
-  }
-  100% {
-    transform: translateY(0) scale(1, 1);
-  }
-}
 
 .cleaner-gain-float {
   position: absolute;
@@ -4404,6 +4396,10 @@ textarea {
 .cleaner-meta-sheet {
   max-height: 85vh;
   overflow-y: auto;
+  /* Same reasoning as .cleaner-modal above -- these are separate sheet
+     classes, not nested inside .cleaner-modal, so they need their own
+     touch-action to not inherit the swipe-back-hijack default. */
+  touch-action: pan-y;
 }
 
 .cleaner-tool-list,
