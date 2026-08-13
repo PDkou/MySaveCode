@@ -86,9 +86,19 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   // and rendered through the exact same object-fit/object-position
   // technique already proven correct for the idle pose.
   const [sweepFrame, setSweepFrame] = useState(1);
+  // Alternates broom/mop every tap (doc's own "빗자루질과 걸레질을 번갈아
+  // 사용" -- left as an open decision there; simple per-tap alternation is
+  // the least surprising reading of it). Only cleaner-girl-mop-1.png exists
+  // (single frame, no sweep-style 4-frame cycle) so the mop pose doesn't
+  // animate through sweepFrame -- it just holds for the same 360ms window.
+  const [sweepTool, setSweepTool] = useState<"broom" | "mop">("broom");
   const [tapFloat, setTapFloat] = useState<{ id: number; gain: string } | null>(
     null,
   );
+  // Shown briefly the first time a given tool is ever bought (owned goes
+  // 0 -> 1) -- the doc's "새 도구 발견" pose, previously speced but never
+  // wired to anything (cleaner.tools.newToolToast sat unused).
+  const [newToolFlash, setNewToolFlash] = useState(false);
   const [stageToast, setStageToast] = useState<{
     room: string;
     stage: number;
@@ -233,13 +243,16 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     tapBatchRef.current += 1;
     setTapReaction("tap");
     setTapMotionKey((current) => current + 1);
+    setSweepTool((current) => (current === "broom" ? "mop" : "broom"));
     if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
     sweepFrameTimers.current.forEach(clearTimeout);
     sweepFrameTimers.current = [];
     // Steps through frames 1->2->3->4, ~90ms per frame (frame 1 shows
     // immediately, no timer needed for it) -- was 55ms/frame (220ms total),
     // which read as too fast/rushed; slowed to 360ms total to match the
-    // cleanerTapPunch CSS animation's own 0.36s duration.
+    // cleanerTapPunch CSS animation's own 0.36s duration. Only the broom
+    // pose actually has 4 frames -- the mop pose (single still image) just
+    // holds for the same window, sweepFrame is simply unused while it shows.
     setSweepFrame(1);
     const FRAME_MS = 90;
     [2, 3, 4].forEach((frame, index) => {
@@ -369,7 +382,12 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     try {
       const next = await buyCleanerTool(family.id, toolId);
       setState(next);
+      const wasFirstEver = (toolsOwned[toolId] ?? 0) === 0;
       setToolsOwned((prev) => ({ ...prev, [toolId]: (prev[toolId] ?? 0) + 1 }));
+      if (wasFirstEver) {
+        setNewToolFlash(true);
+        later(() => setNewToolFlash(false), 1500);
+      }
     } catch (err) {
       setErrorKey(
         err instanceof CleanerActionError
@@ -548,6 +566,39 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   );
   const gainPerTap = (1 + clickBonus) * (hasStrongerHands ? 1.25 : 1);
   const visibleTools = visibleCleanerTools(state.max_stage);
+
+  // Which pose the character shows right now, in priority order (biggest
+  // celebration wins if more than one happens to be true at once) --
+  // doc's original 7-pose plan, section 1 of
+  // CLEANER_CHARACTER_AND_ROOM_PROGRESS_HANDOFF.md. poseKey only changes
+  // when the *pose itself* changes (not on every sweep-frame tick within a
+  // single tap), so the cleanerTapPunch pop-in animation plays once per
+  // pose entry, not once per frame.
+  let characterImgSrc: string;
+  let poseKey: string;
+  if (prestigeCelebration) {
+    characterImgSrc = "/art/cleaner/cleaner-girl-prestige.png";
+    poseKey = "prestige";
+  } else if (deepCleanCelebration) {
+    characterImgSrc = "/art/cleaner/cleaner-girl-deep-clean.png";
+    poseKey = "deep-clean";
+  } else if (stageToast) {
+    characterImgSrc = "/art/cleaner/cleaner-girl-stage-complete.png";
+    poseKey = "stage-complete";
+  } else if (newToolFlash) {
+    characterImgSrc = "/art/cleaner/cleaner-girl-new-tool.png";
+    poseKey = "new-tool";
+  } else if (tapReaction === "tap") {
+    characterImgSrc =
+      sweepTool === "mop"
+        ? "/art/cleaner/cleaner-girl-mop-1.png"
+        : `/art/cleaner/cleaner-girl-sweep-${sweepFrame}.png`;
+    poseKey = `tap-${tapMotionKey}`;
+  } else {
+    characterImgSrc = "/art/cleaner/cleaner-girl-idle.png";
+    poseKey = "idle";
+  }
+  const isReactivePose = poseKey !== "idle";
   const hasAffordableNewTool = visibleTools.some((tool) => {
     const owned = toolsOwned[tool.id] ?? 0;
     if (owned > 0) return false;
@@ -618,6 +669,15 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
           </div>
 
           <section className={`cleaner-scene is-room-${room.id}`}>
+            <div
+              className={`cleaner-scene-bg is-dirty is-room-${room.id}`}
+              aria-hidden="true"
+            />
+            <div
+              className={`cleaner-scene-bg is-clean is-room-${room.id}`}
+              style={{ opacity: progressPct / 100 }}
+              aria-hidden="true"
+            />
             <div className="cleaner-clutter-layer" aria-hidden="true">
               {progressPct < 25 && (
                 <img
@@ -648,21 +708,39 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
                 />
               )}
             </div>
+            {/* Every owned tool except robot_vacuum (which keeps its own
+                patrolling treatment below) shows up here as a small icon --
+                doc feedback: buying a tool used to be invisible on screen
+                past the first purchase, giving no sense of the room
+                actually filling up with what was bought. */}
+            <div className="cleaner-tool-shelf" aria-hidden="true">
+              {CLEANER_TOOLS.filter(
+                (tool) => tool.id !== "robot_vacuum" && (toolsOwned[tool.id] ?? 0) > 0,
+              ).map((tool) => {
+                const owned = toolsOwned[tool.id] ?? 0;
+                return (
+                  <div key={tool.id} className="cleaner-tool-shelf-icon">
+                    <img src={`/art/cleaner/${tool.id}.png`} alt="" />
+                    {owned > 1 && <span>×{owned}</span>}
+                  </div>
+                );
+              })}
+            </div>
             <div
-              className={`cleaner-character ${tapReaction === "tap" ? "is-tap" : ""}`}
+              className={`cleaner-character ${isReactivePose ? "is-tap" : ""}`}
             >
               <div className="cleaner-shadow" />
-              {tapReaction === "tap" ? (
+              {isReactivePose ? (
                 <img
-                  key={tapMotionKey}
+                  key={poseKey}
                   className="cleaner-sprite cleaner-sprite-tap"
-                  src={`/art/cleaner/cleaner-girl-sweep-${sweepFrame}.png`}
+                  src={characterImgSrc}
                   alt=""
                 />
               ) : (
                 <img
                   className="cleaner-sprite"
-                  src="/art/cleaner/cleaner-girl-idle.png"
+                  src={characterImgSrc}
                   alt=""
                 />
               )}
