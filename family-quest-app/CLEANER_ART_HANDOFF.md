@@ -95,6 +95,31 @@ v1 문서는 방향을 잘못 잡았습니다 — 기존 온보딩 마스코트�
 - 두 캐릭터(여자/남자)는 **같은 세트로 보이도록** 체형 비율/아웃라인 두께/전체 톤을
   맞추고, 팔레트만 구분되게 그려주세요.
 
+### 5-1. "AI스러운 도트아트" 피하기 (중요 — 실제로 발견된 문제)
+
+기존에 나온 캐릭터 아트(`cleaner-girl-idle.png` 등)를 픽셀 단위로 분석해보니
+색상이 255가지나 쓰여 있었습니다 — 진짜 도트아트는 이 크기 캐릭터면 보통
+12~32색 정도로 딱 정해놓고 그립니다. 원인은 "픽셀아트 스타일"이라는 프롬프트
+단어만으로는 실제 저해상도 격자에 그려주는 게 아니라, 고해상도로 부드럽게
+렌더링한 다음 픽셀처럼 보이게 필터만 씌우기 때문입니다. 이번엔 아래 조건을
+프롬프트에 반드시 포함해주세요 (8번 프롬프트에 이미 반영했습니다):
+
+- **실제 캔버스 자체를 저해상도로 생성**: "실제 렌더링 해상도 자체를 64~96픽셀
+  정도로, 그 이상 디테일을 넣지 말고" 처럼 네이티브 저해상도를 명시. 고해상도로
+  그린 다음 축소하는 게 아니라, 애초에 낮은 해상도 격자 위에 그려야 함.
+  결과물을 확대해서 전달해야 한다면 **최근접 이웃(nearest-neighbor) 방식으로만
+  확대** — AI/스무스 업스케일은 각진 픽셀 경계를 뭉갬.
+- **팔레트를 숫자로 못박기**: 전체 스프라이트 기준 16~20색 이내, 부위(피부/머리/
+  옷)마다 밝은 톤 1개 + 그림자 톤 1개(최대 하이라이트 톤 1개 추가), 그 이상
+  단계적 그라디언트 금지.
+- **아웃라인 두께 전체 통일**: 이미지 전체에서 테두리가 항상 같은 픽셀 두께.
+- **경계에 반투명 픽셀 없음**: 알파값은 완전 불투명 아니면 완전 투명 둘 중
+  하나만 — 안티에일리어싱/디더링 노이즈 있는 부드러운 경계 금지.
+- 가능하면 범용 이미지 생성 AI(달리/미드저니/GPT 이미지 등)보다 **도트아트
+  전용 생성 도구**(예: Retro Diffusion류 픽셀아트 특화 모델)를 우선 시도해주세요
+  — 범용 디퓨전 모델은 구조적으로 진짜 격자/팔레트 제약을 걸지 못해서 위
+  조건들을 지시해도 완벽히 지켜지지 않는 경우가 많습니다.
+
 **룸 배경 팔레트** (지금 CSS 그라디언트 값 — 배경 아트를 그린다면 톤 참고용):
 
 | 방 | 주요 색 (밝은순) |
@@ -132,25 +157,36 @@ v1 문서는 방향을 잘못 잡았습니다 — 기존 온보딩 마스코트�
 ```
 Brand-new chibi pixel art character design for a mobile housework-cleaning
 clicker game, cute girl character, original design (not based on any
-existing mascot), thick dark brown outline, flat saturated cel-shaded
-colors (no soft gradients, no airbrush shading, no photorealistic
-texture), large expressive eyes, oversized head-to-body ratio, short
-chunky limbs, warm kid-friendly palette, standing idle pose, holding a
-broom loosely at her side, standing on a fully transparent background,
+existing mascot). Render at a genuinely low native resolution (actual
+canvas around 64-96 pixels tall, not a high-resolution illustration
+styled to look pixelated) with a strict locked color palette of 16-20
+colors total for the whole sprite -- each surface (skin/hair/clothes)
+shaded with exactly one base tone plus one shadow tone (at most one extra
+highlight tone), no soft gradients, no airbrush shading, no
+photorealistic texture. Thick dark brown outline of perfectly uniform
+pixel width throughout. Large expressive eyes, oversized head-to-body
+ratio, short chunky limbs, warm kid-friendly palette, standing idle pose,
+holding a broom loosely at her side, fully transparent background with
+hard binary alpha (no semi-transparent/anti-aliased edge pixels),
 front-facing three-quarter pose, chunky low-resolution pixel blocks (not
 smooth/anti-aliased), full body visible head to feet, no shadow baked
-into the image. Avoid: realistic rendering, soft AI-diffusion shading,
-noise texture, muted/desaturated colors, painterly brushwork.
+into the image. If upscaling for delivery, upscale with nearest-neighbor
+only, never AI/smooth upscaling. Avoid: realistic rendering, soft
+AI-diffusion shading, noise texture, dithering, muted/desaturated colors,
+painterly brushwork, gradient blending.
 ```
 
 빗자루질 포즈(2~3프레임 스프라이트시트로 요청):
 
 ```
-Same character as above, 3-frame side-scrolling sprite sheet of a
-sweeping motion with a broom (frame 1: broom pulled back, frame 2: broom
-mid-sweep, frame 3: broom follow-through), frames arranged horizontally
-in equal width cells, same art style and palette as the idle pose,
-transparent background, chunky pixel art, no anti-aliasing.
+Same character as above (same native low resolution, same locked 16-20
+color palette, same uniform outline width, same hard binary alpha), 3-frame
+side-scrolling sprite sheet of a sweeping motion with a broom (frame 1:
+broom pulled back, frame 2: broom mid-sweep, frame 3: broom
+follow-through), frames arranged horizontally in equal width cells,
+transparent background, chunky pixel art, no anti-aliasing, no soft
+gradients, nearest-neighbor upscale only if delivered larger than native
+resolution.
 ```
 
 다른 5개 포즈(걸레질/단계완료/대청소/새도구발견/환생)도 "같은 캐릭터, 같은 스타일"이라고

@@ -80,6 +80,25 @@ CSS로 크로스페이드(서서히 전환)할 예정이라, 딱 2장(더러움/
   같은 캐릭터, 같은 팔레트, 같은 체형 비율 유지 (다른 캐릭터처럼 보이면 안 됨)
 - 배경은 기존 `*-base-clean.png` 5장과 각각 같은 구도 유지
 
+### 3-1. "AI스러운 도트아트" 피하기 (중요 — 실제로 발견된 문제)
+
+기존 캐릭터 아트를 픽셀 단위로 분석해보니 색상이 255가지나 쓰여 있었습니다 —
+진짜 도트아트는 이 크기면 보통 12~32색 정도로 딱 정해놓고 그립니다.
+"픽셀아트 스타일"이라는 프롬프트 단어만으로는 실제 저해상도 격자에 그려주는
+게 아니라 고해상도로 부드럽게 렌더링한 다음 필터만 씌우기 때문입니다. 이번
+캐릭터 5포즈 + 배경 5장은 아래 조건을 꼭 지켜서 요청해주세요 (5번 프롬프트에
+이미 반영):
+
+- 실제 캔버스 자체를 저해상도(캐릭터는 64~96픽셀, 배경은 기존 clean 배경과
+  같은 저해상도)로 생성 — 고해상도로 그린 뒤 축소가 아니라 애초에 낮은 해상도
+  격자 위에 그리기. 확대 전달 시 최근접 이웃(nearest-neighbor) 방식으로만.
+- 팔레트를 숫자로 못박기: 캐릭터는 16~20색 이내, 배경은 기존 clean 배경과
+  비슷한 색 수로. 부위마다 밝은 톤 1개 + 그림자 톤 1개만, 그 이상 그라디언트
+  금지.
+- 아웃라인 두께 이미지 전체에서 통일.
+- 캐릭터는 알파값이 완전 불투명/완전 투명 둘 중 하나만 (반투명 경계 없음).
+- 가능하면 범용 이미지 생성 AI보다 도트아트 전용 생성 도구를 우선 시도.
+
 ## 4. 파일 스펙
 
 **캐릭터 (5포즈)**:
@@ -100,13 +119,19 @@ CSS로 크로스페이드(서서히 전환)할 예정이라, 딱 2장(더러움/
 
 ```
 Same chibi pixel art character as the existing idle/sweeping poses (same
-proportions, same warm palette, same thick dark brown outline, flat
-saturated cel-shaded colors), now doing a small proud reaction pose --
-thumbs up, bright happy eyes, big smile -- standing on a fully
-transparent background, front-facing, chunky low-resolution pixel
-blocks (not smooth/anti-aliased), full body visible head to feet, no
-shadow baked into the image. Avoid: realistic rendering, soft
-AI-diffusion shading, noise texture, muted colors, painterly brushwork.
+proportions, same warm palette, same thick dark brown outline). Render
+at the same genuinely low native resolution as the reference poses (not
+a high-resolution illustration styled to look pixelated), same strict
+locked color palette of 16-20 colors total -- each surface shaded with
+exactly one base tone plus one shadow tone, no soft gradients. Now doing
+a small proud reaction pose -- thumbs up, bright happy eyes, big smile
+-- standing on a fully transparent background with hard binary alpha
+(no semi-transparent/anti-aliased edge pixels), front-facing, chunky
+low-resolution pixel blocks (not smooth/anti-aliased), full body
+visible head to feet, no shadow baked into the image. If upscaling for
+delivery, upscale with nearest-neighbor only, never AI/smooth upscaling.
+Avoid: realistic rendering, soft AI-diffusion shading, noise texture,
+dithering, muted colors, painterly brushwork, gradient blending.
 ```
 
 다른 포즈들도 "같은 캐릭터, 같은 스타일"이라고 명시하면서 위 섹션 1의 표정
@@ -116,12 +141,14 @@ AI-diffusion shading, noise texture, muted colors, painterly brushwork.
 
 ```
 Same pixel art living room background as an existing clean reference
-image (same camera angle, same furniture layout, same palette), but
-subtly messier/dustier -- slightly crooked cushions, faint dust
-particles, a bit of cobweb in a corner -- for a mobile housework-cleaning
-clicker game. Thick dark outlines, flat cel-shaded colors, no soft
-gradients or photorealistic texture. Keep the mess light and cozy, not
-grimy or unpleasant.
+image (same camera angle, same furniture layout, same native resolution,
+same locked color palette), but subtly messier/dustier -- slightly
+crooked cushions, faint dust particles, a bit of cobweb in a corner --
+for a mobile housework-cleaning clicker game. Thick outlines of uniform
+pixel width, flat cel-shaded colors (one base tone + one shadow tone per
+surface), no soft gradients or photorealistic texture, no dithering
+noise. If upscaling for delivery, upscale with nearest-neighbor only.
+Keep the mess light and cozy, not grimy or unpleasant.
 ```
 
 ## 6. 참고용 소스 zip
