@@ -198,6 +198,42 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     };
   }, [family?.id, user?.id]);
 
+  // Force-decode every pose sprite into the browser's own image cache on
+  // mount, once, rather than letting each pose's first appearance be the
+  // thing that triggers its network fetch. Without this, swapping the same
+  // <img> element's `src` mid-gesture (poseKey stays stable across the 4
+  // sweep frames -- see the picker below) can show a blank/transparent frame
+  // for however long that specific file takes to arrive, which on a cold
+  // cache or slow connection reads as the character "flickering
+  // see-through" while tapping -- a real playtest report this project had
+  // no test coverage for, since every prior verification pass only
+  // inspected the static PNG files, never an actual tap-through on a
+  // throttled/cold-cache connection.
+  useEffect(() => {
+    const poseFiles = [
+      "cleaner-girl-idle.png",
+      "cleaner-girl-sweep-1.png",
+      "cleaner-girl-sweep-2.png",
+      "cleaner-girl-sweep-3.png",
+      "cleaner-girl-sweep-4.png",
+      "cleaner-girl-mop-1.png",
+      "cleaner-girl-stage-complete.png",
+      "cleaner-girl-deep-clean.png",
+      "cleaner-girl-new-tool.png",
+      "cleaner-girl-prestige.png",
+    ];
+    const preloaded = poseFiles.map((file) => {
+      const img = new Image();
+      img.src = `/art/cleaner/${file}`;
+      return img;
+    });
+    return () => {
+      // Drop references so the decoded bitmaps are eligible for GC once the
+      // modal closes -- nothing else keeps these Image objects alive.
+      preloaded.length = 0;
+    };
+  }, []);
+
   // Tap batching -- every click bumps a plain counter immediately (doc:
   // "버튼은 모든 실제 클릭을 즉시 받아야 한다"), a fixed interval flushes the
   // accumulated count to apply_cleaner_taps rather than one RPC per click.
@@ -709,17 +745,25 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
               )}
             </div>
             {/* Every owned tool except robot_vacuum (which keeps its own
-                patrolling treatment below) shows up here as a small icon --
-                doc feedback: buying a tool used to be invisible on screen
-                past the first purchase, giving no sense of the room
-                actually filling up with what was bought. */}
+                patrolling treatment below) shows up here in its own fixed
+                floor/wall spot -- doc feedback: buying a tool used to be
+                invisible on screen past the first purchase, and the first
+                attempt at fixing that (a flex-wrapped icon strip along the
+                top edge) itself got called out in play as "a picture and a
+                number just dangling there", not an object actually placed
+                in the room. Each tool id has a dedicated
+                .cleaner-tool-slot-* position (see global.css) instead of a
+                reflowing list. */}
             <div className="cleaner-tool-shelf" aria-hidden="true">
               {CLEANER_TOOLS.filter(
                 (tool) => tool.id !== "robot_vacuum" && (toolsOwned[tool.id] ?? 0) > 0,
               ).map((tool) => {
                 const owned = toolsOwned[tool.id] ?? 0;
                 return (
-                  <div key={tool.id} className="cleaner-tool-shelf-icon">
+                  <div
+                    key={tool.id}
+                    className={`cleaner-placed-tool cleaner-tool-slot-${tool.id}`}
+                  >
                     <img src={`/art/cleaner/${tool.id}.png`} alt="" />
                     {owned > 1 && <span>×{owned}</span>}
                   </div>

@@ -4212,10 +4212,23 @@ textarea {
   left: 50%;
   width: 68%;
   height: 16%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) scale(1);
   border-radius: 50%;
   background: rgba(20, 16, 26, 0.28);
   filter: blur(2px);
+  /* Squashes/lightens in sync with .cleaner-sprite's own idle bob (same
+     2.4s duration) -- a shadow that shrinks as the character rises and
+     grows back as she settles is what reads as "standing on the floor,
+     briefly lifting" rather than "floating in place", which is what a
+     plain up/down translate on the sprite alone reads as without any
+     ground-contact cue reacting to it. */
+  animation: cleanerShadowPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes cleanerShadowPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.28; }
+  40% { transform: translateX(-50%) scale(0.86); opacity: 0.18; }
+  70% { transform: translateX(-50%) scale(0.94); opacity: 0.22; }
 }
 
 .cleaner-sprite {
@@ -4234,7 +4247,17 @@ textarea {
      actually puts the feet at the shadow instead of ~5% above it. */
   object-position: 50% 100%;
   image-rendering: pixelated;
-  filter: drop-shadow(0 3px 0 rgba(20, 16, 26, 0.2));
+  /* No filter:drop-shadow here (was `drop-shadow(0 3px 0 ...)`) -- a real
+     playtest reported the character looking partially see-through, and
+     compositing a CSS filter over a nearest-neighbor-scaled bitmap is a
+     known cross-browser/GPU soft spot: some mobile rasterizers resample
+     the source through their filter pipeline regardless of
+     image-rendering:pixelated, reintroducing blended (partially
+     transparent-looking) edge pixels the source PNG itself never has
+     (verified: 0 partial-alpha pixels in every shipped character frame).
+     .cleaner-shadow below already gives the character a ground shadow via
+     a separate blurred element instead, so this filter was purely a small
+     extra "pop" -- not worth the risk of reproducing the reported bug. */
   transform-origin: 50% 100%;
   animation: cleanerIdle 2.4s ease-in-out infinite;
 }
@@ -4274,7 +4297,7 @@ textarea {
   position: absolute;
   object-fit: contain;
   image-rendering: pixelated;
-  filter: drop-shadow(0 2px 0 rgba(73, 40, 25, 0.22));
+  /* filter:drop-shadow dropped -- see .cleaner-sprite's comment. */
   animation: cleanerClutterOut 0.25s ease-out both;
 }
 
@@ -4288,38 +4311,59 @@ textarea {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Every owned tool except robot_vacuum shows up here as a small icon in
-   the top strip of the scene (the character box only starts ~22% down,
-   so this area is otherwise empty). Wraps to a second row once more than
-   ~6 tools are owned rather than shrinking icons further. */
+/* Every owned tool except robot_vacuum gets its own fixed spot on the
+   room's floor/walls instead of a flex-wrapped icon strip along the top
+   edge -- a real playtest reported the strip read as "a picture and a
+   number just dangling up there", i.e. a HUD tray bolted onto the scene
+   rather than an object actually sitting in the room. Each tool id has a
+   dedicated position below (.cleaner-tool-slot-*) chosen to stay clear of
+   the character's own footprint (centered column, roughly 24-76% wide)
+   and the robot vacuum's patrol corner (bottom-right), so the room reads
+   as filling up around the character rather than tools overlapping her or
+   each other. */
 .cleaner-tool-shelf {
   position: absolute;
-  top: 3%;
-  left: 3%;
-  right: 3%;
+  inset: 0;
   z-index: 3;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4%;
   pointer-events: none;
 }
 
-.cleaner-tool-shelf-icon {
-  position: relative;
-  width: 14%;
+.cleaner-placed-tool {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: cleanerClutterOut 0.3s ease-out both;
 }
 
-.cleaner-tool-shelf-icon img {
+/* A soft ground-contact ellipse, the same technique as .cleaner-shadow for
+   the character -- a separate element behind the icon instead of a
+   filter:drop-shadow on the icon's own bitmap (see .cleaner-sprite's
+   comment for why filters on nearest-neighbor-scaled images are avoided
+   now throughout this scene). Sells "resting on the floor" rather than
+   "icon pasted on top". */
+.cleaner-placed-tool::before {
+  content: "";
+  position: absolute;
+  bottom: -8%;
+  width: 80%;
+  height: 22%;
+  border-radius: 50%;
+  background: rgba(20, 16, 26, 0.22);
+  filter: blur(1.5px);
+}
+
+.cleaner-placed-tool img {
+  position: relative;
   display: block;
   width: 100%;
   image-rendering: pixelated;
-  filter: drop-shadow(0 2px 0 rgba(73, 40, 25, 0.24));
 }
 
-.cleaner-tool-shelf-icon span {
+.cleaner-placed-tool span {
   position: absolute;
-  right: -5px;
-  bottom: -5px;
+  right: -8%;
+  top: -10%;
   min-width: 16px;
   padding: 1px 4px;
   border: 2px solid #3a1f2b;
@@ -4331,6 +4375,16 @@ textarea {
   line-height: 1.2;
   text-align: center;
 }
+
+.cleaner-tool-slot-toy_box { left: 3%; bottom: 4%; width: 15%; }
+.cleaner-tool-slot-sturdy_gloves { left: 20%; bottom: 3%; width: 9%; }
+.cleaner-tool-slot-feather_duster { left: 3%; bottom: 23%; width: 10%; }
+.cleaner-tool-slot-auto_mop { left: 3%; bottom: 41%; width: 12%; }
+.cleaner-tool-slot-laundry_helper { left: 3%; bottom: 59%; width: 13%; }
+.cleaner-tool-slot-auto_broom { right: 3%; bottom: 23%; width: 11%; }
+.cleaner-tool-slot-dishwasher { right: 3%; bottom: 41%; width: 14%; }
+.cleaner-tool-slot-helper_robot { right: 3%; bottom: 59%; width: 15%; }
+.cleaner-tool-slot-work_gloves_pro { right: 18%; bottom: 3%; width: 9%; }
 
 .cleaner-active-robot {
   position: absolute;
@@ -4346,7 +4400,7 @@ textarea {
   display: block;
   width: 100%;
   image-rendering: pixelated;
-  filter: drop-shadow(0 3px 0 rgba(73, 40, 25, 0.24));
+  /* filter:drop-shadow dropped -- see .cleaner-sprite's comment. */
 }
 
 .cleaner-active-robot span {
@@ -4370,14 +4424,23 @@ textarea {
   to { transform: translateX(-34%) rotate(1deg); }
 }
 
+/* Was a single symmetric translateY/scale bob -- reported in real play as
+   the character looking like she's "floating in mid-air" rather than
+   standing. A perfectly even sine-wave bob with no other motion is exactly
+   what reads as weightless: real standing-idle has an asymmetric rise
+   (quicker up, slower settle), a touch of body rotation from shifting
+   weight between feet, and a horizontal micro-drift, not just a vertical
+   float. Paired with .cleaner-shadow squashing on the same timeline above
+   so the ground plane visibly reacts to her weight leaving and returning.
+   This is still a CSS-only mitigation, not a substitute for the actual
+   idle-variation art (blink/glance/weight-shift frames) requested in the
+   latest handoff doc -- true variety needs more source frames than one
+   idle pose can express no matter how the single frame is animated. */
 @keyframes cleanerIdle {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-3%) scale(1.01);
-  }
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  40% { transform: translate(0.5%, -3%) rotate(-1.2deg) scale(1.012, 0.99); }
+  70% { transform: translate(-0.3%, -1%) rotate(0.6deg) scale(1.004, 0.997); }
+  100% { transform: translate(0, 0) rotate(0deg) scale(1); }
 }
 
 /* Was `.cleaner-character.is-tap { width: 58%; }` -- bumping the box's own
