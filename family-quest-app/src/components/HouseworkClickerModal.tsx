@@ -93,6 +93,13 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     room: string;
     stage: number;
   } | null>(null);
+  // Shown once per session-start heartbeat that actually credited a real
+  // gap (see cleaner_heartbeat's offline accrual, section 38) -- filtered
+  // to at least 60s so a quick tab-switch-and-back during normal play
+  // doesn't pop a "welcome back" toast for a few seconds' worth of coins.
+  const [offlineWelcome, setOfflineWelcome] = useState<{ gained: string } | null>(
+    null,
+  );
 
   const [showTools, setShowTools] = useState(false);
   const [busyToolId, setBusyToolId] = useState<string | null>(null);
@@ -246,15 +253,26 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     }, 360);
   };
 
-  // Sole source of passive/tool income -- doc section 7: online-only, no
-  // offline catch-up. The interval only exists while the tab is visible;
-  // its own presence (not any server-side tracking) is the online signal.
+  // Sole source of passive/tool income -- the interval only exists while
+  // the tab is visible; its own presence (not any server-side tracking) is
+  // the online signal for the interval's own 15s-capped online ticks.
+  // Session-start calls (mount, or hidden -> visible) are different: they
+  // now credit the real gap since the server's last baseline, capped at
+  // 24h, matching this project's own original idle-tycoon design
+  // (GAMIFICATION_DESIGN.md section 6-1) -- section 38 reinstated that for
+  // this game after the initial clicker rewrite had dropped it.
   useEffect(() => {
     if (!family) return;
     let interval: ReturnType<typeof setInterval> | null = null;
     const tick = (sessionStart: boolean) => {
       void cleanerHeartbeat(family.id, sessionStart)
-        .then((next) => setState(next))
+        .then((result) => {
+          setState(result.state);
+          if (sessionStart && Number(result.offline_seconds) >= 60) {
+            setOfflineWelcome({ gained: result.offline_gained });
+            later(() => setOfflineWelcome(null), 4000);
+          }
+        })
         .catch(() => {
           // Heartbeat failures are silent -- a missed tick just means no
           // passive credit for that interval, not worth surfacing an error
@@ -263,11 +281,10 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     };
     const start = () => {
       if (interval) return;
-      // sessionStart=true: this call always just resets the server's
-      // baseline with zero credit, even if last_heartbeat_at is old (e.g.
-      // the app was closed for hours) -- without this, every resume could
-      // credit up to 15s as if the player had been actively online the
-      // whole time. Only the interval's own later ticks (below) pass false.
+      // sessionStart=true: settles whatever gap has accrued since the
+      // server's last baseline (see the effect comment above) before the
+      // interval's own online-only ticks take over. Only those later ticks
+      // (below) pass false.
       tick(true);
       interval = setInterval(() => tick(false), HEARTBEAT_MS);
     };
@@ -507,14 +524,29 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     ? Math.min(100, Number((BigInt(state.stage_progress) * 100n) / required))
     : 0;
   const hasEfficientTools = (upgradesOwned["efficient_tools_1"] ?? 0) > 0;
+  const hasStrongerHands = (upgradesOwned["stronger_hands_1"] ?? 0) > 0;
+  // Only 'auto' tools contribute to passive rate -- 'click' tools (section
+  // 38) affect tap gain instead, summed separately below. Mixing the two
+  // sums would silently inflate both the displayed rate and (once the
+  // matching automation-title threshold check is added client-side) any
+  // rate-based UI gating.
   const baseRatePerSecond = CLEANER_TOOLS.reduce(
-    (sum, tool) => sum + tool.baseRate * (toolsOwned[tool.id] ?? 0),
+    (sum, tool) =>
+      tool.kind === "auto" ? sum + tool.baseRate * (toolsOwned[tool.id] ?? 0) : sum,
     0,
   );
   // Mirrors cleaner_heartbeat's v_auto_mult in schema.sql -- the HUD used
   // to show the pre-upgrade base rate even after buying efficient_tools_1,
   // silently understating actual passive income by 20%.
   const ratePerSecond = baseRatePerSecond * (hasEfficientTools ? 1.2 : 1);
+  // Mirrors apply_cleaner_taps' v_gain formula exactly: 1 (base) + summed
+  // click-tool bonus, then stronger_hands_1's +25% multiplies on top.
+  const clickBonus = CLEANER_TOOLS.reduce(
+    (sum, tool) =>
+      tool.kind === "click" ? sum + tool.baseRate * (toolsOwned[tool.id] ?? 0) : sum,
+    0,
+  );
+  const gainPerTap = (1 + clickBonus) * (hasStrongerHands ? 1.25 : 1);
   const visibleTools = visibleCleanerTools(state.max_stage);
   const hasAffordableNewTool = visibleTools.some((tool) => {
     const owned = toolsOwned[tool.id] ?? 0;
@@ -556,6 +588,11 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
               <span>
                 {t("cleaner.ratePerSecond", {
                   rate: formatCleanerNumber(String(Math.round(ratePerSecond))),
+                })}
+              </span>
+              <span>
+                {t("cleaner.gainPerTap", {
+                  gain: gainPerTap.toFixed(gainPerTap % 1 === 0 ? 0 : 1),
                 })}
               </span>
             </div>
@@ -651,6 +688,13 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
                 })}
               </div>
             )}
+            {offlineWelcome && (
+              <div className="cleaner-stage-toast cleaner-offline-toast">
+                {t("cleaner.offlineWelcome", {
+                  gained: formatCleanerNumber(offlineWelcome.gained),
+                })}
+              </div>
+            )}
           </section>
 
           <div className="cleaner-tools-row">
@@ -699,37 +743,58 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
               title={t("cleaner.tools.sheetHeading")}
               onClose={() => setShowTools(false)}
             />
-            <div className="cleaner-tool-list">
-              {visibleTools.map((tool) => {
-                const owned = toolsOwned[tool.id] ?? 0;
-                const cost = cleanerToolCost(tool, owned);
-                const affordable = BigInt(cost) <= BigInt(state.currency);
-                return (
-                  <div key={tool.id} className="cleaner-tool-card">
-                    <div className="cleaner-tool-info">
-                      <strong>{t(`cleaner.tools.${tool.id}.name`)}</strong>
-                      <p>{t(`cleaner.tools.${tool.id}.description`)}</p>
-                      <small>
-                        {t("cleaner.tools.owned", { count: owned })} ·{" "}
-                        {t("cleaner.tools.rate", {
-                          rate: formatCleanerNumber(String(tool.baseRate * owned)),
-                        })}
-                      </small>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      disabled={!affordable || busyToolId === tool.id}
-                      onClick={() => void handleBuyTool(tool.id)}
-                    >
-                      {t("cleaner.tools.buyButton", {
-                        cost: formatCleanerNumber(String(cost)),
-                      })}
-                    </button>
+            {(["auto", "click"] as const).map((kind) => {
+              const toolsOfKind = visibleTools.filter((tool) => tool.kind === kind);
+              if (toolsOfKind.length === 0) return null;
+              return (
+                <div key={kind} className="cleaner-tool-section">
+                  <h3 className="cleaner-tool-section-heading">
+                    {t(
+                      kind === "auto"
+                        ? "cleaner.tools.autoSectionHeading"
+                        : "cleaner.tools.clickSectionHeading",
+                    )}
+                  </h3>
+                  <div className="cleaner-tool-list">
+                    {toolsOfKind.map((tool) => {
+                      const owned = toolsOwned[tool.id] ?? 0;
+                      const cost = cleanerToolCost(tool, owned);
+                      const affordable = BigInt(cost) <= BigInt(state.currency);
+                      return (
+                        <div key={tool.id} className="cleaner-tool-card">
+                          <div className="cleaner-tool-info">
+                            <strong>{t(`cleaner.tools.${tool.id}.name`)}</strong>
+                            <p>{t(`cleaner.tools.${tool.id}.description`)}</p>
+                            <small>
+                              {t("cleaner.tools.owned", { count: owned })} ·{" "}
+                              {kind === "auto"
+                                ? t("cleaner.tools.rate", {
+                                    rate: formatCleanerNumber(
+                                      String(tool.baseRate * owned),
+                                    ),
+                                  })
+                                : t("cleaner.tools.clickBonus", {
+                                    bonus: (tool.baseRate * owned).toFixed(1),
+                                  })}
+                            </small>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            disabled={!affordable || busyToolId === tool.id}
+                            onClick={() => void handleBuyTool(tool.id)}
+                          >
+                            {t("cleaner.tools.buyButton", {
+                              cost: formatCleanerNumber(String(cost)),
+                            })}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

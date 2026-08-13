@@ -115,18 +115,20 @@ export type CleanerStateRow = {
   historical_max_completed_stage: number;
   prestige_count: number;
   prestige_stars: string;
-  // null until the first cleaner_heartbeat call establishes a baseline --
-  // see cleaner_heartbeat in schema.sql, no lazy/offline settlement exists
-  // for this table (contrast tycoon_state's last_collected_at).
+  // null until the first cleaner_heartbeat call establishes a baseline.
+  // Section 38 added capped offline/away settlement on top of this (credits
+  // the gap since this timestamp, up to 24h, on session-start) -- see
+  // cleaner_heartbeat in schema.sql.
   last_heartbeat_at: string | null;
   exchanged_today: number;
   exchange_reset_date: string;
   created_at: string;
 };
 
-// One row per (owner, tool) -- how many of that auto-cleaning tool is
-// owned. Tool identity/cost/rate curves are hardcoded data (see
-// CLEANER_TOOLS in lib/cleaner.ts and cleaner_tool_defs() in schema.sql),
+// One row per (owner, tool) -- how many of that tool is owned. Covers both
+// `auto` tools (passive coins/sec) and `click` tools (flat tap-gain bonus,
+// section 38) -- same table for both kinds, the split lives in CleanerToolDef.kind
+// (CLEANER_TOOLS in lib/cleaner.ts / cleaner_tool_defs() in schema.sql),
 // same "data not code" spirit as shop_items.
 export type CleanerToolOwnedRow = {
   user_id: string;
@@ -148,9 +150,22 @@ export type CleanerUpgradeOwnedRow = {
 
 // apply_cleaner_taps returns this composite (not a bare state row) so the
 // client can show the actual server-decided gain for this batch (post
-// click_level/permanent-upgrade multipliers) instead of assuming
+// click-tool/permanent-upgrade multipliers) instead of assuming
 // tap_count * 1.
 export type CleanerTapResult = { state: CleanerStateRow; gained: string };
+
+// cleaner_heartbeat returns this composite (section 38) instead of a bare
+// state row so the client can tell a real offline/away accrual apart from a
+// normal 5s-apart online tick -- offline_gained is 0 on every online tick
+// and on a brand-new player's very first call, and only non-zero on a
+// session-start call that found a real gap since last_heartbeat_at (capped
+// at 24h -- offline_seconds is the elapsed time actually credited, useful
+// for deciding whether a gap is worth a "welcome back" celebration at all).
+export type CleanerHeartbeatResult = {
+  state: CleanerStateRow;
+  offline_gained: string;
+  offline_seconds: string;
+};
 
 // complete_cleaner_stage returns this composite so the client knows
 // whether to show the bigger deep-clean celebration (stage % 5 = 0) --
@@ -539,10 +554,10 @@ export type Database = {
       cleaner_heartbeat: {
         // p_session_start: true on the first tick after the heartbeat
         // interval (re)starts (mount, or hidden -> visible) -- that call
-        // always resets the baseline with zero credit instead of crediting
-        // up to 15s for time spent hidden/closed. See section 36.
+        // now credits the actual elapsed gap since last_heartbeat_at
+        // (capped at 24h) instead of discarding it, per section 38.
         Args: { p_family_id: string; p_session_start?: boolean };
-        Returns: CleanerStateRow;
+        Returns: CleanerHeartbeatResult;
       };
       buy_cleaner_tool: {
         Args: { p_family_id: string; p_tool_id: string };

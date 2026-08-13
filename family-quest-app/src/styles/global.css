@@ -4394,6 +4394,16 @@ textarea {
   white-space: nowrap;
 }
 
+/* Anchored to the top instead of .cleaner-stage-toast's default bottom --
+   the two can't collide (offline-welcome only ever shows on mount, before
+   any tap-driven stage-complete toast could fire), but keeping them at
+   different corners avoids any ambiguity if that ever changes. */
+.cleaner-offline-toast {
+  bottom: auto;
+  top: 4%;
+  background: #d7f0d0;
+}
+
 .cleaner-tools-row {
   display: flex;
   justify-content: center;
@@ -4468,6 +4478,21 @@ textarea {
      classes, not nested inside .cleaner-modal, so they need their own
      touch-action to not inherit the swipe-back-hijack default. */
   touch-action: pan-y;
+}
+
+/* Groups the tools sheet into 'auto' (passive coins/sec) vs 'click' (flat
+   tap-gain bonus) tools -- section 38 -- so a player isn't left guessing
+   why some cards say "코인/초" and others don't apply to their auto rate at
+   all. */
+.cleaner-tool-section + .cleaner-tool-section {
+  margin-top: 16px;
+}
+
+.cleaner-tool-section-heading {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .cleaner-tool-list,
