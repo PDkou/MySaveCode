@@ -423,6 +423,8 @@
     "tapHint": "눌러서 청소해요. 제한 없이 눌러도 돼요!",
     "currency": "청소 포인트",
     "ratePerSecond": "초당 +{{rate}}",
+    "gainPerTap": "탭당 +{{gain}}",
+    "offlineWelcome": "다시 오셨네요! 그동안 +{{gained}} 모았어요",
     "stageLabel": "{{stage}}단계",
     "stageInChapter": "{{current}}/5단계",
     "stageProgress": "{{current}} / {{required}}",
@@ -446,6 +448,9 @@
       "newToolToast": "새로운 청소도구 발견!",
       "owned": "보유 {{count}}개",
       "rate": "+{{rate}}/초",
+      "clickBonus": "탭당 +{{bonus}}",
+      "autoSectionHeading": "자동 청소 도구",
+      "clickSectionHeading": "탭 강화 도구",
       "buyButton": "{{cost}}로 구매",
       "toy_box": {
         "name": "장난감 정리함",
@@ -478,6 +483,14 @@
       "helper_robot": {
         "name": "만능 도우미 로봇",
         "description": "가장 강력한 자동 청소 도구예요."
+      },
+      "sturdy_gloves": {
+        "name": "튼튼한 장갑",
+        "description": "탭할 때마다 얻는 청소 포인트가 늘어나요."
+      },
+      "work_gloves_pro": {
+        "name": "프로 작업 장갑",
+        "description": "탭 위력을 크게 강화해줘요."
       }
     },
     "prestige": {

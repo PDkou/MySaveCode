@@ -2,6 +2,7 @@ import type { PostgrestError } from "@supabase/supabase-js";
 
 import { supabase } from "./supabaseClient";
 import type {
+  CleanerHeartbeatResult,
   CleanerPrestigePreview,
   CleanerPrestigeResult,
   CleanerStageCompleteResult,
@@ -91,23 +92,35 @@ export interface CleanerToolDef {
     | "auto_mop"
     | "dishwasher"
     | "laundry_helper"
-    | "helper_robot";
+    | "helper_robot"
+    | "sturdy_gloves"
+    | "work_gloves_pro";
   unlockStage: number;
   baseCost: number;
   costMult: number;
   baseRate: number;
+  // 'auto' = passive coins/sec per owned unit (the original 8 tools).
+  // 'click' = flat bonus added to tap gain per owned unit (section 38) --
+  // e.g. 2 owned at baseRate 0.5 makes every tap worth 1 + 1.0x its base
+  // value. Never mix the two kinds in the same sum -- see
+  // cleaner_tool_defs()'s comment in schema.sql for why every rate/threshold
+  // query filters on this.
+  kind: "auto" | "click";
 }
 
-// Keep in exact sync with public.cleaner_tool_defs() in schema.sql section 35.
+// Keep in exact sync with public.cleaner_tool_defs() in schema.sql
+// (section 35, kind column added in section 38).
 export const CLEANER_TOOLS: CleanerToolDef[] = [
-  { id: "toy_box", unlockStage: 1, baseCost: 50, costMult: 1.15, baseRate: 1 },
-  { id: "feather_duster", unlockStage: 2, baseCost: 300, costMult: 1.15, baseRate: 5 },
-  { id: "auto_broom", unlockStage: 3, baseCost: 1800, costMult: 1.16, baseRate: 22 },
-  { id: "robot_vacuum", unlockStage: 4, baseCost: 10000, costMult: 1.16, baseRate: 90 },
-  { id: "auto_mop", unlockStage: 6, baseCost: 60000, costMult: 1.17, baseRate: 400 },
-  { id: "dishwasher", unlockStage: 8, baseCost: 350000, costMult: 1.17, baseRate: 1700 },
-  { id: "laundry_helper", unlockStage: 11, baseCost: 2000000, costMult: 1.18, baseRate: 7000 },
-  { id: "helper_robot", unlockStage: 16, baseCost: 12000000, costMult: 1.18, baseRate: 30000 },
+  { id: "toy_box", unlockStage: 1, baseCost: 50, costMult: 1.15, baseRate: 1, kind: "auto" },
+  { id: "feather_duster", unlockStage: 2, baseCost: 300, costMult: 1.15, baseRate: 5, kind: "auto" },
+  { id: "auto_broom", unlockStage: 3, baseCost: 1800, costMult: 1.16, baseRate: 22, kind: "auto" },
+  { id: "robot_vacuum", unlockStage: 4, baseCost: 10000, costMult: 1.16, baseRate: 90, kind: "auto" },
+  { id: "auto_mop", unlockStage: 6, baseCost: 60000, costMult: 1.17, baseRate: 400, kind: "auto" },
+  { id: "dishwasher", unlockStage: 8, baseCost: 350000, costMult: 1.17, baseRate: 1700, kind: "auto" },
+  { id: "laundry_helper", unlockStage: 11, baseCost: 2000000, costMult: 1.18, baseRate: 7000, kind: "auto" },
+  { id: "helper_robot", unlockStage: 16, baseCost: 12000000, costMult: 1.18, baseRate: 30000, kind: "auto" },
+  { id: "sturdy_gloves", unlockStage: 1, baseCost: 40, costMult: 1.18, baseRate: 0.5, kind: "click" },
+  { id: "work_gloves_pro", unlockStage: 6, baseCost: 80000, costMult: 1.19, baseRate: 4, kind: "click" },
 ];
 
 // Only unlocked tools are ever shown -- doc's "잠긴 물품은 UI에 존재 자체를
@@ -274,13 +287,17 @@ export function applyCleanerTaps(
 //
 // sessionStart must be true for the very first call after the heartbeat
 // interval (re)starts (component mount, or hidden -> visible) -- that call
-// always just resets the server's baseline with zero credit, so time spent
-// hidden/closed never earns anything (section 36 fix; the interval's own
-// subsequent 5s-apart ticks pass sessionStart=false as normal).
+// now credits the actual gap since the server's last baseline (capped at
+// 24h) instead of discarding it, per section 38's offline-accrual fix; the
+// interval's own subsequent 5s-apart ticks pass sessionStart=false as
+// normal, each capped at 15s as before. The returned offline_gained/
+// offline_seconds are 0 on every non-session-start call and on a brand-new
+// player's very first ever call -- callers can use them to decide whether a
+// gap is worth a "welcome back" celebration.
 export function cleanerHeartbeat(
   familyId: string,
   sessionStart = false,
-): Promise<CleanerStateRow> {
+): Promise<CleanerHeartbeatResult> {
   return unwrap(
     supabase.rpc("cleaner_heartbeat", {
       p_family_id: familyId,

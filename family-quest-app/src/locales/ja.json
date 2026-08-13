@@ -423,6 +423,8 @@
     "tapHint": "タップして掃除しよう。制限なく連打してOK！",
     "currency": "お掃除ポイント",
     "ratePerSecond": "毎秒 +{{rate}}",
+    "gainPerTap": "タップごとに +{{gain}}",
+    "offlineWelcome": "おかえりなさい！その間に +{{gained}} 貯まりました",
     "stageLabel": "{{stage}}段階",
     "stageInChapter": "{{current}}/5段階",
     "stageProgress": "{{current}} / {{required}}",
@@ -446,6 +448,9 @@
       "newToolToast": "新しいお掃除道具を発見！",
       "owned": "所持数 {{count}}個",
       "rate": "+{{rate}}/秒",
+      "clickBonus": "タップごとに +{{bonus}}",
+      "autoSectionHeading": "自動お掃除道具",
+      "clickSectionHeading": "タップ強化道具",
       "buyButton": "{{cost}}で購入",
       "toy_box": {
         "name": "おもちゃ箱",
@@ -478,6 +483,14 @@
       "helper_robot": {
         "name": "万能お手伝いロボット",
         "description": "最も強力な自動お掃除道具です。"
+      },
+      "sturdy_gloves": {
+        "name": "丈夫な手袋",
+        "description": "タップで得られるお掃除ポイントが増えます。"
+      },
+      "work_gloves_pro": {
+        "name": "プロ用作業手袋",
+        "description": "タップの威力を大きく強化します。"
       }
     },
     "prestige": {

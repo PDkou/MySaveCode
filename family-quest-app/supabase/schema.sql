@@ -8793,3 +8793,356 @@ revoke execute on function public.buy_tycoon_prestige_upgrade(uuid, text) from a
 -- =============================================================================
 -- End section 37.
 -- =============================================================================
+
+-- =============================================================================
+-- Section 38 -- Tap-power tools (currency-bought) + offline income accrual
+--
+-- Two player-requested changes to the housework clicker's economy:
+--
+-- 1. Every currency-bought tool in cleaner_tool_defs() only ever boosted the
+--    passive/auto rate; the only thing that ever touched tap gain
+--    (stronger_hands_1, +25%) sits behind the prestige-star shop, which is
+--    unreachable before stage 10. A player who hasn't prestiged yet -- most
+--    of a fresh run -- had literally no way to grow their tap gain at all,
+--    every tap paying out exactly 1 currency regardless of anything bought.
+--    Adds a `kind` column to cleaner_tool_defs() (`auto` | `click`) and two
+--    new `click`-kind tools, reusing the exact same repeatable/
+--    exponential-cost structure as the auto tools (base_rate reinterpreted
+--    as "flat tap-gain bonus per owned unit" for this kind instead of
+--    "coins/sec per unit"). Every query that sums tool rates for *passive*
+--    purposes (cleaner_heartbeat's rate calc, buy_cleaner_tool's automation-
+--    title threshold) is updated to filter kind = 'auto' so click tools
+--    can't silently inflate those.
+--
+-- 2. This project's own original idle-tycoon design doc
+--    (GAMIFICATION_DESIGN.md section 6-1) specifies offline accrual capped
+--    at 24h as standard for this genre ("오프라인 동안도 경과 시간만큼 누적
+--    지급, 최대 24시간까지만 인정") -- the housework clicker's rewrite
+--    (section 35) deliberately dropped that per its own handoff doc, capping
+--    every heartbeat call (online or not) at 15 elapsed seconds and
+--    discarding any larger gap outright on session-start. Reinstating it per
+--    the original doc's own convention: cleaner_heartbeat's session-start
+--    path (first call after mount, or after coming back from hidden) now
+--    credits the actual elapsed time since last_heartbeat_at, capped at
+--    86400s (24h) instead of discarding it, at the same rate formula as
+--    online ticks (no separate offline penalty multiplier -- the original
+--    doc doesn't call for one). Its own 15s-per-call cap is untouched for
+--    the normal (non-session-start) online ticking path, so an actively
+--    open tab still can't abuse rapid repeated calls.
+--
+--    cleaner_heartbeat's return type changes from a bare cleaner_state row
+--    to a new composite carrying the offline gain alongside it, so the
+--    client can show a "welcome back" celebration when it's meaningful.
+--    Postgres requires a drop+recreate (not create-or-replace) for a
+--    function's return type to change, same as the old 1-arg overload was
+--    handled in section 36.
+-- =============================================================================
+
+-- 38-1. cleaner_tool_defs -- add kind + 2 new click-kind tools ------------
+--
+-- sturdy_gloves unlocks at stage 1 (immediately, like toy_box) so a fresh
+-- run has a tap upgrade to chase from the very first screen. work_gloves_pro
+-- unlocks at stage 6 (the kitchen transition, same milestone as auto_mop)
+-- for a mid-game tap-power spike. Pricing is a first pass, same as every
+-- other cost/rate in this catalog -- flagged for balance-testing later, not
+-- a considered final curve.
+drop function if exists public.cleaner_tool_defs() cascade;
+create function public.cleaner_tool_defs()
+returns table(
+  tool_id text,
+  unlock_stage integer,
+  base_cost numeric,
+  cost_mult numeric,
+  base_rate numeric,
+  kind text
+)
+language sql
+immutable
+set search_path = public
+as $$
+  values
+    ('toy_box', 1, 50::numeric, 1.15::numeric, 1::numeric, 'auto'),
+    ('feather_duster', 2, 300::numeric, 1.15::numeric, 5::numeric, 'auto'),
+    ('auto_broom', 3, 1800::numeric, 1.16::numeric, 22::numeric, 'auto'),
+    ('robot_vacuum', 4, 10000::numeric, 1.16::numeric, 90::numeric, 'auto'),
+    ('auto_mop', 6, 60000::numeric, 1.17::numeric, 400::numeric, 'auto'),
+    ('dishwasher', 8, 350000::numeric, 1.17::numeric, 1700::numeric, 'auto'),
+    ('laundry_helper', 11, 2000000::numeric, 1.18::numeric, 7000::numeric, 'auto'),
+    ('helper_robot', 16, 12000000::numeric, 1.18::numeric, 30000::numeric, 'auto'),
+    ('sturdy_gloves', 1, 40::numeric, 1.18::numeric, 0.5::numeric, 'click'),
+    ('work_gloves_pro', 6, 80000::numeric, 1.19::numeric, 4::numeric, 'click')
+$$;
+
+-- 38-2. apply_cleaner_taps -- click-kind tools add a flat per-tap bonus ----
+--
+-- v_click_bonus is the sum of (base_rate * owned_count) across owned
+-- click-kind tools -- e.g. owning 2 sturdy_gloves (0.5 each) makes every
+-- tap worth 1 + 1.0 = 2x its base value, before stronger_hands_1's 25%
+-- prestige multiplier stacks on top (multiplicative, same relationship
+-- efficient_tools_1 has with the auto tools' summed rate in
+-- cleaner_heartbeat below).
+create or replace function public.apply_cleaner_taps(p_family_id uuid, p_tap_count integer)
+returns public.cleaner_tap_result
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.cleaner_state;
+  v_tap_count integer;
+  v_click_mult numeric := 1;
+  v_click_bonus numeric := 0;
+  v_gain numeric;
+  v_required numeric;
+  v_has_quick_living_room boolean;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  if p_tap_count is null or p_tap_count <= 0 then
+    raise exception 'invalid_amount' using errcode = '22023';
+  end if;
+  v_tap_count := least(p_tap_count, 400);
+
+  insert into public.cleaner_state (user_id, family_id) values (v_uid, p_family_id) on conflict do nothing;
+  select * into v_state from public.cleaner_state where user_id = v_uid and family_id = p_family_id for update;
+
+  if exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'stronger_hands_1'
+  ) then
+    v_click_mult := 1.25;
+  end if;
+
+  select coalesce(sum(def.base_rate * owned.owned_count), 0) into v_click_bonus
+  from public.cleaner_tools_owned owned
+  join public.cleaner_tool_defs() def on def.tool_id = owned.tool_id and def.kind = 'click'
+  where owned.user_id = v_uid and owned.family_id = p_family_id;
+
+  v_gain := round(v_tap_count * (1 + v_click_bonus) * v_click_mult);
+
+  v_has_quick_living_room := exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'quick_living_room'
+  );
+  v_required := public.cleaner_effective_required(v_state.stage, v_has_quick_living_room);
+
+  update public.cleaner_state
+  set currency = currency + v_gain,
+      lifetime_cleaning = lifetime_cleaning + v_gain,
+      stage_progress = least(v_required, stage_progress + v_gain)
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  return row(v_state, v_gain)::public.cleaner_tap_result;
+end;
+$$;
+
+-- 38-3. buy_cleaner_tool -- automation-title threshold sums auto tools only
+
+create or replace function public.buy_cleaner_tool(p_family_id uuid, p_tool_id text)
+returns public.cleaner_state
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.cleaner_state;
+  v_def record;
+  v_owned integer := 0;
+  v_cost numeric;
+  v_total_rate numeric;
+  v_auto_mult numeric := 1;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  select * into v_def from public.cleaner_tool_defs() where tool_id = p_tool_id;
+  if v_def is null then
+    raise exception 'invalid_tool' using errcode = '22023';
+  end if;
+
+  insert into public.cleaner_state (user_id, family_id) values (v_uid, p_family_id) on conflict do nothing;
+  select * into v_state from public.cleaner_state where user_id = v_uid and family_id = p_family_id for update;
+
+  if v_state.max_stage < v_def.unlock_stage then
+    raise exception 'tool_locked' using errcode = 'P0001';
+  end if;
+
+  select owned_count into v_owned
+  from public.cleaner_tools_owned
+  where user_id = v_uid and family_id = p_family_id and tool_id = p_tool_id;
+  v_owned := coalesce(v_owned, 0);
+
+  v_cost := round(v_def.base_cost * power(v_def.cost_mult, v_owned));
+  if v_state.currency < v_cost then
+    raise exception 'insufficient_currency' using errcode = 'P0001';
+  end if;
+
+  insert into public.cleaner_tools_owned (user_id, family_id, tool_id, owned_count)
+  values (v_uid, p_family_id, p_tool_id, 1)
+  on conflict (user_id, family_id, tool_id) do update
+  set owned_count = public.cleaner_tools_owned.owned_count + 1;
+
+  update public.cleaner_state
+  set currency = currency - v_cost
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  select coalesce(sum(def.base_rate * owned.owned_count), 0) into v_total_rate
+  from public.cleaner_tools_owned owned
+  join public.cleaner_tool_defs() def on def.tool_id = owned.tool_id and def.kind = 'auto'
+  where owned.user_id = v_uid and owned.family_id = p_family_id;
+
+  if exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'efficient_tools_1'
+  ) then
+    v_auto_mult := 1.20;
+  end if;
+
+  if v_total_rate * v_auto_mult >= 100 then
+    perform public.grant_title(p_family_id, v_uid, 'cleaner_automation_pro_progress');
+  end if;
+
+  return v_state;
+end;
+$$;
+
+-- 38-4. cleaner_heartbeat -- offline accrual on session-start, capped 24h -
+
+drop type if exists public.cleaner_heartbeat_result cascade;
+create type public.cleaner_heartbeat_result as (
+  state public.cleaner_state,
+  offline_gained numeric,
+  offline_seconds numeric
+);
+
+drop function if exists public.cleaner_heartbeat(uuid, boolean) cascade;
+create function public.cleaner_heartbeat(p_family_id uuid, p_session_start boolean default false)
+returns public.cleaner_heartbeat_result
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_state public.cleaner_state;
+  v_now timestamptz := now();
+  v_elapsed_seconds numeric;
+  v_rate_per_sec numeric := 0;
+  v_auto_mult numeric := 1;
+  v_gain numeric;
+  v_required numeric;
+  v_has_quick_living_room boolean;
+begin
+  if v_uid is null or not public.is_family_member(p_family_id) then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  insert into public.cleaner_state (user_id, family_id) values (v_uid, p_family_id) on conflict do nothing;
+  select * into v_state from public.cleaner_state where user_id = v_uid and family_id = p_family_id for update;
+
+  if p_session_start or v_state.last_heartbeat_at is null then
+    -- No prior baseline at all (brand-new player) -- nothing to backfill,
+    -- same as before.
+    if v_state.last_heartbeat_at is null then
+      update public.cleaner_state set last_heartbeat_at = v_now
+      where user_id = v_uid and family_id = p_family_id
+      returning * into v_state;
+      return row(v_state, 0::numeric, 0::numeric)::public.cleaner_heartbeat_result;
+    end if;
+
+    -- Offline/away accrual: credit the actual gap since the last heartbeat
+    -- (mount, tab-hidden->visible, or a real app-closed absence -- all the
+    -- same code path, just different magnitudes of v_elapsed_seconds),
+    -- capped at 24h so leaving the app open-but-backgrounded for days can't
+    -- be farmed indefinitely.
+    v_elapsed_seconds := least(86400, greatest(0, extract(epoch from (v_now - v_state.last_heartbeat_at))));
+
+    select coalesce(sum(def.base_rate * owned.owned_count), 0) into v_rate_per_sec
+    from public.cleaner_tools_owned owned
+    join public.cleaner_tool_defs() def on def.tool_id = owned.tool_id and def.kind = 'auto'
+    where owned.user_id = v_uid and owned.family_id = p_family_id;
+
+    if exists (
+      select 1 from public.cleaner_upgrades_owned
+      where user_id = v_uid and family_id = p_family_id and upgrade_id = 'efficient_tools_1'
+    ) then
+      v_auto_mult := 1.20;
+    end if;
+
+    v_gain := round(v_rate_per_sec * v_auto_mult * v_elapsed_seconds);
+
+    v_has_quick_living_room := exists (
+      select 1 from public.cleaner_upgrades_owned
+      where user_id = v_uid and family_id = p_family_id and upgrade_id = 'quick_living_room'
+    );
+    v_required := public.cleaner_effective_required(v_state.stage, v_has_quick_living_room);
+
+    update public.cleaner_state
+    set currency = currency + v_gain,
+        lifetime_cleaning = lifetime_cleaning + v_gain,
+        stage_progress = least(v_required, stage_progress + v_gain),
+        last_heartbeat_at = v_now
+    where user_id = v_uid and family_id = p_family_id
+    returning * into v_state;
+
+    return row(v_state, v_gain, v_elapsed_seconds)::public.cleaner_heartbeat_result;
+  end if;
+
+  v_elapsed_seconds := least(15, greatest(0, extract(epoch from (v_now - v_state.last_heartbeat_at))));
+
+  select coalesce(sum(def.base_rate * owned.owned_count), 0) into v_rate_per_sec
+  from public.cleaner_tools_owned owned
+  join public.cleaner_tool_defs() def on def.tool_id = owned.tool_id and def.kind = 'auto'
+  where owned.user_id = v_uid and owned.family_id = p_family_id;
+
+  if exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'efficient_tools_1'
+  ) then
+    v_auto_mult := 1.20;
+  end if;
+
+  v_gain := round(v_rate_per_sec * v_auto_mult * v_elapsed_seconds);
+
+  v_has_quick_living_room := exists (
+    select 1 from public.cleaner_upgrades_owned
+    where user_id = v_uid and family_id = p_family_id and upgrade_id = 'quick_living_room'
+  );
+  v_required := public.cleaner_effective_required(v_state.stage, v_has_quick_living_room);
+
+  update public.cleaner_state
+  set currency = currency + v_gain,
+      lifetime_cleaning = lifetime_cleaning + v_gain,
+      stage_progress = least(v_required, stage_progress + v_gain),
+      last_heartbeat_at = v_now
+  where user_id = v_uid and family_id = p_family_id
+  returning * into v_state;
+
+  return row(v_state, 0::numeric, 0::numeric)::public.cleaner_heartbeat_result;
+end;
+$$;
+
+grant execute on function public.cleaner_heartbeat(uuid, boolean) to authenticated;
+revoke execute on function public.cleaner_heartbeat(uuid, boolean) from anon, public;
+
+-- Re-grant everything cascade-dropped by the cleaner_tool_defs() /
+-- cleaner_heartbeat() drops above -- `drop ... cascade` also drops the
+-- privileges Postgres tracks per-function, so they need restating exactly
+-- like a fresh create would have gotten via the default-privileges shim.
+grant execute on function public.cleaner_tool_defs() to authenticated;
+grant execute on function public.apply_cleaner_taps(uuid, integer) to authenticated;
+grant execute on function public.buy_cleaner_tool(uuid, text) to authenticated;
+revoke execute on function public.cleaner_tool_defs() from anon, public;
+revoke execute on function public.apply_cleaner_taps(uuid, integer) from anon, public;
+revoke execute on function public.buy_cleaner_tool(uuid, text) from anon, public;
+
+-- =============================================================================
+-- End section 38.
+-- =============================================================================
