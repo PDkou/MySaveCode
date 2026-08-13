@@ -46,6 +46,22 @@
   기준 삼아 맞춰주세요.
 - 배경은 완전 투명(alpha 채널).
 
+### 4-1. "AI스러운 도트아트" 피하기 (중요 — 실제로 발견된 문제)
+
+기존 캐릭터 아트를 픽셀 단위로 분석해보니 색상이 255가지나 쓰여 있었습니다 —
+진짜 도트아트는 이 정도 크기면 보통 12~32색 정도로 딱 정해놓고 그립니다.
+"픽셀아트 스타일"이라는 프롬프트 단어만으로는 실제 저해상도 격자에 그려주는
+게 아니라 고해상도로 부드럽게 렌더링한 다음 필터만 씌우기 때문입니다. 아이콘
+9종은 아래 조건을 꼭 지켜서 요청해주세요 (7번 프롬프트에 이미 반영):
+
+- 실제 캔버스 자체를 저해상도(32~48픽셀 정도)로 생성 — 고해상도로 그린 뒤
+  축소가 아니라 애초에 낮은 해상도 격자 위에 그리기. 확대 전달 시 최근접
+  이웃(nearest-neighbor) 방식으로만.
+- 아이콘 하나당 팔레트 12~16색 이내, 부위마다 밝은 톤 1개 + 그림자 톤 1개만.
+- 아웃라인 두께 이미지 전체에서 통일.
+- 알파값은 완전 불투명/완전 투명 둘 중 하나만 (반투명 경계 없음).
+- 가능하면 범용 이미지 생성 AI보다 도트아트 전용 생성 도구를 우선 시도.
+
 ## 5. 파일 스펙
 
 - 포맷: PNG, 투명 배경
@@ -71,13 +87,19 @@
 ```
 Small pixel art icon of a [DESCRIBE THE TOOL] for a cute mobile
 housework-cleaning clicker game, same art style as a friendly chibi robot
-vacuum icon: thick dark brown outline, flat saturated cel-shaded colors
-(no soft gradients, no airbrush shading, no photorealistic texture),
-warm kid-friendly palette, fully transparent background, chunky
-low-resolution pixel blocks (not smooth/anti-aliased), centered, filling
-the frame with minimal padding, no shadow baked into the image. Avoid:
-realistic rendering, soft AI-diffusion shading, noise texture,
-muted/desaturated colors, painterly brushwork, text, watermark.
+vacuum icon. Render at a genuinely low native resolution (actual canvas
+around 32-48 pixels, not a high-resolution illustration styled to look
+pixelated) with a strict locked color palette of 12-16 colors total --
+each surface shaded with exactly one base tone plus one shadow tone, no
+soft gradients, no airbrush shading, no photorealistic texture. Thick
+dark brown outline of perfectly uniform pixel width throughout. Warm
+kid-friendly palette, fully transparent background with hard binary
+alpha (no semi-transparent/anti-aliased edge pixels), centered, filling
+the frame with minimal padding, no shadow baked into the image. If
+upscaling for delivery, upscale with nearest-neighbor only, never
+AI/smooth upscaling. Avoid: realistic rendering, soft AI-diffusion
+shading, noise texture, dithering, muted/desaturated colors, painterly
+brushwork, gradient blending, text, watermark.
 ```
 
 `[DESCRIBE THE TOOL]` 자리에 위 표 3번 열의 설명을 넣어서 9종 각각 요청하시면
@@ -86,14 +108,20 @@ muted/desaturated colors, painterly brushwork, text, watermark.
 ```
 Small pixel art icon of a cute wooden toy box with the lid slightly open
 and toys peeking out, for a cute mobile housework-cleaning clicker game,
-same art style as a friendly chibi robot vacuum icon: thick dark brown
-outline, flat saturated cel-shaded colors (no soft gradients, no airbrush
-shading, no photorealistic texture), warm kid-friendly palette, fully
-transparent background, chunky low-resolution pixel blocks (not
-smooth/anti-aliased), centered, filling the frame with minimal padding,
-no shadow baked into the image. Avoid: realistic rendering, soft
-AI-diffusion shading, noise texture, muted/desaturated colors, painterly
-brushwork, text, watermark.
+same art style as a friendly chibi robot vacuum icon. Render at a
+genuinely low native resolution (actual canvas around 32-48 pixels, not
+a high-resolution illustration styled to look pixelated) with a strict
+locked color palette of 12-16 colors total -- each surface shaded with
+exactly one base tone plus one shadow tone, no soft gradients, no
+airbrush shading, no photorealistic texture. Thick dark brown outline of
+perfectly uniform pixel width throughout. Warm kid-friendly palette,
+fully transparent background with hard binary alpha (no
+semi-transparent/anti-aliased edge pixels), centered, filling the frame
+with minimal padding, no shadow baked into the image. If upscaling for
+delivery, upscale with nearest-neighbor only, never AI/smooth upscaling.
+Avoid: realistic rendering, soft AI-diffusion shading, noise texture,
+dithering, muted/desaturated colors, painterly brushwork, gradient
+blending, text, watermark.
 ```
 
 ## 8. 참고용 소스 zip
