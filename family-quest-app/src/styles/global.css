@@ -4135,45 +4135,45 @@ textarea {
   transition: background 0.6s ease;
 }
 
-.cleaner-scene.is-room-living_room {
-  background-color: #f5c466;
-  background-image: url("/art/cleaner/living-room-base-clean.png");
+.cleaner-scene.is-room-living_room { background-color: #f5c466; }
+.cleaner-scene.is-room-kitchen { background-color: #f4b84d; }
+.cleaner-scene.is-room-bathroom { background-color: #79d2cf; }
+.cleaner-scene.is-room-kids_room { background-color: #70bde6; }
+.cleaner-scene.is-room-whole_house { background-color: #d99545; }
+
+/* Two stacked full-cover layers instead of a single background-image on
+   .cleaner-scene itself -- doc feedback: a chapter's background never
+   visibly changed within its own 5 stages (every shipped background was
+   already the "clean" state, so a chapter looked finished from the
+   moment it started). .is-dirty is the constant base layer; .is-clean
+   sits on top and fades in via its own opacity (set inline from
+   stage_progress) as the chapter's actual progress fills, so the dirty
+   art shows through underneath at the start of a chapter and the room
+   visibly cleans up by the time its gauge is full. */
+.cleaner-scene-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   background-position: center;
   background-size: cover;
   image-rendering: pixelated;
 }
 
-.cleaner-scene.is-room-kitchen {
-  background-color: #f4b84d;
-  background-image: url("/art/cleaner/kitchen-base-clean.png");
-  background-position: center;
-  background-size: cover;
-  image-rendering: pixelated;
+.cleaner-scene-bg.is-clean {
+  z-index: 1;
+  transition: opacity 0.6s ease;
 }
 
-.cleaner-scene.is-room-bathroom {
-  background-color: #79d2cf;
-  background-image: url("/art/cleaner/bathroom-base-clean.png");
-  background-position: center;
-  background-size: cover;
-  image-rendering: pixelated;
-}
-
-.cleaner-scene.is-room-kids_room {
-  background-color: #70bde6;
-  background-image: url("/art/cleaner/kids-room-base-clean.png");
-  background-position: center;
-  background-size: cover;
-  image-rendering: pixelated;
-}
-
-.cleaner-scene.is-room-whole_house {
-  background-color: #d99545;
-  background-image: url("/art/cleaner/whole-house-base-clean.png");
-  background-position: center;
-  background-size: cover;
-  image-rendering: pixelated;
-}
+.cleaner-scene-bg.is-room-living_room.is-dirty { background-image: url("/art/cleaner/living-room-base-dirty.png"); }
+.cleaner-scene-bg.is-room-living_room.is-clean { background-image: url("/art/cleaner/living-room-base-clean.png"); }
+.cleaner-scene-bg.is-room-kitchen.is-dirty { background-image: url("/art/cleaner/kitchen-base-dirty.png"); }
+.cleaner-scene-bg.is-room-kitchen.is-clean { background-image: url("/art/cleaner/kitchen-base-clean.png"); }
+.cleaner-scene-bg.is-room-bathroom.is-dirty { background-image: url("/art/cleaner/bathroom-base-dirty.png"); }
+.cleaner-scene-bg.is-room-bathroom.is-clean { background-image: url("/art/cleaner/bathroom-base-clean.png"); }
+.cleaner-scene-bg.is-room-kids_room.is-dirty { background-image: url("/art/cleaner/kids-room-base-dirty.png"); }
+.cleaner-scene-bg.is-room-kids_room.is-clean { background-image: url("/art/cleaner/kids-room-base-clean.png"); }
+.cleaner-scene-bg.is-room-whole_house.is-dirty { background-image: url("/art/cleaner/whole-house-base-dirty.png"); }
+.cleaner-scene-bg.is-room-whole_house.is-clean { background-image: url("/art/cleaner/whole-house-base-clean.png"); }
 
 .cleaner-character {
   position: absolute;
@@ -4286,6 +4286,50 @@ textarea {
 @keyframes cleanerClutterOut {
   from { opacity: 0; transform: translateY(5%) scale(0.94); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Every owned tool except robot_vacuum shows up here as a small icon in
+   the top strip of the scene (the character box only starts ~22% down,
+   so this area is otherwise empty). Wraps to a second row once more than
+   ~6 tools are owned rather than shrinking icons further. */
+.cleaner-tool-shelf {
+  position: absolute;
+  top: 3%;
+  left: 3%;
+  right: 3%;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4%;
+  pointer-events: none;
+}
+
+.cleaner-tool-shelf-icon {
+  position: relative;
+  width: 14%;
+}
+
+.cleaner-tool-shelf-icon img {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 0 rgba(73, 40, 25, 0.24));
+}
+
+.cleaner-tool-shelf-icon span {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  min-width: 16px;
+  padding: 1px 4px;
+  border: 2px solid #3a1f2b;
+  border-radius: 999px;
+  background: #fff3bd;
+  color: #3a1f2b;
+  font-size: 9px;
+  font-weight: 950;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .cleaner-active-robot {
