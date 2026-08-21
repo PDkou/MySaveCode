@@ -4386,6 +4386,21 @@ textarea {
 .cleaner-tool-slot-helper_robot { right: 3%; bottom: 59%; width: 15%; }
 .cleaner-tool-slot-work_gloves_pro { right: 18%; bottom: 3%; width: 9%; }
 
+/* Applied to the 4 tool slots whose art (see MOTION_TOOL_IDS in
+   HouseworkClickerModal.tsx) is the "actively working" variant rather than
+   a resting object -- a small sway/pulse in place, not real travel (unlike
+   .cleaner-active-robot's own side-to-side patrol) so it doesn't need
+   per-slot travel-distance math or risk overlapping a neighboring tool's
+   fixed slot. */
+.cleaner-placed-tool.is-motion {
+  animation: cleanerToolWork 2.2s ease-in-out infinite;
+}
+
+@keyframes cleanerToolWork {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(-3deg) scale(1.04); }
+}
+
 .cleaner-active-robot {
   position: absolute;
   right: 5%;

@@ -59,6 +59,23 @@ const HEARTBEAT_MS = 5000;
 const EXCHANGE_RATE = 1000;
 const DAILY_EXCHANGE_CAP = 25;
 
+// Tools whose art (public/art/cleaner/<id>.png) is the "in-action" variant
+// from the items-motion-v10 delivery batch, not the plain resting one --
+// these get a subtle sway in their fixed slot (.cleaner-placed-tool.is-motion
+// in global.css) so they read as actively working like robot_vacuum's own
+// patrol, rather than a static icon. robot_vacuum itself isn't in this set:
+// it already has its own dedicated .cleaner-active-robot treatment outside
+// the tool shelf entirely. toy_box/feather_duster/dishwasher/sturdy_gloves/
+// work_gloves_pro have no motion variant (either no art delivered for them
+// this round, or they're conceptually a placed object, not a working
+// machine) so they stay static.
+const MOTION_TOOL_IDS = new Set([
+  "auto_broom",
+  "auto_mop",
+  "helper_robot",
+  "laundry_helper",
+]);
+
 export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -759,10 +776,11 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
                 (tool) => tool.id !== "robot_vacuum" && (toolsOwned[tool.id] ?? 0) > 0,
               ).map((tool) => {
                 const owned = toolsOwned[tool.id] ?? 0;
+                const isMotion = MOTION_TOOL_IDS.has(tool.id);
                 return (
                   <div
                     key={tool.id}
-                    className={`cleaner-placed-tool cleaner-tool-slot-${tool.id}`}
+                    className={`cleaner-placed-tool cleaner-tool-slot-${tool.id} ${isMotion ? "is-motion" : ""}`}
                   >
                     <img src={`/art/cleaner/${tool.id}.png`} alt="" />
                     {owned > 1 && <span>×{owned}</span>}
