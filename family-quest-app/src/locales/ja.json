@@ -540,6 +540,18 @@
       "deep_clean_bonus": {
         "name": "大掃除ボーナス",
         "description": "大掃除を完了するたびに、所持ポイントの25%を追加でもらえます。"
+      },
+      "combo_reach_1": {
+        "name": "長いコンボ",
+        "description": "コンボで得られるボーナスタップの上限が増えます。"
+      },
+      "fever_quick_1": {
+        "name": "早めのフィーバー",
+        "description": "少ないコンボでもフィーバータイムが始まります。"
+      },
+      "fever_surge_1": {
+        "name": "強いフィーバー",
+        "description": "フィーバータイムのボーナスと持続時間が増えます。"
       }
     },
     "exchangeHeading": "アプリゴールドに交換",
