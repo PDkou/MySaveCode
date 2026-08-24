@@ -5,16 +5,21 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { useFamily } from "../context/FamilyContext";
 import {
+  CLEANER_ROOM_SHADOW_DIRECTION,
+  CLEANER_SHADOW_PHASE,
   CLEANER_TOOLS,
   CleanerActionError,
   applyCleanerTaps,
   buyCleanerTool,
   buyCleanerUpgrade,
   cleanerHeartbeat,
+  cleanerItemTravelPercent,
+  cleanerOpaqueBottomOffsetPercent,
   cleanerRoomForStage,
   cleanerRoomFileBase,
   cleanerTimeOfDay,
   cleanerToolLayout,
+  cleanerToolMotion,
   CLEANER_TIME_BG_ROOMS,
   cleanerEffectiveRequiredCleaning,
   cleanerToolCost,
@@ -31,6 +36,7 @@ import {
   CLEANER_UPGRADES,
 } from "../lib/cleaner";
 import { useBackDismiss } from "../lib/backNav";
+import { CleanerWindowLight } from "./CleanerWindowLight";
 import {
   ShopActionError,
   getOwnedItemIds,
@@ -66,19 +72,23 @@ const DAILY_EXCHANGE_CAP = 25;
 
 // Tools whose art (public/art/cleaner/<id>.png) is the "in-action" variant
 // from the items-motion-v10 delivery batch, not the plain resting one --
-// these get a subtle sway in their fixed slot (.cleaner-placed-tool.is-motion
-// in global.css) so they read as actively working like robot_vacuum's own
-// patrol, rather than a static icon. robot_vacuum itself isn't in this set:
-// it already has its own dedicated .cleaner-active-robot treatment outside
-// the tool shelf entirely. toy_box/feather_duster/dishwasher/sturdy_gloves/
-// work_gloves_pro have no motion variant (either no art delivered for them
-// this round, or they're conceptually a placed object, not a working
-// machine) so they stay static.
+// gets *some* motion treatment in its slot (a real route animation, per
+// CLEANER_ITEM_MOTION in lib/cleaner.ts, when the current room has layout
+// data for it -- see .is-positioned.is-motion in global.css -- otherwise a
+// generic in-place sway, .is-motion alone). robot_vacuum joined this set
+// once it moved from its own standalone .cleaner-active-robot patrol into
+// this same system for the 3 rooms it has layout data for (see
+// CLEANER_TOOL_LAYOUTS) -- .cleaner-active-robot is now only the fallback
+// for rooms without that data. toy_box/feather_duster/dishwasher/
+// sturdy_gloves/work_gloves_pro have no motion variant (either no art
+// delivered for them this round, or they're conceptually a placed object,
+// not a working machine) so they stay static.
 const MOTION_TOOL_IDS = new Set([
   "auto_broom",
   "auto_mop",
   "helper_robot",
   "laundry_helper",
+  "robot_vacuum",
 ]);
 
 // Per-frame dwell times (ms), ported from a third-party prototype's own
@@ -845,6 +855,27 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     DAILY_EXCHANGE_CAP - state.exchanged_today,
   );
 
+  // Shared per-current-room light vector for every item's cast shadow (see
+  // .cleaner-item-shadow-layer below) -- whole_house has no entry in
+  // CLEANER_ROOM_SHADOW_DIRECTION (the source this was ported from has no
+  // equivalent room), so it falls back to a straight-down shadow (0) rather
+  // than skipping the shadow layer entirely.
+  const shadowDirection = CLEANER_ROOM_SHADOW_DIRECTION[room.id]?.[timeOfDay] ?? 0;
+  const shadowPhase = CLEANER_SHADOW_PHASE[timeOfDay];
+  // Every owned tool that has real per-room placement data AND per-item
+  // motion/shadow data for the room currently showing -- computed once and
+  // shared between the shadow layer and the tool shelf below so both agree
+  // on exactly the same (layout, travel) per tool.
+  const positionedTools = CLEANER_TOOLS.filter((tool) => (toolsOwned[tool.id] ?? 0) > 0)
+    .map((tool) => {
+      const layout = cleanerToolLayout(room.id, tool.id);
+      const motion = layout ? cleanerToolMotion(tool.id) : null;
+      if (!layout || !motion) return null;
+      const travel = cleanerItemTravelPercent(layout.x, layout.width, motion.travel);
+      return { tool, layout, motion, travel };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+
   return (
     <>
       <div className="modal-backdrop" onClick={onClose}>
@@ -915,6 +946,7 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
               }}
               aria-hidden="true"
             />
+            <CleanerWindowLight roomId={room.id} timeOfDay={timeOfDay} />
             <div className="cleaner-clutter-layer" aria-hidden="true">
               {progressPct < 25 && (
                 <img
@@ -945,20 +977,59 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
                 />
               )}
             </div>
-            {/* Every owned tool except robot_vacuum (which keeps its own
-                patrolling treatment below) shows up here in its own fixed
-                floor/wall spot -- doc feedback: buying a tool used to be
-                invisible on screen past the first purchase, and the first
-                attempt at fixing that (a flex-wrapped icon strip along the
-                top edge) itself got called out in play as "a picture and a
-                number just dangling there", not an object actually placed
-                in the room. Each tool id has a dedicated
-                .cleaner-tool-slot-* position (see global.css) instead of a
-                reflowing list. */}
+            {/* Every owned, currently-positioned tool (see CLEANER_TOOL_LAYOUTS)
+                gets a real ground-contact shadow here, one layer below the
+                tools themselves, that travels with it when it's actually
+                moving -- ported 1:1 from a third-party prototype's own
+                per-item cast-shadow system (CLEANER_ROOM_SHADOW_DIRECTION/
+                CLEANER_SHADOW_PHASE in lib/cleaner.ts), safe to port exactly
+                since this app's own background art is byte-identical to
+                what those numbers were tuned against. Tools without layout
+                data (fixed .cleaner-tool-slot-* fallback) keep their older,
+                simpler .cleaner-placed-tool::before ellipse instead -- there's
+                no real (x, y) for them to compute a directional shadow from. */}
+            <div className="cleaner-item-shadow-layer" aria-hidden="true">
+              {positionedTools.map(({ tool, layout, motion, travel }) => (
+                <span
+                  key={tool.id}
+                  className="cleaner-item-shadow"
+                  data-tool-id={tool.id}
+                  style={
+                    {
+                      "--shadow-x": `${layout.x}%`,
+                      "--shadow-y": `${layout.y}%`,
+                      "--shadow-w": `${layout.width}%`,
+                      "--contact-width": `${motion.contactWidth}%`,
+                      "--contact-shift": `${shadowDirection * 8}%`,
+                      "--shadow-opacity": Math.max(0.24, shadowPhase.opacity),
+                      "--travel": `${travel}%`,
+                      "--travel-neg": `${-travel}%`,
+                    } as CSSProperties
+                  }
+                />
+              ))}
+            </div>
+            {/* Every owned tool shows up here in its own floor/wall spot --
+                doc feedback: buying a tool used to be invisible on screen
+                past the first purchase, and the first attempt at fixing that
+                (a flex-wrapped icon strip along the top edge) itself got
+                called out in play as "a picture and a number just dangling
+                there", not an object actually placed in the room. Tools with
+                real per-room placement data (CLEANER_TOOL_LAYOUTS) render
+                there and travel a real route when in motion (see
+                cleanerToolMotion); everything else falls back to a fixed
+                .cleaner-tool-slot-* corner. robot_vacuum without layout data
+                for the current room (bathroom/whole_house) falls back to its
+                own standalone .cleaner-active-robot block below instead of
+                rendering here at all. */}
             <div className="cleaner-tool-shelf" aria-hidden="true">
-              {CLEANER_TOOLS.filter(
-                (tool) => tool.id !== "robot_vacuum" && (toolsOwned[tool.id] ?? 0) > 0,
-              ).map((tool) => {
+              {CLEANER_TOOLS.filter((tool) => {
+                if ((toolsOwned[tool.id] ?? 0) <= 0) return false;
+                if (tool.id === "robot_vacuum" && !cleanerToolLayout(room.id, tool.id)) {
+                  return false;
+                }
+                return true;
+              }).map((tool) => {
                 const owned = toolsOwned[tool.id] ?? 0;
                 const isMotion = MOTION_TOOL_IDS.has(tool.id);
                 // Real per-room placement for this tool if one was ported
@@ -966,9 +1037,11 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
                 // to the fixed .cleaner-tool-slot-{id} corner slot below for
                 // any room/tool this table doesn't cover.
                 const layout = cleanerToolLayout(room.id, tool.id);
+                const motion = layout ? cleanerToolMotion(tool.id) : null;
                 return (
                   <div
                     key={tool.id}
+                    data-tool-id={tool.id}
                     className={`cleaner-placed-tool ${
                       layout ? "is-positioned" : `cleaner-tool-slot-${tool.id}`
                     } ${isMotion ? "is-motion" : ""}`}
@@ -978,6 +1051,9 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
                             "--tool-x": `${layout.x}%`,
                             "--tool-y": `${layout.y}%`,
                             "--tool-w": `${layout.width}%`,
+                            "--opaque-bottom-offset": `${
+                              motion ? cleanerOpaqueBottomOffsetPercent(motion.opaqueBottom) : 0
+                            }%`,
                           } as CSSProperties)
                         : undefined
                     }
@@ -1007,7 +1083,7 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
                 />
               )}
             </div>
-            {(toolsOwned.robot_vacuum ?? 0) > 0 && (
+            {(toolsOwned.robot_vacuum ?? 0) > 0 && !cleanerToolLayout(room.id, "robot_vacuum") && (
               <div className="cleaner-active-robot" aria-hidden="true">
                 <img src="/art/cleaner/robot-vacuum.png" alt="" />
                 {(toolsOwned.robot_vacuum ?? 0) > 1 && (
