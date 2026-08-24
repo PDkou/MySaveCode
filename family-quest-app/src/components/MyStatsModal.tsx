@@ -9,6 +9,8 @@ import { supabase } from '../lib/supabaseClient';
 import {
   ALL_BADGE_KEYS,
   BADGE_ICON_SRC,
+  CLEANER_BADGE_KEYS,
+  CLEANER_TITLE_KEYS,
   TITLE_CATEGORIES,
   equipBadge,
   levelForPoints,
@@ -18,6 +20,7 @@ import {
   unequipBadge,
   type TitleCategory,
 } from '../lib/gamification';
+import { GAME_FEATURES_ENABLED } from '../lib/featureFlags';
 import {
   ShopActionError,
   equipItem,
@@ -120,7 +123,20 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [familyId, userId]);
 
-  const visibleTitleItems = titleItems.filter((i) => !i.hidden || ownedTitleIds.has(i.id));
+  // While the housework clicker minigame is on hold, its not-yet-earned
+  // badges/titles are hidden from these galleries (see gamification.ts's
+  // CLEANER_BADGE_KEYS/CLEANER_TITLE_KEYS comment) -- already-earned ones
+  // stay visible either way, same "hide, don't delete" treatment as the
+  // game's own entry points.
+  const visibleBadgeKeys = ALL_BADGE_KEYS.filter(
+    (key) => GAME_FEATURES_ENABLED || !CLEANER_BADGE_KEYS.includes(key) || earnedKeys.has(key),
+  );
+
+  const visibleTitleItems = titleItems.filter(
+    (i) =>
+      (!i.hidden || ownedTitleIds.has(i.id)) &&
+      (GAME_FEATURES_ENABLED || !CLEANER_TITLE_KEYS.includes(i.key ?? '') || ownedTitleIds.has(i.id)),
+  );
   const titleItemsForActiveTab =
     activeTab === 'badges' ? [] : visibleTitleItems.filter((i) => titleCategoryForKey(i.key) === activeTab);
 
@@ -221,7 +237,7 @@ export function MyStatsModal({ onClose }: MyStatsModalProps) {
               <p className="empty-message">{t('common.loading')}</p>
             ) : (
               <div className="gallery-list">
-                {ALL_BADGE_KEYS.map((key) => {
+                {visibleBadgeKeys.map((key) => {
                   const earned = earnedKeys.has(key);
                   const equipped = me.equipped_badge_key === key;
                   const busy = badgeBusyKey === key;
