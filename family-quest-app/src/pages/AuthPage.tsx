@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 import { useAuth, AuthActionError } from '../context/AuthContext';
 import { SettingsModal } from '../components/SettingsModal';
@@ -186,6 +187,14 @@ export function AuthPage() {
 
           {errorKey && <p className="form-error" role="alert">{t(errorKey)}</p>}
           {infoMessage && <p className="form-info" role="status">{infoMessage}</p>}
+
+          {tab === 'signup' && (
+            <p className="auth-privacy-notice">
+              {t('auth.privacyNoticePrefix')}
+              <Link to="/privacy">{t('profile.viewPrivacyPolicy')}</Link>
+              {t('auth.privacyNoticeSuffix')}
+            </p>
+          )}
 
           <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
             {submitting

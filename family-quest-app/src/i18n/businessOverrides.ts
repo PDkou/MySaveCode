@@ -98,6 +98,15 @@ export const BUSINESS_OVERRIDES = {
       heading: '팀 채팅',
       openButton: '팀 채팅 열기',
     },
+    // "방장" itself is left as-is -- it already goes untranslated elsewhere
+    // in this app (e.g. family.error.notAuthorized), a pre-existing gap
+    // outside this override's scope. Only "가족방" -> "팀 공간" is patched
+    // here, same substitution as every other family.* string above.
+    account: {
+      error: {
+        ownerOfSharedFamily: '다른 멤버가 남아있는 팀 공간의 방장이라 탈퇴할 수 없어요. 방장을 위임하거나 팀 공간을 먼저 나가주세요.',
+      },
+    },
   },
   ja: {
     app: { name: 'Company Quest', tagline: 'チームでこなす業務クエスト' },
@@ -167,6 +176,13 @@ export const BUSINESS_OVERRIDES = {
     chat: {
       heading: 'チームチャット',
       openButton: 'チームチャットを開く',
+    },
+    // "ルーム長" itself is left as-is, same reasoning as the ko override
+    // above -- only "家族ルーム" -> "チームスペース" is patched here.
+    account: {
+      error: {
+        ownerOfSharedFamily: '他のメンバーが残っているチームスペースのルーム長のため退会できません。ルーム長を譲るか、先にチームスペースを退出してください。',
+      },
     },
   },
 };

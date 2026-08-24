@@ -211,6 +211,11 @@ export type ProfileRow = {
   // Short user-editable line shown near the topbar character slot and in
   // FamilyMembersModal (schema.sql section 40) -- null means unset.
   status_message: string | null;
+  // Set by request_account_deletion(), cleared by cancel_account_deletion()
+  // (schema.sql section 43) -- null means no pending deletion. Once 7 days
+  // old, process_expired_account_deletions() anonymizes the row and clears
+  // this back to null as part of that.
+  deletion_requested_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -622,6 +627,14 @@ export type Database = {
       };
       unequip_badge: {
         Args: { p_family_id: string };
+        Returns: void;
+      };
+      request_account_deletion: {
+        Args: Record<string, never>;
+        Returns: void;
+      };
+      cancel_account_deletion: {
+        Args: Record<string, never>;
         Returns: void;
       };
     };
