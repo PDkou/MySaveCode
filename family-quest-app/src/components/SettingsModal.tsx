@@ -33,7 +33,7 @@ interface SettingsModalProps {
 export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, profile, avatarUrl, signOut, updateAvatarPhoto, updateBirthday } = useAuth();
+  const { user, profile, avatarUrl, signOut, updateAvatarPhoto, removeAvatarPhoto, updateBirthday } = useAuth();
   const { family, members, updateMyDisplayName, refresh: refreshFamily } = useFamily();
   useBackDismiss(true, onClose);
   const [showEditName, setShowEditName] = useState(false);
@@ -80,6 +80,22 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
       // components (weekly breakdown, task cards, comments) read avatar
       // URLs from FamilyContext's per-member map, which needs its own
       // refresh to pick up the newly uploaded photo.
+      await refreshFamily();
+    } catch (err) {
+      setPhotoErrorKey(err instanceof AvatarPhotoError ? err.translationKey : 'profile.error.photoUploadFailed');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  // 2026-08 feedback: photo could be changed but never unset. A no-op if
+  // there's nothing to remove (button is hidden in that case anyway, see
+  // the JSX below), so no separate guard needed here.
+  const handleRemovePhoto = async () => {
+    setPhotoBusy(true);
+    setPhotoErrorKey(null);
+    try {
+      await removeAvatarPhoto();
       await refreshFamily();
     } catch (err) {
       setPhotoErrorKey(err instanceof AvatarPhotoError ? err.translationKey : 'profile.error.photoUploadFailed');
@@ -155,19 +171,31 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
                   the installed-app cache) never fire the file input's
                   change event once it's clipped that small, even though
                   the native picker still opens and completes normally. */}
-              <label className={`settings-photo-trigger ${photoBusy ? 'settings-photo-trigger-disabled' : ''}`}>
-                <AvatarChip name={currentName} size={40} photoUrl={avatarUrl} />
-                <span className="settings-photo-trigger-label">
-                  {photoBusy ? t('profile.photoUploading') : t('profile.photoChange')}
-                </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="file-input-overlay"
-                  onChange={handleFileSelected}
-                  disabled={photoBusy}
-                />
-              </label>
+              <div className="settings-photo-actions">
+                <label className={`settings-photo-trigger ${photoBusy ? 'settings-photo-trigger-disabled' : ''}`}>
+                  <AvatarChip name={currentName} size={40} photoUrl={avatarUrl} />
+                  <span className="settings-photo-trigger-label">
+                    {photoBusy ? t('profile.photoUploading') : t('profile.photoChange')}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="file-input-overlay"
+                    onChange={handleFileSelected}
+                    disabled={photoBusy}
+                  />
+                </label>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    className="settings-photo-remove"
+                    disabled={photoBusy}
+                    onClick={() => void handleRemovePhoto()}
+                  >
+                    {t('profile.photoRemove')}
+                  </button>
+                )}
+              </div>
             </div>
             {photoErrorKey && <p className="form-error" role="alert">{t(photoErrorKey)}</p>}
             <button type="button" className="settings-row-button" onClick={() => setShowEditName(true)}>
