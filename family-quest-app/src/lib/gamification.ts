@@ -61,6 +61,32 @@ export const ALL_BADGE_KEYS: BadgeKey[] = [
   'cleaner_deep_clean_25',
 ];
 
+// Housework clicker minigame is on hold (lib/featureFlags.ts) -- its entry
+// point and the character shop are both hidden, but the badges/titles it
+// used to grant were never removed from ALL_BADGE_KEYS / shop_items, so
+// MyStatsModal's gallery still listed 10 "locked, and now literally
+// impossible to ever earn" rows (2026-08 feedback: "미니게임에 관련된
+// 칭호들도 정리해줄래"). These two lists are what MyStatsModal filters that
+// gallery against -- hiding the not-yet-earned ones while the game is
+// inaccessible, without hiding ones a player already earned before the hold.
+export const CLEANER_BADGE_KEYS: BadgeKey[] = [
+  'cleaner_deep_clean_5',
+  'cleaner_deep_clean_10',
+  'cleaner_deep_clean_15',
+  'cleaner_deep_clean_20',
+  'cleaner_deep_clean_25',
+];
+
+// shop_items.key values for the 5 cleaner-granted titles (schema.sql
+// section 35-5 / 36-10's grant_title calls).
+export const CLEANER_TITLE_KEYS: string[] = [
+  'cleaner_first_step',
+  'cleaner_king_10',
+  'cleaner_first_prestige',
+  'cleaner_automation_pro_progress',
+  'cleaner_endless_25',
+];
+
 export const BADGE_EMOJI: Record<BadgeKey, string> = {
   first_quest: '🌱',
   ten_quests: '🎖️',
