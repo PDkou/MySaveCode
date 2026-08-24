@@ -4183,6 +4183,46 @@ textarea {
 .cleaner-scene-bg.is-room-whole_house.is-dirty { background-image: url("/art/cleaner/whole-house-base-dirty.png"); }
 .cleaner-scene-bg.is-room-whole_house.is-clean { background-image: url("/art/cleaner/whole-house-base-clean.png"); }
 
+/* Time-of-day color wash over the WHOLE scene (background, clutter, tools,
+   character alike -- highest z-index in .cleaner-scene) via a blend-mode
+   overlay, no new art required. Ported from a third-party prototype's own
+   pure-CSS lighting-overlay technique (CLEANER_ART_REDO_HANDOFF.md's "조명은
+   코드에서 처리" call). timeOfDay is the same 5-minute-refreshed bucket
+   HouseworkClickerModal.tsx already computes for picking which of the 4
+   day/night background images to show (cleanerTimeOfDay() in lib/
+   cleaner.ts) -- applied here regardless of whether the current room has a
+   time-of-day background set, since it's a benign wash either way. Alpha
+   values are the source's own (deliberately subtle) -- not independently
+   visually tuned against this app's own art, since this sandbox has no
+   display; revisit if a real device check finds them too faint/strong. */
+.cleaner-time-lighting {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  transition: background 0.7s ease;
+}
+
+.cleaner-time-lighting.is-time-morning {
+  background: rgba(255, 226, 174, 0.025);
+  mix-blend-mode: soft-light;
+}
+
+.cleaner-time-lighting.is-time-afternoon {
+  background: transparent;
+}
+
+.cleaner-time-lighting.is-time-evening {
+  background: rgba(133, 66, 82, 0.055);
+  mix-blend-mode: multiply;
+}
+
+.cleaner-time-lighting.is-time-night {
+  background: rgba(26, 42, 78, 0.1);
+  box-shadow: inset 0 0 54px rgba(12, 23, 58, 0.06);
+  mix-blend-mode: multiply;
+}
+
 .cleaner-character {
   position: absolute;
   left: 50%;
@@ -4387,6 +4427,30 @@ textarea {
   text-align: center;
 }
 
+/* Real per-room placement for a tool, when CLEANER_TOOL_LAYOUTS (lib/
+   cleaner.ts) has one -- ported from a third-party prototype's own hand-
+   tuned positions. --tool-x/-y/-w are set inline from that table; x/y are
+   the item's own CENTER point (x from left, y from TOP, matching the
+   source's scheme) and the translate bottom-anchors it there, same
+   technique the source used for its .scene-sprite. Takes priority over
+   (replaces, doesn't combine with) the fixed .cleaner-tool-slot-* rules
+   below, which stay as the fallback for any room/tool this table doesn't
+   cover. */
+.cleaner-placed-tool.is-positioned {
+  left: var(--tool-x);
+  top: var(--tool-y);
+  right: auto;
+  bottom: auto;
+  width: var(--tool-w);
+  transform: translate(-50%, -100%);
+  animation: cleanerClutterOutPositioned 0.3s ease-out both;
+}
+
+@keyframes cleanerClutterOutPositioned {
+  from { opacity: 0; transform: translate(-50%, -100%) translateY(5%) scale(0.94); }
+  to { opacity: 1; transform: translate(-50%, -100%) translateY(0) scale(1); }
+}
+
 .cleaner-tool-slot-toy_box { left: 3%; bottom: 4%; width: 15%; }
 .cleaner-tool-slot-sturdy_gloves { left: 20%; bottom: 3%; width: 9%; }
 .cleaner-tool-slot-feather_duster { left: 3%; bottom: 23%; width: 10%; }
@@ -4410,6 +4474,26 @@ textarea {
 @keyframes cleanerToolWork {
   0%, 100% { transform: rotate(0deg) scale(1); }
   50% { transform: rotate(-3deg) scale(1.04); }
+}
+
+/* .is-positioned already puts `transform: translate(-50%, -100%)` on this
+   element for placement -- .cleaner-tool-slot-* slots don't set any static
+   transform, so cleanerToolWork's own rotate/scale was safe replacing
+   "nothing". Here it would replace the placement translate itself on every
+   keyframe tick, snapping the icon to the box's default (top-left) anchor
+   while animating. This variant folds the same translate into every
+   keyframe instead so the icon stays anchored at (--tool-x, --tool-y)
+   throughout the sway. Three-class selector outranks the two-class rule
+   above, so a positioned+motion tool gets only this one (no separate
+   entrance pop-in -- a minor trade, not worth stacking two animations on
+   the same transform property). */
+.cleaner-placed-tool.is-positioned.is-motion {
+  animation: cleanerToolWorkPositioned 2.2s ease-in-out infinite;
+}
+
+@keyframes cleanerToolWorkPositioned {
+  0%, 100% { transform: translate(-50%, -100%) rotate(0deg) scale(1); }
+  50% { transform: translate(-50%, -100%) rotate(-3deg) scale(1.04); }
 }
 
 .cleaner-active-robot {
