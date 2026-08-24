@@ -300,14 +300,24 @@ export function DashboardPage() {
               <CharacterSprite equipped={equippedSprite} size={112} />
             </button>
           )}
-          {/* Character shop is on hold (see lib/featureFlags.ts) -- the
-              avatar is still shown as the user's identity display, just not
-              as a clickable shop entry (no data-tutorial either, so
-              TutorialTour's own 'character' step is dropped to match, see
-              that file). */}
+          {/* Character shop is on hold (see lib/featureFlags.ts) -- this
+              slot is no longer a clickable shop entry (no data-tutorial
+              either, so TutorialTour's own 'character' step is dropped to
+              match, see that file), but still shows the user's identity:
+              their own uploaded profile photo (the same one Settings ->
+              profile photo already manages, via lib/avatarPhotos.ts) if
+              they have one, otherwise the app's own mascot as a fixed
+              default -- CharacterSprite itself was only ever a placeholder
+              (plain colored shapes + emoji, see its own file comment, "No
+              real art yet"), never real character art, so this is a
+              genuine improvement, not a downgrade, while the shop is held. */}
           {family && !CHARACTER_CUSTOMIZATION_ENABLED && (
             <div className="topbar-character is-static">
-              <CharacterSprite equipped={equippedSprite} size={112} />
+              <img
+                className="topbar-character-photo"
+                src={(user && avatarUrlByUserId.get(user.id)) || '/mascot/tutorial-guide-default.png'}
+                alt=""
+              />
             </div>
           )}
 
