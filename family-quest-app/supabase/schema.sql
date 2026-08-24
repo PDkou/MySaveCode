@@ -9146,3 +9146,69 @@ revoke execute on function public.buy_cleaner_tool(uuid, text) from anon, public
 -- =============================================================================
 -- End section 38.
 -- =============================================================================
+
+-- =============================================================================
+-- Section 39 -- Fever/combo permanent-upgrade chain
+--
+-- The housework clicker's combo/fever mechanic (build a tap streak, spend it
+-- into a temporary bonus-tap window) is otherwise pure client-side session
+-- state -- no new table, no new RPC needed for it, since every bonus tap it
+-- grants just adds to the same plain integer p_tap_count apply_cleaner_taps
+-- already accepts (see HouseworkClickerModal.tsx's own comment on this).
+-- The only thing that genuinely needs server-side persistence is 3 new
+-- permanent-upgrade nodes that tune combo/fever's own constants -- reusing
+-- buy_cleaner_upgrade/cleaner_upgrades_owned exactly as-is (that RPC is
+-- already fully generic over cleaner_upgrade_defs(), see its own body --
+-- adding rows here is the only change required, no new PL/pgSQL). A
+-- standalone 4th chain, not attached to any existing node's prereq, same
+-- shape as the existing "reward chain" root.
+--
+-- Effects (client-side only, read via cleaner_upgrades_owned same as every
+-- other upgrade -- see the matching comment in lib/cleaner.ts):
+--   combo_reach_1 -- raises the max bonus taps a combo streak alone can add
+--                    (COMBO_BONUS_CAP) from 5 to 8.
+--   fever_quick_1 -- lowers the combo count that spends itself into fever
+--                    (FEVER_TRIGGER_COMBO) from 30 to 20.
+--   fever_surge_1 -- raises fever's own per-tap bonus (FEVER_BONUS_TAPS)
+--                    from 2 to 4 and its duration (FEVER_DURATION_MS) from
+--                    8000 to 12000.
+--
+-- Run just this section's cleaner_upgrade_defs() replacement in the
+-- Supabase SQL Editor to activate it against the live project -- this repo
+-- has no credentials to do that itself. The whole schema.sql file is also
+-- safe to re-run top to bottom per its own header note, if preferred.
+-- =============================================================================
+
+create or replace function public.cleaner_upgrade_defs()
+returns table(
+  upgrade_id text,
+  star_cost numeric,
+  max_level integer,
+  prereq_upgrade_id text
+)
+language sql
+immutable
+set search_path = public
+as $$
+  values
+    -- Click chain: +25% tap gain -> halved stage 1-5 requirement -> skip to
+    -- stage 6 on prestige.
+    ('stronger_hands_1', 1::numeric, 1, null::text),
+    ('quick_living_room', 4::numeric, 1, 'stronger_hands_1'),
+    ('checkpoint_kitchen', 8::numeric, 1, 'quick_living_room'),
+    -- Automation chain: +20% passive rate -> free starter tool on prestige.
+    ('efficient_tools_1', 1::numeric, 1, null::text),
+    ('free_toy_box', 3::numeric, 1, 'efficient_tools_1'),
+    -- Reward chain: start each cycle with currency -> deep-clean bonus.
+    ('starting_sparkles', 2::numeric, 1, null::text),
+    ('deep_clean_bonus', 5::numeric, 1, 'starting_sparkles'),
+    -- Fever chain (section 39): bigger combo bonus -> fever triggers sooner
+    -- -> fever hits harder and lasts longer.
+    ('combo_reach_1', 3::numeric, 1, null::text),
+    ('fever_quick_1', 6::numeric, 1, 'combo_reach_1'),
+    ('fever_surge_1', 10::numeric, 1, 'fever_quick_1')
+$$;
+
+-- =============================================================================
+-- End section 39.
+-- =============================================================================

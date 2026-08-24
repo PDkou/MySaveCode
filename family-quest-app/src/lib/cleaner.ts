@@ -241,7 +241,10 @@ export interface CleanerUpgradeDef {
     | "free_toy_box"
     | "quick_living_room"
     | "checkpoint_kitchen"
-    | "deep_clean_bonus";
+    | "deep_clean_bonus"
+    | "combo_reach_1"
+    | "fever_quick_1"
+    | "fever_surge_1";
   starCost: number;
   maxLevel: number;
   prereqUpgradeId: string | null;
@@ -255,12 +258,19 @@ export interface CleanerUpgradeDef {
 // columns rather than a generic multiplier engine). Names/descriptions live
 // in i18n (cleaner.upgrades.<id>.*), not here.
 //
-// Three short chains (section 36 gave these real prereq edges -- v1 had
+// Four short chains (section 36 gave the first 3 real prereq edges -- v1 had
 // every node visible from the start, which didn't match the doc's
-// "구입한 노드와 바로 다음 후보만 공개" rule):
+// "구입한 노드와 바로 다음 후보만 공개" rule; section 39 added the 4th):
 // click:      stronger_hands_1 -> quick_living_room -> checkpoint_kitchen
 // automation: efficient_tools_1 -> free_toy_box
 // reward:     starting_sparkles -> deep_clean_bonus
+// fever:      combo_reach_1 -> fever_quick_1 -> fever_surge_1 -- tunes the
+//   combo/fever mechanic's own constants (COMBO_BONUS_CAP/
+//   FEVER_TRIGGER_COMBO/FEVER_BONUS_TAPS/FEVER_DURATION_MS in
+//   HouseworkClickerModal.tsx); unlike every other upgrade here, this
+//   chain's *effect* is pure client-side logic, not something any RPC
+//   computes -- buy_cleaner_upgrade/cleaner_upgrades_owned still persist
+//   ownership exactly the same way, only the consuming code differs.
 export const CLEANER_UPGRADES: CleanerUpgradeDef[] = [
   { id: "stronger_hands_1", starCost: 1, maxLevel: 1, prereqUpgradeId: null },
   { id: "quick_living_room", starCost: 4, maxLevel: 1, prereqUpgradeId: "stronger_hands_1" },
@@ -269,6 +279,9 @@ export const CLEANER_UPGRADES: CleanerUpgradeDef[] = [
   { id: "free_toy_box", starCost: 3, maxLevel: 1, prereqUpgradeId: "efficient_tools_1" },
   { id: "starting_sparkles", starCost: 2, maxLevel: 1, prereqUpgradeId: null },
   { id: "deep_clean_bonus", starCost: 5, maxLevel: 1, prereqUpgradeId: "starting_sparkles" },
+  { id: "combo_reach_1", starCost: 3, maxLevel: 1, prereqUpgradeId: null },
+  { id: "fever_quick_1", starCost: 6, maxLevel: 1, prereqUpgradeId: "combo_reach_1" },
+  { id: "fever_surge_1", starCost: 10, maxLevel: 1, prereqUpgradeId: "fever_quick_1" },
 ];
 
 // Doc's "구입한 노드와 그 노드에 직접 연결된 다음 후보만 공개한다" rule.

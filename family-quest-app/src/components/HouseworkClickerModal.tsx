@@ -97,19 +97,16 @@ const WORK_FRAME_DURATIONS: Record<"broom" | "mop", readonly number[]> = {
   mop: [180, 152, 122, 148, 198, 158, 128, 168],
 };
 
-// Combo/fever -- a pure client-side session mechanic (no new backend
-// state), also ported from a third-party prototype but reworked from the
-// ground up rather than copied: the source ran its own separate
+// Combo/fever -- a pure client-side session mechanic (no new backend state
+// of its own), also ported from a third-party prototype but reworked from
+// the ground up rather than copied: the source ran its own separate
 // localStorage-backed currency/economy entirely disconnected from this
 // app's real Supabase-backed one. Here, combo/fever instead directly boost
 // the REAL apply_cleaner_taps batch (tapBatchRef below) -- every bonus is
 // genuine credited currency, not a second fake number next to the real one.
 // Deliberately NOT ported: the source's separate achievement list (this
 // app already has a real, server-granted equivalent -- the
-// cleaner_deep_clean_* badges in lib/gamification.ts) and its 13-node
-// upgrade tree (those upgrades would need new purchasable, persisted
-// server state -- a real schema/RPC change this sandbox has no way to
-// apply to the live database and verify, unlike this file's own logic).
+// cleaner_deep_clean_* badges in lib/gamification.ts).
 //
 // apply_cleaner_taps' p_tap_count is a plain Postgres `integer` (see
 // schema.sql), so bonuses are extra whole credited taps added to the same
@@ -117,15 +114,24 @@ const WORK_FRAME_DURATIONS: Record<"broom" | "mop", readonly number[]> = {
 // identical to an ordinary fast-tapping burst, which the RPC already caps
 // at 400 taps/batch server-side regardless of how the client arrived at
 // that count.
+//
+// The constants below are BASE values only -- the fever chain of
+// CLEANER_UPGRADES (combo_reach_1/fever_quick_1/fever_surge_1, schema.sql
+// section 39) tunes 3 of them per-player. Unlike every other upgrade in
+// this game, that chain's effect lives entirely here on the client (no RPC
+// computes it) -- buy_cleaner_upgrade/cleaner_upgrades_owned still persist
+// which nodes are owned exactly the same way as any other upgrade, this
+// component just reads them into comboBonusCap/feverTriggerCombo/
+// feverBonusTaps/feverDurationMs below instead of a server-side effect.
 const COMBO_WINDOW_MS = 1200; // a tap this long after the last one resets combo to 1
 const COMBO_BONUS_PER = 10; // +1 credited bonus tap per this many combo steps
-const COMBO_BONUS_CAP = 5; // bonus taps from combo alone never exceed this
-const FEVER_TRIGGER_COMBO = 30; // combo count that spends itself into fever
-const FEVER_DURATION_MS = 8000;
-const FEVER_BONUS_TAPS = 2; // each real tap credits as 1 (base) + this many during fever
+const COMBO_BONUS_CAP_BASE = 5; // combo_reach_1 raises this to 8
+const FEVER_TRIGGER_COMBO_BASE = 30; // fever_quick_1 lowers this to 20
+const FEVER_DURATION_MS_BASE = 8000; // fever_surge_1 raises this to 12000
+const FEVER_BONUS_TAPS_BASE = 2; // fever_surge_1 raises this to 4
 const FEVER_TEMPO = 1.35; // sweep/mop frame durations divide by this during fever
-function comboBonusTaps(combo: number): number {
-  return Math.min(COMBO_BONUS_CAP, Math.floor(combo / COMBO_BONUS_PER));
+function comboBonusTaps(combo: number, cap: number): number {
+  return Math.min(cap, Math.floor(combo / COMBO_BONUS_PER));
 }
 
 export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
@@ -388,6 +394,18 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [family?.id]);
 
+  // Per-player combo/fever tuning from the fever upgrade chain (see the
+  // BASE constants' own comment above) -- read directly from upgradesOwned
+  // state, available from the top of this component regardless of the
+  // loading-guard return further down, same as hasEfficientTools/
+  // hasStrongerHands below compute from the same state later for display.
+  const comboBonusCap = (upgradesOwned["combo_reach_1"] ?? 0) > 0 ? 8 : COMBO_BONUS_CAP_BASE;
+  const feverTriggerCombo =
+    (upgradesOwned["fever_quick_1"] ?? 0) > 0 ? 20 : FEVER_TRIGGER_COMBO_BASE;
+  const hasFeverSurge = (upgradesOwned["fever_surge_1"] ?? 0) > 0;
+  const feverBonusTaps = hasFeverSurge ? 4 : FEVER_BONUS_TAPS_BASE;
+  const feverDurationMs = hasFeverSurge ? 12000 : FEVER_DURATION_MS_BASE;
+
   // Starts (or, if already active, just re-extends) a fever window --
   // called once combo has just been "spent" into it (see handleTap).
   const triggerFever = () => {
@@ -398,7 +416,7 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
       feverActiveRef.current = false;
       setFeverActive(false);
       feverEndTimer.current = null;
-    }, FEVER_DURATION_MS);
+    }, feverDurationMs);
   };
 
   const handleTap = () => {
@@ -420,17 +438,17 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
       // building combo for display/flavor, but the credit itself is
       // fever's flat bonus, not the combo table.
       comboCountRef.current = nextCombo;
-      creditedTaps = 1 + FEVER_BONUS_TAPS;
-    } else if (nextCombo >= FEVER_TRIGGER_COMBO) {
+      creditedTaps = 1 + feverBonusTaps;
+    } else if (nextCombo >= feverTriggerCombo) {
       // Combo just crossed the trigger line -- it "pays out" into a fever
       // window and resets to 0, same spirit as the reference prototype's
       // own combo-feeds-fever design.
       comboCountRef.current = 0;
       triggerFever();
-      creditedTaps = 1 + FEVER_BONUS_TAPS;
+      creditedTaps = 1 + feverBonusTaps;
     } else {
       comboCountRef.current = nextCombo;
-      creditedTaps = 1 + comboBonusTaps(nextCombo);
+      creditedTaps = 1 + comboBonusTaps(nextCombo, comboBonusCap);
     }
     setComboDisplay(comboCountRef.current);
     tapBatchRef.current += creditedTaps;

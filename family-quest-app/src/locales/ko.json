@@ -540,6 +540,18 @@
       "deep_clean_bonus": {
         "name": "대청소 보너스",
         "description": "대청소를 완료할 때마다 보유 포인트의 25%를 추가로 받아요."
+      },
+      "combo_reach_1": {
+        "name": "긴 콤보",
+        "description": "콤보로 얻는 보너스 탭 최대치가 늘어나요."
+      },
+      "fever_quick_1": {
+        "name": "빠른 피버",
+        "description": "더 적은 콤보로도 피버타임이 시작돼요."
+      },
+      "fever_surge_1": {
+        "name": "강한 피버",
+        "description": "피버타임 보너스와 지속시간이 늘어나요."
       }
     },
     "exchangeHeading": "앱 골드로 교환",
