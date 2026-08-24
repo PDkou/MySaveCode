@@ -46,6 +46,7 @@ interface AuthContextValue {
   updateDisplayName: (name: string) => Promise<void>;
   updateBirthday: (birthday: string | null) => Promise<void>;
   updateAvatarPhoto: (blob: Blob) => Promise<void>;
+  removeAvatarPhoto: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -266,6 +267,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session, profile]);
 
+  // Clears the photo back to no-photo (AvatarChip/topbar-character etc.
+  // then fall back to their own default, an initial letter or the app
+  // mascot) -- previously there was no way to undo updateAvatarPhoto short
+  // of uploading a different photo (2026-08 feedback: "사진을 해제하는건
+  // 못함"). A no-op if there's nothing set, same spirit as updateBirthday's
+  // null-clears-it handling above.
+  const removeAvatarPhoto = useCallback(async () => {
+    if (!session?.user) return;
+    const userId = session.user.id;
+    const previousPath = profile?.avatar_path ?? null;
+    if (!previousPath) return;
+
+    const { error } = await supabase.from('profiles').update({ avatar_path: null }).eq('id', userId);
+    if (error) {
+      throw new AvatarPhotoError('profile.error.photoUploadFailed');
+    }
+
+    setProfile((prev) => (prev ? { ...prev, avatar_path: null } : prev));
+    setAvatarUrl(null);
+
+    // Best-effort, same reasoning as updateAvatarPhoto's own cleanup above.
+    void deleteAvatarPhoto(previousPath);
+  }, [session, profile]);
+
   const refreshProfile = useCallback(async () => {
     if (session?.user) {
       await loadProfile(session.user.id);
@@ -286,12 +311,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateDisplayName,
     updateBirthday,
     updateAvatarPhoto,
+    removeAvatarPhoto,
     sendPasswordReset,
     updatePassword,
     refreshProfile,
   }), [
     session, profile, avatarUrl, initializing, profileLoading, signUp, signIn, signOut, setLanguage,
-    updateDisplayName, updateBirthday, updateAvatarPhoto, sendPasswordReset, updatePassword, refreshProfile,
+    updateDisplayName, updateBirthday, updateAvatarPhoto, removeAvatarPhoto, sendPasswordReset, updatePassword,
+    refreshProfile,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

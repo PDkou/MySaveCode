@@ -334,6 +334,8 @@
     "birthdayHint": "任意入力です。誕生日にクエストを完了すると特別な称号がもらえます。",
     "photoHeading": "プロフィール写真",
     "photoChange": "写真を変更",
+    "photoRemove": "削除",
+    "viewPhoto": "写真を大きく見る",
     "photoUploading": "アップロード中...",
     "cropHeading": "写真の位置を調整",
     "cropHint": "指でドラッグして位置を動かし、スライダーで拡大・縮小してください。",

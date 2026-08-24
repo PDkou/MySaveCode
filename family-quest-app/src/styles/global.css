@@ -985,13 +985,11 @@ textarea {
   }
 }
 
-/* Rendered as a plain <div> instead of a <button> while the character shop
-   is on hold (see lib/featureFlags.ts) -- the avatar still shows, but
-   isn't actually clickable, so the pointer cursor/hover cues that imply
-   "click me" above are turned back off for it. */
-.topbar-character.is-static {
-  cursor: default;
-}
+/* "is-static" is a semantic marker only ("this isn't the shop entry"), not
+   a styling hook -- while the character shop is on hold (see
+   lib/featureFlags.ts) this element is still a real <button>, just opening
+   PhotoLightbox instead of the shop (2026-08 feedback), so it keeps the
+   base .topbar-character's pointer cursor/hover cues as-is. */
 
 /* The user's own uploaded profile photo (already square-cropped, see
    PhotoCropModal) or, failing that, the app's own mascot PNG -- either way
@@ -1004,13 +1002,6 @@ textarea {
   width: 82%;
   height: 82%;
   object-fit: contain;
-}
-
-@media (hover: hover) {
-  .topbar-character.is-static:hover {
-    border-color: var(--border);
-    box-shadow: var(--shadow-sm);
-  }
 }
 
 .app-title {
@@ -2264,6 +2255,24 @@ textarea {
   z-index: 50;
   padding: 0;
   animation: backdropIn 0.15s ease both;
+}
+
+/* PhotoLightbox -- always centered (unlike the base bottom-sheet-on-mobile
+   layout above), darker backdrop since there's no white card underneath to
+   separate from, and the image itself just sized to fit the viewport with
+   its own aspect ratio intact. */
+.photo-lightbox-backdrop {
+  align-items: center;
+  padding: 24px;
+  background: rgba(10, 14, 26, 0.82);
+  cursor: zoom-out;
+}
+
+.photo-lightbox-image {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
 /* Used by SettingsModal while a child modal (EditNameModal/
@@ -3532,6 +3541,34 @@ textarea {
 }
 
 .settings-photo-trigger-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Wraps .settings-photo-trigger + the remove button together as ONE child
+   of .settings-row -- that row is `justify-content: space-between` for
+   exactly 2 children (a label + this), so the remove button couldn't just
+   be a third sibling without breaking that layout. */
+.settings-photo-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 2026-08 feedback: photo could be changed but never unset. Text-button
+   styling to read as clearly secondary to the trigger's own purple label
+   next to it. */
+.settings-photo-remove {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.settings-photo-remove:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
