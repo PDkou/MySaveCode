@@ -97,6 +97,37 @@ const WORK_FRAME_DURATIONS: Record<"broom" | "mop", readonly number[]> = {
   mop: [180, 152, 122, 148, 198, 158, 128, 168],
 };
 
+// Combo/fever -- a pure client-side session mechanic (no new backend
+// state), also ported from a third-party prototype but reworked from the
+// ground up rather than copied: the source ran its own separate
+// localStorage-backed currency/economy entirely disconnected from this
+// app's real Supabase-backed one. Here, combo/fever instead directly boost
+// the REAL apply_cleaner_taps batch (tapBatchRef below) -- every bonus is
+// genuine credited currency, not a second fake number next to the real one.
+// Deliberately NOT ported: the source's separate achievement list (this
+// app already has a real, server-granted equivalent -- the
+// cleaner_deep_clean_* badges in lib/gamification.ts) and its 13-node
+// upgrade tree (those upgrades would need new purchasable, persisted
+// server state -- a real schema/RPC change this sandbox has no way to
+// apply to the live database and verify, unlike this file's own logic).
+//
+// apply_cleaner_taps' p_tap_count is a plain Postgres `integer` (see
+// schema.sql), so bonuses are extra whole credited taps added to the same
+// integer batch, never a fractional multiplier -- keeps the wire format
+// identical to an ordinary fast-tapping burst, which the RPC already caps
+// at 400 taps/batch server-side regardless of how the client arrived at
+// that count.
+const COMBO_WINDOW_MS = 1200; // a tap this long after the last one resets combo to 1
+const COMBO_BONUS_PER = 10; // +1 credited bonus tap per this many combo steps
+const COMBO_BONUS_CAP = 5; // bonus taps from combo alone never exceed this
+const FEVER_TRIGGER_COMBO = 30; // combo count that spends itself into fever
+const FEVER_DURATION_MS = 8000;
+const FEVER_BONUS_TAPS = 2; // each real tap credits as 1 (base) + this many during fever
+const FEVER_TEMPO = 1.35; // sweep/mop frame durations divide by this during fever
+function comboBonusTaps(combo: number): number {
+  return Math.min(COMBO_BONUS_CAP, Math.floor(combo / COMBO_BONUS_PER));
+}
+
 export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -151,13 +182,23 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   }, [idleFrame]);
   // Alternates broom/mop every tap (doc's own "빗자루질과 걸레질을 번갈아
   // 사용" -- left as an open decision there; simple per-tap alternation is
-  // the least surprising reading of it). Only cleaner-girl-mop-1.png exists
-  // (single frame, no sweep-style 4-frame cycle) so the mop pose doesn't
-  // animate through sweepFrame -- it just holds for the same 360ms window.
+  // the least surprising reading of it). Both now have the full 8-frame set
+  // (see WORK_FRAME_DURATIONS above).
   const [sweepTool, setSweepTool] = useState<"broom" | "mop">("broom");
   const [tapFloat, setTapFloat] = useState<{ id: number; gain: string } | null>(
     null,
   );
+  // Combo/fever display state (see the constants above) -- comboCountRef/
+  // feverActiveRef below are the values handleTap actually computes with
+  // (needed synchronously, mid-tap, before React would've committed a state
+  // update); these two are kept in sync purely for rendering the combo
+  // badge/fever banner.
+  const [comboDisplay, setComboDisplay] = useState(0);
+  const [feverActive, setFeverActive] = useState(false);
+  const comboCountRef = useRef(0);
+  const feverActiveRef = useRef(false);
+  const lastTapAtRef = useRef(0);
+  const feverEndTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Shown briefly the first time a given tool is ever bought (owned goes
   // 0 -> 1) -- the doc's "새 도구 발견" pose, previously speced but never
   // wired to anything (cleaner.tools.newToolToast sat unused).
@@ -229,6 +270,7 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
       feedbackTimers.current.forEach(clearTimeout);
       if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
       sweepFrameTimers.current.forEach(clearTimeout);
+      if (feverEndTimer.current) clearTimeout(feverEndTimer.current);
     },
     [],
   );
@@ -346,9 +388,53 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [family?.id]);
 
+  // Starts (or, if already active, just re-extends) a fever window --
+  // called once combo has just been "spent" into it (see handleTap).
+  const triggerFever = () => {
+    feverActiveRef.current = true;
+    setFeverActive(true);
+    if (feverEndTimer.current) clearTimeout(feverEndTimer.current);
+    feverEndTimer.current = setTimeout(() => {
+      feverActiveRef.current = false;
+      setFeverActive(false);
+      feverEndTimer.current = null;
+    }, FEVER_DURATION_MS);
+  };
+
   const handleTap = () => {
     if (!family) return;
-    tapBatchRef.current += 1;
+
+    // Combo: a tap landing within COMBO_WINDOW_MS of the previous one keeps
+    // building the streak; a slower tap starts it over at 1. Read/written
+    // via refs (not the comboDisplay state) so this math always uses the
+    // value from the tap that literally just happened, never a stale
+    // closure from whenever this render's handleTap was created.
+    const now = Date.now();
+    const withinComboWindow = now - lastTapAtRef.current <= COMBO_WINDOW_MS;
+    lastTapAtRef.current = now;
+    const nextCombo = withinComboWindow ? comboCountRef.current + 1 : 1;
+
+    let creditedTaps: number;
+    if (feverActiveRef.current) {
+      // Fever already running (from an earlier combo payout) -- keep
+      // building combo for display/flavor, but the credit itself is
+      // fever's flat bonus, not the combo table.
+      comboCountRef.current = nextCombo;
+      creditedTaps = 1 + FEVER_BONUS_TAPS;
+    } else if (nextCombo >= FEVER_TRIGGER_COMBO) {
+      // Combo just crossed the trigger line -- it "pays out" into a fever
+      // window and resets to 0, same spirit as the reference prototype's
+      // own combo-feeds-fever design.
+      comboCountRef.current = 0;
+      triggerFever();
+      creditedTaps = 1 + FEVER_BONUS_TAPS;
+    } else {
+      comboCountRef.current = nextCombo;
+      creditedTaps = 1 + comboBonusTaps(nextCombo);
+    }
+    setComboDisplay(comboCountRef.current);
+    tapBatchRef.current += creditedTaps;
+
     setTapReaction("tap");
     setTapMotionKey((current) => current + 1);
     const nextTool = sweepTool === "broom" ? "mop" : "broom";
@@ -361,17 +447,23 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     // WORK_FRAME_DURATIONS (see above) instead of a flat 90ms -- cumulative
     // offsets built from that tool's own per-frame dwell table read as a
     // natural sweeping/mopping rhythm rather than a mechanically even tick.
-    // Both broom and mop have the full 8-frame set.
+    // Both broom and mop have the full 8-frame set. During fever the whole
+    // gesture's durations divide by FEVER_TEMPO -- a flat per-gesture
+    // speed-up (decided fresh each tap) rather than the reference's smooth
+    // frame-by-frame tempo easing, since this component schedules a tap
+    // gesture's frames as one upfront batch rather than a continuously
+    // re-evaluating loop; good enough for a ~1s gesture.
     setSweepFrame(1);
+    const tempo = feverActiveRef.current ? FEVER_TEMPO : 1;
     const durations = WORK_FRAME_DURATIONS[nextTool];
     let elapsed = 0;
     [2, 3, 4, 5, 6, 7, 8].forEach((frame, index) => {
-      elapsed += durations[index];
+      elapsed += durations[index] / tempo;
       sweepFrameTimers.current.push(
         setTimeout(() => setSweepFrame(frame), elapsed),
       );
     });
-    elapsed += durations[7];
+    elapsed += durations[7] / tempo;
     tapResetTimer.current = setTimeout(() => {
       setTapReaction("idle");
       tapResetTimer.current = null;
@@ -780,7 +872,11 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
             </i>
           </div>
 
-          <section className={`cleaner-scene is-room-${room.id}`}>
+          <section
+            className={`cleaner-scene is-room-${room.id} is-time-${timeOfDay} ${
+              feverActive ? "is-fever" : ""
+            }`}
+          >
             <div
               className={`cleaner-scene-bg is-dirty is-room-${room.id}`}
               aria-hidden="true"
@@ -906,6 +1002,20 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
                 +{formatCleanerNumber(tapFloat.gain)}
               </span>
             )}
+            {/* Shown once combo is worth pointing out (below COMBO_BONUS_PER
+                it's not earning any bonus taps yet, so no badge). Hidden
+                once fever actually starts -- the fever banner below takes
+                over as the "something special is happening" cue instead. */}
+            {comboDisplay >= COMBO_BONUS_PER && !feverActive && (
+              <div className="cleaner-combo-badge">
+                {t("cleaner.combo", { count: comboDisplay })}
+              </div>
+            )}
+            {feverActive && (
+              <div className="cleaner-stage-toast cleaner-fever-toast">
+                {t("cleaner.fever.active")}
+              </div>
+            )}
             {stageToast && (
               <div className="cleaner-stage-toast">
                 {t("cleaner.stageCompleteToast", {
@@ -925,11 +1035,21 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
                 background alike) -- ported from a third-party prototype's
                 pure-CSS lighting-overlay technique (ART_REDO_HANDOFF's
                 "조명은 코드에서 처리" call), ".cleaner-time-lighting.is-time-*"
-                in global.css. No new art required. */}
-            <div
-              className={`cleaner-time-lighting is-time-${timeOfDay}`}
-              aria-hidden="true"
-            />
+                in global.css. Only rendered for rooms with NO dedicated
+                time-of-day background set (CLEANER_TIME_BG_ROOMS) -- the 4
+                rooms that DO have one already bake their own full time-of-day
+                relighting directly into each image (verified by inspecting
+                the delivered art: living-room-clean-night.png is a fully
+                re-graded dark room with its own warm lamp glow and a starry
+                window, not the same picture with a tint over it), so this
+                wash would only ever double up on top of art that's already
+                correct there, never add anything. */}
+            {!CLEANER_TIME_BG_ROOMS.has(room.id) && (
+              <div
+                className={`cleaner-time-lighting is-time-${timeOfDay}`}
+                aria-hidden="true"
+              />
+            )}
           </section>
 
           <div className="cleaner-tools-row">
