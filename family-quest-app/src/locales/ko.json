@@ -424,6 +424,10 @@
     "currency": "청소 포인트",
     "ratePerSecond": "초당 +{{rate}}",
     "gainPerTap": "탭당 +{{gain}}",
+    "combo": "콤보 x{{count}}",
+    "fever": {
+      "active": "🔥 피버타임! 탭 보상이 커져요"
+    },
     "offlineWelcome": "다시 오셨네요! 그동안 +{{gained}} 모았어요",
     "stageLabel": "{{stage}}단계",
     "stageInChapter": "{{current}}/5단계",

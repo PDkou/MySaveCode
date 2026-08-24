@@ -424,6 +424,10 @@
     "currency": "お掃除ポイント",
     "ratePerSecond": "毎秒 +{{rate}}",
     "gainPerTap": "タップごとに +{{gain}}",
+    "combo": "コンボ x{{count}}",
+    "fever": {
+      "active": "🔥 フィーバータイム！タップ報酬アップ"
+    },
     "offlineWelcome": "おかえりなさい！その間に +{{gained}} 貯まりました",
     "stageLabel": "{{stage}}段階",
     "stageInChapter": "{{current}}/5段階",
