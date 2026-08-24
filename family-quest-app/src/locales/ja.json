@@ -92,6 +92,8 @@
     "signingUp": "登録中...",
     "signupSuccessConfirmEmail": "登録が完了しました。届いた確認メールのリンクを開いてからログインしてください。",
     "signupSuccessAutoLogin": "登録が完了しました。",
+    "privacyNoticePrefix": "登録すると",
+    "privacyNoticeSuffix": "に同意したものとみなされます。",
     "forgotPasswordLink": "パスワードをお忘れですか?",
     "forgotPasswordHeading": "パスワード再設定",
     "sendResetLink": "再設定リンクを送信",
@@ -335,8 +337,6 @@
     "birthdayHint": "任意入力です。誕生日にクエストを完了すると特別な称号がもらえます。",
     "statusMessageHeading": "ステータスメッセージ",
     "statusMessagePlaceholder": "ステータスメッセージを入力",
-    "statusMessageSaving": "保存中...",
-    "statusMessageSaved": "保存しました",
     "photoHeading": "プロフィール写真",
     "photoChange": "写真を変更",
     "photoRemove": "削除",
@@ -345,6 +345,9 @@
     "cropHeading": "写真の位置を調整",
     "cropHint": "指でドラッグして位置を動かし、スライダーで拡大・縮小してください。",
     "cropZoom": "拡大・縮小",
+    "viewPrivacyPolicy": "プライバシーポリシー",
+    "deleteAccount": "退会する",
+    "deleteAccountConfirm": "本当に退会しますか? 7日後にアカウントが完全に無効化されます。それまでの間はいつでも取り消せます。",
     "error": {
       "photoTooLarge": "写真の容量は5MB以下にしてください。",
       "photoInvalidType": "画像ファイルのみ添付できます。",
@@ -719,6 +722,16 @@
       "deleteFailed": "メッセージを削除できませんでした。",
       "attachmentTooLarge": "添付ファイルは8MB以下にしてください。",
       "attachmentUploadFailed": "添付ファイルをアップロードできませんでした。"
+    }
+  },
+  "account": {
+    "deletionPending": {
+      "heading": "アカウント削除予定",
+      "body": "{{date}}にアカウントが完全に削除されます(残り約{{days}}日)。それまではいつでも取り消せます。",
+      "cancelButton": "削除を取り消す"
+    },
+    "error": {
+      "ownerOfSharedFamily": "他のメンバーが残っている家族ルームのルーム長のため退会できません。ルーム長を譲るか、先に家族ルームを退出してください。"
     }
   }
 }

@@ -3,7 +3,7 @@ import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { useAuth } from '../context/AuthContext';
+import { useAuth, AuthActionError } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { ThemeToggle } from './ThemeToggle';
 import { ColorThemePicker } from './ColorThemePicker';
@@ -12,6 +12,7 @@ import { EditNameModal } from './EditNameModal';
 import { FamilyMembersModal } from './FamilyMembersModal';
 import { PhotoCropModal } from './PhotoCropModal';
 import { OnboardingScreen } from './OnboardingScreen';
+import { ConfirmModal } from './ConfirmModal';
 import { ModalHeader } from './ModalHeader';
 import { AvatarChip } from './AvatarChip';
 import { AvatarPhotoError } from '../lib/avatarPhotos';
@@ -34,7 +35,7 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
   const { t } = useTranslation();
   const navigate = useNavigate();
   const {
-    user, profile, avatarUrl, signOut, updateAvatarPhoto, removeAvatarPhoto, updateBirthday,
+    user, profile, avatarUrl, signOut, updateAvatarPhoto, removeAvatarPhoto, updateBirthday, requestAccountDeletion,
   } = useAuth();
   const { family, members, updateMyDisplayName, refresh: refreshFamily } = useFamily();
   useBackDismiss(true, onClose);
@@ -46,15 +47,19 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
   const [birthdayBusy, setBirthdayBusy] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
   const [showOnboardingPreview, setShowOnboardingPreview] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteErrorKey, setDeleteErrorKey] = useState<string | null>(null);
 
-  // EditNameModal/FamilyMembersModal/PhotoCropModal are only ever opened
-  // from here -- each renders its own .modal-backdrop, so having this
-  // modal's backdrop stay visible underneath stacked two translucent
-  // bottom sheets with double-dimmed backgrounds and this modal's own
-  // sheet visibly peeking out above the shorter child sheet. Hiding (not
-  // unmounting, so none of this modal's own local state resets) this
-  // modal's chrome while a child is open avoids that.
-  const childModalOpen = showEditName || showMembers || !!pendingPhotoFile;
+  // EditNameModal/FamilyMembersModal/PhotoCropModal/the delete-account
+  // ConfirmModal are only ever opened from here -- each renders its own
+  // .modal-backdrop, so having this modal's backdrop stay visible
+  // underneath stacked two translucent bottom sheets with double-dimmed
+  // backgrounds and this modal's own sheet visibly peeking out above the
+  // shorter child sheet. Hiding (not unmounting, so none of this modal's
+  // own local state resets) this modal's chrome while a child is open
+  // avoids that.
+  const childModalOpen = showEditName || showMembers || !!pendingPhotoFile || showDeleteConfirm;
 
   const currentName = useMemo(() => {
     if (!user) return '';
@@ -121,6 +126,33 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
   const goToHelp = () => {
     onClose();
     navigate('/help');
+  };
+
+  const goToPrivacyPolicy = () => {
+    onClose();
+    navigate('/privacy');
+  };
+
+  // Actually anonymizing/banning the account happens 7 days from now, not
+  // here -- see schema.sql section 43's own comment. Closes the confirm
+  // dialog immediately either way (same pattern as FamilyMembersModal's own
+  // handleLeave/handleRemove) -- any error shows in this modal's own body
+  // afterward, not inside ConfirmModal itself. On success, closes Settings
+  // too; App.tsx's RootGate reactively swaps to
+  // AccountDeletionPendingScreen the moment profile.deletion_requested_at
+  // is set, so there's nothing else to navigate to.
+  const handleDeleteAccount = async () => {
+    setShowDeleteConfirm(false);
+    setDeleteBusy(true);
+    setDeleteErrorKey(null);
+    try {
+      await requestAccountDeletion();
+      onClose();
+    } catch (err) {
+      setDeleteErrorKey(err instanceof AuthActionError ? err.translationKey : 'auth.error.unknown');
+    } finally {
+      setDeleteBusy(false);
+    }
   };
 
   const handleBirthdayChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -239,12 +271,24 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
             >
               {t('auth.logout')}
             </button>
+            <button
+              type="button"
+              className="settings-row-button settings-row-danger"
+              disabled={deleteBusy}
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              {t('profile.deleteAccount')}
+            </button>
+            {deleteErrorKey && <p className="form-error" role="alert">{t(deleteErrorKey)}</p>}
           </div>
         )}
 
         <div className="settings-section">
           <button type="button" className="settings-row-button" onClick={goToHelp}>
             {t('help.openButton')}
+          </button>
+          <button type="button" className="settings-row-button" onClick={goToPrivacyPolicy}>
+            {t('profile.viewPrivacyPolicy')}
           </button>
           <button type="button" className="settings-row-button" onClick={() => setShowOnboardingPreview(true)}>
             {t('onboarding.replayButton')}
@@ -283,6 +327,15 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
 
       {showOnboardingPreview && (
         <OnboardingScreen onDismiss={() => setShowOnboardingPreview(false)} replay />
+      )}
+
+      {showDeleteConfirm && (
+        <ConfirmModal
+          message={t('profile.deleteAccountConfirm')}
+          confirmLabel={t('profile.deleteAccount')}
+          onConfirm={() => void handleDeleteAccount()}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
       )}
     </div>
   );

@@ -24,6 +24,7 @@ function mapAuthErrorToKey(message: string | undefined): string {
   if (m.includes('password should be at least') || m.includes('password')) return 'auth.error.weakPassword';
   if (m.includes('unable to validate email') || m.includes('invalid email')) return 'auth.error.invalidEmail';
   if (m.includes('email not confirmed')) return 'auth.error.emailNotConfirmed';
+  if (m.includes('owner_of_shared_family')) return 'account.error.ownerOfSharedFamily';
   return 'auth.error.unknown';
 }
 
@@ -48,6 +49,8 @@ interface AuthContextValue {
   updateAvatarPhoto: (blob: Blob) => Promise<void>;
   removeAvatarPhoto: () => Promise<void>;
   updateStatusMessage: (message: string | null) => Promise<void>;
+  requestAccountDeletion: () => Promise<void>;
+  cancelAccountDeletion: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -317,6 +320,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session, loadProfile]);
 
+  // Two-phase (see schema.sql section 43): this just marks the profile with
+  // a timestamp -- the actual anonymize-and-ban happens 7 days later, from
+  // a scheduled Edge Function, not from this call. Blocks (via the RPC's
+  // own owner_of_shared_family exception) if the caller still owns a
+  // family with other members, mapped to a translation key by
+  // mapAuthErrorToKey above.
+  const requestAccountDeletion = useCallback(async () => {
+    if (!session?.user) return;
+    const { error } = await supabase.rpc('request_account_deletion');
+    if (error) {
+      throw new AuthActionError(mapAuthErrorToKey(error.message));
+    }
+    setProfile((prev) => (prev ? { ...prev, deletion_requested_at: new Date().toISOString() } : prev));
+  }, [session]);
+
+  // Available any time during the 7-day grace period -- see
+  // AccountDeletionPendingScreen, the only place this is currently called.
+  const cancelAccountDeletion = useCallback(async () => {
+    if (!session?.user) return;
+    const { error } = await supabase.rpc('cancel_account_deletion');
+    if (error) {
+      throw new AuthActionError('auth.error.unknown');
+    }
+    setProfile((prev) => (prev ? { ...prev, deletion_requested_at: null } : prev));
+  }, [session]);
+
   const value = useMemo<AuthContextValue>(() => ({
     session,
     user: session?.user ?? null,
@@ -333,13 +362,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateAvatarPhoto,
     removeAvatarPhoto,
     updateStatusMessage,
+    requestAccountDeletion,
+    cancelAccountDeletion,
     sendPasswordReset,
     updatePassword,
     refreshProfile,
   }), [
     session, profile, avatarUrl, initializing, profileLoading, signUp, signIn, signOut, setLanguage,
     updateDisplayName, updateBirthday, updateAvatarPhoto, removeAvatarPhoto, updateStatusMessage,
-    sendPasswordReset, updatePassword, refreshProfile,
+    requestAccountDeletion, cancelAccountDeletion, sendPasswordReset, updatePassword, refreshProfile,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

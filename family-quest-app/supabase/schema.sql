@@ -9405,3 +9405,173 @@ using (
 -- =============================================================================
 -- End section 42.
 -- =============================================================================
+
+-- =============================================================================
+-- Section 43: Account deletion (2026-08, app-store/legal readiness pass)
+--
+-- Self-service account deletion, required for app store submission (Apple
+-- guideline 5.1.1(v)) and PIPA compliance. Two-phase, not an immediate hard
+-- delete:
+--   1. request_account_deletion() marks profiles.deletion_requested_at, with
+--      a 7-day grace period the user can cancel out of
+--      (cancel_account_deletion()) -- protects against an accidental tap.
+--   2. After the grace period, process_expired_account_deletions() (called
+--      from a scheduled Edge Function invocation, service_role only -- see
+--      the commented cron.schedule template below, same pattern as section
+--      13's send-due-reminders job) anonymizes the profile and removes
+--      their family memberships.
+--
+-- This deliberately does NOT call auth.admin.deleteUser() / hard-delete the
+-- auth.users row. A large number of tables reference auth.users(id)
+-- WITHOUT on delete cascade (families.created_by, tasks.created_by/
+-- completed_by, task_comments.author_id, family_chat_messages.author_id,
+-- task_activities.actor_id, ...), by design, so that historical "who did
+-- this" attribution survives someone leaving a family (see leave_family()
+-- above, which already produces the same "member gone, history stays"
+-- shape). A literal auth.admin.deleteUser() call would fail outright with a
+-- foreign key violation for almost any account that has ever created a
+-- task or left a comment. Instead: the Edge Function permanently bans login
+-- via the Admin API's ban_duration (auth.users itself is untouched), and
+-- this function scrubs every personally-identifying field in profiles plus
+-- removes family_members/push_subscriptions/notification_prefs rows --
+-- functionally equivalent to deletion from every other user's point of
+-- view (no display name, no photo, can't log in, not in any family
+-- anymore, gets no more pushes), while historical records they're
+-- attributed to keep working exactly like a departed member's already do.
+-- =============================================================================
+
+alter table public.profiles add column if not exists deletion_requested_at timestamptz;
+
+create or replace function public.request_account_deletion()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  -- Block if the caller owns any family that still has other members --
+  -- ask them to transfer ownership (or have everyone else leave) first,
+  -- rather than silently orphaning the family the way skipping this check
+  -- would. leave_family() auto-transfers ownership in this same situation;
+  -- this deliberately doesn't, since deletion (once the grace period
+  -- elapses) can't be undone the way leaving one family can.
+  if exists (
+    select 1
+    from public.family_members fm
+    where fm.user_id = v_uid
+      and fm.role = 'owner'
+      and exists (
+        select 1 from public.family_members fm2
+        where fm2.family_id = fm.family_id and fm2.user_id <> v_uid
+      )
+  ) then
+    raise exception 'owner_of_shared_family' using errcode = 'P0001';
+  end if;
+
+  update public.profiles set deletion_requested_at = now() where id = v_uid;
+end;
+$$;
+
+grant execute on function public.request_account_deletion() to authenticated;
+revoke execute on function public.request_account_deletion() from anon, public;
+
+create or replace function public.cancel_account_deletion()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+  update public.profiles set deletion_requested_at = null where id = auth.uid();
+end;
+$$;
+
+grant execute on function public.cancel_account_deletion() to authenticated;
+revoke execute on function public.cancel_account_deletion() from anon, public;
+
+-- Service-role only (called from the Edge Function, never the client) --
+-- processes every profile whose 7-day grace period has elapsed. Re-checks
+-- the same owner-of-shared-family guard as request_account_deletion() above
+-- since circumstances can change during the grace period (e.g. someone else
+-- joined and left them as a shared family's sole owner after they
+-- requested deletion) -- such a profile is simply skipped this run and
+-- retried on the next one, deletion_requested_at left untouched.
+create or replace function public.process_expired_account_deletions()
+returns table(processed_user_id uuid, old_avatar_path text)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row record;
+begin
+  for v_row in
+    select p.id, p.avatar_path
+    from public.profiles p
+    where p.deletion_requested_at is not null
+      and p.deletion_requested_at <= now() - interval '7 days'
+      and not exists (
+        select 1
+        from public.family_members fm
+        where fm.user_id = p.id
+          and fm.role = 'owner'
+          and exists (
+            select 1 from public.family_members fm2
+            where fm2.family_id = fm.family_id and fm2.user_id <> p.id
+          )
+      )
+  loop
+    delete from public.task_assignees where user_id = v_row.id;
+    delete from public.family_members where user_id = v_row.id;
+    delete from public.push_subscriptions where user_id = v_row.id;
+    delete from public.notification_prefs where user_id = v_row.id;
+
+    update public.profiles
+    set display_name = '탈퇴한 사용자',
+        avatar_path = null,
+        status_message = null,
+        birthday = null,
+        deletion_requested_at = null
+    where id = v_row.id;
+
+    processed_user_id := v_row.id;
+    old_avatar_path := v_row.avatar_path;
+    return next;
+  end loop;
+end;
+$$;
+
+revoke all on function public.process_expired_account_deletions() from public, anon, authenticated;
+grant execute on function public.process_expired_account_deletions() to service_role;
+
+-- After deploying the updated Edge Function (see README.md), uncomment,
+-- fill in <PROJECT_REF>/<ANON_KEY>, and run just this block once in the SQL
+-- Editor -- same convention as section 13's send-due-reminders job.
+--
+-- select cron.schedule(
+--   'process-account-deletions',
+--   '30 16 * * *', -- 16:30 UTC = 01:30 KST/JST, a low-traffic hour
+--   $$
+--   select net.http_post(
+--     url := 'https://<PROJECT_REF>.supabase.co/functions/v1/send-due-reminders',
+--     headers := jsonb_build_object(
+--       'Content-Type', 'application/json',
+--       'Authorization', 'Bearer <ANON_KEY>'
+--     ),
+--     body := '{"process_account_deletions": true}'::jsonb
+--   );
+--   $$
+-- );
+
+-- =============================================================================
+-- End section 43.
+-- =============================================================================

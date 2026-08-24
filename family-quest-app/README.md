@@ -293,6 +293,31 @@ select cron.schedule(
 );
 ```
 
+**회원 탈퇴(계정 삭제) 처리**는 매일 새벽 한 번, 7일 유예기간이 지난 탈퇴 신청을 실제로 처리합니다(로그인 영구 차단 + 개인정보 익명화 — `schema.sql` 섹션 43 참고). 이 기능을 쓰려면:
+
+1. 위 3-1-1의 **Code** 탭에서, 이 저장소의 최신 `send-due-reminders/index.ts` 내용으로 갱신하고 **Deploy** (새 함수를 만들 필요 없음 — 같은 함수에 경로 하나가 추가된 것뿐입니다)
+2. `schema.sql`을 다시 실행 (섹션 43이 새로 추가됨 — 재실행 안전)
+3. 아래를 SQL Editor에서 한 번 실행:
+
+```sql
+select cron.schedule(
+  'process-account-deletions',
+  '30 16 * * *',
+  $$
+  select net.http_post(
+    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
+    ),
+    body := '{"process_account_deletions": true}'::jsonb
+  );
+  $$
+);
+```
+
+이 크론이 없어도 회원 탈퇴 신청/취소 자체(설정 화면)는 정상 동작합니다 — 다만 7일 뒤 실제 처리(로그인 차단·정보 익명화)가 이 스케줄러 없이는 일어나지 않습니다.
+
 ### 3-1-4. Vercel 환경변수 추가
 
 위 3단계 "배포 (Vercel 예시)"에서 `VITE_VAPID_PUBLIC_KEY`를 추가하지 않았다면 Vercel 프로젝트 설정 → Environment Variables에 추가 후 **Redeploy**.

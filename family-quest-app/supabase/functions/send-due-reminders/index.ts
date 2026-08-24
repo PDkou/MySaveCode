@@ -1,6 +1,6 @@
 // Deno Edge Function -- deployed via the Supabase dashboard's "Via Editor"
 // flow (paste this file's contents into the function's Code tab, no CLI
-// needed). Handles two kinds of calls, distinguished by the request body:
+// needed). Handles several kinds of calls, distinguished by the request body:
 //
 //   1. Scheduled due-time reminders: invoked with an empty body by the
 //      pg_cron job set up in schema.sql section 13.
@@ -11,6 +11,13 @@
 //      job -- same URL, same secrets, same "Verify JWT" setting already
 //      configured for this function, so no new deploy steps beyond pasting
 //      this updated code.
+//   3. Weekly per-family completion digest: invoked with
+//      { weekly_summary: true } by its own cron job (schema.sql section 17).
+//   4. Account deletion sweep: invoked with { process_account_deletions:
+//      true } by its own cron job (schema.sql section 43) -- the one path
+//      here that needs the Admin API (banning login), which is exactly why
+//      this runs as a service-role Edge Function rather than a plain SQL
+//      function on its own.
 //
 // See README.md "Push notifications" for the full deploy walkthrough.
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -365,6 +372,47 @@ async function handleWeeklySummary(supabase: SupabaseClient): Promise<Response> 
 }
 
 // ---------------------------------------------------------------------------
+// Path 4: account deletion sweep -- see schema.sql section 43's own comment
+// for why this bans login via the Admin API instead of hard-deleting the
+// auth.users row. process_expired_account_deletions() (plain SQL, no Admin
+// API access) does everything else -- scrubbing profiles, dropping family
+// memberships -- and hands back just enough per user (their old avatar
+// path, to clean up storage) for this function to finish the job.
+// ---------------------------------------------------------------------------
+
+interface ExpiredDeletionRow {
+  processed_user_id: string;
+  old_avatar_path: string | null;
+}
+
+async function handleAccountDeletions(supabase: SupabaseClient): Promise<Response> {
+  const { data, error } = await supabase.rpc('process_expired_account_deletions');
+  if (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const rows = (data ?? []) as ExpiredDeletionRow[];
+  let processedCount = 0;
+  for (const row of rows) {
+    if (row.old_avatar_path) {
+      await supabase.storage.from('avatars').remove([row.old_avatar_path]);
+    }
+    // 'none' un-bans -- any large duration here is effectively "forever"
+    // for this app's purposes. auth.users itself is otherwise untouched.
+    await supabase.auth.admin.updateUserById(row.processed_user_id, { ban_duration: '876000h' });
+    processedCount++;
+  }
+
+  return new Response(JSON.stringify({ processedCount }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Path 2: event-driven pushes (created/assigned, completed, reopened,
 // commented) -- fired immediately by a DB trigger, not on a schedule.
 // ---------------------------------------------------------------------------
@@ -491,6 +539,10 @@ Deno.serve(async (req: Request) => {
 
   if (body && typeof body === 'object' && (body as Record<string, unknown>).weekly_summary === true) {
     return handleWeeklySummary(supabase);
+  }
+
+  if (body && typeof body === 'object' && (body as Record<string, unknown>).process_account_deletions === true) {
+    return handleAccountDeletions(supabase);
   }
 
   return handleDueReminders(supabase);

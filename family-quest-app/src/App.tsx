@@ -13,6 +13,8 @@ import { TaskDetailPage } from './pages/TaskDetailPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { PhotoGalleryPage } from './pages/PhotoGalleryPage';
 import { HelpPage } from './pages/HelpPage';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { AccountDeletionPendingScreen } from './pages/AccountDeletionPendingScreen';
 import { Spinner } from './components/Spinner';
 import { UndoSnackbar } from './components/UndoSnackbar';
 import { InstallPromptBanner } from './components/InstallPromptBanner';
@@ -28,7 +30,7 @@ function FullScreenLoading() {
 }
 
 function RootGate() {
-  const { session, initializing } = useAuth();
+  const { session, initializing, profile, profileLoading } = useAuth();
   const { family, loading: familyLoading } = useFamily();
 
   if (initializing) {
@@ -37,6 +39,18 @@ function RootGate() {
 
   if (!session) {
     return <AuthPage />;
+  }
+
+  // Checked before familyLoading/family below -- a pending-deletion account
+  // has nothing else worth loading, and this must never flash the real
+  // dashboard first, so it waits on profileLoading rather than treating a
+  // still-null profile as "not pending" (schema.sql section 43).
+  if (profileLoading) {
+    return <FullScreenLoading />;
+  }
+
+  if (profile?.deletion_requested_at) {
+    return <AccountDeletionPendingScreen />;
   }
 
   if (familyLoading) {
@@ -142,6 +156,9 @@ function AppRoutes() {
           reachable from the login screen and family-setup screen too, both
           of which come before a session/family exist. */}
       <Route path="/help" element={<HelpPage />} />
+      {/* Same reasoning as /help -- linked from the signup form and from
+          Settings, both reachable before a session/family exists. */}
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
       {/* No guard here either -- this is reached via the recovery link in
           the reset email, before any normal session/family exists yet. */}
       <Route path="/reset-password" element={<ResetPasswordPage />} />
