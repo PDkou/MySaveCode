@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useBackDismiss } from '../lib/backNav';
+import { CHARACTER_CUSTOMIZATION_ENABLED } from '../lib/featureFlags';
 
 interface TutorialStep {
   // data-tutorial attribute value to spotlight, or null for a centered,
@@ -12,7 +13,7 @@ interface TutorialStep {
   bodyKey: string;
 }
 
-const STEPS: TutorialStep[] = [
+const ALL_STEPS: TutorialStep[] = [
   { target: null, titleKey: 'tutorial.steps.welcome.title', bodyKey: 'tutorial.steps.welcome.body' },
   { target: 'new-task', titleKey: 'tutorial.steps.newTask.title', bodyKey: 'tutorial.steps.newTask.body' },
   { target: 'filters', titleKey: 'tutorial.steps.filters.title', bodyKey: 'tutorial.steps.filters.body' },
@@ -22,6 +23,16 @@ const STEPS: TutorialStep[] = [
   { target: 'character', titleKey: 'tutorial.steps.character.title', bodyKey: 'tutorial.steps.character.body' },
   { target: null, titleKey: 'tutorial.steps.help.title', bodyKey: 'tutorial.steps.help.body' },
 ];
+
+// Drop the character-shop step while that feature is on hold (see
+// lib/featureFlags.ts) -- DashboardPage no longer renders anything with
+// data-tutorial="character" in that state, and this step would otherwise
+// point at nothing (harmless -- the placement effect below already
+// degrades a missing target to a centered step -- but still references an
+// inaccessible feature, which reads as broken/confusing in the tour).
+const STEPS: TutorialStep[] = CHARACTER_CUSTOMIZATION_ENABLED
+  ? ALL_STEPS
+  : ALL_STEPS.filter((step) => step.target !== 'character');
 
 // Which of the 5 generated mascot poses (design/character-art.md #33-38) to
 // show, picked in the placement logic below based on where the mascot ends

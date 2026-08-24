@@ -985,6 +985,21 @@ textarea {
   }
 }
 
+/* Rendered as a plain <div> instead of a <button> while the character shop
+   is on hold (see lib/featureFlags.ts) -- the avatar still shows, but
+   isn't actually clickable, so the pointer cursor/hover cues that imply
+   "click me" above are turned back off for it. */
+.topbar-character.is-static {
+  cursor: default;
+}
+
+@media (hover: hover) {
+  .topbar-character.is-static:hover {
+    border-color: var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
 .app-title {
   color: var(--navy);
   font-size: 22px;

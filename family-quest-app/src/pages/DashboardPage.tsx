@@ -23,6 +23,7 @@ import { CelebrationOverlay } from '../components/CelebrationOverlay';
 import { TitleFrame } from '../components/TitleFrame';
 import { TutorialTour } from '../components/TutorialTour';
 import { useUnseenCelebration } from '../hooks/useUnseenCelebration';
+import { CHARACTER_CUSTOMIZATION_ENABLED, GAME_FEATURES_ENABLED } from '../lib/featureFlags';
 import { startOfThisWeek } from '../lib/formatDate';
 import { BADGE_ICON_SRC, levelForPoints, pointsIntoLevel, pointsNeededForLevel } from '../lib/gamification';
 import { getEquippedItems, getShopItems, shopItemDisplayName } from '../lib/shop';
@@ -288,7 +289,7 @@ export function DashboardPage() {
             </div>
           )}
 
-          {family && (
+          {family && CHARACTER_CUSTOMIZATION_ENABLED && (
             <button
               type="button"
               className="topbar-character"
@@ -299,6 +300,16 @@ export function DashboardPage() {
               <CharacterSprite equipped={equippedSprite} size={112} />
             </button>
           )}
+          {/* Character shop is on hold (see lib/featureFlags.ts) -- the
+              avatar is still shown as the user's identity display, just not
+              as a clickable shop entry (no data-tutorial either, so
+              TutorialTour's own 'character' step is dropped to match, see
+              that file). */}
+          {family && !CHARACTER_CUSTOMIZATION_ENABLED && (
+            <div className="topbar-character is-static">
+              <CharacterSprite equipped={equippedSprite} size={112} />
+            </div>
+          )}
 
           <div className="dashboard-icon-row">
             {me && (
@@ -307,7 +318,8 @@ export function DashboardPage() {
                 {me.current_streak > 0 ? ` 🔥${me.current_streak}` : ''}
               </button>
             )}
-            {family && (
+            {/* Housework clicker minigame is on hold, see lib/featureFlags.ts. */}
+            {family && GAME_FEATURES_ENABLED && (
               <button
                 type="button"
                 className="btn btn-ghost btn-icon btn-sm"
