@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import type { BadgeKey, TitleTier } from '../types/database';
+import type { BadgeKey } from '../types/database';
 
 // Points/level are simple and purely derived on the client -- the server
 // (finalize_task_completion RPC, see supabase/schema.sql section 9) only
@@ -87,24 +87,11 @@ export const CLEANER_TITLE_KEYS: string[] = [
   'cleaner_endless_25',
 ];
 
-export const BADGE_EMOJI: Record<BadgeKey, string> = {
-  first_quest: '🌱',
-  ten_quests: '🎖️',
-  fifty_quests: '🏆',
-  streak_3: '🔥',
-  streak_7: '⚡',
-  early_bird: '🌅',
-  night_owl: '🦉',
-  cleaner_deep_clean_5: '🧽',
-  cleaner_deep_clean_10: '🧴',
-  cleaner_deep_clean_15: '🧼',
-  cleaner_deep_clean_20: '🪣',
-  cleaner_deep_clean_25: '✨',
-};
-
-// Pixel-art medal icons (design/gamification-iconography.md), replacing the
-// system-emoji placeholders above wherever a badge is rendered visually.
-// BADGE_EMOJI is kept around for alt text.
+// Pixel-art medal icons (design/gamification-iconography.md). These replaced
+// an earlier system-emoji placeholder set (BADGE_EMOJI, removed 2026-08 --
+// its own comment claimed it was "kept around for alt text" but no code
+// anywhere actually read it; every badge <img> renders with alt="" +
+// aria-hidden instead) wherever a badge is rendered visually.
 //
 // The 5 cleaner_deep_clean_* icons below are plain placeholders (no real
 // art commissioned yet -- see CLEANER_ART_HANDOFF.md) so the badge gallery
@@ -136,19 +123,6 @@ export async function unequipBadge(familyId: string): Promise<void> {
   const { error } = await supabase.rpc('unequip_badge', { p_family_id: familyId });
   if (error) throw error;
 }
-
-// Title rarity frames (design/title-tiers.md) -- `shop_items.tier` picks
-// which of these to render behind the title text (see the `.title-frame`
-// CSS, a border-image 9-slice so the pill stretches to fit titles of any
-// length without distorting the fixed rounded end-caps).
-export const TITLE_FRAME_SRC: Record<TitleTier, string> = {
-  bronze: '/titles/bronze.png',
-  silver: '/titles/silver.png',
-  gold: '/titles/gold.png',
-  platinum: '/titles/platinum.png',
-  diamond: '/titles/diamond.png',
-  master: '/titles/master.png',
-};
 
 // Title theme tabs, matching GAMIFICATION_DESIGN.md section 12's 4-tab
 // breakdown (76 titles total) -- `shop_items` has no category column, so
