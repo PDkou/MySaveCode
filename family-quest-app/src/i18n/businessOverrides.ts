@@ -88,6 +88,16 @@ export const BUSINESS_OVERRIDES = {
     badges: {
       fifty_quests: { name: '팀의 영웅' },
     },
+    // Added along with the chat feature itself (2026-08) -- caught during
+    // an app-wide review that this override was missing while every other
+    // "가족" string already had one, i.e. Company Quest was showing "가족
+    // 채팅" verbatim. Only heading/openButton need it; the rest of chat.*
+    // (placeholder, send, error messages, ...) never mentioned "가족" in
+    // the first place.
+    chat: {
+      heading: '팀 채팅',
+      openButton: '팀 채팅 열기',
+    },
   },
   ja: {
     app: { name: 'Company Quest', tagline: 'チームでこなす業務クエスト' },
@@ -153,6 +163,10 @@ export const BUSINESS_OVERRIDES = {
     },
     badges: {
       fifty_quests: { name: 'チームのヒーロー' },
+    },
+    chat: {
+      heading: 'チームチャット',
+      openButton: 'チームチャットを開く',
     },
   },
 };
