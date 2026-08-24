@@ -4156,7 +4156,15 @@ textarea {
   z-index: 0;
   background-position: center;
   background-size: cover;
-  image-rendering: pixelated;
+  /* No image-rendering:pixelated -- the room art direction moved off
+     strict low-res/locked-palette pixel art (repeatedly failed from
+     AI image generation) to a simpler flat-illustration style instead
+     (thick outline, flat color fields, 1-2 tone shading, no gradient/
+     photorealistic texture). Forcing nearest-neighbor scaling on art
+     that was never drawn on a pixel grid just risks jagged edges with
+     no benefit -- .cleaner-placed-tool img / .cleaner-active-robot img
+     keep it because their art (items-v9/items-motion-v10) genuinely is
+     locked-palette low-res pixel art. */
 }
 
 .cleaner-scene-bg.is-clean {
@@ -4246,7 +4254,9 @@ textarea {
      tight to its content bbox (862x1121, no padding) so bottom-anchoring
      actually puts the feet at the shadow instead of ~5% above it. */
   object-position: 50% 100%;
-  image-rendering: pixelated;
+  /* No image-rendering:pixelated -- see .cleaner-scene-bg's comment. The
+     character art (actor-v8) is flat-illustration style, not a genuine
+     low-res pixel grid, so nearest-neighbor scaling buys nothing here. */
   /* No filter:drop-shadow here (was `drop-shadow(0 3px 0 ...)`) -- a real
      playtest reported the character looking partially see-through, and
      compositing a CSS filter over a nearest-neighbor-scaled bitmap is a
@@ -4296,7 +4306,8 @@ textarea {
 .cleaner-clutter {
   position: absolute;
   object-fit: contain;
-  image-rendering: pixelated;
+  /* No image-rendering:pixelated -- see .cleaner-scene-bg's comment (also
+     applies to clutter-v4's flat-illustration style). */
   /* filter:drop-shadow dropped -- see .cleaner-sprite's comment. */
   animation: cleanerClutterOut 0.25s ease-out both;
 }
