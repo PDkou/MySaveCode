@@ -36,7 +36,7 @@ type Filter = 'open' | 'done' | 'all';
 export function DashboardPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { family, members, avatarUrlByUserId } = useFamily();
   const { tasks, assigneesByTaskId, loading, refresh, requestDelete, completeTasks, togglePin } = useTasks();
 
@@ -304,6 +304,9 @@ export function DashboardPage() {
               aria-label={t('shop.openButton')}
             >
               <CharacterSprite equipped={equippedSprite} size={112} />
+              {profile?.status_message && (
+                <span className="topbar-character-status">{profile.status_message}</span>
+              )}
             </button>
           )}
           {/* Character shop is on hold (see lib/featureFlags.ts) -- this
@@ -328,6 +331,9 @@ export function DashboardPage() {
               aria-label={t('profile.viewPhoto')}
             >
               <img className="topbar-character-photo" src={myTopbarPhotoSrc} alt="" />
+              {profile?.status_message && (
+                <span className="topbar-character-status">{profile.status_message}</span>
+              )}
             </button>
           )}
 

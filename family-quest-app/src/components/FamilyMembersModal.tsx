@@ -82,9 +82,14 @@ export function FamilyMembersModal({ onClose }: FamilyMembersModalProps) {
             <li key={member.user_id} className="family-member-row">
               <span className="family-member-info">
                 <AvatarChip name={member.display_name} size={28} photoUrl={avatarUrlByUserId.get(member.user_id)} />
-                <span>
-                  {member.display_name}
-                  {member.role === 'owner' && <span className="family-member-owner-tag"> · {t('family.ownerTag')}</span>}
+                <span className="family-member-text">
+                  <span>
+                    {member.display_name}
+                    {member.role === 'owner' && <span className="family-member-owner-tag"> · {t('family.ownerTag')}</span>}
+                  </span>
+                  {member.status_message && (
+                    <span className="family-member-status">{member.status_message}</span>
+                  )}
                 </span>
               </span>
               {isOwner && member.user_id !== user?.id && (

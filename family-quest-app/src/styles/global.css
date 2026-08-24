@@ -962,6 +962,7 @@ textarea {
    whatever height the meta+icon rows it spans end up needing, rather
    than a fixed height that could mismatch them. */
 .topbar-character {
+  position: relative;
   grid-area: char;
   flex-shrink: 0;
   width: clamp(120px, 34vw, 160px);
@@ -976,6 +977,30 @@ textarea {
   box-shadow: var(--shadow-sm);
   padding: 0;
   cursor: pointer;
+}
+
+/* A KakaoTalk/Line-style short status line (2026-08 feedback), overlaid on
+   the character slot itself -- profile.status_message, see AuthContext's
+   updateStatusMessage and SettingsModal's own edit row for it. Only
+   rendered at all when set (see the component), so an unset status never
+   reserves this space. */
+.topbar-character-status {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 6%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--navy);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 @media (hover: hover) {
@@ -3468,6 +3493,24 @@ textarea {
   padding: 5px 8px;
 }
 
+/* Same iOS-zoom-avoidance reasoning as .settings-date-input above (>=16px
+   font), but this one needs to actually hold typed text (a KakaoTalk/Line-
+   style short status line, 2026-08 feedback) rather than a fixed-width
+   native date picker, so it gets its own width/text-align instead of
+   reusing that class as-is. */
+.settings-text-input {
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--navy);
+  background: var(--surface-alt, transparent);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 8px;
+  width: 55%;
+  max-width: 220px;
+  text-align: right;
+}
+
 .settings-row-hint {
   margin: -6px 0 0;
   font-size: 12px;
@@ -3605,6 +3648,29 @@ textarea {
   font-size: 12px;
   font-weight: 500;
   color: var(--muted-light);
+}
+
+/* Stacks the name row and the status-message line under it -- .family-
+   member-info was a single inline-flex row before this (avatar + name),
+   so this wrapper is what actually lets the status line sit on its own
+   line without disturbing the avatar's own vertical centering. */
+.family-member-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+/* A KakaoTalk/Line-style short status line (2026-08 feedback), same field
+   as .topbar-character-status shows for the current user -- here it's
+   just plain text under each member's name instead of an overlay pill. */
+.family-member-status {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted-light);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .family-member-remove {

@@ -47,6 +47,7 @@ interface AuthContextValue {
   updateBirthday: (birthday: string | null) => Promise<void>;
   updateAvatarPhoto: (blob: Blob) => Promise<void>;
   removeAvatarPhoto: () => Promise<void>;
+  updateStatusMessage: (message: string | null) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -233,6 +234,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile((prev) => (prev ? { ...prev, birthday } : prev));
   }, [session]);
 
+  // A KakaoTalk/Line-style short status line (2026-08 feedback), same
+  // shape as updateBirthday above -- optional, null clears it. Trimmed and
+  // length-capped here (not just at the input's maxLength) so a value that
+  // somehow bypasses the input -- e.g. a future non-UI caller -- can't
+  // write an unbounded string.
+  const updateStatusMessage = useCallback(async (message: string | null) => {
+    if (!session?.user) return;
+    const trimmed = message?.trim() || null;
+    const statusMessage = trimmed ? trimmed.slice(0, 60) : null;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status_message: statusMessage })
+      .eq('id', session.user.id);
+    if (error) {
+      throw new AuthActionError('auth.error.unknown');
+    }
+    setProfile((prev) => (prev ? { ...prev, status_message: statusMessage } : prev));
+  }, [session]);
+
   const updateAvatarPhoto = useCallback(async (blob: Blob) => {
     if (!session?.user) return;
     const userId = session.user.id;
@@ -312,13 +332,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateBirthday,
     updateAvatarPhoto,
     removeAvatarPhoto,
+    updateStatusMessage,
     sendPasswordReset,
     updatePassword,
     refreshProfile,
   }), [
     session, profile, avatarUrl, initializing, profileLoading, signUp, signIn, signOut, setLanguage,
-    updateDisplayName, updateBirthday, updateAvatarPhoto, removeAvatarPhoto, sendPasswordReset, updatePassword,
-    refreshProfile,
+    updateDisplayName, updateBirthday, updateAvatarPhoto, removeAvatarPhoto, updateStatusMessage,
+    sendPasswordReset, updatePassword, refreshProfile,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
