@@ -335,6 +335,8 @@
     "birthdayHint": "선택 입력이에요. 생일에 퀘스트를 완료하면 특별한 칭호를 받을 수 있어요.",
     "statusMessageHeading": "상태메시지",
     "statusMessagePlaceholder": "상태메시지를 입력해보세요",
+    "statusMessageSaving": "저장 중...",
+    "statusMessageSaved": "저장됨",
     "photoHeading": "프로필 사진",
     "photoChange": "사진 변경",
     "photoRemove": "제거",
