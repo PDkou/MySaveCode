@@ -8403,7 +8403,21 @@ $$;
 -- existing null-baseline case -- so time spent with the tab hidden or the
 -- app fully closed never earns anything, closing the up-to-15s leak the old
 -- version had on every resume.
-create or replace function public.cleaner_heartbeat(p_family_id uuid, p_session_start boolean default false)
+--
+-- drop-before-create -- same re-run hazard as cleaner_tool_defs() above
+-- (see that fix's own comment): section 38 further down replaces this exact
+-- (uuid, boolean) overload again, changing its return type from the bare
+-- `public.cleaner_state` used here to the new `public.cleaner_heartbeat_
+-- result` composite. That later replacement already drops first (it has
+-- to, since it also has to drop the old return type itself), but this
+-- FIRST creation of the (uuid, boolean) overload was a plain "create or
+-- replace" -- fine on this file's very first run, but re-running the whole
+-- file against an already-migrated project (which now has the section 38
+-- shape live) hit this exact statement trying to change the return type
+-- back down, with Postgres's error naming this function by name (confirmed
+-- by an actual user report, not just inspection this time).
+drop function if exists public.cleaner_heartbeat(uuid, boolean) cascade;
+create function public.cleaner_heartbeat(p_family_id uuid, p_session_start boolean default false)
 returns public.cleaner_state
 language plpgsql
 security definer
