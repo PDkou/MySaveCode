@@ -629,6 +629,14 @@ export type Database = {
         Args: { p_family_id: string };
         Returns: void;
       };
+      request_account_deletion: {
+        Args: Record<string, never>;
+        Returns: void;
+      };
+      cancel_account_deletion: {
+        Args: Record<string, never>;
+        Returns: void;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
