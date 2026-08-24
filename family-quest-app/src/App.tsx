@@ -150,10 +150,32 @@ function AppRoutes() {
   );
 }
 
+// global.css's `img { -webkit-touch-callout: none; ... }` handles iOS
+// Safari's long-press "Save Image"/"Copy" menu, but that property is
+// WebKit-only -- Android Chrome (and other Chromium-based mobile browsers)
+// fire a real `contextmenu` event on a long-press instead, which CSS alone
+// can't suppress (2026-08 feedback: "길게 탭하는걸로 이미지 복사할수있는
+// 버그"). One document-level listener, filtered to <img> targets, covers
+// every image in the app without touching each component individually.
+function BlockImageContextMenu() {
+  useEffect(() => {
+    const handler = (event: MouseEvent) => {
+      if (event.target instanceof HTMLImageElement) {
+        event.preventDefault();
+      }
+    };
+    document.addEventListener('contextmenu', handler);
+    return () => document.removeEventListener('contextmenu', handler);
+  }, []);
+
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
       <ResumeLastRoute />
+      <BlockImageContextMenu />
       <AuthProvider>
         <FamilyProvider>
           <TasksProvider>

@@ -169,6 +169,22 @@ a {
   color: var(--purple);
 }
 
+/* Long-pressing any <img> (mascot art, avatars, chat/task attachment
+   photos, ...) brought up the OS's own "Save Image"/"Copy" context menu on
+   iOS Safari and some Android browsers (2026-08 feedback: "길게 탭하는걸로
+   이미지 복사할수있는 버그"). Blanket rule here, same convention as the
+   `button`/`label` ones above, instead of chasing down every individual
+   <img> one at a time -- touch-callout is the one that actually suppresses
+   the long-press menu; user-select/user-drag additionally stop a
+   press-and-drag text-selection or drag-out-to-save on desktop. */
+img {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
 :focus-visible {
   outline: 2px solid var(--purple);
   outline-offset: 2px;
