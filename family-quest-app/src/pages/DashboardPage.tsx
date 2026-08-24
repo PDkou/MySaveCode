@@ -18,6 +18,7 @@ import { HouseworkClickerModal } from '../components/HouseworkClickerModal';
 import { CharacterShopModal } from '../components/CharacterShopModal';
 import { CharacterSprite } from '../components/CharacterSprite';
 import { PhotoLightbox } from '../components/PhotoLightbox';
+import { FamilyChatModal } from '../components/FamilyChatModal';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
 import { CelebrationOverlay } from '../components/CelebrationOverlay';
@@ -52,6 +53,7 @@ export function DashboardPage() {
   const [showCleaner, setShowCleaner] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showPhotoLightbox, setShowPhotoLightbox] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
   const [selectMode, setSelectMode] = useState(false);
@@ -355,6 +357,16 @@ export function DashboardPage() {
                 <span aria-hidden="true">🧹</span>
               </button>
             )}
+            {family && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-icon btn-sm"
+                onClick={() => setShowChat(true)}
+                aria-label={t('chat.openButton')}
+              >
+                <span aria-hidden="true">💬</span>
+              </button>
+            )}
             <NotificationBell />
             <button
               type="button"
@@ -556,6 +568,7 @@ export function DashboardPage() {
       {showPhotoLightbox && (
         <PhotoLightbox src={myTopbarPhotoSrc} onClose={() => setShowPhotoLightbox(false)} />
       )}
+      {showChat && <FamilyChatModal onClose={() => setShowChat(false)} />}
       {showCleaner && <HouseworkClickerModal onClose={() => setShowCleaner(false)} />}
       {showShop && (
         <CharacterShopModal

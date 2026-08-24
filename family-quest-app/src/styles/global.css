@@ -5182,3 +5182,129 @@ textarea {
   font-size: 11px;
   font-weight: 800;
 }
+
+/* ---------- Family chat (2026-08 feedback) ---------- */
+
+/* Fixed height (not just .modal's own max-height) so .chat-message-list
+   gets a stable scrollable region instead of the whole modal growing with
+   the message count. */
+.chat-modal {
+  height: 80vh;
+  max-height: 640px;
+}
+
+.chat-message-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 2px;
+}
+
+.chat-empty {
+  margin: auto 0;
+  color: var(--muted-light);
+  font-size: 13px;
+  text-align: center;
+}
+
+.chat-message {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 78%;
+}
+
+/* Own messages align right and skip the avatar (matches KakaoTalk/Line's
+   own convention -- your own messages don't need your own face next to
+   them, only other people's do). */
+.chat-message.is-mine {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.chat-bubble-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.chat-message-author {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted-light);
+}
+
+.chat-bubble {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 16px;
+  background: var(--bg);
+  color: var(--navy);
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.chat-message.is-mine .chat-bubble {
+  background: var(--purple);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-message:not(.is-mine) .chat-bubble {
+  border-bottom-left-radius: 4px;
+}
+
+.chat-message-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--muted-light);
+}
+
+.chat-message.is-mine .chat-message-meta {
+  justify-content: flex-end;
+}
+
+.chat-message-delete {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted-light);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Sticky footer, same technique as .modal-actions -- pinned to the bottom
+   of the modal regardless of message-list scroll position. */
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  position: sticky;
+  bottom: -24px;
+  margin: 4px -24px -24px;
+  padding: 12px 24px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--card);
+  border-top: 1px solid var(--border);
+}
+
+.chat-input {
+  flex: 1;
+  min-width: 0;
+  font-family: inherit;
+  /* >=16px for the same iOS-Safari force-zoom reason as .settings-text-input. */
+  font-size: 16px;
+  color: var(--navy);
+  background: var(--surface-alt, transparent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+}

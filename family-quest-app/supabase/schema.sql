@@ -9266,3 +9266,69 @@ alter table public.profiles add column if not exists status_message text;
 -- =============================================================================
 -- End section 40.
 -- =============================================================================
+
+-- =============================================================================
+-- Section 41 -- Family group chat (2026-08 feedback: "팀원 내 채팅기능이
+-- 있었으면 좋겠음")
+--
+-- Scope decided with the user: ONE group chat per family (no 1:1 DMs),
+-- text-only for this first pass. Structurally a near-exact copy of
+-- task_comments (section 14) -- same RLS shape (family members can read/
+-- post, only the author can delete their own message), same realtime-
+-- publication-add pattern, same not-blank/length check constraints. No new
+-- RPC needed; the client reads/writes this table directly under RLS,
+-- exactly like task_comments already does (see useTaskDetail.ts's
+-- loadComments/postComment for the client-side pattern this mirrors).
+--
+-- Deliberately NOT included in this pass (all natural follow-ups, not
+-- skipped by oversight): push notifications on a new message (task_comments
+-- already has a working trigger for this in section 15 that could be
+-- adapted), an unread-count badge on the chat entry point, and photo
+-- attachments.
+-- =============================================================================
+
+create table if not exists public.family_chat_messages (
+  id uuid primary key default gen_random_uuid(),
+  family_id uuid not null references public.families(id) on delete cascade,
+  author_id uuid not null references auth.users(id),
+  body text not null,
+  created_at timestamptz not null default now(),
+  constraint family_chat_messages_body_not_blank check (length(trim(body)) > 0),
+  constraint family_chat_messages_body_length check (length(body) <= 500)
+);
+
+create index if not exists family_chat_messages_family_id_idx
+  on public.family_chat_messages (family_id, created_at);
+
+alter table public.family_chat_messages enable row level security;
+
+drop policy if exists family_chat_messages_select on public.family_chat_messages;
+create policy family_chat_messages_select on public.family_chat_messages
+for select
+using (public.is_family_member(family_id));
+
+drop policy if exists family_chat_messages_insert on public.family_chat_messages;
+create policy family_chat_messages_insert on public.family_chat_messages
+for insert
+with check (public.is_family_member(family_id) and author_id = auth.uid());
+
+-- Same reasoning as task_comments_delete: anyone can post, only the author
+-- can remove a message they posted by mistake.
+drop policy if exists family_chat_messages_delete on public.family_chat_messages;
+create policy family_chat_messages_delete on public.family_chat_messages
+for delete
+using (author_id = auth.uid());
+
+grant select, insert, delete on public.family_chat_messages to authenticated;
+revoke all on public.family_chat_messages from anon, public;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.family_chat_messages;
+exception
+  when duplicate_object then null;
+end $$;
+
+-- =============================================================================
+-- End section 41.
+-- =============================================================================
