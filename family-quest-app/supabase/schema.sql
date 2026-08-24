@@ -7421,7 +7421,20 @@ $$;
 -- server refusing progression -- the doc requires stages to keep advancing
 -- past 25 with the same 5-stage rule even though only 5 rooms are seeded.
 
-create or replace function public.cleaner_tool_defs()
+-- drop-before-create (not plain "create or replace") -- section 38 further
+-- down replaces this with a 6-column version (adds a `kind` column), and
+-- Postgres refuses to CREATE OR REPLACE a function into a different return
+-- row shape ("cannot change return type of existing function", errcode
+-- 42P13) once that 6-column version is already live. On a project's very
+-- first run of this file that's moot (nothing exists yet to conflict with),
+-- but re-running the whole file top to bottom against an already-migrated
+-- project -- which this file's own header advertises as safe -- hit exactly
+-- that error at this statement, since it re-creates the OLD 5-column shape
+-- first. Dropping first (a no-op via IF EXISTS on a first-ever run) makes
+-- this statement idempotent regardless of which version is currently live,
+-- matching the pattern section 38 already uses for this same function.
+drop function if exists public.cleaner_tool_defs() cascade;
+create function public.cleaner_tool_defs()
 returns table(
   tool_id text,
   unlock_stage integer,
@@ -7443,6 +7456,14 @@ as $$
     ('laundry_helper', 11, 2000000::numeric, 1.18::numeric, 7000::numeric),
     ('helper_robot', 16, 12000000::numeric, 1.18::numeric, 30000::numeric)
 $$;
+
+-- Re-grant, same reasoning as section 38's own re-grant after its later
+-- drop+create of this same function -- a cascade drop resets privileges a
+-- plain "create or replace" would have preserved, and this file may now be
+-- executed with this being the LAST create of cleaner_tool_defs() to run in
+-- a given session if section 38's own is somehow skipped, so this can't
+-- assume section 38 will always run afterward to restate the grant either.
+grant execute on function public.cleaner_tool_defs() to authenticated;
 
 -- effect_value's meaning is documented per-row below and interpreted by
 -- whichever RPC implements that specific node -- these 7 nodes are a fixed
