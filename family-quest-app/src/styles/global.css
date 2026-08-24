@@ -2322,13 +2322,25 @@ textarea {
 /* cursor: default overrides the backdrop's zoom-out cursor -- this is an
    actual form, not part of the "tap to close" photo. Reuses .settings-
    field-header/-counter/-input from the settings status-message field this
-   replaced (SettingsModal no longer has its own copy of that field). */
+   replaced (SettingsModal no longer has its own copy of that field).
+   background/padding/shadow turn it into an opaque floating card -- without
+   this it sat directly on the backdrop's near-black rgba(10,14,26,0.82),
+   and .settings-field-input's own background (var(--surface-alt,
+   transparent), which nothing in this app ever actually defines --
+   resolves to transparent) plus var(--navy) text (dark navy in light
+   theme) meant dark text on a near-black background: barely legible,
+   basically invisible in light theme (2026-08 feedback: "상태메시지 쓰는
+   곳이 너무 안보임"). */
 .profile-status-editor {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   width: 100%;
   max-width: 320px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   cursor: default;
 }
 
