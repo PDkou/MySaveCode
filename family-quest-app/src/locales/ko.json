@@ -700,5 +700,18 @@
       "name": "끝없는 대청소",
       "desc": "집안일 클리커 25단계 대청소를 완료했어요"
     }
+  },
+  "chat": {
+    "heading": "가족 채팅",
+    "openButton": "가족 채팅 열기",
+    "empty": "아직 메시지가 없어요. 첫 메시지를 남겨보세요!",
+    "placeholder": "메시지를 입력하세요",
+    "send": "보내기",
+    "deleteMessage": "삭제",
+    "error": {
+      "loadFailed": "메시지를 불러오지 못했어요.",
+      "sendFailed": "메시지를 보내지 못했어요.",
+      "deleteFailed": "메시지를 삭제하지 못했어요."
+    }
   }
 }

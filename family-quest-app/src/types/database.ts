@@ -320,6 +320,16 @@ export type TaskCommentRow = {
   created_at: string;
 };
 
+// Section 41 -- family group chat, structurally a near-copy of
+// TaskCommentRow above (see schema.sql's own comment for why).
+export type FamilyChatMessageRow = {
+  id: string;
+  family_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+};
+
 export type MemberBadgeRow = {
   id: string;
   family_id: string;
@@ -396,6 +406,12 @@ export type Database = {
         Row: TaskCommentRow;
         Insert: Partial<TaskCommentRow> & Pick<TaskCommentRow, 'task_id' | 'family_id' | 'author_id' | 'body'>;
         Update: Partial<TaskCommentRow>;
+        Relationships: [];
+      };
+      family_chat_messages: {
+        Row: FamilyChatMessageRow;
+        Insert: Partial<FamilyChatMessageRow> & Pick<FamilyChatMessageRow, 'family_id' | 'author_id' | 'body'>;
+        Update: Partial<FamilyChatMessageRow>;
         Relationships: [];
       };
       member_badges: {
