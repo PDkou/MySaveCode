@@ -875,6 +875,7 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
       return { tool, layout, motion, travel };
     })
     .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+  const positionedToolMap = new Map(positionedTools.map((entry) => [entry.tool.id, entry]));
 
   return (
     <>
@@ -1036,29 +1037,42 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
                 // (see CLEANER_TOOL_LAYOUTS in lib/cleaner.ts) -- falls back
                 // to the fixed .cleaner-tool-slot-{id} corner slot below for
                 // any room/tool this table doesn't cover.
-                const layout = cleanerToolLayout(room.id, tool.id);
-                const motion = layout ? cleanerToolMotion(tool.id) : null;
+                const positioned = positionedToolMap.get(tool.id);
                 return (
                   <div
                     key={tool.id}
                     data-tool-id={tool.id}
                     className={`cleaner-placed-tool ${
-                      layout ? "is-positioned" : `cleaner-tool-slot-${tool.id}`
+                      positioned ? "is-positioned" : `cleaner-tool-slot-${tool.id}`
                     } ${isMotion ? "is-motion" : ""}`}
                     style={
-                      layout
+                      positioned
                         ? ({
-                            "--tool-x": `${layout.x}%`,
-                            "--tool-y": `${layout.y}%`,
-                            "--tool-w": `${layout.width}%`,
-                            "--opaque-bottom-offset": `${
-                              motion ? cleanerOpaqueBottomOffsetPercent(motion.opaqueBottom) : 0
-                            }%`,
+                            "--tool-x": `${positioned.layout.x}%`,
+                            "--tool-y": `${positioned.layout.y}%`,
+                            "--tool-w": `${positioned.layout.width}%`,
+                            "--opaque-bottom-offset": `${cleanerOpaqueBottomOffsetPercent(
+                              positioned.motion.opaqueBottom,
+                            )}%`,
+                            "--travel": `${positioned.travel}%`,
+                            "--travel-neg": `${-positioned.travel}%`,
                           } as CSSProperties)
                         : undefined
                     }
                   >
-                    <img src={`/art/cleaner/${tool.id}.png`} alt="" />
+                    <img
+                      src={`/art/cleaner/${
+                        // robot_vacuum's own delivered file is hyphenated
+                        // (robot-vacuum.png), unlike every other tool id
+                        // (which are already the exact filename) -- this
+                        // tool used to always go through a hardcoded src in
+                        // its own standalone .cleaner-active-robot block,
+                        // so nothing needed this mapping until it joined
+                        // this shared render path.
+                        tool.id === "robot_vacuum" ? "robot-vacuum" : tool.id
+                      }.png`}
+                      alt=""
+                    />
                     {owned > 1 && <span>×{owned}</span>}
                   </div>
                 );
@@ -1068,20 +1082,17 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
               className={`cleaner-character ${isReactivePose ? "is-tap" : ""}`}
             >
               <div className="cleaner-shadow" />
-              {isReactivePose ? (
-                <img
-                  key={poseKey}
-                  className="cleaner-sprite cleaner-sprite-tap"
-                  src={characterImgSrc}
-                  alt=""
-                />
-              ) : (
-                <img
-                  className="cleaner-sprite"
-                  src={characterImgSrc}
-                  alt=""
-                />
-              )}
+              {/* One persistent <img>, src swapped per frame -- matches a
+                  third-party prototype's own character rendering exactly
+                  (it never remounts its <img> between poses either). Used to
+                  remount via `key={poseKey}` on a reactive pose so a CSS
+                  "punch" animation would replay per pose entry; that
+                  animation is gone now (see .cleaner-sprite's own comment),
+                  so there's nothing left needing a remount, and every pose
+                  is already preloaded into the browser's image cache (see
+                  the poseFiles effect above), so swapping src here doesn't
+                  flicker. */}
+              <img className="cleaner-sprite" src={characterImgSrc} alt="" />
             </div>
             {(toolsOwned.robot_vacuum ?? 0) > 0 && !cleanerToolLayout(room.id, "robot_vacuum") && (
               <div className="cleaner-active-robot" aria-hidden="true">

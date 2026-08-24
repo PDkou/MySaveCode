@@ -4207,7 +4207,7 @@ textarea {
 .cleaner-time-lighting {
   position: absolute;
   inset: 0;
-  z-index: 6;
+  z-index: 8;
   pointer-events: none;
   transition: background 0.7s ease;
 }
@@ -4260,44 +4260,26 @@ textarea {
   width: 52%;
   height: 73%;
   max-width: 260px;
-  z-index: 4;
+  z-index: 6;
 }
 
-/* --shadow-time-mult scales every ground-contact shadow's opacity by time of
-   day (see .cleaner-scene.is-time-* below) -- a lighter, more scoped stand-in
-   for the reference prototype's own per-room directional cast-shadow system.
-   Only intensity/softness is ported, not direction: the reference derived
-   shadow direction from a known window position in its OWN base art, and
-   this app's actual delivered backgrounds don't leave that knowable the same
-   way (see .cleaner-time-lighting's comment -- window position/lighting is
-   baked per room, not code-driven), so a precise directional port isn't
-   safely verifiable without a real visual check this sandbox can't do.
-   Intensity alone is a safe, room-agnostic effect: shadows read crisper at
-   midday, soften toward evening, go faint at night, regardless of where the
-   light source actually is. */
+/* Static hard-edged shadow shape (a clipped octagon, not a blurred ellipse)
+   with no pulse animation -- ported exactly from a third-party prototype's
+   own .character-anchor::before, once its own idle bob/tap punch (below)
+   were dropped in favor of the prototype's actual technique: motion comes
+   entirely from frame-swapping (see .cleaner-sprite's own comment), so
+   there's no bob left for a shadow to stay "in sync" with, and the
+   prototype's own shadow never pulsed either. */
 .cleaner-shadow {
   position: absolute;
-  bottom: -6%;
+  bottom: -1.2%;
   left: 50%;
-  width: 68%;
-  height: 16%;
-  transform: translateX(-50%) scale(1);
-  border-radius: 50%;
-  background: rgba(20, 16, 26, 0.28);
-  filter: blur(2px);
-  /* Squashes/lightens in sync with .cleaner-sprite's own idle bob (same
-     2.4s duration) -- a shadow that shrinks as the character rises and
-     grows back as she settles is what reads as "standing on the floor,
-     briefly lifting" rather than "floating in place", which is what a
-     plain up/down translate on the sprite alone reads as without any
-     ground-contact cue reacting to it. */
-  animation: cleanerShadowPulse 2.4s ease-in-out infinite;
-}
-
-@keyframes cleanerShadowPulse {
-  0%, 100% { transform: translateX(-50%) scale(1); opacity: calc(0.28 * var(--shadow-time-mult, 1)); }
-  40% { transform: translateX(-50%) scale(0.86); opacity: calc(0.18 * var(--shadow-time-mult, 1)); }
-  70% { transform: translateX(-50%) scale(0.94); opacity: calc(0.22 * var(--shadow-time-mult, 1)); }
+  width: 62%;
+  height: 7%;
+  transform: translateX(-50%);
+  clip-path: polygon(12% 0, 88% 0, 100% 35%, 100% 65%, 88% 100%, 12% 100%, 0 65%, 0 35%);
+  background: rgba(67, 42, 38, 0.28);
+  box-shadow: 0 2px 0 rgba(67, 42, 38, 0.12);
 }
 
 .cleaner-sprite {
@@ -4326,41 +4308,55 @@ textarea {
      image-rendering:pixelated, reintroducing blended (partially
      transparent-looking) edge pixels the source PNG itself never has
      (verified: 0 partial-alpha pixels in every shipped character frame).
-     .cleaner-shadow below already gives the character a ground shadow via
-     a separate blurred element instead, so this filter was purely a small
-     extra "pop" -- not worth the risk of reproducing the reported bug. */
+     .cleaner-shadow above already gives the character a ground shadow via
+     a separate element instead, so a filter here was purely a small extra
+     "pop" -- not worth the risk of reproducing the reported bug. */
+  /* No idle-bob/tap-punch animation here (there used to be one, cleanerIdle
+     2.4s + cleanerTapPunch on tap) -- removed to match a third-party
+     prototype's own character rendering exactly, once it turned out its
+     idle art has essentially the same content as ours (verified: even the
+     prototype's own idle frames collapse to 3 truly distinct poses across
+     8 nominal slots, the same limitation ours has). The prototype's
+     .character-base has NO CSS animation at all -- every bit of its motion
+     comes from swapping frame images on IDLE_FRAME_DURATIONS/
+     WORK_FRAME_DURATIONS's own timing (already ported above), so adding a
+     CSS wobble on top was this app's own embellishment, not something
+     matched on the other side. transform-origin is kept at 50% 100% purely
+     so nothing shifts if a transform is ever reintroduced here. */
   transform-origin: 50% 100%;
-  animation: cleanerIdle 2.4s ease-in-out infinite;
 }
 
-/* Tap reaction now cycles through 4 individually-cropped <img> frames
-   (cleaner-girl-sweep-1.png..-4.png, stepped by JS in
-   HouseworkClickerModal.tsx) instead of stepping background-position
-   through a single sprite sheet. The 4 files are built from the sheet's
-   true per-pose connected components (no cross-frame bleed, no missing
-   pixels) and just reuse .cleaner-sprite's own object-fit/object-position
-   rules, the same technique already proven correct for the idle pose --
-   this class opts out of the idle bob (cleanerIdle) and instead plays a
-   bottom-pivoted scale "punch" (transform-origin: 50% 100%, inherited from
-   .cleaner-sprite) for tap feedback. Pivoting from the bottom instead of
-   growing the character BOX (the old .cleaner-character.is-tap width bump,
-   removed -- see its comment above) means the feet position can't shift:
-   scaling around a fixed bottom point only ever moves content upward from
-   that point, never the point itself. */
-.cleaner-sprite-tap {
-  animation: cleanerTapPunch 0.36s ease-out both;
+/* Colored "light panes" projected onto the floor through the current room's
+   window, ported 1:1 (component in components/CleanerWindowLight.tsx, data
+   in lib/cleaner.ts's CLEANER_WINDOW_PROJECTIONS) from a third-party
+   prototype -- safe to port exactly since this app's own background art was
+   confirmed byte-identical to what those coordinates were tuned against.
+   Sits directly above the background, below everything else that's
+   actually IN the room (clutter/items/character). */
+.cleaner-window-light {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  shape-rendering: crispEdges;
 }
 
-@keyframes cleanerTapPunch {
-  0% { transform: scale(1); }
-  35% { transform: scale(1.08); }
-  100% { transform: scale(1); }
+.cleaner-window-light-pane {
+  stroke: none;
+  mix-blend-mode: screen;
 }
+
+.cleaner-window-light.is-time-morning .cleaner-window-light-pane { fill: rgba(255, 211, 112, 0.48); }
+.cleaner-window-light.is-time-afternoon .cleaner-window-light-pane { fill: rgba(255, 239, 179, 0.42); }
+.cleaner-window-light.is-time-evening .cleaner-window-light-pane { fill: rgba(255, 148, 72, 0.36); }
 
 .cleaner-clutter-layer {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 3;
   pointer-events: none;
 }
 
@@ -4383,20 +4379,34 @@ textarea {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Every owned tool except robot_vacuum gets its own fixed spot on the
-   room's floor/walls instead of a flex-wrapped icon strip along the top
-   edge -- a real playtest reported the strip read as "a picture and a
-   number just dangling up there", i.e. a HUD tray bolted onto the scene
-   rather than an object actually sitting in the room. Each tool id has a
-   dedicated position below (.cleaner-tool-slot-*) chosen to stay clear of
-   the character's own footprint (centered column, roughly 24-76% wide)
-   and the robot vacuum's patrol corner (bottom-right), so the room reads
-   as filling up around the character rather than tools overlapping her or
-   each other. */
+/* One flat ground-contact shadow per currently-positioned, owned tool (see
+   .cleaner-item-shadow below for the shape/direction itself) -- a separate
+   layer below the tools themselves so shadows never visually sit ON TOP of
+   a neighboring tool. Tools without real position data keep their older,
+   simpler .cleaner-placed-tool::before ellipse instead (see that rule's own
+   comment) -- there's no real (x, y) here to compute a directional shadow
+   from for those. */
+.cleaner-item-shadow-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* Every owned tool gets its own spot on the room's floor/walls instead of a
+   flex-wrapped icon strip along the top edge -- a real playtest reported
+   the strip read as "a picture and a number just dangling up there", i.e. a
+   HUD tray bolted onto the scene rather than an object actually sitting in
+   the room. Tools with real per-room placement data (see
+   .cleaner-placed-tool.is-positioned below) render there; everything else
+   falls back to a dedicated fixed position below (.cleaner-tool-slot-*)
+   chosen to stay clear of the character's own footprint (centered column,
+   roughly 24-76% wide), so the room reads as filling up around the
+   character rather than tools overlapping her or each other. */
 .cleaner-tool-shelf {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 5;
   pointer-events: none;
 }
 
@@ -4413,7 +4423,10 @@ textarea {
    filter:drop-shadow on the icon's own bitmap (see .cleaner-sprite's
    comment for why filters on nearest-neighbor-scaled images are avoided
    now throughout this scene). Sells "resting on the floor" rather than
-   "icon pasted on top". */
+   "icon pasted on top". Only for the .cleaner-tool-slot-* fallback --
+   .is-positioned tools get a real directional shadow instead, rendered as
+   its own element in .cleaner-item-shadow-layer (see .cleaner-item-shadow
+   below), so this is turned off for them right below. */
 .cleaner-placed-tool::before {
   content: "";
   position: absolute;
@@ -4426,6 +4439,10 @@ textarea {
   /* See .cleaner-shadow's comment on --shadow-time-mult above -- same
      time-of-day intensity treatment for a placed tool's own ground shadow. */
   opacity: var(--shadow-time-mult, 1);
+}
+
+.cleaner-placed-tool.is-positioned::before {
+  content: none;
 }
 
 .cleaner-placed-tool img {
@@ -4455,24 +4472,33 @@ textarea {
    cleaner.ts) has one -- ported from a third-party prototype's own hand-
    tuned positions. --tool-x/-y/-w are set inline from that table; x/y are
    the item's own CENTER point (x from left, y from TOP, matching the
-   source's scheme) and the translate bottom-anchors it there, same
-   technique the source used for its .scene-sprite. Takes priority over
-   (replaces, doesn't combine with) the fixed .cleaner-tool-slot-* rules
-   below, which stay as the fallback for any room/tool this table doesn't
-   cover. */
+   source's scheme). --opaque-bottom-offset (also inline, from
+   CLEANER_ITEM_MOTION's opaqueBottom) nudges the anchor up by however much
+   transparent padding the icon's own 128px canvas has below its real
+   content, so a padded icon doesn't visually "sink" below where a tight-
+   cropped one would sit -- same technique the source used for its
+   .scene-sprite.is-item. Takes priority over (replaces, doesn't combine
+   with) the fixed .cleaner-tool-slot-* rules below, which stay as the
+   fallback for any room/tool this table doesn't cover. */
 .cleaner-placed-tool.is-positioned {
   left: var(--tool-x);
   top: var(--tool-y);
   right: auto;
   bottom: auto;
   width: var(--tool-w);
-  transform: translate(-50%, -100%);
+  transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%)));
   animation: cleanerClutterOutPositioned 0.3s ease-out both;
 }
 
 @keyframes cleanerClutterOutPositioned {
-  from { opacity: 0; transform: translate(-50%, -100%) translateY(5%) scale(0.94); }
-  to { opacity: 1; transform: translate(-50%, -100%) translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateY(5%) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateY(0) scale(1);
+  }
 }
 
 .cleaner-tool-slot-toy_box { left: 3%; bottom: 4%; width: 15%; }
@@ -4500,31 +4526,136 @@ textarea {
   50% { transform: rotate(-3deg) scale(1.04); }
 }
 
-/* .is-positioned already puts `transform: translate(-50%, -100%)` on this
-   element for placement -- .cleaner-tool-slot-* slots don't set any static
-   transform, so cleanerToolWork's own rotate/scale was safe replacing
-   "nothing". Here it would replace the placement translate itself on every
-   keyframe tick, snapping the icon to the box's default (top-left) anchor
-   while animating. This variant folds the same translate into every
-   keyframe instead so the icon stays anchored at (--tool-x, --tool-y)
-   throughout the sway. Three-class selector outranks the two-class rule
-   above, so a positioned+motion tool gets only this one (no separate
-   entrance pop-in -- a minor trade, not worth stacking two animations on
-   the same transform property). */
-.cleaner-placed-tool.is-positioned.is-motion {
-  animation: cleanerToolWorkPositioned 2.2s ease-in-out infinite;
+/* Real per-item route animations, ported 1:1 (same keyframe percentages,
+   same durations) from a third-party prototype's own item-*-zone/
+   item-clean-row/item-helper-route/item-rumble keyframes -- each travels
+   the item sideways by --travel/--travel-neg (set inline, see
+   cleanerItemTravelPercent in lib/cleaner.ts) and flips it (scaleX) to
+   visually face the direction it's currently heading, except
+   cleanerItemRumble (laundry_helper), which has no real travel and just
+   shakes 1px in place. Three-class + attribute selector outranks the
+   two-class .is-motion rule above (still the fallback for a motion-capable
+   tool with no layout data for the current room), so a positioned+motion
+   tool always gets exactly one of these instead. */
+.cleaner-placed-tool.is-positioned.is-motion[data-tool-id="robot_vacuum"] {
+  animation: cleanerItemCleanRow 11s ease-in-out infinite;
+}
+.cleaner-placed-tool.is-positioned.is-motion[data-tool-id="auto_broom"] {
+  animation: cleanerItemSweepZone 7.4s ease-in-out infinite;
+}
+.cleaner-placed-tool.is-positioned.is-motion[data-tool-id="auto_mop"] {
+  animation: cleanerItemMopZone 8.2s ease-in-out infinite;
+}
+.cleaner-placed-tool.is-positioned.is-motion[data-tool-id="helper_robot"] {
+  animation: cleanerItemHelperRoute 9.5s ease-in-out infinite;
+}
+.cleaner-placed-tool.is-positioned.is-motion[data-tool-id="laundry_helper"] {
+  animation: cleanerItemRumble 5.8s ease-in-out infinite;
 }
 
-@keyframes cleanerToolWorkPositioned {
-  0%, 100% { transform: translate(-50%, -100%) rotate(0deg) scale(1); }
-  50% { transform: translate(-50%, -100%) rotate(-3deg) scale(1.04); }
+@keyframes cleanerItemCleanRow {
+  0%, 8% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel-neg)) scaleX(-1); }
+  43%, 49.9% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel)) scaleX(-1); }
+  50%, 55% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel)) scaleX(1); }
+  92%, 100% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel-neg)) scaleX(1); }
+}
+@keyframes cleanerItemSweepZone {
+  0%, 15% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel-neg)) scaleX(-1); }
+  42%, 48.9% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel)) scaleX(-1); }
+  49%, 55% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel)) scaleX(1); }
+  86%, 100% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel-neg)) scaleX(1); }
+}
+@keyframes cleanerItemMopZone {
+  0%, 12% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel-neg)) scaleX(-1); }
+  44%, 50.9% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel)) scaleX(-1); }
+  51%, 58% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel)) scaleX(1); }
+  90%, 100% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel-neg)) scaleX(1); }
+}
+@keyframes cleanerItemHelperRoute {
+  0%, 20% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel-neg)) scaleX(-1); }
+  44%, 54.9% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel)) scaleX(-1); }
+  55%, 66% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel)) scaleX(1); }
+  86%, 100% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(var(--travel-neg)) scaleX(1); }
+}
+@keyframes cleanerItemRumble {
+  0%, 34%, 72%, 100% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))); }
+  39%, 49%, 59% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(-1px); }
+  44%, 54%, 64% { transform: translate(-50%, calc(-100% + var(--opaque-bottom-offset, 0%))) translateX(1px); }
+}
+
+/* The shadow layer counterpart to the route animations above -- travels
+   the shadow in sync with its item (robot_vacuum/auto_broom/auto_mop/
+   helper_robot), ported 1:1 (item-cast-*) from the same source. No variant
+   for laundry_helper -- it rumbles in place (--travel is 0 for it anyway),
+   same as the source's own item-cast-* set has no rumble counterpart. */
+.cleaner-item-shadow[data-tool-id="robot_vacuum"] {
+  animation: cleanerItemCastCleanRow 11s ease-in-out infinite;
+}
+.cleaner-item-shadow[data-tool-id="auto_broom"] {
+  animation: cleanerItemCastSweepZone 7.4s ease-in-out infinite;
+}
+.cleaner-item-shadow[data-tool-id="auto_mop"] {
+  animation: cleanerItemCastMopZone 8.2s ease-in-out infinite;
+}
+.cleaner-item-shadow[data-tool-id="helper_robot"] {
+  animation: cleanerItemCastHelperRoute 9.5s ease-in-out infinite;
+}
+
+@keyframes cleanerItemCastCleanRow {
+  0%, 8% { transform: translate(-50%, -48%) translateX(var(--travel-neg)); }
+  43%, 55% { transform: translate(-50%, -48%) translateX(var(--travel)); }
+  92%, 100% { transform: translate(-50%, -48%) translateX(var(--travel-neg)); }
+}
+@keyframes cleanerItemCastSweepZone {
+  0%, 15% { transform: translate(-50%, -48%) translateX(var(--travel-neg)); }
+  42%, 55% { transform: translate(-50%, -48%) translateX(var(--travel)); }
+  86%, 100% { transform: translate(-50%, -48%) translateX(var(--travel-neg)); }
+}
+@keyframes cleanerItemCastMopZone {
+  0%, 12% { transform: translate(-50%, -48%) translateX(var(--travel-neg)); }
+  44%, 58% { transform: translate(-50%, -48%) translateX(var(--travel)); }
+  90%, 100% { transform: translate(-50%, -48%) translateX(var(--travel-neg)); }
+}
+@keyframes cleanerItemCastHelperRoute {
+  0%, 20% { transform: translate(-50%, -48%) translateX(var(--travel-neg)); }
+  44%, 66% { transform: translate(-50%, -48%) translateX(var(--travel)); }
+  86%, 100% { transform: translate(-50%, -48%) translateX(var(--travel-neg)); }
+}
+
+/* One flat ground-contact shadow per positioned tool (see
+   .cleaner-item-shadow-layer above for the layer it renders in) -- ported
+   1:1 from a third-party prototype's own .scene-cast-shadow. --shadow-x/-y/
+   -w mirror the item's own --tool-x/-y/-w; --contact-width/-shift/-opacity
+   come from CLEANER_ITEM_MOTION's contactWidth and the current room+time's
+   CLEANER_ROOM_SHADOW_DIRECTION/CLEANER_SHADOW_PHASE (all set inline, see
+   the component). */
+.cleaner-item-shadow {
+  position: absolute;
+  left: var(--shadow-x);
+  top: var(--shadow-y);
+  width: var(--shadow-w);
+  height: clamp(4px, 1.15%, 6px);
+  transform: translate(-50%, -48%);
+  pointer-events: none;
+}
+
+.cleaner-item-shadow::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 50%;
+  width: var(--contact-width);
+  transform: translateX(calc(-50% + var(--contact-shift)));
+  clip-path: polygon(14% 0, 86% 0, 100% 34%, 100% 66%, 86% 100%, 14% 100%, 0 66%, 0 34%);
+  background: rgba(54, 35, 31, var(--shadow-opacity));
+  box-shadow: inset 0 -1px rgba(36, 24, 23, 0.16);
+  mix-blend-mode: multiply;
 }
 
 .cleaner-active-robot {
   position: absolute;
   right: 5%;
   bottom: 4%;
-  z-index: 5;
+  z-index: 7;
   width: 18%;
   pointer-events: none;
   animation: cleanerRobotPatrol 2.8s ease-in-out infinite alternate;
@@ -4558,25 +4689,6 @@ textarea {
   to { transform: translateX(-34%) rotate(1deg); }
 }
 
-/* Was a single symmetric translateY/scale bob -- reported in real play as
-   the character looking like she's "floating in mid-air" rather than
-   standing. A perfectly even sine-wave bob with no other motion is exactly
-   what reads as weightless: real standing-idle has an asymmetric rise
-   (quicker up, slower settle), a touch of body rotation from shifting
-   weight between feet, and a horizontal micro-drift, not just a vertical
-   float. Paired with .cleaner-shadow squashing on the same timeline above
-   so the ground plane visibly reacts to her weight leaving and returning.
-   This is still a CSS-only mitigation, not a substitute for the actual
-   idle-variation art (blink/glance/weight-shift frames) requested in the
-   latest handoff doc -- true variety needs more source frames than one
-   idle pose can express no matter how the single frame is animated. */
-@keyframes cleanerIdle {
-  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-  40% { transform: translate(0.5%, -3%) rotate(-1.2deg) scale(1.012, 0.99); }
-  70% { transform: translate(-0.3%, -1%) rotate(0.6deg) scale(1.004, 0.997); }
-  100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-}
-
 /* Was `.cleaner-character.is-tap { width: 58%; }` -- bumping the box's own
    width changed which axis object-fit:contain letterboxes on: at 52% wide
    the sweep frame (aspect 0.756) is wider than the box (aspect 0.712), so
@@ -4588,9 +4700,13 @@ textarea {
    left enough of a subpixel/perceptual difference between idle and tap
    that it read as the character hopping up slightly on tap. Keeping the
    box size identical between idle and tap removes that axis-switch
-   entirely -- the "pop" on tap now comes from a bottom-pivoted transform
-   scale on the sprite itself instead (see .cleaner-sprite-tap below),
-   which can't move the feet since its transform-origin is 50% 100%. */
+   entirely. (An earlier revision then added a bottom-pivoted CSS "punch"
+   scale on tap and a matching idle bob, cleanerTapPunch/cleanerIdle -- both
+   later removed to match a third-party prototype's own character rendering,
+   which has no CSS motion at all beyond frame-swapping; see .cleaner-sprite's
+   own comment. .is-tap on this element is now purely a CSS hook, unused by
+   any current rule, kept in the JSX in case a future reactive-pose-only
+   style is wanted again.) */
 
 .cleaner-gain-float {
   position: absolute;
@@ -4654,7 +4770,7 @@ textarea {
   position: absolute;
   left: 4%;
   top: 4%;
-  z-index: 7;
+  z-index: 10;
   padding: 4px 10px;
   border: 2px solid #7f4625;
   border-radius: 999px;
@@ -4679,7 +4795,7 @@ textarea {
 .cleaner-fever-toast {
   bottom: auto;
   top: 4%;
-  z-index: 7;
+  z-index: 10;
   background: linear-gradient(90deg, #ffb03b, #ff7a2c);
   color: #3a1f0b;
   border-color: #7f4625;
