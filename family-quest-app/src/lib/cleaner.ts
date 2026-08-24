@@ -186,13 +186,14 @@ interface CleanerToolLayout {
 // work_gloves_pro, which the source's own item catalog has no match for)
 // falls back to those fixed slots unchanged; see cleanerToolLayout below.
 //
-// "storage-bin" in the source maps to our toy_box (closest conceptual
-// match); the source's kids-room-only "toy-box" item has no tool of ours to
-// map to and is dropped. "robot-vacuum" is intentionally excluded -- it
-// already has its own dedicated patrol treatment (.cleaner-active-robot in
-// global.css) outside the tool shelf entirely, and the source positions it
-// identically (x:50, y:91) in every room anyway, so there's nothing
-// room-specific to gain by wiring it in here.
+// "storage-bin" in the source maps to our toy_box for POSITION only (the
+// source's own separate "toy-box" item only appears in one room and isn't
+// as well-tuned) -- but our toy_box.png is actually pixel-identical to the
+// source's own toy-box-v9.png art (verified), so CLEANER_ITEM_MOTION below
+// uses toy-box's opaqueBottom for it, not storage-bin's. robot_vacuum was
+// previously excluded here (it had its own separate .cleaner-active-robot
+// patrol, outside this system) -- now included for the 3 rooms the source
+// positions it in, see cleanerToolMotion's own comment for why.
 export const CLEANER_TOOL_LAYOUTS: Partial<
   Record<CleanerRoomDef["id"], Partial<Record<CleanerToolDef["id"], CleanerToolLayout>>>
 > = {
@@ -200,11 +201,13 @@ export const CLEANER_TOOL_LAYOUTS: Partial<
     auto_broom: { x: 16, y: 74, width: 12 },
     helper_robot: { x: 82, y: 74, width: 13 },
     toy_box: { x: 85, y: 91, width: 14 },
+    robot_vacuum: { x: 50, y: 91, width: 16 },
   },
   kitchen: {
     dishwasher: { x: 84, y: 74, width: 16 },
     toy_box: { x: 30, y: 58, width: 9 },
     auto_mop: { x: 76, y: 74, width: 14 },
+    robot_vacuum: { x: 50, y: 91, width: 16 },
   },
   bathroom: {
     toy_box: { x: 15, y: 58, width: 9 },
@@ -215,6 +218,7 @@ export const CLEANER_TOOL_LAYOUTS: Partial<
     auto_broom: { x: 15, y: 74, width: 12 },
     helper_robot: { x: 78, y: 74, width: 13 },
     toy_box: { x: 68, y: 91, width: 14 },
+    robot_vacuum: { x: 50, y: 91, width: 16 },
   },
 };
 
@@ -224,6 +228,166 @@ export function cleanerToolLayout(
 ): CleanerToolLayout | null {
   return CLEANER_TOOL_LAYOUTS[roomId]?.[toolId] ?? null;
 }
+
+// ---------------------------------------------------------------------------
+// Per-item motion/shadow data -- ported from the same third-party prototype,
+// verified against this app's own delivered art rather than assumed: every
+// tool icon this table covers was confirmed byte-identical to the
+// prototype's own source PNG (its items-v9/items-motion-v10 delivery) before
+// porting its numbers, and all 16 room-background images were confirmed
+// byte-identical to the prototype's own backgrounds-time-v3 delivery before
+// porting CLEANER_WINDOW_PROJECTIONS/CLEANER_ROOM_SHADOW_DIRECTION below --
+// unlike the first pass at this (CLEANER_ART_REDO_HANDOFF.md's "기술 개선"
+// section), there's no coordinate-guessing risk here, since it's the exact
+// same pictures the prototype tuned these numbers against.
+// ---------------------------------------------------------------------------
+
+interface CleanerItemMotion {
+  // Out of a 128px logical canvas (every covered icon is delivered at
+  // 128x128) -- how far up from the bottom edge the art's own opaque
+  // content actually ends, used to anchor by content bottom instead of the
+  // canvas's own bottom edge (which can have transparent padding).
+  opaqueBottom: number;
+  // Width (as % of the item's own rendered width) of the flat ground-contact
+  // shadow shape under it.
+  contactWidth: number;
+  // How far (as % of the item's own rendered width) it travels from its
+  // resting position during its route animation -- 0 for anything that
+  // doesn't travel (static items, and laundry_helper which rumbles in place
+  // instead). Actual on-screen travel is this value clamped so the item
+  // never crosses the scene's own edges -- see cleanerItemTravelPercent.
+  travel: number;
+  // CSS animation-name (global.css) for the sprite and its cast shadow, and
+  // how long one cycle takes. Absent entirely for non-animated items
+  // (dishwasher, toy_box) or ones with no per-item cast-shadow variant
+  // (laundry_helper's rumble is a fixed 1px shake, not a route, so its
+  // shadow just stays still under it).
+  motion?: { spriteAnim: string; castAnim?: string; durationSeconds: number };
+}
+
+export const CLEANER_ITEM_MOTION: Partial<Record<CleanerToolDef["id"], CleanerItemMotion>> = {
+  toy_box: { opaqueBottom: 104, contactWidth: 66, travel: 0 },
+  dishwasher: { opaqueBottom: 112, contactWidth: 66, travel: 0 },
+  auto_broom: {
+    opaqueBottom: 112,
+    contactWidth: 54,
+    travel: 65,
+    motion: { spriteAnim: "cleanerItemSweepZone", castAnim: "cleanerItemCastSweepZone", durationSeconds: 7.4 },
+  },
+  auto_mop: {
+    opaqueBottom: 107,
+    contactWidth: 76,
+    travel: 80,
+    motion: { spriteAnim: "cleanerItemMopZone", castAnim: "cleanerItemCastMopZone", durationSeconds: 8.2 },
+  },
+  helper_robot: {
+    opaqueBottom: 120,
+    contactWidth: 44,
+    travel: 45,
+    motion: { spriteAnim: "cleanerItemHelperRoute", castAnim: "cleanerItemCastHelperRoute", durationSeconds: 9.5 },
+  },
+  laundry_helper: {
+    opaqueBottom: 120,
+    contactWidth: 66,
+    travel: 0,
+    motion: { spriteAnim: "cleanerItemRumble", durationSeconds: 5.8 },
+  },
+  robot_vacuum: {
+    opaqueBottom: 104,
+    contactWidth: 76,
+    travel: 210,
+    motion: { spriteAnim: "cleanerItemCleanRow", castAnim: "cleanerItemCastCleanRow", durationSeconds: 11 },
+  },
+};
+
+export function cleanerToolMotion(toolId: CleanerToolDef["id"]): CleanerItemMotion | null {
+  return CLEANER_ITEM_MOTION[toolId] ?? null;
+}
+
+// The item's own rendered width/2, plus a fixed 2% margin -- how close its
+// CENTER point can get to the scene's left/right edge before its own edge
+// would cross the boundary.
+function cleanerItemHorizontalMargin(width: number): number {
+  return width / 2 + 2;
+}
+
+// Clamps a route's nominal travel distance (CLEANER_ITEM_MOTION's own
+// `travel`) so the item never crosses the scene edges from its own (x,
+// width) position -- same formula as the source's own safeTravel calc.
+export function cleanerItemTravelPercent(x: number, width: number, travel: number): number {
+  const margin = cleanerItemHorizontalMargin(width);
+  const safeTravel = Math.max(
+    0,
+    Math.min(((x - margin) / width) * 100, ((100 - margin - x) / width) * 100),
+  );
+  return Math.min(travel, safeTravel);
+}
+
+export function cleanerOpaqueBottomOffsetPercent(opaqueBottom: number): number {
+  return ((128 - opaqueBottom) / 128) * 100;
+}
+
+// ---------------------------------------------------------------------------
+// Window light + item cast-shadow direction, ported 1:1 from the same
+// prototype (see CLEANER_ITEM_MOTION's comment above on why this is a safe,
+// verified port this time rather than a guess).
+// ---------------------------------------------------------------------------
+
+export interface CleanerLightPoint {
+  x: number;
+  y: number;
+}
+
+export interface CleanerWindowProjection {
+  corners: [CleanerLightPoint, CleanerLightPoint, CleanerLightPoint, CleanerLightPoint];
+  layout?: "split-vertical";
+}
+
+// No "night" entry per room -- there's no window light to project once it's
+// dark out; callers should treat night as "render nothing" (see
+// CleanerWindowLight).
+export const CLEANER_WINDOW_PROJECTIONS: Partial<
+  Record<CleanerRoomDef["id"], Partial<Record<Exclude<CleanerTimeOfDay, "night">, CleanerWindowProjection>>>
+> = {
+  living_room: {
+    morning: { corners: [{ x: 20, y: 55 }, { x: 36, y: 55 }, { x: 15, y: 88 }, { x: -4, y: 88 }] },
+    afternoon: { corners: [{ x: 25, y: 56 }, { x: 40, y: 56 }, { x: 34, y: 73 }, { x: 18, y: 73 }] },
+    evening: { corners: [{ x: 39, y: 56 }, { x: 54, y: 56 }, { x: 70, y: 86 }, { x: 51, y: 86 }] },
+  },
+  kitchen: {
+    morning: { corners: [{ x: 38, y: 51 }, { x: 52, y: 51 }, { x: 28, y: 79 }, { x: 11, y: 79 }], layout: "split-vertical" },
+    afternoon: { corners: [{ x: 42, y: 51 }, { x: 56, y: 51 }, { x: 51, y: 67 }, { x: 36, y: 67 }], layout: "split-vertical" },
+    evening: { corners: [{ x: 50, y: 51 }, { x: 64, y: 51 }, { x: 79, y: 78 }, { x: 61, y: 78 }], layout: "split-vertical" },
+  },
+  bathroom: {
+    morning: { corners: [{ x: 8, y: 51 }, { x: 23, y: 51 }, { x: 17, y: 82 }, { x: 0, y: 82 }] },
+    afternoon: { corners: [{ x: 10, y: 51 }, { x: 25, y: 51 }, { x: 22, y: 68 }, { x: 7, y: 68 }] },
+    evening: { corners: [{ x: 17, y: 51 }, { x: 32, y: 51 }, { x: 44, y: 79 }, { x: 27, y: 79 }] },
+  },
+  kids_room: {
+    morning: { corners: [{ x: 39, y: 49 }, { x: 55, y: 49 }, { x: 37, y: 82 }, { x: 18, y: 82 }] },
+    afternoon: { corners: [{ x: 43, y: 49 }, { x: 59, y: 49 }, { x: 56, y: 68 }, { x: 40, y: 68 }] },
+    evening: { corners: [{ x: 50, y: 49 }, { x: 66, y: 49 }, { x: 80, y: 80 }, { x: 61, y: 80 }] },
+  },
+};
+
+// Horizontal displacement divided by vertical displacement -- every item in
+// the same room and time bucket shares this world-space light vector.
+export const CLEANER_ROOM_SHADOW_DIRECTION: Partial<
+  Record<CleanerRoomDef["id"], Record<CleanerTimeOfDay, number>>
+> = {
+  living_room: { morning: -0.72, afternoon: -0.16, evening: 0.66, night: 0 },
+  kitchen: { morning: -0.76, afternoon: -0.2, evening: 0.7, night: 0 },
+  bathroom: { morning: -0.55, afternoon: -0.14, evening: 0.58, night: 0 },
+  kids_room: { morning: -0.66, afternoon: -0.16, evening: 0.62, night: 0 },
+};
+
+export const CLEANER_SHADOW_PHASE: Record<CleanerTimeOfDay, { length: number; opacity: number }> = {
+  morning: { length: 0.28, opacity: 0.27 },
+  afternoon: { length: 0.16, opacity: 0.22 },
+  evening: { length: 0.3, opacity: 0.3 },
+  night: { length: 0.11, opacity: 0.2 },
+};
 
 // Preview only (server re-verifies) -- realistic owned counts stay well
 // within safe-float range even though costMult isn't a round number, so
