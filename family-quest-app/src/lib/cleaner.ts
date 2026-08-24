@@ -166,6 +166,65 @@ export function visibleCleanerTools(maxStage: number): CleanerToolDef[] {
   return CLEANER_TOOLS.filter((tool) => maxStage >= tool.unlockStage);
 }
 
+interface CleanerToolLayout {
+  // Percent of the scene's width/height, matching the GPT prototype's own
+  // scheme: x/y are the item's own CENTER point (x from left, y from TOP),
+  // width is the item's own rendered width -- the consuming CSS bottom-
+  // anchors the item at (x, y) via `transform: translate(-50%, -100%)`,
+  // same technique the prototype used.
+  x: number;
+  y: number;
+  width: number;
+}
+
+// Real, hand-tuned per-room item placements ported from a third-party
+// prototype (see CLEANER_ART_REDO_HANDOFF.md's "기술 개선" section) --
+// replaces the fixed, room-independent corner slots in global.css's
+// .cleaner-tool-slot-* rules for exactly the (room, tool) pairs listed
+// here. Any tool/room combination not listed (whole_house entirely -- the
+// source has no equivalent room -- plus feather_duster/sturdy_gloves/
+// work_gloves_pro, which the source's own item catalog has no match for)
+// falls back to those fixed slots unchanged; see cleanerToolLayout below.
+//
+// "storage-bin" in the source maps to our toy_box (closest conceptual
+// match); the source's kids-room-only "toy-box" item has no tool of ours to
+// map to and is dropped. "robot-vacuum" is intentionally excluded -- it
+// already has its own dedicated patrol treatment (.cleaner-active-robot in
+// global.css) outside the tool shelf entirely, and the source positions it
+// identically (x:50, y:91) in every room anyway, so there's nothing
+// room-specific to gain by wiring it in here.
+export const CLEANER_TOOL_LAYOUTS: Partial<
+  Record<CleanerRoomDef["id"], Partial<Record<CleanerToolDef["id"], CleanerToolLayout>>>
+> = {
+  living_room: {
+    auto_broom: { x: 16, y: 74, width: 12 },
+    helper_robot: { x: 82, y: 74, width: 13 },
+    toy_box: { x: 85, y: 91, width: 14 },
+  },
+  kitchen: {
+    dishwasher: { x: 84, y: 74, width: 16 },
+    toy_box: { x: 30, y: 58, width: 9 },
+    auto_mop: { x: 76, y: 74, width: 14 },
+  },
+  bathroom: {
+    toy_box: { x: 15, y: 58, width: 9 },
+    laundry_helper: { x: 82, y: 74, width: 17 },
+    auto_mop: { x: 28, y: 91, width: 14 },
+  },
+  kids_room: {
+    auto_broom: { x: 15, y: 74, width: 12 },
+    helper_robot: { x: 78, y: 74, width: 13 },
+    toy_box: { x: 68, y: 91, width: 14 },
+  },
+};
+
+export function cleanerToolLayout(
+  roomId: CleanerRoomDef["id"],
+  toolId: CleanerToolDef["id"],
+): CleanerToolLayout | null {
+  return CLEANER_TOOL_LAYOUTS[roomId]?.[toolId] ?? null;
+}
+
 // Preview only (server re-verifies) -- realistic owned counts stay well
 // within safe-float range even though costMult isn't a round number, so
 // plain floating point is fine here, unlike the currency/stage-requirement

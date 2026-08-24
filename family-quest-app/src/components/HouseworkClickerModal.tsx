@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -13,6 +14,7 @@ import {
   cleanerRoomForStage,
   cleanerRoomFileBase,
   cleanerTimeOfDay,
+  cleanerToolLayout,
   CLEANER_TIME_BG_ROOMS,
   cleanerEffectiveRequiredCleaning,
   cleanerToolCost,
@@ -79,6 +81,22 @@ const MOTION_TOOL_IDS = new Set([
   "laundry_helper",
 ]);
 
+// Per-frame dwell times (ms), ported from a third-party prototype's own
+// hand-tuned timing tables (see CLEANER_ART_REDO_HANDOFF.md's "기술 개선"
+// section) -- replaces a flat interval-per-frame with a rhythm that reads
+// as natural rather than mechanically uniform. Index i is how long frame
+// (i+1) holds before the loop advances to frame (i+2 mod 8): idle's frames
+// 6-7 (indices 5-6, 90ms/105ms) are a quick blink; frame 5 (index 4,
+// 1600ms) is a long resting hold. The source also eased work-motion speed
+// up during its own "fever" state (a scoring mechanic this app doesn't
+// have) -- that easing is intentionally not ported, only the base per-frame
+// durations are.
+const IDLE_FRAME_DURATIONS = [900, 500, 550, 500, 1600, 90, 105, 760];
+const WORK_FRAME_DURATIONS: Record<"broom" | "mop", readonly number[]> = {
+  broom: [170, 145, 112, 138, 188, 148, 118, 158],
+  mop: [180, 152, 122, 148, 198, 158, 128, 168],
+};
+
 export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
@@ -117,19 +135,20 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   // and rendered through the exact same object-fit/object-position
   // technique already proven correct for the idle pose.
   const [sweepFrame, setSweepFrame] = useState(1);
-  // Ambient idle animation: cycles cleaner-girl-idle-{1..8}.png on a slow
-  // loop (300ms/frame, 2400ms total) matching .cleaner-sprite's own
-  // cleanerIdle CSS bob duration (2.4s) so the breathing/blink art and the
-  // CSS weight-shift read as one motion instead of two out-of-sync loops.
-  // Runs continuously rather than only while idle -- cheap, and avoids a
-  // start/stop effect race against the tap-reaction timers.
+  // Ambient idle animation: cycles cleaner-girl-idle-{1..8}.png, each frame
+  // holding for its own duration from IDLE_FRAME_DURATIONS (see above)
+  // rather than a flat interval -- a re-scheduled setTimeout keyed off the
+  // current frame, not setInterval, since the wait before the *next* frame
+  // depends on which frame is showing *now*. Runs continuously rather than
+  // only while idle -- cheap, and avoids a start/stop effect race against
+  // the tap-reaction timers.
   const [idleFrame, setIdleFrame] = useState(1);
   useEffect(() => {
-    const interval = setInterval(() => {
+    const timer = setTimeout(() => {
       setIdleFrame((current) => (current % 8) + 1);
-    }, 300);
-    return () => clearInterval(interval);
-  }, []);
+    }, IDLE_FRAME_DURATIONS[idleFrame - 1]);
+    return () => clearTimeout(timer);
+  }, [idleFrame]);
   // Alternates broom/mop every tap (doc's own "빗자루질과 걸레질을 번갈아
   // 사용" -- left as an open decision there; simple per-tap alternation is
   // the least surprising reading of it). Only cleaner-girl-mop-1.png exists
@@ -332,25 +351,31 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     tapBatchRef.current += 1;
     setTapReaction("tap");
     setTapMotionKey((current) => current + 1);
-    setSweepTool((current) => (current === "broom" ? "mop" : "broom"));
+    const nextTool = sweepTool === "broom" ? "mop" : "broom";
+    setSweepTool(nextTool);
     if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
     sweepFrameTimers.current.forEach(clearTimeout);
     sweepFrameTimers.current = [];
-    // Steps through frames 1->2->...->8, ~90ms per frame (frame 1 shows
-    // immediately, no timer needed for it). Both broom and mop now have the
-    // full 8-frame set (mop used to be a single still image held for the
-    // window; sweepFrame now animates it exactly like broom).
+    // Steps through frames 1->2->...->8 (frame 1 shows immediately, no
+    // timer needed for it), each frame holding for its own duration from
+    // WORK_FRAME_DURATIONS (see above) instead of a flat 90ms -- cumulative
+    // offsets built from that tool's own per-frame dwell table read as a
+    // natural sweeping/mopping rhythm rather than a mechanically even tick.
+    // Both broom and mop have the full 8-frame set.
     setSweepFrame(1);
-    const FRAME_MS = 90;
+    const durations = WORK_FRAME_DURATIONS[nextTool];
+    let elapsed = 0;
     [2, 3, 4, 5, 6, 7, 8].forEach((frame, index) => {
+      elapsed += durations[index];
       sweepFrameTimers.current.push(
-        setTimeout(() => setSweepFrame(frame), FRAME_MS * (index + 1)),
+        setTimeout(() => setSweepFrame(frame), elapsed),
       );
     });
+    elapsed += durations[7];
     tapResetTimer.current = setTimeout(() => {
       setTapReaction("idle");
       tapResetTimer.current = null;
-    }, FRAME_MS * 8);
+    }, elapsed);
   };
 
   // Sole source of passive/tool income -- the interval only exists while
@@ -822,10 +847,26 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
               ).map((tool) => {
                 const owned = toolsOwned[tool.id] ?? 0;
                 const isMotion = MOTION_TOOL_IDS.has(tool.id);
+                // Real per-room placement for this tool if one was ported
+                // (see CLEANER_TOOL_LAYOUTS in lib/cleaner.ts) -- falls back
+                // to the fixed .cleaner-tool-slot-{id} corner slot below for
+                // any room/tool this table doesn't cover.
+                const layout = cleanerToolLayout(room.id, tool.id);
                 return (
                   <div
                     key={tool.id}
-                    className={`cleaner-placed-tool cleaner-tool-slot-${tool.id} ${isMotion ? "is-motion" : ""}`}
+                    className={`cleaner-placed-tool ${
+                      layout ? "is-positioned" : `cleaner-tool-slot-${tool.id}`
+                    } ${isMotion ? "is-motion" : ""}`}
+                    style={
+                      layout
+                        ? ({
+                            "--tool-x": `${layout.x}%`,
+                            "--tool-y": `${layout.y}%`,
+                            "--tool-w": `${layout.width}%`,
+                          } as CSSProperties)
+                        : undefined
+                    }
                   >
                     <img src={`/art/cleaner/${tool.id}.png`} alt="" />
                     {owned > 1 && <span>×{owned}</span>}
@@ -880,6 +921,15 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
                 })}
               </div>
             )}
+            {/* Time-of-day color wash over the whole scene (character, tools,
+                background alike) -- ported from a third-party prototype's
+                pure-CSS lighting-overlay technique (ART_REDO_HANDOFF's
+                "조명은 코드에서 처리" call), ".cleaner-time-lighting.is-time-*"
+                in global.css. No new art required. */}
+            <div
+              className={`cleaner-time-lighting is-time-${timeOfDay}`}
+              aria-hidden="true"
+            />
           </section>
 
           <div className="cleaner-tools-row">
