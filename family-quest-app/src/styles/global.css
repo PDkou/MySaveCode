@@ -3507,22 +3507,58 @@ textarea {
   padding: 5px 8px;
 }
 
+/* Stacked full-width field (label+counter on their own line, input below,
+   save-state caption under that) for a status message -- a short typed
+   line of text, unlike the rest of .settings-row's compact
+   label-plus-control pairs (toggles, a native date picker). Squeezing it
+   into that same row layout read as cramped (2026-08 feedback: "UI가 좁고
+   어색함"), so this gets its own block instead of reusing .settings-row. */
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-field-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+  color: var(--navy);
+}
+
+.settings-field-counter {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-light);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Same iOS-zoom-avoidance reasoning as .settings-date-input above (>=16px
    font), but this one needs to actually hold typed text (a KakaoTalk/Line-
    style short status line, 2026-08 feedback) rather than a fixed-width
-   native date picker, so it gets its own width/text-align instead of
-   reusing that class as-is. */
-.settings-text-input {
+   native date picker. */
+.settings-field-input {
   font-family: inherit;
   font-size: 16px;
   color: var(--navy);
   background: var(--surface-alt, transparent);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 5px 8px;
-  width: 55%;
-  max-width: 220px;
-  text-align: right;
+  padding: 7px 10px;
+  width: 100%;
+}
+
+/* Reserves a line even when empty so the save confirmation appearing/
+   disappearing doesn't shift the row below up and down -- blur-to-save
+   previously gave no sign at all that anything happened (2026-08 feedback:
+   "저장 방식이 불투명함"), this is that sign. */
+.settings-field-status {
+  margin: 0;
+  min-height: 15px;
+  font-size: 12px;
+  color: var(--muted-light);
 }
 
 .settings-row-hint {

@@ -334,6 +334,8 @@
     "birthdayHint": "任意入力です。誕生日にクエストを完了すると特別な称号がもらえます。",
     "statusMessageHeading": "ステータスメッセージ",
     "statusMessagePlaceholder": "ステータスメッセージを入力",
+    "statusMessageSaving": "保存中...",
+    "statusMessageSaved": "保存しました",
     "photoHeading": "プロフィール写真",
     "photoChange": "写真を変更",
     "photoRemove": "削除",

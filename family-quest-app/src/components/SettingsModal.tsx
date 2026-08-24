@@ -53,6 +53,11 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
   const [statusMessageDraft, setStatusMessageDraft] = useState(profile?.status_message ?? '');
   const [statusMessageBusy, setStatusMessageBusy] = useState(false);
   const [statusMessageErrorKey, setStatusMessageErrorKey] = useState<string | null>(null);
+  // Blur-to-save has no other feedback of its own (no navigation, no
+  // visible network indicator) -- without this, saving was indistinguishable
+  // from silently doing nothing (2026-08 feedback: "저장 방식이 불투명함").
+  // Mirrors handleCopyInviteCode's codeCopied flash below.
+  const [statusMessageSaved, setStatusMessageSaved] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
   const [showOnboardingPreview, setShowOnboardingPreview] = useState(false);
 
@@ -160,6 +165,8 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
     setStatusMessageErrorKey(null);
     try {
       await updateStatusMessage(trimmed || null);
+      setStatusMessageSaved(true);
+      setTimeout(() => setStatusMessageSaved(false), 1500);
     } catch {
       setStatusMessageErrorKey('auth.error.unknown');
     } finally {
@@ -245,18 +252,41 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
               />
             </div>
             <p className="settings-row-hint">{t('profile.birthdayHint')}</p>
-            <div className="settings-row">
-              <span>{t('profile.statusMessageHeading')}</span>
+            {/* A stacked full-width field, not a settings-row -- squeezed
+                into a 55%-wide, right-aligned input next to its label (the
+                same treatment as the compact birthday/date row) read as
+                cramped and out of place for actual typed text (2026-08
+                feedback: "UI가 좁고 어색함"). The counter and the save-state
+                line below address the other two points from that same
+                feedback: no length guidance, and blur-to-save giving no
+                sign anything happened. */}
+            <div className="settings-field">
+              <div className="settings-field-header">
+                <span>{t('profile.statusMessageHeading')}</span>
+                <span className="settings-field-counter">{statusMessageDraft.length}/60</span>
+              </div>
               <input
                 type="text"
-                className="settings-text-input"
+                className="settings-field-input"
                 placeholder={t('profile.statusMessagePlaceholder')}
                 maxLength={60}
                 value={statusMessageDraft}
                 disabled={statusMessageBusy}
-                onChange={(e) => setStatusMessageDraft(e.target.value)}
+                onChange={(e) => {
+                  setStatusMessageDraft(e.target.value);
+                  setStatusMessageSaved(false);
+                }}
                 onBlur={() => void handleStatusMessageBlur()}
               />
+              {/* aria-live so screen reader users get the same "it saved"
+                  confirmation sighted users get from the text appearing. */}
+              <p className="settings-field-status" aria-live="polite">
+                {statusMessageBusy
+                  ? t('profile.statusMessageSaving')
+                  : statusMessageSaved
+                    ? t('profile.statusMessageSaved')
+                    : ''}
+              </p>
             </div>
             {statusMessageErrorKey && <p className="form-error" role="alert">{t(statusMessageErrorKey)}</p>}
             {family && (
