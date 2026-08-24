@@ -83,6 +83,40 @@ export function cleanerRoomForStage(stage: number): CleanerRoomDef {
   );
 }
 
+export type CleanerTimeOfDay = "morning" | "afternoon" | "evening" | "night";
+
+// Rooms with a dedicated 4-times-of-day "clean" background set (see
+// public/art/cleaner/{file base}-clean-{time}.png). whole_house has no such
+// set -- it keeps its single static *-base-clean.png fallback via the CSS
+// class rule in global.css instead of the inline-styled path these 4 use.
+export const CLEANER_TIME_BG_ROOMS = new Set<CleanerRoomDef["id"]>([
+  "living_room",
+  "kitchen",
+  "bathroom",
+  "kids_room",
+]);
+
+// File-base differs from the room id's own underscore convention (matches
+// the delivered art's own naming) -- living_room -> living-room,
+// kids_room -> kids-room, the other two are identical to their id.
+export function cleanerRoomFileBase(roomId: CleanerRoomDef["id"]): string {
+  return roomId.replace(/_/g, "-");
+}
+
+// Local-device-clock based, not server time -- this is decorative (which of
+// 4 already-clean-state background images to show), not gameplay-affecting,
+// so there's no correctness reason to round-trip it through the server.
+// Bucket boundaries are arbitrary but ordinary: dawn/commute hours read as
+// morning, lunch-to-dinner as afternoon, dinner-to-bedtime as evening, the
+// rest as night.
+export function cleanerTimeOfDay(date: Date = new Date()): CleanerTimeOfDay {
+  const hour = date.getHours();
+  if (hour >= 5 && hour < 11) return "morning";
+  if (hour >= 11 && hour < 17) return "afternoon";
+  if (hour >= 17 && hour < 21) return "evening";
+  return "night";
+}
+
 export interface CleanerToolDef {
   id:
     | "toy_box"

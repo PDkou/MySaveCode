@@ -11,6 +11,9 @@ import {
   buyCleanerUpgrade,
   cleanerHeartbeat,
   cleanerRoomForStage,
+  cleanerRoomFileBase,
+  cleanerTimeOfDay,
+  CLEANER_TIME_BG_ROOMS,
   cleanerEffectiveRequiredCleaning,
   cleanerToolCost,
   completeCleanerStage,
@@ -82,6 +85,17 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   const { family } = useFamily();
   useBackDismiss(true, onClose);
 
+  // Which of the 4 time-of-day "clean" backgrounds to show for rooms that
+  // have one (see CLEANER_TIME_BG_ROOMS) -- recomputed every 5 minutes so a
+  // long play session eventually crosses a bucket boundary, without needing
+  // a full-second ticking clock for what's purely a decorative background
+  // pick.
+  const [timeOfDay, setTimeOfDay] = useState(() => cleanerTimeOfDay());
+  useEffect(() => {
+    const interval = setInterval(() => setTimeOfDay(cleanerTimeOfDay()), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const [state, setState] = useState<CleanerStateRow | null>(null);
   const [toolsOwned, setToolsOwned] = useState<Record<string, number>>({});
   const [upgradesOwned, setUpgradesOwned] = useState<Record<string, number>>(
@@ -103,6 +117,19 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   // and rendered through the exact same object-fit/object-position
   // technique already proven correct for the idle pose.
   const [sweepFrame, setSweepFrame] = useState(1);
+  // Ambient idle animation: cycles cleaner-girl-idle-{1..8}.png on a slow
+  // loop (300ms/frame, 2400ms total) matching .cleaner-sprite's own
+  // cleanerIdle CSS bob duration (2.4s) so the breathing/blink art and the
+  // CSS weight-shift read as one motion instead of two out-of-sync loops.
+  // Runs continuously rather than only while idle -- cheap, and avoids a
+  // start/stop effect race against the tap-reaction timers.
+  const [idleFrame, setIdleFrame] = useState(1);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIdleFrame((current) => (current % 8) + 1);
+    }, 300);
+    return () => clearInterval(interval);
+  }, []);
   // Alternates broom/mop every tap (doc's own "빗자루질과 걸레질을 번갈아
   // 사용" -- left as an open decision there; simple per-tap alternation is
   // the least surprising reading of it). Only cleaner-girl-mop-1.png exists
@@ -116,6 +143,18 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   // 0 -> 1) -- the doc's "새 도구 발견" pose, previously speced but never
   // wired to anything (cleaner.tools.newToolToast sat unused).
   const [newToolFlash, setNewToolFlash] = useState(false);
+  // Which of the 8 cleaner-girl-new-tool-{1..8}.png frames is showing while
+  // newToolFlash is up -- loops for the flash's whole 1500ms window (see
+  // handleBuyTool) instead of holding a single still frame.
+  const [newToolFrame, setNewToolFrame] = useState(1);
+  useEffect(() => {
+    if (!newToolFlash) return;
+    setNewToolFrame(1);
+    const interval = setInterval(() => {
+      setNewToolFrame((current) => (current % 8) + 1);
+    }, 90);
+    return () => clearInterval(interval);
+  }, [newToolFlash]);
   const [stageToast, setStageToast] = useState<{
     room: string;
     stage: number;
@@ -228,15 +267,12 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
   // throttled/cold-cache connection.
   useEffect(() => {
     const poseFiles = [
-      "cleaner-girl-idle.png",
-      "cleaner-girl-sweep-1.png",
-      "cleaner-girl-sweep-2.png",
-      "cleaner-girl-sweep-3.png",
-      "cleaner-girl-sweep-4.png",
-      "cleaner-girl-mop-1.png",
+      ...[1, 2, 3, 4, 5, 6, 7, 8].map((n) => `cleaner-girl-idle-${n}.png`),
+      ...[1, 2, 3, 4, 5, 6, 7, 8].map((n) => `cleaner-girl-sweep-${n}.png`),
+      ...[1, 2, 3, 4, 5, 6, 7, 8].map((n) => `cleaner-girl-mop-${n}.png`),
+      ...[1, 2, 3, 4, 5, 6, 7, 8].map((n) => `cleaner-girl-new-tool-${n}.png`),
       "cleaner-girl-stage-complete.png",
       "cleaner-girl-deep-clean.png",
-      "cleaner-girl-new-tool.png",
       "cleaner-girl-prestige.png",
     ];
     const preloaded = poseFiles.map((file) => {
@@ -300,15 +336,13 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     if (tapResetTimer.current) clearTimeout(tapResetTimer.current);
     sweepFrameTimers.current.forEach(clearTimeout);
     sweepFrameTimers.current = [];
-    // Steps through frames 1->2->3->4, ~90ms per frame (frame 1 shows
-    // immediately, no timer needed for it) -- was 55ms/frame (220ms total),
-    // which read as too fast/rushed; slowed to 360ms total to match the
-    // cleanerTapPunch CSS animation's own 0.36s duration. Only the broom
-    // pose actually has 4 frames -- the mop pose (single still image) just
-    // holds for the same window, sweepFrame is simply unused while it shows.
+    // Steps through frames 1->2->...->8, ~90ms per frame (frame 1 shows
+    // immediately, no timer needed for it). Both broom and mop now have the
+    // full 8-frame set (mop used to be a single still image held for the
+    // window; sweepFrame now animates it exactly like broom).
     setSweepFrame(1);
     const FRAME_MS = 90;
-    [2, 3, 4].forEach((frame, index) => {
+    [2, 3, 4, 5, 6, 7, 8].forEach((frame, index) => {
       sweepFrameTimers.current.push(
         setTimeout(() => setSweepFrame(frame), FRAME_MS * (index + 1)),
       );
@@ -316,7 +350,7 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     tapResetTimer.current = setTimeout(() => {
       setTapReaction("idle");
       tapResetTimer.current = null;
-    }, 360);
+    }, FRAME_MS * 8);
   };
 
   // Sole source of passive/tool income -- the interval only exists while
@@ -639,16 +673,16 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
     characterImgSrc = "/art/cleaner/cleaner-girl-stage-complete.png";
     poseKey = "stage-complete";
   } else if (newToolFlash) {
-    characterImgSrc = "/art/cleaner/cleaner-girl-new-tool.png";
+    characterImgSrc = `/art/cleaner/cleaner-girl-new-tool-${newToolFrame}.png`;
     poseKey = "new-tool";
   } else if (tapReaction === "tap") {
     characterImgSrc =
       sweepTool === "mop"
-        ? "/art/cleaner/cleaner-girl-mop-1.png"
+        ? `/art/cleaner/cleaner-girl-mop-${sweepFrame}.png`
         : `/art/cleaner/cleaner-girl-sweep-${sweepFrame}.png`;
     poseKey = `tap-${tapMotionKey}`;
   } else {
-    characterImgSrc = "/art/cleaner/cleaner-girl-idle.png";
+    characterImgSrc = `/art/cleaner/cleaner-girl-idle-${idleFrame}.png`;
     poseKey = "idle";
   }
   const isReactivePose = poseKey !== "idle";
@@ -728,7 +762,18 @@ export function HouseworkClickerModal({ onClose }: HouseworkClickerModalProps) {
             />
             <div
               className={`cleaner-scene-bg is-clean is-room-${room.id}`}
-              style={{ opacity: progressPct / 100 }}
+              style={{
+                opacity: progressPct / 100,
+                // Rooms with a 4-times-of-day art set override the static
+                // *-base-clean.png the CSS class rule points at; whole_house
+                // (no time set delivered) falls through to that CSS rule
+                // unchanged.
+                ...(CLEANER_TIME_BG_ROOMS.has(room.id)
+                  ? {
+                      backgroundImage: `url(/art/cleaner/${cleanerRoomFileBase(room.id)}-clean-${timeOfDay}.png)`,
+                    }
+                  : {}),
+              }}
               aria-hidden="true"
             />
             <div className="cleaner-clutter-layer" aria-hidden="true">
