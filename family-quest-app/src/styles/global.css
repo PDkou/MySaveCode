@@ -969,30 +969,33 @@ textarea {
   min-height: clamp(120px, 34vw, 160px);
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 20px;
   box-shadow: var(--shadow-sm);
-  padding: 0;
+  padding: 6px 8px;
   cursor: pointer;
 }
 
-/* A KakaoTalk/Line-style short status line (2026-08 feedback), overlaid on
-   the character slot itself -- profile.status_message, see AuthContext's
-   updateStatusMessage and SettingsModal's own edit row for it. Only
-   rendered at all when set (see the component), so an unset status never
-   reserves this space. */
+/* A KakaoTalk/Line-style short status line (2026-08 feedback),
+   profile.status_message, see AuthContext's updateStatusMessage and
+   ProfilePhotoModal (the one place it's edited from). Was an absolute
+   overlay pinned to the bottom of the photo/sprite -- looked bad overlaid
+   directly on top of whatever the photo happened to show there (2026-08
+   feedback: "사진이랑 겹쳐있어서 안 예쁨"). Now a normal flex child stacked
+   below it instead, never covering the art itself. Only rendered at all
+   when set (see the component), so an unset status never reserves this
+   space. */
 .topbar-character-status {
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 6%;
-  padding: 3px 8px;
+  flex-shrink: 0;
+  max-width: 100%;
+  padding: 2px 8px;
   border-radius: 999px;
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: var(--surface-alt, transparent);
   font-size: 10px;
   font-weight: 700;
   color: var(--navy);
@@ -1000,7 +1003,6 @@ textarea {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  pointer-events: none;
 }
 
 @media (hover: hover) {
@@ -1013,7 +1015,7 @@ textarea {
 /* "is-static" is a semantic marker only ("this isn't the shop entry"), not
    a styling hook -- while the character shop is on hold (see
    lib/featureFlags.ts) this element is still a real <button>, just opening
-   PhotoLightbox instead of the shop (2026-08 feedback), so it keeps the
+   ProfilePhotoModal instead of the shop (2026-08 feedback), so it keeps the
    base .topbar-character's pointer cursor/hover cues as-is. */
 
 /* The user's own uploaded profile photo (already square-cropped, see
@@ -1022,10 +1024,16 @@ textarea {
    little breathing room. object-fit:contain rather than cover -- the
    mascot art has its own portrait proportions/whitespace unlike a
    square photo, and .topbar-character's box is only roughly square
-   (clamp-based), so contain avoids ever cropping either awkwardly. */
+   (clamp-based), so contain avoids ever cropping either awkwardly.
+   min-height: 0 lets it actually shrink to make room for the status line
+   below it in the column flex layout above -- without it, the flex item's
+   default min-height:auto (its intrinsic size) can refuse to shrink and
+   push the status line out past the card's bottom edge. */
 .topbar-character-photo {
   width: 82%;
   height: 82%;
+  min-height: 0;
+  flex-shrink: 1;
   object-fit: contain;
 }
 
@@ -2282,10 +2290,10 @@ textarea {
   animation: backdropIn 0.15s ease both;
 }
 
-/* PhotoLightbox -- always centered (unlike the base bottom-sheet-on-mobile
-   layout above), darker backdrop since there's no white card underneath to
-   separate from, and the image itself just sized to fit the viewport with
-   its own aspect ratio intact. */
+/* ProfilePhotoModal -- always centered (unlike the base bottom-sheet-on-
+   mobile layout above), darker backdrop since there's no white card
+   underneath to separate from, and the image itself just sized to fit the
+   viewport with its own aspect ratio intact. */
 .photo-lightbox-backdrop {
   align-items: center;
   padding: 24px;
@@ -2298,6 +2306,41 @@ textarea {
   max-height: 100%;
   border-radius: 16px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Wraps the photo and the status-message editor below it so both center
+   together as one unit regardless of the photo's own aspect ratio. */
+.profile-photo-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* cursor: default overrides the backdrop's zoom-out cursor -- this is an
+   actual form, not part of the "tap to close" photo. Reuses .settings-
+   field-header/-counter/-input from the settings status-message field this
+   replaced (SettingsModal no longer has its own copy of that field). */
+.profile-status-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-width: 320px;
+  cursor: default;
+}
+
+.profile-status-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-status-editor-row .settings-field-input {
+  flex: 1;
+  min-width: 0;
 }
 
 /* Used by SettingsModal while a child modal (EditNameModal/
@@ -3507,18 +3550,11 @@ textarea {
   padding: 5px 8px;
 }
 
-/* Stacked full-width field (label+counter on their own line, input below,
-   save-state caption under that) for a status message -- a short typed
-   line of text, unlike the rest of .settings-row's compact
-   label-plus-control pairs (toggles, a native date picker). Squeezing it
-   into that same row layout read as cramped (2026-08 feedback: "UI가 좁고
-   어색함"), so this gets its own block instead of reusing .settings-row. */
-.settings-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
+/* Label+counter header and the text input below it, for the status-message
+   editor -- now lives in ProfilePhotoModal (2026-08 feedback: consolidated
+   there, no longer duplicated in SettingsModal). A short typed line of
+   text, unlike the rest of .settings-row's compact label-plus-control
+   pairs (toggles, a native date picker), so it never reused that layout. */
 .settings-field-header {
   display: flex;
   align-items: baseline;
@@ -3548,17 +3584,6 @@ textarea {
   border-radius: 8px;
   padding: 7px 10px;
   width: 100%;
-}
-
-/* Reserves a line even when empty so the save confirmation appearing/
-   disappearing doesn't shift the row below up and down -- blur-to-save
-   previously gave no sign at all that anything happened (2026-08 feedback:
-   "저장 방식이 불투명함"), this is that sign. */
-.settings-field-status {
-  margin: 0;
-  min-height: 15px;
-  font-size: 12px;
-  color: var(--muted-light);
 }
 
 .settings-row-hint {
@@ -5350,11 +5375,107 @@ textarea {
   flex: 1;
   min-width: 0;
   font-family: inherit;
-  /* >=16px for the same iOS-Safari force-zoom reason as .settings-text-input. */
+  /* >=16px for the same iOS-Safari force-zoom reason as .settings-field-input. */
   font-size: 16px;
   color: var(--navy);
   background: var(--surface-alt, transparent);
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 8px 14px;
+}
+
+/* Attachments (2026-08 follow-up). Same label+full-overlay-input pattern as
+   .settings-photo-trigger, reusing .file-input-overlay -- same reasoning:
+   the more broadly-compatible way to trigger a native file picker from a
+   custom-styled control. position: relative anchors that overlay. */
+.chat-attach-trigger {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--surface-alt, transparent);
+  border: 1px solid var(--border);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.chat-attach-trigger-disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* A picked-but-not-yet-sent attachment, shown above the input row until
+   Send (or the × here) clears it -- mirrors most chat apps' own "preview
+   before you send" convention rather than uploading silently on pick. */
+.chat-pending-attachment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 -24px;
+  padding: 6px 24px;
+  background: var(--surface-alt, transparent);
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--navy);
+}
+
+.chat-pending-attachment-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.chat-pending-attachment-remove {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0 4px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--muted-light);
+  cursor: pointer;
+}
+
+.chat-attachment-image {
+  display: block;
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.chat-attachment-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  background: var(--bg);
+  color: var(--navy);
+  font-size: 13px;
+  text-decoration: none;
+  border-bottom-left-radius: 4px;
+}
+
+.chat-message.is-mine .chat-attachment-file {
+  background: var(--purple);
+  color: #fff;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-attachment-file-name {
+  overflow-wrap: anywhere;
+}
+
+.chat-attachment-file-size {
+  flex-shrink: 0;
+  opacity: 0.75;
+  font-size: 11px;
 }

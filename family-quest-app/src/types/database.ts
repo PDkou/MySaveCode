@@ -321,12 +321,18 @@ export type TaskCommentRow = {
 };
 
 // Section 41 -- family group chat, structurally a near-copy of
-// TaskCommentRow above (see schema.sql's own comment for why).
+// TaskCommentRow above (see schema.sql's own comment for why). attachment_*
+// added in section 42 -- all null together when a message has no
+// attachment, all set together when it does (see lib/familyChat.ts).
 export type FamilyChatMessageRow = {
   id: string;
   family_id: string;
   author_id: string;
   body: string;
+  attachment_path: string | null;
+  attachment_name: string | null;
+  attachment_type: string | null;
+  attachment_size: number | null;
   created_at: string;
 };
 

@@ -17,7 +17,7 @@ import { WeeklyBreakdownModal } from '../components/WeeklyBreakdownModal';
 import { HouseworkClickerModal } from '../components/HouseworkClickerModal';
 import { CharacterShopModal } from '../components/CharacterShopModal';
 import { CharacterSprite } from '../components/CharacterSprite';
-import { PhotoLightbox } from '../components/PhotoLightbox';
+import { ProfilePhotoModal } from '../components/ProfilePhotoModal';
 import { FamilyChatModal } from '../components/FamilyChatModal';
 import { Spinner } from '../components/Spinner';
 import { EmptyState } from '../components/EmptyState';
@@ -124,7 +124,7 @@ export function DashboardPage() {
 
   const me = useMemo(() => members.find((m) => m.user_id === user?.id) ?? null, [members, user]);
 
-  // Shared by the topbar-character slot's <img> and PhotoLightbox below --
+  // Shared by the topbar-character slot's <img> and ProfilePhotoModal below --
   // computed once so both always agree on which photo is actually showing.
   const myTopbarPhotoSrc = (user && avatarUrlByUserId.get(user.id)) || '/mascot/tutorial-guide-default.png';
 
@@ -322,9 +322,9 @@ export function DashboardPage() {
               (plain colored shapes + emoji, see its own file comment, "No
               real art yet"), never real character art, so this is a
               genuine improvement, not a downgrade, while the shop is held.
-              Clicking it opens PhotoLightbox at full size instead (2026-08
-              feedback) -- still a button, "is-static" now just means "not
-              a shop entry", not "inert". */}
+              Clicking it opens ProfilePhotoModal at full size instead
+              (2026-08 feedback) -- still a button, "is-static" now just
+              means "not a shop entry", not "inert". */}
           {family && !CHARACTER_CUSTOMIZATION_ENABLED && (
             <button
               type="button"
@@ -566,7 +566,7 @@ export function DashboardPage() {
       )}
       {showWeekly && <WeeklyBreakdownModal onClose={() => setShowWeekly(false)} />}
       {showPhotoLightbox && (
-        <PhotoLightbox src={myTopbarPhotoSrc} onClose={() => setShowPhotoLightbox(false)} />
+        <ProfilePhotoModal src={myTopbarPhotoSrc} onClose={() => setShowPhotoLightbox(false)} />
       )}
       {showChat && <FamilyChatModal onClose={() => setShowChat(false)} />}
       {showCleaner && <HouseworkClickerModal onClose={() => setShowCleaner(false)} />}

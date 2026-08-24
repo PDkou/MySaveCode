@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -34,7 +34,7 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
   const { t } = useTranslation();
   const navigate = useNavigate();
   const {
-    user, profile, avatarUrl, signOut, updateAvatarPhoto, removeAvatarPhoto, updateBirthday, updateStatusMessage,
+    user, profile, avatarUrl, signOut, updateAvatarPhoto, removeAvatarPhoto, updateBirthday,
   } = useAuth();
   const { family, members, updateMyDisplayName, refresh: refreshFamily } = useFamily();
   useBackDismiss(true, onClose);
@@ -44,26 +44,8 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoErrorKey, setPhotoErrorKey] = useState<string | null>(null);
   const [birthdayBusy, setBirthdayBusy] = useState(false);
-  // Local draft, committed to updateStatusMessage onBlur rather than on
-  // every keystroke (unlike the birthday date input above, which only ever
-  // fires onChange once per actual date pick) -- synced from profile
-  // whenever it changes underneath this (mount, or another tab's edit)
-  // via the effect below, but otherwise left alone so typing doesn't fight
-  // a controlled value reset mid-edit.
-  const [statusMessageDraft, setStatusMessageDraft] = useState(profile?.status_message ?? '');
-  const [statusMessageBusy, setStatusMessageBusy] = useState(false);
-  const [statusMessageErrorKey, setStatusMessageErrorKey] = useState<string | null>(null);
-  // Blur-to-save has no other feedback of its own (no navigation, no
-  // visible network indicator) -- without this, saving was indistinguishable
-  // from silently doing nothing (2026-08 feedback: "저장 방식이 불투명함").
-  // Mirrors handleCopyInviteCode's codeCopied flash below.
-  const [statusMessageSaved, setStatusMessageSaved] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
   const [showOnboardingPreview, setShowOnboardingPreview] = useState(false);
-
-  useEffect(() => {
-    setStatusMessageDraft(profile?.status_message ?? '');
-  }, [profile?.status_message]);
 
   // EditNameModal/FamilyMembersModal/PhotoCropModal are only ever opened
   // from here -- each renders its own .modal-backdrop, so having this
@@ -155,25 +137,6 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
     }
   };
 
-  // Saves on blur (not on every keystroke, unlike the date input above) --
-  // a no-op if the draft didn't actually change since the last save/load,
-  // so tabbing through the field without editing it never fires a write.
-  const handleStatusMessageBlur = async () => {
-    const trimmed = statusMessageDraft.trim();
-    if (trimmed === (profile?.status_message ?? '')) return;
-    setStatusMessageBusy(true);
-    setStatusMessageErrorKey(null);
-    try {
-      await updateStatusMessage(trimmed || null);
-      setStatusMessageSaved(true);
-      setTimeout(() => setStatusMessageSaved(false), 1500);
-    } catch {
-      setStatusMessageErrorKey('auth.error.unknown');
-    } finally {
-      setStatusMessageBusy(false);
-    }
-  };
-
   return (
     <div className={`modal-backdrop ${childModalOpen ? 'modal-backdrop-hidden' : ''}`} onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -252,43 +215,10 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
               />
             </div>
             <p className="settings-row-hint">{t('profile.birthdayHint')}</p>
-            {/* A stacked full-width field, not a settings-row -- squeezed
-                into a 55%-wide, right-aligned input next to its label (the
-                same treatment as the compact birthday/date row) read as
-                cramped and out of place for actual typed text (2026-08
-                feedback: "UI가 좁고 어색함"). The counter and the save-state
-                line below address the other two points from that same
-                feedback: no length guidance, and blur-to-save giving no
-                sign anything happened. */}
-            <div className="settings-field">
-              <div className="settings-field-header">
-                <span>{t('profile.statusMessageHeading')}</span>
-                <span className="settings-field-counter">{statusMessageDraft.length}/60</span>
-              </div>
-              <input
-                type="text"
-                className="settings-field-input"
-                placeholder={t('profile.statusMessagePlaceholder')}
-                maxLength={60}
-                value={statusMessageDraft}
-                disabled={statusMessageBusy}
-                onChange={(e) => {
-                  setStatusMessageDraft(e.target.value);
-                  setStatusMessageSaved(false);
-                }}
-                onBlur={() => void handleStatusMessageBlur()}
-              />
-              {/* aria-live so screen reader users get the same "it saved"
-                  confirmation sighted users get from the text appearing. */}
-              <p className="settings-field-status" aria-live="polite">
-                {statusMessageBusy
-                  ? t('profile.statusMessageSaving')
-                  : statusMessageSaved
-                    ? t('profile.statusMessageSaved')
-                    : ''}
-              </p>
-            </div>
-            {statusMessageErrorKey && <p className="form-error" role="alert">{t(statusMessageErrorKey)}</p>}
+            {/* Status message editing lives in ProfilePhotoModal now (2026-08
+                feedback: consolidated to the one place it's edited, opened
+                by tapping the topbar character slot's photo) -- no longer
+                duplicated here. */}
             {family && (
               <button type="button" className="settings-row-button" onClick={() => void handleCopyInviteCode()}>
                 <span>{t('family.inviteCodeLabel')}</span>
