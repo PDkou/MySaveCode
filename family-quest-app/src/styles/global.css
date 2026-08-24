@@ -993,6 +993,19 @@ textarea {
   cursor: default;
 }
 
+/* The user's own uploaded profile photo (already square-cropped, see
+   PhotoCropModal) or, failing that, the app's own mascot PNG -- either way
+   just a plain <img> now, filling most of .topbar-character's box with a
+   little breathing room. object-fit:contain rather than cover -- the
+   mascot art has its own portrait proportions/whitespace unlike a
+   square photo, and .topbar-character's box is only roughly square
+   (clamp-based), so contain avoids ever cropping either awkwardly. */
+.topbar-character-photo {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+
 @media (hover: hover) {
   .topbar-character.is-static:hover {
     border-color: var(--border);
