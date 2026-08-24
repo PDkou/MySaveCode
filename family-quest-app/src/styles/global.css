@@ -2310,6 +2310,20 @@ textarea {
   visibility: hidden;
 }
 
+/* visibility is inherited -- without this, EditNameModal/FamilyMembersModal/
+   PhotoCropModal (each rendered as a plain child of the parent's hidden
+   backdrop, not a sibling of it -- see SettingsModal.tsx) would themselves
+   inherit "hidden" from the ancestor above and never become visible at
+   all, since nothing else in this file ever sets `visibility` back to
+   `visible` on them. Confirmed via a standalone reproduction: an
+   unstyled-visibility descendant of a `visibility: hidden` element stays
+   hidden (invisible AND unclickable) even though it still occupies layout
+   space -- exactly the "nothing shows, page just seems stuck" symptom this
+   caused for the photo crop screen. */
+.modal-backdrop-hidden > .modal-backdrop {
+  visibility: visible;
+}
+
 .modal {
   background: var(--card);
   border-radius: 26px 26px 0 0;
