@@ -63,6 +63,7 @@
     "loading": "読み込み中...",
     "save": "保存",
     "saving": "保存中...",
+    "apply": "適用",
     "cancel": "キャンセル",
     "confirm": "確認",
     "close": "閉じる",
@@ -710,10 +711,14 @@
     "placeholder": "メッセージを入力",
     "send": "送信",
     "deleteMessage": "削除",
+    "attachButton": "ファイルを添付",
+    "removeAttachment": "添付を取り消す",
     "error": {
       "loadFailed": "メッセージを読み込めませんでした。",
       "sendFailed": "メッセージを送信できませんでした。",
-      "deleteFailed": "メッセージを削除できませんでした。"
+      "deleteFailed": "メッセージを削除できませんでした。",
+      "attachmentTooLarge": "添付ファイルは8MB以下にしてください。",
+      "attachmentUploadFailed": "添付ファイルをアップロードできませんでした。"
     }
   }
 }

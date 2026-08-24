@@ -9332,3 +9332,76 @@ end $$;
 -- =============================================================================
 -- End section 41.
 -- =============================================================================
+
+-- =============================================================================
+-- Section 42: Family chat attachments (2026-08 feedback)
+--
+-- The one deliberate follow-up section 41's own comment called out as not
+-- yet built: photo/file attachments on a chat message. Same storage
+-- pattern as the existing "task-photos" bucket (section 33/34-ish, family-
+-- scoped via is_family_member on the path's first folder segment) rather
+-- than the "avatars" bucket's per-user scoping, since an attachment belongs
+-- to the family's chat, not to one person.
+--
+-- Client uploads to "{family_id}/{message_id}/{filename}" using a uuid it
+-- generates itself (see lib/familyChat.ts's sendFamilyChatMessage) so the
+-- message row can be inserted with that same id -- the object path and the
+-- row that references it always agree without a second round trip.
+--
+-- A message can now carry an attachment with no text body (photo-only,
+-- like any other chat app) -- the old "body must be non-blank" constraint
+-- is replaced with "body non-blank OR an attachment is present".
+-- =============================================================================
+
+alter table public.family_chat_messages
+  add column if not exists attachment_path text,
+  add column if not exists attachment_name text,
+  add column if not exists attachment_type text,
+  add column if not exists attachment_size bigint;
+
+alter table public.family_chat_messages alter column body set default '';
+
+alter table public.family_chat_messages drop constraint if exists family_chat_messages_body_not_blank;
+alter table public.family_chat_messages drop constraint if exists family_chat_messages_has_content;
+alter table public.family_chat_messages add constraint family_chat_messages_has_content
+  check (length(trim(body)) > 0 or attachment_path is not null);
+
+-- Storage: a private "chat-attachments" bucket. Objects are uploaded at the
+-- path "{family_id}/{message_id}/{file}", so membership can be checked from
+-- the first folder segment without a join -- same shape as task-photos.
+insert into storage.buckets (id, name, public)
+values ('chat-attachments', 'chat-attachments', false)
+on conflict (id) do nothing;
+
+drop policy if exists chat_attachments_select on storage.objects;
+create policy chat_attachments_select on storage.objects
+for select
+using (
+  bucket_id = 'chat-attachments'
+  and public.is_family_member((storage.foldername(name))[1]::uuid)
+);
+
+drop policy if exists chat_attachments_insert on storage.objects;
+create policy chat_attachments_insert on storage.objects
+for insert
+with check (
+  bucket_id = 'chat-attachments'
+  and public.is_family_member((storage.foldername(name))[1]::uuid)
+);
+
+-- Same shape as task_photos_delete -- any family member can delete an
+-- attachment object directly via storage (not just the message's author).
+-- Deleting the message row itself is still author-only (see
+-- family_chat_messages_delete above); FamilyChatModal's delete flow calls
+-- both, but this policy alone is only as strict as task-photos already is.
+drop policy if exists chat_attachments_delete on storage.objects;
+create policy chat_attachments_delete on storage.objects
+for delete
+using (
+  bucket_id = 'chat-attachments'
+  and public.is_family_member((storage.foldername(name))[1]::uuid)
+);
+
+-- =============================================================================
+-- End section 42.
+-- =============================================================================

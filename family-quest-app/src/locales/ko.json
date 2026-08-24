@@ -63,6 +63,7 @@
     "loading": "불러오는 중...",
     "save": "저장",
     "saving": "저장 중...",
+    "apply": "적용",
     "cancel": "취소",
     "confirm": "확인",
     "close": "닫기",
@@ -710,10 +711,14 @@
     "placeholder": "메시지를 입력하세요",
     "send": "보내기",
     "deleteMessage": "삭제",
+    "attachButton": "파일 첨부",
+    "removeAttachment": "첨부 취소",
     "error": {
       "loadFailed": "메시지를 불러오지 못했어요.",
       "sendFailed": "메시지를 보내지 못했어요.",
-      "deleteFailed": "메시지를 삭제하지 못했어요."
+      "deleteFailed": "메시지를 삭제하지 못했어요.",
+      "attachmentTooLarge": "첨부파일은 8MB 이하만 가능해요.",
+      "attachmentUploadFailed": "첨부파일을 업로드하지 못했어요."
     }
   }
 }
