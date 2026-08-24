@@ -208,6 +208,9 @@ export type ProfileRow = {
   preferred_language: AppLanguageCode;
   avatar_path: string | null;
   birthday: string | null;
+  // Short user-editable line shown near the topbar character slot and in
+  // FamilyMembersModal (schema.sql section 40) -- null means unset.
+  status_message: string | null;
   created_at: string;
   updated_at: string;
 };

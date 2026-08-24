@@ -34,6 +34,7 @@ const activeFamilyStorageKey = (userId: string) => `familyquest.active-family.${
 export interface FamilyMember extends FamilyMemberRow {
   display_name: string;
   avatar_path: string | null;
+  status_message: string | null;
 }
 
 interface FamilyContextValue {
@@ -168,7 +169,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
       const memberIds = (memberRows ?? []).map((m) => m.user_id);
       const { data: profileRows, error: profilesErr } = memberIds.length
-        ? await supabase.from('profiles').select('id, display_name, avatar_path').in('id', memberIds)
+        ? await supabase.from('profiles').select('id, display_name, avatar_path, status_message').in('id', memberIds)
         : { data: [], error: null };
 
       if (profilesErr) throw profilesErr;
@@ -176,6 +177,9 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
       const profileNameById = new Map((profileRows ?? []).map((p) => [p.id, p.display_name]));
       const avatarPathById = new Map((profileRows ?? []).map((p) => [p.id, p.avatar_path as string | null]));
+      const statusMessageById = new Map(
+        (profileRows ?? []).map((p) => [p.id, p.status_message as string | null]),
+      );
 
       setMembers(
         (memberRows ?? []).map((m) => ({
@@ -184,6 +188,9 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           // fall back to the account's global profile name.
           display_name: m.display_name?.trim() || profileNameById.get(m.user_id) || '',
           avatar_path: avatarPathById.get(m.user_id) ?? null,
+          // Global (account-level, not per-family), same as avatar_path --
+          // FamilyMembersModal shows this next to each member's name.
+          status_message: statusMessageById.get(m.user_id) ?? null,
         })),
       );
 

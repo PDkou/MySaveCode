@@ -9247,3 +9247,22 @@ $$;
 -- =============================================================================
 -- End section 39.
 -- =============================================================================
+
+-- =============================================================================
+-- Section 40 -- Profile status message (2026-08 feedback: "프로필메세지?
+-- 상태메세지? 를 적용할 수 있는 기능이 있었으면 좋겠음(카카오톡이나 라인처럼)")
+--
+-- A short, user-editable text line on the account (global, like
+-- display_name/avatar_path/birthday -- not per-family), shown near the
+-- topbar character slot and next to each member's name in
+-- FamilyMembersModal. No new table/RLS needed: profiles_select/
+-- profiles_update (section 10) already cover the whole row for "your own
+-- row or a family partner's", Postgres RLS is row-level not column-level,
+-- so a new column on an already-covered row is automatically covered too.
+-- =============================================================================
+
+alter table public.profiles add column if not exists status_message text;
+
+-- =============================================================================
+-- End section 40.
+-- =============================================================================

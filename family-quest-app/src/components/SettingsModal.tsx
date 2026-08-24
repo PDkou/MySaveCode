@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -33,7 +33,9 @@ interface SettingsModalProps {
 export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, profile, avatarUrl, signOut, updateAvatarPhoto, removeAvatarPhoto, updateBirthday } = useAuth();
+  const {
+    user, profile, avatarUrl, signOut, updateAvatarPhoto, removeAvatarPhoto, updateBirthday, updateStatusMessage,
+  } = useAuth();
   const { family, members, updateMyDisplayName, refresh: refreshFamily } = useFamily();
   useBackDismiss(true, onClose);
   const [showEditName, setShowEditName] = useState(false);
@@ -42,8 +44,21 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoErrorKey, setPhotoErrorKey] = useState<string | null>(null);
   const [birthdayBusy, setBirthdayBusy] = useState(false);
+  // Local draft, committed to updateStatusMessage onBlur rather than on
+  // every keystroke (unlike the birthday date input above, which only ever
+  // fires onChange once per actual date pick) -- synced from profile
+  // whenever it changes underneath this (mount, or another tab's edit)
+  // via the effect below, but otherwise left alone so typing doesn't fight
+  // a controlled value reset mid-edit.
+  const [statusMessageDraft, setStatusMessageDraft] = useState(profile?.status_message ?? '');
+  const [statusMessageBusy, setStatusMessageBusy] = useState(false);
+  const [statusMessageErrorKey, setStatusMessageErrorKey] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
   const [showOnboardingPreview, setShowOnboardingPreview] = useState(false);
+
+  useEffect(() => {
+    setStatusMessageDraft(profile?.status_message ?? '');
+  }, [profile?.status_message]);
 
   // EditNameModal/FamilyMembersModal/PhotoCropModal are only ever opened
   // from here -- each renders its own .modal-backdrop, so having this
@@ -135,6 +150,23 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
     }
   };
 
+  // Saves on blur (not on every keystroke, unlike the date input above) --
+  // a no-op if the draft didn't actually change since the last save/load,
+  // so tabbing through the field without editing it never fires a write.
+  const handleStatusMessageBlur = async () => {
+    const trimmed = statusMessageDraft.trim();
+    if (trimmed === (profile?.status_message ?? '')) return;
+    setStatusMessageBusy(true);
+    setStatusMessageErrorKey(null);
+    try {
+      await updateStatusMessage(trimmed || null);
+    } catch {
+      setStatusMessageErrorKey('auth.error.unknown');
+    } finally {
+      setStatusMessageBusy(false);
+    }
+  };
+
   return (
     <div className={`modal-backdrop ${childModalOpen ? 'modal-backdrop-hidden' : ''}`} onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -213,6 +245,20 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
               />
             </div>
             <p className="settings-row-hint">{t('profile.birthdayHint')}</p>
+            <div className="settings-row">
+              <span>{t('profile.statusMessageHeading')}</span>
+              <input
+                type="text"
+                className="settings-text-input"
+                placeholder={t('profile.statusMessagePlaceholder')}
+                maxLength={60}
+                value={statusMessageDraft}
+                disabled={statusMessageBusy}
+                onChange={(e) => setStatusMessageDraft(e.target.value)}
+                onBlur={() => void handleStatusMessageBlur()}
+              />
+            </div>
+            {statusMessageErrorKey && <p className="form-error" role="alert">{t(statusMessageErrorKey)}</p>}
             {family && (
               <button type="button" className="settings-row-button" onClick={() => void handleCopyInviteCode()}>
                 <span>{t('family.inviteCodeLabel')}</span>
