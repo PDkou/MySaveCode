@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { useSmartBack } from '../lib/backNav';
+import { OPERATOR_NAME, SUPPORT_EMAIL } from '../lib/constants';
 
 // Deliberately NOT routed through ko.json/ja.json like the rest of the
 // app's copy -- these are law-oriented legal documents (Korean PIPA /
@@ -20,8 +21,6 @@ import { useSmartBack } from '../lib/backNav';
 // written once and forgotten.
 const EFFECTIVE_DATE_KO = '2026-08-24';
 const EFFECTIVE_DATE_JA = '2026年8月24日';
-const OPERATOR_NAME = 'Howling Creative Studio';
-const CONTACT_EMAIL = 'db5704@gmail.com';
 
 function PrivacyPolicyKo() {
   return (
@@ -134,7 +133,7 @@ function PrivacyPolicyKo() {
         <p>
           운영자: {OPERATOR_NAME}
           <br />
-          연락처(이메일): {CONTACT_EMAIL}
+          연락처(이메일): {SUPPORT_EMAIL}
         </p>
         <p className="privacy-hint">
           아직 사업자등록 전 개인 프로젝트 단계로, 사업자등록번호 등 정보는 등록 이후 이 페이지에 추가로
@@ -280,7 +279,7 @@ function PrivacyPolicyJa() {
         <p>
           運営者: {OPERATOR_NAME}
           <br />
-          連絡先(メール): {CONTACT_EMAIL}
+          連絡先(メール): {SUPPORT_EMAIL}
         </p>
         <p className="privacy-hint">
           現在は法人登記前の個人プロジェクト段階のため、法人情報等は登記後に本ページへ追記します。

@@ -17,6 +17,7 @@ import { ModalHeader } from './ModalHeader';
 import { AvatarChip } from './AvatarChip';
 import { AvatarPhotoError } from '../lib/avatarPhotos';
 import { useBackDismiss } from '../lib/backNav';
+import { SUPPORT_EMAIL } from '../lib/constants';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -131,6 +132,11 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
   const goToPrivacyPolicy = () => {
     onClose();
     navigate('/privacy');
+  };
+
+  const goToTermsOfService = () => {
+    onClose();
+    navigate('/terms');
   };
 
   // Actually anonymizing/banning the account happens 7 days from now, not
@@ -286,6 +292,19 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
         <div className="settings-section">
           <button type="button" className="settings-row-button" onClick={goToHelp}>
             {t('help.openButton')}
+          </button>
+          {/* mailto:, not an in-app form -- no backend for inquiries exists
+              (2026-08 feedback: there was no contact channel in the app at
+              all). A plain link is enough for now; revisit if volume ever
+              justifies a real support inbox/ticketing flow. */}
+          <a
+            className="settings-row-button"
+            href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`[${t('app.name')}] ${t('settings.contactSubject')}`)}`}
+          >
+            {t('settings.contactUs')}
+          </a>
+          <button type="button" className="settings-row-button" onClick={goToTermsOfService}>
+            {t('profile.viewTermsOfService')}
           </button>
           <button type="button" className="settings-row-button" onClick={goToPrivacyPolicy}>
             {t('profile.viewPrivacyPolicy')}

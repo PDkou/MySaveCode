@@ -3665,6 +3665,11 @@ textarea {
   color: var(--navy);
   text-align: left;
   cursor: pointer;
+  /* No-op for the <button> elements this class was originally written for
+     (buttons never underline by default) -- needed once the "문의하기"
+     mailto row (2026-08) reused this class on a plain <a>, which does. */
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
 .settings-row-value {

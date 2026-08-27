@@ -170,6 +170,19 @@ npm run build   # tsc -b && vite build, TypeScript 오류 0개로 통과해야 �
 npm run preview # 빌드 결과물을 로컬에서 미리보기
 ```
 
+### 자동화 테스트 (2026-08 도입)
+
+```bash
+npm test  # vitest run -- src/**/*.test.ts
+```
+
+Supabase에 실제로 붙지 않는 순수 로직(현재는 `lib/gamification.ts`의 레벨업 계산·칭호 탭 분류)부터
+시작한 첫 자동화 테스트입니다. `vite.config.ts`의 `test.env`에 가짜 Supabase URL/키를 넣어둬서,
+`lib/supabaseClient.ts`를 거쳐가는(직접 API를 호출하지 않아도) 모듈을 임포트할 때 나는 "환경변수
+없음" 에러를 막습니다 -- 진짜 크리덴셜이 아니니 안심하고 커밋해도 됩니다. 새 순수 함수를 추가하면
+같은 패턴(`*.test.ts`, `describe`/`it`/`expect`를 `vitest`에서 직접 import)으로 테스트를 늘려가면
+됩니다.
+
 ---
 
 ## 3. 배포 (Vercel 예시)

@@ -14,6 +14,7 @@ import { CalendarPage } from './pages/CalendarPage';
 import { PhotoGalleryPage } from './pages/PhotoGalleryPage';
 import { HelpPage } from './pages/HelpPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { AccountDeletionPendingScreen } from './pages/AccountDeletionPendingScreen';
 import { Spinner } from './components/Spinner';
 import { UndoSnackbar } from './components/UndoSnackbar';
@@ -159,6 +160,7 @@ function AppRoutes() {
       {/* Same reasoning as /help -- linked from the signup form and from
           Settings, both reachable before a session/family exists. */}
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms" element={<TermsOfServicePage />} />
       {/* No guard here either -- this is reached via the recovery link in
           the reset email, before any normal session/family exists yet. */}
       <Route path="/reset-password" element={<ResetPasswordPage />} />
