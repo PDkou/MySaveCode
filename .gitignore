@@ -7,3 +7,9 @@ node_modules
 # build.sh's own output, and the debug keystore it regenerates on demand.
 hellotoday-app/build/
 hellotoday-app/debug.keystore
+
+# build.sh expects an Android SDK checkout as a sibling of hellotoday-app/
+# (see build.sh's SDK="$ROOT/../android-sdk"). ~300MB, fetched from the
+# "android-sdk-slim" GitHub Release (see .github/workflows/fetch-android-sdk.yml)
+# -- never commit it here.
+/android-sdk/

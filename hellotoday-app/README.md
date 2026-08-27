@@ -25,9 +25,28 @@ Not a Gradle project. `build.sh` calls the Android build tools directly:
   worth tracking) — `build.sh` creates one automatically on first run if
   missing.
 
-None of that Android SDK is present in this sandbox as of the import, the
-same situation `game/` is in with its Godot binary — it has to be obtained
-before `build.sh` can actually be run here.
+None of that Android SDK ships with this sandbox by default — same
+situation `game/` is in with its Godot binary. It's obtained the same way:
+`.github/workflows/fetch-android-sdk.yml` runs on a GitHub-hosted runner
+(which, unlike this sandbox, can reach `dl.google.com`), packages just
+`build-tools/35.0.1/` + `platforms/android-35/` (~290MB unpacked), and
+publishes them as the repo's `android-sdk-slim` Release asset. From here:
+
+```bash
+# Trigger the workflow (or check whether the release is still fresh) via
+# the GitHub Actions API/UI, then:
+curl -sSL -o /tmp/android-sdk-slim.zip \
+  https://github.com/PDkou/MySaveCode/releases/download/android-sdk-slim/android-sdk-slim.zip
+unzip -q /tmp/android-sdk-slim.zip -d /home/user/MySaveCode   # -> MySaveCode/android-sdk/
+cd hellotoday-app && bash build.sh
+```
+
+Verified 2026-08-27: built clean end-to-end (`javac` → `d8` → `aapt2` →
+`apksigner`, `apksigner verify` passed) against this SDK bundle. Diffed
+against the originally-handed-off `HelloToday-v0.4.14-debug.apk`:
+`assets/index.html` is byte-identical (same SHA-256); `classes.dex` differs
+by ~90 bytes, consistent with a different `d8`/debug-keystore than whatever
+produced the original artifact, not a behavior difference.
 
 ## Where the logic actually lives
 
