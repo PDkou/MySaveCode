@@ -51,7 +51,7 @@ const context = {
   },
   window: {addEventListener: () => {}},
   navigator: {language: 'ko-KR'},
-  HelloNative: {schedule: () => {}, cancel: () => {}, syncSettings: () => {}, setLanguage: () => {}, syncAppearance: () => {}, isPremium: () => false, purchasePremium: () => {}, restorePurchases: () => {}},
+  HelloNative: {schedule: () => {}, cancel: () => {}, syncSettings: () => {}, setLanguage: () => {}, syncAppearance: () => {}, isPremium: () => false, purchasePremium: () => {}, restorePurchases: () => {}, maybeShowInterstitial: () => {}},
   atob: value => Buffer.from(value, 'base64').toString('binary'),
   TextDecoder,
   Uint8Array,

@@ -110,13 +110,20 @@ it:
 When changing behavior, change `index.html` first — it's the app, the same
 way `RunManager.gd` is the whole economy in `game/`.
 
-## Premium unlock (Play Billing)
+## Monetization: ads (free tier) + one purchase that removes them
 
-One-time, non-consumable purchase (`PremiumBilling.PRODUCT_ID =
-"premium_unlimited_people"`) that lifts the free tier's people-count cap.
-The cap itself (`FREE_PEOPLE_LIMIT`, currently 2) was already implemented
-in `index.html` before this — `openPerson()` blocked a 3rd person with a
-toast; the only thing added 2026-08-27 was an actual way to lift it.
+The free tier shows an occasional interstitial ad and caps registered
+people at `FREE_PEOPLE_LIMIT` (2); a single one-time purchase
+(`PremiumBilling.PRODUCT_ID = "remove_ads"`) removes both. There is no
+separate ads-only or people-only product — one purchase, two effects,
+framed to the user as "광고 제거" (remove ads) since that's the primary
+pitch, with the people-limit lift as a bundled bonus. (The code-level
+names — `PremiumBilling`, `state.settings.premium`, `onPremiumStatus` —
+still say "premium"; only the user-facing copy changed. The people-count
+cap itself predates all of this — `openPerson()` blocked a 3rd person with
+a toast before any purchase mechanism existed to lift it.)
+
+### Ad-removal purchase
 
 - **JS side** (`index.html`): `state.settings.premium` gates `openPerson()`;
   hitting the cap opens `overlay={type:'premium'}` (an upsell sheet, not
@@ -139,13 +146,39 @@ toast; the only thing added 2026-08-27 was an actual way to lift it.
   unlock; revisit with real receipt verification if this product line ever
   becomes worth attacking.
 - **Not yet done, and blocking a real purchase from working**: the
-  `premium_unlimited_people` in-app product has to be created in Play
-  Console (Monetize → Products → In-app products) after the app's first
-  upload — nothing here can create it remotely. Until then,
-  `queryProductDetailsAsync` returns empty and `buyPremium()` fails
-  through `onPurchaseFailed()` (verify this in the CI-built APK on a real
-  device/Play-signed build once the app exists in Play Console, not in the
-  Node tests below — Billing doesn't run in a JS `vm` context or Playwright).
+  `remove_ads` in-app product has to be created in Play Console (Monetize →
+  Products → In-app products) after the app's first upload — nothing here
+  can create it remotely. Until then, `queryProductDetailsAsync` returns
+  empty and `buyPremium()` fails through `onPurchaseFailed()` (verify this
+  in the CI-built APK on a real device/Play-signed build once the app
+  exists in Play Console, not in the Node tests below — Billing doesn't run
+  in a JS `vm` context or Playwright).
+
+### Interstitial ads
+
+- **JS side**: `complete()` in `index.html` — right after logging a
+  "연락했어요" contact — calls `HelloNative.maybeShowInterstitial()`. That's
+  the only call site; ads are never triggered from navigation or app open.
+- **Native side** (`InterstitialAdManager.java`): shows at most every 3rd
+  such call (`SHOW_EVERY_N_ACTIONS`), and never at all once
+  `PremiumBilling.isUnlockedCached()` is true — checked fresh on every call,
+  so a purchase mid-session silences ads on the very next would-be one. A
+  missing/failed ad load is a silent no-op, never a blocked UI.
+- **⚠️ Placeholder IDs, not this app's real ones**: `AndroidManifest.xml`'s
+  `com.google.android.gms.ads.APPLICATION_ID` and
+  `InterstitialAdManager.TEST_INTERSTITIAL_UNIT_ID` are Google's published
+  *test* IDs (`ca-app-pub-3940256099942544~3347511713` /
+  `ca-app-pub-3940256099942544/1033173712`) — always safe, always serve
+  test creatives, no AdMob account needed to build/run with them. They
+  **must** be swapped for this app's real AdMob App ID and ad unit ID
+  before a real release (see `PLAY_CONSOLE_LAUNCH.md`), or Google can
+  suspend the account for serving real impressions against IDs that
+  self-declare as a test app.
+- **Not yet done**: the User Messaging Platform (UMP) consent flow Google
+  requires before showing ads to EEA/UK users. That needs a real AdMob
+  account to configure the consent form in Play Console/AdMob first, so
+  it's blocked on the same prerequisite as the real ad unit IDs above —
+  don't ship to those regions without it.
 
 ## Testing
 
@@ -206,7 +239,14 @@ handoff document for whoever actually clicks through Play Console.
 - `expectedArt` in `test-regression.js` pins the SHA-256 of the three
   illustration PNGs under `app/src/main/assets/img/` — replacing artwork
   must update those hashes too.
-- Play Billing is integrated (see "Premium unlock" above) but untested
-  against a real Play Console listing, since the in-app product doesn't
-  exist there yet. Don't assume the purchase flow works end-to-end until
-  it's been through that once.
+- Play Billing is integrated (see "Monetization" above) but untested
+  against a real Play Console listing, since the `remove_ads` in-app
+  product doesn't exist there yet. Don't assume the purchase flow works
+  end-to-end until it's been through that once.
+- Ads are wired up against Google's test IDs only. Before a real release:
+  create the AdMob account/app/ad unit, swap both IDs (manifest +
+  `InterstitialAdManager`), and implement the UMP consent flow — none of
+  that can happen without the AdMob account existing first.
+- The privacy policy (linked from `PLAY_CONSOLE_LAUNCH.md`) was written
+  before ads existed and needs a pass to disclose the AdMob SDK before
+  submitting to Play Console — don't ship the old "no ads" wording.

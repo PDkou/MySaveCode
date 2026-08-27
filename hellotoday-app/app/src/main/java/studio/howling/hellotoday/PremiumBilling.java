@@ -21,15 +21,20 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Wraps Google Play Billing for the single premium unlock: a one-time,
- * non-consumable purchase (PRODUCT_ID) that lifts the free tier's
- * FREE_PEOPLE_LIMIT cap enforced in index.html's openPerson().
+ * Wraps Google Play Billing for the single paid unlock: a one-time,
+ * non-consumable purchase (PRODUCT_ID) framed to the user as "remove ads"
+ * (InterstitialAdManager checks the same flag) that also, as a bundled
+ * bonus, lifts the free tier's FREE_PEOPLE_LIMIT cap enforced in
+ * index.html's openPerson(). One purchase, two effects -- there's no
+ * separate ads-only or people-only product.
  *
  * Owned by MainActivity for the Activity's lifetime. Pushes state into the
  * WebView via window.onPremiumStatus/onPremiumPrice/onPurchaseFailed --
  * same evaluateJavascript pattern NativeBridge already uses elsewhere in
  * MainActivity, just originating from billing callbacks instead of a JS
- * bridge call.
+ * bridge call. (The window.* callback names still say "Premium" -- that's
+ * the internal/code-level name for this unlock; only the user-facing copy
+ * in index.html frames it as ad removal.)
  *
  * The in-app product with this ID has to be created in Play Console
  * (Monetize > Products > In-app products) before a real purchase can
@@ -42,7 +47,11 @@ import java.util.List;
  * ever becomes worth attacking.
  */
 final class PremiumBilling implements PurchasesUpdatedListener {
-    static final String PRODUCT_ID = "premium_unlimited_people";
+    // Renamed from premium_unlimited_people (2026-08-27) to match the new
+    // ad-removal framing, before any real Play Console product existed --
+    // safe to rename freely at this stage, would not be once real
+    // purchases existed against the old ID.
+    static final String PRODUCT_ID = "remove_ads";
     private static final String PREFS = "hello_today_premium";
     private static final String KEY_UNLOCKED = "unlocked";
 

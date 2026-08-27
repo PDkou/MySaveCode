@@ -21,6 +21,7 @@ import org.json.JSONObject;
 public class MainActivity extends Activity {
     private WebView web;
     private PremiumBilling premiumBilling;
+    private InterstitialAdManager adManager;
     private static final String INTERNAL_BACKUP = "hello_today_backup.json";
 
     @Override public void onCreate(Bundle state) {
@@ -40,6 +41,8 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new NativeBridge(), "HelloNative");
         premiumBilling = new PremiumBilling(this, web);
         premiumBilling.start();
+        adManager = new InterstitialAdManager(this, premiumBilling);
+        adManager.start();
         FrameLayout safeRoot = new FrameLayout(this);
         safeRoot.setBackgroundColor(Color.rgb(248,245,237));
         safeRoot.addView(web, new FrameLayout.LayoutParams(-1, -1));
@@ -151,6 +154,10 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public void restorePurchases() {
             if (premiumBilling != null) premiumBilling.refreshOwnedPurchases();
+        }
+        @JavascriptInterface public void maybeShowInterstitial() {
+            // InterstitialAd.show() requires the main thread.
+            runOnUiThread(() -> { if (adManager != null) adManager.maybeShow(); });
         }
     }
 

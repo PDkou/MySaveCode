@@ -74,9 +74,12 @@ configurations.all {
 }
 
 dependencies {
-    // Premium unlock (one-time purchase, see PremiumBilling.java). Google
+    // Ad-removal unlock (one-time purchase, see PremiumBilling.java). Google
     // Play requires Billing Library 8+ for new apps/updates from
     // 2026-08-31 (https://developer.android.com/google/play/billing/release-notes) --
     // 9.1.0 is current stable as of this writing.
     implementation("com.android.billingclient:billing:9.1.0")
+
+    // Interstitial ads for the free tier (see InterstitialAdManager.java).
+    implementation("com.google.android.gms:play-services-ads:25.3.0")
 }
