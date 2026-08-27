@@ -74,7 +74,7 @@ p{
 }
 </style></head><body>
   <div class="copy">
-    <div class="eyebrow">Howling</div>
+    <div class="eyebrow">Howling Creative Studio</div>
     <h1>Hello,<br>Today</h1>
     <p>하루의 틈에,<br>작은 안부</p>
   </div>
