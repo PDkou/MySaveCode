@@ -24,18 +24,20 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
  * -- checked fresh on every call (not cached at construction), so buying
  * mid-session takes effect on the very next would-be ad.
  *
- * ⚠️ TEST_INTERSTITIAL_UNIT_ID below is Google's published placeholder
- * (always serves test creatives, safe with no AdMob account at all).
- * AndroidManifest.xml's APPLICATION_ID meta-data is the matching test App
- * ID. Both must be swapped for this app's real AdMob IDs before a real
- * release -- see PLAY_CONSOLE_LAUNCH.md. Also not yet done: the User
- * Messaging Platform (UMP) consent flow Google requires for EEA/UK users
- * before showing personalized ads -- that needs a real AdMob account to
- * configure the consent form in the first place, so it's blocked on the
- * same prerequisite as the real ad unit IDs.
+ * INTERSTITIAL_UNIT_ID below is this app's real AdMob ad unit (registered
+ * 2026-08-27; AndroidManifest.xml's APPLICATION_ID meta-data is the
+ * matching real App ID). Not yet done: the User Messaging Platform (UMP)
+ * consent flow Google requires for EEA/UK users before showing
+ * personalized ads -- see PLAY_CONSOLE_LAUNCH.md.
+ *
+ * ⚠️ Because this is a real ad unit now (not Google's public test ID), do
+ * not run/tap through the ad flow repeatedly on a personal device without
+ * first registering that device as a test device in the AdMob console
+ * (Settings → Test devices) -- repeated real impressions/clicks from an
+ * unregistered device risk an invalid-traffic account suspension.
  */
 final class InterstitialAdManager {
-    static final String TEST_INTERSTITIAL_UNIT_ID = "ca-app-pub-3940256099942544/1033173712";
+    static final String INTERSTITIAL_UNIT_ID = "ca-app-pub-4220607528679200/8936210332";
     private static final String PREFS = "hello_today_ads";
     private static final String KEY_ACTION_COUNT = "action_count";
     private static final int SHOW_EVERY_N_ACTIONS = 3;
@@ -76,7 +78,7 @@ final class InterstitialAdManager {
 
     private void loadNext() {
         if (premiumBilling.isUnlockedCached()) return; // don't spend a load on a user who'll never see it
-        InterstitialAd.load(activity, TEST_INTERSTITIAL_UNIT_ID, new AdRequest.Builder().build(),
+        InterstitialAd.load(activity, INTERSTITIAL_UNIT_ID, new AdRequest.Builder().build(),
                 new InterstitialAdLoadCallback() {
                     @Override public void onAdLoaded(InterstitialAd ad) { loadedAd = ad; }
                     @Override public void onAdFailedToLoad(LoadAdError loadAdError) { loadedAd = null; }

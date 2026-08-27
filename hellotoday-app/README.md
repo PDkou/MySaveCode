@@ -164,21 +164,18 @@ a toast before any purchase mechanism existed to lift it.)
   `PremiumBilling.isUnlockedCached()` is true — checked fresh on every call,
   so a purchase mid-session silences ads on the very next would-be one. A
   missing/failed ad load is a silent no-op, never a blocked UI.
-- **⚠️ Placeholder IDs, not this app's real ones**: `AndroidManifest.xml`'s
+- **Real AdMob IDs, registered 2026-08-27**: `AndroidManifest.xml`'s
   `com.google.android.gms.ads.APPLICATION_ID` and
-  `InterstitialAdManager.TEST_INTERSTITIAL_UNIT_ID` are Google's published
-  *test* IDs (`ca-app-pub-3940256099942544~3347511713` /
-  `ca-app-pub-3940256099942544/1033173712`) — always safe, always serve
-  test creatives, no AdMob account needed to build/run with them. They
-  **must** be swapped for this app's real AdMob App ID and ad unit ID
-  before a real release (see `PLAY_CONSOLE_LAUNCH.md`), or Google can
-  suspend the account for serving real impressions against IDs that
-  self-declare as a test app.
+  `InterstitialAdManager.INTERSTITIAL_UNIT_ID` are this app's actual AdMob
+  App ID / ad unit ID (no longer Google's public test placeholders). That
+  means **any device that runs this app now serves/can trigger real
+  impressions** — register your own test device in the AdMob console
+  (Settings → Test devices) before repeatedly tapping through the ad flow
+  on it, or risk an invalid-traffic suspension.
 - **Not yet done**: the User Messaging Platform (UMP) consent flow Google
-  requires before showing ads to EEA/UK users. That needs a real AdMob
-  account to configure the consent form in Play Console/AdMob first, so
-  it's blocked on the same prerequisite as the real ad unit IDs above —
-  don't ship to those regions without it.
+  requires before showing ads to EEA/UK users — don't ship to those regions
+  without it. Now unblocked (the AdMob account exists), just not
+  implemented yet.
 
 ## Testing
 
@@ -243,10 +240,10 @@ handoff document for whoever actually clicks through Play Console.
   against a real Play Console listing, since the `remove_ads` in-app
   product doesn't exist there yet. Don't assume the purchase flow works
   end-to-end until it's been through that once.
-- Ads are wired up against Google's test IDs only. Before a real release:
-  create the AdMob account/app/ad unit, swap both IDs (manifest +
-  `InterstitialAdManager`), and implement the UMP consent flow — none of
-  that can happen without the AdMob account existing first.
+- Ads run on this app's real AdMob App ID/ad unit ID now (registered
+  2026-08-27) — no longer Google's test placeholders. Before a real
+  release, the UMP consent flow for EEA/UK still needs implementing; the
+  AdMob account it depends on now exists.
 - The privacy policy (linked from `PLAY_CONSOLE_LAUNCH.md`) was written
   before ads existed and needs a pass to disclose the AdMob SDK before
   submitting to Play Console — don't ship the old "no ads" wording.

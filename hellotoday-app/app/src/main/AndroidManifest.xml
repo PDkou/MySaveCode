@@ -14,12 +14,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
-        <!-- TEST App ID (Google's published placeholder, always serves
-             test creatives). Must be swapped for this app's real AdMob
-             App ID before a real release; see PLAY_CONSOLE_LAUNCH.md. -->
+        <!-- Real AdMob App ID (registered 2026-08-27; see PLAY_CONSOLE_LAUNCH.md). -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-4220607528679200~3458803740" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
