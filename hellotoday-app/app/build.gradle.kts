@@ -4,17 +4,17 @@ plugins {
 
 android {
     namespace = "studio.howling.hellotoday"
-    compileSdk = 35
-    buildToolsVersion = "35.0.1"
+    // Google Play requires new apps/updates to target API 36 from
+    // 2026-08-31 (https://developer.android.com/google/play/requirements/target-sdk).
+    // This app hasn't been submitted yet, so there's no lower floor to
+    // stay compatible with -- go straight to 36.
+    compileSdk = 36
+    buildToolsVersion = "36.0.0"
 
     defaultConfig {
         applicationId = "studio.howling.hellotoday"
         minSdk = 26
-        // Was 36 under the old manual aapt2 build; dropped to match compileSdk
-        // (35, the only platform this SDK bundle carries) rather than leave
-        // targetSdk ahead of what's actually compiled against. Bump both
-        // together once platforms;android-36 is available.
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 28
         versionName = "0.4.14"
     }

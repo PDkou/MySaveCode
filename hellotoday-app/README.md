@@ -32,17 +32,18 @@ Gradle Plugin itself* and any library dependency (Play Billing included)
 come from, which is Google's/Maven's servers over the network at
 configure/sync time — the local SDK doesn't substitute for that.
 
-- AGP `8.7.0`, Gradle `8.9` (pinned in `gradle/wrapper/gradle-wrapper.properties`).
-- `compileSdk 35` / `buildToolsVersion "35.0.1"` — chosen to match the
-  `android-sdk-slim` Release asset this repo already publishes (see below),
-  not because 35 is some hard ceiling.
-- `minSdk 26`, `targetSdk 35`. **Note:** the old `build.sh` declared
-  `targetSdk 36` while still compiling against the `android-35` jar (aapt2
-  doesn't enforce that the two line up). Gradle/AGP is stricter about this,
-  and this SDK bundle only carries platform 35, so `targetSdk` was brought
-  down to 35 to match what's actually compiled against, rather than leaving
-  it silently ahead. Bump both together once `platforms;android-36` is
-  fetched (extend `fetch-android-sdk.yml`).
+- AGP `8.11.0`, Gradle `8.13` (pinned in `gradle/wrapper/gradle-wrapper.properties`).
+  8.11.0 is the *minimum* AGP with API 36 support (8.7's ceiling is API 35;
+  see `app/build.gradle.kts`'s comment).
+- `compileSdk 36` / `targetSdk 36` / `buildToolsVersion "36.0.0"`. **Not a
+  free choice**: Google Play requires new apps and updates to target API 36
+  (Android 16) from **2026-08-31**
+  ([source](https://developer.android.com/google/play/requirements/target-sdk));
+  this app hasn't been submitted yet, so there was no reason to land on
+  anything lower. (An earlier pass here briefly set both to 35 to match
+  what the SDK bundle carried at the time — that missed this deadline
+  entirely and was corrected same-day. `fetch-android-sdk.yml` now packages
+  platform/build-tools 36 alongside 35.)
 - No Debug keystore to manage: AGP's debug build type auto-generates and
   reuses `~/.android/debug.keystore` per machine, so the old committed-vs-
   regenerated `debug.keystore` dance is gone entirely.
@@ -60,8 +61,8 @@ Same situation `game/` is in with its Godot binary: this sandbox has
 `dl.google.com` blocked, so it can't run `sdkmanager` (or resolve the
 Android Gradle Plugin itself) directly. `.github/workflows/fetch-android-sdk.yml`
 runs on a GitHub-hosted runner (unrestricted network), packages
-`build-tools/35.0.1/` + `platforms/android-35/` (~290MB unpacked), and
-publishes them as this repo's `android-sdk-slim` Release asset:
+`build-tools/{35.0.1,36.0.0}/` + `platforms/{android-35,android-36}/`,
+and publishes them as this repo's `android-sdk-slim` Release asset:
 
 ```bash
 curl -sSL -o /tmp/android-sdk-slim.zip \
