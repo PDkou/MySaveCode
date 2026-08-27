@@ -31,6 +31,19 @@ android {
     }
 }
 
+configurations.all {
+    // Billing Library 9.1.0 pulls a recent kotlin-stdlib (1.8.22+, which
+    // already merges the old split jdk7/jdk8 extension modules) while some
+    // other transitive dependency in the graph still declares the legacy
+    // separate kotlin-stdlib-jdk7/jdk8 artifacts (1.6.21) -- both land on
+    // the classpath and checkDebugDuplicateClasses fails on classes now
+    // defined in both. Dropping the legacy modules (their content already
+    // lives in kotlin-stdlib post-1.8) is the standard fix; this app has
+    // no Kotlin source of its own to be affected by it.
+    exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
+    exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
+}
+
 dependencies {
     // Premium unlock (one-time purchase, see PremiumBilling.java). Google
     // Play requires Billing Library 8+ for new apps/updates from
