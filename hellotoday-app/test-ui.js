@@ -9,7 +9,7 @@ const path = require('path');
   const page = await browser.newPage({ viewport: { width: 360, height: 640 }, deviceScaleFactor: 2 });
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
-  await page.goto('file://' + path.join(__dirname, 'assets/index.html'));
+  await page.goto('file://' + path.join(__dirname, 'app/src/main/assets/index.html'));
   await page.getByRole('button', { name: '다음' }).click();
   await page.waitForTimeout(600);
   await page.getByRole('button', { name: '다음' }).click();

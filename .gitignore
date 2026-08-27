@@ -3,13 +3,22 @@
 # 2026-08 app split. Doesn't affect the unrelated game/ (Godot) project.
 node_modules
 
-# hellotoday-app/ (Android, manual aapt2/d8/apksigner build, no Gradle):
-# build.sh's own output, and the debug keystore it regenerates on demand.
+# hellotoday-app/ (Android, Gradle build as of 2026-08-27; the old
+# aapt2/d8/apksigner manual build.sh is gone):
+hellotoday-app/.gradle/
+hellotoday-app/app/build/
 hellotoday-app/build/
-hellotoday-app/debug.keystore
+# Machine-specific `sdk.dir=` pointer AGP reads instead of $ANDROID_HOME.
+hellotoday-app/local.properties
+# AGP's debug build type auto-generates/reuses ~/.android/debug.keystore
+# per machine -- nothing to gitignore here anymore, but if a signing
+# keystore for release builds ever lands under hellotoday-app/, it must
+# never be committed.
 
-# build.sh expects an Android SDK checkout as a sibling of hellotoday-app/
-# (see build.sh's SDK="$ROOT/../android-sdk"). ~300MB, fetched from the
-# "android-sdk-slim" GitHub Release (see .github/workflows/fetch-android-sdk.yml)
-# -- never commit it here.
+# The SDK Gradle/AGP resolves from Google's/Maven's servers over the
+# network at build time (this repo doesn't vendor it) -- but AGP still
+# needs local build-tools/platform jars for aapt2 etc. as a sibling of
+# hellotoday-app/ (see app/build.gradle.kts's compileSdk/buildToolsVersion).
+# ~300MB, fetched from the "android-sdk-slim" GitHub Release (see
+# .github/workflows/fetch-android-sdk.yml) -- never commit it here.
 /android-sdk/

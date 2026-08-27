@@ -2,11 +2,12 @@ const fs = require('fs');
 const crypto = require('crypto');
 const vm = require('vm');
 
-const html = fs.readFileSync('assets/index.html', 'utf8');
+const ASSETS = 'app/src/main/assets';
+const html = fs.readFileSync(`${ASSETS}/index.html`, 'utf8');
 const expectedArt = {
-  'assets/img/window-note.png': '3846c92da953b980f051525435980970b862a474746f8aa25a1fe7b658083e0f',
-  'assets/img/quiet-bell.png': '505941fd7a79abcf8acf80ddadcb81fd4ec4b5de9ad4f74cf8d1750ce81c8ee9',
-  'assets/img/open-notebook.png': 'e6f32c8bf9b2e3b3e22184afa0e0f7f2221f21788aa74aea0a17e0b36db92a8d'
+  [`${ASSETS}/img/window-note.png`]: '3846c92da953b980f051525435980970b862a474746f8aa25a1fe7b658083e0f',
+  [`${ASSETS}/img/quiet-bell.png`]: '505941fd7a79abcf8acf80ddadcb81fd4ec4b5de9ad4f74cf8d1750ce81c8ee9',
+  [`${ASSETS}/img/open-notebook.png`]: 'e6f32c8bf9b2e3b3e22184afa0e0f7f2221f21788aa74aea0a17e0b36db92a8d'
 };
 
 function assert(condition, message) {
@@ -16,7 +17,8 @@ function assert(condition, message) {
 for (const [file, expected] of Object.entries(expectedArt)) {
   const actual = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
   assert(actual === expected, `${file}: v0.4.8 illustration changed`);
-  assert(html.includes(file.replace('assets/', '')), `${file}: illustration is no longer used`);
+  const relativeToHtml = file.slice(`${ASSETS}/`.length); // e.g. 'img/window-note.png'
+  assert(html.includes(relativeToHtml), `${file}: illustration is no longer used`);
 }
 
 assert(html.includes('Hello, Today 0.4.14'), 'version label missing');

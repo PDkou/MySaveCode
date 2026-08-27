@@ -1,0 +1,43 @@
+name: build-hellotoday-gradle
+
+# Verifies the Gradle migration of hellotoday-app/ actually compiles.
+# The CCR sandbox that authors this project has dl.google.com blocked, so it
+# can write the Gradle files correctly but can't resolve the Android Gradle
+# Plugin itself to prove they work. This runs on a GitHub-hosted runner
+# (unrestricted network) and does that proof. Run manually
+# (workflow_dispatch) after touching hellotoday-app's Gradle setup.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch/tag/SHA to build (defaults to the ref the workflow runs from)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  assemble-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: gradlew assembleDebug
+        working-directory: hellotoday-app
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Upload built debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: hellotoday-debug-apk
+          path: hellotoday-app/app/build/outputs/apk/debug/*.apk

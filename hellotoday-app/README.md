@@ -12,48 +12,89 @@ as "day one" of the app.
 
 ## How it's built
 
-Not a Gradle project. `build.sh` calls the Android build tools directly:
-`aapt2 compile/link → javac → d8 → apksigner`, writing
-`build/HelloToday-<version>-debug.apk`. It expects:
-
-- A local Android SDK checkout at `../android-sdk` (sibling of this
-  directory, **not** committed) containing `build-tools/35.0.1/` (aapt2, d8,
-  apksigner, zipalign) and `platforms/android-35/android.jar`.
-- A JDK on `PATH` capable of `-source 8 -target 8` (any modern JDK works;
-  the repo sandbox has OpenJDK 21).
-- `debug.keystore` is **not** committed (regenerable, debug-only, no secret
-  worth tracking) — `build.sh` creates one automatically on first run if
-  missing.
-
-None of that Android SDK ships with this sandbox by default — same
-situation `game/` is in with its Godot binary. It's obtained the same way:
-`.github/workflows/fetch-android-sdk.yml` runs on a GitHub-hosted runner
-(which, unlike this sandbox, can reach `dl.google.com`), packages just
-`build-tools/35.0.1/` + `platforms/android-35/` (~290MB unpacked), and
-publishes them as the repo's `android-sdk-slim` Release asset. From here:
+**Gradle**, as of 2026-08-27 (migrated from a hand-rolled `aapt2/d8`
+shell script — see `git log -- hellotoday-app/build.sh` for that era).
+The app is the single `:app` module; there's nothing else in this repo's
+Gradle setup.
 
 ```bash
-# Trigger the workflow (or check whether the release is still fresh) via
-# the GitHub Actions API/UI, then:
+cd hellotoday-app
+echo "sdk.dir=$(cd .. && pwd)/android-sdk" > local.properties   # not committed; per-machine
+./gradlew assembleDebug     # -> app/build/outputs/apk/debug/app-debug.apk
+./gradlew bundleDebug       # -> app/build/outputs/bundle/debug/app-debug.aab
+./gradlew bundleRelease     # AAB for Play Console (unsigned unless you wire up signingConfigs)
+```
+
+`local.properties` (or `$ANDROID_HOME`) has to point at a real SDK
+checkout with `platforms/` and `build-tools/` — the `android-sdk-slim`
+Release below, same as before. That's separate from where the *Android
+Gradle Plugin itself* and any library dependency (Play Billing included)
+come from, which is Google's/Maven's servers over the network at
+configure/sync time — the local SDK doesn't substitute for that.
+
+- AGP `8.7.0`, Gradle `8.9` (pinned in `gradle/wrapper/gradle-wrapper.properties`).
+- `compileSdk 35` / `buildToolsVersion "35.0.1"` — chosen to match the
+  `android-sdk-slim` Release asset this repo already publishes (see below),
+  not because 35 is some hard ceiling.
+- `minSdk 26`, `targetSdk 35`. **Note:** the old `build.sh` declared
+  `targetSdk 36` while still compiling against the `android-35` jar (aapt2
+  doesn't enforce that the two line up). Gradle/AGP is stricter about this,
+  and this SDK bundle only carries platform 35, so `targetSdk` was brought
+  down to 35 to match what's actually compiled against, rather than leaving
+  it silently ahead. Bump both together once `platforms;android-36` is
+  fetched (extend `fetch-android-sdk.yml`).
+- No Debug keystore to manage: AGP's debug build type auto-generates and
+  reuses `~/.android/debug.keystore` per machine, so the old committed-vs-
+  regenerated `debug.keystore` dance is gone entirely.
+
+**Why migrate off the manual script**: two things this app needs next —
+Google Play Billing (a premium unlock) and an AAB for Play Console (Google
+has required AAB for new-app submissions since August 2021) — are only
+officially distributed/produced through Gradle. The old script could only
+ever produce a plain APK and had no path to a Maven dependency without
+hand-unpacking an AAR on every version bump.
+
+### The Android SDK this needs
+
+Same situation `game/` is in with its Godot binary: this sandbox has
+`dl.google.com` blocked, so it can't run `sdkmanager` (or resolve the
+Android Gradle Plugin itself) directly. `.github/workflows/fetch-android-sdk.yml`
+runs on a GitHub-hosted runner (unrestricted network), packages
+`build-tools/35.0.1/` + `platforms/android-35/` (~290MB unpacked), and
+publishes them as this repo's `android-sdk-slim` Release asset:
+
+```bash
 curl -sSL -o /tmp/android-sdk-slim.zip \
   https://github.com/PDkou/MySaveCode/releases/download/android-sdk-slim/android-sdk-slim.zip
 unzip -q /tmp/android-sdk-slim.zip -d /home/user/MySaveCode   # -> MySaveCode/android-sdk/
-cd hellotoday-app && bash build.sh
 ```
 
-Verified 2026-08-27: built clean end-to-end (`javac` → `d8` → `aapt2` →
-`apksigner`, `apksigner verify` passed) against this SDK bundle. Diffed
-against the originally-handed-off `HelloToday-v0.4.14-debug.apk`:
-`assets/index.html` is byte-identical (same SHA-256); `classes.dex` differs
-by ~90 bytes, consistent with a different `d8`/debug-keystore than whatever
-produced the original artifact, not a behavior difference.
+That gets you the SDK, but **not** a working Gradle build in this sandbox —
+AGP itself (and any Gradle dependency, Play Billing included) resolves from
+Google's/Maven's servers, which are blocked here the same way. Verifying an
+actual Gradle build has to happen off-sandbox:
+`.github/workflows/build-hellotoday-gradle.yml` runs `./gradlew assembleDebug`
+on a GitHub-hosted runner and uploads the resulting APK as a workflow
+artifact — run that (workflow_dispatch) after touching anything under
+`hellotoday-app`'s Gradle files, since this sandbox can't confirm it itself
+beyond "the wrapper downloads and the project configures up to the first
+network-bound plugin."
+
+Before the migration (2026-08-27, on the old `build.sh`): built clean
+end-to-end (`javac` → `d8` → `aapt2` → `apksigner`, `apksigner verify`
+passed) against this same SDK bundle, and `assets/index.html` diffed
+byte-identical (SHA-256) against the originally-handed-off
+`HelloToday-v0.4.14-debug.apk`. That's evidence the SDK bundle and source
+are sound; it doesn't by itself prove the *new* Gradle config compiles —
+see the CI run before trusting it.
 
 ## Where the logic actually lives
 
-Almost everything is in `assets/index.html` — a single self-contained
-HTML/CSS/JS file (no framework, no bundler) rendered full-screen inside a
-bare `WebView`. The Java under `src/studio/howling/hellotoday/` is thin
-native glue around it:
+Almost everything is in `app/src/main/assets/index.html` — a single
+self-contained HTML/CSS/JS file (no framework, no bundler) rendered
+full-screen inside a bare `WebView`. The Java under
+`app/src/main/java/studio/howling/hellotoday/` is thin native glue around
+it:
 
 - `MainActivity` — hosts the `WebView`, exposes a `HelloNative` JS bridge
   (local JSON backup/export via `Storage Access Framework`, language sync).
@@ -62,15 +103,18 @@ native glue around it:
   X" notifications and their inline actions (연락했어요 / 내일 다시 / 날짜 변경).
   `BootReceiver` re-arms them after a reboot or app update.
 
-When changing behavior, change `assets/index.html` first — it's the app,
-the same way `RunManager.gd` is the whole economy in `game/`.
+When changing behavior, change `index.html` first — it's the app, the same
+way `RunManager.gd` is the whole economy in `game/`.
 
 ## Testing
 
 Two scripts, both runnable with plain Node — no Android build needed to
-exercise the web layer:
+exercise the web layer. They read `app/src/main/assets/index.html` now
+(path changed by the Gradle migration; the scripts themselves were updated
+to match):
 
 ```bash
+cd hellotoday-app
 # Executes the page's inline <script> in a Node `vm` context against a
 # mocked DOM/localStorage/HelloNative bridge, then asserts specific
 # strings/markup/behavior are present. Fast, no browser.
@@ -112,5 +156,8 @@ regression gate.
   `test_all_charms.gd` in `game/` is expected to be re-run (not silently
   patched around) after a rules change.
 - `expectedArt` in `test-regression.js` pins the SHA-256 of the three
-  illustration PNGs under `assets/img/` — replacing artwork must update
-  those hashes too.
+  illustration PNGs under `app/src/main/assets/img/` — replacing artwork
+  must update those hashes too.
+- Play Billing Library integration goes in `app/build.gradle.kts`'s
+  `dependencies {}` block (`implementation("com.android.billingclient:billing:<version>")`)
+  — that's the whole point of having migrated.
