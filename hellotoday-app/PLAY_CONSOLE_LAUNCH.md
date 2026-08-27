@@ -6,7 +6,7 @@
 
 ## 0. 시작 전에 준비할 것
 
-- [ ] **Google Play Console 개발자 계정** (1회 $25 등록비, 없으면 가입)
+- [x] **Google Play Console 개발자 계정** — **완료**
 - [x] **개인정보처리방침(Privacy Policy) URL** — **완료** (2026-08-27).
       한국어(전문) + 영어(요약) 페이지를 만들어 Artifact로 발행함:
       https://claude.ai/code/artifact/f623cb28-a189-4cab-a294-b8fededc9bba
@@ -15,10 +15,17 @@
       **공개(공유)로 전환**한 뒤, 그 URL을 앱 콘텐츠 → 개인정보처리방침
       칸에 붙여넣으세요. (연락처는 `db5704@gmail.com`로 실려 있음 — 다른
       주소로 바꾸고 싶으면 다음에 알려주면 바로 수정.)
-- [ ] **Feature graphic** (1024×500 PNG/JPG) — 없음, 제작 필요
-- [ ] **스크린샷 최소 2장** (휴대폰) — 없음. `test-ui.js`가 이미
-      `/tmp/hello-today-phone.png`로 스크린샷을 찍고 있으니, 여러 화면
-      상태로 스크린샷 스크립트를 확장해서 뽑아낼 수 있습니다.
+- [x] **Feature graphic** (1024×500) — **완료** (2026-08-27):
+      `store-assets/feature-graphic-1024x500.png`. 아이콘 + 태그라인
+      "하루의 틈에, 작은 안부"(앱 자체 카피)로 구성. 다시 만들거나 문구를
+      바꾸고 싶으면 `store-assets/capture-feature-graphic.js`를 고쳐서
+      재실행.
+- [x] **스크린샷 7장** (휴대폰, 1080×1920) — **완료** (2026-08-27):
+      `store-assets/screenshots/01`~`07`.png. 온보딩 3장 → 오늘 화면(메모
+      이월 포함) → 사람 목록 → 프리미엄 업셀 → 설정(테마)까지 앱의
+      실제 화면을 `store-assets/capture-screenshots.js`로 캡처한 것
+      (목업 아님). 데이터/카피가 바뀌면 스크립트만 다시 돌리면 최신 화면
+      그대로 재생성됨.
 - [ ] 앱 아이콘 512×512 — **이미 있음**: `art/HelloToday-icon-512.png`
 - [x] AAB를 서명할 업로드 키 — **완료**. 2026-08-27 세션에서 생성해
       직접 전달함 (`hellotoday-upload-key.jks` + `keystore.properties`).
