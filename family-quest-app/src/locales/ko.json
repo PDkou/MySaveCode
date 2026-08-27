@@ -366,7 +366,13 @@
     "appearance": "화면",
     "account": "계정",
     "contactUs": "문의하기",
-    "contactSubject": "문의사항"
+    "contactSubject": "문의사항",
+    "removeAds": "광고 제거",
+    "removeAdsHint": "이 가족방에서 광고를 없애요. 한 번 구매하면 이 방 멤버 전원에게 적용돼요.",
+    "removeAdsPurchasePending": "구매가 시작됐어요. 반영까지 몇 초 걸릴 수 있어요.",
+    "error": {
+      "removeAdsFailed": "구매 중 문제가 발생했어요. 잠시 후 다시 시도해주세요."
+    }
   },
   "language": {
     "label": "언어",

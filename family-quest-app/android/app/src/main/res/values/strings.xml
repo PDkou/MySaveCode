@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Family Quest</string>
+    <string name="title_activity_main">Family Quest</string>
+    <string name="package_name">com.howlingcreative.familyquest</string>
+    <string name="custom_url_scheme">com.howlingcreative.familyquest</string>
+
+    <!-- Google's public TEST AdMob App ID -- safe to ship, always serves
+         test creatives, never real ones. Replace with the real App ID from
+         the AdMob console before release (MONETIZATION_DESIGN.md section
+         1); until then every ad request everywhere in the app is a test ad
+         no matter what ad unit ID lib/ads.ts uses. -->
+    <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
+</resources>

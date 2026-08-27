@@ -362,6 +362,58 @@ supabase functions deploy send-due-reminders
 
 ---
 
+## 3-2. Capacitor(광고/인앱결제) 설정
+
+`MONETIZATION_DESIGN.md` 섹션 1(광고 기반 무료 + 방 단위 광고 제거)을 실제로 동작시키려면
+필요한 단계입니다. 코드/스캐폴드는 이미 다 되어 있고(`android/` 디렉터리, `lib/ads.ts`,
+`lib/purchases.ts`, Edge Function의 RevenueCat 웹훅 경로), **이 앱에서 대신 만들어줄 수
+없는 외부 계정 3개**를 만들고 아래 값들을 채워 넣어야 실제로 광고가 뜨고 결제가 됩니다.
+이 샌드박스엔 Android SDK/에뮬레이터가 없어서 실제 빌드·기기 테스트는 이 저장소를 로컬(또는
+Android Studio가 있는 환경)에 내려받아서 진행해야 합니다.
+
+### 3-2-1. Google Play Console
+
+1. 앱 등록 (패키지명은 `capacitor.config.ts`의 `appId`와 반드시 동일하게 --
+   `com.howlingcreative.familyquest`. **한 번 배포하면 바꿀 수 없으니** 다른 이름을
+   쓰고 싶으면 배포 전에 지금 바꿔야 함)
+2. **인앱상품(관리형, 비소모성)** 하나 등록 -- 상품 ID는 자유(예: `remove_ads`), 가격
+   300엔 근처로 설정
+
+### 3-2-2. RevenueCat
+
+1. [revenuecat.com](https://www.revenuecat.com)에서 프로젝트 생성, 위 Play Console 앱과 연결
+2. 3-2-1에서 만든 상품을 RevenueCat의 **Product**로 가져오고, **Lifetime 타입 Package**로
+   Offering(Current로 지정)에 담기 -- `lib/purchases.ts`가 `packageType === LIFETIME`인
+   패키지를 찾아서 구매를 시작하므로, 반드시 Lifetime 타입으로 등록해야 함
+3. **Webhook** 설정 (RevenueCat 대시보드 > Integrations > Webhooks):
+   - URL: 이 프로젝트의 `rapid-service` Edge Function URL (3-1-1에서 만든 것과 동일,
+     `https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service`)
+   - Authorization 헤더: 3-1-3의 크론들과 동일한 publishable key 값 (`Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P`) --
+     이 함수의 "Verify JWT" 설정을 그대로 통과시키기 위한 것으로, 별도 시크릿 관리가 필요 없음
+4. 공개 Android SDK 키를 복사해서 `src/lib/purchases.ts`의
+   `REVENUECAT_ANDROID_API_KEY` 자리에 붙여넣기
+
+### 3-2-3. AdMob
+
+1. [admob.google.com](https://admob.google.com)에서 앱 등록, **배너 광고 단위** 하나 생성
+2. 발급된 **App ID**를 `android/app/src/main/res/values/strings.xml`의 `admob_app_id`에
+   교체 (지금은 Google 공식 테스트용 App ID가 들어있어서 항상 테스트 광고만 나옴)
+3. 발급된 **광고 단위 ID**를 `src/lib/ads.ts`의 `BANNER_AD_UNIT_ID`에 교체
+
+### 3-2-4. 빌드/동기화
+
+```bash
+cd family-quest-app
+npm run cap:sync        # 웹 빌드 + android/ 프로젝트에 최신 웹 자산·플러그인 동기화
+npm run cap:open:android # Android Studio에서 android/ 열기 (Android Studio 필요)
+```
+
+Android Studio에서 실제 기기/에뮬레이터로 실행해서 배너 광고와 "광고 제거" 구매(설정 화면)가
+정상 동작하는지 확인 -- 이 부분은 이 샌드박스에서 검증 불가능했던 부분이라 실제 확인이
+필요합니다.
+
+---
+
 ## 4. Android / iPhone 홈 화면 설치
 
 ### Android (Chrome)

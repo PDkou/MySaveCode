@@ -18,6 +18,15 @@
 //      here that needs the Admin API (banning login), which is exactly why
 //      this runs as a service-role Edge Function rather than a plain SQL
 //      function on its own.
+//   5. RevenueCat purchase webhook: invoked by RevenueCat itself (not by
+//      this project's own cron/pg_net) whenever a purchase event happens,
+//      body shape { event: { type, app_user_id, subscriber_attributes,
+//      ... } } -- see MONETIZATION_DESIGN.md section 1 and
+//      lib/purchases.ts for the client side. Configure RevenueCat's
+//      webhook "Authorization" header to the same publishable-key value
+//      already used for this function's own cron/trigger calls (see
+//      README.md) so it passes this function's "Verify JWT" setting the
+//      same way those do, without a second secret to manage.
 //
 // See README.md "Push notifications" for the full deploy walkthrough.
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -413,6 +422,77 @@ async function handleAccountDeletions(supabase: SupabaseClient): Promise<Respons
 }
 
 // ---------------------------------------------------------------------------
+// Path 5: RevenueCat purchase webhook -- flips families.ads_removed once a
+// "remove ads" purchase is confirmed (MONETIZATION_DESIGN.md section 1).
+// RevenueCat has no built-in notion of "which family room" a purchase was
+// for, so lib/purchases.ts attaches the target family_id as a subscriber
+// attribute immediately before starting the purchase; this reads it back
+// off the webhook event.
+// ---------------------------------------------------------------------------
+
+interface RevenueCatWebhookEvent {
+  type: string;
+  app_user_id: string;
+  subscriber_attributes?: Record<string, { value: string; updated_at_ms: number }>;
+}
+
+interface RevenueCatWebhookPayload {
+  event: RevenueCatWebhookEvent;
+}
+
+function isRevenueCatWebhookPayload(value: unknown): value is RevenueCatWebhookPayload {
+  if (!value || typeof value !== 'object') return false;
+  const event = (value as Record<string, unknown>).event;
+  if (!event || typeof event !== 'object') return false;
+  const e = event as Record<string, unknown>;
+  return typeof e.type === 'string' && typeof e.app_user_id === 'string';
+}
+
+// RevenueCat sends INITIAL_PURCHASE the first time a non-consumable product
+// is bought (NON_RENEWING_PURCHASE for a consumable, included defensively
+// even though "remove ads" is configured as non-consumable) -- there's no
+// "renewal" for either, so these are the only event types this app reacts
+// to. Everything else (CANCELLATION, BILLING_ISSUE, EXPIRATION, ...)
+// doesn't apply to a one-time purchase and is just acknowledged.
+const ADS_REMOVAL_PURCHASE_EVENT_TYPES = new Set(['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE']);
+
+async function handleRevenueCatWebhook(supabase: SupabaseClient, payload: RevenueCatWebhookPayload): Promise<Response> {
+  const { event } = payload;
+
+  if (!ADS_REMOVAL_PURCHASE_EVENT_TYPES.has(event.type)) {
+    return new Response(JSON.stringify({ ignored: event.type }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const familyId = event.subscriber_attributes?.pending_ads_removal_family_id?.value;
+  if (!familyId) {
+    // A real purchase went through but we don't know which room it was
+    // for -- shouldn't happen (lib/purchases.ts always sets this attribute
+    // immediately before starting the purchase), but fail loud rather than
+    // silently dropping a real purchase RevenueCat already charged for.
+    return new Response(JSON.stringify({ error: 'missing_pending_ads_removal_family_id' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const { error } = await supabase.rpc('mark_family_ads_removed', { p_family_id: familyId });
+  if (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Path 2: event-driven pushes (created/assigned, completed, reopened,
 // commented) -- fired immediately by a DB trigger, not on a schedule.
 // ---------------------------------------------------------------------------
@@ -543,6 +623,10 @@ Deno.serve(async (req: Request) => {
 
   if (body && typeof body === 'object' && (body as Record<string, unknown>).process_account_deletions === true) {
     return handleAccountDeletions(supabase);
+  }
+
+  if (isRevenueCatWebhookPayload(body)) {
+    return handleRevenueCatWebhook(supabase, body);
   }
 
   return handleDueReminders(supabase);

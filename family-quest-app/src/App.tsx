@@ -18,6 +18,8 @@ import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { AccountDeletionPendingScreen } from './pages/AccountDeletionPendingScreen';
 import { BirthdayRequiredScreen } from './pages/BirthdayRequiredScreen';
 import { APP_MODE } from './lib/appMode';
+import { ensurePurchasesConfigured } from './lib/purchases';
+import { hideAdsBanner, initAdsForProfile, showAdsBannerIfNeeded } from './lib/ads';
 import { Spinner } from './components/Spinner';
 import { UndoSnackbar } from './components/UndoSnackbar';
 import { InstallPromptBanner } from './components/InstallPromptBanner';
@@ -35,6 +37,34 @@ function FullScreenLoading() {
 function RootGate() {
   const { session, initializing, profile, profileLoading } = useAuth();
   const { family, loading: familyLoading } = useFamily();
+
+  // Ads/purchases setup -- family-quest-app only, no-op on web/PWA and
+  // no-op for business-quest-app (see each function's own APP_MODE-
+  // independent native-platform check; the APP_MODE guard here just skips
+  // the calls entirely rather than relying on that). Hooks must run
+  // unconditionally before RootGate's early returns below, so the actual
+  // "is there anything to do yet" checks live inside each effect body.
+  useEffect(() => {
+    if (APP_MODE !== 'family' || !session?.user) return;
+    void ensurePurchasesConfigured(session.user.id);
+  }, [session]);
+
+  useEffect(() => {
+    if (APP_MODE !== 'family' || !profile) return;
+    void initAdsForProfile(profile);
+  }, [profile]);
+
+  // Banner is tied to this component's lifecycle -- shown only while the
+  // dashboard root route is mounted, hidden on task detail/calendar/gallery
+  // (separate routes that unmount RootGate) and re-shown on return. A
+  // deliberately simple starting behavior rather than a global overlay.
+  useEffect(() => {
+    if (APP_MODE !== 'family') return;
+    void showAdsBannerIfNeeded(family ?? null);
+    return () => {
+      void hideAdsBanner();
+    };
+  }, [family]);
 
   if (initializing) {
     return <FullScreenLoading />;

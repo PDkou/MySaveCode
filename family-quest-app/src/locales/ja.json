@@ -366,7 +366,13 @@
     "appearance": "画面",
     "account": "アカウント",
     "contactUs": "お問い合わせ",
-    "contactSubject": "お問い合わせ"
+    "contactSubject": "お問い合わせ",
+    "removeAds": "広告を削除",
+    "removeAdsHint": "この家族ルームの広告をなくします。一度購入すると、この部屋のメンバー全員に適用されます。",
+    "removeAdsPurchasePending": "購入処理を開始しました。反映まで数秒かかることがあります。",
+    "error": {
+      "removeAdsFailed": "購入中に問題が発生しました。しばらくしてからもう一度お試しください。"
+    }
   },
   "language": {
     "label": "言語",

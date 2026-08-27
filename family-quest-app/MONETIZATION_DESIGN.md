@@ -6,11 +6,16 @@
 문서라(회사방/스토어 등록 같은 큰 프로젝트는 제외한다고 파일 자체에 적혀있음), 결제/광고처럼
 두 앱에 걸친 굵직한 프로젝트는 이 문서에 남깁니다.
 
-**현재 상태 (2026-08 갱신)**: 패밀리퀘스트 쪽 웹 코드/DB 플러밍은 구현 완료
-(`schema.sql` 섹션 44, `AuthPage.tsx`/`App.tsx`/`BirthdayRequiredScreen.tsx` 등).
-컴퍼니퀘스트는 아직 설계만 확정, 코드 착수 전. 결제대행사(Stripe/Komoju 등)도 광고
-SDK도 아직 실제로 붙이지 않았음 -- 광고 노출 자체와 광고 제거 결제(인앱결제)는 Capacitor로
-앱을 감싸야만 실제로 동작하는 부분이라 그 작업 전까지는 의도적으로 보류 중.
+**현재 상태 (2026-08 갱신, 2차)**: 패밀리퀘스트는 웹 코드/DB 플러밍에 이어 Capacitor
+스캐폴드 + 광고(AdMob)/인앱결제(RevenueCat) 연동 코드까지 작성 완료. 컴퍼니퀘스트는 아직
+설계만 확정, 코드 착수 전.
+
+**남은 건 순수 설정값뿐**: 코드는 다 짜여 있지만 Google Play Console/AdMob/RevenueCat
+계정 3개를 만들고 그 발급값(App ID, 광고 단위 ID, API 키)을 채워 넣어야 실제로 동작함 --
+이 셋은 이 세션에서 대신 만들어줄 수 없는 외부 계정이라, 자세한 절차는 `README.md`
+"3-2. Capacitor(광고/인앱결제) 설정"에 정리해뒀음. 이 샌드박스엔 Android SDK/에뮬레이터가
+없어서 실제 기기 빌드·동작 검증도 못 했음 -- 로컬(또는 Android Studio가 있는 환경)에서
+`npm run cap:sync` → `npm run cap:open:android`로 직접 확인 필요.
 
 ## 1. 패밀리퀘스트 -- 광고 기반 무료 + 방 단위 광고 제거 ✅ 웹 코드/DB 구현 완료
 
@@ -50,9 +55,18 @@ SDK도 아직 실제로 붙이지 않았음 -- 광고 노출 자체와 광고 �
     3. `handle_new_user()`가 signup 시 `raw_user_meta_data->>'birthday'`를 방어적으로
        파싱해서 바로 `profiles.birthday`에 심음 (형식이 이상해도 signup 자체는 절대
        실패하지 않고 null로 남아 위 2번 게이트로 자연스럽게 흡수됨)
-  - **아직 안 한 것**: 광고 SDK 자체(AdMob 등)가 없어서, 위에서 확보한 생일/나이 데이터를
-    실제로 개인화 여부 태깅에 쓰는 코드는 아직 없음 -- Capacitor + 광고 SDK 도입 시점에
-    이 생일 데이터를 그대로 읽어서 쓰면 됨.
+- **광고 SDK/인앱결제까지 코드는 작성 완료** -- `@capacitor-community/admob`(광고)과
+  `@revenuecat/purchases-capacitor`(Play Billing 영수증 검증을 직접 안 해도 되게 해주는
+  래퍼) 도입, `android/` Capacitor 프로젝트 스캐폴드, `lib/ads.ts`(생일로 계산한 나이가
+  성인 기준 미만이면 `tagForChildDirectedTreatment`/`tagForUnderAgeOfConsent` 태깅 +
+  항상 비개인화(`npa: true`) 배너 요청), `lib/purchases.ts`(광고 제거 구매 시작),
+  `mark_family_ads_removed()`를 실제로 호출하는 RevenueCat 웹훅 경로(Edge Function
+  `handleRevenueCatWebhook`)까지 전부 구현됨. **남은 건 설정값뿐**(README.md
+  "3-2. Capacitor(광고/인앱결제) 설정" 참고) -- Play Console/AdMob/RevenueCat 계정 3개를
+  만들고 발급값을 `lib/ads.ts`/`lib/purchases.ts`/`strings.xml`에 채워 넣는 것과, 실제
+  기기에서의 동작 확인(이 샌드박스엔 Android SDK가 없어 못 함)만 남음.
+- 아직 만들지 않은 것: Google UMP 동의 흐름(성인 사용자의 개인화 광고 동의 수집 -- 지금은
+  성인도 항상 비개인화 광고만 요청하도록 안전하게 처리해뒀음, `lib/ads.ts` 주석 참고).
 
 ## 2. 컴퍼니퀘스트(business-quest-app) -- B2B 구독
 
@@ -80,9 +94,13 @@ SDK도 아직 실제로 붙이지 않았음 -- 광고 노출 자체와 광고 �
 
 ## 3. 아직 정하지 않은 것 (다음에 결정해야 할 것들)
 
-- Family Quest 광고 SDK 선정 (AdMob 등, Families Program 인증 여부 확인 필요)
+- ~~Family Quest 광고 SDK 선정~~ → `@capacitor-community/admob`으로 확정, 코드 작성 완료
+  (1번 참고). Google Play Families Ads Program 인증 여부는 실제 AdMob 계정 생성 시 확인
+  필요.
+- ~~결제 이벤트를 받을 웹훅 Edge Function 설계~~ → 기존 `rapid-service` 함수에 경로 추가로
+  확정, 코드 작성 완료 (`handleRevenueCatWebhook`).
 - Company Quest 결제대행사 선정 (Stripe vs Komoju vs 둘 다)
 - Company Quest Pro/Premium 정확한 인당 단가
-- `subscriptions`/`ad_removal_purchases` 등 실제 DB 스키마
-- 결제 이벤트를 받을 웹훅 Edge Function 설계 (기존 `rapid-service` 함수에 경로 추가할지,
-  새 함수로 분리할지)
+- Company Quest `subscriptions`/좌석 제한 등 실제 DB 스키마
+- (Family Quest) Google UMP 동의 흐름 -- 성인 사용자에게 개인화 광고 동의를 받아 eCPM을
+  올릴지, 지금처럼 계속 전원 비개인화로 갈지
