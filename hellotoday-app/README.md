@@ -172,10 +172,25 @@ a toast before any purchase mechanism existed to lift it.)
   impressions** — register your own test device in the AdMob console
   (Settings → Test devices) before repeatedly tapping through the ad flow
   on it, or risk an invalid-traffic suspension.
-- **Not yet done**: the User Messaging Platform (UMP) consent flow Google
-  requires before showing ads to EEA/UK users — don't ship to those regions
-  without it. Now unblocked (the AdMob account exists), just not
-  implemented yet.
+### EEA/UK ad consent (UMP)
+
+`ConsentManager.java` wraps Google's User Messaging Platform SDK
+(`com.google.android.ump:user-messaging-platform`). `MainActivity.onCreate`
+calls `gatherConsent(adManager::start)` instead of starting
+`InterstitialAdManager` directly — ads only actually start loading once
+consent is resolved (immediately, for users it doesn't apply to). Follows
+Google's documented pattern of invoking the ready callback from two places
+(a prior session's cached consent, and this session's UMP round-trip), so
+`InterstitialAdManager.start()` is written to tolerate being called twice.
+
+**Still not fully configured**: the actual consent message/form is authored
+in AdMob Console → Privacy & messaging, not in this code — nothing here can
+create that remotely. Until one is published there, this flow runs but has
+nothing to show (safe no-op); don't assume EEA/UK compliance until that
+form exists and has been verified to actually appear for a test account in
+that region (AdMob Console's debug geography override, under
+`ConsentDebugSettings`, can simulate an EEA device for that check without
+needing to travel).
 
 ## Testing
 
@@ -241,9 +256,11 @@ handoff document for whoever actually clicks through Play Console.
   product doesn't exist there yet. Don't assume the purchase flow works
   end-to-end until it's been through that once.
 - Ads run on this app's real AdMob App ID/ad unit ID now (registered
-  2026-08-27) — no longer Google's test placeholders. Before a real
-  release, the UMP consent flow for EEA/UK still needs implementing; the
-  AdMob account it depends on now exists.
-- The privacy policy (linked from `PLAY_CONSOLE_LAUNCH.md`) was written
-  before ads existed and needs a pass to disclose the AdMob SDK before
-  submitting to Play Console — don't ship the old "no ads" wording.
+  2026-08-27) — no longer Google's test placeholders. `ConsentManager`
+  (UMP) is wired up, but the actual EEA/UK consent form still has to be
+  authored in AdMob Console → Privacy & messaging before that flow shows
+  anything real — verify it with a debug-geography override before
+  shipping to those regions.
+- The privacy policy (linked from `PLAY_CONSOLE_LAUNCH.md`) was updated
+  2026-08-27 to disclose the AdMob SDK — if ads or their frequency change
+  again, re-check that page stays accurate.

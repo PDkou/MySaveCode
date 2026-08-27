@@ -45,13 +45,18 @@ final class InterstitialAdManager {
     private final Activity activity;
     private final PremiumBilling premiumBilling;
     private volatile InterstitialAd loadedAd;
+    private volatile boolean started;
 
     InterstitialAdManager(Activity activity, PremiumBilling premiumBilling) {
         this.activity = activity;
         this.premiumBilling = premiumBilling;
     }
 
+    /** Safe to call more than once (ConsentManager's ready callback can
+     *  fire twice by design) -- every call after the first is a no-op. */
     void start() {
+        if (started) return;
+        started = true;
         MobileAds.initialize(activity, status -> loadNext());
     }
 

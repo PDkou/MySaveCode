@@ -82,4 +82,8 @@ dependencies {
 
     // Interstitial ads for the free tier (see InterstitialAdManager.java).
     implementation("com.google.android.gms:play-services-ads:25.3.0")
+
+    // EEA/UK ad consent flow required by Google's ads policy (see
+    // ConsentManager.java) -- a separate artifact from play-services-ads.
+    implementation("com.google.android.ump:user-messaging-platform:4.0.0")
 }

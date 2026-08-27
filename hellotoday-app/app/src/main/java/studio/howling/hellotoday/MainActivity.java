@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
         premiumBilling = new PremiumBilling(this, web);
         premiumBilling.start();
         adManager = new InterstitialAdManager(this, premiumBilling);
-        adManager.start();
+        new ConsentManager(this).gatherConsent(adManager::start);
         FrameLayout safeRoot = new FrameLayout(this);
         safeRoot.setBackgroundColor(Color.rgb(248,245,237));
         safeRoot.addView(web, new FrameLayout.LayoutParams(-1, -1));
