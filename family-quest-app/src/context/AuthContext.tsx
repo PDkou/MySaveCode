@@ -40,7 +40,16 @@ interface AuthContextValue {
   avatarUrl: string | null;
   initializing: boolean;
   profileLoading: boolean;
-  signUp: (email: string, password: string, displayName: string) => Promise<{ needsEmailConfirmation: boolean }>;
+  // birthday ('YYYY-MM-DD') is optional here since only family-quest-app's
+  // AuthPage collects and requires it (see APP_MODE branching there and in
+  // App.tsx's RootGate) -- business-quest-app never sends one, and that's
+  // fine, see MONETIZATION_DESIGN.md section 1.
+  signUp: (
+    email: string,
+    password: string,
+    displayName: string,
+    birthday?: string,
+  ) => Promise<{ needsEmailConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   setLanguage: (language: AppLanguageCode) => Promise<void>;
@@ -126,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [loadProfile]);
 
-  const signUp = useCallback(async (email: string, password: string, displayName: string) => {
+  const signUp = useCallback(async (email: string, password: string, displayName: string, birthday?: string) => {
     const trimmedName = displayName.trim();
     if (!trimmedName) {
       throw new AuthActionError('auth.error.displayNameRequired');
@@ -142,6 +151,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: {
           display_name: trimmedName,
           preferred_language,
+          // Read by handle_new_user() (schema.sql section 44) to seed
+          // profiles.birthday at row-creation time -- parsed defensively
+          // there, so an omitted/malformed value just leaves it null
+          // rather than failing signup.
+          ...(birthday ? { birthday } : {}),
         },
       },
     });

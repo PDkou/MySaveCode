@@ -9575,3 +9575,202 @@ grant execute on function public.process_expired_account_deletions() to service_
 -- =============================================================================
 -- End section 43.
 -- =============================================================================
+
+-- =============================================================================
+-- Section 44: Family Quest monetization plumbing -- ad-supported free tier +
+-- room-creation slots (2026-08, see MONETIZATION_DESIGN.md section 1)
+--
+-- Web-side plumbing only, ahead of actually wiring up an ad SDK or payment
+-- provider (MONETIZATION_DESIGN.md's "아직 정하지 않은 것"). Three pieces:
+--   1. families.ads_removed -- true once that room's ads have been paid to
+--      remove (a one-time purchase, not a subscription). Every member of an
+--      ads_removed room sees no ads, regardless of which member paid or
+--      which device did -- the flag lives on the room, not the payer.
+--   2. profiles.rooms_unlocked -- how many rooms this user is allowed to
+--      *create* (create_family_room, room_type='family' only -- joining
+--      someone else's room by invite code never needs a slot, and
+--      room_type='business' rooms, which is all business-quest-app ever
+--      creates, are intentionally exempt -- that side monetizes as a B2B
+--      subscription instead, see MONETIZATION_DESIGN.md section 2). Starts
+--      at 1. This is a permanent counter, not "count of currently-owned
+--      ads_removed rooms" recomputed live, so deleting a paid-off room never
+--      takes back a slot already earned.
+--   3. mark_family_ads_removed() -- service_role only (no payment provider
+--      is wired up yet; this exists so a future payment webhook has one
+--      place to call once a purchase is verified). Flips a room's
+--      ads_removed to true and, the first time only, credits the room
+--      owner's rooms_unlocked by one.
+--
+-- Google Play Families Policy note: this app's users include minors, so ad
+-- personalization has to be decided per-user from an actual birthdate, not
+-- applied uniformly to everyone. profiles.birthday already existed (section
+-- 22) but was optional and only ever set from Settings; handle_new_user()
+-- below now also seeds it from signup (family-quest-app's AuthPage.tsx
+-- only -- business-quest-app never sends one, see APP_MODE branching there
+-- and in RootGate), and any existing family-quest-app account that still
+-- has none is gated by RootGate's BirthdayRequiredScreen until it does.
+-- =============================================================================
+
+alter table public.families add column if not exists ads_removed boolean not null default false;
+alter table public.profiles add column if not exists rooms_unlocked integer not null default 1;
+
+-- Redefines the trigger function from section 4 (same trigger binding,
+-- on_auth_user_created -- no need to re-create the trigger itself). Only
+-- change: also seed birthday, parsed defensively so a malformed value can
+-- never fail the signup itself (this runs in the same transaction as the
+-- auth.users insert) -- anything that doesn't parse just leaves birthday
+-- null, same as an account created before this column existed, and such an
+-- account is caught by BirthdayRequiredScreen on next login.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_display_name text;
+  v_language text;
+  v_birthday_raw text;
+  v_birthday date;
+begin
+  v_display_name := coalesce(
+    nullif(trim(new.raw_user_meta_data->>'display_name'), ''),
+    split_part(new.email, '@', 1)
+  );
+  v_language := coalesce(new.raw_user_meta_data->>'preferred_language', 'ko');
+  if v_language not in ('ko', 'ja') then
+    v_language := 'ko';
+  end if;
+
+  v_birthday_raw := new.raw_user_meta_data->>'birthday';
+  v_birthday := null;
+  if v_birthday_raw ~ '^\d{4}-\d{2}-\d{2}$' then
+    begin
+      v_birthday := v_birthday_raw::date;
+      if v_birthday > current_date then
+        v_birthday := null;
+      end if;
+    exception when others then
+      v_birthday := null;
+    end;
+  end if;
+
+  insert into public.profiles (id, display_name, preferred_language, birthday)
+  values (new.id, v_display_name, v_language, v_birthday)
+  on conflict (id) do nothing;
+
+  return new;
+end;
+$$;
+
+-- Redefines create_family_room() from section 6 -- only change is the new
+-- room-creation-slot check up front (room_type='family' only, see comment
+-- above); everything after it is unchanged from section 6's version.
+create or replace function public.create_family_room(p_name text, p_room_type text default 'family')
+returns public.families
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_name text := trim(coalesce(p_name, ''));
+  v_room_type text := coalesce(p_room_type, 'family');
+  v_code text;
+  v_family public.families;
+  v_attempts integer := 0;
+  v_display_name text;
+  v_room_count integer;
+  v_other_family_id uuid;
+  v_owned_family_rooms integer;
+  v_unlocked integer;
+begin
+  if v_uid is null then
+    raise exception 'not_authenticated' using errcode = '28000';
+  end if;
+
+  if length(v_name) = 0 or length(v_name) > 60 then
+    raise exception 'invalid_family_name' using errcode = '22023';
+  end if;
+
+  if v_room_type not in ('family', 'business') then
+    raise exception 'invalid_room_type' using errcode = '22023';
+  end if;
+
+  if v_room_type = 'family' then
+    select count(*) into v_owned_family_rooms
+    from public.families where created_by = v_uid and room_type = 'family';
+    select rooms_unlocked into v_unlocked from public.profiles where id = v_uid;
+    if v_owned_family_rooms >= coalesce(v_unlocked, 1) then
+      raise exception 'room_creation_limit_reached' using errcode = 'P0001';
+    end if;
+  end if;
+
+  loop
+    v_code := public.generate_invite_code();
+    v_attempts := v_attempts + 1;
+    exit when not exists (select 1 from public.families where invite_code = v_code);
+    if v_attempts > 25 then
+      raise exception 'invite_code_generation_failed' using errcode = 'P0001';
+    end if;
+  end loop;
+
+  insert into public.families (name, invite_code, created_by, room_type)
+  values (v_name, v_code, v_uid, v_room_type)
+  returning * into v_family;
+
+  select display_name into v_display_name from public.profiles where id = v_uid;
+
+  insert into public.family_members (family_id, user_id, role, display_name, points, starter_grant_received)
+  values (v_family.id, v_uid, 'owner', v_display_name, 20, true);
+
+  perform public.grant_title(v_family.id, v_uid, 'newcomer');
+
+  if v_room_type = 'business' then
+    perform public.grant_title(v_family.id, v_uid, 'boss');
+  end if;
+
+  select count(*) into v_room_count from public.family_members where user_id = v_uid;
+  if v_room_count >= 3 then
+    for v_other_family_id in select family_id from public.family_members where user_id = v_uid loop
+      perform public.grant_title(v_other_family_id, v_uid, 'social_butterfly');
+    end loop;
+  end if;
+
+  return v_family;
+end;
+$$;
+
+-- Service-role only -- no payment provider is wired up yet. This is the
+-- single place a future payment webhook will call once a room's
+-- ads-removal purchase is verified. Idempotent: calling it again on a room
+-- that's already ads_removed is a no-op (the `where ads_removed = false`
+-- guard means the update touches no row, so v_owner stays null and
+-- rooms_unlocked is left alone) -- a payment webhook retry can never
+-- double-credit rooms_unlocked.
+create or replace function public.mark_family_ads_removed(p_family_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_owner uuid;
+begin
+  update public.families
+  set ads_removed = true
+  where id = p_family_id and ads_removed = false
+  returning created_by into v_owner;
+
+  if v_owner is not null then
+    update public.profiles set rooms_unlocked = rooms_unlocked + 1 where id = v_owner;
+  end if;
+end;
+$$;
+
+revoke all on function public.mark_family_ads_removed(uuid) from public, anon, authenticated;
+grant execute on function public.mark_family_ads_removed(uuid) to service_role;
+
+-- =============================================================================
+-- End section 44.
+-- =============================================================================

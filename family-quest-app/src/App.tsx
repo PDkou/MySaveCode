@@ -16,6 +16,8 @@ import { HelpPage } from './pages/HelpPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { AccountDeletionPendingScreen } from './pages/AccountDeletionPendingScreen';
+import { BirthdayRequiredScreen } from './pages/BirthdayRequiredScreen';
+import { APP_MODE } from './lib/appMode';
 import { Spinner } from './components/Spinner';
 import { UndoSnackbar } from './components/UndoSnackbar';
 import { InstallPromptBanner } from './components/InstallPromptBanner';
@@ -52,6 +54,14 @@ function RootGate() {
 
   if (profile?.deletion_requested_at) {
     return <AccountDeletionPendingScreen />;
+  }
+
+  // family-quest-app only (APP_MODE) -- see BirthdayRequiredScreen and
+  // MONETIZATION_DESIGN.md section 1. Covers both new accounts that somehow
+  // skipped signup's birthday field and every account created before it
+  // existed at all.
+  if (APP_MODE === 'family' && !profile?.birthday) {
+    return <BirthdayRequiredScreen />;
   }
 
   if (familyLoading) {

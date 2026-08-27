@@ -20,6 +20,7 @@ function mapFamilyErrorToKey(message: string | undefined): string {
   const m = (message ?? '').toLowerCase();
   if (m.includes('already_in_this_family')) return 'family.error.alreadyInThisFamily';
   if (m.includes('invalid_family_name')) return 'family.error.nameRequired';
+  if (m.includes('room_creation_limit_reached')) return 'family.error.roomLimitReached';
   if (m.includes('invalid_invite_code')) return 'family.error.invalidCode';
   if (m.includes('family_not_found')) return 'family.error.codeNotFound';
   if (m.includes('not_authenticated')) return 'auth.error.unknown';

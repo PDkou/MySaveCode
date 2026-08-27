@@ -7,6 +7,16 @@ import { useAuth, AuthActionError } from '../context/AuthContext';
 import { SettingsModal } from '../components/SettingsModal';
 import { ModalHeader } from '../components/ModalHeader';
 import { useBackDismiss } from '../lib/backNav';
+import { APP_MODE } from '../lib/appMode';
+
+// Birthday is required at signup for family-quest-app only, not
+// business-quest-app -- it exists to let ad requests be tagged per-user
+// once an ad SDK is wired up (this app's users include minors, which is
+// what makes that necessary under Google Play's Families Policy), and that
+// doesn't apply to the B2B-only business app. See MONETIZATION_DESIGN.md
+// section 1 and App.tsx's RootGate, which gates existing accounts the same
+// way this flag gates new ones.
+const REQUIRE_BIRTHDAY = APP_MODE === 'family';
 
 type Tab = 'login' | 'signup';
 
@@ -19,6 +29,7 @@ export function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [birthday, setBirthday] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
@@ -74,13 +85,23 @@ export function AuthPage() {
       setErrorKey('auth.error.displayNameRequired');
       return;
     }
+    if (tab === 'signup' && REQUIRE_BIRTHDAY) {
+      if (!birthday) {
+        setErrorKey('auth.error.birthdayRequired');
+        return;
+      }
+      if (birthday > new Date().toISOString().slice(0, 10)) {
+        setErrorKey('auth.error.birthdayFuture');
+        return;
+      }
+    }
 
     setSubmitting(true);
     try {
       if (tab === 'login') {
         await signIn(email, password);
       } else {
-        const { needsEmailConfirmation } = await signUp(email, password, displayName);
+        const { needsEmailConfirmation } = await signUp(email, password, displayName, birthday || undefined);
         if (needsEmailConfirmation) {
           setInfoMessage(t('auth.signupSuccessConfirmEmail'));
           setTab('login');
@@ -152,6 +173,20 @@ export function AuthPage() {
                 maxLength={40}
                 autoComplete="nickname"
               />
+            </label>
+          )}
+
+          {tab === 'signup' && REQUIRE_BIRTHDAY && (
+            <label className="field">
+              <span>{t('auth.birthday')}</span>
+              <input
+                type="date"
+                value={birthday}
+                onChange={(e) => setBirthday(e.target.value)}
+                max={new Date().toISOString().slice(0, 10)}
+                autoComplete="bday"
+              />
+              <span className="field-hint">{t('auth.birthdayHint')}</span>
             </label>
           )}
 

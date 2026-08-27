@@ -85,6 +85,8 @@
     "passwordPlaceholder": "6文字以上で入力",
     "displayName": "表示名",
     "displayNamePlaceholder": "家族に表示される名前",
+    "birthday": "誕生日",
+    "birthdayHint": "利用年齢の確認のために必要です。",
     "login": "ログイン",
     "signup": "登録する",
     "logout": "ログアウト",
@@ -113,6 +115,8 @@
       "weakPassword": "パスワードは6文字以上にしてください。",
       "invalidEmail": "メールアドレスの形式が正しくありません。",
       "displayNameRequired": "表示名を入力してください。",
+      "birthdayRequired": "誕生日を入力してください。",
+      "birthdayFuture": "未来の日付は入力できません。",
       "emailRequired": "メールアドレスを入力してください。",
       "passwordRequired": "パスワードを入力してください。",
       "emailNotConfirmed": "メールアドレスの確認が必要です。受信トレイをご確認ください。",
@@ -161,6 +165,7 @@
     "regenerateInviteCodeConfirm": "新しいコードを発行すると、以前の招待コードは使えなくなります。続けますか?",
     "error": {
       "nameRequired": "家族ルーム名を入力してください。",
+      "roomLimitReached": "作成できる家族ルーム数の上限に達しました。既存の家族ルームの広告を削除すると、新しい家族ルームをもう一つ作成できます。",
       "alreadyInThisFamily": "すでにこの家族ルームに参加しています。",
       "codeRequired": "招待コードを入力してください。",
       "invalidCode": "招待コードは8桁で入力してください。",
@@ -733,6 +738,11 @@
       "heading": "アカウント削除予定",
       "body": "{{date}}にアカウントが完全に削除されます(残り約{{days}}日)。それまではいつでも取り消せます。",
       "cancelButton": "削除を取り消す"
+    },
+    "birthdayRequired": {
+      "heading": "誕生日を入力してください",
+      "body": "サービス利用年齢の確認のため誕生日の入力が必要です。一度入力すれば引き続きご利用いただけます。",
+      "submitButton": "確認"
     },
     "error": {
       "ownerOfSharedFamily": "他のメンバーが残っている家族ルームのルーム長のため退会できません。ルーム長を譲るか、先に家族ルームを退出してください。"
