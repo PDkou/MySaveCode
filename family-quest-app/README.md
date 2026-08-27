@@ -414,6 +414,54 @@ Android Studio에서 실제 기기/에뮬레이터로 실행해서 배너 광고
 
 ---
 
+## 3-3. FCM(네이티브 푸시 알림) 설정 -- 스토어에 내려면 필수
+
+**왜 필요한가**: 지금까지의 마감/댓글/주간 리포트 알림은 전부 "Web Push"(브라우저 표준)
+방식인데, 이건 **안드로이드 WebView에서 아예 지원되지 않습니다** (백그라운드 실행 자체가
+안 됨, 네이티브 알림 권한 요청창도 안 뜸). Capacitor로 감싼 이 앱은 WebView로 화면을
+그리기 때문에, Play Store에서 설치한 앱에서는 Web Push가 작동하지 않습니다. 이 문제를
+풀려면 안드로이드 앱의 표준 푸시 방식인 **FCM(Firebase Cloud Messaging)**을 별도로
+붙여야 합니다 (코드는 이미 다 되어 있음 -- `lib/nativePush.ts`,
+`supabase/functions/send-due-reminders/index.ts`의 `sendFcmMessage`,
+`schema.sql` 섹션 45). FCM 자체는 완전 무료(메시지 건수 제한 없음)입니다.
+
+### 3-3-1. Firebase 프로젝트 만들기
+
+1. [console.firebase.google.com](https://console.firebase.google.com)에서 새 프로젝트 생성
+2. **Android 앱 추가** -- 패키지명은 정확히 `com.howlingcreative.familyquest`
+3. 이 화면에서 **`google-services.json`** 파일을 다운로드 → `family-quest-app/android/app/` 디렉터리에 그대로 넣기
+   (이 파일이 있어야 안드로이드 빌드가 자동으로 Firebase를 연결함 -- 없으면 빌드는 되지만
+   "Push Notifications won't work"라는 로그만 남기고 조용히 비활성화됨)
+
+### 3-3-2. 서비스 계정 키 발급 (Edge Function이 FCM으로 발송하려면 필요)
+
+1. Firebase 콘솔 > 프로젝트 설정(⚙️) > **서비스 계정** 탭
+2. **새 비공개 키 생성** 클릭 → JSON 파일 다운로드
+3. 이 JSON 파일의 **전체 내용**을 그대로 복사
+
+### 3-3-3. Edge Function Secrets에 등록 (3-1-2와 같은 화면)
+
+| Key | Value |
+|---|---|
+| `FCM_SERVICE_ACCOUNT_JSON` | 3-3-2에서 받은 JSON 파일 내용 전체 (한 줄로) |
+| `FCM_PROJECT_ID` | Firebase 프로젝트 ID (프로젝트 설정 화면 상단에 있음) |
+
+등록 후 Edge Function **Redeploy** (이 저장소의 최신 `send-due-reminders/index.ts` 코드로
+갱신하는 것도 잊지 말 것 -- FCM 발송 로직이 새로 추가되어 있음).
+
+### 3-3-4. schema.sql 다시 실행
+
+섹션 45(`native_push_tokens` 테이블)가 추가되어 있으니, 3-1-0처럼 `schema.sql` 전체를
+SQL Editor에서 다시 실행 (재실행 안전).
+
+### 3-3-5. 확인
+
+Android Studio에서 실기기/에뮬레이터로 실행 → 알림 벨의 푸시 토글을 켜서 권한을 허용하고,
+마감 임박 퀘스트를 만들어서 실제로 알림이 오는지 확인. 이것도 이 샌드박스에선 검증
+불가능했던 부분입니다.
+
+---
+
 ## 4. Android / iPhone 홈 화면 설치
 
 ### Android (Chrome)

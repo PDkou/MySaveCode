@@ -1,5 +1,8 @@
+import { Capacitor } from '@capacitor/core';
+
 import { supabase } from './supabaseClient';
 import type { NotificationPrefsRow } from '../types/database';
+import { checkNativePushPermission, subscribeToNativePush, unsubscribeFromNativePush } from './nativePush';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
@@ -70,7 +73,15 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   return output;
 }
 
+// Two completely different channels behind one API, so NotificationBell.tsx
+// (the only caller) never has to know or care which one it's using:
+//   - Native (Capacitor/Android): FCM via lib/nativePush.ts. Android WebView
+//     doesn't support the Web Push API at all -- no background delivery, no
+//     native permission prompt -- see schema.sql section 45's header
+//     comment for the full story.
+//   - Web/PWA: the original Web Push + VAPID flow below, unchanged.
 export function isPushSupported(): boolean {
+  if (Capacitor.isNativePlatform()) return true; // FCM is always available via the plugin
   return (
     typeof window !== 'undefined' &&
     'serviceWorker' in navigator &&
@@ -80,6 +91,15 @@ export function isPushSupported(): boolean {
 }
 
 export async function getPushState(): Promise<PushState> {
+  if (Capacitor.isNativePlatform()) {
+    // No cheap way to ask "is *this* token already stored server-side"
+    // without a round trip the other three states don't need either -- the
+    // permission state is the same proxy the web path below uses
+    // (Notification.permission), just via the native plugin's own check.
+    const permission = await checkNativePushPermission();
+    if (permission === 'denied') return 'denied';
+    return permission === 'granted' ? 'subscribed' : 'unsubscribed';
+  }
   if (!isPushSupported()) return 'unsupported';
   if (Notification.permission === 'denied') return 'denied';
   const registration = await navigator.serviceWorker.ready;
@@ -88,6 +108,10 @@ export async function getPushState(): Promise<PushState> {
 }
 
 export async function subscribeToPush(userId: string, familyId: string): Promise<void> {
+  if (Capacitor.isNativePlatform()) {
+    return subscribeToNativePush(userId, familyId);
+  }
+
   if (!isPushSupported() || !VAPID_PUBLIC_KEY) {
     throw new Error('push_unsupported');
   }
@@ -121,6 +145,10 @@ export async function subscribeToPush(userId: string, familyId: string): Promise
 }
 
 export async function unsubscribeFromPush(): Promise<void> {
+  if (Capacitor.isNativePlatform()) {
+    return unsubscribeFromNativePush();
+  }
+
   if (!isPushSupported()) return;
   const registration = await navigator.serviceWorker.ready;
   const subscription = await registration.pushManager.getSubscription();

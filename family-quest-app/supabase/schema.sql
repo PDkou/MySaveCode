@@ -9533,6 +9533,12 @@ begin
     delete from public.task_assignees where user_id = v_row.id;
     delete from public.family_members where user_id = v_row.id;
     delete from public.push_subscriptions where user_id = v_row.id;
+    -- native_push_tokens (section 45) doesn't exist yet the first time this
+    -- file runs top-to-bottom, but plpgsql bodies aren't validated against
+    -- table existence until first execution, and section 45 always finishes
+    -- creating it long before this function is ever actually called (via
+    -- cron) -- same reasoning as any other forward reference in this file.
+    delete from public.native_push_tokens where user_id = v_row.id;
     delete from public.notification_prefs where user_id = v_row.id;
 
     update public.profiles
@@ -9773,4 +9779,74 @@ grant execute on function public.mark_family_ads_removed(uuid) to service_role;
 
 -- =============================================================================
 -- End section 44.
+-- =============================================================================
+
+-- =============================================================================
+-- Section 45: Native push tokens (FCM) -- Android WebView can't do Web Push
+-- (2026-08, discovered while getting Capacitor's Android build ready)
+--
+-- push_subscriptions (section 13) is the Web Push table -- it only ever
+-- works for a browser/installed-PWA session, because Web Push depends on
+-- the full Chrome browser's own background service to wake up and deliver
+-- a push while nothing is in the foreground. The Capacitor-wrapped Android
+-- app doesn't run inside Chrome -- its UI is an Android WebView, which does
+-- not implement the Push API at all (no background delivery, no native
+-- permission prompt). So the native app needs a completely separate
+-- channel: Firebase Cloud Messaging (FCM), registered via
+-- @capacitor/push-notifications (see lib/nativePush.ts) and delivered from
+-- the Edge Function via FCM's HTTP v1 API (see
+-- supabase/functions/send-due-reminders/index.ts's sendFcmMessage --
+-- google-auth-library handles the OAuth2 service-account exchange; FCM's
+-- older "legacy" API that used a static server key was fully shut down by
+-- Google in 2024, so there's no simpler option here).
+--
+-- Deliberately a separate table rather than adding nullable columns to
+-- push_subscriptions -- a Web Push subscription and an FCM token don't
+-- share any fields (endpoint+p256dh+auth_key vs a single opaque token), and
+-- keeping them apart means every existing push_subscriptions query in the
+-- Edge Function keeps working completely unchanged.
+-- =============================================================================
+
+create table if not exists public.native_push_tokens (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  family_id uuid not null references public.families(id) on delete cascade,
+  fcm_token text not null unique,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists native_push_tokens_user_id_idx on public.native_push_tokens (user_id);
+
+alter table public.native_push_tokens enable row level security;
+
+drop policy if exists native_push_tokens_select on public.native_push_tokens;
+create policy native_push_tokens_select on public.native_push_tokens
+for select
+using (user_id = auth.uid());
+
+drop policy if exists native_push_tokens_insert on public.native_push_tokens;
+create policy native_push_tokens_insert on public.native_push_tokens
+for insert
+with check (user_id = auth.uid() and public.is_family_member(family_id));
+
+drop policy if exists native_push_tokens_update on public.native_push_tokens;
+create policy native_push_tokens_update on public.native_push_tokens
+for update
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+drop policy if exists native_push_tokens_delete on public.native_push_tokens;
+create policy native_push_tokens_delete on public.native_push_tokens
+for delete
+using (user_id = auth.uid());
+
+grant select, insert, update, delete on public.native_push_tokens to authenticated;
+revoke all on public.native_push_tokens from anon, public;
+
+-- The Edge Function connects with the service_role key and bypasses RLS,
+-- same as it already does for push_subscriptions (section 13's own comment
+-- applies unchanged here).
+
+-- =============================================================================
+-- End section 45.
 -- =============================================================================

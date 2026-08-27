@@ -29,9 +29,19 @@
 //      same way those do, without a second secret to manage.
 //
 // See README.md "Push notifications" for the full deploy walkthrough.
+//
+// Two delivery channels, side by side: Web Push (webpush, VAPID -- for
+// browser/PWA installs) and FCM (Firebase Cloud Messaging -- for the
+// Capacitor-wrapped Android app, whose WebView doesn't support the Web Push
+// API at all, see lib/nativePush.ts's own header comment). Every send site
+// below fetches both push_subscriptions and native_push_tokens for the same
+// user ids and calls both send functions -- a user is never in both tables
+// at once in practice (one device, one channel), but nothing stops it, and
+// sending to both is harmless either way.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
+import { GoogleAuth } from 'npm:google-auth-library@9';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -40,6 +50,104 @@ const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY')!;
 const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') ?? 'mailto:admin@example.com';
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+
+// FCM HTTP v1 API auth -- the legacy "server key" FCM API this project could
+// otherwise have used was fully shut down by Google in mid-2024, so this has
+// to be OAuth2 via a service account from the start (google-auth-library
+// handles the JWT-signing-and-token-exchange dance so this file doesn't
+// have to hand-roll RS256 signing in Deno). FCM_SERVICE_ACCOUNT_JSON is the
+// *entire contents* of the service account key file Firebase console gives
+// you when you create one, pasted as a single-line secret value.
+// FCM_PROJECT_ID is that same Firebase project's project ID. Both unset
+// (the default until someone actually creates the Firebase project -- see
+// README.md) makes every FCM send a silent no-op rather than an error, same
+// spirit as this file's other soft-fail paths.
+const FCM_SERVICE_ACCOUNT_JSON = Deno.env.get('FCM_SERVICE_ACCOUNT_JSON');
+const FCM_PROJECT_ID = Deno.env.get('FCM_PROJECT_ID');
+
+let cachedGoogleAuth: GoogleAuth | null = null;
+function getGoogleAuth(): GoogleAuth {
+  if (!cachedGoogleAuth) {
+    cachedGoogleAuth = new GoogleAuth({
+      credentials: JSON.parse(FCM_SERVICE_ACCOUNT_JSON!),
+      scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
+    });
+  }
+  return cachedGoogleAuth;
+}
+
+// Returns false (never throws) for anything that isn't "delivered" -- FCM
+// not configured yet, a transient network/auth failure, or the token being
+// rejected outright. The caller only needs to distinguish "delivered" from
+// "not delivered right now", and separately decides whether the *specific*
+// reason means the token is dead and should be deleted (see
+// sendToNativeTokens below).
+async function sendFcmMessage(
+  token: string,
+  payload: { title: string; body: string; taskId: string },
+): Promise<{ ok: boolean; tokenIsDead: boolean }> {
+  if (!FCM_SERVICE_ACCOUNT_JSON || !FCM_PROJECT_ID) {
+    return { ok: false, tokenIsDead: false };
+  }
+  try {
+    const client = await getGoogleAuth().getClient();
+    const accessTokenResponse = await client.getAccessToken();
+    const accessToken = typeof accessTokenResponse === 'string' ? accessTokenResponse : accessTokenResponse.token;
+    if (!accessToken) return { ok: false, tokenIsDead: false };
+
+    const res = await fetch(`https://fcm.googleapis.com/v1/projects/${FCM_PROJECT_ID}/messages:send`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: {
+          token,
+          notification: { title: payload.title, body: payload.body },
+          data: { taskId: payload.taskId },
+        },
+      }),
+    });
+
+    if (res.ok) return { ok: true, tokenIsDead: false };
+
+    // FCM's HTTP v1 API reports a dead/unregistered token as 404 with an
+    // UNREGISTERED error status in the body -- same intent as web-push's
+    // 404/410 handling in sendToSubscriptions below, just a different shape.
+    if (res.status === 404) {
+      const body = await res.json().catch(() => null);
+      const status = body?.error?.status as string | undefined;
+      return { ok: false, tokenIsDead: status === 'UNREGISTERED' };
+    }
+    return { ok: false, tokenIsDead: false };
+  } catch {
+    return { ok: false, tokenIsDead: false };
+  }
+}
+
+interface NativePushTokenRow {
+  id: string;
+  user_id: string;
+  fcm_token: string;
+}
+
+async function sendToNativeTokens(
+  supabase: SupabaseClient,
+  tokens: NativePushTokenRow[],
+  payload: { title: string; body: string; taskId: string },
+): Promise<number> {
+  let sentCount = 0;
+  for (const row of tokens) {
+    const result = await sendFcmMessage(row.fcm_token, payload);
+    if (result.ok) {
+      sentCount++;
+    } else if (result.tokenIsDead) {
+      await supabase.from('native_push_tokens').delete().eq('id', row.id);
+    }
+  }
+  return sentCount;
+}
 
 interface PushSubscriptionRow {
   id: string;
@@ -82,6 +190,20 @@ async function filterByNotificationPref(
 // Sends one push per subscription and cleans up any that have expired
 // (404/410) or been unregistered by the browser. Shared by both request
 // paths below since the "actually deliver it" step is identical either way.
+// Shared by every send site below: both push_subscriptions and
+// native_push_tokens rows carry a user_id, and every notification's body
+// text is picked per-recipient by preferred_language -- this groups either
+// row type the same way so each language's batch gets sent with that
+// language's pre-picked text.
+function groupByLang<T extends { user_id: string }>(rows: T[], langById: Map<string, string>): Map<string, T[]> {
+  const byLang = new Map<string, T[]>();
+  for (const row of rows) {
+    const lang = langById.get(row.user_id) === 'ja' ? 'ja' : 'ko';
+    byLang.set(lang, [...(byLang.get(lang) ?? []), row]);
+  }
+  return byLang;
+}
+
 async function sendToSubscriptions(
   supabase: SupabaseClient,
   subscriptions: PushSubscriptionRow[],
@@ -176,19 +298,20 @@ async function handleDueReminders(supabase: SupabaseClient): Promise<Response> {
     const userIds = await filterByNotificationPref(supabase, task.family_id as string, assigneeIds, 'notify_due');
 
     if (userIds.length > 0) {
-      const [{ data: profiles }, { data: subscriptions }] = await Promise.all([
+      const [{ data: profiles }, { data: subscriptions }, { data: nativeTokens }] = await Promise.all([
         supabase.from('profiles').select('id, preferred_language').in('id', userIds),
         supabase.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth_key').in('user_id', userIds),
+        supabase.from('native_push_tokens').select('id, user_id, fcm_token').in('user_id', userIds),
       ]);
 
       const langById = new Map((profiles ?? []).map((p) => [p.id as string, p.preferred_language as string]));
-      const subsByLang = new Map<string, PushSubscriptionRow[]>();
-      for (const sub of (subscriptions ?? []) as PushSubscriptionRow[]) {
-        const lang = langById.get(sub.user_id) === 'ja' ? 'ja' : 'ko';
-        subsByLang.set(lang, [...(subsByLang.get(lang) ?? []), sub]);
-      }
+      const subsByLang = groupByLang((subscriptions ?? []) as PushSubscriptionRow[], langById);
+      const tokensByLang = groupByLang((nativeTokens ?? []) as NativePushTokenRow[], langById);
       for (const [lang, subs] of subsByLang) {
         sentCount += await sendToSubscriptions(supabase, subs, { title: task.title, body: DUE_BODY_TEXT[lang], taskId: task.id });
+      }
+      for (const [lang, tokens] of tokensByLang) {
+        sentCount += await sendToNativeTokens(supabase, tokens, { title: task.title, body: DUE_BODY_TEXT[lang], taskId: task.id });
       }
     }
   }
@@ -252,19 +375,20 @@ async function runOverdueEscalation(supabase: SupabaseClient, now: Date): Promis
     const userIds = await filterByNotificationPref(supabase, task.family_id as string, recipientIds, 'notify_overdue');
 
     if (userIds.length > 0) {
-      const [{ data: profiles }, { data: subscriptions }] = await Promise.all([
+      const [{ data: profiles }, { data: subscriptions }, { data: nativeTokens }] = await Promise.all([
         supabase.from('profiles').select('id, preferred_language').in('id', userIds),
         supabase.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth_key').in('user_id', userIds),
+        supabase.from('native_push_tokens').select('id, user_id, fcm_token').in('user_id', userIds),
       ]);
 
       const langById = new Map((profiles ?? []).map((p) => [p.id as string, p.preferred_language as string]));
-      const subsByLang = new Map<string, PushSubscriptionRow[]>();
-      for (const sub of (subscriptions ?? []) as PushSubscriptionRow[]) {
-        const lang = langById.get(sub.user_id) === 'ja' ? 'ja' : 'ko';
-        subsByLang.set(lang, [...(subsByLang.get(lang) ?? []), sub]);
-      }
+      const subsByLang = groupByLang((subscriptions ?? []) as PushSubscriptionRow[], langById);
+      const tokensByLang = groupByLang((nativeTokens ?? []) as NativePushTokenRow[], langById);
       for (const [lang, subs] of subsByLang) {
         sentCount += await sendToSubscriptions(supabase, subs, { title: task.title, body: OVERDUE_BODY_TEXT[lang], taskId: task.id });
+      }
+      for (const [lang, tokens] of tokensByLang) {
+        sentCount += await sendToNativeTokens(supabase, tokens, { title: task.title, body: OVERDUE_BODY_TEXT[lang], taskId: task.id });
       }
     }
   }
@@ -313,8 +437,19 @@ async function handleWeeklySummary(supabase: SupabaseClient): Promise<Response> 
   const now = new Date();
   const weekAgo = startOfThisWeekKst(now).toISOString();
 
-  const { data: subscriptionFamilies } = await supabase.from('push_subscriptions').select('family_id');
-  const familyIds = Array.from(new Set((subscriptionFamilies ?? []).map((r) => r.family_id as string)));
+  // Union of both channels' family_ids -- a family whose members only ever
+  // registered a native (FCM) token and never a Web Push subscription (or
+  // vice versa) must not be skipped here.
+  const [{ data: webSubFamilies }, { data: nativeTokenFamilies }] = await Promise.all([
+    supabase.from('push_subscriptions').select('family_id'),
+    supabase.from('native_push_tokens').select('family_id'),
+  ]);
+  const familyIds = Array.from(
+    new Set([
+      ...(webSubFamilies ?? []).map((r) => r.family_id as string),
+      ...(nativeTokenFamilies ?? []).map((r) => r.family_id as string),
+    ]),
+  );
   let sentCount = 0;
 
   for (const familyId of familyIds) {
@@ -353,9 +488,10 @@ async function handleWeeklySummary(supabase: SupabaseClient): Promise<Response> 
     const recipientIds = await filterByNotificationPref(supabase, familyId, memberIds, 'notify_weekly_summary');
     if (recipientIds.length === 0) continue;
 
-    const [{ data: profiles }, { data: subscriptions }, { data: mvpMember }] = await Promise.all([
+    const [{ data: profiles }, { data: subscriptions }, { data: nativeTokens }, { data: mvpMember }] = await Promise.all([
       supabase.from('profiles').select('id, preferred_language').in('id', recipientIds),
       supabase.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth_key').in('user_id', recipientIds),
+      supabase.from('native_push_tokens').select('id, user_id, fcm_token').in('user_id', recipientIds),
       mvpUserId
         ? supabase.from('family_members').select('display_name').eq('family_id', familyId).eq('user_id', mvpUserId).maybeSingle()
         : Promise.resolve({ data: null }),
@@ -363,14 +499,15 @@ async function handleWeeklySummary(supabase: SupabaseClient): Promise<Response> 
 
     const mvpName = (mvpMember?.display_name as string | null | undefined) ?? null;
     const langById = new Map((profiles ?? []).map((p) => [p.id as string, p.preferred_language as string]));
-    const subsByLang = new Map<string, PushSubscriptionRow[]>();
-    for (const sub of (subscriptions ?? []) as PushSubscriptionRow[]) {
-      const lang = langById.get(sub.user_id) === 'ja' ? 'ja' : 'ko';
-      subsByLang.set(lang, [...(subsByLang.get(lang) ?? []), sub]);
-    }
+    const subsByLang = groupByLang((subscriptions ?? []) as PushSubscriptionRow[], langById);
+    const tokensByLang = groupByLang((nativeTokens ?? []) as NativePushTokenRow[], langById);
     for (const [lang, subs] of subsByLang) {
       const body = buildWeeklySummaryBody(lang, total, mvpName, mvpCount);
       sentCount += await sendToSubscriptions(supabase, subs, { title: WEEKLY_SUMMARY_TITLE[lang], body, taskId: '' });
+    }
+    for (const [lang, tokens] of tokensByLang) {
+      const body = buildWeeklySummaryBody(lang, total, mvpName, mvpCount);
+      sentCount += await sendToNativeTokens(supabase, tokens, { title: WEEKLY_SUMMARY_TITLE[lang], body, taskId: '' });
     }
   }
 
@@ -573,28 +710,32 @@ async function handleTaskEvent(supabase: SupabaseClient, payload: TaskEventPaylo
     });
   }
 
-  const [{ data: actorMember }, { data: actorProfile }, { data: profiles }, { data: subscriptions }] = await Promise.all([
-    supabase.from('family_members').select('display_name').eq('family_id', task.family_id).eq('user_id', payload.actor_id).maybeSingle(),
-    supabase.from('profiles').select('display_name').eq('id', payload.actor_id).maybeSingle(),
-    supabase.from('profiles').select('id, preferred_language').in('id', recipientIds),
-    supabase.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth_key').in('user_id', recipientIds),
-  ]);
+  const [{ data: actorMember }, { data: actorProfile }, { data: profiles }, { data: subscriptions }, { data: nativeTokens }] =
+    await Promise.all([
+      supabase.from('family_members').select('display_name').eq('family_id', task.family_id).eq('user_id', payload.actor_id).maybeSingle(),
+      supabase.from('profiles').select('display_name').eq('id', payload.actor_id).maybeSingle(),
+      supabase.from('profiles').select('id, preferred_language').in('id', recipientIds),
+      supabase.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth_key').in('user_id', recipientIds),
+      supabase.from('native_push_tokens').select('id, user_id, fcm_token').in('user_id', recipientIds),
+    ]);
 
   const actorName = (actorMember?.display_name as string | null)?.trim() || (actorProfile?.display_name as string | undefined) || '';
   const commentPreview = (payload.comment_body ?? '').slice(0, 80);
   const langById = new Map((profiles ?? []).map((p) => [p.id as string, p.preferred_language as string]));
 
-  const subsByLang = new Map<string, PushSubscriptionRow[]>();
-  for (const sub of (subscriptions ?? []) as PushSubscriptionRow[]) {
-    const lang = langById.get(sub.user_id) === 'ja' ? 'ja' : 'ko';
-    subsByLang.set(lang, [...(subsByLang.get(lang) ?? []), sub]);
-  }
+  const subsByLang = groupByLang((subscriptions ?? []) as PushSubscriptionRow[], langById);
+  const tokensByLang = groupByLang((nativeTokens ?? []) as NativePushTokenRow[], langById);
 
   let sentCount = 0;
   for (const [lang, subs] of subsByLang) {
     const template = EVENT_BODY_TEXT[payload.event][lang];
     const body = template(actorName, commentPreview);
     sentCount += await sendToSubscriptions(supabase, subs, { title: task.title, body, taskId: task.id });
+  }
+  for (const [lang, tokens] of tokensByLang) {
+    const template = EVENT_BODY_TEXT[payload.event][lang];
+    const body = template(actorName, commentPreview);
+    sentCount += await sendToNativeTokens(supabase, tokens, { title: task.title, body, taskId: task.id });
   }
 
   return new Response(JSON.stringify({ notificationsSent: sentCount }), {

@@ -313,6 +313,17 @@ export type PushSubscriptionRow = {
   created_at: string;
 };
 
+// FCM token for the Capacitor-wrapped Android app -- a separate channel
+// from PushSubscriptionRow's Web Push, since Android WebView doesn't
+// support the Web Push API at all (schema.sql section 45, lib/nativePush.ts).
+export type NativePushTokenRow = {
+  id: string;
+  user_id: string;
+  family_id: string;
+  fcm_token: string;
+  created_at: string;
+};
+
 export type NotificationPrefsRow = {
   user_id: string;
   family_id: string;
@@ -415,6 +426,12 @@ export type Database = {
         Insert: Partial<PushSubscriptionRow> &
           Pick<PushSubscriptionRow, 'user_id' | 'family_id' | 'endpoint' | 'p256dh' | 'auth_key'>;
         Update: Partial<PushSubscriptionRow>;
+        Relationships: [];
+      };
+      native_push_tokens: {
+        Row: NativePushTokenRow;
+        Insert: Partial<NativePushTokenRow> & Pick<NativePushTokenRow, 'user_id' | 'family_id' | 'fcm_token'>;
+        Update: Partial<NativePushTokenRow>;
         Relationships: [];
       };
       notification_prefs: {
