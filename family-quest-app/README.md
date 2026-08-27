@@ -270,7 +270,7 @@ select cron.schedule(
   '* * * * *',
   $$
   select net.http_post(
-    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/send-due-reminders',
+    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
@@ -295,7 +295,7 @@ select cron.schedule(
   '0 0 * * 1',
   $$
   select net.http_post(
-    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/send-due-reminders',
+    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
