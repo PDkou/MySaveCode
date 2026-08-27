@@ -1,4 +1,4 @@
-# Hello, Today (`studio.howling.hellotoday`)
+# Hello, Today (`com.howlingcreativestudio.hellotoday`)
 
 An Android app that reminds you to check in on the people you care about —
 family, friends — and keeps a short memo of what you talked about each time,
@@ -9,6 +9,12 @@ This project was handed over as a complete, working source drop (v0.4.14,
 versionCode 28) and imported here as-is on 2026-08-27. It has no history in
 this repo before that commit — treat the import commit as the baseline, not
 as "day one" of the app.
+
+The package was originally `studio.howling.hellotoday`; renamed to
+`com.howlingcreativestudio.hellotoday` the same day, before any Play
+Console app or AAB upload existed (the only point this is safe to do — the
+package name is permanent from the first upload on). If you find a stray
+reference to the old name anywhere, it's a leftover to fix, not intentional.
 
 ## How it's built
 
@@ -94,7 +100,7 @@ see the CI run before trusting it.
 Almost everything is in `app/src/main/assets/index.html` — a single
 self-contained HTML/CSS/JS file (no framework, no bundler) rendered
 full-screen inside a bare `WebView`. The Java under
-`app/src/main/java/studio/howling/hellotoday/` is thin native glue around
+`app/src/main/java/com/howlingcreativestudio/hellotoday/` is thin native glue around
 it:
 
 - `MainActivity` — hosts the `WebView`, exposes a `HelloNative` JS bridge

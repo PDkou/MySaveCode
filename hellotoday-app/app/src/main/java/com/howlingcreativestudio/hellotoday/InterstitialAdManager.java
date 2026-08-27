@@ -1,4 +1,4 @@
-package studio.howling.hellotoday;
+package com.howlingcreativestudio.hellotoday;
 
 import android.app.Activity;
 import android.content.Context;

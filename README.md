@@ -63,8 +63,8 @@ they just happen to share source code and a database.
 - `game/` — a separate Godot/GDScript project ("Hungry Pack"), see its own
   `CLAUDE.md`.
 - `hellotoday-app/` — a separate Android app ("Hello, Today",
-  `studio.howling.hellotoday`), imported here 2026-08-27. Not a Gradle
-  project and not part of the npm workspace above — see its own `README.md`
-  for how it's built and tested.
+  `com.howlingcreativestudio.hellotoday`), imported here 2026-08-27. Not
+  part of the npm workspace above — see its own `README.md` for how it's
+  built and tested.
 - `web_test/`, `reports/` — standalone artifacts, not part of either app's
   build.

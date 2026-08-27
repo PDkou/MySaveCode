@@ -18,7 +18,7 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "studio.howling.hellotoday"
+    namespace = "com.howlingcreativestudio.hellotoday"
     // Google Play requires new apps/updates to target API 36 from
     // 2026-08-31 (https://developer.android.com/google/play/requirements/target-sdk).
     // This app hasn't been submitted yet, so there's no lower floor to
@@ -27,7 +27,7 @@ android {
     buildToolsVersion = "36.0.0"
 
     defaultConfig {
-        applicationId = "studio.howling.hellotoday"
+        applicationId = "com.howlingcreativestudio.hellotoday"
         minSdk = 26
         targetSdk = 36
         versionCode = 28
