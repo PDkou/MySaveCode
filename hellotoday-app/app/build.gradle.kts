@@ -1,5 +1,20 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
+}
+
+// Release signing (upload key for Play App Signing). Read from a local,
+// never-committed keystore.properties -- see README's "Signing & Play
+// Console" section for how to generate one. Its absence isn't an error:
+// assembleDebug/bundleDebug (what CI runs) never need it, only
+// bundleRelease does, and that just fails with a clear Gradle error
+// ("SigningConfig ... does not exist") instead of silently producing an
+// unsigned release artifact.
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -24,9 +39,23 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 }

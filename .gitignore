@@ -11,9 +11,13 @@ hellotoday-app/build/
 # Machine-specific `sdk.dir=` pointer AGP reads instead of $ANDROID_HOME.
 hellotoday-app/local.properties
 # AGP's debug build type auto-generates/reuses ~/.android/debug.keystore
-# per machine -- nothing to gitignore here anymore, but if a signing
-# keystore for release builds ever lands under hellotoday-app/, it must
-# never be committed.
+# per machine -- nothing to gitignore here for debug signing.
+# Release (upload key) signing credentials -- NEVER commit these. The real
+# .jks belongs outside this repo entirely; these patterns are a backstop in
+# case one is ever dropped in here by mistake.
+hellotoday-app/keystore.properties
+hellotoday-app/*.jks
+hellotoday-app/*.keystore
 
 # The SDK Gradle/AGP resolves from Google's/Maven's servers over the
 # network at build time (this repo doesn't vendor it) -- but AGP still
