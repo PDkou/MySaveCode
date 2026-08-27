@@ -93,6 +93,7 @@
     "signupSuccessConfirmEmail": "가입이 완료되었습니다. 이메일함에서 인증 메일을 확인한 뒤 로그인해주세요.",
     "signupSuccessAutoLogin": "가입이 완료되었습니다.",
     "privacyNoticePrefix": "가입하면 ",
+    "privacyNoticeMiddle": " 및 ",
     "privacyNoticeSuffix": "에 동의하는 것으로 간주됩니다.",
     "forgotPasswordLink": "비밀번호를 잊으셨나요?",
     "forgotPasswordHeading": "비밀번호 재설정",
@@ -346,6 +347,7 @@
     "cropHint": "손가락으로 끌어서 위치를 옮기고, 슬라이더로 확대/축소하세요.",
     "cropZoom": "확대/축소",
     "viewPrivacyPolicy": "개인정보처리방침",
+    "viewTermsOfService": "이용약관",
     "deleteAccount": "회원 탈퇴",
     "deleteAccountConfirm": "정말 탈퇴하시겠어요? 7일 후 계정이 완전히 비활성화되며, 그 전까지는 언제든 취소할 수 있어요.",
     "error": {
@@ -357,7 +359,9 @@
   "settings": {
     "heading": "설정",
     "appearance": "화면",
-    "account": "계정"
+    "account": "계정",
+    "contactUs": "문의하기",
+    "contactSubject": "문의사항"
   },
   "language": {
     "label": "언어",

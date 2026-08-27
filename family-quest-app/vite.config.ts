@@ -1,9 +1,31 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Vitest reuses this same config (vite.config.ts, not a separate
+  // vitest.config.ts) -- 'test' is simply ignored by plain `vite build`/
+  // `vite dev`. environment: 'node' (the default) is enough for now since
+  // the first tests only cover pure logic (src/lib/*.ts) with no DOM
+  // needed; add jsdom/happy-dom + this field's `environment` only once an
+  // actual component test needs one.
+  test: {
+    include: ['src/**/*.test.ts'],
+    // Placeholder values only, never real credentials -- most of src/lib
+    // imports the shared `supabase` client (lib/supabaseClient.ts) at
+    // module scope, which throws immediately if these env vars are unset
+    // (a deliberate guard against silently running with no Supabase
+    // project configured). A unit test that never actually calls
+    // supabase.from()/.rpc() still transitively imports that module the
+    // moment it imports anything from src/lib, so it needs *some* value
+    // here to load at all -- createClient() itself doesn't make a network
+    // call, so these never need to resolve to a real project.
+    env: {
+      VITE_SUPABASE_URL: 'https://test.invalid',
+      VITE_SUPABASE_PUBLISHABLE_KEY: 'test-placeholder-key',
+    },
+  },
   plugins: [
     react(),
     VitePWA({

@@ -191,6 +191,8 @@ export function AuthPage() {
           {tab === 'signup' && (
             <p className="auth-privacy-notice">
               {t('auth.privacyNoticePrefix')}
+              <Link to="/terms">{t('profile.viewTermsOfService')}</Link>
+              {t('auth.privacyNoticeMiddle')}
               <Link to="/privacy">{t('profile.viewPrivacyPolicy')}</Link>
               {t('auth.privacyNoticeSuffix')}
             </p>

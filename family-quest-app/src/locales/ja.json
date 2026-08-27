@@ -93,6 +93,7 @@
     "signupSuccessConfirmEmail": "登録が完了しました。届いた確認メールのリンクを開いてからログインしてください。",
     "signupSuccessAutoLogin": "登録が完了しました。",
     "privacyNoticePrefix": "登録すると",
+    "privacyNoticeMiddle": "及び",
     "privacyNoticeSuffix": "に同意したものとみなされます。",
     "forgotPasswordLink": "パスワードをお忘れですか?",
     "forgotPasswordHeading": "パスワード再設定",
@@ -346,6 +347,7 @@
     "cropHint": "指でドラッグして位置を動かし、スライダーで拡大・縮小してください。",
     "cropZoom": "拡大・縮小",
     "viewPrivacyPolicy": "プライバシーポリシー",
+    "viewTermsOfService": "利用規約",
     "deleteAccount": "退会する",
     "deleteAccountConfirm": "本当に退会しますか? 7日後にアカウントが完全に無効化されます。それまでの間はいつでも取り消せます。",
     "error": {
@@ -357,7 +359,9 @@
   "settings": {
     "heading": "設定",
     "appearance": "画面",
-    "account": "アカウント"
+    "account": "アカウント",
+    "contactUs": "お問い合わせ",
+    "contactSubject": "お問い合わせ"
   },
   "language": {
     "label": "言語",
