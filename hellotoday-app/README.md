@@ -188,6 +188,13 @@ or something else about running headless vs. the original dev machine.
 Don't assume it's fixed — re-check it before relying on this script for a
 regression gate.
 
+## Publishing to Play Console
+
+See `PLAY_CONSOLE_LAUNCH.md` — the manual, human-side checklist (privacy
+policy, store listing assets, in-app product setup, closed testing track,
+tester invite copy). Nothing there can be done from this sandbox; it's the
+handoff document for whoever actually clicks through Play Console.
+
 ## Notes for whoever picks this up next
 
 - `test-regression.js`'s asserted strings (e.g. `'Hello, Today 0.4.14'`,
