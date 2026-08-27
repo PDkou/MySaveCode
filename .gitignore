@@ -2,3 +2,8 @@
 # package.json's "workspaces") -- node_modules is hoisted here after the
 # 2026-08 app split. Doesn't affect the unrelated game/ (Godot) project.
 node_modules
+
+# hellotoday-app/ (Android, manual aapt2/d8/apksigner build, no Gradle):
+# build.sh's own output, and the debug keystore it regenerates on demand.
+hellotoday-app/build/
+hellotoday-app/debug.keystore
