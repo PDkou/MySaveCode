@@ -98,14 +98,54 @@ full-screen inside a bare `WebView`. The Java under
 it:
 
 - `MainActivity` — hosts the `WebView`, exposes a `HelloNative` JS bridge
-  (local JSON backup/export via `Storage Access Framework`, language sync).
+  (local JSON backup/export via `Storage Access Framework`, language sync,
+  premium purchase entry points).
 - `ReminderScheduler` / `ReminderReceiver` / `NotificationActionReceiver` /
   `NotificationActionStore` — schedules and fires the local "check in on
   X" notifications and their inline actions (연락했어요 / 내일 다시 / 날짜 변경).
   `BootReceiver` re-arms them after a reboot or app update.
+- `PremiumBilling` — Google Play Billing wrapper for the premium unlock
+  (see below).
 
 When changing behavior, change `index.html` first — it's the app, the same
 way `RunManager.gd` is the whole economy in `game/`.
+
+## Premium unlock (Play Billing)
+
+One-time, non-consumable purchase (`PremiumBilling.PRODUCT_ID =
+"premium_unlimited_people"`) that lifts the free tier's people-count cap.
+The cap itself (`FREE_PEOPLE_LIMIT`, currently 2) was already implemented
+in `index.html` before this — `openPerson()` blocked a 3rd person with a
+toast; the only thing added 2026-08-27 was an actual way to lift it.
+
+- **JS side** (`index.html`): `state.settings.premium` gates `openPerson()`;
+  hitting the cap opens `overlay={type:'premium'}` (an upsell sheet, not
+  just a toast) with `buyPremium()`/`restorePremium()` calling into
+  `HelloNative`. `window.onPremiumStatus(bool)` / `onPremiumPrice(text)` /
+  `onPurchaseFailed()` are the native → JS callbacks, same
+  `window.xyz=function(){}` pattern as `restoreBackupFromNative` etc.
+- **Native side** (`PremiumBilling.java`): owns the `BillingClient`
+  (Billing Library 9.1.0, `app/build.gradle.kts`), queries product details
+  and owned purchases on connect, and re-syncs on every `onResume()` (so a
+  purchase completed in Play's own UI is picked up without relying solely
+  on `onPurchasesUpdated`). Cached unlock state lives in its own
+  SharedPreferences file (`hello_today_premium`), deliberately separate
+  from `deleteAllDataConfirmed()`'s `localStorage.removeItem` — clearing
+  app data doesn't un-purchase anything; `index.html` re-syncs from
+  `HelloNative.isPremium()` right after a reset for the same reason.
+- **No backend verification.** Purchases are trusted from `BillingClient`'s
+  own `PURCHASED` state rather than a server-side receipt check — this app
+  has no backend to do that. Accepted tradeoff for a small personal-use
+  unlock; revisit with real receipt verification if this product line ever
+  becomes worth attacking.
+- **Not yet done, and blocking a real purchase from working**: the
+  `premium_unlimited_people` in-app product has to be created in Play
+  Console (Monetize → Products → In-app products) after the app's first
+  upload — nothing here can create it remotely. Until then,
+  `queryProductDetailsAsync` returns empty and `buyPremium()` fails
+  through `onPurchaseFailed()` (verify this in the CI-built APK on a real
+  device/Play-signed build once the app exists in Play Console, not in the
+  Node tests below — Billing doesn't run in a JS `vm` context or Playwright).
 
 ## Testing
 
@@ -159,6 +199,7 @@ regression gate.
 - `expectedArt` in `test-regression.js` pins the SHA-256 of the three
   illustration PNGs under `app/src/main/assets/img/` — replacing artwork
   must update those hashes too.
-- Play Billing Library integration goes in `app/build.gradle.kts`'s
-  `dependencies {}` block (`implementation("com.android.billingclient:billing:<version>")`)
-  — that's the whole point of having migrated.
+- Play Billing is integrated (see "Premium unlock" above) but untested
+  against a real Play Console listing, since the in-app product doesn't
+  exist there yet. Don't assume the purchase flow works end-to-end until
+  it's been through that once.

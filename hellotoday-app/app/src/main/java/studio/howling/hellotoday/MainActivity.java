@@ -20,6 +20,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends Activity {
     private WebView web;
+    private PremiumBilling premiumBilling;
     private static final String INTERNAL_BACKUP = "hello_today_backup.json";
 
     @Override public void onCreate(Bundle state) {
@@ -37,6 +38,8 @@ public class MainActivity extends Activity {
         web.getSettings().setAllowContentAccess(false);
         web.setWebViewClient(new WebViewClient());
         web.addJavascriptInterface(new NativeBridge(), "HelloNative");
+        premiumBilling = new PremiumBilling(this, web);
+        premiumBilling.start();
         FrameLayout safeRoot = new FrameLayout(this);
         safeRoot.setBackgroundColor(Color.rgb(248,245,237));
         safeRoot.addView(web, new FrameLayout.LayoutParams(-1, -1));
@@ -140,6 +143,15 @@ public class MainActivity extends Activity {
             File file = new File(getFilesDir(), INTERNAL_BACKUP);
             if (file.isFile()) file.delete();
         }
+        @JavascriptInterface public boolean isPremium() {
+            return premiumBilling != null && premiumBilling.isUnlockedCached();
+        }
+        @JavascriptInterface public void purchasePremium() {
+            if (premiumBilling != null) premiumBilling.launchPurchase();
+        }
+        @JavascriptInterface public void restorePurchases() {
+            if (premiumBilling != null) premiumBilling.refreshOwnedPurchases();
+        }
     }
 
     @Override protected void onNewIntent(Intent intent) {
@@ -152,6 +164,9 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         if (web != null) web.evaluateJavascript("window.syncNativeActions&&window.syncNativeActions()", null);
+        // Catches a purchase completed in Play's own UI (e.g. resuming after
+        // the billing flow) without waiting on a fresh onPurchasesUpdated.
+        if (premiumBilling != null) premiumBilling.refreshOwnedPurchases();
     }
 
     private void handleOpenIntent(Intent intent) {

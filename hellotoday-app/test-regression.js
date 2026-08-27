@@ -41,15 +41,17 @@ const context = {
   clearTimeout: () => {},
   localStorage: {getItem: () => null, setItem: () => {}, removeItem: () => {}},
   document: {
-    body: {className: '', classList: {add: () => {}, remove: () => {}}},
+    body: {className: '', classList: {add: () => {}, remove: () => {}}, appendChild: () => {}},
     documentElement: {lang: '', dataset: {}},
     addEventListener: () => {},
     getElementById: id => id === 'app' ? appNode : null,
-    querySelectorAll: () => []
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    createElement: () => ({classList: {add: () => {}, remove: () => {}}, style: {}, appendChild: () => {}})
   },
   window: {addEventListener: () => {}},
   navigator: {language: 'ko-KR'},
-  HelloNative: {schedule: () => {}, cancel: () => {}, syncSettings: () => {}, setLanguage: () => {}, syncAppearance: () => {}},
+  HelloNative: {schedule: () => {}, cancel: () => {}, syncSettings: () => {}, setLanguage: () => {}, syncAppearance: () => {}, isPremium: () => false, purchasePremium: () => {}, restorePurchases: () => {}},
   atob: value => Buffer.from(value, 'base64').toString('binary'),
   TextDecoder,
   Uint8Array,
@@ -69,6 +71,17 @@ assert(vm.runInContext("nextIntervalDays({reminderMode:'random',interval:21,minD
 assert(vm.runInContext("nextIntervalDays({reminderMode:'fixed',interval:30,minDays:14,maxDays:28})", context) === 30, 'fixed interval changed');
 assert(vm.runInContext("overlay={type:'person'};overlayView().includes('data-mode=\"random\" class=\"reminderChoice active\"')", context), 'new contacts do not default to random mode');
 
+// Premium gate: free tier caps at FREE_PEOPLE_LIMIT people; the cap lifts once
+// native reports the purchase, and re-applies after a state reset if native
+// still says premium (deleteAllDataConfirmed must not silently revoke a
+// real purchase just because it clears localStorage).
+vm.runInContext("state.settings.premium=false;state.people=Array.from({length:FREE_PEOPLE_LIMIT},(_,i)=>({id:i+1,name:'P'+i,reminderMode:'random',interval:21,minDays:14,maxDays:28,lastAt:null,memo:'',topic:seeds[0],nextAt:now()+day}))", context);
+assert(vm.runInContext("openPerson();overlay.type", context) === 'premium', 'reaching the free cap should open the premium upsell, not the add-person form');
+assert(vm.runInContext("onPremiumStatus(true);state.settings.premium", context) === true, 'onPremiumStatus(true) did not flip state.settings.premium');
+assert(vm.runInContext("openPerson();overlay.type", context) === 'person', 'premium users must not be blocked by the free-tier cap');
+
+vm.runInContext("state.settings.premium=false;overlay=null", context); // reset for the language sweep below
+
 for (const language of ['ja', 'en']) {
   vm.runInContext(`state.settings.language='${language}';state.people=[{id:1,name:'Alex',relation:'',reminderMode:'random',interval:21,minDays:14,maxDays:28,nextAt:Date.now()+20*day,lastAt:null,memo:'',topic:seeds[0]}];state.logs=[{id:2,personId:1,name:'Alex',at:Date.now(),memo:'',mood:''}]`, context);
   const screens = [
@@ -81,7 +94,8 @@ for (const language of ['ja', 'en']) {
     vm.runInContext('settingsView()', context),
     vm.runInContext("overlay={type:'person',id:1};overlayView()", context),
     vm.runInContext("overlay={type:'complete',id:1};overlayView()", context),
-    vm.runInContext("overlay={type:'snooze',id:1};overlayView()", context)
+    vm.runInContext("overlay={type:'snooze',id:1};overlayView()", context),
+    vm.runInContext("overlay={type:'premium'};overlayView()", context)
   ];
   const visibleText = screens.join(' ').replace(/<[^>]*>/g, ' ');
   assert(!/[가-힣]/.test(visibleText), `${language} screen contains visible Korean copy`);
