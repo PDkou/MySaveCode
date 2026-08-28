@@ -13,9 +13,15 @@ import '@core/styles/global.css';
 import App from '@core/App.tsx';
 import { applyTheme, getInitialTheme } from '@core/lib/theme.ts';
 import { applyColorTheme, getInitialColorTheme } from '@core/lib/colorTheme.ts';
+import { installBackDismissListener } from '@core/lib/backNav.ts';
 
 applyTheme(getInitialTheme());
 applyColorTheme(getInitialColorTheme());
+
+// See family-quest-app/src/main.tsx's matching block (and backNav.ts's
+// comment on installBackDismissListener) for why this must run before
+// createRoot(...).render(<App />) below.
+installBackDismissListener();
 
 // See family-quest-app/src/main.tsx's matching block for why this is
 // needed -- registerType: 'autoUpdate' in vite.config.ts does nothing on

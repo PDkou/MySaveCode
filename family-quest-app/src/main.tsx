@@ -8,9 +8,16 @@ import './styles/global.css';
 import App from './App.tsx';
 import { applyTheme, getInitialTheme } from './lib/theme.ts';
 import { applyColorTheme, getInitialColorTheme } from './lib/colorTheme.ts';
+import { installBackDismissListener } from './lib/backNav.ts';
 
 applyTheme(getInitialTheme());
 applyColorTheme(getInitialColorTheme());
+
+// Must run before createRoot(...).render(<App />) below -- see backNav.ts's
+// comment on installBackDismissListener for why this ordering (attaching
+// before <BrowserRouter>'s own popstate listener exists) is load-bearing,
+// not just early-is-safer tidiness.
+installBackDismissListener();
 
 // vite-plugin-pwa's registerType: 'autoUpdate' (vite.config.ts) only takes
 // effect once something actually calls registerSW() -- without this, the

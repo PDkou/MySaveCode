@@ -25,6 +25,7 @@ import { CelebrationOverlay } from '../components/CelebrationOverlay';
 import { TitleFrame } from '../components/TitleFrame';
 import { TutorialTour } from '../components/TutorialTour';
 import { useUnseenCelebration } from '../hooks/useUnseenCelebration';
+import { consumeSettingsReopenFlag } from '../lib/backNav';
 import { CHARACTER_CUSTOMIZATION_ENABLED, GAME_FEATURES_ENABLED } from '../lib/featureFlags';
 import { startOfThisWeek } from '../lib/formatDate';
 import { BADGE_ICON_SRC, levelForPoints, pointsIntoLevel, pointsNeededForLevel } from '../lib/gamification';
@@ -45,7 +46,11 @@ export function DashboardPage() {
   const [onlyMine, setOnlyMine] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewTask, setShowNewTask] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  // See backNav.ts's consumeSettingsReopenFlag comment -- restores Settings
+  // after navigating away from it to /help, /privacy, or /terms and then
+  // pressing back, which otherwise remounts this page fresh with Settings
+  // closed.
+  const [showSettings, setShowSettings] = useState(() => consumeSettingsReopenFlag());
   const [showInviteQr, setShowInviteQr] = useState(false);
   const [showEditFamilyName, setShowEditFamilyName] = useState(false);
   const [showStats, setShowStats] = useState(false);

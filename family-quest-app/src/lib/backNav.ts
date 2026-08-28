@@ -29,6 +29,45 @@ export function useSmartBack(fallbackPath: string) {
   };
 }
 
+// Settings menu rows that navigate to a real route (help/privacy/terms)
+// intentionally leave that route's own history entry in place instead of
+// consuming it (see useBackDismiss's cleanup below) -- so pressing back
+// does correctly land the browser back on the page that had Settings open.
+// But AuthPage/DashboardPage/FamilySetupPage (whichever one it was) always
+// fully unmounts across a real route change and remounts fresh on the way
+// back, which throws away its showSettings React state -- there is no
+// history-based mechanism that can resurrect already-discarded state, so
+// without this the user lands back on the bare page instead of Settings
+// reopened (reported: "뒤로가기 누르면 전에 모달이 아니라 초기 화면이 표시됨").
+// sessionStorage is the one thing that survives that unmount/remount to
+// carry the "reopen" intent across it.
+const REOPEN_SETTINGS_KEY = 'familyquest.reopenSettingsOnReturn';
+
+// Called right before navigating away from an open Settings modal to
+// /help, /privacy, or /terms.
+export function markSettingsShouldReopen() {
+  try {
+    window.sessionStorage.setItem(REOPEN_SETTINGS_KEY, '1');
+  } catch {
+    // Unavailable (private browsing, storage quota) -- worst case, back
+    // navigation just doesn't reopen Settings, same as before this fix.
+  }
+}
+
+// Read once by each page's own showSettings useState initializer. Consumes
+// the flag immediately so it only ever fires for the one remount right
+// after navigating away from Settings, not on every future mount of that
+// page for the rest of the session.
+export function consumeSettingsReopenFlag(): boolean {
+  try {
+    const shouldReopen = window.sessionStorage.getItem(REOPEN_SETTINGS_KEY) === '1';
+    if (shouldReopen) window.sessionStorage.removeItem(REOPEN_SETTINGS_KEY);
+    return shouldReopen;
+  } catch {
+    return false;
+  }
+}
+
 // Every modal/overlay in this app (SettingsModal, NewTaskModal, the
 // onboarding/tutorial overlays, ...) is a plain conditional render --
 // `{open && <Thing onClose={...} />}` -- not a route, so opening one never
@@ -63,6 +102,26 @@ export function useSmartBack(fallbackPath: string) {
 // the top* of that stack on every popstate -- so a hardware back press
 // always closes the most recently opened overlay, however many are
 // stacked underneath it.
+//
+// installBackDismissListener() (below) MUST attach before React Router's
+// own popstate listener does, i.e. before <BrowserRouter> ever mounts --
+// see main.tsx's call to it. React Router's `useSyncExternalStore`-based
+// history subscription forces a *synchronous* re-render+effect-flush in
+// reaction to a popstate (to avoid tearing), all inside that same event's
+// dispatch. Landing back on a route that reopens Settings (see
+// consumeSettingsReopenFlag above) remounts SettingsModal, whose own
+// useBackDismiss effect pushes a brand-new entry for the reopened
+// modal -- synchronously, still within that one popstate's dispatch. If
+// our own listener were registered *after* React Router's (which it is
+// when only attached lazily on first overlay-open, since React Router's
+// listener always exists first, from app boot), our listener runs second
+// and sees that brand-new entry sitting on top of the stack -- and pops
+// it, instantly closing the overlay that had just correctly reopened
+// (reported: "뒤로가기 누르면 전에 모달이 아니라 초기 화면이 표시됨" --
+// reproduced with instrumented logging: a single popstate event, with
+// AuthPage's full remount-and-reopen happening *before* our listener's
+// turn). Attaching first means our listener always acts on the stack as
+// it stood before this event's own route-driven side effects ran.
 let backDismissTokenCounter = 0;
 interface BackDismissEntry {
   token: number;
@@ -81,7 +140,12 @@ let popstateListenerAttached = false;
 // swallow instead of acting on.
 let suppressNextPopCount = 0;
 
-function ensureBackDismissListener() {
+// Exported so main.tsx can call this *before* `createRoot(...).render(<App
+// />)` -- see the long comment on the call site for why that ordering is
+// load-bearing, not just early-is-safer tidiness. useBackDismiss below also
+// calls this (idempotent) so any test/harness that renders a component tree
+// without going through main.tsx still gets a working listener.
+export function installBackDismissListener() {
   if (popstateListenerAttached) return;
   popstateListenerAttached = true;
   window.addEventListener('popstate', () => {
@@ -100,7 +164,7 @@ export function useBackDismiss(isOpen: boolean, onClose: () => void) {
 
   useEffect(() => {
     if (!isOpen) return;
-    ensureBackDismissListener();
+    installBackDismissListener();
 
     const entry: BackDismissEntry = {
       token: ++backDismissTokenCounter,

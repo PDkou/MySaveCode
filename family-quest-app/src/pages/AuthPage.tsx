@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { useAuth, AuthActionError } from '../context/AuthContext';
 import { SettingsModal } from '../components/SettingsModal';
 import { ModalHeader } from '../components/ModalHeader';
-import { useBackDismiss } from '../lib/backNav';
+import { consumeSettingsReopenFlag, useBackDismiss } from '../lib/backNav';
 import { APP_MODE } from '../lib/appMode';
 
 // Birthday is required at signup for family-quest-app only, not
@@ -23,7 +23,11 @@ type Tab = 'login' | 'signup';
 export function AuthPage() {
   const { t } = useTranslation();
   const { signIn, signUp, sendPasswordReset } = useAuth();
-  const [showSettings, setShowSettings] = useState(false);
+  // See backNav.ts's consumeSettingsReopenFlag comment -- restores Settings
+  // after navigating away from it to /help, /privacy, or /terms and then
+  // pressing back, which otherwise remounts this page fresh with Settings
+  // closed.
+  const [showSettings, setShowSettings] = useState(() => consumeSettingsReopenFlag());
 
   const [tab, setTab] = useState<Tab>('login');
   const [email, setEmail] = useState('');

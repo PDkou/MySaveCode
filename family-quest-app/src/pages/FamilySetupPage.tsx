@@ -5,12 +5,17 @@ import { useAuth } from '../context/AuthContext';
 import { SettingsModal } from '../components/SettingsModal';
 import { FamilyOnboardingForms } from '../components/FamilyOnboardingForms';
 import { OnboardingScreen } from '../components/OnboardingScreen';
+import { consumeSettingsReopenFlag } from '../lib/backNav';
 import { hasSeenOnboarding, markOnboardingSeen } from '../lib/onboarding';
 
 export function FamilySetupPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [showSettings, setShowSettings] = useState(false);
+  // See backNav.ts's consumeSettingsReopenFlag comment -- restores Settings
+  // after navigating away from it to /help, /privacy, or /terms and then
+  // pressing back, which otherwise remounts this page fresh with Settings
+  // closed.
+  const [showSettings, setShowSettings] = useState(() => consumeSettingsReopenFlag());
   // FamilySetupPage is also where returning users land if they ever leave
   // every family (not just fresh signups) -- gating on a per-user "seen"
   // flag rather than "no family yet" keeps this a true one-time welcome
