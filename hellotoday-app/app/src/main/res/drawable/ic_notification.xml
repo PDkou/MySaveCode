@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Status-bar notification icon. Android requires this to be a flat white
      silhouette on a transparent background (the OS renders it using only
-     the alpha channel, masked to the system's own tint) -- a full-color
+     the alpha channel, masked to the system's own tint); a full-color
      app icon here would show up as a solid white/gray blob. The heart
      shape mirrors the one in the launcher icon (art/HelloToday-icon-512.png)
      so the notification still reads as "this app" at a glance. -->
