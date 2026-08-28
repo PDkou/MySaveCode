@@ -52,8 +52,11 @@ jobs:
           KEY_ALIAS: ${{ secrets.HELLOTODAY_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.HELLOTODAY_KEY_PASSWORD }}
         run: |
+          # storeFile must be an absolute path: build.gradle.kts resolves it
+          # via file(...) from the app module directory (hellotoday-app/app),
+          # not from keystore.properties' own directory (hellotoday-app/).
           cat > keystore.properties <<EOF
-          storeFile=hellotoday-upload-key.jks
+          storeFile=$(pwd)/hellotoday-upload-key.jks
           storePassword=$KEYSTORE_PASSWORD
           keyAlias=$KEY_ALIAS
           keyPassword=$KEY_PASSWORD
