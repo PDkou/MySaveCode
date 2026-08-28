@@ -31,7 +31,7 @@ public class ReminderReceiver extends BroadcastReceiver {
         PendingIntent complete = actionIntent(c, personId, name, interval, notifyHour, notifyMinute, reminderMode, minDays, maxDays, notificationId, "complete", notificationId + 100000);
         PendingIntent snooze = actionIntent(c, personId, name, interval, notifyHour, notifyMinute, reminderMode, minDays, maxDays, notificationId, "snooze", notificationId + 200000);
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(c, channel) : new Notification.Builder(c);
-        b.setSmallIcon(android.R.drawable.ic_dialog_info)
+        b.setSmallIcon(R.drawable.ic_notification)
          .setContentTitle(isTest ? "Hello, Today · " + text(language, "Test reminder", "テスト通知", "테스트 알림") : "Hello, Today · " + (name == null || name.trim().isEmpty() ? text(language, "Contact reminder", "連絡リマインダー", "연락 알림") : name))
          .setContentText(isTest ? text(language, "Try the buttons below.", "下のボタンを試してください。", "아래 버튼을 눌러보세요.") : text(language, "Time to reach out.", "そろそろ連絡しませんか？", "연락할 때예요."))
          .setContentIntent(pi).setAutoCancel(true)

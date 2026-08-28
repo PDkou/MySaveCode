@@ -38,7 +38,7 @@ public class NotificationActionReceiver extends BroadcastReceiver {
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26) nm.createNotificationChannel(new NotificationChannel(channel, text(language, "Contact reminders", "連絡リマインダー", "연락 알림"), NotificationManager.IMPORTANCE_DEFAULT));
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(context, channel) : new Notification.Builder(context);
-        b.setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle("Hello, Today · " + text(language, "Test complete", "テスト完了", "테스트 완료")).setContentText(message).setAutoCancel(true);
+        b.setSmallIcon(R.drawable.ic_notification).setContentTitle("Hello, Today · " + text(language, "Test complete", "テスト完了", "테스트 완료")).setContentText(message).setAutoCancel(true);
         nm.notify((int) System.currentTimeMillis(), b.build());
     }
 
