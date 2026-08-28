@@ -116,12 +116,25 @@ export function useBackDismiss(isOpen: boolean, onClose: () => void) {
         // to consume.
         return;
       }
-      // Closed some other way (its own button, a selection, ...) --
-      // remove the entry and pop the history entry pushed for it, so the
-      // back-stack doesn't grow one dead step per overlay ever opened.
       backDismissStack.splice(idx, 1);
-      suppressNextPopCount += 1;
-      window.history.back();
+      // Closed some other way -- normally its own close button, in which
+      // case we're still sitting on the entry we pushed and should consume
+      // it with a self-triggered back so the stack doesn't grow one dead
+      // step per overlay ever opened. But a menu action inside the overlay
+      // can *navigate to a real route* instead of just closing (e.g.
+      // SettingsModal's "개인정보처리방침" row calls onClose() then
+      // navigate('/privacy')) -- that navigate() pushes its own new entry
+      // on top of ours before this cleanup runs (React defers the unmount,
+      // so the synchronous navigate() call always lands first). Blindly
+      // calling history.back() here would then pop *that* new entry
+      // instead of ours, silently undoing the navigation the instant it
+      // happened (reported as "the privacy policy link does nothing" --
+      // reproduced: URL flips to /privacy then immediately back). Only
+      // self-consume when our entry is still actually the current one.
+      if ((window.history.state as { backDismiss?: number } | null)?.backDismiss === entry.token) {
+        suppressNextPopCount += 1;
+        window.history.back();
+      }
     };
   }, [isOpen]);
 }
