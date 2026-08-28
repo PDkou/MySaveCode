@@ -17,7 +17,7 @@ import { ConfirmModal } from './ConfirmModal';
 import { ModalHeader } from './ModalHeader';
 import { AvatarChip } from './AvatarChip';
 import { AvatarPhotoError } from '../lib/avatarPhotos';
-import { useBackDismiss } from '../lib/backNav';
+import { markSettingsShouldReopen, useBackDismiss } from '../lib/backNav';
 import { SUPPORT_EMAIL } from '../lib/constants';
 import { purchaseRemoveAds } from '../lib/purchases';
 
@@ -153,16 +153,19 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
   };
 
   const goToHelp = () => {
+    markSettingsShouldReopen();
     onClose();
     navigate('/help');
   };
 
   const goToPrivacyPolicy = () => {
+    markSettingsShouldReopen();
     onClose();
     navigate('/privacy');
   };
 
   const goToTermsOfService = () => {
+    markSettingsShouldReopen();
     onClose();
     navigate('/terms');
   };
