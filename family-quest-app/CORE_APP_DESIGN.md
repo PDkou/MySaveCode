@@ -7,7 +7,8 @@
 이 두 문서 다 "미리 설계하고 나서 구현"이 아니라 **대화로 기능을 하나씩 추가하면서 코드가 먼저
 생겼고, 이 문서는 그 코드를 거꾸로 읽어서 스펙으로 정리한 것**입니다. 그래서 "왜 이렇게
 동작해야 하는가"보다 "지금 실제로 어떻게 동작하는가"에 가깝고, 코드가 바뀌면 이 문서도 같이
-갱신해야 의미가 있습니다.
+갱신해야 의미가 있습니다. 기능 전체를 빠르게 훑어보려면 `FEATURES.md`(무엇이 지금 라이브인지/
+꺼져있는지/설정 대기인지까지 표시된 요약)를 먼저 보는 게 더 빠릅니다.
 
 ## 목차
 
@@ -28,6 +29,7 @@
 15. PWA
 16. 데이터 모델 요약
 17. 테스트 체크리스트
+18. 가족방 채팅 (2026-08 추가, 번호 순서상 11번 근처가 맞지만 기존 번호를 안 건드리려고 맨 뒤에 추가)
 
 ---
 
@@ -57,6 +59,9 @@
   가능(`FamilySwitcher`).
 - 새 방 만들기: 이름 + 종류(family/business) 지정, 초대 코드 자동 생성. 첫 가입/생성 시
   시작 포인트 지급(`create_family_room`/`join_family_room` 안에서).
+  **`room_type='family'` 생성만 슬롯 제한 있음** (2026-08 추가): 기본 1개, 그 방에서 광고
+  제거를 사면 +1개씩 순차 해금(`profiles.rooms_unlocked`) -- `room_type='business'` 생성은
+  이 제한과 무관. `MONETIZATION_DESIGN.md` 1번 참고.
 - 방 참여: 초대 코드 직접 입력, 또는 QR코드 스캔(`InviteQrModal` -- 코드가 아니라
   `?joinCode=` 쿼리파라미터 붙은 가입 링크를 인코딩해서, 스캔한 기기에서 가입 폼에
   자동으로 채워짐).
@@ -181,7 +186,11 @@
 남이 한 행동) 것만 걸러서 보여줌. 벨을 닫을 때(연 순간이 아니라) "여기까지 봤다"고 기록해서
 다음에 열면 새 것만 남음. 배지 숫자로 안 읽은 개수 표시.
 
-**푸시 알림** (Web Push, Edge Function `send-due-reminders` -- 실제 배포명은 `rapid-service`):
+**푸시 알림** (Edge Function `send-due-reminders` -- 실제 배포명은 `rapid-service`). 두 채널을
+나란히 발송: **Web Push**(PWA/브라우저 설치, `push_subscriptions`)와 **FCM**(Capacitor 네이티브
+앱, `native_push_tokens` -- Android WebView가 Web Push를 지원하지 않아서 별도로 필요, 코드는
+완료됐지만 Firebase 프로젝트 설정 전까지는 실제 발송 안 됨. `README.md` "3-3"/`MONETIZATION_DESIGN.md`
+참고):
 
 | 종류 | 트리거 | 대상 |
 |---|---|---|
@@ -202,10 +211,15 @@
 
 `SettingsModal` 하나로 통합(예전엔 상단바에 아이콘 6~8개가 흩어져 있었음):
 
-- 프로필: 표시 이름(계정 전역), 이 방에서의 표시 이름(방별 오버라이드), 생일, 아바타 사진(크롭 후 업로드)
+- 프로필: 표시 이름(계정 전역), 이 방에서의 표시 이름(방별 오버라이드), 생일(family-quest-app은
+  회원가입 시 필수), 아바타 사진(크롭 후 업로드), 상태 메시지
 - 테마: 라이트/다크 토글, 포인트 색상 테마(여러 팔레트 중 선택)
 - 언어: 한국어/일본어
-- 가족방: 이름 수정, 멤버 관리 모달 열기, 초대 QR 보기
+- 가족방: 이름 수정, 멤버 관리 모달 열기, 초대 QR 보기, 초대 코드 복사
+- **광고 제거** (family-quest-app, room_type='family', 네이티브 앱에서만 노출) -- 방 단위
+  1회성 인앱결제, `MONETIZATION_DESIGN.md` 참고
+- 문의하기(mailto), 이용약관/개인정보처리방침 링크
+- 회원 탈퇴 (7일 유예기간, 다른 멤버가 있는 방의 방장이면 신청 자체가 막힘)
 - 로그아웃
 - (개발/미리보기용) 온보딩 화면 다시 보기
 
@@ -214,8 +228,9 @@
 - `families.room_type === 'business'`인 방에서만, 주간 리포트 모달(`WeeklyBreakdownModal`)에
   CSV 다운로드 버튼이 추가로 뜸. 완료된 퀘스트의 제목/담당자/완료일시를 CSV로 내보냄
   (엑셀에서 한글 깨짐 방지로 UTF-8 BOM 붙임).
-- 그 외 게임화 로직(포인트/XP/칭호/타이쿤)은 family든 business든 완전히 동일 -- room_type을
-  구분해서 다르게 처리하는 곳은 이 CSV 버튼 노출 여부 하나뿐.
+- 그 외 게임화 로직(포인트/XP/칭호)은 family든 business든 완전히 동일 -- room_type을
+  구분해서 다르게 처리하는 곳은 이 CSV 버튼 노출 여부 하나뿐. 컴퍼니퀘스트의 실제 수익화 방향은
+  이 게임화 로직 공유와 무관하게 별도(B2B 구독, `MONETIZATION_DESIGN.md` 2번).
 
 ## 15. PWA
 
@@ -244,21 +259,35 @@
 | `task_templates` | 저장된 요청 템플릿 |
 | `member_badges` | 획득한 뱃지 |
 | `shop_items` | 상점 아이템(코스메틱 + 칭호, `GAMIFICATION_DESIGN.md` 참고) |
-| `member_owned_items` / `member_equipped_items` | 보유/장착 아이템 |
-| `tycoon_state` | 방치형 타이쿤 상태 |
+| `member_owned_items` / `member_equipped_items` | 보유/장착 아이템 (캐릭터 커스터마이징 --
+  `featureFlags.ts`의 `CHARACTER_CUSTOMIZATION_ENABLED`로 현재 UI에서는 꺼져있음, `FEATURES.md` 참고) |
+| `cleaner_state` / `cleaner_tools_owned` / `cleaner_upgrades_owned` | 청소 미니게임(방치형
+  클리커) 상태 -- 코드는 완성이지만 `GAME_FEATURES_ENABLED`로 현재 UI에서는 꺼져있음 |
+| `tycoon_state` / `tycoon_buildings` / `family_tycoon_state` / `family_tycoon_buildings` /
+  `family_tycoon_tap_cooldowns` | **레거시** -- 청소 미니게임 이전의 구 방치형 타이쿤. 클라이언트
+  코드 어디서도 더 이상 호출하지 않는 죽은 경로 (스키마는 append-only 방침이라 테이블 자체는 남아있음) |
+| `family_chat_messages` | 가족방 채팅 (파일 첨부 지원) |
 | `weekly_mvp_log` | 주간 MVP 기록 |
 | `notification_prefs` | 알림 종류별 옵트인/아웃 |
-| `push_subscriptions` | Web Push 구독 정보 |
+| `push_subscriptions` | Web Push 구독 정보 (PWA/브라우저용) |
+| `native_push_tokens` | FCM 토큰 (Capacitor 네이티브 앱용 -- Android WebView는 Web Push를 지원
+  안 해서 별도 채널로 분리, `MONETIZATION_DESIGN.md`/`README.md` "3-3" 참고) |
 
 주요 RPC(서버 함수, 클라이언트가 직접 테이블을 못 건드리게 로직 전부 여기 안에 있음):
 `create_family_room`, `join_family_room`, `leave_family`, `remove_family_member`,
 `regenerate_invite_code`, `create_task`, `update_task`, `report_task_completion`,
 `confirm_task_completion`, `reject_task_completion`, `reopen_task`, `mark_celebration_seen`,
-`purchase_item`, `equip_item`/`unequip_item`, `equip_badge`/`unequip_badge`,
-`tap_tycoon_currency`/`upgrade_tycoon`/`exchange_tycoon_currency`, `record_login`,
-`tap_heartbeat`. (내부 전용, 클라이언트 호출 불가: `award_quest_payout`,
+`purchase_item`, `equip_item`/`unequip_item`, `equip_badge`/`unequip_badge`, `record_login`,
+`tap_heartbeat`, `request_account_deletion`/`cancel_account_deletion`. 청소 미니게임(현재
+UI 비활성, 위 표 참고) 관련: `apply_cleaner_taps`, `buy_cleaner_tool`, `buy_cleaner_upgrade`,
+`complete_cleaner_stage`, `cleaner_heartbeat`, `exchange_cleaner_points`,
+`perform_cleaner_prestige`. (내부 전용, 클라이언트 호출 불가: `award_quest_payout`,
 `spawn_next_recurrence`, `finalize_task_completion`, `sweep_expired_tasks`,
-`compute_weekly_mvp`, `update_family_champions`, `grant_title`.)
+`compute_weekly_mvp`, `update_family_champions`, `grant_title`,
+`process_expired_account_deletions`, `mark_family_ads_removed` -- 마지막 둘은 service_role
+전용, Edge Function에서만 호출.) `tap_tycoon_currency`/`upgrade_tycoon`/
+`exchange_tycoon_currency`도 여전히 존재하지만 위 레거시 타이쿤용이라 이제 아무 클라이언트
+코드도 호출하지 않음.
 
 ## 17. 테스트 체크리스트
 
@@ -296,3 +325,17 @@
 
 ### 회사방 CSV 리포트
 - [ ] 실제로 다운로드한 CSV를 엑셀에서 열었을 때 한글이 안 깨지는지
+
+## 18. 가족방 채팅
+
+`FamilyChatModal`/`lib/familyChat.ts` -- 대시보드 💬 아이콘으로 여는 방 단위 채팅.
+
+- 메시지는 `family_chat_messages`에 저장, 텍스트 없이 첨부파일만 있는 메시지도 가능(둘 중
+  하나만 있으면 됨).
+- **파일 첨부**: 사진 전용이 아니라 전체 파일 타입 허용, 건당 8MB (`lib/chatAttachments.ts`,
+  `taskPhotos.ts`와 같은 패턴). 업로드 전에 메시지 id를 클라이언트가 `crypto.randomUUID()`로
+  미리 만들어서 스토리지 경로(`{family_id}/{message_id}/{filename}`)와 실제로 삽입할 행이
+  항상 같은 id를 쓰도록 함 -- 행 삽입이 실패하면 이미 올라간 파일을 정리(orphan 방지).
+- 삭제는 작성자만 가능(메시지 행 기준). 첨부파일 오브젝트 자체는 다른 멤버도 스토리지
+  정책상 지울 수 있음(`task_photos`와 동일한 관대함 -- `schema.sql` 섹션 42 주석 참고).
+- 방별로 완전히 분리 (RLS `is_family_member` 체크).
