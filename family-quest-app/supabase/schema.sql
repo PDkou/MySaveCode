@@ -9850,3 +9850,48 @@ revoke all on public.native_push_tokens from anon, public;
 -- =============================================================================
 -- End section 45.
 -- =============================================================================
+
+-- =============================================================================
+-- Section 46: Missing title tier assignments (2026-08, docs cleanup pass)
+--
+-- Section 27's tier-mapping UPDATE only covered the titles that existed
+-- when design/title-tiers.md was originally written. 5 cleaner-minigame
+-- titles added afterward were never added to any tier mapping, so
+-- shop_items.tier is still null for them -- found by diffing every
+-- title_condition shop_items.key against every existing tier-assignment
+-- UPDATE in this file (there's more than one -- section 29-3 already tiers
+-- tycoon_devoted/tycoon_prestiged separately, which a first pass at this
+-- diff missed by only looking at section 27's block and wrongly flagged as
+-- missing too; this section covers only the 5 that are genuinely
+-- unassigned anywhere). Same cosmetic-only column, same reasoning style as
+-- section 27 (matched against each title's actual grant_title() condition,
+-- not guessed):
+--   - cleaner_first_step: max_stage reaches 5 (the very first checkpoint)
+--     -- bronze, same tier as other "_first"-named titles.
+--   - cleaner_automation_pro_progress: buying any brand-new tool type for
+--     the first time (v_owned = 0) -- an easy, early milestone -- bronze.
+--   - cleaner_king_10: max_stage reaches 10 -- same numeric tier as the
+--     existing "_ten" titles -- silver.
+--   - cleaner_endless_25: max_stage reaches 25 -- same numeric tier as the
+--     existing "_twenty_five" titles -- gold.
+--   - cleaner_first_prestige: fires on every perform_cleaner_prestige() call
+--     (no count gate), but prestiging itself requires having already
+--     reached deep progress -- platinum, parity with tycoon_prestiged
+--     (section 29-3, already 'master' -- left untouched here) and with the
+--     other big-grind titles.
+-- =============================================================================
+
+update public.shop_items si
+set tier = v.tier
+from (values
+  ('cleaner_first_step', 'bronze'),
+  ('cleaner_automation_pro_progress', 'bronze'),
+  ('cleaner_king_10', 'silver'),
+  ('cleaner_endless_25', 'gold'),
+  ('cleaner_first_prestige', 'platinum')
+) as v(key, tier)
+where si.key = v.key;
+
+-- =============================================================================
+-- End section 46.
+-- =============================================================================
