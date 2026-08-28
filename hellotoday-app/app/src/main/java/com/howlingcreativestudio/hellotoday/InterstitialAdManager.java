@@ -72,7 +72,16 @@ final class InterstitialAdManager {
         if (count % SHOW_EVERY_N_ACTIONS != 0) return;
 
         InterstitialAd ad = loadedAd;
-        if (ad == null) return;
+        if (ad == null) {
+            // Nothing loaded for this trigger (still loading, or the
+            // previous load failed and nothing since has retried it --
+            // onAdFailedToLoad used to leave loadedAd null forever with no
+            // way back). Kick off a fresh attempt so at least the *next*
+            // trigger has a shot, instead of silently going dark for the
+            // rest of the session.
+            loadNext();
+            return;
+        }
         loadedAd = null;
         ad.setFullScreenContentCallback(new FullScreenContentCallback() {
             @Override public void onAdDismissedFullScreenContent() { loadNext(); }
