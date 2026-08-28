@@ -42,6 +42,14 @@
       그 폰을 등록해두세요, 안 그러면 잘못된 트래픽으로 계정이 정지될 수
       있습니다. 아래 3-1번에 UMP 동의 흐름이 아직 남아있습니다.
 
+## 0-1. 알림 아이콘 수정 (0.4.15) — **완료** (2026-08-28)
+
+`ReminderReceiver`/`NotificationActionReceiver`가 `setSmallIcon()`에
+안드로이드 기본 시스템 "i" 아이콘(`android.R.drawable.ic_dialog_info`)을
+쓰고 있던 걸 발견해서 앱 전용 상태바 아이콘(`ic_notification.xml`, 말풍선
+실루엣)으로 교체. 버전 0.4.14(코드 28) → **0.4.15(코드 29)**로 올려서
+CI로 다시 빌드 → 내부 테스트 트랙에 재업로드 완료.
+
 ## 1. Play Console에서 새 앱 만들기
 
 1. Play Console → **모든 앱** → **앱 만들기**
