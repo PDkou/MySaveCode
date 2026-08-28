@@ -216,6 +216,11 @@ export type ProfileRow = {
   // old, process_expired_account_deletions() anonymizes the row and clears
   // this back to null as part of that.
   deletion_requested_at: string | null;
+  // How many room_type='family' rooms this account may create via
+  // create_family_room (schema.sql section 44) -- starts at 1, permanently
+  // incremented by mark_family_ads_removed() the first time a room they own
+  // has its ads removed. See MONETIZATION_DESIGN.md section 1.
+  rooms_unlocked: number;
   created_at: string;
   updated_at: string;
 };
@@ -228,6 +233,11 @@ export type FamilyRow = {
   invite_code: string;
   created_by: string;
   room_type: FamilyRoomType;
+  // One-time "remove ads" purchase applied to this room -- every member
+  // sees no ads once true, regardless of who paid (schema.sql section 44).
+  // Flipped only by the service-role-only mark_family_ads_removed(); no ad
+  // SDK reads this yet (MONETIZATION_DESIGN.md).
+  ads_removed: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -300,6 +310,17 @@ export type PushSubscriptionRow = {
   endpoint: string;
   p256dh: string;
   auth_key: string;
+  created_at: string;
+};
+
+// FCM token for the Capacitor-wrapped Android app -- a separate channel
+// from PushSubscriptionRow's Web Push, since Android WebView doesn't
+// support the Web Push API at all (schema.sql section 45, lib/nativePush.ts).
+export type NativePushTokenRow = {
+  id: string;
+  user_id: string;
+  family_id: string;
+  fcm_token: string;
   created_at: string;
 };
 
@@ -405,6 +426,12 @@ export type Database = {
         Insert: Partial<PushSubscriptionRow> &
           Pick<PushSubscriptionRow, 'user_id' | 'family_id' | 'endpoint' | 'p256dh' | 'auth_key'>;
         Update: Partial<PushSubscriptionRow>;
+        Relationships: [];
+      };
+      native_push_tokens: {
+        Row: NativePushTokenRow;
+        Insert: Partial<NativePushTokenRow> & Pick<NativePushTokenRow, 'user_id' | 'family_id' | 'fcm_token'>;
+        Update: Partial<NativePushTokenRow>;
         Relationships: [];
       };
       notification_prefs: {

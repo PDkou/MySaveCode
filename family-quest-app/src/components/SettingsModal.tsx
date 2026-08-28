@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 
 import { useAuth, AuthActionError } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
@@ -18,6 +19,7 @@ import { AvatarChip } from './AvatarChip';
 import { AvatarPhotoError } from '../lib/avatarPhotos';
 import { useBackDismiss } from '../lib/backNav';
 import { SUPPORT_EMAIL } from '../lib/constants';
+import { purchaseRemoveAds } from '../lib/purchases';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -47,6 +49,9 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
   const [photoErrorKey, setPhotoErrorKey] = useState<string | null>(null);
   const [birthdayBusy, setBirthdayBusy] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [adsRemovalBusy, setAdsRemovalBusy] = useState(false);
+  const [adsRemovalErrorKey, setAdsRemovalErrorKey] = useState<string | null>(null);
+  const [adsRemovalMessage, setAdsRemovalMessage] = useState<string | null>(null);
   const [showOnboardingPreview, setShowOnboardingPreview] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -121,6 +126,29 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
     } catch {
       // Clipboard API can be unavailable (older iOS Safari without a user
       // gesture context); the code is still visible on screen to copy by hand.
+    }
+  };
+
+  const handleRemoveAds = async () => {
+    if (!family) return;
+    setAdsRemovalBusy(true);
+    setAdsRemovalErrorKey(null);
+    setAdsRemovalMessage(null);
+    try {
+      await purchaseRemoveAds(family.id);
+      // families.ads_removed only flips once the RevenueCat webhook lands
+      // server-side (lib/purchases.ts) -- not instantly reflected here, so
+      // this is a "purchase started" message, not a "done" one. refreshFamily
+      // picks up the real flag next time this modal (or the dashboard) loads.
+      setAdsRemovalMessage(t('settings.removeAdsPurchasePending'));
+    } catch {
+      // Button is only rendered on native platforms in the first place, so
+      // in practice this is always a real store-side failure (offering
+      // misconfigured, user cancelled, network) rather than PurchaseError's
+      // "web" case -- one generic message covers all of those.
+      setAdsRemovalErrorKey('settings.error.removeAdsFailed');
+    } finally {
+      setAdsRemovalBusy(false);
     }
   };
 
@@ -269,6 +297,26 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
               <button type="button" className="settings-row-button" onClick={() => setShowMembers(true)}>
                 {t('family.membersHeading')}
               </button>
+            )}
+            {/* room_type check also naturally excludes business-quest-app,
+                which never creates room_type='family' rooms -- that side
+                monetizes as a B2B subscription instead (MONETIZATION_DESIGN.md
+                section 2), not ads. Hidden on web/PWA too since there's no
+                store to purchase through there. */}
+            {Capacitor.isNativePlatform() && family && family.room_type === 'family' && !family.ads_removed && (
+              <>
+                <button
+                  type="button"
+                  className="settings-row-button"
+                  disabled={adsRemovalBusy}
+                  onClick={() => void handleRemoveAds()}
+                >
+                  {adsRemovalBusy ? t('common.saving') : t('settings.removeAds')}
+                </button>
+                <p className="settings-row-hint">{t('settings.removeAdsHint')}</p>
+                {adsRemovalMessage && <p className="form-info" role="status">{adsRemovalMessage}</p>}
+                {adsRemovalErrorKey && <p className="form-error" role="alert">{t(adsRemovalErrorKey)}</p>}
+              </>
             )}
             <button
               type="button"

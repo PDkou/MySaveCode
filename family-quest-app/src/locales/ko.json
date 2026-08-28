@@ -85,6 +85,8 @@
     "passwordPlaceholder": "6자 이상 입력",
     "displayName": "이름",
     "displayNamePlaceholder": "가족에게 보여질 이름",
+    "birthday": "생일",
+    "birthdayHint": "서비스 이용 연령대 확인을 위해 필요해요.",
     "login": "로그인",
     "signup": "회원가입",
     "logout": "로그아웃",
@@ -113,6 +115,8 @@
       "weakPassword": "비밀번호는 6자 이상이어야 합니다.",
       "invalidEmail": "올바른 이메일 형식이 아닙니다.",
       "displayNameRequired": "이름을 입력해주세요.",
+      "birthdayRequired": "생일을 입력해주세요.",
+      "birthdayFuture": "미래 날짜는 입력할 수 없어요.",
       "emailRequired": "이메일을 입력해주세요.",
       "passwordRequired": "비밀번호를 입력해주세요.",
       "emailNotConfirmed": "이메일 인증이 필요합니다. 받은 메일함을 확인해주세요.",
@@ -161,6 +165,7 @@
     "regenerateInviteCodeConfirm": "새 코드를 발급하면 기존 초대 코드는 더 이상 사용할 수 없어요. 계속할까요?",
     "error": {
       "nameRequired": "가족방 이름을 입력해주세요.",
+      "roomLimitReached": "만들 수 있는 가족방 개수를 다 썼어요. 기존 가족방에서 광고를 제거하면 새 가족방을 하나 더 만들 수 있어요.",
       "alreadyInThisFamily": "이미 이 가족방에 참여하고 있습니다.",
       "codeRequired": "초대 코드를 입력해주세요.",
       "invalidCode": "초대 코드는 8자리여야 합니다.",
@@ -361,7 +366,13 @@
     "appearance": "화면",
     "account": "계정",
     "contactUs": "문의하기",
-    "contactSubject": "문의사항"
+    "contactSubject": "문의사항",
+    "removeAds": "광고 제거",
+    "removeAdsHint": "이 가족방에서 광고를 없애요. 한 번 구매하면 이 방 멤버 전원에게 적용돼요.",
+    "removeAdsPurchasePending": "구매가 시작됐어요. 반영까지 몇 초 걸릴 수 있어요.",
+    "error": {
+      "removeAdsFailed": "구매 중 문제가 발생했어요. 잠시 후 다시 시도해주세요."
+    }
   },
   "language": {
     "label": "언어",
@@ -733,6 +744,11 @@
       "heading": "계정 삭제 예정",
       "body": "{{date}}에 계정이 완전히 삭제돼요 (약 {{days}}일 남음). 그 전까지 언제든 취소할 수 있어요.",
       "cancelButton": "삭제 취소"
+    },
+    "birthdayRequired": {
+      "heading": "생일을 입력해주세요",
+      "body": "서비스 이용 연령대 확인을 위해 생일 입력이 필요해요. 한 번만 입력하면 계속 이용하실 수 있어요.",
+      "submitButton": "확인"
     },
     "error": {
       "ownerOfSharedFamily": "다른 멤버가 남아있는 가족방의 방장이라 탈퇴할 수 없어요. 방장을 위임하거나 가족방을 먼저 나가주세요."

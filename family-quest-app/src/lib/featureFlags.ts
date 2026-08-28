@@ -20,6 +20,16 @@
 
 // Housework clicker minigame (HouseworkClickerModal) -- the dashboard's
 // broom-icon entry button.
+//
+// 2026-08 status note: public/art/cleaner/ now has every pose/background/
+// tool-icon asset the CLEANER_*.md handoff docs asked for, and
+// HouseworkClickerModal.tsx already references all of them -- coverage-wise
+// this looks done. What's NOT confirmed is whether CLEANER_ART_REDO_HANDOFF.md
+// (v8)'s actual ask -- part-based rigging instead of a separate image per
+// pose/frame -- was implemented, or whether these are still separately-
+// generated per-frame images (the file names suggest the latter). Flip this
+// back to true once someone's actually looked at it running and decided
+// it's good enough; don't flip it just because the file list looks complete.
 export const GAME_FEATURES_ENABLED = false;
 
 // Character shop (CharacterShopModal, outfit purchases/equip) -- the

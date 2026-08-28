@@ -1,9 +1,11 @@
 # Family Quest
 
 가족(또는 개인/회사팀)이 실제로 쓰는 생활 퀘스트 공유 앱. React + Vite + TypeScript + Supabase 기반
-PWA. 설계 배경과 전체 구현 이력은 `GAMIFICATION_DESIGN.md`(게임화 시스템)를 참고하세요 — 이 문서는
-설치/배포/테스트 절차 중심입니다. 실제 이미지/아이콘 제작이 필요한 영역은 `design/`(캐릭터 아트,
-뱃지·칭호 아이콘, 앱 브랜딩, UI 비주얼)을 참고하세요.
+PWA. **기능 전체를 한눈에 훑어보려면 `FEATURES.md`**를 먼저 보세요 (지금 라이브인지/코드는
+있는데 꺼져있는지/설정 대기인지 상태까지 표시되어 있음). 설계 배경과 전체 구현 이력은
+`GAMIFICATION_DESIGN.md`(게임화 시스템)를 참고하세요 — 이 문서는 설치/배포/테스트 절차 중심입니다.
+실제 이미지/아이콘 제작이 필요한 영역은 `design/`(캐릭터 아트, 뱃지·칭호 아이콘, 앱 브랜딩, UI
+비주얼)을 참고하세요.
 
 ### 기본 기능
 - 이메일/비밀번호 회원가입·로그인 (비밀번호 찾기 포함)
@@ -20,11 +22,13 @@ PWA. 설계 배경과 전체 구현 이력은 `GAMIFICATION_DESIGN.md`(게임화
 ### 게임화 (자세한 설계는 `GAMIFICATION_DESIGN.md` 참고)
 - 공유 방(2인 이상)의 퀘스트는 의뢰금(등록 시 거는 골드, 최소 5골드)을 걸고, 완료하면 포상금으로
   받음 — 완료자 전액 + 의뢰자에게 소액 환급 보너스. 레벨이 오를수록 필요 경험치도 늘어나는 성장형
-  레벨/경험치, 연속 완료 스트릭, 조건 달성형 뱃지, 76종 칭호(테마별 탭으로 구분) 수집
+  레벨/경험치, 연속 완료 스트릭, 조건 달성형 뱃지, 80여 종 칭호(테마별 탭으로 구분) 수집
 - 완료 시 컨페티 애니메이션 + 랜덤 축하 메시지, 대시보드 헤더에 경험치 진행 바 + 보유 골드 상시 표시
-- 골드로 캐릭터 꾸미기(피부/배경/상의/하의/신발/머리/무기/방패/장신구 2종 슬롯) + 칭호/뱃지 장착,
-  방치형 "타이쿤" 시스템(탭하여 재화 획득 → 업그레이드 → 골드로 환전, 일일 상한 있음)
 - 이번 주 가족별 완료 현황(주간 리포트, MVP 하이라이트)
+- **캐릭터 커스터마이징**(골드로 꾸미기, 11개 슬롯)과 **청소 미니게임**(방치형 클리커)은 코드/DB
+  전부 구현되어 있지만, 비주얼 아트 방향이 아직 안 정해져서 **현재 UI에서는 꺼져있는 상태**입니다
+  (`src/lib/featureFlags.ts`에서 플래그 하나로 관리 -- 다시 켜면 바로 복귀). `FEATURES.md` 7번
+  참고.
 
 ### 알림 / 편의 기능
 - 기기 푸시 알림: 마감 임박, 담당 배정, 완료, 댓글, 마감 초과(에스컬레이션), 주간 요약 — 종류별로 켜고 끌 수 있음
@@ -270,7 +274,7 @@ select cron.schedule(
   '* * * * *',
   $$
   select net.http_post(
-    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/send-due-reminders',
+    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
@@ -295,7 +299,7 @@ select cron.schedule(
   '0 0 * * 1',
   $$
   select net.http_post(
-    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/send-due-reminders',
+    url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
@@ -359,6 +363,106 @@ supabase functions deploy send-due-reminders
 ```
 
 코드를 나중에 수정하게 되면(지금은 수정할 필요 없음) `supabase functions deploy send-due-reminders`만 다시 실행하면 됩니다. 3-1-3(pg_cron), 3-1-4(Vercel)는 CLI를 쓰든 대시보드를 쓰든 동일합니다.
+
+---
+
+## 3-2. Capacitor(광고/인앱결제) 설정
+
+`MONETIZATION_DESIGN.md` 섹션 1(광고 기반 무료 + 방 단위 광고 제거)을 실제로 동작시키려면
+필요한 단계입니다. 코드/스캐폴드는 이미 다 되어 있고(`android/` 디렉터리, `lib/ads.ts`,
+`lib/purchases.ts`, Edge Function의 RevenueCat 웹훅 경로), **이 앱에서 대신 만들어줄 수
+없는 외부 계정 3개**를 만들고 아래 값들을 채워 넣어야 실제로 광고가 뜨고 결제가 됩니다.
+이 샌드박스엔 Android SDK/에뮬레이터가 없어서 실제 빌드·기기 테스트는 이 저장소를 로컬(또는
+Android Studio가 있는 환경)에 내려받아서 진행해야 합니다.
+
+### 3-2-1. Google Play Console
+
+1. 앱 등록 (패키지명은 `capacitor.config.ts`의 `appId`와 반드시 동일하게 --
+   `com.howlingcreative.familyquest`. **한 번 배포하면 바꿀 수 없으니** 다른 이름을
+   쓰고 싶으면 배포 전에 지금 바꿔야 함)
+2. **인앱상품(관리형, 비소모성)** 하나 등록 -- 상품 ID는 자유(예: `remove_ads`), 가격
+   300엔 근처로 설정
+
+### 3-2-2. RevenueCat
+
+1. [revenuecat.com](https://www.revenuecat.com)에서 프로젝트 생성, 위 Play Console 앱과 연결
+2. 3-2-1에서 만든 상품을 RevenueCat의 **Product**로 가져오고, **Lifetime 타입 Package**로
+   Offering(Current로 지정)에 담기 -- `lib/purchases.ts`가 `packageType === LIFETIME`인
+   패키지를 찾아서 구매를 시작하므로, 반드시 Lifetime 타입으로 등록해야 함
+3. **Webhook** 설정 (RevenueCat 대시보드 > Integrations > Webhooks):
+   - URL: 이 프로젝트의 `rapid-service` Edge Function URL (3-1-1에서 만든 것과 동일,
+     `https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service`)
+   - Authorization 헤더: 3-1-3의 크론들과 동일한 publishable key 값 (`Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P`) --
+     이 함수의 "Verify JWT" 설정을 그대로 통과시키기 위한 것으로, 별도 시크릿 관리가 필요 없음
+4. 공개 Android SDK 키를 복사해서 `src/lib/purchases.ts`의
+   `REVENUECAT_ANDROID_API_KEY` 자리에 붙여넣기
+
+### 3-2-3. AdMob
+
+1. [admob.google.com](https://admob.google.com)에서 앱 등록, **배너 광고 단위** 하나 생성
+2. 발급된 **App ID**를 `android/app/src/main/res/values/strings.xml`의 `admob_app_id`에
+   교체 (지금은 Google 공식 테스트용 App ID가 들어있어서 항상 테스트 광고만 나옴)
+3. 발급된 **광고 단위 ID**를 `src/lib/ads.ts`의 `BANNER_AD_UNIT_ID`에 교체
+
+### 3-2-4. 빌드/동기화
+
+```bash
+cd family-quest-app
+npm run cap:sync        # 웹 빌드 + android/ 프로젝트에 최신 웹 자산·플러그인 동기화
+npm run cap:open:android # Android Studio에서 android/ 열기 (Android Studio 필요)
+```
+
+Android Studio에서 실제 기기/에뮬레이터로 실행해서 배너 광고와 "광고 제거" 구매(설정 화면)가
+정상 동작하는지 확인 -- 이 부분은 이 샌드박스에서 검증 불가능했던 부분이라 실제 확인이
+필요합니다.
+
+---
+
+## 3-3. FCM(네이티브 푸시 알림) 설정 -- 스토어에 내려면 필수
+
+**왜 필요한가**: 지금까지의 마감/댓글/주간 리포트 알림은 전부 "Web Push"(브라우저 표준)
+방식인데, 이건 **안드로이드 WebView에서 아예 지원되지 않습니다** (백그라운드 실행 자체가
+안 됨, 네이티브 알림 권한 요청창도 안 뜸). Capacitor로 감싼 이 앱은 WebView로 화면을
+그리기 때문에, Play Store에서 설치한 앱에서는 Web Push가 작동하지 않습니다. 이 문제를
+풀려면 안드로이드 앱의 표준 푸시 방식인 **FCM(Firebase Cloud Messaging)**을 별도로
+붙여야 합니다 (코드는 이미 다 되어 있음 -- `lib/nativePush.ts`,
+`supabase/functions/send-due-reminders/index.ts`의 `sendFcmMessage`,
+`schema.sql` 섹션 45). FCM 자체는 완전 무료(메시지 건수 제한 없음)입니다.
+
+### 3-3-1. Firebase 프로젝트 만들기
+
+1. [console.firebase.google.com](https://console.firebase.google.com)에서 새 프로젝트 생성
+2. **Android 앱 추가** -- 패키지명은 정확히 `com.howlingcreative.familyquest`
+3. 이 화면에서 **`google-services.json`** 파일을 다운로드 → `family-quest-app/android/app/` 디렉터리에 그대로 넣기
+   (이 파일이 있어야 안드로이드 빌드가 자동으로 Firebase를 연결함 -- 없으면 빌드는 되지만
+   "Push Notifications won't work"라는 로그만 남기고 조용히 비활성화됨)
+
+### 3-3-2. 서비스 계정 키 발급 (Edge Function이 FCM으로 발송하려면 필요)
+
+1. Firebase 콘솔 > 프로젝트 설정(⚙️) > **서비스 계정** 탭
+2. **새 비공개 키 생성** 클릭 → JSON 파일 다운로드
+3. 이 JSON 파일의 **전체 내용**을 그대로 복사
+
+### 3-3-3. Edge Function Secrets에 등록 (3-1-2와 같은 화면)
+
+| Key | Value |
+|---|---|
+| `FCM_SERVICE_ACCOUNT_JSON` | 3-3-2에서 받은 JSON 파일 내용 전체 (한 줄로) |
+| `FCM_PROJECT_ID` | Firebase 프로젝트 ID (프로젝트 설정 화면 상단에 있음) |
+
+등록 후 Edge Function **Redeploy** (이 저장소의 최신 `send-due-reminders/index.ts` 코드로
+갱신하는 것도 잊지 말 것 -- FCM 발송 로직이 새로 추가되어 있음).
+
+### 3-3-4. schema.sql 다시 실행
+
+섹션 45(`native_push_tokens` 테이블)가 추가되어 있으니, 3-1-0처럼 `schema.sql` 전체를
+SQL Editor에서 다시 실행 (재실행 안전).
+
+### 3-3-5. 확인
+
+Android Studio에서 실기기/에뮬레이터로 실행 → 알림 벨의 푸시 토글을 켜서 권한을 허용하고,
+마감 임박 퀘스트를 만들어서 실제로 알림이 오는지 확인. 이것도 이 샌드박스에선 검증
+불가능했던 부분입니다.
 
 ---
 

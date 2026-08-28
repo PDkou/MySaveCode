@@ -23,7 +23,7 @@ grayscale 필터가 이미지에도 그대로 적용됨), `CelebrationOverlay.ts
 확인해보니 `BADGE_EMOJI`/`BADGE_ICON_SRC`를 아예 안 씀 — MVP 하이라이트는 이모지 없이 텍스트로만
 표시되고 있어서(별도 placeholder 아님) 이번 작업 범위 밖.
 
-## 칭호 (76종) — ✅ 2026-07-31 6단계 프레임으로 실제 연결 완료
+## 칭호 (83종) — ✅ 2026-07-31 6단계 프레임으로 실제 연결 완료
 
 6단계 프레임(브론즈/실버/골드/플래티넘/다이아/마스터, `public/titles/{tier}.png`)을
 [`title-tiers.md`](./title-tiers.md) 기준으로 `shop_items.tier` 컬럼에 채워 넣고, 실제 코드에
@@ -33,10 +33,10 @@ grayscale 필터가 이미지에도 그대로 적용됨), `CelebrationOverlay.ts
 `MyStatsModal.tsx`(칭호 갤러리), `DashboardPage.tsx`(헤더 장착 칩), `CharacterShopModal.tsx`(상점
 미리보기) 세 곳 전부 여기로 통일했습니다.
 
-`shop_items` 테이블의 title 슬롯 76개는 텍스트(예: "방치의 신", "신입" 등, 한국어/일본어 이름 각각
+`shop_items` 테이블의 title 슬롯 83개는 텍스트(예: "방치의 신", "신입" 등, 한국어/일본어 이름 각각
 보유) + 티어 조합으로 표시됩니다.
 
-76개 전부에 개별 아이콘을 그리는 건 비현실적이지만, 아래처럼 **티어별로 묶어서** 최소한의 시각적
+83개 전부에 개별 아이콘을 그리는 건 비현실적이지만, 아래처럼 **티어별로 묶어서** 최소한의 시각적
 구분을 주는 방향은 고려해볼 만합니다:
 
 - 칭호 4개 테마 탭(`TitleCategory`: specific/everyone/firstCome/other, `MyStatsModal.tsx`)별로
@@ -260,7 +260,7 @@ Subject: A circular medal badge icon with a silver rim, a small pixel owl face i
 Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
 
-### 칭호 티어 프레임 (76종 텍스트 칭호를 감싸는 6단 프레임)
+### 칭호 티어 프레임 (83종 텍스트 칭호를 감싸는 6단 프레임)
 
 **8. 브론즈 프레임**
 
