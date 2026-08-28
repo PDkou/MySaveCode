@@ -78,17 +78,20 @@ Play Console 좌측 메뉴 **정책 → 앱 콘텐츠**에서 전부 작성해�
 
 ## 3. 인앱 상품 등록 — **정확한 ID가 중요**
 
-**Monetize(수익 창출) → Products → In-app products → Create product**
-
-- **Product ID**: `remove_ads`
-  (⚠️ `PremiumBilling.PRODUCT_ID`에 이미 하드코딩되어 있는 값과
-  **철자 그대로 정확히 일치**해야 합니다 — 다르면 `queryProductDetailsAsync`가
-  빈 결과를 반환하고 구매 버튼이 계속 실패합니다.)
-- **이름**: 예) "광고 제거"
-- **설명**: 예) "광고를 없애고, 연락하고 싶은 사람도 제한 없이 등록할 수
-  있어요."
-- **가격**: 국가별 가격 설정 (1회성 영구 구매)
-- 저장 후 **활성화(Activate)** — 비활성 상태면 구매가 안 됩니다.
+- [x] **AAB 업로드** — **완료** (2026-08-28). Play Console 최신 UI에서는
+  "일회성 제품"을 만들려면 먼저 앱에 AAB가 하나라도 올라가 있어야 함.
+  `.github/workflows/build-hellotoday-release.yml` (CI, 리포지토리
+  시크릿에 저장된 실제 서명 키로 `bundleRelease` 실행)로 빌드해서
+  **테스트 및 출시 → 테스트 → 내부 테스트**에 첫 버전(0.4.14, 버전
+  코드 28) 업로드/출시함.
+- [x] **일회성 제품 `remove_ads` 생성 및 활성화** — **완료** (2026-08-28).
+  **Play를 통한 수익 창출 → 제품 → 일회성 제품 → 제품 만들기**에서:
+  - **제품 ID**: `remove_ads`
+    (⚠️ `PremiumBilling.PRODUCT_ID`에 하드코딩된 값과 철자가 정확히
+    일치함 — 다르면 `queryProductDetailsAsync`가 빈 결과를 반환하고
+    구매 버튼이 계속 실패합니다.)
+  - 구매 옵션(구매 유형: 구입) 추가, 가격 ₩2,900(모든 지역), **활성화**
+    완료.
 
 ### 3-1. AdMob 연동
 
