@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Reminders are meaningless if they land whenever the OS gets around
-         to it -- this app's whole point is a nudge at roughly the right
+         to it; this app's whole point is a nudge at roughly the right
          moment. Without this, ReminderScheduler falls back to an inexact
          alarm that battery-saving OEM skins (Samsung especially) can defer
          by many minutes. See ReminderScheduler.schedule(). -->
