@@ -107,6 +107,15 @@ public class MainActivity extends Activity {
             }
             requestExactAlarmPermissionIfNeeded();
         }
+        @JavascriptInterface public String appVersion() {
+            // Settings screen shows this so it's obvious which build a
+            // tester/user is on -- reading it from the real package info
+            // (rather than a hand-typed string in index.html) means it can
+            // never again drift out of sync with build.gradle.kts'
+            // versionName like the old hardcoded "0.4.14" footer did.
+            try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
+            catch (Exception e) { return ""; }
+        }
         @JavascriptInterface public void openNotificationSettings() {
             Intent i = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
             startActivity(i);
