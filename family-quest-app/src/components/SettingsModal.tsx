@@ -152,21 +152,30 @@ export function SettingsModal({ onClose, onReplayTutorial }: SettingsModalProps)
     }
   };
 
+  // Deliberately *not* calling onClose() here -- navigate() alone already
+  // unmounts this whole page (AuthPage/DashboardPage/FamilySetupPage, and
+  // SettingsModal along with it) once the route changes, so an explicit
+  // onClose() first is redundant. It's worse than redundant, though: it
+  // commits a *separate* React render (Settings closes, bare underlying
+  // page briefly visible) before the route-change render lands a moment
+  // later, and Chromium paints both -- a real, visible flash every time
+  // (reported: "도움말, 이용약관등등 누르면 깜빡거림" -- confirmed with a
+  // MutationObserver trace: two distinct commits ~11ms apart, the first
+  // showing the bare screen with no modal, the second showing the new
+  // page). Skipping onClose() collapses this back to the single commit
+  // the route swap already produces on its own.
   const goToHelp = () => {
     markSettingsShouldReopen();
-    onClose();
     navigate('/help');
   };
 
   const goToPrivacyPolicy = () => {
     markSettingsShouldReopen();
-    onClose();
     navigate('/privacy');
   };
 
   const goToTermsOfService = () => {
     markSettingsShouldReopen();
-    onClose();
     navigate('/terms');
   };
 
