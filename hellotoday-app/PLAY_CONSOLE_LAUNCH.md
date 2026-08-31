@@ -306,5 +306,54 @@ cd hellotoday-app
 > 앱을 써보시고 불편한 점이나 의견 있으시면 편하게 댓글/DM 남겨주세요.
 > 시간 내주셔서 감사합니다!
 
+### English version (Reddit r/androidapps, r/AlphaAndBetaUsers, IndieHackers 등)
+
+> Hi! I'm an indie developer looking for **closed testers** for my Android
+> app. 🙇
+>
+> **Hello, Today** — a quiet reminder app for staying in touch with people
+> you keep meaning to contact but forget to.
+> - Add someone you want to reach out to, and it reminds you on a random
+>   day 14–28 days later.
+> - Leave a short note after reaching out; it resurfaces that note next
+>   time you're reminded.
+> - No sign-up, no login — everything stays on your device (no server).
+> - Supports Korean, Japanese, and English.
+>
+> Google Play requires new personal developer accounts to have at least
+> 12 closed testers before going live, so I'm looking for people willing
+> to help out.
+>
+> **To join** (both steps needed to count):
+> 1. Join this Google Group first: https://groups.google.com/g/hello-today-testers
+> 2. Then tap "Become a tester" here and install from Play: https://play.google.com/store/apps/details?id=com.howlingcreativestudio.hellotoday
+> 3. Opening the app once is enough to help — no need to keep using it.
+>
+> Feedback (bugs, confusing screens, anything) is very welcome in the
+> comments/DMs. Thanks so much for your time!
+
+### 日本語版（Reddit r/Android_jp、5ch アプリ板、Discordのアプリテストコミュニティなど）
+
+> こんにちは、個人でAndroidアプリを開発していて、**非公開テストの参加者**を
+> 募集しています。🙇
+>
+> **Hello, Today** — たまに思い出す相手についつい連絡し忘れてしまう方の
+> ための、静かなリマインダーアプリです。
+> - 連絡したい相手を登録しておくと、14〜28日後のランダムな日に通知でお知らせします。
+> - 連絡した後に短いメモを残せて、次にお知らせする時にそのメモを表示します。
+> - 会員登録・ログイン不要、記録はすべて端末内のみに保存（サーバーなし）。
+> - 韓国語・日本語・英語に対応。
+>
+> Google Playの規定で、新規の個人開発者アカウントは非公開テストに
+> 最低12人の参加が必要なため、協力してくださる方を探しています。
+>
+> **参加方法**（両方の手順が必要です）
+> 1. まずこちらのGoogleグループに参加してください：https://groups.google.com/g/hello-today-testers
+> 2. 次にこちらのリンクから「テスターになる」を押してPlayストアからインストールしてください：https://play.google.com/store/apps/details?id=com.howlingcreativestudio.hellotoday
+> 3. 一度起動していただくだけで大丈夫です（継続的な利用は不要です）。
+>
+> 使ってみての不具合や気になる点、気軽にコメント・DMでお知らせください。
+> お時間いただきありがとうございます！
+
 (플랫폼별로 첫 인사말/말투만 살짝 조정해서 쓰면 됩니다 — 링크는 위
 "테스터 전달문"과 동일한 옵트인 링크를 넣으면 됩니다.)
