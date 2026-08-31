@@ -181,7 +181,18 @@ export function NotificationBell() {
                       type="button"
                       className="notification-item"
                       onClick={() => {
-                        close();
+                        // Not calling close() (which also does setOpen(false))
+                        // -- same reasoning as SettingsModal's goToHelp/etc:
+                        // navigate() unmounts this whole dropdown anyway once
+                        // the route changes to the task detail page, and
+                        // setOpen(false) landing as its own separate commit
+                        // first (dropdown closes, dashboard flashes) before
+                        // navigate()'s commit lands moments later is a real,
+                        // visible flicker -- confirmed by the identical
+                        // pattern in SettingsModal. markAllRead() is still a
+                        // real side effect (not just UI-closing state), so
+                        // it stays.
+                        markAllRead();
                         navigate(`/task/${item.task_id}`);
                       }}
                     >
