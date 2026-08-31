@@ -252,10 +252,11 @@ cd hellotoday-app
 > 아주 작고 조용한 앱이에요. 가입도, 로그인도 없고, 모든 기록은 휴대폰
 > 안에만 저장돼요.
 >
-> **참여 방법**
-> 1. 아래 링크로 들어가서 "테스터 되기(Become a tester)"를 눌러주세요.
->    [테스트 참여 링크]
-> 2. 안내에 따라 Play 스토어에서 설치하시면 돼요.
+> **참여 방법** (두 단계 다 해주셔야 해요)
+> 1. 먼저 이 구글 그룹에 가입해주세요: https://groups.google.com/g/hello-today-testers
+> 2. 그다음 이 링크로 들어가서 "테스터 되기(Become a tester)"를 눌러주세요:
+>    https://play.google.com/store/apps/details?id=com.howlingcreativestudio.hellotoday
+> 3. 안내에 따라 Play 스토어에서 설치하시면 돼요.
 >
 > **이런 걸 봐주시면 좋아요**
 > - 사람을 등록하고, 알림이 잘 오는지
@@ -295,11 +296,12 @@ cd hellotoday-app
 > 최소 12명이 참여해야 정식 출시가 가능**해서, 참여해주실 분을 찾고
 > 있습니다.
 >
-> **참여 방법**
-> 1. 아래 링크에서 "테스터 되기"를 눌러주세요.
->    [테스트 참여 링크]
-> 2. Play 스토어에서 설치 후 한 번 실행만 해주셔도 큰 도움이 됩니다
->    (계속 쓰실 필요는 없어요!).
+> **참여 방법** (두 단계 다 해주셔야 참여로 인정됩니다)
+> 1. 먼저 이 구글 그룹에 가입해주세요 (승인 대기 없이 바로 가입됩니다):
+>    https://groups.google.com/g/hello-today-testers
+> 2. 그다음 이 링크에서 "테스터 되기"를 누르고 Play 스토어에서 설치해주세요:
+>    https://play.google.com/store/apps/details?id=com.howlingcreativestudio.hellotoday
+> 3. 한 번 실행만 해주셔도 큰 도움이 됩니다 (계속 쓰실 필요는 없어요!).
 >
 > 앱을 써보시고 불편한 점이나 의견 있으시면 편하게 댓글/DM 남겨주세요.
 > 시간 내주셔서 감사합니다!
