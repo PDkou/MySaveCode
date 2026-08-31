@@ -81,6 +81,19 @@ public class MainActivity extends Activity {
             if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 runOnUiThread(() -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 7));
             }
+            // Exact-alarm scheduling (see ReminderScheduler.schedule()) needs
+            // this granted on API 31+; unlike POST_NOTIFICATIONS there's no
+            // in-app permission dialog for it -- only a system Settings
+            // screen, which this opens directly so the ask stays one tap.
+            if (Build.VERSION.SDK_INT >= 31) {
+                AlarmManager alarms = (AlarmManager) getSystemService(ALARM_SERVICE);
+                if (alarms != null && !alarms.canScheduleExactAlarms()) {
+                    try {
+                        startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                                .setData(android.net.Uri.parse("package:" + getPackageName())));
+                    } catch (Exception ignored) {}
+                }
+            }
         }
         @JavascriptInterface public void openNotificationSettings() {
             Intent i = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());

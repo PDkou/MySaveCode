@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Reminders are meaningless if they land whenever the OS gets around
+         to it -- this app's whole point is a nudge at roughly the right
+         moment. Without this, ReminderScheduler falls back to an inexact
+         alarm that battery-saving OEM skins (Samsung especially) can defer
+         by many minutes. See ReminderScheduler.schedule(). -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <!-- Ads (interstitial, free tier only; see InterstitialAdManager) need
          a real network path; nothing else in this app does. -->
     <uses-permission android:name="android.permission.INTERNET" />

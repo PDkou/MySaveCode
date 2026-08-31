@@ -2,6 +2,7 @@ package com.howlingcreativestudio.hellotoday;
 
 import android.app.*;
 import android.content.*;
+import android.os.Build;
 import org.json.JSONObject;
 import java.util.Calendar;
 import java.util.Map;
@@ -37,7 +38,18 @@ final class ReminderScheduler {
         );
         AlarmManager alarms = (AlarmManager) app.getSystemService(Context.ALARM_SERVICE);
         long safeTime = Math.max(atMillis, System.currentTimeMillis() + 5000L);
-        alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, safeTime, pending);
+        // Prefer an exact alarm -- setAndAllowWhileIdle() alone lets battery
+        // savers (Samsung's especially) defer delivery by many minutes,
+        // which defeats a "reminds you at roughly the right time" app.
+        // canScheduleExactAlarms() only exists from API 31; below that,
+        // SCHEDULE_EXACT_ALARM is a normal permission granted at install,
+        // so exact scheduling is always available.
+        boolean exactAllowed = Build.VERSION.SDK_INT < 31 || alarms.canScheduleExactAlarms();
+        if (exactAllowed) {
+            alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, safeTime, pending);
+        } else {
+            alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, safeTime, pending);
+        }
         if (persist) save(app, personId, name, atMillis, intervalDays, notifyHour, notifyMinute, reminderMode, minDays, maxDays);
     }
 
