@@ -74,6 +74,13 @@ configurations.all {
 }
 
 dependencies {
+    // Pins the transitive androidx.fragment version pulled in by
+    // play-services-ads/billing (their dialogs use it internally -- this
+    // app has no Fragment code of its own). Google's pre-launch report
+    // flagged the version those libraries were resolving to (1.1.0) as
+    // outdated; forcing a current one here doesn't change any app behavior.
+    implementation("androidx.fragment:fragment:1.8.5")
+
     // Ad-removal unlock (one-time purchase, see PremiumBilling.java). Google
     // Play requires Billing Library 8+ for new apps/updates from
     // 2026-08-31 (https://developer.android.com/google/play/billing/release-notes) --
