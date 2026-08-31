@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto Backup for Apps rules for API 26-30 (API 31+ uses
+     data_extraction_rules.xml instead; both are declared in the
+     manifest so the whole minSdk 26+ range is covered).
+
+     Only the one file the app already maintains for its own manual
+     "백업 저장/불러오기" (hello_today_backup.json, a full JSON snapshot
+     of people/logs/settings; see MainActivity's saveInternalBackup/
+     silentBackup) is whitelisted. Everything else is left out: WebView's
+     own localStorage (where the app actually reads/writes state day to
+     day), ad SDK caches, billing library state. WebView's on-disk
+     layout is a Chromium implementation detail with no stable path to
+     pin here, and the ad/billing SDKs' cached state is meaningless to
+     restore onto a different device anyway. -->
+<full-backup-content>
+    <include domain="file" path="hello_today_backup.json" />
+</full-backup-content>

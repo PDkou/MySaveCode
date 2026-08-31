@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- API 31+ equivalent of backup_rules.xml; see that file for why only
+     hello_today_backup.json is included. cloud-backup covers Android's
+     automatic Google Drive backup (restored on reinstall/new device);
+     device-transfer covers the cable/Quick-Share device-to-device
+     migration flow. Both point at the same single file. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="file" path="hello_today_backup.json" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="file" path="hello_today_backup.json" />
+    </device-transfer>
+</data-extraction-rules>

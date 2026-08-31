@@ -147,12 +147,31 @@ public class MainActivity extends Activity {
             });
         }
         @JavascriptInterface public void saveInternalBackup(String json) {
-            try (FileOutputStream out = openFileOutput(INTERNAL_BACKUP, MODE_PRIVATE)) {
-                out.write(json.getBytes(StandardCharsets.UTF_8));
+            if (writeInternalBackup(json)) {
                 long savedAt = new File(getFilesDir(), INTERNAL_BACKUP).lastModified();
                 runOnUiThread(() -> web.evaluateJavascript("window.internalBackupSaved&&window.internalBackupSaved(" + savedAt + ")", null));
-            } catch (Exception ignored) {
+            } else {
                 runOnUiThread(() -> web.evaluateJavascript("window.internalBackupFailed&&window.internalBackupFailed()", null));
+            }
+        }
+        // Called from JS's own save() on every state change (not just the
+        // explicit "백업 저장" button) so hello_today_backup.json -- the one
+        // file android:allowBackup's Auto Backup is scoped to (see
+        // backup_rules.xml/data_extraction_rules.xml) -- stays current.
+        // WebView's own localStorage isn't included in that backup (its
+        // on-disk layout is a Chromium implementation detail, too fragile
+        // to pin a path to), so this file is what actually survives a
+        // reinstall/device change. Silent: no JS callback, no toast --
+        // firing one on every keystroke-adjacent save() would be noisy.
+        @JavascriptInterface public void silentBackup(String json) {
+            writeInternalBackup(json);
+        }
+        private boolean writeInternalBackup(String json) {
+            try (FileOutputStream out = openFileOutput(INTERNAL_BACKUP, MODE_PRIVATE)) {
+                out.write(json.getBytes(StandardCharsets.UTF_8));
+                return true;
+            } catch (Exception ignored) {
+                return false;
             }
         }
         @JavascriptInterface public void restoreInternalBackup() {

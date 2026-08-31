@@ -146,7 +146,9 @@ function premiumBuyLabel(){return premiumPrice?l(`${premiumPrice}에 광고 제�
 state.people.forEach(normalizePerson);
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||fresh()}catch(e){return fresh()}}
 function fresh(){return{people:[],logs:[],settings:{quietStart:'21:00',quietEnd:'09:00',notificationTime:'10:00',theme:'cream',tutorialDone:false,language:deviceLanguage}}}
-function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function save(){localStorage.setItem(KEY,JSON.stringify(state));autoBackup()}
+function backupPayload(){return{format:'hello-today-backup',version:2,exportedAt:new Date().toISOString(),data:state}}
+function autoBackup(){try{HelloNative.silentBackup(JSON.stringify(backupPayload()))}catch(e){}}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function locale(){return state.settings.language==='ko'?'ko-KR':state.settings.language==='ja'?'ja-JP':'en-US'}
 function fmt(ts){return new Intl.DateTimeFormat(locale(),{month:'long',day:'numeric'}).format(new Date(ts))}
@@ -227,7 +229,7 @@ window.syncNativeActions=syncNativeActions;
 function testNotification(){try{HelloNative.scheduleTestReminder();toast(l('5분 뒤 테스트 알림이 옵니다','5分後にテスト通知が届きます','A test reminder will arrive in 5 minutes'))}catch(e){toast(l('테스트 알림을 예약하지 못했습니다','テスト通知を予約できませんでした','Could not schedule the test reminder'))}}
 function internalBackupTime(){try{return Number(HelloNative.getInternalBackupTime())||0}catch(e){return 0}}
 function appVersion(){try{return HelloNative.appVersion()||''}catch(e){return ''}}
-function saveInternalBackup(){let payload={format:'hello-today-backup',version:2,exportedAt:new Date().toISOString(),data:state};try{HelloNative.saveInternalBackup(JSON.stringify(payload))}catch(e){internalBackupFailed()}}
+function saveInternalBackup(){try{HelloNative.saveInternalBackup(JSON.stringify(backupPayload()))}catch(e){internalBackupFailed()}}
 function restoreInternalBackup(){try{HelloNative.restoreInternalBackup()}catch(e){internalBackupMissing()}}
 window.internalBackupSaved=function(){render();toast(l('백업했어요','バックアップしました','Backup saved'))}
 window.internalBackupFailed=function(){toast(l('백업하지 못했어요','バックアップできませんでした','Backup failed'))}
@@ -242,6 +244,13 @@ function pressOn(e){let b=e.target.closest&&e.target.closest('button');if(!b)ret
 function pressOff(e){document.querySelectorAll('button.is-pressed').forEach(b=>b.classList.remove('is-pressed'))}
 document.addEventListener('pointerdown',pressOn,{passive:true,capture:true});document.addEventListener('pointerup',pressOff,{passive:true,capture:true});document.addEventListener('pointercancel',pressOff,{passive:true,capture:true});
 state.people.forEach(p=>{if(p.nextAt>now())nativeSchedule(p)});
+// Reinstall / new device: WebView's localStorage (where state actually
+// lives day to day) starts empty and isn't part of what Android's Auto
+// Backup restores (see backup_rules.xml) -- only hello_today_backup.json
+// is. So an empty state with a restorable backup file already sitting
+// there means Android restored it before this first launch; pull it in
+// automatically rather than silently looking like a brand-new install.
+if(!state.people.length&&!state.logs.length&&internalBackupTime()>0)restoreInternalBackup();
 render();
 setTimeout(syncNativeActions,350);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNativeActions()});
