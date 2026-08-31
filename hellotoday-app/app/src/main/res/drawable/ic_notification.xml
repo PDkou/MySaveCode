@@ -3,10 +3,11 @@
      silhouette on a transparent background (the OS renders it using only
      the alpha channel, masked to the system's own tint); a full-color
      app icon here would show up as a solid white/gray blob. Speech-bubble
-     shape (tail bottom-left), matching the GPT-drafted icon concept the
-     heart-in-bubble motif was simplified to a plain bubble since fine
-     detail like a heart cutout disappears at the ~24dp size this actually
-     renders at in the status bar. -->
+     with a heart cut out of it (fillType=evenOdd, so the heart sub-path
+     inside the bubble becomes a transparent hole), matching this app's
+     brand mark (art/HelloToday-icon-512.png). A plain bubble alone was
+     tried first but reads too close to KakaoTalk's own bubble-shaped icon
+     sitting right next to it in the status bar on a Korean phone. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
@@ -14,5 +15,6 @@
     android:viewportHeight="24">
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M20,2H4c-1.1,0 -2,0.9 -2,2v18l4,-4h14c1.1,0 2,-0.9 2,-2V4c0,-1.1 -0.9,-2 -2,-2z" />
+        android:fillType="evenOdd"
+        android:pathData="M20,2H4c-1.1,0 -2,0.9 -2,2v18l4,-4h14c1.1,0 2,-0.9 2,-2V4c0,-1.1 -0.9,-2 -2,-2z M12,14.09L11.28,13.43C8.7,11.09 7,9.55 7,7.66C7,6.12 8.21,4.91 9.75,4.91C10.62,4.91 11.46,5.32 12,5.96C12.55,5.32 13.38,4.91 14.25,4.91C15.79,4.91 17,6.12 17,7.66C17,9.55 15.3,11.09 12.73,13.43L12,14.09Z" />
 </vector>
