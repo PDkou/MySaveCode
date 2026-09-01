@@ -153,7 +153,7 @@ function save(){localStorage.setItem(KEY,JSON.stringify(state));autoBackup()}
 function backupPayload(){return{format:'hello-today-backup',version:2,exportedAt:new Date().toISOString(),data:state}}
 function autoBackup(){try{HelloNative.silentBackup(JSON.stringify(backupPayload()))}catch(e){}}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function avatarInner(p,photoOverride){let src=photoOverride!==undefined?photoOverride:p.photo;return src?`<img src="${src}" style="width:100%;height:100%;object-fit:cover;display:block">`:esc(p.name.slice(0,1))}
+function avatarInner(p,photoOverride){let src=photoOverride!==undefined?photoOverride:p.photo;return src?`<img src="${src}" style="width:100%;height:100%;object-fit:cover;display:block">`:esc((p.name||'').slice(0,1))}
 function locale(){return state.settings.language==='ko'?'ko-KR':state.settings.language==='ja'?'ja-JP':'en-US'}
 function fmt(ts){return new Intl.DateTimeFormat(locale(),{month:'long',day:'numeric'}).format(new Date(ts))}
 function fmtTime(ts){return new Intl.DateTimeFormat(locale(),{hour:'numeric',minute:'2-digit'}).format(new Date(ts))}
