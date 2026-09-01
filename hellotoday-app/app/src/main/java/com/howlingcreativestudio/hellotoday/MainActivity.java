@@ -32,6 +32,7 @@ public class MainActivity extends Activity {
     private static final String INTERNAL_BACKUP = "hello_today_backup.json";
     private static final int REQUEST_PICK_CONTACT = 501;
     private static final int REQUEST_PICK_PHOTO = 502;
+    private static final int REQUEST_PICK_RECORDING = 503;
     // Target size (px, square) stored profile photos are downscaled to.
     // Small enough that a base64 JPEG of one is only tens of KB, so it can
     // live directly in a person's JSON record -- no separate file storage
@@ -111,6 +112,7 @@ public class MainActivity extends Activity {
         Uri uri = data.getData();
         if (requestCode == REQUEST_PICK_CONTACT) handleContactPicked(uri);
         else if (requestCode == REQUEST_PICK_PHOTO) handlePhotoPicked(uri);
+        else if (requestCode == REQUEST_PICK_RECORDING) handleRecordingPicked(uri);
     }
 
     // ACTION_PICK against the Phone URI (not the plain Contacts URI) returns
@@ -127,6 +129,18 @@ public class MainActivity extends Activity {
             String js = "window.contactPicked&&window.contactPicked(" + JSONObject.quote(name) + ")";
             web.evaluateJavascript(js, null);
         } catch (Exception ignored) {}
+    }
+
+    // "Link, don't copy": we only keep the content:// URI, not a file copy,
+    // so we need a persistable permission grant -- otherwise it's revoked
+    // the moment this Activity's task finishes and playback would fail on
+    // the very next app launch. No file is read or copied here at all.
+    private void handleRecordingPicked(Uri uri) {
+        try {
+            getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (Exception ignored) {}
+        String js = "window.recordingPicked&&window.recordingPicked(" + JSONObject.quote(uri.toString()) + ")";
+        web.evaluateJavascript(js, null);
     }
 
     // Decodes off the UI thread (JPEGs from a real camera can be several
@@ -329,6 +343,32 @@ public class MainActivity extends Activity {
                         new Intent(Intent.ACTION_GET_CONTENT).setType("image/*"),
                         REQUEST_PICK_PHOTO));
             } catch (Exception ignored) {}
+        }
+        // ACTION_OPEN_DOCUMENT (not GET_CONTENT) is required here -- only it
+        // grants a URI that takePersistableUriPermission() can hold onto
+        // long-term, since the recording is linked (kept as a URI) rather
+        // than copied into the app's own storage.
+        @JavascriptInterface public void pickRecording() {
+            try {
+                runOnUiThread(() -> startActivityForResult(
+                        new Intent(Intent.ACTION_OPEN_DOCUMENT)
+                                .addCategory(Intent.CATEGORY_OPENABLE)
+                                .setType("audio/*"),
+                        REQUEST_PICK_RECORDING));
+            } catch (Exception ignored) {}
+        }
+        @JavascriptInterface public void playRecording(String uriString) {
+            runOnUiThread(() -> {
+                try {
+                    Uri uri = Uri.parse(uriString);
+                    Intent intent = new Intent(Intent.ACTION_VIEW)
+                            .setDataAndType(uri, "audio/*")
+                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    web.evaluateJavascript("window.recordingPlayFailed&&window.recordingPlayFailed()", null);
+                }
+            });
         }
     }
 
