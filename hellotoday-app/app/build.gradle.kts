@@ -30,8 +30,8 @@ android {
         applicationId = "com.howlingcreativestudio.hellotoday"
         minSdk = 26
         targetSdk = 36
-        versionCode = 34
-        versionName = "0.4.20"
+        versionCode = 35
+        versionName = "0.4.21"
     }
 
     compileOptions {
