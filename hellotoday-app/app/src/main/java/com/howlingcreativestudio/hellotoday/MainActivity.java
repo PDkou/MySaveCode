@@ -138,6 +138,8 @@ public class MainActivity extends Activity {
             if ("sage".equals(theme)) color = Color.rgb(237, 242, 234);
             else if ("lilac".equals(theme)) color = Color.rgb(243, 239, 247);
             else if ("peach".equals(theme)) color = Color.rgb(250, 238, 232);
+            else if ("sky".equals(theme)) color = Color.rgb(232, 242, 247);
+            else if ("meadow".equals(theme)) color = Color.rgb(238, 243, 223);
             else color = Color.rgb(248, 245, 237);
             final int resolved = color;
             runOnUiThread(() -> {
