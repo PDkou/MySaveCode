@@ -4,8 +4,15 @@ import android.Manifest;
 import android.app.*;
 import android.content.*;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
+import android.net.Uri;
 import android.os.*;
+import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.view.*;
 import android.webkit.*;
@@ -23,6 +30,13 @@ public class MainActivity extends Activity {
     private PremiumBilling premiumBilling;
     private InterstitialAdManager adManager;
     private static final String INTERNAL_BACKUP = "hello_today_backup.json";
+    private static final int REQUEST_PICK_CONTACT = 501;
+    private static final int REQUEST_PICK_PHOTO = 502;
+    // Target size (px, square) stored profile photos are downscaled to.
+    // Small enough that a base64 JPEG of one is only tens of KB, so it can
+    // live directly in a person's JSON record -- no separate file storage
+    // or backup-format change needed (see backupPayload() in index.html).
+    private static final int PROFILE_PHOTO_SIZE = 256;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -89,6 +103,94 @@ public class MainActivity extends Activity {
         web.evaluateJavascript("window.closeOverlay && window.closeOverlay()", value -> {
             if ("false".equals(value)) super.onBackPressed();
         });
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        Uri uri = data.getData();
+        if (requestCode == REQUEST_PICK_CONTACT) handleContactPicked(uri);
+        else if (requestCode == REQUEST_PICK_PHOTO) handlePhotoPicked(uri);
+    }
+
+    // ACTION_PICK against the Phone URI (not the plain Contacts URI) returns
+    // a row that already has both a display name and a number in one query
+    // -- no second contacts lookup needed. This is the system's own contact
+    // list UI doing the browsing, so no READ_CONTACTS runtime permission is
+    // needed; the app only ever sees the one row the user picked.
+    private void handleContactPicked(Uri uri) {
+        try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor == null || !cursor.moveToFirst()) return;
+            int nameIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+            String name = nameIdx >= 0 ? cursor.getString(nameIdx) : null;
+            if (name == null || name.trim().isEmpty()) return;
+            String js = "window.contactPicked&&window.contactPicked(" + JSONObject.quote(name) + ")";
+            web.evaluateJavascript(js, null);
+        } catch (Exception ignored) {}
+    }
+
+    // Decodes off the UI thread (JPEGs from a real camera can be several
+    // MB) into a small square JPEG, base64-encoded straight into a data:
+    // URI so it can be stored as an ordinary string field on the person --
+    // see PROFILE_PHOTO_SIZE.
+    private void handlePhotoPicked(Uri uri) {
+        new Thread(() -> {
+            try {
+                Bitmap bitmap = decodeSampledBitmap(uri, PROFILE_PHOTO_SIZE);
+                if (bitmap == null) return;
+                bitmap = correctOrientation(bitmap, uri);
+                bitmap = centerCropSquare(bitmap);
+                bitmap = Bitmap.createScaledBitmap(bitmap, PROFILE_PHOTO_SIZE, PROFILE_PHOTO_SIZE, true);
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 82, out);
+                String dataUri = "data:image/jpeg;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
+                String js = "window.profilePhotoPicked&&window.profilePhotoPicked(" + JSONObject.quote(dataUri) + ")";
+                runOnUiThread(() -> web.evaluateJavascript(js, null));
+            } catch (Exception ignored) {}
+        }).start();
+    }
+
+    // Downsamples during decode (inSampleSize) rather than decoding the
+    // full-resolution bitmap and scaling after -- avoids briefly holding a
+    // multi-megapixel bitmap in memory for what ends up as a 256px avatar.
+    private Bitmap decodeSampledBitmap(Uri uri, int targetSize) throws IOException {
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        try (InputStream in = getContentResolver().openInputStream(uri)) {
+            BitmapFactory.decodeStream(in, null, bounds);
+        }
+        int sample = 1;
+        while (bounds.outWidth / (sample * 2) >= targetSize && bounds.outHeight / (sample * 2) >= targetSize) sample *= 2;
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inSampleSize = sample;
+        try (InputStream in = getContentResolver().openInputStream(uri)) {
+            return BitmapFactory.decodeStream(in, null, opts);
+        }
+    }
+
+    // Camera photos commonly carry an EXIF rotation instead of being
+    // physically rotated; skipping this would leave portrait selfies
+    // sideways once decoded.
+    private Bitmap correctOrientation(Bitmap bitmap, Uri uri) {
+        try (InputStream in = getContentResolver().openInputStream(uri)) {
+            if (in == null) return bitmap;
+            ExifInterface exif = new ExifInterface(in);
+            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            float degrees = orientation == ExifInterface.ORIENTATION_ROTATE_90 ? 90
+                    : orientation == ExifInterface.ORIENTATION_ROTATE_180 ? 180
+                    : orientation == ExifInterface.ORIENTATION_ROTATE_270 ? 270 : 0;
+            if (degrees == 0) return bitmap;
+            Matrix matrix = new Matrix();
+            matrix.postRotate(degrees);
+            return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        } catch (Exception ignored) {
+            return bitmap;
+        }
+    }
+
+    private Bitmap centerCropSquare(Bitmap src) {
+        int size = Math.min(src.getWidth(), src.getHeight());
+        return Bitmap.createBitmap(src, (src.getWidth() - size) / 2, (src.getHeight() - size) / 2, size, size);
     }
 
     public final class NativeBridge {
@@ -213,6 +315,20 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void maybeShowInterstitial() {
             // InterstitialAd.show() requires the main thread.
             runOnUiThread(() -> { if (adManager != null) adManager.maybeShow(); });
+        }
+        @JavascriptInterface public void pickContact() {
+            try {
+                runOnUiThread(() -> startActivityForResult(
+                        new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI),
+                        REQUEST_PICK_CONTACT));
+            } catch (Exception ignored) {}
+        }
+        @JavascriptInterface public void pickProfilePhoto() {
+            try {
+                runOnUiThread(() -> startActivityForResult(
+                        new Intent(Intent.ACTION_GET_CONTENT).setType("image/*"),
+                        REQUEST_PICK_PHOTO));
+            } catch (Exception ignored) {}
         }
     }
 
