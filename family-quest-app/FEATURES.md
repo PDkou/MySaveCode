@@ -119,6 +119,8 @@
 
 ## 11. 컴퍼니퀘스트 (business-quest-app, 별도 배포) ✅
 
+컴퍼니퀘스트 관련 정보를 전부 모은 문서는 `COMPANY_QUEST_OVERVIEW.md` 참고.
+
 - family-quest-app과 동일 코드베이스, `room_type='business'` 고정 온보딩 + 문구만 다름
   (`businessOverrides.ts`)
 - **CSV 리포트**: 회사방에서만 주간 리포트 모달에 CSV 다운로드 버튼 노출 (완료 퀘스트
