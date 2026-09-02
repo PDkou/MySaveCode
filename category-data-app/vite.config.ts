@@ -11,6 +11,12 @@ export default defineConfig({
   // (https://appassets.androidplatform.net/assets/dist/); absolute "/"
   // paths would 404 there.
   base: './',
+  define: {
+    // See src/main.tsx and package.json's build:preview script -- true
+    // only for the standalone single-file build used for quick live
+    // previews (published as an Artifact rather than installed).
+    __DISABLE_SW__: JSON.stringify(!!process.env.DISABLE_SW),
+  },
   plugins: [
     react(),
     VitePWA({

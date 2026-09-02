@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:preview": "tsc -b && DISABLE_SW=1 vite build --outDir dist-preview",
+    "preview:artifact": "npm run build:preview && node scripts/build-preview-artifact.cjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },
