@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
+import { CATEGORY_COLOR_CHOICES } from '../lib/palette';
 import type { Category } from '../types';
 
 const EMOJI_CHOICES = ['📁', '💰', '👕', '💄', '📚', '🏋️', '🐾', '🌱', '🎮', '🚗', '✈️', '🏠'];
-const COLOR_CHOICES = ['#4f46e5', '#db2777', '#d97706', '#059669', '#0891b2', '#7c3aed', '#dc2626', '#475569'];
 
 interface EditCategoryModalProps {
   category: Category;
@@ -54,7 +54,7 @@ export function EditCategoryModal({ category, onSave, onClose }: EditCategoryMod
 
       <span className="field-label">색상</span>
       <div className="choice-row">
-        {COLOR_CHOICES.map((c) => (
+        {CATEGORY_COLOR_CHOICES.map((c) => (
           <button
             key={c}
             type="button"

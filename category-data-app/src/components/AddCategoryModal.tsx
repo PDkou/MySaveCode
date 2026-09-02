@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
 import { CATEGORY_TEMPLATES } from '../lib/templates';
+import { CATEGORY_COLOR_CHOICES } from '../lib/palette';
 import type { FieldDef } from '../types';
 
 const EMOJI_CHOICES = ['📁', '💰', '👕', '💄', '📚', '🏋️', '🐾', '🌱', '🎮', '🚗', '✈️', '🏠'];
-const COLOR_CHOICES = ['#4f46e5', '#db2777', '#d97706', '#059669', '#0891b2', '#7c3aed', '#dc2626', '#475569'];
 
 interface AddCategoryModalProps {
   onCreate: (input: { name: string; emoji: string; color: string; fields: FieldDef[] }) => void;
@@ -17,14 +17,14 @@ export function AddCategoryModal({ onCreate, onClose }: AddCategoryModalProps) {
   const [step, setStep] = useState<Step>('template');
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState(EMOJI_CHOICES[0]);
-  const [color, setColor] = useState(COLOR_CHOICES[0]);
+  const [color, setColor] = useState(CATEGORY_COLOR_CHOICES[0]);
   const [fields, setFields] = useState<FieldDef[]>([]);
 
   const pickTemplate = (templateId: string) => {
     if (templateId === 'blank') {
       setName('');
       setEmoji(EMOJI_CHOICES[0]);
-      setColor(COLOR_CHOICES[0]);
+      setColor(CATEGORY_COLOR_CHOICES[0]);
       setFields([]);
       setStep('details');
       return;
@@ -111,7 +111,7 @@ export function AddCategoryModal({ onCreate, onClose }: AddCategoryModalProps) {
 
       <span className="field-label">색상</span>
       <div className="choice-row">
-        {COLOR_CHOICES.map((c) => (
+        {CATEGORY_COLOR_CHOICES.map((c) => (
           <button
             key={c}
             type="button"

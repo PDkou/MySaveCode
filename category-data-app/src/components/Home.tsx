@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { AppData, Category, FieldDef } from '../types';
 import { AddCategoryModal } from './AddCategoryModal';
 import { BackupSheet } from './BackupSheet';
@@ -38,10 +38,10 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport }: HomeProp
                 key={c.id}
                 type="button"
                 className="category-card"
-                style={{ borderTopColor: c.color }}
+                style={{ '--card-accent': c.color } as CSSProperties}
                 onClick={() => onOpenCategory(c.id)}
               >
-                <span className="category-card-emoji">{c.emoji}</span>
+                <span className="category-card-badge">{c.emoji}</span>
                 <span className="category-card-name">{c.name}</span>
                 <span className="category-card-count">{entryCount(c.id)}건</span>
               </button>

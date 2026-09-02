@@ -51,7 +51,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        int bg = Color.rgb(0xF7, 0xF7, 0xFB);
+        int bg = Color.rgb(0xF1, 0xEE, 0xE4);
         getWindow().setStatusBarColor(bg);
         getWindow().setNavigationBarColor(bg);
         getWindow().getDecorView().setSystemUiVisibility(
