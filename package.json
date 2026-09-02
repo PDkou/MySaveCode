@@ -3,6 +3,7 @@
   "name": "mysavecode-monorepo",
   "workspaces": [
     "family-quest-app",
-    "business-quest-app"
+    "business-quest-app",
+    "category-data-app"
   ]
 }

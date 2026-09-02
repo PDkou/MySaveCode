@@ -20,6 +20,20 @@ Both apps currently point at the **same Supabase project** (same
 `.env`) — splitting the backend too is a deliberately deferred follow-up,
 not done yet.
 
+A third, unrelated app lives alongside them:
+
+- **`category-data-app/`** — "내 기록장", a mobile/tablet-first PWA where
+  the user defines their own categories (가계부, 옷장, 화장품, ...), each
+  with its own user-defined fields (text/number/currency/date/select), and
+  the app renders entered data as an auto-generated table with per-column
+  sums, plus a PDF export via the browser's native print dialog (no
+  server-rendered PDF, no font-embedding concerns). It does **not** share
+  code with `family-quest-app`/`business-quest-app` and has no `@core`
+  alias — it's a standalone React+Vite+`vite-plugin-pwa` app. Storage is
+  local-only (`localStorage`, no login) for now, with JSON backup/restore
+  to move data between devices; a Supabase-backed sync is a deliberately
+  deferred follow-up, same as the split above, should usage outgrow that.
+
 ## What actually differs between the two apps today
 
 Startlingly little, by design — see `family-quest-app/src/lib/appMode.ts`,
@@ -43,8 +57,8 @@ not yet built.
 
 This is an npm workspace rooted here (see `package.json`'s `"workspaces"`)
 — `node_modules` is hoisted to this root, not duplicated per app. Run
-`npm install` from **this directory**, not from inside either app, after
-pulling changes that touch either app's `package.json`.
+`npm install` from **this directory**, not from inside any app, after
+pulling changes that touch an app's `package.json`.
 
 ```bash
 # family app
@@ -52,6 +66,9 @@ cd family-quest-app && npm run dev    # or: npm run build
 
 # business app
 cd business-quest-app && npm run dev  # or: npm run build
+
+# category data app (no Supabase env needed -- local storage only)
+cd category-data-app && npm run dev   # or: npm run build
 ```
 
 Each app builds/deploys completely independently (two separate hosting
