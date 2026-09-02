@@ -370,6 +370,17 @@ public class MainActivity extends Activity {
                 }
             });
         }
+        // Opens an https link in the user's own browser rather than inside this
+        // WebView -- the WebViewClient here has no shouldOverrideUrlLoading, so
+        // an in-WebView navigation would strand the user with no way back to
+        // the app short of force-closing it.
+        @JavascriptInterface public void openUrl(String url) {
+            runOnUiThread(() -> {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                } catch (Exception ignored) {}
+            });
+        }
     }
 
     @Override protected void onNewIntent(Intent intent) {
