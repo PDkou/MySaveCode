@@ -112,9 +112,26 @@
 
 **설계**:
 
-- `employee_profiles.employment_start_date` (근속연수 계산 기준), `weekly_work_days`(비례
-  부여 판별용) -- `family_members`를 그대로 확장할지, 회사방 전용 프로필 테이블을 새로 둘지는
-  8번 열린 질문.
+- **사원 프로필은 `family_members` 확장이 아니라 별도 테이블(`business_employee_profiles`)로
+  둡니다.** `family_members`는 family-quest-app과 완전히 공유하는 테이블이고, 지금까지 이
+  스키마의 관례가 기능별 상태를 `family_members`에 얹지 않고 항상 별도 테이블로 분리해온
+  쪽이었습니다(청소 미니게임의 `cleaner_state`, 옛 타이쿤의 `tycoon_state`, FCM 토큰의
+  `native_push_tokens` 등 -- `CORE_APP_DESIGN.md` 16번 데이터 모델 요약 참고). `family_members`
+  자체도 이미 게임화 상태(포인트/XP/스트릭 등)로 꽤 빽빽한데, 여기에 회사방에서만 의미 있는
+  컬럼을 얹으면 family-quest-app 쪽 행에는 영원히 안 쓰이는 NULL 컬럼만 늘어납니다. 이미 이
+  문서에서 회사방 전용 테이블은 전부 `business_` 접두사로 통일하고 있으니(`business_worksites`,
+  `business_manager_grants` 등) 같은 명명 규칙을 그대로 따릅니다.
+  - `business_employee_profiles`: `family_id`, `user_id`, `employment_start_date`(근속연수
+    계산 기준), `weekly_work_days`(비례 부여 판별용, 기본값 5 -- 풀타임 기준). `unique
+    (family_id, user_id)` -- `family_members`와 동일한 복합 유니크 제약으로 사실상 1:1 확장.
+  - **생성 시점**: `create_family_room`/`join_family_room`이 `room_type='business'`일 때
+    `family_members` 행을 만드는 것과 같은 트랜잭션에서 이 행도 함께 만듭니다(`employment_
+    start_date` 기본값은 참여 시각). 나중에 채워 넣는 별도 단계를 두면 "멤버는 있는데 사원
+    프로필은 없는" 상태를 연차 배치/매니저 위임 판정 곳곳에서 방어적으로 처리해야 해서, 생성을
+    보장해두는 쪽이 이후 로직을 훨씬 단순하게 만듭니다.
+  - 실제 입사일이 방 참여일과 다른 경우(입사 후 한참 지나서야 앱을 도입하는 회사 등)는
+    `employment_start_date`를 오너가 나중에 수정하는 걸로 대응 -- 별도 정책 없이도 이미 이
+    문서 곳곳에 있는 "오너가 수동으로 조정" 패턴과 동일.
 - `annual_leave_grants`: 부여 1건 = 1행. `granted_on`, `days_granted`, `expires_at`(2년 후),
   `days_used`, `source`(`'auto'`/`'manual'`), 잔여일수는 `days_granted - days_used`로 계산.
 - 매일(또는 매월) 배치로 근속연수가 부여 기준일에 도달한 사원을 스캔해서 `source='auto'`로
@@ -186,6 +203,7 @@ role을 대체하는 게 아니라 **member 위에 얹는 추가 권한 레이�
 | 테이블 | 용도 |
 |---|---|
 | `business_worksites` | 사업장(다지점 대응) -- 이름, GPS 좌표+반경, QR 토큰 |
+| `business_employee_profiles` | 사원 프로필(회사방 x 사용자 1:1) -- 입사일, 주 근무일수 |
 | `attendance_records` | 사원 1명의 하루 출퇴근 1건 -- 체크인/아웃 시각, 방식, 상태, 근무시간 |
 | `business_schedule_templates` | 고정근무 스케줄(회사방 단위) -- 표준 출퇴근 시간, 휴게시간 |
 | `business_shift_defs` | 교대근무 조 정의 -- 조 이름, 시작/종료 시각 |
@@ -200,7 +218,6 @@ role을 대체하는 게 아니라 **member 위에 얹는 추가 권한 레이�
 
 ## 8. 아직 정하지 않은 것
 
-- 사원 프로필을 `family_members` 확장으로 갈지, 회사방 전용 테이블을 새로 둘지
 - 공휴일 캘린더를 사업장별로 다르게 등록할 수 있어야 하는 다지점 회사 대응 (1차는 회사방
   전체 공통 캘린더, 3-1번 참고)
 - 초과근무 **수당 계산**까지 포함할지 -- 이번 설계는 근무시간/초과근무 "시간" 산출까지만이고,
