@@ -3,6 +3,7 @@ import type { Category, Entry } from '../types';
 import { DataTable } from './DataTable';
 import { EntryFormModal } from './EntryFormModal';
 import { PrintView } from './PrintView';
+import { getNativeBridge } from '../lib/native';
 
 interface TableScreenProps {
   category: Category;
@@ -42,7 +43,20 @@ export function TableScreen({ category, entries, onBack, onAddEntry, onUpdateEnt
         <h1 className="category-title">
           {category.emoji} {category.name} · 표
         </h1>
-        <button type="button" className="icon-btn" onClick={() => window.print()} aria-label="PDF로 내보내기" disabled={entries.length === 0}>
+        <button
+          type="button"
+          className="icon-btn"
+          // window.print() has no built-in effect inside the native
+          // wrapper's bare WebView -- printPage() there hands off to
+          // Android's own PrintManager instead (see MainActivity.java).
+          onClick={() => {
+            const native = getNativeBridge();
+            if (native) native.printPage();
+            else window.print();
+          }}
+          aria-label="PDF로 내보내기"
+          disabled={entries.length === 0}
+        >
           📄
         </button>
       </header>

@@ -2,3 +2,25 @@
 # package.json's "workspaces") -- node_modules is hoisted here after the
 # 2026-08 app split. Doesn't affect the unrelated game/ (Godot) project.
 node_modules
+
+# drawary-app/ (Android, Gradle build -- same setup as hellotoday-app/ on
+# the HelloToday branch, see that project for the original pattern this
+# mirrors):
+drawary-app/.gradle/
+drawary-app/app/build/
+drawary-app/build/
+# Machine-specific `sdk.dir=` pointer AGP reads instead of $ANDROID_HOME.
+drawary-app/local.properties
+# Release (upload key) signing credentials -- NEVER commit these. The real
+# .jks belongs outside this repo entirely; these patterns are a backstop in
+# case one is ever dropped in here by mistake.
+drawary-app/keystore.properties
+drawary-app/*.jks
+drawary-app/*.keystore
+
+# The SDK Gradle/AGP resolves from Google's/Maven's servers over the
+# network at build time (this repo doesn't vendor it) -- but AGP still
+# needs local build-tools/platform jars for aapt2 etc. as a sibling of
+# drawary-app/. Same "android-sdk-slim" GitHub Release hellotoday-app uses
+# (repo-wide, not branch-specific) -- see that project's README.
+/android-sdk/

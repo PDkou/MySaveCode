@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Light indigo tint: matches the web app's "primary" token
+         (#4f46e5, see category-data-app/src/styles/global.css) and its
+         PWA icon's gradient, just lightened for legibility as an adaptive
+         icon background sitting behind the white "paper" foreground
+         glyph. -->
+    <color name="ic_launcher_background">#E5E4FB</color>
+    <color name="status_bar">#F7F7FB</color>
+</resources>

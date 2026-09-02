@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Default/English: Android falls back to this for any locale
+         without its own values-<lang>/strings.xml (see values-ko/,
+         values-ja/). The web UI itself stays Korean-only for now (no
+         i18n infra there yet, see category-data-app/), but the launcher
+         label and store listing can already be localized independently
+         of that. -->
+    <string name="app_name">Drawary</string>
+</resources>

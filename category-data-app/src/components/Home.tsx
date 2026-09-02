@@ -19,7 +19,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport }: HomeProp
   return (
     <div className="screen home-screen">
       <header className="app-header">
-        <h1>내 기록장</h1>
+        <h1>나만의 서랍장</h1>
         <button type="button" className="icon-btn" onClick={() => setShowBackup(true)} aria-label="백업/복원">
           ⚙️
         </button>

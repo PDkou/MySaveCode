@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Deliberately no <uses-permission> at all: this app is fully local
+         (localStorage inside the WebView + Storage Access Framework for
+         backup export/import), no network calls, no notifications, no
+         alarms. (hellotoday-app needs INTERNET for ads, plus
+         POST_NOTIFICATIONS and SCHEDULE_EXACT_ALARM for reminders; this
+         app has neither feature.) -->
+    <application
+        android:allowBackup="true"
+        android:enableOnBackInvokedCallback="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="false">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <!-- No android:screenOrientation lock. (hellotoday-app pins
+                 "portrait", but this app's web UI was specifically built
+                 to support landscape too, since tablets especially
+                 benefit from it on TableScreen, so orientation is left to
+                 the system default, following the device's own rotation
+                 setting.) -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

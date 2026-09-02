@@ -1,0 +1,52 @@
+name: build-drawary-gradle
+
+# Verifies drawary-app/ actually compiles. Mirrors
+# build-hellotoday-gradle.yml (HelloToday branch) for the same reason: the
+# CCR sandbox that authors this project has dl.google.com blocked, so it
+# can write the Gradle files correctly but can't resolve the Android
+# Gradle Plugin itself (or any Maven dependency) to prove they work. This
+# runs on a GitHub-hosted runner (unrestricted network) and does that
+# proof. Run manually (workflow_dispatch) after touching drawary-app's
+# Gradle setup, or after rebuilding category-data-app/dist and re-copying
+# it into drawary-app/app/src/main/assets/dist/.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch/tag/SHA to build (defaults to the ref the workflow runs from)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  assemble-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: gradlew assembleDebug bundleDebug
+        working-directory: drawary-app
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug bundleDebug
+
+      - name: Upload built debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawary-debug-apk
+          path: drawary-app/app/build/outputs/apk/debug/*.apk
+
+      - name: Upload built debug AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawary-debug-aab
+          path: drawary-app/app/build/outputs/bundle/debug/*.aab

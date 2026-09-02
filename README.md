@@ -20,19 +20,25 @@ Both apps currently point at the **same Supabase project** (same
 `.env`) — splitting the backend too is a deliberately deferred follow-up,
 not done yet.
 
-A third, unrelated app lives alongside them:
+A third, unrelated pair of apps lives alongside them:
 
-- **`category-data-app/`** — "내 기록장", a mobile/tablet-first PWA where
-  the user defines their own categories (가계부, 옷장, 화장품, ...), each
-  with its own user-defined fields (text/number/currency/date/select), and
-  the app renders entered data as an auto-generated table with per-column
-  sums, plus a PDF export via the browser's native print dialog (no
-  server-rendered PDF, no font-embedding concerns). It does **not** share
-  code with `family-quest-app`/`business-quest-app` and has no `@core`
-  alias — it's a standalone React+Vite+`vite-plugin-pwa` app. Storage is
-  local-only (`localStorage`, no login) for now, with JSON backup/restore
-  to move data between devices; a Supabase-backed sync is a deliberately
-  deferred follow-up, same as the split above, should usage outgrow that.
+- **`category-data-app/`** — "나만의 서랍장" (Drawary / ひきだし帳), a
+  mobile/tablet-first PWA where the user defines their own categories
+  (가계부, 옷장, 화장품, ...), each with its own user-defined fields
+  (text/number/currency/date/select), and the app renders entered data as
+  an auto-generated table with per-column sums, plus a PDF export via the
+  browser's native print dialog (no server-rendered PDF, no font-embedding
+  concerns). It does **not** share code with
+  `family-quest-app`/`business-quest-app` and has no `@core` alias — it's
+  a standalone React+Vite+`vite-plugin-pwa` app. Storage is local-only
+  (`localStorage`, no login) for now, with JSON backup/restore to move
+  data between devices; a Supabase-backed sync is a deliberately deferred
+  follow-up, same as the split above, should usage outgrow that.
+- **`drawary-app/`** — the Android build of the same app
+  (`com.howlingcreativestudio.drawary`): a thin native WebView shell that
+  bundles `category-data-app/dist` as local assets (no live hosting
+  needed), following the same pattern as `hellotoday-app/` on the
+  `HelloToday` branch. See its own `README.md`.
 
 ## What actually differs between the two apps today
 
@@ -79,5 +85,7 @@ they just happen to share source code and a database.
 
 - `game/` — a separate Godot/GDScript project ("Hungry Pack"), see its own
   `CLAUDE.md`.
+- `drawary-app/` — see above; Gradle, not npm, so it's outside this
+  workspace's `npm install`.
 - `web_test/`, `reports/` — standalone artifacts, not part of either app's
   build.

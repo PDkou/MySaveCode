@@ -4,6 +4,13 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Relative asset paths -- this build isn't only ever served from a
+  // domain root. The same dist/ output also gets bundled as local
+  // in-app assets inside drawary-app/ (the native Android WebView shell,
+  // see its README) and loaded from a non-root virtual origin
+  // (https://appassets.androidplatform.net/assets/dist/); absolute "/"
+  // paths would 404 there.
+  base: './',
   plugins: [
     react(),
     VitePWA({
@@ -15,8 +22,8 @@ export default defineConfig({
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
         id: '/',
-        name: '내 기록장',
-        short_name: '기록장',
+        name: '나만의 서랍장 (Drawary)',
+        short_name: '서랍장',
         description: '나만의 카테고리를 만들고 항목을 기록하는 개인 데이터 관리 앱',
         start_url: '/',
         scope: '/',
