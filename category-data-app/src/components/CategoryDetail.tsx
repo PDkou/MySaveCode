@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react';
 import type { AppData, Entry, FieldDef, FieldType } from '../types';
 import { FieldEditor } from './FieldEditor';
-import { DataTable } from './DataTable';
+import { EntryList } from './EntryList';
 import { EntryFormModal } from './EntryFormModal';
 import { EditCategoryModal } from './EditCategoryModal';
 import { ConfirmDialog } from './ConfirmDialog';
-import { PrintView } from './PrintView';
 
 interface CategoryDetailProps {
   data: AppData;
   categoryId: string;
   onBack: () => void;
+  onOpenTable: () => void;
   onUpdateCategory: (patch: { name: string; emoji: string; color: string }) => void;
   onDeleteCategory: () => void;
   onAddField: (field: { name: string; type: FieldType; options?: string[]; required: boolean }) => void;
@@ -28,10 +28,16 @@ function matchesSearch(entry: Entry, fields: FieldDef[], query: string): boolean
   return fields.some((f) => (entry.values[f.id] ?? '').toLowerCase().includes(q));
 }
 
+// This screen is for managing the category's shape (fields) and browsing/
+// editing entries as a compact list. The full spreadsheet-style table
+// (sortable columns, PDF export) lives on its own screen -- see
+// TableScreen.tsx, reached via the "표로 보기" button below -- so this
+// screen never needs horizontal scrolling on a phone.
 export function CategoryDetail({
   data,
   categoryId,
   onBack,
+  onOpenTable,
   onUpdateCategory,
   onDeleteCategory,
   onAddField,
@@ -70,10 +76,6 @@ export function CategoryDetail({
     );
   }
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
     <div className="screen category-screen">
       <header className="app-header">
@@ -107,12 +109,12 @@ export function CategoryDetail({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <button type="button" className="btn btn-secondary" onClick={handlePrint} disabled={categoryEntries.length === 0}>
-            📄 PDF로 내보내기
+          <button type="button" className="btn btn-secondary" onClick={onOpenTable} disabled={category.fields.length === 0}>
+            📊 표로 보기
           </button>
         </div>
 
-        <DataTable fields={category.fields} entries={filteredEntries} onRowClick={(entry) => setEditingEntry(entry)} />
+        <EntryList fields={category.fields} entries={filteredEntries} onRowClick={(entry) => setEditingEntry(entry)} />
       </div>
 
       <button
@@ -175,8 +177,6 @@ export function CategoryDetail({
           onCancel={() => setConfirmDeleteCategory(false)}
         />
       )}
-
-      <PrintView category={category} entries={filteredEntries} />
     </div>
   );
 }

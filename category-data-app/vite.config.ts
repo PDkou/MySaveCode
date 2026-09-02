@@ -21,7 +21,11 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        orientation: 'portrait',
+        // 'any' rather than 'portrait' -- phones AND tablets, and the
+        // dedicated table screen (TableScreen.tsx) specifically benefits
+        // from landscape on a tablet (more table columns visible without
+        // horizontal scrolling).
+        orientation: 'any',
         background_color: '#f7f7fb',
         theme_color: '#4f46e5',
         lang: 'ko',
