@@ -6,4 +6,9 @@
          icon. -->
     <color name="ic_launcher_background">#EDE3CD</color>
     <color name="status_bar">#F1EEE4</color>
+    <!-- Splash screen background: the app's pine-green primary, see
+         themes.xml. A flat color (the splash API doesn't support a
+         gradient background); the web bundle's own SplashScreen.tsx
+         picks up the gradient version once it takes over. -->
+    <color name="splash_background">#3B6255</color>
 </resources>

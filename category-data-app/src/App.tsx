@@ -1,16 +1,34 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppData } from './hooks/useAppData';
 import { Home } from './components/Home';
 import { CategoryDetail } from './components/CategoryDetail';
 import { TableScreen } from './components/TableScreen';
+import { SplashScreen } from './components/SplashScreen';
 
 type View = { screen: 'home' } | { screen: 'category'; categoryId: string } | { screen: 'table'; categoryId: string };
+
+const SPLASH_VISIBLE_MS = 900;
+const SPLASH_FADE_MS = 300;
 
 function App() {
   const app = useAppData();
   const [view, setView] = useState<View>({ screen: 'home' });
+  const [splashState, setSplashState] = useState<'visible' | 'fading' | 'gone'>('visible');
+
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setSplashState('fading'), SPLASH_VISIBLE_MS);
+    const goneTimer = setTimeout(() => setSplashState('gone'), SPLASH_VISIBLE_MS + SPLASH_FADE_MS);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(goneTimer);
+    };
+  }, []);
 
   const category = view.screen !== 'home' ? app.data.categories.find((c) => c.id === view.categoryId) : undefined;
+
+  if (splashState !== 'gone') {
+    return <SplashScreen fadingOut={splashState === 'fading'} />;
+  }
 
   return (
     <div className="app-shell">

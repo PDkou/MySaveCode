@@ -16,6 +16,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
+import androidx.core.splashscreen.SplashScreen;
 import androidx.webkit.WebViewAssetLoader;
 
 import java.io.ByteArrayOutputStream;
@@ -47,10 +48,18 @@ public class MainActivity extends Activity {
     // destination) -- there's only ever one export in flight at a time
     // since it's driven by a single modal in the web UI.
     private String pendingExportJson;
+    // Flips true once the WebView's first page load finishes (see
+    // onPageFinished below) -- read by the splash screen's keep-on-screen
+    // condition so Theme.App.Starting (themes.xml) stays up through
+    // WebView engine init and the initial asset fetch, instead of handing
+    // off to a blank white WebView for a frame or two.
+    private volatile boolean webReady = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
+        splashScreen.setKeepOnScreenCondition(() -> !webReady);
         int bg = Color.rgb(0xF1, 0xEE, 0xE4);
         getWindow().setStatusBarColor(bg);
         getWindow().setNavigationBarColor(bg);
@@ -83,6 +92,12 @@ public class MainActivity extends Activity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                webReady = true;
             }
         });
         web.addJavascriptInterface(new NativeBridge(), "DrawaryNative");

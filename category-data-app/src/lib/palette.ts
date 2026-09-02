@@ -14,3 +14,39 @@ export const CATEGORY_COLOR_CHOICES = [
   '#6B6448', // olive
   '#4A4536', // walnut
 ];
+
+// Icon choices for a category -- covers the domains someone is likely to
+// want a drawer for (finance, fashion, beauty, food, hobbies, health,
+// tech, travel, pets, home, kids, sports, entertainment, work/study),
+// not just the three worked examples (가계부/옷장/화장품) the app was
+// originally scoped around.
+export const CATEGORY_EMOJI_CHOICES = [
+  '📁',
+  '💰',
+  '👕',
+  '💄',
+  '📚',
+  '🏋️',
+  '🐾',
+  '🌱',
+  '🎮',
+  '🚗',
+  '✈️',
+  '🏠',
+  '🎬',
+  '🍔',
+  '🎵',
+  '💊',
+  '🧸',
+  '🛠️',
+  '🎁',
+  '💻',
+  '⚽',
+  '📷',
+  '💳',
+  '🍷',
+  '🚲',
+  '🎨',
+  '📺',
+  '🧴',
+];

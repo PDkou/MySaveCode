@@ -16,7 +16,8 @@
         android:usesCleartextTraffic="false">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.App.Starting">
             <!-- No android:screenOrientation lock. (hellotoday-app pins
                  "portrait", but this app's web UI was specifically built
                  to support landscape too, since tablets especially

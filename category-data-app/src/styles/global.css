@@ -134,8 +134,13 @@ select {
   align-items: center;
   gap: 8px;
   padding: calc(12px + var(--safe-top)) calc(16px + var(--safe-right)) 12px calc(16px + var(--safe-left));
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  /* Frosted-glass sticky header -- translucent + blurred rather than a
+     flat opaque bar, so content settles under it instead of hard-cutting
+     against a bottom border. */
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -147,6 +152,46 @@ select {
   font-size: 1.2rem;
   font-weight: 800;
   letter-spacing: -0.01em;
+}
+
+.home-header {
+  gap: 12px;
+  padding-top: calc(16px + var(--safe-top));
+  padding-bottom: 16px;
+}
+
+.home-logo {
+  flex-shrink: 0;
+  width: 38px;
+  height: 42px;
+  background: var(--accent);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px;
+  box-shadow: 0 3px 8px -2px rgba(var(--shadow-rgb), 0.45);
+}
+
+.home-logo-drawer {
+  flex: 1;
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+.home-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-header-text h1 {
+  font-size: 1.25rem;
+}
+
+.home-header-tagline {
+  margin: 1px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
 }
 
 .category-title {
@@ -193,6 +238,80 @@ select {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ---------- Splash screen ---------- */
+
+.splash-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: linear-gradient(135deg, #517d6c 0%, #2c4a3f 100%);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.splash-screen.fading {
+  opacity: 0;
+}
+
+.splash-cabinet {
+  width: 108px;
+  height: 132px;
+  background: #c39a5f;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.4);
+  animation: splash-pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.splash-drawer {
+  flex: 1;
+  background: #fffcf6;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-pull {
+  width: 34%;
+  height: 12%;
+  border-radius: 999px;
+  background: #2c4a3f;
+}
+
+@keyframes splash-pop {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.splash-title {
+  margin: 0;
+  color: #fffcf6;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.splash-tagline {
+  margin: -12px 0 0;
+  color: rgba(255, 252, 246, 0.7);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 /* ---------- FAB ---------- */
 
 .fab {
@@ -206,8 +325,10 @@ select {
   /* Brass accent rather than the primary pine -- the FAB is the one
      "tap me" object per screen, so it gets the palette's warmest, most
      attention-grabbing color instead of blending in with everything
-     else that's already primary-colored (headers, active states). */
-  background: var(--accent);
+     else that's already primary-colored (headers, active states). A
+     subtle gradient instead of a flat fill gives it a bit more polish/
+     depth than the rest of the flatter UI. */
+  background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 115%, white) 0%, var(--accent) 55%, color-mix(in srgb, var(--accent) 80%, black) 100%);
   color: var(--accent-contrast);
   font-size: 1.8rem;
   line-height: 1;
@@ -216,9 +337,11 @@ select {
     0 2px 6px rgba(var(--shadow-rgb), 0.3);
   cursor: pointer;
   z-index: 10;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .fab:active {
+  transform: scale(0.94);
   box-shadow:
     0 4px 10px -2px rgba(var(--shadow-rgb), 0.4),
     0 1px 3px rgba(var(--shadow-rgb), 0.3);
@@ -280,11 +403,12 @@ select {
   cursor: pointer;
   text-align: center;
   box-shadow: 0 4px 10px -4px rgba(var(--shadow-rgb), 0.25);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
 .category-card:active {
   box-shadow: none;
-  transform: translateY(1px);
+  transform: scale(0.97);
 }
 
 .category-card-badge {
@@ -520,6 +644,11 @@ select {
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
 }
 
 .btn:disabled {
@@ -710,10 +839,12 @@ select {
   text-align: left;
   cursor: pointer;
   box-shadow: 0 2px 6px -4px rgba(var(--shadow-rgb), 0.3);
+  transition: transform 0.1s ease;
 }
 
 .entry-list-row:active {
   background: var(--surface-alt);
+  transform: scale(0.99);
 }
 
 .entry-list-summary {
@@ -906,5 +1037,13 @@ select {
     color: #555;
     font-size: 11px;
     margin: 0 0 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }

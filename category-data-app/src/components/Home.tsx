@@ -18,8 +18,15 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport }: HomeProp
 
   return (
     <div className="screen home-screen">
-      <header className="app-header">
-        <h1>나만의 서랍장</h1>
+      <header className="app-header home-header">
+        <span className="home-logo" aria-hidden="true">
+          <span className="home-logo-drawer" />
+          <span className="home-logo-drawer" />
+        </span>
+        <div className="home-header-text">
+          <h1>나만의 서랍장</h1>
+          <p className="home-header-tagline">카테고리를 만들고, 표로 정리해요</p>
+        </div>
         <button type="button" className="icon-btn" onClick={() => setShowBackup(true)} aria-label="백업/복원">
           ⚙️
         </button>

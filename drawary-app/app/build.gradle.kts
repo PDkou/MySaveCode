@@ -66,4 +66,11 @@ dependencies {
     // serving it from a real (if virtual) origin sidesteps that entirely.
     // See MainActivity.java.
     implementation("androidx.webkit:webkit:1.13.0")
+
+    // Native cold-start splash screen (Theme.App.Starting in themes.xml) --
+    // held on screen until the WebView's first page finishes loading (see
+    // MainActivity.java's installSplashScreen()/setKeepOnScreenCondition),
+    // so there's no blank-white gap between the OS launching the app and
+    // the web bundle's own splash (SplashScreen.tsx) taking over.
+    implementation("androidx.core:core-splashscreen:1.0.1")
 }

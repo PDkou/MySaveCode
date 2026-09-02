@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cold-start splash theme (androidx.core.splashscreen: works back
+         to API 21, not just the platform SplashScreen API's real API 31+
+         floor). Set on MainActivity in AndroidManifest.xml, not on
+         <application>, and only for that first frame: installSplashScreen()
+         in MainActivity.onCreate() switches the activity to postSplashScreenTheme
+         (AppTheme, styles.xml) once it's done, so this theme is never
+         "the app's theme" more generally. -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/AppTheme</item>
+    </style>
+</resources>
