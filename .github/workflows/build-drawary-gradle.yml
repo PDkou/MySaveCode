@@ -6,10 +6,23 @@ name: build-drawary-gradle
 # can write the Gradle files correctly but can't resolve the Android
 # Gradle Plugin itself (or any Maven dependency) to prove they work. This
 # runs on a GitHub-hosted runner (unrestricted network) and does that
-# proof. Run manually (workflow_dispatch) after touching drawary-app's
-# Gradle setup, or after rebuilding category-data-app/dist and re-copying
-# it into drawary-app/app/src/main/assets/dist/.
+# proof. Normally run manually (workflow_dispatch) after touching
+# drawary-app's Gradle setup, or after rebuilding category-data-app/dist
+# and re-copying it into drawary-app/app/src/main/assets/dist/ -- but
+# workflow_dispatch only becomes dispatchable once this file exists on the
+# repo's default branch (a GitHub restriction, unrelated to this repo's
+# own setup), which isn't true yet for a workflow that was just added on a
+# feature branch. The push trigger below is the one-time bootstrap around
+# that: remove it (or narrow the branches: list) once this has merged and
+# workflow_dispatch is usable directly, the same way build-hellotoday-gradle.yml
+# already is on the HelloToday branch.
 on:
+  push:
+    branches:
+      - claude/category-data-management-app-jo6f6i
+    paths:
+      - "drawary-app/**"
+      - ".github/workflows/build-drawary-gradle.yml"
   workflow_dispatch:
     inputs:
       ref:
@@ -26,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref || github.ref }}
+          ref: ${{ github.event.inputs.ref || github.ref }}
 
       - uses: actions/setup-java@v4
         with:
