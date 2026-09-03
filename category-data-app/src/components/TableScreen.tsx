@@ -5,6 +5,7 @@ import { EntryFormModal } from './EntryFormModal';
 import { PrintView } from './PrintView';
 import { getNativeBridge } from '../lib/native';
 import { BackIcon, PdfIcon } from './icons';
+import { CategoryEmoji } from './categoryIcons';
 
 interface TableScreenProps {
   category: Category;
@@ -42,7 +43,8 @@ export function TableScreen({ category, entries, onBack, onAddEntry, onUpdateEnt
           <BackIcon />
         </button>
         <h1 className="category-title">
-          {category.emoji} {category.name} · 표
+          <CategoryEmoji value={category.emoji} size={20} />
+          {category.name} · 표
         </h1>
         <button
           type="button"

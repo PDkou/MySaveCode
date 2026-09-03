@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
 import { CATEGORY_COLOR_CHOICES, CATEGORY_EMOJI_CHOICES } from '../lib/palette';
+import { CategoryEmoji } from './categoryIcons';
 import type { Category } from '../types';
 
 interface EditCategoryModalProps {
@@ -45,7 +46,7 @@ export function EditCategoryModal({ category, onSave, onClose }: EditCategoryMod
             onClick={() => setEmoji(e)}
             aria-label={`아이콘 ${e}`}
           >
-            {e}
+            <CategoryEmoji value={e} size={22} />
           </button>
         ))}
       </div>

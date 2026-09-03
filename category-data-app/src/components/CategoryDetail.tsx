@@ -6,6 +6,7 @@ import { EntryFormModal } from './EntryFormModal';
 import { EditCategoryModal } from './EditCategoryModal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { BackIcon, EditIcon, TrashIcon, TableIcon } from './icons';
+import { CategoryEmoji } from './categoryIcons';
 
 interface CategoryDetailProps {
   data: AppData;
@@ -84,7 +85,8 @@ export function CategoryDetail({
           <BackIcon />
         </button>
         <h1 className="category-title">
-          {category.emoji} {category.name}
+          <CategoryEmoji value={category.emoji} size={20} />
+          {category.name}
         </h1>
         <button type="button" className="icon-btn" onClick={() => setShowEditCategory(true)} aria-label="카테고리 편집">
           <EditIcon size={18} />

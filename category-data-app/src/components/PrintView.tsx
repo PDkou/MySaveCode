@@ -1,5 +1,6 @@
 import type { Category, Entry } from '../types';
 import { formatFieldValue, sumField } from '../lib/format';
+import { CategoryEmoji } from './categoryIcons';
 
 interface PrintViewProps {
   category: Category;
@@ -21,7 +22,8 @@ export function PrintView({ category, entries }: PrintViewProps) {
   return (
     <div className="print-view">
       <h1>
-        {category.emoji} {category.name}
+        <CategoryEmoji value={category.emoji} size={22} />
+        {category.name}
       </h1>
       <p className="print-meta">
         생성일: {new Date().toLocaleDateString('ko-KR')} · 총 {entries.length}건
