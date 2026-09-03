@@ -9,13 +9,20 @@
 // shapes -- cream cabinet body + teal feet, green top/bottom drawers,
 // coral middle drawer, four folders bursting out -- color-matched and
 // shaped to read as the same object as the real icon, not the flatter
-// hand-drawn version an earlier pass shipped. It's built from a
-// standalone animation the user iterated on directly in an external
-// tool, not tuned in-repo; the delay/duration/path numbers below are
-// copied verbatim from that export. Runs once on load (never replayed),
-// so plain SMIL <animateMotion>/<mpath> for the folder flight paths is
-// fine here -- the restart-reliability problem that pushed the earlier
-// splash-tuner prototype onto CSS offset-path only matters for a
+// hand-drawn version an earlier pass shipped. Colors/timing/particle
+// values are copied verbatim from a standalone animation the user
+// iterated on in an external tool; the four dw-route-* folder paths
+// below are NOT verbatim, though -- the source export's path coordinates
+// (all starting from a shared point far outside the <svg>'s own viewBox)
+// only looked right inside that tool's own preview because its stage box
+// clipped the overshoot at a different aspect ratio than ours. Redrawn
+// here to actually start from the drawer's opening (measured via
+// getScreenCTM against the rendered layout, not eyeballed) and stay
+// inside this stage's clip -- the original right-hand pair (blue/teal)
+// landed off-canvas and never rendered at all. Runs once on load (never
+// replayed), so plain SMIL <animateMotion>/<mpath> for the folder flight
+// paths is fine here -- the restart-reliability problem that pushed the
+// earlier splash-tuner prototype onto CSS offset-path only matters for a
 // live-editable tool, not a fire-once splash.
 export function SplashScreen({ fadingOut }: { fadingOut: boolean }) {
   return (
@@ -28,10 +35,10 @@ export function SplashScreen({ fadingOut }: { fadingOut: boolean }) {
           <div className="dw-slot">
             <svg className="dw-trails" viewBox="0 0 220 100" preserveAspectRatio="xMidYMid meet">
               <defs>
-                <path id="dw-route-coral" d="M215 150 C185 105 130 80 100 65" />
-                <path id="dw-route-yellow" d="M215 150 C195 85 155 45 155 20" />
-                <path id="dw-route-blue" d="M215 150 C235 85 275 45 275 20" />
-                <path id="dw-route-teal" d="M215 150 C245 105 300 80 330 65" />
+                <path id="dw-route-coral" d="M100 81 C95 60 65 55 55 60" />
+                <path id="dw-route-yellow" d="M105 81 C100 50 88 30 85 22" />
+                <path id="dw-route-blue" d="M115 81 C120 50 132 30 135 22" />
+                <path id="dw-route-teal" d="M120 81 C125 60 155 55 165 60" />
                 <linearGradient id="dw-coral-fill" x1="0" y1="0" x2="1" y2="1">
                   <stop stopColor="#ff7b73" />
                   <stop offset="1" stopColor="#ef4f4d" />
