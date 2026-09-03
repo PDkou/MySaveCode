@@ -2,17 +2,19 @@
 <resources>
     <!-- Shown for the brief window before installSplashScreen() hands the
          activity back to AppTheme in MainActivity.onCreate(); masks the
-         white flash while WebView loads index.html. Uses the bare
-         character art (not the layer-list-wrapped ic_launcher_foreground,
-         which boxes it down to 86dp for the launcher's adaptive-icon safe
-         zone) so it renders at the platform's full splash icon size
-         instead of launcher-icon size. windowSplashScreenBrandingImage
-         adds the wordmark underneath, in the same serif treatment used
-         for the wordmark elsewhere (Feature Graphic, in-app hero text). -->
+         white flash while WebView loads index.html.
+
+         windowSplashScreenBrandingImage isn't backported by
+         core-splashscreen below API 31; referencing it fails resource
+         linking on this minSdk 26 project ("attr ... not found"), so the
+         wordmark can't be a separate branding-image layer here. Instead
+         splash_icon.png bakes the character art and the "Hello, Today"
+         wordmark (same serif treatment as the Feature Graphic/in-app hero
+         text) into one image and is shown via windowSplashScreenAnimatedIcon,
+         which every API level this library supports does resolve. -->
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_art</item>
-        <item name="windowSplashScreenBrandingImage">@drawable/splash_branding</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
         <item name="postSplashScreenTheme">@style/AppTheme</item>
     </style>
 </resources>
