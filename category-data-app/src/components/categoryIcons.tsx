@@ -69,19 +69,76 @@ export const CATEGORY_EMOJI_IMAGES: Record<string, string> = {
   '🧴': './icons/categories/28-lotion-bottle.webp',
 };
 
-const CATEGORY_BADGE_IMAGES: Record<string, { light: string; dark: string }> = {};
-const CATEGORY_TEMPLATE_IMAGES: Record<string, { light: string; dark: string }> = {};
-for (const [emoji, transparentPath] of Object.entries(CATEGORY_EMOJI_IMAGES)) {
-  const file = transparentPath.split('/').pop();
-  CATEGORY_BADGE_IMAGES[emoji] = {
-    light: `./icons/categories/badge-light/${file}`,
-    dark: `./icons/categories/badge-dark/${file}`,
-  };
-  CATEGORY_TEMPLATE_IMAGES[emoji] = {
-    light: `./icons/categories/template-light/${file}`,
-    dark: `./icons/categories/template-dark/${file}`,
-  };
-}
+// These two maps are spelled out as literal path strings -- not derived
+// from CATEGORY_EMOJI_IMAGES via a loop -- on purpose. This app's real
+// dist/ build would resolve a runtime-built path (`./icons/.../${file}`)
+// fine, since the actual files exist on disk. But the single-file Artifact
+// preview (scripts/build-preview-artifact.cjs) inlines every icon by
+// statically regex-scanning the bundled JS for literal `./icons/...`
+// substrings and swapping each for a base64 data: URI -- it can't see
+// inside runtime template-literal concatenation. A loop-built version of
+// these maps left 108 of the 135 icon paths as un-inlined `${...}`
+// fragments in the preview, which is exactly what "그림 다 깨졌다" turned
+// out to be. Keep these literal so every icon path is greppable as-is.
+const CATEGORY_BADGE_IMAGES: Record<string, { light: string; dark: string }> = {
+  '📁': { light: './icons/categories/badge-light/01-folder.webp', dark: './icons/categories/badge-dark/01-folder.webp' },
+  '💰': { light: './icons/categories/badge-light/02-money-pouch.webp', dark: './icons/categories/badge-dark/02-money-pouch.webp' },
+  '👕': { light: './icons/categories/badge-light/03-tshirt.webp', dark: './icons/categories/badge-dark/03-tshirt.webp' },
+  '💄': { light: './icons/categories/badge-light/04-lipstick.webp', dark: './icons/categories/badge-dark/04-lipstick.webp' },
+  '📚': { light: './icons/categories/badge-light/05-book.webp', dark: './icons/categories/badge-dark/05-book.webp' },
+  '🏋️': { light: './icons/categories/badge-light/06-dumbbell.webp', dark: './icons/categories/badge-dark/06-dumbbell.webp' },
+  '🐾': { light: './icons/categories/badge-light/07-paw.webp', dark: './icons/categories/badge-dark/07-paw.webp' },
+  '🌱': { light: './icons/categories/badge-light/08-plant.webp', dark: './icons/categories/badge-dark/08-plant.webp' },
+  '🎮': { light: './icons/categories/badge-light/09-game-controller.webp', dark: './icons/categories/badge-dark/09-game-controller.webp' },
+  '🚗': { light: './icons/categories/badge-light/10-car.webp', dark: './icons/categories/badge-dark/10-car.webp' },
+  '✈️': { light: './icons/categories/badge-light/11-airplane.webp', dark: './icons/categories/badge-dark/11-airplane.webp' },
+  '🏠': { light: './icons/categories/badge-light/12-house.webp', dark: './icons/categories/badge-dark/12-house.webp' },
+  '🎬': { light: './icons/categories/badge-light/13-clapperboard.webp', dark: './icons/categories/badge-dark/13-clapperboard.webp' },
+  '🍔': { light: './icons/categories/badge-light/14-hamburger.webp', dark: './icons/categories/badge-dark/14-hamburger.webp' },
+  '🎵': { light: './icons/categories/badge-light/15-music-note.webp', dark: './icons/categories/badge-dark/15-music-note.webp' },
+  '💊': { light: './icons/categories/badge-light/16-pill.webp', dark: './icons/categories/badge-dark/16-pill.webp' },
+  '🧸': { light: './icons/categories/badge-light/17-teddy-bear.webp', dark: './icons/categories/badge-dark/17-teddy-bear.webp' },
+  '🛠️': { light: './icons/categories/badge-light/18-wrench.webp', dark: './icons/categories/badge-dark/18-wrench.webp' },
+  '🎁': { light: './icons/categories/badge-light/19-gift-box.webp', dark: './icons/categories/badge-dark/19-gift-box.webp' },
+  '💻': { light: './icons/categories/badge-light/20-laptop.webp', dark: './icons/categories/badge-dark/20-laptop.webp' },
+  '⚽': { light: './icons/categories/badge-light/21-soccer-ball.webp', dark: './icons/categories/badge-dark/21-soccer-ball.webp' },
+  '📷': { light: './icons/categories/badge-light/22-camera.webp', dark: './icons/categories/badge-dark/22-camera.webp' },
+  '💳': { light: './icons/categories/badge-light/23-credit-card.webp', dark: './icons/categories/badge-dark/23-credit-card.webp' },
+  '🚲': { light: './icons/categories/badge-light/25-bicycle.webp', dark: './icons/categories/badge-dark/25-bicycle.webp' },
+  '🎨': { light: './icons/categories/badge-light/26-artist-palette.webp', dark: './icons/categories/badge-dark/26-artist-palette.webp' },
+  '📺': { light: './icons/categories/badge-light/27-tv.webp', dark: './icons/categories/badge-dark/27-tv.webp' },
+  '🧴': { light: './icons/categories/badge-light/28-lotion-bottle.webp', dark: './icons/categories/badge-dark/28-lotion-bottle.webp' },
+};
+
+const CATEGORY_TEMPLATE_IMAGES: Record<string, { light: string; dark: string }> = {
+  '📁': { light: './icons/categories/template-light/01-folder.webp', dark: './icons/categories/template-dark/01-folder.webp' },
+  '💰': { light: './icons/categories/template-light/02-money-pouch.webp', dark: './icons/categories/template-dark/02-money-pouch.webp' },
+  '👕': { light: './icons/categories/template-light/03-tshirt.webp', dark: './icons/categories/template-dark/03-tshirt.webp' },
+  '💄': { light: './icons/categories/template-light/04-lipstick.webp', dark: './icons/categories/template-dark/04-lipstick.webp' },
+  '📚': { light: './icons/categories/template-light/05-book.webp', dark: './icons/categories/template-dark/05-book.webp' },
+  '🏋️': { light: './icons/categories/template-light/06-dumbbell.webp', dark: './icons/categories/template-dark/06-dumbbell.webp' },
+  '🐾': { light: './icons/categories/template-light/07-paw.webp', dark: './icons/categories/template-dark/07-paw.webp' },
+  '🌱': { light: './icons/categories/template-light/08-plant.webp', dark: './icons/categories/template-dark/08-plant.webp' },
+  '🎮': { light: './icons/categories/template-light/09-game-controller.webp', dark: './icons/categories/template-dark/09-game-controller.webp' },
+  '🚗': { light: './icons/categories/template-light/10-car.webp', dark: './icons/categories/template-dark/10-car.webp' },
+  '✈️': { light: './icons/categories/template-light/11-airplane.webp', dark: './icons/categories/template-dark/11-airplane.webp' },
+  '🏠': { light: './icons/categories/template-light/12-house.webp', dark: './icons/categories/template-dark/12-house.webp' },
+  '🎬': { light: './icons/categories/template-light/13-clapperboard.webp', dark: './icons/categories/template-dark/13-clapperboard.webp' },
+  '🍔': { light: './icons/categories/template-light/14-hamburger.webp', dark: './icons/categories/template-dark/14-hamburger.webp' },
+  '🎵': { light: './icons/categories/template-light/15-music-note.webp', dark: './icons/categories/template-dark/15-music-note.webp' },
+  '💊': { light: './icons/categories/template-light/16-pill.webp', dark: './icons/categories/template-dark/16-pill.webp' },
+  '🧸': { light: './icons/categories/template-light/17-teddy-bear.webp', dark: './icons/categories/template-dark/17-teddy-bear.webp' },
+  '🛠️': { light: './icons/categories/template-light/18-wrench.webp', dark: './icons/categories/template-dark/18-wrench.webp' },
+  '🎁': { light: './icons/categories/template-light/19-gift-box.webp', dark: './icons/categories/template-dark/19-gift-box.webp' },
+  '💻': { light: './icons/categories/template-light/20-laptop.webp', dark: './icons/categories/template-dark/20-laptop.webp' },
+  '⚽': { light: './icons/categories/template-light/21-soccer-ball.webp', dark: './icons/categories/template-dark/21-soccer-ball.webp' },
+  '📷': { light: './icons/categories/template-light/22-camera.webp', dark: './icons/categories/template-dark/22-camera.webp' },
+  '💳': { light: './icons/categories/template-light/23-credit-card.webp', dark: './icons/categories/template-dark/23-credit-card.webp' },
+  '🚲': { light: './icons/categories/template-light/25-bicycle.webp', dark: './icons/categories/template-dark/25-bicycle.webp' },
+  '🎨': { light: './icons/categories/template-light/26-artist-palette.webp', dark: './icons/categories/template-dark/26-artist-palette.webp' },
+  '📺': { light: './icons/categories/template-light/27-tv.webp', dark: './icons/categories/template-dark/27-tv.webp' },
+  '🧴': { light: './icons/categories/template-light/28-lotion-bottle.webp', dark: './icons/categories/template-dark/28-lotion-bottle.webp' },
+};
 
 const WINE_GLASS_EMOJI = '🍷';
 
