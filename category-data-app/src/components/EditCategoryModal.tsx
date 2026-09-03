@@ -46,7 +46,7 @@ export function EditCategoryModal({ category, onSave, onClose }: EditCategoryMod
             onClick={() => setEmoji(e)}
             aria-label={`아이콘 ${e}`}
           >
-            <CategoryEmoji value={e} size={22} />
+            <CategoryEmoji value={e} size={26} />
           </button>
         ))}
       </div>

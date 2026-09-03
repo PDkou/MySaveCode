@@ -36,14 +36,19 @@ const css = fs.readFileSync(path.join(assetsDir, cssFile), 'utf8');
 // is a single standalone file with no icons/ folder alongside it. Inline
 // each referenced icon as a data URI so it still renders here.
 const iconsDir = path.join(SRC, 'icons');
-const iconRefs = [...js.matchAll(/\.\/icons\/([\w.-]+\.png)/g)].map((m) => m[1]);
+const MIME = { png: 'image/png', webp: 'image/webp' };
+// Category pictograms live one level down (icons/categories/...), hence
+// the "/" in the character class -- everything else about this inlining
+// is unchanged.
+const iconRefs = [...js.matchAll(/\.\/icons\/([\w./-]+\.(?:png|webp))/g)].map((m) => m[1]);
 for (const name of new Set(iconRefs)) {
   const iconPath = path.join(iconsDir, name);
   if (!fs.existsSync(iconPath)) {
     console.error(`Referenced ./icons/${name} but ${iconPath} doesn't exist.`);
     process.exit(1);
   }
-  const dataUri = `data:image/png;base64,${fs.readFileSync(iconPath).toString('base64')}`;
+  const ext = path.extname(name).slice(1);
+  const dataUri = `data:${MIME[ext] ?? 'application/octet-stream'};base64,${fs.readFileSync(iconPath).toString('base64')}`;
   js = js.split(`./icons/${name}`).join(dataUri);
 }
 

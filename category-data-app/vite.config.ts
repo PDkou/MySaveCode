@@ -70,7 +70,10 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest}'],
+        // webp added for the illustrated category-icon set
+        // (public/icons/categories/) -- everything else here was already
+        // covered.
+        globPatterns: ['**/*.{js,css,html,png,svg,webp,webmanifest}'],
       },
       devOptions: {
         enabled: false,

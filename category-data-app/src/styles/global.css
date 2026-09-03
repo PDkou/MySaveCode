@@ -197,7 +197,14 @@ select {
   white-space: nowrap;
 }
 
-.category-title svg {
+.category-title svg,
+.category-title img {
+  flex-shrink: 0;
+}
+
+.category-emoji-img {
+  display: block;
+  object-fit: contain;
   flex-shrink: 0;
 }
 
@@ -706,16 +713,22 @@ select {
 }
 
 .category-card-badge {
+  /* The pictograms are full-color illustrations now (not a single-tone
+     icon on a colored disc) -- a solid --card-accent fill behind one
+     would fight its own colors, so the badge is a neutral disc with a
+     thin accent ring instead; the accent still reads through the card's
+     own tinted background/border. */
   width: 52px;
   height: 52px;
   border-radius: 999px;
-  background: var(--card-accent);
-  color: #fffcf6;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--card-accent) 45%, transparent),
+    0 3px 8px -2px rgba(var(--shadow-rgb), 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.6rem;
-  box-shadow: 0 3px 8px -2px rgba(var(--shadow-rgb), 0.4);
 }
 
 .category-card-name {
@@ -1012,7 +1025,7 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 28px;
+  height: 34px;
   font-size: 1.6rem;
 }
 

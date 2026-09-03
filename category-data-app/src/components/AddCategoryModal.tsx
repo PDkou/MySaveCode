@@ -52,7 +52,7 @@ export function AddCategoryModal({ onCreate, onClose }: AddCategoryModalProps) {
           {CATEGORY_TEMPLATES.map((tpl) => (
             <button key={tpl.id} type="button" className="template-card" onClick={() => pickTemplate(tpl.id)}>
               <span className="template-emoji">
-                <CategoryEmoji value={tpl.emoji} size={28} />
+                <CategoryEmoji value={tpl.emoji} size={34} />
               </span>
               <span className="template-name">{tpl.name}</span>
               <span className="template-desc">{tpl.description}</span>
@@ -105,7 +105,7 @@ export function AddCategoryModal({ onCreate, onClose }: AddCategoryModalProps) {
             onClick={() => setEmoji(e)}
             aria-label={`아이콘 ${e}`}
           >
-            <CategoryEmoji value={e} size={22} />
+            <CategoryEmoji value={e} size={26} />
           </button>
         ))}
       </div>

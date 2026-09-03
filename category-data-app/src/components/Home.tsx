@@ -48,7 +48,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport }: HomeProp
                 onClick={() => onOpenCategory(c.id)}
               >
                 <span className="category-card-badge">
-                  <CategoryEmoji value={c.emoji} size={26} />
+                  <CategoryEmoji value={c.emoji} size={36} />
                 </span>
                 <span className="category-card-name">{c.name}</span>
                 <span className="category-card-count">{entryCount(c.id)}건</span>
