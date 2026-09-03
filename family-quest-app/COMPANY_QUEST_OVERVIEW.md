@@ -80,7 +80,24 @@
   business`** 만 추가로 필요. 이걸 안 넣으면 회사용 앱이 가족용처럼 동작함.
 - 배포된 새 도메인을 Supabase Authentication → URL Configuration의 Redirect URLs에
   **추가**(family-quest-app 주소는 지우지 않고 같이 등록).
-- 두 프로젝트 다 같은 저장소/브랜치를 보고 있으므로, 푸시 한 번으로 두 앱이 동시에 재배포됨.
+- 두 프로젝트 다 같은 저장소/브랜치를 보고 있으므로 푸시 한 번으로 두 앱 다 재배포가 트리거됨
+  -- 다만 **2026-09까지는 business-quest-app 쪽이 `family-quest-app/src`(`@core`로 가져다
+  쓰는 공유 소스)만 바뀐 커밋에서 매번 "Skipped - Not affected"로 스킵되는 문제가 있었음**.
+  Vercel의 기본 Ignored Build Step이 프로젝트의 Root Directory(`business-quest-app`) 안의
+  변경만 감지하고, `@core` alias로 참조하는 바깥 디렉터리는 못 봤기 때문 -- `business-quest-
+  app/vercel.json`에 `family-quest-app/src`/`package-lock.json`까지 함께 확인하는
+  `ignoreCommand`를 명시해서 고침. 대시보드에 수동으로 설정해둔 Ignored Build Step 값이
+  이미 있었다면 이 파일이 그걸 덮어쓸 수 있으니, 배포 후 한 번 대시보드에서 충돌 없는지
+  확인해두는 게 안전함.
+  - **`git diff HEAD^ HEAD`가 아니라 `$VERCEL_GIT_PREVIOUS_SHA`를 기준으로 비교**합니다 --
+    이 저장소는 이 세션 내내 "기본 브랜치를 merge로 받아온 뒤 푸시"하는 워크플로를 써서, 브랜치
+    HEAD가 거의 항상 머지 커밋입니다. 머지 커밋의 `HEAD^`(첫 부모)는 보통 이미 그 변경분을
+    포함하고 있는 커밋이라(머지 자체가 아니라 그 이전 커밋에서 실제 변경이 일어났으므로),
+    `HEAD^ HEAD` 비교로는 아무 차이가 안 보여서 매번 스킵으로 오판하는 문제가 실제로
+    있었습니다(PR #279에서 고치는 도중 그 PR 자체에서 재현/발견) -- 직전 배포 시점의 실제 커밋을
+    가리키는 `VERCEL_GIT_PREVIOUS_SHA`로 비교해야 머지 커밋 워크플로에서도 정확합니다. 이
+    값이 없는 경우(그 브랜치의 첫 배포 등)는 안전하게 "빌드함"(스킵 안 함) 쪽으로 기본값을
+    잡아뒀습니다.
 
 ## 5. 수익화 (B2B 구독) — 요약
 
