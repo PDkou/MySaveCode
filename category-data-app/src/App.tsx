@@ -7,7 +7,10 @@ import { SplashScreen } from './components/SplashScreen';
 
 type View = { screen: 'home' } | { screen: 'category'; categoryId: string } | { screen: 'table'; categoryId: string };
 
-const SPLASH_VISIBLE_MS = 900;
+// Splash's animated sequence (cabinet -> drawer open -> folder burst ->
+// particles) runs to ~1930ms (last particle's 1.37s delay + 560ms burst)
+// -- keep this ahead of that so the transition never cuts it off mid-flight.
+const SPLASH_VISIBLE_MS = 2000;
 const SPLASH_FADE_MS = 300;
 
 function App() {
