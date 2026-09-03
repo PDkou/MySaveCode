@@ -208,6 +208,30 @@ select {
   flex-shrink: 0;
 }
 
+/* CategoryBadgeEmoji/CategoryTemplateEmoji render both a light- and a
+   dark-flattened <img> and let CSS pick one -- same three-state pattern
+   as the color tokens above (see that comment for why there are three
+   blocks, not two). */
+.theme-dark-only {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .theme-light-only {
+    display: none;
+  }
+  :root:not([data-theme='light']) .theme-dark-only {
+    display: block;
+  }
+}
+
+:root[data-theme='dark'] .theme-light-only {
+  display: none;
+}
+:root[data-theme='dark'] .theme-dark-only {
+  display: block;
+}
+
 .icon-btn {
   border: none;
   background: transparent;

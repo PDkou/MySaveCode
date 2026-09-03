@@ -3,7 +3,7 @@ import type { AppData, Category, FieldDef } from '../types';
 import { AddCategoryModal } from './AddCategoryModal';
 import { BackupSheet } from './BackupSheet';
 import { SettingsIcon } from './icons';
-import { CategoryEmoji } from './categoryIcons';
+import { CategoryBadgeEmoji } from './categoryIcons';
 
 interface HomeProps {
   data: AppData;
@@ -48,7 +48,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport }: HomeProp
                 onClick={() => onOpenCategory(c.id)}
               >
                 <span className="category-card-badge">
-                  <CategoryEmoji value={c.emoji} size={36} />
+                  <CategoryBadgeEmoji value={c.emoji} size={36} />
                 </span>
                 <span className="category-card-name">{c.name}</span>
                 <span className="category-card-count">{entryCount(c.id)}건</span>

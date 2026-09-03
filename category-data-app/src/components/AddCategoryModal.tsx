@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal } from './Modal';
 import { CATEGORY_TEMPLATES } from '../lib/templates';
 import { CATEGORY_COLOR_CHOICES, CATEGORY_EMOJI_CHOICES } from '../lib/palette';
-import { CategoryEmoji } from './categoryIcons';
+import { CategoryBadgeEmoji, CategoryTemplateEmoji } from './categoryIcons';
 import type { FieldDef } from '../types';
 
 interface AddCategoryModalProps {
@@ -52,7 +52,7 @@ export function AddCategoryModal({ onCreate, onClose }: AddCategoryModalProps) {
           {CATEGORY_TEMPLATES.map((tpl) => (
             <button key={tpl.id} type="button" className="template-card" onClick={() => pickTemplate(tpl.id)}>
               <span className="template-emoji">
-                <CategoryEmoji value={tpl.emoji} size={34} />
+                <CategoryTemplateEmoji value={tpl.emoji} size={34} />
               </span>
               <span className="template-name">{tpl.name}</span>
               <span className="template-desc">{tpl.description}</span>
@@ -105,7 +105,7 @@ export function AddCategoryModal({ onCreate, onClose }: AddCategoryModalProps) {
             onClick={() => setEmoji(e)}
             aria-label={`아이콘 ${e}`}
           >
-            <CategoryEmoji value={e} size={26} />
+            <CategoryBadgeEmoji value={e} size={26} />
           </button>
         ))}
       </div>
