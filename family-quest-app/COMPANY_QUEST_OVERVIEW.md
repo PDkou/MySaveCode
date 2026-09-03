@@ -80,7 +80,15 @@
   business`** 만 추가로 필요. 이걸 안 넣으면 회사용 앱이 가족용처럼 동작함.
 - 배포된 새 도메인을 Supabase Authentication → URL Configuration의 Redirect URLs에
   **추가**(family-quest-app 주소는 지우지 않고 같이 등록).
-- 두 프로젝트 다 같은 저장소/브랜치를 보고 있으므로, 푸시 한 번으로 두 앱이 동시에 재배포됨.
+- 두 프로젝트 다 같은 저장소/브랜치를 보고 있으므로 푸시 한 번으로 두 앱 다 재배포가 트리거됨
+  -- 다만 **2026-09까지는 business-quest-app 쪽이 `family-quest-app/src`(`@core`로 가져다
+  쓰는 공유 소스)만 바뀐 커밋에서 매번 "Skipped - Not affected"로 스킵되는 문제가 있었음**.
+  Vercel의 기본 Ignored Build Step이 프로젝트의 Root Directory(`business-quest-app`) 안의
+  변경만 감지하고, `@core` alias로 참조하는 바깥 디렉터리는 못 봤기 때문 -- `business-quest-
+  app/vercel.json`에 `family-quest-app/src`/`package-lock.json`까지 함께 확인하는
+  `ignoreCommand`를 명시해서 고침. 대시보드에 수동으로 설정해둔 Ignored Build Step 값이
+  이미 있었다면 이 파일이 그걸 덮어쓸 수 있으니, 배포 후 한 번 대시보드에서 충돌 없는지
+  확인해두는 게 안전함.
 
 ## 5. 수익화 (B2B 구독) — 요약
 
