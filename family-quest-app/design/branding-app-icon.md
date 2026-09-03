@@ -36,6 +36,28 @@ Node의 zlib만으로 PNG를 픽셀 단위로 직접 그려서 만든 임시 아
 브라우저 탭 파비콘은 별도 `favicon.ico`/`favicon.svg` 없이 `index.html`에서 `icon-192.png`를 그대로
 재사용 중입니다 — 실제 로고가 정해지면 위 3개 파일만 교체하면 파비콘까지 한 번에 바뀝니다.
 
+## 네이티브 앱 스플래시 화면도 아직 미착수 (2026-09 확인)
+
+PWA 쪽(홈 화면 설치)은 `vite.config.ts`의 매니페스트(`background_color`/`theme_color`/아이콘)가
+이미 제대로 설정돼 있어서 브라우저가 자동으로 만들어주는 설치 스플래시는 코드상 문제 없음 --
+다만 저 아이콘 자체가 위에서 말한 임시 아이콘이라 브랜딩 관점에선 같은 문제를 그대로 물려받음.
+
+**진짜 빠진 건 Capacitor 네이티브 앱(안드로이드) 콜드 스타트 스플래시**입니다:
+`android/app/src/main/res/drawable*/splash.png`에 있는 이미지가 **Capacitor가 `npx cap add
+android` 실행 시 기본으로 깔아주는 스톡 로고**(흰 배경에 파란 X자 모양) 그대로이고, 이 앱
+아이콘과는 아무 관련이 없습니다. `@capacitor/splash-screen` 플러그인도 `package.json`에
+아직 없음 -- 지금 상태로 실기기에서 앱을 켜면 Family Quest 브랜딩이 전혀 없는 Capacitor
+기본 로고가 잠깐 뜨고 나서 앱으로 넘어갑니다.
+
+- `business-quest-app`은 아직 `android/` 스캐폴드 자체가 없어서 해당 없음 (앱 아이콘 심볼이
+  정해지면 두 앱 다 같은 소스로 만들면 됨).
+- 위 심볼 단독 버전 프롬프트로 앱 아이콘이 먼저 나오면, 그 심볼을 크게 배치한 스플래시 이미지도
+  같은 스타일 고정 문단으로 바로 이어서 만들 수 있음 (별도 프롬프트 설계는 아이콘이 확정된 뒤
+  진행) -- `@capacitor/splash-screen` 플러그인 설치 + `npx cap sync`로 각 해상도별
+  `drawable*/splash.png` 자동 교체까지가 남은 작업.
+- 급한 건 아님(스토어 등록 자체를 실기기 검증 전까지 보류 중이라 `README.md`/`FEATURES.md`
+  13번 참고) -- 앱 아이콘 브랜딩이 확정되는 시점에 같이 처리하면 됨.
+
 ## 겸사겸사: `index.html`의 `meta description`도 낡음
 
 ```html
