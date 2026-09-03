@@ -62,6 +62,20 @@ export const BUSINESS_OVERRIDES = {
       modeFamily: '팀',
       familyHint: '팀 구성원 모두가 함께 키우는 공용 타이쿤이에요. 누가 탭하든 같은 재화가 쌓여요.',
     },
+    // point3만 통째로 갈아치움 -- 원문은 캐릭터 커스터마이징 상점을 홍보하는데, 그 기능 자체가
+    // CHARACTER_CUSTOMIZATION_ENABLED로 두 앱 다 꺼져 있어서 그대로 두면 없는 기능을 안내하게
+    // 됨(family-quest-app에도 있는 기존 문제, design/ui-visual-system.md에 별도 메모). 대신
+    // 회사방에서만 실제로 쓸 수 있는 주간 리포트 CSV 다운로드를 대신 소개. 나머지 항목은 원문이
+    // 이미 가족색이 짙지 않아서(온보딩 텍스트엔 "가족"이라는 단어 자체가 없음) 톤만 업무용으로
+    // 살짝 다듬음 -- point1Title/point4Title/point4Desc는 그대로 둬도 어색하지 않아 생략.
+    onboarding: {
+      tagline: '오늘 처리할 업무, 퀘스트로 받아볼까요?',
+      point1Desc: '등록하고 담당자까지 정하면 끝, 팀원 모두가 한눈에 확인해요.',
+      point2Title: '완료하면 포인트 팡팡!',
+      point2Desc: '퀘스트를 마치면 포인트와 경험치를 받고, 레벨업까지 이어져요.',
+      point3Title: '주간 리포트로 한눈에',
+      point3Desc: '이번 주 팀원별 완료 현황을 확인하고, CSV로 내려받을 수도 있어요.',
+    },
     help: {
       sections: {
         0: {
@@ -146,6 +160,18 @@ export const BUSINESS_OVERRIDES = {
     tycoon: {
       modeFamily: 'チーム',
       familyHint: 'チーム全員で一緒に育てる共有タイクーンです。誰がタップしても同じ通貨が貯まります。',
+    },
+    // ko側と同じ理由でpoint3のみ丸ごと差し替え -- 元の文言はキャラクターカスタマイズショップの
+    // 案内だが、CHARACTER_CUSTOMIZATION_ENABLEDで両アプリとも無効化中のため、そのままでは
+    // 存在しない機能を案内してしまう。代わりに会社部屋だけで実際に使える週次レポートのCSV
+    // ダウンロードを紹介。
+    onboarding: {
+      tagline: '今日の業務、クエストにしてみる?',
+      point1Desc: '登録して担当まで決めればOK、チームみんなでひと目で確認できます。',
+      point2Title: '完了するとポイントざくざく!',
+      point2Desc: 'クエストを終えるとポイントと経験値がもらえて、レベルアップにつながります。',
+      point3Title: '週次レポートでひと目に',
+      point3Desc: '今週のチームメンバー別の完了状況を確認でき、CSVでダウンロードもできます。',
     },
     help: {
       sections: {
