@@ -271,6 +271,45 @@ Subject: A simple welcoming pixel-art scene for a first-launch screen: a small c
 Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
 ```
 
+이 일러스트가 `public/illustrations/onboarding.png`로 지금 실제 라이브 중인 Family Quest
+온보딩 화면(`OnboardingScreen.tsx`)에 쓰이고 있습니다. Company Quest는 이 이미지를 그대로
+재사용 중인데, 방향 재검토 결과(`branding-app-icon.md`) 회사용 온보딩 장면을 따로 만들기로
+했습니다 -- 아래 프롬프트.
+
+**8-1. Company Quest 첫 실행 환영 장면**
+
+```
+16-bit pixel art, chibi RPG mascot style (SNES/GBA-era JRPG, cozy farm-sim adjacent).
+Characters are 2.5-3 heads tall with an oversized rounded head, small simple body, stubby
+limbs, simple round black dot eyes, no visible mouth or a tiny minimal one. Bold, clean,
+uniform black pixel outline around every shape (~2px at a 32-64px base resolution) -- hard
+pixel edges, absolutely no anti-aliasing, no soft blur, no gradients inside a color area
+(one exception: a single small rectangular highlight block on glossy/metal/gem surfaces).
+Flat cel-shading with exactly 3 tones per surface -- one base tone, one lighter highlight
+tone (upper-left), one darker shadow tone (lower-right) -- single consistent light source
+from the upper-left across every asset. Warm, saturated, friendly color palette; nothing
+violent, sharp, or scary -- toy-like and family-friendly even for "weapon" items (they are
+pure cosmetic accessories, never shown in combat). Draw at a small base canvas (32x32 or
+64x64px) then upscale with nearest-neighbor/no smoothing to the final export size -- must
+look like true pixel art up close, not a smooth illustration pretending to be pixelated.
+Transparent PNG background unless the asset IS a background/backdrop piece. Every asset in
+a set must share identical outline weight, shading logic, and proportions so the full set
+reads as one unified sprite sheet.
+
+Subject: A simple welcoming pixel-art scene for a first-launch screen, re-themed for a workplace app: a small chibi coworker group (2-3 characters in the app's mascot style, dressed in business-casual/formal office attire -- blazers, collared shirts, one styled like the pointed-ear elf app-icon character in a suit) standing together next to a small wooden bulletin board with a blank sheet of paper pinned to it (same board/signpost motif as the Family Quest onboarding scene, re-themed as an office notice board), bright tidy office interior background with a window and warm daytime light, professional yet friendly and inviting mood.
+
+Generate exactly one image, containing only the single item described in the Subject line above (combined with the style-lock paragraph). Do not add, invent, substitute, or hint at any other character, clothing item, accessory, weapon, background element, icon, or text that is not explicitly described here. No grid, no multiple variants, no comparison sheet, no sprite sheet -- exactly one image, one item.
+```
+
+이 이미지가 나오면 코드 쪽에도 손 볼 게 있습니다 -- 지금 `OnboardingScreen.tsx`는
+`/illustrations/onboarding.png` 경로를 `APP_MODE` 분기 없이 하드코딩해서 쓰고 있어서, 이미지
+파일을 추가하는 것만으론 안 되고 `APP_MODE === 'business'`일 때 다른 경로를 쓰도록 분기하는
+코드 변경이 같이 필요합니다. 온보딩 문구(`onboarding.tagline`/`point1~4Title`/`Desc`) 쪽도
+`businessOverrides.ts`에 아직 오버라이드가 하나도 없어서 지금은 Company Quest에서도 Family
+Quest 문구가 그대로 노출되는 중 -- 이미지 교체와 함께 정리하면 좋습니다 (예: `point3Desc`가
+캐릭터 커스터마이징 상점을 언급하는데, 그 기능 자체가 `CHARACTER_CUSTOMIZATION_ENABLED`로
+두 앱 다 꺼져 있어서 이건 사실 family-quest-app에도 있는 별개의 기존 문제).
+
 ### 컨페티 조각 4종 (완료 축하 연출용)
 
 **9. 금화**
