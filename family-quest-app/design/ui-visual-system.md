@@ -304,11 +304,15 @@ Generate exactly one image, containing only the single item described in the Sub
 이 이미지가 나오면 코드 쪽에도 손 볼 게 있습니다 -- 지금 `OnboardingScreen.tsx`는
 `/illustrations/onboarding.png` 경로를 `APP_MODE` 분기 없이 하드코딩해서 쓰고 있어서, 이미지
 파일을 추가하는 것만으론 안 되고 `APP_MODE === 'business'`일 때 다른 경로를 쓰도록 분기하는
-코드 변경이 같이 필요합니다. 온보딩 문구(`onboarding.tagline`/`point1~4Title`/`Desc`) 쪽도
-`businessOverrides.ts`에 아직 오버라이드가 하나도 없어서 지금은 Company Quest에서도 Family
-Quest 문구가 그대로 노출되는 중 -- 이미지 교체와 함께 정리하면 좋습니다 (예: `point3Desc`가
-캐릭터 커스터마이징 상점을 언급하는데, 그 기능 자체가 `CHARACTER_CUSTOMIZATION_ENABLED`로
-두 앱 다 꺼져 있어서 이건 사실 family-quest-app에도 있는 별개의 기존 문제).
+코드 변경이 같이 필요합니다.
+
+온보딩 문구는 이미 정리했습니다 -- `businessOverrides.ts`의 `onboarding` 키로
+`tagline`/`point1Desc`/`point2Title`/`point2Desc`/`point3Title`/`point3Desc`를 오버라이드
+(ko/ja 둘 다). `point3`는 원문(캐릭터 커스터마이징 상점 홍보 -- 그 기능 자체가
+`CHARACTER_CUSTOMIZATION_ENABLED`로 두 앱 다 꺼져 있어서 이건 family-quest-app에도 있는
+별개의 기존 문제)을 그대로 옮기지 않고, 회사방에서만 실제로 쓸 수 있는 주간 리포트 CSV
+다운로드 소개로 통째로 갈아치웠습니다. `point1Title`/`point4Title`/`point4Desc`는 원문이
+이미 업무 톤에 어색하지 않아 오버라이드 생략.
 
 ### 컨페티 조각 4종 (완료 축하 연출용)
 
