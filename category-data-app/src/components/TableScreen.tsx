@@ -4,6 +4,7 @@ import { DataTable } from './DataTable';
 import { EntryFormModal } from './EntryFormModal';
 import { PrintView } from './PrintView';
 import { getNativeBridge } from '../lib/native';
+import { BackIcon, PdfIcon } from './icons';
 
 interface TableScreenProps {
   category: Category;
@@ -38,7 +39,7 @@ export function TableScreen({ category, entries, onBack, onAddEntry, onUpdateEnt
     <div className="screen table-screen">
       <header className="app-header">
         <button type="button" className="icon-btn" onClick={onBack} aria-label="뒤로">
-          ←
+          <BackIcon />
         </button>
         <h1 className="category-title">
           {category.emoji} {category.name} · 표
@@ -57,7 +58,7 @@ export function TableScreen({ category, entries, onBack, onAddEntry, onUpdateEnt
           aria-label="PDF로 내보내기"
           disabled={entries.length === 0}
         >
-          📄
+          <PdfIcon size={18} />
         </button>
       </header>
 

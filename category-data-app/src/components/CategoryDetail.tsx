@@ -5,6 +5,7 @@ import { EntryList } from './EntryList';
 import { EntryFormModal } from './EntryFormModal';
 import { EditCategoryModal } from './EditCategoryModal';
 import { ConfirmDialog } from './ConfirmDialog';
+import { BackIcon, EditIcon, TrashIcon, TableIcon } from './icons';
 
 interface CategoryDetailProps {
   data: AppData;
@@ -80,16 +81,21 @@ export function CategoryDetail({
     <div className="screen category-screen">
       <header className="app-header">
         <button type="button" className="icon-btn" onClick={onBack} aria-label="뒤로">
-          ←
+          <BackIcon />
         </button>
         <h1 className="category-title">
           {category.emoji} {category.name}
         </h1>
         <button type="button" className="icon-btn" onClick={() => setShowEditCategory(true)} aria-label="카테고리 편집">
-          ✏️
+          <EditIcon size={18} />
         </button>
-        <button type="button" className="icon-btn" onClick={() => setConfirmDeleteCategory(true)} aria-label="카테고리 삭제">
-          🗑️
+        <button
+          type="button"
+          className="icon-btn danger"
+          onClick={() => setConfirmDeleteCategory(true)}
+          aria-label="카테고리 삭제"
+        >
+          <TrashIcon size={18} />
         </button>
       </header>
 
@@ -110,7 +116,8 @@ export function CategoryDetail({
             onChange={(e) => setSearch(e.target.value)}
           />
           <button type="button" className="btn btn-secondary" onClick={onOpenTable} disabled={category.fields.length === 0}>
-            📊 표로 보기
+            <TableIcon size={16} />
+            표로 보기
           </button>
         </div>
 

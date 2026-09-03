@@ -2,6 +2,7 @@ import { useState, type CSSProperties } from 'react';
 import type { AppData, Category, FieldDef } from '../types';
 import { AddCategoryModal } from './AddCategoryModal';
 import { BackupSheet } from './BackupSheet';
+import { SettingsIcon } from './icons';
 
 interface HomeProps {
   data: AppData;
@@ -25,7 +26,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport }: HomeProp
           <p className="home-header-tagline">카테고리를 만들고, 표로 정리해요</p>
         </div>
         <button type="button" className="icon-btn" onClick={() => setShowBackup(true)} aria-label="백업/복원">
-          ⚙️
+          <SettingsIcon />
         </button>
       </header>
 
