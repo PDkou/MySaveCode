@@ -2,12 +2,17 @@
 <resources>
     <!-- Shown for the brief window before installSplashScreen() hands the
          activity back to AppTheme in MainActivity.onCreate(); masks the
-         white flash while WebView loads index.html. Reuses the exact
-         launcher icon/background so there's no visual mismatch between
-         tapping the icon and seeing the splash. -->
+         white flash while WebView loads index.html. Uses the bare
+         character art (not the layer-list-wrapped ic_launcher_foreground,
+         which boxes it down to 86dp for the launcher's adaptive-icon safe
+         zone) so it renders at the platform's full splash icon size
+         instead of launcher-icon size. windowSplashScreenBrandingImage
+         adds the wordmark underneath, in the same serif treatment used
+         for the wordmark elsewhere (Feature Graphic, in-app hero text). -->
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_art</item>
+        <item name="windowSplashScreenBrandingImage">@drawable/splash_branding</item>
         <item name="postSplashScreenTheme">@style/AppTheme</item>
     </style>
 </resources>
