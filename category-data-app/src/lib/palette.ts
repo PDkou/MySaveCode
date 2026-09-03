@@ -1,18 +1,18 @@
 // Shared category color choices -- used by both AddCategoryModal and
-// EditCategoryModal (previously duplicated in each). A curated warm/rich
-// set standing in for physical drawer materials (wood, brass, ink, fabric
-// linings) rather than default saturated primaries, matching the "나만의
-// 서랍장" concept -- see global.css's color tokens for the same idea
+// EditCategoryModal (previously duplicated in each). A curated pastel set
+// drawn from the app icon's own palette (lavender ground, coral drawer,
+// sage-green drawers) rather than saturated primaries or the earlier
+// wood/brass palette -- see global.css's color tokens for the same set
 // applied to the app chrome itself.
 export const CATEGORY_COLOR_CHOICES = [
-  '#3B6255', // pine
-  '#B8873F', // brass
-  '#A6432E', // brick
-  '#8B5FA3', // plum
-  '#3E6E8E', // ink teal
-  '#B5556B', // dusty rose
-  '#6B6448', // olive
-  '#4A4536', // walnut
+  '#6F5499', // lavender
+  '#F17B6B', // coral
+  '#5FA382', // sage green
+  '#E0A93E', // mustard
+  '#4FA8A0', // dusty teal
+  '#D98BA0', // dusty rose
+  '#6E8FC9', // soft blue
+  '#8A82A3', // gray-lavender
 ];
 
 // Icon choices for a category -- covers the domains someone is likely to

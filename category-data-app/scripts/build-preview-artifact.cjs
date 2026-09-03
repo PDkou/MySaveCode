@@ -25,8 +25,27 @@ if (!jsFile || !cssFile) {
   process.exit(1);
 }
 
-const js = fs.readFileSync(path.join(assetsDir, jsFile), 'utf8');
+let js = fs.readFileSync(path.join(assetsDir, jsFile), 'utf8');
 const css = fs.readFileSync(path.join(assetsDir, cssFile), 'utf8');
+
+// Runtime-referenced images (<img src="./icons/...">, e.g. SplashScreen.tsx
+// and Home.tsx's header logo) are plain string literals, not Vite asset
+// imports -- Vite has no idea they exist, so they end up in the bundle as
+// bare "./icons/xxx.png" paths. That's fine for dist/ (icons/ sits right
+// next to index.html) and drawary-app's bundled assets, but this preview
+// is a single standalone file with no icons/ folder alongside it. Inline
+// each referenced icon as a data URI so it still renders here.
+const iconsDir = path.join(SRC, 'icons');
+const iconRefs = [...js.matchAll(/\.\/icons\/([\w.-]+\.png)/g)].map((m) => m[1]);
+for (const name of new Set(iconRefs)) {
+  const iconPath = path.join(iconsDir, name);
+  if (!fs.existsSync(iconPath)) {
+    console.error(`Referenced ./icons/${name} but ${iconPath} doesn't exist.`);
+    process.exit(1);
+  }
+  const dataUri = `data:image/png;base64,${fs.readFileSync(iconPath).toString('base64')}`;
+  js = js.split(`./icons/${name}`).join(dataUri);
+}
 
 if (js.includes('</script')) {
   console.error('Bundled JS contains a literal "</script" sequence -- would break inlining. Investigate before publishing.');

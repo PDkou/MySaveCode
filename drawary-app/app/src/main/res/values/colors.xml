@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Warm tan, matching the web app's palette (see
+    <!-- Soft lavender, matching the web app's pastel palette (see
          category-data-app/src/styles/global.css and lib/palette.ts).
          Sits behind the drawer-cabinet foreground glyph on the adaptive
          icon. -->
-    <color name="ic_launcher_background">#EDE3CD</color>
-    <color name="status_bar">#F1EEE4</color>
-    <!-- Splash screen background: the app's pine-green primary, see
+    <color name="ic_launcher_background">#DCD0EC</color>
+    <color name="status_bar">#F4EFF9</color>
+    <!-- Splash screen background: the app's lavender primary, see
          themes.xml. A flat color (the splash API doesn't support a
          gradient background); the web bundle's own SplashScreen.tsx
          picks up the gradient version once it takes over. -->
-    <color name="splash_background">#3B6255</color>
+    <color name="splash_background">#6F5499</color>
 </resources>

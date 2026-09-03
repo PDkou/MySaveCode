@@ -1,30 +1,31 @@
 :root {
   color-scheme: light;
-  /* Warm, paper/wood-toned neutrals rather than a cold gray-blue SaaS
-     palette -- this app is "나만의 서랍장" (a chest of drawers you build
-     yourself), so the chrome leans into that material world: linen
-     paper, walnut ink, brass hardware. See lib/palette.ts for the
-     matching category-color choices. */
-  --bg: #f1eee4;
+  /* Pastel palette matching the app icon's own colors (lavender ground,
+     cream cabinet, coral drawer, sage-green drawers) rather than the
+     earlier wood/brass material palette -- chosen deliberately so the
+     icon and the in-app chrome read as the same object, not two
+     different brands. See lib/palette.ts for the matching
+     category-color choices, drawn from the same set. */
+  --bg: #f4eff9;
   --surface: #fffcf6;
-  --surface-alt: #e8e2d1;
-  --text: #2a281f;
-  --text-muted: #79715c;
-  --border: #ddd5bf;
-  --primary: #3b6255;
+  --surface-alt: #ece3f5;
+  --text: #2e2a3d;
+  --text-muted: #7a7390;
+  --border: #dcd0ec;
+  --primary: #6f5499;
   --primary-contrast: #fffcf6;
-  --accent: #b8873f;
-  --accent-contrast: #2a1d08;
-  --danger: #a6432e;
-  --danger-bg: #f1dcd2;
-  --success: #3b7355;
+  --accent: #f17b6b;
+  --accent-contrast: #3a1610;
+  --danger: #c23b3b;
+  --danger-bg: #fbe3de;
+  --success: #5fa382;
   --radius-sm: 12px;
   --radius-md: 18px;
   --radius-lg: 26px;
-  /* Warm-tinted shadow triplet (a walnut brown, not neutral gray) so
-     depth reads as part of the same material world instead of a generic
-     UI-kit drop shadow. */
-  --shadow-rgb: 42, 33, 20;
+  /* Plum-tinted shadow triplet (not neutral gray) so depth reads as part
+     of the same pastel-lavender world instead of a generic UI-kit drop
+     shadow. */
+  --shadow-rgb: 46, 36, 66;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   /* In landscape (phone rotated, or a notch/home-indicator cutout on the
@@ -47,38 +48,38 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --bg: #1c1a13;
-    --surface: #252217;
-    --surface-alt: #2f2b1d;
-    --text: #f0ecdb;
-    --text-muted: #a99f83;
-    --border: #3c3624;
-    --primary: #74a591;
-    --primary-contrast: #142019;
-    --accent: #dcab63;
-    --accent-contrast: #271a06;
-    --danger: #e08268;
-    --danger-bg: #3a2117;
-    --success: #74a591;
+    --bg: #1e1a29;
+    --surface: #272130;
+    --surface-alt: #322a3d;
+    --text: #f1ecfa;
+    --text-muted: #a99fc0;
+    --border: #453a55;
+    --primary: #b49bdd;
+    --primary-contrast: #221936;
+    --accent: #f79c8c;
+    --accent-contrast: #3a1610;
+    --danger: #e8897e;
+    --danger-bg: #3d2420;
+    --success: #8fc7a7;
     --shadow-rgb: 0, 0, 0;
   }
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #1c1a13;
-  --surface: #252217;
-  --surface-alt: #2f2b1d;
-  --text: #f0ecdb;
-  --text-muted: #a99f83;
-  --border: #3c3624;
-  --primary: #74a591;
-  --primary-contrast: #142019;
-  --accent: #dcab63;
-  --accent-contrast: #271a06;
-  --danger: #e08268;
-  --danger-bg: #3a2117;
-  --success: #74a591;
+  --bg: #1e1a29;
+  --surface: #272130;
+  --surface-alt: #322a3d;
+  --text: #f1ecfa;
+  --text-muted: #a99fc0;
+  --border: #453a55;
+  --primary: #b49bdd;
+  --primary-contrast: #221936;
+  --accent: #f79c8c;
+  --accent-contrast: #3a1610;
+  --danger: #e8897e;
+  --danger-bg: #3d2420;
+  --success: #8fc7a7;
   --shadow-rgb: 0, 0, 0;
 }
 
@@ -162,21 +163,9 @@ select {
 
 .home-logo {
   flex-shrink: 0;
-  width: 38px;
-  height: 42px;
-  background: var(--accent);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 4px;
-  box-shadow: 0 3px 8px -2px rgba(var(--shadow-rgb), 0.45);
-}
-
-.home-logo-drawer {
-  flex: 1;
-  background: var(--surface);
-  border-radius: 4px;
+  width: 40px;
+  height: 40px;
+  filter: drop-shadow(0 3px 6px rgba(var(--shadow-rgb), 0.4));
 }
 
 .home-header-text {
@@ -247,7 +236,7 @@ select {
   align-items: center;
   justify-content: center;
   gap: 18px;
-  background: linear-gradient(135deg, #517d6c 0%, #2c4a3f 100%);
+  background: linear-gradient(135deg, #9b7fc7 0%, #5f4488 100%);
   opacity: 1;
   transition: opacity 0.3s ease;
 }
@@ -256,42 +245,20 @@ select {
   opacity: 0;
 }
 
-.splash-cabinet {
-  width: 108px;
-  height: 132px;
-  background: #c39a5f;
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-  box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.4);
-  animation: splash-pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-.splash-drawer {
-  flex: 1;
-  background: #fffcf6;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.splash-pull {
-  width: 34%;
-  height: 12%;
-  border-radius: 999px;
-  background: #2c4a3f;
+.splash-icon {
+  width: 148px;
+  height: 148px;
+  filter: drop-shadow(0 16px 28px rgba(58, 26, 16, 0.35));
+  animation: splash-pop 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 @keyframes splash-pop {
   from {
-    transform: scale(0.85);
+    transform: scale(0.8) rotate(-4deg);
     opacity: 0;
   }
   to {
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
     opacity: 1;
   }
 }

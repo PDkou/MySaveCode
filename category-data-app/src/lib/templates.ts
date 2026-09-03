@@ -19,7 +19,7 @@ export const CATEGORY_TEMPLATES: CategoryTemplate[] = [
     id: 'ledger',
     name: '가계부',
     emoji: '💰',
-    color: '#3B6255',
+    color: '#6F5499',
     description: '날짜별 수입/지출 기록',
     buildFields: () => [
       { id: newId(), name: '날짜', type: 'date', required: true },
@@ -33,7 +33,7 @@ export const CATEGORY_TEMPLATES: CategoryTemplate[] = [
     id: 'wardrobe',
     name: '옷장',
     emoji: '👕',
-    color: '#B5556B',
+    color: '#D98BA0',
     description: '옷 종류, 구매일, 가격 관리',
     buildFields: () => [
       { id: newId(), name: '구매일', type: 'date', required: false },
@@ -47,7 +47,7 @@ export const CATEGORY_TEMPLATES: CategoryTemplate[] = [
     id: 'cosmetics',
     name: '화장품',
     emoji: '💄',
-    color: '#B8873F',
+    color: '#E0A93E',
     description: '제품별 구매일, 개봉일 관리',
     buildFields: () => [
       { id: newId(), name: '제품명', type: 'text', required: true },

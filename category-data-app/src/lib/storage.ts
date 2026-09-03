@@ -25,7 +25,7 @@ function seedData(): AppData {
         id: categoryId,
         name: '가계부 (예시)',
         emoji: '💰',
-        color: '#3B6255',
+        color: '#6F5499',
         createdAt: now,
         fields: [
           { id: dateFieldId, name: '날짜', type: 'date', required: true },

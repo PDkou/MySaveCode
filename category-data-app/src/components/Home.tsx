@@ -19,10 +19,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport }: HomeProp
   return (
     <div className="screen home-screen">
       <header className="app-header home-header">
-        <span className="home-logo" aria-hidden="true">
-          <span className="home-logo-drawer" />
-          <span className="home-logo-drawer" />
-        </span>
+        <img className="home-logo" src="./icons/icon-splash.png" alt="" aria-hidden="true" />
         <div className="home-header-text">
           <h1>나만의 서랍장</h1>
           <p className="home-header-tagline">카테고리를 만들고, 표로 정리해요</p>

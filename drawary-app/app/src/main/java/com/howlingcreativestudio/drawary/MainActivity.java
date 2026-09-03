@@ -60,7 +60,7 @@ public class MainActivity extends Activity {
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         splashScreen.setKeepOnScreenCondition(() -> !webReady);
-        int bg = Color.rgb(0xF1, 0xEE, 0xE4);
+        int bg = Color.rgb(0xF4, 0xEF, 0xF9);
         getWindow().setStatusBarColor(bg);
         getWindow().setNavigationBarColor(bg);
         getWindow().getDecorView().setSystemUiVisibility(

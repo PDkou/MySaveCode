@@ -39,8 +39,8 @@ export default defineConfig({
         // from landscape on a tablet (more table columns visible without
         // horizontal scrolling).
         orientation: 'any',
-        background_color: '#f1eee4',
-        theme_color: '#3B6255',
+        background_color: '#f4eff9',
+        theme_color: '#6F5499',
         lang: 'ko',
         icons: [
           {
