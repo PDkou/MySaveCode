@@ -40,6 +40,7 @@ public class MainActivity extends Activity {
     private static final int PROFILE_PHOTO_SIZE = 256;
 
     @Override public void onCreate(Bundle state) {
+        androidx.core.splashscreen.SplashScreen.installSplashScreen(this);
         super.onCreate(state);
         getWindow().setStatusBarColor(Color.rgb(248,245,237));
         getWindow().setNavigationBarColor(Color.rgb(248,245,237));

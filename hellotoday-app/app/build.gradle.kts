@@ -93,4 +93,9 @@ dependencies {
     // EEA/UK ad consent flow required by Google's ads policy (see
     // ConsentManager.java) -- a separate artifact from play-services-ads.
     implementation("com.google.android.ump:user-messaging-platform:4.0.0")
+
+    // Splash screen shown while WebView loads index.html (masks the brief
+    // white flash on cold start). Backports the Android 12 SplashScreen API
+    // down to minSdk 26 via a compat theme -- see Theme.App.Starting.
+    implementation("androidx.core:core-splashscreen:1.0.1")
 }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shown for the brief window before installSplashScreen() hands the
+         activity back to AppTheme in MainActivity.onCreate(); masks the
+         white flash while WebView loads index.html. Reuses the exact
+         launcher icon/background so there's no visual mismatch between
+         tapping the icon and seeing the splash. -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/AppTheme</item>
+    </style>
+</resources>
