@@ -52,7 +52,7 @@ public class MainActivity extends Activity {
         androidx.core.splashscreen.SplashScreen splashScreen =
                 androidx.core.splashscreen.SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !(minSplashElapsed && webViewReady));
-        new Handler(Looper.getMainLooper()).postDelayed(() -> minSplashElapsed = true, 900);
+        new Handler(Looper.getMainLooper()).postDelayed(() -> minSplashElapsed = true, 1500);
         super.onCreate(state);
         getWindow().setStatusBarColor(Color.rgb(248,245,237));
         getWindow().setNavigationBarColor(Color.rgb(248,245,237));
