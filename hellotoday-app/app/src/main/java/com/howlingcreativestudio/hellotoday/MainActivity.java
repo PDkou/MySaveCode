@@ -39,8 +39,20 @@ public class MainActivity extends Activity {
     // or backup-format change needed (see backupPayload() in index.html).
     private static final int PROFILE_PHOTO_SIZE = 256;
 
+    // Both flags must flip true before the splash screen is allowed to
+    // dismiss: minSplashElapsed guarantees it's actually seen (installSplashScreen()
+    // alone would let it vanish the instant setContentView() draws one frame,
+    // which is basically immediately -- before WebView has painted anything),
+    // and webViewReady means the WebView already has real content underneath
+    // it, so there's no gap where the splash drops away onto a blank page.
+    private volatile boolean minSplashElapsed = false;
+    private volatile boolean webViewReady = false;
+
     @Override public void onCreate(Bundle state) {
-        androidx.core.splashscreen.SplashScreen.installSplashScreen(this);
+        androidx.core.splashscreen.SplashScreen splashScreen =
+                androidx.core.splashscreen.SplashScreen.installSplashScreen(this);
+        splashScreen.setKeepOnScreenCondition(() -> !(minSplashElapsed && webViewReady));
+        new Handler(Looper.getMainLooper()).postDelayed(() -> minSplashElapsed = true, 900);
         super.onCreate(state);
         getWindow().setStatusBarColor(Color.rgb(248,245,237));
         getWindow().setNavigationBarColor(Color.rgb(248,245,237));
@@ -53,7 +65,12 @@ public class MainActivity extends Activity {
         web.getSettings().setDomStorageEnabled(true);
         web.getSettings().setAllowFileAccess(true);
         web.getSettings().setAllowContentAccess(false);
-        web.setWebViewClient(new WebViewClient());
+        web.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                webViewReady = true;
+            }
+        });
         web.addJavascriptInterface(new NativeBridge(), "HelloNative");
         premiumBilling = new PremiumBilling(this, web);
         premiumBilling.start();
