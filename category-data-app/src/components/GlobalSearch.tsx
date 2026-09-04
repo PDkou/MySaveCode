@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import type { AppData } from '../types';
 import { matchesSearch } from '../lib/search';
 import { formatFieldValue } from '../lib/format';
@@ -9,6 +9,10 @@ interface GlobalSearchProps {
   data: AppData;
   onOpenCategory: (id: string) => void;
   onClose: () => void;
+  // Home's BottomNav -- rendered here (instead of Home wrapping this
+  // component from outside) so this screen's own .screen-content can
+  // reserve the right amount of bottom padding for it in the same place.
+  bottomNav?: ReactNode;
 }
 
 interface GroupResult {
@@ -25,7 +29,7 @@ interface GroupResult {
 // same shape as CategoryDetail/TableScreen. Kept as Home-local state
 // rather than its own App.tsx view, since it never needs anything beyond
 // what Home already has (data + onOpenCategory).
-export function GlobalSearch({ data, onOpenCategory, onClose }: GlobalSearchProps) {
+export function GlobalSearch({ data, onOpenCategory, onClose, bottomNav }: GlobalSearchProps) {
   const [query, setQuery] = useState('');
 
   const groups = useMemo<GroupResult[]>(() => {
@@ -76,7 +80,7 @@ export function GlobalSearch({ data, onOpenCategory, onClose }: GlobalSearchProp
         />
       </header>
 
-      <div className="screen-content">
+      <div className={`screen-content ${bottomNav ? 'with-bottom-nav' : ''}`}>
         {!query.trim() && <p className="empty-hint">카테고리를 넘나들며 데이터를 한 번에 찾아요.</p>}
         {query.trim() && groups.length === 0 && <p className="empty-hint">검색 결과가 없어요.</p>}
         {groups.length > 0 && (
@@ -100,6 +104,8 @@ export function GlobalSearch({ data, onOpenCategory, onClose }: GlobalSearchProp
           </ul>
         )}
       </div>
+
+      {bottomNav}
     </div>
   );
 }

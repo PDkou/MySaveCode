@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { BackupSheet } from './BackupSheet';
@@ -10,6 +10,7 @@ interface SettingsProps {
   data: AppData;
   onImport: (data: AppData) => void;
   onBack: () => void;
+  bottomNav?: ReactNode;
 }
 
 const CONTACT_EMAIL = 'db5704@gmail.com';
@@ -35,7 +36,7 @@ function appVersion(): string {
 // there's more here than just backup/restore -- reached from Home the
 // same way GlobalSearch is, as Home-local state rather than its own
 // App.tsx view, since it only ever needs what Home already has.
-export function Settings({ data, onImport, onBack }: SettingsProps) {
+export function Settings({ data, onImport, onBack, bottomNav }: SettingsProps) {
   const [showBackup, setShowBackup] = useState(false);
   const [showTokushoho, setShowTokushoho] = useState(false);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
@@ -49,7 +50,7 @@ export function Settings({ data, onImport, onBack }: SettingsProps) {
         <h1>설정</h1>
       </header>
 
-      <div className="screen-content">
+      <div className={`screen-content ${bottomNav ? 'with-bottom-nav' : ''}`}>
         <div className="settings-row">
           <div className="settings-row-text">
             <b>백업</b>
@@ -156,6 +157,8 @@ export function Settings({ data, onImport, onBack }: SettingsProps) {
           </dl>
         </Modal>
       )}
+
+      {bottomNav}
     </div>
   );
 }

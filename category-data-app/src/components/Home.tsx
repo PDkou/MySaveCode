@@ -3,7 +3,8 @@ import type { AppData, Category, FieldDef } from '../types';
 import { AddCategoryModal } from './AddCategoryModal';
 import { GlobalSearch } from './GlobalSearch';
 import { Settings } from './Settings';
-import { SettingsIcon, SearchIcon, SortIcon, StarIcon, BellIcon } from './icons';
+import { BottomNav, type BottomNavTab } from './BottomNav';
+import { SortIcon, StarIcon, BellIcon } from './icons';
 import { CategoryBadgeEmoji } from './categoryIcons';
 import { getUpcomingReminders } from '../lib/reminders';
 
@@ -51,12 +52,31 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onTogglePi
     return data.entries.filter((e) => e.createdAt >= weekAgo).length;
   }, [data.entries]);
 
+  const handleNavigate = (tab: BottomNavTab) => {
+    setShowSearch(tab === 'search');
+    setShowSettings(tab === 'settings');
+  };
+
   if (showSearch) {
-    return <GlobalSearch data={data} onOpenCategory={onOpenCategory} onClose={() => setShowSearch(false)} />;
+    return (
+      <GlobalSearch
+        data={data}
+        onOpenCategory={onOpenCategory}
+        onClose={() => setShowSearch(false)}
+        bottomNav={<BottomNav active="search" onNavigate={handleNavigate} />}
+      />
+    );
   }
 
   if (showSettings) {
-    return <Settings data={data} onImport={onImport} onBack={() => setShowSettings(false)} />;
+    return (
+      <Settings
+        data={data}
+        onImport={onImport}
+        onBack={() => setShowSettings(false)}
+        bottomNav={<BottomNav active="settings" onNavigate={handleNavigate} />}
+      />
+    );
   }
 
   return (
@@ -67,9 +87,6 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onTogglePi
           <h1>나만의 서랍장</h1>
           <p className="home-header-tagline">카테고리를 만들고, 표로 정리해요</p>
         </div>
-        <button type="button" className="icon-btn" onClick={() => setShowSearch(true)} aria-label="전체 검색">
-          <SearchIcon />
-        </button>
         {data.categories.length > 1 && (
           <button
             type="button"
@@ -81,12 +98,9 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onTogglePi
             <SortIcon />
           </button>
         )}
-        <button type="button" className="icon-btn" onClick={() => setShowSettings(true)} aria-label="설정">
-          <SettingsIcon />
-        </button>
       </header>
 
-      <div className="screen-content">
+      <div className="screen-content with-bottom-nav">
         {data.categories.length > 0 && (
           <div className="home-hero-card">
             <span className="home-hero-number">{weeklyCount}</span>
@@ -217,6 +231,8 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onTogglePi
           onClose={() => setShowAdd(false)}
         />
       )}
+
+      <BottomNav active="home" onNavigate={handleNavigate} />
     </div>
   );
 }
