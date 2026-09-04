@@ -130,3 +130,77 @@ export function ListIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function CheckSquareIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <polyline points="8 12.5 11 15.5 16 9" />
+    </Icon>
+  );
+}
+
+// Used both for the rating field type (filled = current value) and as the
+// pin/favorite marker on a Home category card -- same "singled out"
+// visual metaphor either way.
+export function StarIcon({ filled, ...props }: IconProps & { filled?: boolean }) {
+  return (
+    <Icon {...props} fill={filled ? 'currentColor' : 'none'}>
+      <polygon points="12 2.5 15.09 8.76 22 9.77 17 14.64 18.18 21.52 12 18.27 5.82 21.52 7 14.64 2 9.77 8.91 8.76 12 2.5" />
+    </Icon>
+  );
+}
+
+export function SearchIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </Icon>
+  );
+}
+
+// Home's reorder-mode toggle -- lines of decreasing length plus an
+// up/down arrow pair reads as "sort/reorder" without needing a drag-handle
+// metaphor this app's plain click/tap interactions (see FieldEditor's own
+// up/down row buttons) don't otherwise use.
+export function SortIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <line x1="4" y1="6" x2="14" y2="6" />
+      <line x1="4" y1="12" x2="11" y2="12" />
+      <line x1="4" y1="18" x2="8" y2="18" />
+      <path d="M18 3v18" />
+      <path d="M14.5 6.5L18 3l3.5 3.5" />
+      <path d="M21.5 17.5L18 21l-3.5-3.5" />
+    </Icon>
+  );
+}
+
+export function DownloadIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3v12" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M5 21h14" />
+    </Icon>
+  );
+}
+
+export function BellIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M6 8a6 6 0 0112 0c0 6 2.5 8 3 8.5H3C3.5 16 6 14 6 8z" />
+      <path d="M10.3 20.5a1.94 1.94 0 003.4 0" />
+    </Icon>
+  );
+}
+
+export function CopyIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="9" y="9" width="12" height="12" rx="2" />
+      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+    </Icon>
+  );
+}

@@ -43,6 +43,8 @@ function App() {
           onOpenCategory={(id) => setView({ screen: 'category', categoryId: id })}
           onAddCategory={app.addCategory}
           onImport={app.replaceAll}
+          onTogglePinCategory={app.togglePinCategory}
+          onMoveCategory={app.moveCategory}
         />
       )}
 
@@ -61,9 +63,10 @@ function App() {
           onUpdateField={(fieldId, patch) => app.updateField(view.categoryId, fieldId, patch)}
           onRemoveField={(fieldId) => app.removeField(view.categoryId, fieldId)}
           onMoveField={(fieldId, direction) => app.moveField(view.categoryId, fieldId, direction)}
-          onAddEntry={(values) => app.addEntry(view.categoryId, values)}
+          onAddEntry={(values, reminders) => app.addEntry(view.categoryId, values, reminders)}
           onUpdateEntry={app.updateEntry}
           onDeleteEntry={app.deleteEntry}
+          onRestoreEntry={app.restoreEntry}
         />
       )}
 
@@ -73,9 +76,10 @@ function App() {
             category={category}
             entries={app.data.entries.filter((e) => e.categoryId === view.categoryId)}
             onBack={() => setView({ screen: 'category', categoryId: view.categoryId })}
-            onAddEntry={(values) => app.addEntry(view.categoryId, values)}
+            onAddEntry={(values, reminders) => app.addEntry(view.categoryId, values, reminders)}
             onUpdateEntry={app.updateEntry}
             onDeleteEntry={app.deleteEntry}
+            onRestoreEntry={app.restoreEntry}
           />
         ) : (
           // Category no longer exists (e.g. deleted in another tab) --

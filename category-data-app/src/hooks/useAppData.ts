@@ -13,9 +13,15 @@ export interface UseAppData {
   updateField: (categoryId: string, fieldId: string, patch: Partial<Omit<FieldDef, 'id'>>) => void;
   removeField: (categoryId: string, fieldId: string) => void;
   moveField: (categoryId: string, fieldId: string, direction: -1 | 1) => void;
-  addEntry: (categoryId: string, values: Record<string, string>) => void;
-  updateEntry: (entryId: string, values: Record<string, string>) => void;
+  togglePinCategory: (id: string) => void;
+  moveCategory: (id: string, direction: -1 | 1) => void;
+  addEntry: (categoryId: string, values: Record<string, string>, reminders?: Record<string, boolean>) => void;
+  updateEntry: (entryId: string, values: Record<string, string>, reminders?: Record<string, boolean>) => void;
   deleteEntry: (entryId: string) => void;
+  // Re-inserts an already-existing Entry object verbatim (same id/
+  // createdAt) rather than minting a new one -- the undo half of the
+  // delete-entry toast (see components/Toast.tsx / CategoryDetail.tsx).
+  restoreEntry: (entry: Entry) => void;
   replaceAll: (next: AppData) => void;
 }
 
@@ -115,21 +121,55 @@ export function useAppData(): UseAppData {
     }));
   }, []);
 
-  const addEntry: UseAppData['addEntry'] = useCallback((categoryId, values) => {
+  const togglePinCategory: UseAppData['togglePinCategory'] = useCallback((id) => {
+    setData((d) => ({
+      ...d,
+      categories: d.categories.map((c) => (c.id === id ? { ...c, pinned: !c.pinned } : c)),
+    }));
+  }, []);
+
+  // Home renders pinned categories first (stable-partitioned, each group
+  // keeping its own relative order -- see Home.tsx), so "move up/down"
+  // only makes sense within the same pinned/unpinned group: this walks
+  // past any different-group entries in between to find the next same-
+  // group neighbor, same effect as reordering within Home's own displayed
+  // grouping without Home having to know the storage order at all.
+  const moveCategory: UseAppData['moveCategory'] = useCallback((id, direction) => {
+    setData((d) => {
+      const cats = d.categories;
+      const idx = cats.findIndex((c) => c.id === id);
+      if (idx === -1) return d;
+      const pinned = !!cats[idx].pinned;
+      let targetIdx = idx + direction;
+      while (targetIdx >= 0 && targetIdx < cats.length && !!cats[targetIdx].pinned !== pinned) {
+        targetIdx += direction;
+      }
+      if (targetIdx < 0 || targetIdx >= cats.length) return d;
+      const next = cats.slice();
+      [next[idx], next[targetIdx]] = [next[targetIdx], next[idx]];
+      return { ...d, categories: next };
+    });
+  }, []);
+
+  const addEntry: UseAppData['addEntry'] = useCallback((categoryId, values, reminders) => {
     const now = Date.now();
-    const entry: Entry = { id: newId(), categoryId, values, createdAt: now, updatedAt: now };
+    const entry: Entry = { id: newId(), categoryId, values, reminders, createdAt: now, updatedAt: now };
     setData((d) => ({ ...d, entries: [...d.entries, entry] }));
   }, []);
 
-  const updateEntry: UseAppData['updateEntry'] = useCallback((entryId, values) => {
+  const updateEntry: UseAppData['updateEntry'] = useCallback((entryId, values, reminders) => {
     setData((d) => ({
       ...d,
-      entries: d.entries.map((e) => (e.id === entryId ? { ...e, values, updatedAt: Date.now() } : e)),
+      entries: d.entries.map((e) => (e.id === entryId ? { ...e, values, reminders, updatedAt: Date.now() } : e)),
     }));
   }, []);
 
   const deleteEntry: UseAppData['deleteEntry'] = useCallback((entryId) => {
     setData((d) => ({ ...d, entries: d.entries.filter((e) => e.id !== entryId) }));
+  }, []);
+
+  const restoreEntry: UseAppData['restoreEntry'] = useCallback((entry) => {
+    setData((d) => ({ ...d, entries: [...d.entries, entry] }));
   }, []);
 
   const replaceAll: UseAppData['replaceAll'] = useCallback((next) => {
@@ -146,9 +186,12 @@ export function useAppData(): UseAppData {
     updateField,
     removeField,
     moveField,
+    togglePinCategory,
+    moveCategory,
     addEntry,
     updateEntry,
     deleteEntry,
+    restoreEntry,
     replaceAll,
   };
 }

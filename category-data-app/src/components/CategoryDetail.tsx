@@ -7,6 +7,8 @@ import { EditCategoryModal } from './EditCategoryModal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { BackIcon, EditIcon, TrashIcon, TableIcon } from './icons';
 import { CategoryEmoji } from './categoryIcons';
+import { matchesSearch } from '../lib/search';
+import { Toast } from './Toast';
 
 interface CategoryDetailProps {
   data: AppData;
@@ -19,15 +21,10 @@ interface CategoryDetailProps {
   onUpdateField: (fieldId: string, patch: Partial<Omit<FieldDef, 'id'>>) => void;
   onRemoveField: (fieldId: string) => void;
   onMoveField: (fieldId: string, direction: -1 | 1) => void;
-  onAddEntry: (values: Record<string, string>) => void;
-  onUpdateEntry: (entryId: string, values: Record<string, string>) => void;
+  onAddEntry: (values: Record<string, string>, reminders?: Record<string, boolean>) => void;
+  onUpdateEntry: (entryId: string, values: Record<string, string>, reminders?: Record<string, boolean>) => void;
   onDeleteEntry: (entryId: string) => void;
-}
-
-function matchesSearch(entry: Entry, fields: FieldDef[], query: string): boolean {
-  if (!query.trim()) return true;
-  const q = query.trim().toLowerCase();
-  return fields.some((f) => (entry.values[f.id] ?? '').toLowerCase().includes(q));
+  onRestoreEntry: (entry: Entry) => void;
 }
 
 // This screen is for managing the category's shape (fields) and browsing/
@@ -49,6 +46,7 @@ export function CategoryDetail({
   onAddEntry,
   onUpdateEntry,
   onDeleteEntry,
+  onRestoreEntry,
 }: CategoryDetailProps) {
   const category = data.categories.find((c) => c.id === categoryId);
   const [search, setSearch] = useState('');
@@ -56,6 +54,7 @@ export function CategoryDetail({
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [showEditCategory, setShowEditCategory] = useState(false);
   const [confirmDeleteCategory, setConfirmDeleteCategory] = useState(false);
+  const [undoEntry, setUndoEntry] = useState<Entry | null>(null);
 
   const categoryEntries = useMemo(
     () => data.entries.filter((e) => e.categoryId === categoryId),
@@ -139,8 +138,8 @@ export function CategoryDetail({
       {showAddEntry && (
         <EntryFormModal
           category={category}
-          onSave={(values) => {
-            onAddEntry(values);
+          onSave={(values, reminders) => {
+            onAddEntry(values, reminders);
             setShowAddEntry(false);
           }}
           onClose={() => setShowAddEntry(false)}
@@ -151,15 +150,32 @@ export function CategoryDetail({
         <EntryFormModal
           category={category}
           initial={editingEntry}
-          onSave={(values) => {
-            onUpdateEntry(editingEntry.id, values);
+          onSave={(values, reminders) => {
+            onUpdateEntry(editingEntry.id, values, reminders);
+            setEditingEntry(null);
+          }}
+          onDuplicate={() => {
+            onAddEntry({ ...editingEntry.values }, editingEntry.reminders);
             setEditingEntry(null);
           }}
           onDelete={() => {
             onDeleteEntry(editingEntry.id);
+            setUndoEntry(editingEntry);
             setEditingEntry(null);
           }}
           onClose={() => setEditingEntry(null)}
+        />
+      )}
+
+      {undoEntry && (
+        <Toast
+          message="삭제됨"
+          actionLabel="되돌리기"
+          onAction={() => {
+            onRestoreEntry(undoEntry);
+            setUndoEntry(null);
+          }}
+          onDismiss={() => setUndoEntry(null)}
         />
       )}
 

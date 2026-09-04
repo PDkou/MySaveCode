@@ -17,6 +17,12 @@
 //   as PDF" dialog on Android.
 export interface DrawaryNativeBridge {
   exportBackup: (json: string) => void;
+  // Generalized version of exportBackup for any other exported file (CSV,
+  // see lib/csv.ts) -- kept as its own method rather than widening
+  // exportBackup's signature since the backup flow's success/failure
+  // callbacks (onDrawaryBackupExported/Failed below) are specifically
+  // tied to BackupSheet.tsx's import/export UI.
+  exportFile: (content: string, filename: string, mimeType: string) => void;
   importBackup: () => void;
   printPage: () => void;
   appVersion?: () => string;
@@ -36,4 +42,19 @@ declare global {
 
 export function getNativeBridge(): DrawaryNativeBridge | undefined {
   return typeof window !== 'undefined' ? window.DrawaryNative : undefined;
+}
+
+// The plain web/PWA blob-download dance -- pulled out here since it's
+// needed by more than one export flow now (BackupSheet.tsx's JSON export
+// had it inline first; lib/csv.ts's CSV export reuses this instead of a
+// third copy).
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }

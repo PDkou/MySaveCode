@@ -263,6 +263,11 @@ select {
   color: var(--danger);
 }
 
+.icon-btn.active {
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--primary);
+}
+
 .screen-content {
   flex: 1;
   overflow-y: auto;
@@ -677,6 +682,45 @@ select {
   box-shadow: none;
 }
 
+/* ---------- Toast (undo delete) ---------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + var(--safe-bottom));
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  /* Deliberately inverted from the page's own surface -- both theme's
+     --text/--bg tokens already contrast correctly against each other, so
+     this reads as a floating chip in either theme without its own
+     light/dark-specific colors. */
+  background: var(--text);
+  color: var(--bg);
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 24px -6px rgba(var(--shadow-rgb), 0.5);
+  z-index: 40;
+  font-size: 0.88rem;
+  animation: sheet-up 0.18s ease-out;
+}
+
+.toast-message {
+  white-space: nowrap;
+}
+
+.toast-action {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
 /* ---------- Home ---------- */
 
 .empty-state {
@@ -764,6 +808,214 @@ select {
   color: var(--text-muted);
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
+}
+
+.category-card {
+  position: relative;
+}
+
+.category-pin-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  color: var(--accent);
+}
+
+/* Reorder mode swaps the whole card out for a non-navigating variant
+   (a <div>, not the clickable <button>) with its own pin toggle + up/down
+   move buttons -- same interaction shape as FieldEditor's per-row arrows,
+   so pin/reorder never fights an accidental tap-to-open. */
+.category-card.reorder-mode {
+  cursor: default;
+}
+
+.category-pin-toggle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px -2px rgba(var(--shadow-rgb), 0.4);
+}
+
+.category-pin-toggle.pinned {
+  color: var(--accent);
+}
+
+.category-reorder-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+/* ---------- Upcoming reminders (Home) ---------- */
+
+.upcoming-panel {
+  margin-bottom: 18px;
+}
+
+.upcoming-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.upcoming-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upcoming-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 6px -4px rgba(var(--shadow-rgb), 0.3);
+}
+
+.upcoming-row:active {
+  background: var(--surface-alt);
+}
+
+.upcoming-row-badge {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upcoming-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.upcoming-row-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upcoming-row-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.upcoming-row-badge-days {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.upcoming-row-badge-days.overdue {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+/* ---------- Global search ---------- */
+
+.search-screen .app-header {
+  gap: 10px;
+}
+
+.search-result-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-result-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 6px -4px rgba(var(--shadow-rgb), 0.3);
+}
+
+.search-result-row:active {
+  background: var(--surface-alt);
+}
+
+.search-result-badge {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-result-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.search-result-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.search-result-count {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 0.82rem;
+}
+
+.search-result-preview {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ---------- Modal / bottom sheet ---------- */
@@ -963,6 +1215,42 @@ select {
 .checkbox-row input {
   width: 18px;
   height: 18px;
+}
+
+/* Entry form's per-field reminder toggle -- a smaller, muted variant of
+   .checkbox-row sitting right under its date input rather than at the
+   bottom of the form with the rest of the checkbox-rows. */
+.reminder-row {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.reminder-row input {
+  width: 16px;
+  height: 16px;
+}
+
+.entry-checkbox {
+  width: 22px;
+  height: 22px;
+}
+
+.rating-input {
+  display: flex;
+  gap: 4px;
+}
+
+.rating-star-btn {
+  border: none;
+  background: none;
+  padding: 4px;
+  color: var(--border);
+  cursor: pointer;
+}
+
+.rating-star-btn[aria-pressed='true'] {
+  color: var(--accent);
 }
 
 .file-input {

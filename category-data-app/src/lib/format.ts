@@ -19,6 +19,15 @@ export function formatFieldValue(field: FieldDef, raw: string | undefined): stri
       if (Number.isNaN(d.getTime())) return raw;
       return d.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
     }
+    case 'checkbox':
+      // Unchecked ('') already short-circuits to '' above, same as an
+      // empty text/number field -- both read as "—" wherever this is
+      // rendered (DataTable/EntryList/PrintView all fall back to that).
+      return raw === 'true' ? '✓' : '';
+    case 'rating': {
+      const n = Math.min(5, Math.max(0, Number(raw) || 0));
+      return '★'.repeat(n) + '☆'.repeat(5 - n);
+    }
     default:
       return raw;
   }

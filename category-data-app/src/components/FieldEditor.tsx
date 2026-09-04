@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import type { Category, FieldDef, FieldType } from '../types';
 import { FieldFormModal } from './FieldFormModal';
 import { ConfirmDialog } from './ConfirmDialog';
-import { TextTypeIcon, HashIcon, CalendarIcon, ListIcon } from './icons';
+import { TextTypeIcon, HashIcon, CalendarIcon, ListIcon, CheckSquareIcon, StarIcon } from './icons';
 
 // currency doesn't get a drawn icon -- the won sign reads instantly to
 // this app's audience and a generic coin/dollar glyph would say less
@@ -13,6 +13,8 @@ const TYPE_ICONS: Record<FieldType, ReactNode> = {
   currency: '₩',
   date: <CalendarIcon size={16} />,
   select: <ListIcon size={16} />,
+  checkbox: <CheckSquareIcon size={16} />,
+  rating: <StarIcon size={16} filled />,
 };
 
 interface FieldEditorProps {

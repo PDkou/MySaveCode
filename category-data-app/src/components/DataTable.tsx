@@ -17,7 +17,7 @@ export function DataTable({ fields, entries, onRowClick }: DataTableProps) {
     if (!sort) return entries;
     const field = fields.find((f) => f.id === sort.fieldId);
     if (!field) return entries;
-    const isNumeric = field.type === 'number' || field.type === 'currency';
+    const isNumeric = field.type === 'number' || field.type === 'currency' || field.type === 'rating';
     return entries.slice().sort((a, b) => {
       const av = a.values[sort.fieldId] ?? '';
       const bv = b.values[sort.fieldId] ?? '';

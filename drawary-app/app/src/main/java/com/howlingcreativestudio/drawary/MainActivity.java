@@ -43,11 +43,17 @@ public class MainActivity extends Activity {
     private WebViewAssetLoader assetLoader;
     private static final int REQUEST_EXPORT_BACKUP = 601;
     private static final int REQUEST_IMPORT_BACKUP = 602;
+    private static final int REQUEST_EXPORT_FILE = 603;
     // Handed off between exportBackup() (JS thread) and
     // writeExportedBackup() (onActivityResult, once the user picks a
     // destination) -- there's only ever one export in flight at a time
     // since it's driven by a single modal in the web UI.
     private String pendingExportJson;
+    // Same handoff as pendingExportJson, for the generic exportFile()
+    // path (CSV, see category-data-app/src/lib/csv.ts) -- kept separate
+    // from the backup fields since the two flows have their own
+    // request codes and JS callback names.
+    private String pendingExportContent;
     // Flips true once the WebView's first page load finishes (see
     // onPageFinished below) -- read by the splash screen's keep-on-screen
     // condition so Theme.App.Starting (themes.xml) stays up through
@@ -146,6 +152,9 @@ public class MainActivity extends Activity {
                 notifyJs("onDrawaryBackupExportFailed");
             } else if (requestCode == REQUEST_IMPORT_BACKUP) {
                 notifyJs("onDrawaryBackupImportFailed");
+            } else if (requestCode == REQUEST_EXPORT_FILE) {
+                pendingExportContent = null;
+                notifyJs("onDrawaryFileExportFailed");
             }
             return;
         }
@@ -154,6 +163,8 @@ public class MainActivity extends Activity {
             writeExportedBackup(uri);
         } else if (requestCode == REQUEST_IMPORT_BACKUP) {
             readImportedBackup(uri);
+        } else if (requestCode == REQUEST_EXPORT_FILE) {
+            writeExportedFile(uri);
         }
     }
 
@@ -167,6 +178,19 @@ public class MainActivity extends Activity {
             notifyJs("onDrawaryBackupExported");
         } catch (Exception e) {
             notifyJs("onDrawaryBackupExportFailed");
+        }
+    }
+
+    private void writeExportedFile(Uri uri) {
+        String content = pendingExportContent;
+        pendingExportContent = null;
+        if (content == null) return;
+        try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+            if (out == null) throw new IOException("no output stream for " + uri);
+            out.write(content.getBytes(StandardCharsets.UTF_8));
+            notifyJs("onDrawaryFileExported");
+        } catch (Exception e) {
+            notifyJs("onDrawaryFileExportFailed");
         }
     }
 
@@ -204,6 +228,16 @@ public class MainActivity extends Activity {
                     .setType("application/json")
                     .putExtra(Intent.EXTRA_TITLE, backupFilename());
             runOnUiThread(() -> startActivityForResult(intent, REQUEST_EXPORT_BACKUP));
+        }
+
+        @JavascriptInterface
+        public void exportFile(String content, String filename, String mimeType) {
+            pendingExportContent = content;
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
+                    .addCategory(Intent.CATEGORY_OPENABLE)
+                    .setType(mimeType)
+                    .putExtra(Intent.EXTRA_TITLE, filename);
+            runOnUiThread(() -> startActivityForResult(intent, REQUEST_EXPORT_FILE));
         }
 
         @JavascriptInterface

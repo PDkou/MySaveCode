@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
+import { StarIcon, CopyIcon, BellIcon } from './icons';
 import type { Category, Entry } from '../types';
 
 interface EntryFormModalProps {
   category: Category;
   initial?: Entry;
-  onSave: (values: Record<string, string>) => void;
+  onSave: (values: Record<string, string>, reminders: Record<string, boolean>) => void;
   onDelete?: () => void;
+  onDuplicate?: () => void;
   onClose: () => void;
 }
 
-export function EntryFormModal({ category, initial, onSave, onDelete, onClose }: EntryFormModalProps) {
+export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicate, onClose }: EntryFormModalProps) {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const base: Record<string, string> = {};
     for (const f of category.fields) {
@@ -19,10 +21,12 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onClose }:
     }
     return base;
   });
+  const [reminders, setReminders] = useState<Record<string, boolean>>(() => ({ ...initial?.reminders }));
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   const setValue = (fieldId: string, v: string) => setValues((prev) => ({ ...prev, [fieldId]: v }));
+  const setReminder = (fieldId: string, on: boolean) => setReminders((prev) => ({ ...prev, [fieldId]: on }));
 
   const missingRequired = category.fields.filter((f) => f.required && !values[f.id]?.trim());
   const canSubmit = missingRequired.length === 0;
@@ -32,7 +36,7 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onClose }:
       setAttemptedSubmit(true);
       return;
     }
-    onSave(values);
+    onSave(values, reminders);
   };
 
   return (
@@ -41,6 +45,12 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onClose }:
       onClose={onClose}
       footer={
         <>
+          {initial && onDuplicate && (
+            <button type="button" className="btn btn-secondary" onClick={onDuplicate} aria-label="복제">
+              <CopyIcon size={16} />
+              복제
+            </button>
+          )}
           {initial && onDelete && (
             <button type="button" className="btn btn-danger" onClick={() => setConfirmDelete(true)}>
               삭제
@@ -78,13 +88,26 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onClose }:
                 ))}
               </select>
             ) : f.type === 'date' ? (
-              <input
-                id={`entry-${f.id}`}
-                type="date"
-                className={`text-input ${invalid ? 'invalid' : ''}`}
-                value={values[f.id] ?? ''}
-                onChange={(e) => setValue(f.id, e.target.value)}
-              />
+              <>
+                <input
+                  id={`entry-${f.id}`}
+                  type="date"
+                  className={`text-input ${invalid ? 'invalid' : ''}`}
+                  value={values[f.id] ?? ''}
+                  onChange={(e) => setValue(f.id, e.target.value)}
+                />
+                {values[f.id] && (
+                  <label className="checkbox-row reminder-row">
+                    <input
+                      type="checkbox"
+                      checked={!!reminders[f.id]}
+                      onChange={(e) => setReminder(f.id, e.target.checked)}
+                    />
+                    <BellIcon size={14} />
+                    <span>홈 화면의 "다가오는 일정"에 표시</span>
+                  </label>
+                )}
+              </>
             ) : f.type === 'number' || f.type === 'currency' ? (
               <input
                 id={`entry-${f.id}`}
@@ -95,6 +118,29 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onClose }:
                 onChange={(e) => setValue(f.id, e.target.value)}
                 placeholder={f.type === 'currency' ? '금액 입력 (원)' : '숫자 입력'}
               />
+            ) : f.type === 'checkbox' ? (
+              <input
+                id={`entry-${f.id}`}
+                type="checkbox"
+                className="entry-checkbox"
+                checked={values[f.id] === 'true'}
+                onChange={(e) => setValue(f.id, e.target.checked ? 'true' : '')}
+              />
+            ) : f.type === 'rating' ? (
+              <div className="rating-input" role="group" aria-label={f.name}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className="rating-star-btn"
+                    onClick={() => setValue(f.id, values[f.id] === String(n) ? '' : String(n))}
+                    aria-label={`${n}점`}
+                    aria-pressed={Number(values[f.id]) >= n}
+                  >
+                    <StarIcon size={24} filled={Number(values[f.id]) >= n} />
+                  </button>
+                ))}
+              </div>
             ) : (
               <input
                 id={`entry-${f.id}`}

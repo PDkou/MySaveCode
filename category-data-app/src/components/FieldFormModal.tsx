@@ -8,6 +8,8 @@ const TYPE_LABELS: Record<FieldType, string> = {
   currency: '금액',
   date: '날짜',
   select: '선택 목록',
+  checkbox: '체크박스',
+  rating: '별점',
 };
 
 interface FieldFormModalProps {
