@@ -78,8 +78,13 @@ async function shot(page, file, mutate) {
   await shot(page, '03-onboarding-record.png', () => { tutorialStep = 2; render(); });
 
   // Today: a reminder that's due, with a memo carried over from last time.
+  // coachDone is set alongside tutorialDone -- otherwise maybeShowCoachmark()
+  // (added since these shots were first captured) covers the "I reached
+  // out" button with a one-time tooltip, which is onboarding chrome, not
+  // something that belongs in a store screenshot.
   await shot(page, '04-today-due.png', () => {
     state.settings.tutorialDone = true;
+    state.settings.coachDone = true;
     state.people = [{
       id: 1, name: '엄마', relation: '가족', reminderMode: 'random',
       interval: 21, minDays: 14, maxDays: 28,
