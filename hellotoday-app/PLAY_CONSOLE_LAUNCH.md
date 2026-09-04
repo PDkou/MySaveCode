@@ -15,11 +15,16 @@
       **공개(공유)로 전환**한 뒤, 그 URL을 앱 콘텐츠 → 개인정보처리방침
       칸에 붙여넣으세요. (연락처는 `db5704@gmail.com`로 실려 있음 — 다른
       주소로 바꾸고 싶으면 다음에 알려주면 바로 수정.)
-- [x] **Feature graphic** (1024×500) — **완료** (2026-08-27):
-      `store-assets/feature-graphic-1024x500.png`. 아이콘 + 태그라인
-      "하루의 틈에, 작은 안부"(앱 자체 카피)로 구성. 다시 만들거나 문구를
-      바꾸고 싶으면 `store-assets/capture-feature-graphic.js`를 고쳐서
-      재실행.
+- [x] **Feature graphic** (1024×500) — **완료** (2026-08-27, 2026-09-04에
+      언어별로 3개로 분리): 아이콘 + 태그라인으로 구성, 언어별 파일:
+      - `store-assets/feature-graphic-1024x500-en.png` ("In life's small
+        gaps, a small hello.") — **기본 스토어 등록정보(English)**에 업로드
+      - `store-assets/feature-graphic-1024x500-ko.png` ("하루의 틈에,
+        작은 안부") — 한국어 번역 등록정보에 업로드
+      - `store-assets/feature-graphic-1024x500-ja.png` ("日々のすきまに、
+        小さな安否を。") — 日本語 번역 등록정보에 업로드
+      다시 만들거나 문구를 바꾸고 싶으면 `store-assets/capture-feature-graphic.js`의
+      `LOCALES`를 고쳐서 재실행 (`node capture-feature-graphic.js`).
 - [x] **스크린샷 7장** (휴대폰, 1080×1920) — **완료** (2026-08-27):
       `store-assets/screenshots/01`~`07`.png. 온보딩 3장 → 오늘 화면(메모
       이월 포함) → 사람 목록 → 프리미엄 업셀 → 설정(테마)까지 앱의
