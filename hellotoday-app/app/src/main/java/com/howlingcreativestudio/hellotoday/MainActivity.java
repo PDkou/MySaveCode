@@ -27,6 +27,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends Activity {
     private WebView web;
+    private FrameLayout safeRoot;
     private PremiumBilling premiumBilling;
     private InterstitialAdManager adManager;
     private static final String INTERNAL_BACKUP = "hello_today_backup.json";
@@ -54,11 +55,21 @@ public class MainActivity extends Activity {
         splashScreen.setKeepOnScreenCondition(() -> !(minSplashElapsed && webViewReady));
         new Handler(Looper.getMainLooper()).postDelayed(() -> minSplashElapsed = true, 1500);
         super.onCreate(state);
-        getWindow().setStatusBarColor(Color.rgb(248,245,237));
-        getWindow().setNavigationBarColor(Color.rgb(248,245,237));
-        getWindow().getDecorView().setSystemUiVisibility(
-                android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                | android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        // Window.setStatusBarColor()/setNavigationBarColor() and the
+        // SYSTEM_UI_FLAG_LIGHT_* flags are deprecated as of Android 15's
+        // edge-to-edge enforcement (targetSdk 35+ gets edge-to-edge whether
+        // it asks for it or not) -- flagged by Play Console's pre-launch
+        // report. Opting in explicitly here instead: the window draws
+        // behind transparent system bars, safeRoot's own cream background
+        // (set below) shows through them, and the light-icon appearance is
+        // set via WindowInsetsControllerCompat. setThemeChrome() below
+        // repaints safeRoot's background instead of the window's bar
+        // colors when the user switches themes.
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        androidx.core.view.WindowInsetsControllerCompat insetsController =
+                androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        insetsController.setAppearanceLightStatusBars(true);
+        insetsController.setAppearanceLightNavigationBars(true);
         web = new WebView(this);
         web.setBackgroundColor(Color.rgb(248,245,237));
         web.getSettings().setJavaScriptEnabled(true);
@@ -76,7 +87,7 @@ public class MainActivity extends Activity {
         premiumBilling.start();
         adManager = new InterstitialAdManager(this, premiumBilling);
         new ConsentManager(this).gatherConsent(adManager::start);
-        FrameLayout safeRoot = new FrameLayout(this);
+        safeRoot = new FrameLayout(this);
         safeRoot.setBackgroundColor(Color.rgb(248,245,237));
         safeRoot.addView(web, new FrameLayout.LayoutParams(-1, -1));
         safeRoot.setOnApplyWindowInsetsListener((view, insets) -> {
@@ -289,8 +300,12 @@ public class MainActivity extends Activity {
             else color = Color.rgb(248, 245, 237);
             final int resolved = color;
             runOnUiThread(() -> {
-                getWindow().setStatusBarColor(resolved);
-                getWindow().setNavigationBarColor(resolved);
+                // Edge-to-edge (see onCreate()): the system bars are
+                // transparent, so safeRoot's own background is what's
+                // actually visible behind them -- repainting it is the
+                // replacement for the old setStatusBarColor()/
+                // setNavigationBarColor() calls.
+                safeRoot.setBackgroundColor(resolved);
                 web.setBackgroundColor(resolved);
             });
         }
