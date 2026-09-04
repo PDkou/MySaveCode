@@ -19,9 +19,14 @@
   --danger: #c23b3b;
   --danger-bg: #fbe3de;
   --success: #5fa382;
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 26px;
+  /* Bumped up from an earlier, tighter 12/18/26 scale -- the softer,
+     more pronounced "squircle" rounding reads as more current (see the
+     bento-grid/soft-UI research this was calibrated against) without
+     changing the palette or icon set that already define this app's
+     identity. */
+  --radius-sm: 14px;
+  --radius-md: 22px;
+  --radius-lg: 30px;
   /* Plum-tinted shadow triplet (not neutral gray) so depth reads as part
      of the same pastel-lavender world instead of a generic UI-kit drop
      shadow. */
@@ -150,9 +155,9 @@ select {
 .app-header h1 {
   flex: 1;
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .home-header {
@@ -174,7 +179,8 @@ select {
 }
 
 .home-header-text h1 {
-  font-size: 1.25rem;
+  font-size: 1.55rem;
+  letter-spacing: -0.02em;
 }
 
 .home-header-tagline {
@@ -190,7 +196,7 @@ select {
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -658,7 +664,14 @@ select {
      else that's already primary-colored (headers, active states). A
      subtle gradient instead of a flat fill gives it a bit more polish/
      depth than the rest of the flatter UI. */
-  background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 115%, white) 0%, var(--accent) 55%, color-mix(in srgb, var(--accent) 80%, black) 100%);
+  /* NOTE: color-mix()'s percentage argument is 0-100 -- an earlier version
+     of this used 115% here to mean "brighter than the accent itself",
+     which isn't a valid color-mix value. An invalid value inside a
+     shorthand `background` declaration doesn't just drop that one stop;
+     the whole `background` property fails to parse and falls back to
+     fully transparent, which is why this (and the hero card below, which
+     copied the same pattern) were rendering with no visible fill at all. */
+  background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 85%, white) 0%, var(--accent) 55%, color-mix(in srgb, var(--accent) 80%, black) 100%);
   color: var(--accent-contrast);
   font-size: 1.8rem;
   line-height: 1;
@@ -667,7 +680,7 @@ select {
     0 2px 6px rgba(var(--shadow-rgb), 0.3);
   cursor: pointer;
   z-index: 10;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease;
 }
 
 .fab:active {
@@ -723,6 +736,48 @@ select {
 
 /* ---------- Home ---------- */
 
+/* The bento-style "hero" tile: one big confident number rather than a
+   row of small equal-weight stats, standing in for the whole "how am I
+   doing" glance a plain list of category cards doesn't give on its own. */
+.home-hero-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--primary) 82%, white) 0%,
+    var(--primary) 60%,
+    color-mix(in srgb, var(--primary) 80%, black) 100%
+  );
+  color: var(--primary-contrast);
+  box-shadow:
+    0 16px 32px -16px color-mix(in srgb, var(--primary) 65%, transparent),
+    0 3px 10px -2px rgba(var(--shadow-rgb), 0.2);
+}
+
+.home-hero-number {
+  font-size: 2.6rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-hero-label {
+  margin-top: 2px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  opacity: 0.92;
+}
+
+.home-hero-sub {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  opacity: 0.75;
+}
+
 .empty-state {
   text-align: center;
   padding: 48px 16px;
@@ -761,23 +816,29 @@ select {
      (tinted panel + a solid nameplate badge) rather than a plain white
      tile with a thin stripe. */
   --card-accent: var(--primary);
+  position: relative;
   background: color-mix(in srgb, var(--card-accent) 12%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--card-accent) 24%, var(--border));
+  border: 1px solid color-mix(in srgb, var(--card-accent) 22%, var(--border));
   border-radius: var(--radius-md);
-  padding: 18px 12px 14px;
+  padding: 20px 14px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   cursor: pointer;
   text-align: center;
-  box-shadow: 0 4px 10px -4px rgba(var(--shadow-rgb), 0.25);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  /* A soft glow tinted from the card's own accent, not a plain dark drop
+     shadow -- diffused and colorful reads as more current than a sharp
+     neutral-gray shadow (paired with the bigger corner radius above). */
+  box-shadow:
+    0 10px 22px -10px color-mix(in srgb, var(--card-accent) 55%, transparent),
+    0 2px 6px -2px rgba(var(--shadow-rgb), 0.12);
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease;
 }
 
 .category-card:active {
-  box-shadow: none;
-  transform: scale(0.97);
+  box-shadow: 0 2px 6px -2px color-mix(in srgb, var(--card-accent) 40%, transparent);
+  transform: scale(0.96);
 }
 
 .category-card-badge {
@@ -786,8 +847,8 @@ select {
      would fight its own colors, so the badge is a neutral disc with a
      thin accent ring instead; the accent still reads through the card's
      own tinted background/border. */
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 999px;
   background: var(--surface);
   box-shadow:
@@ -800,18 +861,15 @@ select {
 }
 
 .category-card-name {
-  font-weight: 700;
-  font-size: 0.95rem;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
 }
 
 .category-card-count {
   color: var(--text-muted);
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
-}
-
-.category-card {
-  position: relative;
 }
 
 .category-pin-badge {
@@ -1271,11 +1329,11 @@ select {
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.1s ease;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .btn:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
 .btn:disabled {

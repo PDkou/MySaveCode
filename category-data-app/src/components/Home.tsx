@@ -42,6 +42,15 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onTogglePi
 
   const upcomingReminders = useMemo(() => getUpcomingReminders(data), [data]);
 
+  // The hero card's "이번 주 기록" count -- entries created in the last
+  // 7 days, not entries whose own date field falls in that window (those
+  // are two different things: this is about how much *use* the app is
+  // getting, not what the data itself says).
+  const weeklyCount = useMemo(() => {
+    const weekAgo = Date.now() - 7 * 86_400_000;
+    return data.entries.filter((e) => e.createdAt >= weekAgo).length;
+  }, [data.entries]);
+
   if (showSearch) {
     return <GlobalSearch data={data} onOpenCategory={onOpenCategory} onClose={() => setShowSearch(false)} />;
   }
@@ -78,6 +87,16 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onTogglePi
       </header>
 
       <div className="screen-content">
+        {data.categories.length > 0 && (
+          <div className="home-hero-card">
+            <span className="home-hero-number">{weeklyCount}</span>
+            <span className="home-hero-label">이번 주 기록</span>
+            <span className="home-hero-sub">
+              전체 {data.entries.length}건 · 카테고리 {data.categories.length}개
+            </span>
+          </div>
+        )}
+
         {upcomingReminders.length > 0 && (
           <section className="upcoming-panel">
             <h2 className="upcoming-panel-title">
