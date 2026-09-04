@@ -25,7 +25,13 @@ public class ReminderReceiver extends BroadcastReceiver {
         int maxDays = source.getIntExtra("maxDays", 28);
         boolean isTest = personId == ReminderScheduler.TEST_REMINDER_ID;
         int notificationId = (int) (personId & 0x7fffffff);
+        // getLaunchIntentForPackage() can return null in rare device states
+        // (e.g. the launcher activity being disabled/mid-replace); falling
+        // back to a plain launch-by-package-name intent keeps the
+        // notification's tap action working instead of crashing this
+        // receiver and losing the notification entirely.
         Intent open = c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
+        if (open == null) open = new Intent(Intent.ACTION_MAIN).setPackage(c.getPackageName());
         open.putExtra("openPersonId", personId);
         PendingIntent pi = PendingIntent.getActivity(c, notificationId, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         PendingIntent complete = actionIntent(c, personId, name, interval, notifyHour, notifyMinute, reminderMode, minDays, maxDays, notificationId, "complete", notificationId + 100000);
