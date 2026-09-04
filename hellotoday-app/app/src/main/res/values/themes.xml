@@ -11,7 +11,16 @@
          splash_icon.png bakes the character art and the "Hello, Today"
          wordmark (same serif treatment as the Feature Graphic/in-app hero
          text) into one image and is shown via windowSplashScreenAnimatedIcon,
-         which every API level this library supports does resolve. -->
+         which every API level this library supports does resolve.
+
+         windowSplashScreenAnimatedIcon is treated the same way an adaptive
+         launcher icon's foreground layer is: only the inner ~66% of the
+         image is guaranteed not to be cropped, the outer ring is fair game.
+         A real-device test caught this the hard way; an earlier square
+         version of splash_icon.png filled content right up to that ~66%
+         line and had the wordmark's descenders clipped. Keep the drawn
+         content (icon + wordmark together) comfortably inside that inner
+         66% square when regenerating this asset. -->
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
