@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#F8EEDC</color>
+    <!-- Matches index.html's cream theme background variable (#f8f5ed)
+         exactly; used for both the adaptive launcher icon's background
+         layer and the splash screen (see themes.xml). Used to be a
+         close-but-not-exact shade (#F8EEDC), invisible on its own but a
+         noticeable color shift the instant the splash screen hands off to
+         the app now that both are shown back-to-back. -->
+    <color name="ic_launcher_background">#F8F5ED</color>
 </resources>
