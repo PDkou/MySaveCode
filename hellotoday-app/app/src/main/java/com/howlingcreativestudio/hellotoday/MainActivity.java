@@ -103,18 +103,30 @@ public class MainActivity extends Activity {
         requestExactAlarmPermissionIfNeeded();
     }
 
+    // Re-prompting for this permission is throttled to once per this many
+    // days (see requestExactAlarmPermissionIfNeeded()) -- frequent enough
+    // that someone who declined by accident gets another shot reasonably
+    // soon, infrequent enough that declining on purpose doesn't turn every
+    // single app open into an unwanted trip to a system Settings screen,
+    // which would cut against this app's whole "quiet, unobtrusive" pitch.
+    private static final long EXACT_ALARM_REPROMPT_INTERVAL_MS = 7L * 24 * 60 * 60 * 1000;
+
     private void requestExactAlarmPermissionIfNeeded() {
         // Exact-alarm scheduling (see ReminderScheduler.schedule()) needs
         // this granted on API 31+; unlike POST_NOTIFICATIONS there's no
         // in-app permission dialog for it -- only a system Settings screen.
         if (Build.VERSION.SDK_INT >= 31) {
             AlarmManager alarms = (AlarmManager) getSystemService(ALARM_SERVICE);
-            if (alarms != null && !alarms.canScheduleExactAlarms()) {
-                try {
-                    startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                            .setData(android.net.Uri.parse("package:" + getPackageName())));
-                } catch (Exception ignored) {}
-            }
+            if (alarms == null || alarms.canScheduleExactAlarms()) return;
+            SharedPreferences prefs = getSharedPreferences("hello_today_preferences", MODE_PRIVATE);
+            long lastPrompt = prefs.getLong("last_exact_alarm_prompt", 0L);
+            long now = System.currentTimeMillis();
+            if (now - lastPrompt < EXACT_ALARM_REPROMPT_INTERVAL_MS) return;
+            try {
+                startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                        .setData(android.net.Uri.parse("package:" + getPackageName())));
+                prefs.edit().putLong("last_exact_alarm_prompt", now).apply();
+            } catch (Exception ignored) {}
         }
     }
 
