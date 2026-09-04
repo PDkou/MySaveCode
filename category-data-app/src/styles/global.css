@@ -1639,6 +1639,91 @@ select {
   font-size: 0.85rem;
 }
 
+/* ---------- Settings screen ---------- */
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-row:last-of-type {
+  border-bottom: none;
+}
+
+.settings-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-row-text b {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.settings-row-text span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-row-btn {
+  flex-shrink: 0;
+  border: none;
+  background: var(--surface-alt);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.settings-row-btn.danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.settings-version {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin: 28px 0 0;
+}
+
+/* 特定商取引法 disclosure -- a plain definition list rather than a form,
+   styled off the same field-label look as the rest of this app's forms
+   (see .field-label) so it doesn't look like a foreign component bolted
+   into a Modal. */
+.tokusho-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tokusho-row dt {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  margin-bottom: 3px;
+}
+
+.tokusho-row dd {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
 /* ---------- Print / PDF export ---------- */
 
 .print-view {

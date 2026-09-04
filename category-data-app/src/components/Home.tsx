@@ -1,8 +1,8 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import type { AppData, Category, FieldDef } from '../types';
 import { AddCategoryModal } from './AddCategoryModal';
-import { BackupSheet } from './BackupSheet';
 import { GlobalSearch } from './GlobalSearch';
+import { Settings } from './Settings';
 import { SettingsIcon, SearchIcon, SortIcon, StarIcon, BellIcon } from './icons';
 import { CategoryBadgeEmoji } from './categoryIcons';
 import { getUpcomingReminders } from '../lib/reminders';
@@ -24,7 +24,7 @@ function reminderBadge(diffDays: number): string {
 
 export function Home({ data, onOpenCategory, onAddCategory, onImport, onTogglePinCategory, onMoveCategory }: HomeProps) {
   const [showAdd, setShowAdd] = useState(false);
-  const [showBackup, setShowBackup] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [reorderMode, setReorderMode] = useState(false);
 
@@ -44,6 +44,10 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onTogglePi
 
   if (showSearch) {
     return <GlobalSearch data={data} onOpenCategory={onOpenCategory} onClose={() => setShowSearch(false)} />;
+  }
+
+  if (showSettings) {
+    return <Settings data={data} onImport={onImport} onBack={() => setShowSettings(false)} />;
   }
 
   return (
@@ -68,7 +72,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onTogglePi
             <SortIcon />
           </button>
         )}
-        <button type="button" className="icon-btn" onClick={() => setShowBackup(true)} aria-label="백업/복원">
+        <button type="button" className="icon-btn" onClick={() => setShowSettings(true)} aria-label="설정">
           <SettingsIcon />
         </button>
       </header>
@@ -194,8 +198,6 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onTogglePi
           onClose={() => setShowAdd(false)}
         />
       )}
-
-      {showBackup && <BackupSheet data={data} onImport={onImport} onClose={() => setShowBackup(false)} />}
     </div>
   );
 }
