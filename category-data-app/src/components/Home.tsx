@@ -148,7 +148,9 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, o
             <p className="empty-hint">가계부, 옷장, 화장품처럼 원하는 카테고리를 만들어 기록을 시작해 보세요.</p>
           </div>
         ) : (
-          <div className="category-grid">
+          <>
+            <h2 className="section-label">카테고리</h2>
+            <div className="category-grid">
             {displayCategories.map((c, i) => {
               const isPinned = !!c.pinned;
               const isFirst = isPinned ? i === 0 : i === pinnedCount;
@@ -215,7 +217,8 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, o
                 </div>
               );
             })}
-          </div>
+            </div>
+          </>
         )}
       </div>
 

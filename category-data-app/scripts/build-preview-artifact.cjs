@@ -57,7 +57,17 @@ if (js.includes('</script')) {
   process.exit(1);
 }
 
+// index.html's own <link> tags aren't read by this script at all (it
+// only pulls the built JS/CSS out of dist-preview/assets/) -- Do Hyeon
+// (global.css's --font-display) is loaded there for the real dist/
+// build, but has to be repeated here by hand or the preview would
+// silently fall back to the system font for every headline while the
+// real app renders correctly. Keep this in sync with index.html's own
+// Google Fonts <link> if that ever changes.
 const html = `<title>Drawary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet" />
 <style>
 ${css}
 </style>

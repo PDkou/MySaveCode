@@ -12,13 +12,23 @@
   --text: #2e2a3d;
   --text-muted: #7a7390;
   --border: #dcd0ec;
-  --primary: #6f5499;
+  /* Bumped from an earlier, duskier #6f5499 -- same hue family (still
+     recognizably "this app's purple", still matches the icon/splash art
+     it sits next to), just with the saturation actually turned up. The
+     old value read as dusty/adult-muted rather than the candy-bright
+     pastel this app's whole cute-drawer-mascot concept is going for. */
+  --primary: #8452d6;
   --primary-contrast: #fffcf6;
   --accent: #f17b6b;
   --accent-contrast: #3a1610;
   --danger: #c23b3b;
   --danger-bg: #fbe3de;
   --success: #5fa382;
+  /* Used sparingly, for headline moments only (screen titles, the home
+     hero number, the splash title) -- see index.html's Google Fonts
+     link. Everything else keeps the system stack below for density and
+     legibility in dense forms/tables. */
+  --font-display: 'Do Hyeon', -apple-system, 'Apple SD Gothic Neo', sans-serif;
   /* Bumped up from an earlier, tighter 12/18/26 scale -- the softer,
      more pronounced "squircle" rounding reads as more current (see the
      bento-grid/soft-UI research this was calibrated against) without
@@ -64,7 +74,7 @@
     --text: #f1ecfa;
     --text-muted: #a99fc0;
     --border: #453a55;
-    --primary: #b49bdd;
+    --primary: #bd97ef;
     --primary-contrast: #221936;
     --accent: #f79c8c;
     --accent-contrast: #3a1610;
@@ -160,9 +170,10 @@ select {
 .app-header h1 {
   flex: 1;
   margin: 0;
-  font-size: 1.3rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .home-header {
@@ -184,8 +195,8 @@ select {
 }
 
 .home-header-text h1 {
-  font-size: 1.55rem;
-  letter-spacing: -0.02em;
+  font-size: 1.45rem;
+  letter-spacing: 0;
 }
 
 .home-header-tagline {
@@ -195,14 +206,15 @@ select {
 }
 
 .category-title {
+  /* font-family/size/weight come from the shared .app-header h1 rule
+     above (higher specificity, one class + the element itself) -- this
+     only adds the icon+text layout on top of that. */
   display: inline-flex;
   align-items: center;
   gap: 6px;
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -647,9 +659,10 @@ select {
 .splash-title {
   margin: 0;
   color: #fffcf6;
-  font-size: 1.3rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .splash-tagline {
@@ -820,10 +833,11 @@ select {
 }
 
 .home-hero-number {
-  font-size: 2.6rem;
-  font-weight: 900;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 400;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 
@@ -844,6 +858,20 @@ select {
   text-align: center;
   padding: 48px 16px;
   color: var(--text-muted);
+}
+
+/* A plain small caption naming the section below it -- the hero card,
+   upcoming-reminders panel, and category grid used to all sit at the
+   same visual weight with nothing separating "here's a summary" from
+   "here's your actual content", which read as flat/unstructured rather
+   than a considered layout. */
+.section-label {
+  margin: 4px 0 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .category-grid {
