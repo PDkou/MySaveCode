@@ -64,3 +64,5 @@ they just happen to share source code and a database.
   `CLAUDE.md`.
 - `web_test/`, `reports/` — standalone artifacts, not part of either app's
   build.
+- `ideas/` — write-ups for app concepts that aren't being built yet, kept
+  around for when someone decides to pick one up.
