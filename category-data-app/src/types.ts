@@ -41,8 +41,21 @@ export interface Entry {
   // `values` so it stays out of the string-only values path entirely (see
   // lib/reminders.ts).
   reminders?: Record<string, boolean>;
+  // Set only on categories with exactly one date-type field (see
+  // EntryFormModal's own gating) -- lib/recurrence.ts advances
+  // `anchorFieldId`'s date by `unit` and spawns the next occurrence once
+  // it's due, moving this flag onto that new entry (see that file for why
+  // only the latest occurrence in a chain keeps it "live").
+  recurrence?: EntryRecurrence;
   createdAt: number;
   updatedAt: number;
+}
+
+export type RecurrenceUnit = 'weekly' | 'monthly' | 'yearly';
+
+export interface EntryRecurrence {
+  unit: RecurrenceUnit;
+  anchorFieldId: string;
 }
 
 export interface AppData {

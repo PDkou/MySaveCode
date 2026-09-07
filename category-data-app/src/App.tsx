@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAppData } from './hooks/useAppData';
+import { useReminderSync } from './hooks/useReminderSync';
 import { Home } from './components/Home';
 import { CategoryDetail } from './components/CategoryDetail';
 import { TableScreen } from './components/TableScreen';
 import { SplashScreen } from './components/SplashScreen';
+import { LockScreen } from './components/LockScreen';
+import { isLockEnabled } from './lib/lock';
 
 type View = { screen: 'home' } | { screen: 'category'; categoryId: string } | { screen: 'table'; categoryId: string };
 
@@ -15,8 +18,10 @@ const SPLASH_FADE_MS = 300;
 
 function App() {
   const app = useAppData();
+  useReminderSync(app.data);
   const [view, setView] = useState<View>({ screen: 'home' });
   const [splashState, setSplashState] = useState<'visible' | 'fading' | 'gone'>('visible');
+  const [unlocked, setUnlocked] = useState(() => !isLockEnabled());
 
   useEffect(() => {
     const fadeTimer = setTimeout(() => setSplashState('fading'), SPLASH_VISIBLE_MS);
@@ -27,10 +32,34 @@ function App() {
     };
   }, []);
 
+  // Re-arms the lock every time the app/tab is backgrounded (Home
+  // button, app switcher, tab hidden) -- checking on unlock alone would
+  // only ever gate the very first cold start, which isn't much of a lock
+  // at all.
+  useEffect(() => {
+    const handler = () => {
+      if (document.hidden && isLockEnabled()) setUnlocked(false);
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, []);
+
   const category = view.screen !== 'home' ? app.data.categories.find((c) => c.id === view.categoryId) : undefined;
 
   if (splashState !== 'gone') {
     return <SplashScreen fadingOut={splashState === 'fading'} />;
+  }
+
+  if (!unlocked) {
+    return (
+      <LockScreen
+        onUnlock={() => setUnlocked(true)}
+        onForgotWipe={() => {
+          app.replaceAll({ version: 1, categories: [], entries: [] });
+          setUnlocked(true);
+        }}
+      />
+    );
   }
 
   return (
@@ -43,6 +72,7 @@ function App() {
           onOpenCategory={(id) => setView({ screen: 'category', categoryId: id })}
           onAddCategory={app.addCategory}
           onImport={app.replaceAll}
+          onMerge={app.mergeData}
           onTogglePinCategory={app.togglePinCategory}
           onMoveCategory={app.moveCategory}
         />
@@ -63,7 +93,7 @@ function App() {
           onUpdateField={(fieldId, patch) => app.updateField(view.categoryId, fieldId, patch)}
           onRemoveField={(fieldId) => app.removeField(view.categoryId, fieldId)}
           onMoveField={(fieldId, direction) => app.moveField(view.categoryId, fieldId, direction)}
-          onAddEntry={(values, reminders) => app.addEntry(view.categoryId, values, reminders)}
+          onAddEntry={(values, reminders, recurrence) => app.addEntry(view.categoryId, values, reminders, recurrence)}
           onUpdateEntry={app.updateEntry}
           onDeleteEntry={app.deleteEntry}
           onRestoreEntry={app.restoreEntry}
@@ -76,7 +106,8 @@ function App() {
             category={category}
             entries={app.data.entries.filter((e) => e.categoryId === view.categoryId)}
             onBack={() => setView({ screen: 'category', categoryId: view.categoryId })}
-            onAddEntry={(values, reminders) => app.addEntry(view.categoryId, values, reminders)}
+            onAddEntry={(values, reminders, recurrence) => app.addEntry(view.categoryId, values, reminders, recurrence)}
+            onAddEntries={(valuesList) => app.addEntries(view.categoryId, valuesList)}
             onUpdateEntry={app.updateEntry}
             onDeleteEntry={app.deleteEntry}
             onRestoreEntry={app.restoreEntry}

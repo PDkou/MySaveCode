@@ -24,19 +24,35 @@ export interface DrawaryNativeBridge {
   // tied to BackupSheet.tsx's import/export UI.
   exportFile: (content: string, filename: string, mimeType: string) => void;
   importBackup: () => void;
+  // Generalized version of importBackup for any other imported file (CSV,
+  // see CsvImportModal.tsx) -- same reasoning as exportFile above: kept
+  // separate since importBackup's callback also validates the content is
+  // JSON before handing it to JS, which a CSV import shouldn't do.
+  importFile: (mimeType: string) => void;
   printPage: () => void;
   appVersion?: () => string;
+  // Real OS notifications for date-field reminders (see
+  // hooks/useReminderSync.ts / MainActivity's ReminderScheduler) --
+  // Android-only, hence optional: there's no equivalent for the plain
+  // web/PWA build, which keeps relying on the in-app "다가오는 일정"
+  // panel alone (Home.tsx). `key` is `${entryId}:${fieldId}`, `atMillis`
+  // a plain epoch-millisecond timestamp.
+  scheduleReminder?: (key: string, atMillis: number, title: string, body: string) => void;
+  cancelReminder?: (key: string) => void;
 }
 
 declare global {
   interface Window {
     DrawaryNative?: DrawaryNativeBridge;
     // Callbacks the native side invokes back into JS -- assigned by
-    // whichever component is currently listening (BackupSheet.tsx).
+    // whichever component is currently listening (BackupSheet.tsx /
+    // CsvImportModal.tsx).
     onDrawaryBackupExported?: () => void;
     onDrawaryBackupExportFailed?: () => void;
     onDrawaryBackupImported?: (json: string) => void;
     onDrawaryBackupImportFailed?: () => void;
+    onDrawaryFileImported?: (content: string) => void;
+    onDrawaryFileImportFailed?: () => void;
   }
 }
 

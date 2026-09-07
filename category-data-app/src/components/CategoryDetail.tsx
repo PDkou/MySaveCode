@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { AppData, Entry, FieldDef, FieldType } from '../types';
+import type { AppData, Entry, EntryRecurrence, FieldDef, FieldType } from '../types';
 import { FieldEditor } from './FieldEditor';
 import { EntryList } from './EntryList';
 import { EntryFormModal } from './EntryFormModal';
@@ -21,8 +21,13 @@ interface CategoryDetailProps {
   onUpdateField: (fieldId: string, patch: Partial<Omit<FieldDef, 'id'>>) => void;
   onRemoveField: (fieldId: string) => void;
   onMoveField: (fieldId: string, direction: -1 | 1) => void;
-  onAddEntry: (values: Record<string, string>, reminders?: Record<string, boolean>) => void;
-  onUpdateEntry: (entryId: string, values: Record<string, string>, reminders?: Record<string, boolean>) => void;
+  onAddEntry: (values: Record<string, string>, reminders?: Record<string, boolean>, recurrence?: EntryRecurrence) => void;
+  onUpdateEntry: (
+    entryId: string,
+    values: Record<string, string>,
+    reminders?: Record<string, boolean>,
+    recurrence?: EntryRecurrence,
+  ) => void;
   onDeleteEntry: (entryId: string) => void;
   onRestoreEntry: (entry: Entry) => void;
 }
@@ -138,8 +143,8 @@ export function CategoryDetail({
       {showAddEntry && (
         <EntryFormModal
           category={category}
-          onSave={(values, reminders) => {
-            onAddEntry(values, reminders);
+          onSave={(values, reminders, recurrence) => {
+            onAddEntry(values, reminders, recurrence);
             setShowAddEntry(false);
           }}
           onClose={() => setShowAddEntry(false)}
@@ -150,11 +155,14 @@ export function CategoryDetail({
         <EntryFormModal
           category={category}
           initial={editingEntry}
-          onSave={(values, reminders) => {
-            onUpdateEntry(editingEntry.id, values, reminders);
+          onSave={(values, reminders, recurrence) => {
+            onUpdateEntry(editingEntry.id, values, reminders, recurrence);
             setEditingEntry(null);
           }}
           onDuplicate={() => {
+            // Recurrence deliberately doesn't carry over -- copying it
+            // would leave two "live" chains anchored on the same date,
+            // both spawning their own next occurrence once due.
             onAddEntry({ ...editingEntry.values }, editingEntry.reminders);
             setEditingEntry(null);
           }}

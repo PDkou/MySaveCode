@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal } from './Modal';
-import { ConfirmDialog } from './ConfirmDialog';
 import type { AppData } from '../types';
 import { parseImportedData } from '../lib/storage';
 import { getNativeBridge } from '../lib/native';
@@ -8,6 +7,7 @@ import { getNativeBridge } from '../lib/native';
 interface BackupSheetProps {
   data: AppData;
   onImport: (data: AppData) => void;
+  onMerge: (data: AppData) => void;
   onClose: () => void;
 }
 
@@ -17,7 +17,7 @@ function backupFilename(): string {
   return `서랍장-백업-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.json`;
 }
 
-export function BackupSheet({ data, onImport, onClose }: BackupSheetProps) {
+export function BackupSheet({ data, onImport, onMerge, onClose }: BackupSheetProps) {
   const [error, setError] = useState<string | null>(null);
   const [imported, setImported] = useState(false);
   const [pendingData, setPendingData] = useState<AppData | null>(null);
@@ -117,7 +117,7 @@ export function BackupSheet({ data, onImport, onClose }: BackupSheetProps) {
 
       <section className="backup-section">
         <h3>가져오기</h3>
-        <p className="modal-hint">백업 파일을 선택하면 현재 데이터를 <strong>모두 대체</strong>해요.</p>
+        <p className="modal-hint">백업 파일을 선택하면 <strong>병합</strong>(추가)하거나 <strong>전체 교체</strong>할 수 있어요.</p>
         {native ? (
           <button type="button" className="btn btn-secondary" onClick={() => native.importBackup()}>
             파일 선택
@@ -140,18 +140,38 @@ export function BackupSheet({ data, onImport, onClose }: BackupSheetProps) {
       </section>
 
       {pendingData && (
-        <ConfirmDialog
-          title="데이터 가져오기"
-          message={`현재 기기의 카테고리 ${pendingData.categories.length}개, 데이터 ${pendingData.entries.length}건으로 모두 대체돼요. 지금 있는 데이터는 사라져요. 계속할까요?`}
-          confirmLabel="대체하기"
-          danger
-          onConfirm={() => {
-            onImport(pendingData);
-            setPendingData(null);
-            setImported(true);
-          }}
-          onCancel={() => setPendingData(null)}
-        />
+        <Modal title="데이터 가져오기" onClose={() => setPendingData(null)}>
+          <p className="confirm-message">
+            가져온 백업: 카테고리 {pendingData.categories.length}개, 데이터 {pendingData.entries.length}건.
+            <br />
+            <strong>병합</strong>은 지금 있는 데이터에 이어서 추가하고, <strong>전체 교체</strong>는 지금 있는 데이터를 지우고
+            백업 내용으로 바꿔요.
+          </p>
+          <div className="confirm-actions">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => {
+                onMerge(pendingData);
+                setPendingData(null);
+                setImported(true);
+              }}
+            >
+              병합
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => {
+                onImport(pendingData);
+                setPendingData(null);
+                setImported(true);
+              }}
+            >
+              전체 교체
+            </button>
+          </div>
+        </Modal>
       )}
     </Modal>
   );

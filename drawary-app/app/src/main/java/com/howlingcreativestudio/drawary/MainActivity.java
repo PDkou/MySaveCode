@@ -1,9 +1,12 @@
 package com.howlingcreativestudio.drawary;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.print.PrintAttributes;
 import android.print.PrintManager;
@@ -44,6 +47,7 @@ public class MainActivity extends Activity {
     private static final int REQUEST_EXPORT_BACKUP = 601;
     private static final int REQUEST_IMPORT_BACKUP = 602;
     private static final int REQUEST_EXPORT_FILE = 603;
+    private static final int REQUEST_IMPORT_FILE = 604;
     // Handed off between exportBackup() (JS thread) and
     // writeExportedBackup() (onActivityResult, once the user picks a
     // destination) -- there's only ever one export in flight at a time
@@ -128,6 +132,21 @@ public class MainActivity extends Activity {
         safeRoot.requestApplyInsets();
 
         web.loadUrl("https://appassets.androidplatform.net/assets/dist/index.html");
+        requestNotificationPermissionIfNeeded();
+    }
+
+    // POST_NOTIFICATIONS needs an explicit runtime request on API 33+
+    // (below that it's granted at install like any other normal
+    // permission) -- without it, ReminderScheduler's alarms still fire
+    // but NotificationManager.notify() silently does nothing. No result
+    // handling: if the user declines, reminders just stay silent, which
+    // is the same "the in-app panel still works either way" fallback
+    // this feature already has for the plain web build.
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 701);
+        }
     }
 
     private void printCurrentPage() {
@@ -155,6 +174,8 @@ public class MainActivity extends Activity {
             } else if (requestCode == REQUEST_EXPORT_FILE) {
                 pendingExportContent = null;
                 notifyJs("onDrawaryFileExportFailed");
+            } else if (requestCode == REQUEST_IMPORT_FILE) {
+                notifyJs("onDrawaryFileImportFailed");
             }
             return;
         }
@@ -165,6 +186,8 @@ public class MainActivity extends Activity {
             readImportedBackup(uri);
         } else if (requestCode == REQUEST_EXPORT_FILE) {
             writeExportedFile(uri);
+        } else if (requestCode == REQUEST_IMPORT_FILE) {
+            readImportedFile(uri);
         }
     }
 
@@ -211,6 +234,27 @@ public class MainActivity extends Activity {
         }
     }
 
+    // Generic counterpart to readImportedBackup() above -- reads the
+    // picked file's raw text and hands it straight to JS without
+    // validating it as JSON (CSV import, see CsvImportModal.tsx, is the
+    // current use; a different content type here just means CsvImportModal
+    // reports a parse error instead of the app crashing).
+    private void readImportedFile(Uri uri) {
+        try (InputStream in = getContentResolver().openInputStream(uri)) {
+            if (in == null) throw new IOException("no input stream for " + uri);
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = in.read(buffer)) != -1) bytes.write(buffer, 0, read);
+            String content = bytes.toString("UTF-8");
+            String js = "window.onDrawaryFileImported&&window.onDrawaryFileImported("
+                    + JSONObject.quote(content) + ")";
+            runOnUiThread(() -> web.evaluateJavascript(js, null));
+        } catch (Exception e) {
+            notifyJs("onDrawaryFileImportFailed");
+        }
+    }
+
     private void notifyJs(String callbackName) {
         runOnUiThread(() -> web.evaluateJavascript("window." + callbackName + "&&window." + callbackName + "()", null));
     }
@@ -246,6 +290,24 @@ public class MainActivity extends Activity {
                     .addCategory(Intent.CATEGORY_OPENABLE)
                     .setType("application/json");
             runOnUiThread(() -> startActivityForResult(intent, REQUEST_IMPORT_BACKUP));
+        }
+
+        @JavascriptInterface
+        public void importFile(String mimeType) {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
+                    .addCategory(Intent.CATEGORY_OPENABLE)
+                    .setType(mimeType);
+            runOnUiThread(() -> startActivityForResult(intent, REQUEST_IMPORT_FILE));
+        }
+
+        @JavascriptInterface
+        public void scheduleReminder(String key, long atMillis, String title, String body) {
+            ReminderScheduler.schedule(MainActivity.this, key, atMillis, title, body);
+        }
+
+        @JavascriptInterface
+        public void cancelReminder(String key) {
+            ReminderScheduler.cancel(MainActivity.this, key);
         }
 
         @JavascriptInterface

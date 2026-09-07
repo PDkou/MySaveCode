@@ -13,6 +13,7 @@ interface HomeProps {
   onOpenCategory: (id: string) => void;
   onAddCategory: (input: { name: string; emoji: string; color: string; fields: FieldDef[] }) => Category;
   onImport: (data: AppData) => void;
+  onMerge: (data: AppData) => void;
   onTogglePinCategory: (id: string) => void;
   onMoveCategory: (id: string, direction: -1 | 1) => void;
 }
@@ -23,7 +24,7 @@ function reminderBadge(diffDays: number): string {
   return `${-diffDays}일 지남`;
 }
 
-export function Home({ data, onOpenCategory, onAddCategory, onImport, onTogglePinCategory, onMoveCategory }: HomeProps) {
+export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, onTogglePinCategory, onMoveCategory }: HomeProps) {
   const [showAdd, setShowAdd] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -73,6 +74,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onTogglePi
       <Settings
         data={data}
         onImport={onImport}
+        onMerge={onMerge}
         onBack={() => setShowSettings(false)}
         bottomNav={<BottomNav active="settings" onNavigate={handleNavigate} />}
       />

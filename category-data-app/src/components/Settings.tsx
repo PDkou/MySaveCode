@@ -2,13 +2,16 @@ import { useState, type ReactNode } from 'react';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { BackupSheet } from './BackupSheet';
+import { SetPinModal } from './SetPinModal';
 import { BackIcon } from './icons';
 import { getNativeBridge } from '../lib/native';
+import { isLockEnabled, removeLock } from '../lib/lock';
 import type { AppData } from '../types';
 
 interface SettingsProps {
   data: AppData;
   onImport: (data: AppData) => void;
+  onMerge: (data: AppData) => void;
   onBack: () => void;
   bottomNav?: ReactNode;
 }
@@ -36,10 +39,13 @@ function appVersion(): string {
 // there's more here than just backup/restore -- reached from Home the
 // same way GlobalSearch is, as Home-local state rather than its own
 // App.tsx view, since it only ever needs what Home already has.
-export function Settings({ data, onImport, onBack, bottomNav }: SettingsProps) {
+export function Settings({ data, onImport, onMerge, onBack, bottomNav }: SettingsProps) {
   const [showBackup, setShowBackup] = useState(false);
   const [showTokushoho, setShowTokushoho] = useState(false);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [lockEnabled, setLockEnabled] = useState(() => isLockEnabled());
+  const [showSetPin, setShowSetPin] = useState(false);
+  const [confirmRemoveLock, setConfirmRemoveLock] = useState(false);
 
   return (
     <div className="screen settings-screen">
@@ -58,6 +64,20 @@ export function Settings({ data, onImport, onBack, bottomNav }: SettingsProps) {
           </div>
           <button type="button" className="settings-row-btn" onClick={() => setShowBackup(true)}>
             관리
+          </button>
+        </div>
+
+        <div className="settings-row">
+          <div className="settings-row-text">
+            <b>앱 잠금</b>
+            <span>{lockEnabled ? 'PIN으로 잠겨 있어요' : '사용 안 함'}</span>
+          </div>
+          <button
+            type="button"
+            className={`settings-row-btn ${lockEnabled ? 'danger' : ''}`}
+            onClick={() => (lockEnabled ? setConfirmRemoveLock(true) : setShowSetPin(true))}
+          >
+            {lockEnabled ? '해제' : '설정'}
           </button>
         </div>
 
@@ -96,7 +116,34 @@ export function Settings({ data, onImport, onBack, bottomNav }: SettingsProps) {
         <p className="settings-version">나만의 서랍장 · {appVersion()}</p>
       </div>
 
-      {showBackup && <BackupSheet data={data} onImport={onImport} onClose={() => setShowBackup(false)} />}
+      {showBackup && (
+        <BackupSheet data={data} onImport={onImport} onMerge={onMerge} onClose={() => setShowBackup(false)} />
+      )}
+
+      {showSetPin && (
+        <SetPinModal
+          onDone={() => {
+            setLockEnabled(true);
+            setShowSetPin(false);
+          }}
+          onClose={() => setShowSetPin(false)}
+        />
+      )}
+
+      {confirmRemoveLock && (
+        <ConfirmDialog
+          title="앱 잠금 해제"
+          message="이제부터 PIN 없이 앱이 열려요. 계속할까요?"
+          confirmLabel="해제"
+          danger
+          onConfirm={() => {
+            removeLock();
+            setLockEnabled(false);
+            setConfirmRemoveLock(false);
+          }}
+          onCancel={() => setConfirmRemoveLock(false)}
+        />
+      )}
 
       {confirmDeleteAll && (
         <ConfirmDialog

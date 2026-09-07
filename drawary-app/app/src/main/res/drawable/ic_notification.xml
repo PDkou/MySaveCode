@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status-bar notification icon for the date-field reminders (see
+     ReminderScheduler.java). Android requires this to be a flat white
+     silhouette on a transparent background; the OS renders it using
+     only the alpha channel, masked to the system's own tint, so this
+     is a plain bell shape rather than the full-color app icon, matching
+     the in-app "다가오는 일정" panel's own BellIcon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,2C10.9,2 10,2.9 10,4V4.29C7.67,5.15 6,7.39 6,10V15L4,17V18H20V17L18,15V10C18,7.39 16.33,5.15 14,4.29V4C14,2.9 13.1,2 12,2Z M12,22C13.1,22 14,21.1 14,20H10C10,21.1 10.9,22 12,22Z" />
+</vector>

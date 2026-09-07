@@ -1,21 +1,30 @@
 import { useMemo, useState } from 'react';
-import type { Category, Entry } from '../types';
+import type { Category, Entry, EntryRecurrence } from '../types';
 import { DataTable } from './DataTable';
 import { EntryFormModal } from './EntryFormModal';
 import { PrintView } from './PrintView';
 import { Toast } from './Toast';
+import { TableFilters } from './TableFilters';
+import { CsvImportModal } from './CsvImportModal';
 import { getNativeBridge } from '../lib/native';
 import { buildCsv, csvFilename, downloadCsv } from '../lib/csv';
-import { BackIcon, PdfIcon, DownloadIcon } from './icons';
+import { BackIcon, PdfIcon, DownloadIcon, UploadIcon } from './icons';
 import { CategoryEmoji } from './categoryIcons';
 import { matchesSearch } from '../lib/search';
+import { filterableFields, matchesFieldFilters, type FieldFilters } from '../lib/filter';
 
 interface TableScreenProps {
   category: Category;
   entries: Entry[];
   onBack: () => void;
-  onAddEntry: (values: Record<string, string>, reminders?: Record<string, boolean>) => void;
-  onUpdateEntry: (entryId: string, values: Record<string, string>, reminders?: Record<string, boolean>) => void;
+  onAddEntry: (values: Record<string, string>, reminders?: Record<string, boolean>, recurrence?: EntryRecurrence) => void;
+  onAddEntries: (valuesList: Record<string, string>[]) => void;
+  onUpdateEntry: (
+    entryId: string,
+    values: Record<string, string>,
+    reminders?: Record<string, boolean>,
+    recurrence?: EntryRecurrence,
+  ) => void;
   onDeleteEntry: (entryId: string) => void;
   onRestoreEntry: (entry: Entry) => void;
 }
@@ -29,18 +38,23 @@ export function TableScreen({
   entries,
   onBack,
   onAddEntry,
+  onAddEntries,
   onUpdateEntry,
   onDeleteEntry,
   onRestoreEntry,
 }: TableScreenProps) {
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<FieldFilters>({});
   const [showAddEntry, setShowAddEntry] = useState(false);
+  const [showCsvImport, setShowCsvImport] = useState(false);
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [undoEntry, setUndoEntry] = useState<Entry | null>(null);
 
+  const filterFields = useMemo(() => filterableFields(category.fields), [category.fields]);
+
   const filteredEntries = useMemo(
-    () => entries.filter((e) => matchesSearch(e, category.fields, search)),
-    [entries, category.fields, search],
+    () => entries.filter((e) => matchesSearch(e, category.fields, search) && matchesFieldFilters(e, filters)),
+    [entries, category.fields, search, filters],
   );
 
   return (
@@ -88,7 +102,22 @@ export function TableScreen({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={() => setShowCsvImport(true)}
+            aria-label="CSV 가져오기"
+            disabled={category.fields.length === 0}
+          >
+            <UploadIcon size={18} />
+          </button>
         </div>
+
+        <TableFilters
+          fields={filterFields}
+          filters={filters}
+          onChange={(fieldId, value) => setFilters((prev) => ({ ...prev, [fieldId]: value }))}
+        />
 
         <DataTable fields={category.fields} entries={filteredEntries} onRowClick={(entry) => setEditingEntry(entry)} />
       </div>
@@ -106,8 +135,8 @@ export function TableScreen({
       {showAddEntry && (
         <EntryFormModal
           category={category}
-          onSave={(values, reminders) => {
-            onAddEntry(values, reminders);
+          onSave={(values, reminders, recurrence) => {
+            onAddEntry(values, reminders, recurrence);
             setShowAddEntry(false);
           }}
           onClose={() => setShowAddEntry(false)}
@@ -118,11 +147,13 @@ export function TableScreen({
         <EntryFormModal
           category={category}
           initial={editingEntry}
-          onSave={(values, reminders) => {
-            onUpdateEntry(editingEntry.id, values, reminders);
+          onSave={(values, reminders, recurrence) => {
+            onUpdateEntry(editingEntry.id, values, reminders, recurrence);
             setEditingEntry(null);
           }}
           onDuplicate={() => {
+            // Recurrence deliberately doesn't carry over -- see
+            // CategoryDetail.tsx's own onDuplicate for why.
             onAddEntry({ ...editingEntry.values }, editingEntry.reminders);
             setEditingEntry(null);
           }}
@@ -133,6 +164,10 @@ export function TableScreen({
           }}
           onClose={() => setEditingEntry(null)}
         />
+      )}
+
+      {showCsvImport && (
+        <CsvImportModal category={category} onImport={onAddEntries} onClose={() => setShowCsvImport(false)} />
       )}
 
       {undoEntry && (

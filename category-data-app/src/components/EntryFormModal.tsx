@@ -1,17 +1,23 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
-import { StarIcon, CopyIcon, BellIcon } from './icons';
-import type { Category, Entry } from '../types';
+import { StarIcon, CopyIcon, BellIcon, RepeatIcon } from './icons';
+import type { Category, Entry, EntryRecurrence, RecurrenceUnit } from '../types';
 
 interface EntryFormModalProps {
   category: Category;
   initial?: Entry;
-  onSave: (values: Record<string, string>, reminders: Record<string, boolean>) => void;
+  onSave: (values: Record<string, string>, reminders: Record<string, boolean>, recurrence?: EntryRecurrence) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
   onClose: () => void;
 }
+
+const RECURRENCE_LABELS: Record<RecurrenceUnit, string> = {
+  weekly: '매주',
+  monthly: '매월',
+  yearly: '매년',
+};
 
 export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicate, onClose }: EntryFormModalProps) {
   const [values, setValues] = useState<Record<string, string>>(() => {
@@ -22,6 +28,13 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
     return base;
   });
   const [reminders, setReminders] = useState<Record<string, boolean>>(() => ({ ...initial?.reminders }));
+  // Recurrence only makes sense with exactly one date field to anchor it
+  // to -- with zero there's nothing to advance, with two-plus it'd be
+  // ambiguous which one recurs. See lib/recurrence.ts for how this plays
+  // out once an occurrence comes due.
+  const dateFields = category.fields.filter((f) => f.type === 'date');
+  const recurrenceField = dateFields.length === 1 ? dateFields[0] : null;
+  const [recurrenceUnit, setRecurrenceUnit] = useState<RecurrenceUnit | ''>(() => initial?.recurrence?.unit ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
@@ -36,7 +49,9 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
       setAttemptedSubmit(true);
       return;
     }
-    onSave(values, reminders);
+    const recurrence: EntryRecurrence | undefined =
+      recurrenceField && recurrenceUnit ? { unit: recurrenceUnit, anchorFieldId: recurrenceField.id } : undefined;
+    onSave(values, reminders, recurrence);
   };
 
   return (
@@ -153,6 +168,38 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
           </div>
         );
       })}
+
+      {recurrenceField && (
+        <div className="entry-field">
+          <span className="field-label">
+            <RepeatIcon size={13} /> 반복 ({recurrenceField.name} 기준)
+          </span>
+          <div className="choice-row wrap">
+            <button
+              type="button"
+              className={`type-choice ${recurrenceUnit === '' ? 'selected' : ''}`}
+              onClick={() => setRecurrenceUnit('')}
+            >
+              없음
+            </button>
+            {(Object.keys(RECURRENCE_LABELS) as RecurrenceUnit[]).map((u) => (
+              <button
+                key={u}
+                type="button"
+                className={`type-choice ${recurrenceUnit === u ? 'selected' : ''}`}
+                onClick={() => setRecurrenceUnit(u)}
+              >
+                {RECURRENCE_LABELS[u]}
+              </button>
+            ))}
+          </div>
+          {recurrenceUnit && (
+            <p className="modal-hint">
+              {recurrenceField.name}이 지나면 같은 내용으로 다음 항목을 자동으로 만들어요. 앱을 열 때마다 확인해요.
+            </p>
+          )}
+        </div>
+      )}
 
       {confirmDelete && onDelete && (
         <ConfirmDialog

@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Deliberately no <uses-permission> at all: this app is fully local
-         (localStorage inside the WebView + Storage Access Framework for
-         backup export/import), no network calls, no notifications, no
-         alarms. (hellotoday-app needs INTERNET for ads, plus
-         POST_NOTIFICATIONS and SCHEDULE_EXACT_ALARM for reminders; this
-         app has neither feature.) -->
+    <!-- Still no network permission (no ads, no accounts, no server;
+         unlike hellotoday-app, which needs INTERNET for ads). These two
+         are for the date-field reminder notifications (see
+         ReminderScheduler.java): POST_NOTIFICATIONS to show them at all
+         on API 33+, RECEIVE_BOOT_COMPLETED so BootReceiver can re-arm
+         them after a reboot (AlarmManager alarms don't survive one).
+         Deliberately not requesting SCHEDULE_EXACT_ALARM the way
+         hellotoday-app does: a "this date is coming up" nudge landing
+         within the same day via the inexact
+         AlarmManager.setAndAllowWhileIdle() is good enough, and skipping
+         it avoids an extra permission plus Settings-screen detour for a
+         lower-stakes reminder than hellotoday-app's own. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <application
         android:allowBackup="true"
         android:enableOnBackInvokedCallback="false"
@@ -29,5 +37,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver android:name=".ReminderReceiver" android:exported="false" />
+        <receiver android:name=".BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
