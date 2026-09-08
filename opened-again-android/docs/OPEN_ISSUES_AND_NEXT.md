@@ -13,10 +13,12 @@
 
 ## 우선순위 C — UI
 - ~~최종 에셋 팩을 코드에 다시 연결~~ — v0.5에서 완료 (`docs/DEVELOPMENT_HISTORY.md` v0.5 참고).
-  단, `ShareCardRenderer`(네이티브 공유 카드 렌더링)는 여전히 코드로 그린 도형/텍스트만 쓰고
-  있어 실제 캐릭터/프레임 에셋을 반영하지 못함 — 다음 우선 작업으로 남겨둠.
+- ~~`ShareCardRenderer`에 실제 에셋 반영~~ — v0.6에서 완료. 배경/카드 아트/등급 배지/캐릭터
+  포즈/로고를 전부 실제 PNG로 그리도록 교체 (`docs/DEVELOPMENT_HISTORY.md` v0.6 참고).
 - 홈/보관함/기록을 승인된 탐정 세계관 기준으로 재구현
-- 카드 상세와 공유 카드 텍스트 길이 대응
+- 카드 상세와 공유 카드 텍스트 길이 대응 — `ShareCardRenderer`의 제목(title)은 여전히
+  줄바꿈 없이 한 줄로 그려서, 아주 긴 사건명은 잘리거나 오른쪽 캐릭터 이미지와 겹칠 수 있음
+  (detail/punchline은 줄바꿈 처리됨). 실기기에서 긴 제목으로 확인 필요.
 - HIDDEN 발견 전/후 상태 전환
 - `preview-board.html`/`preview-hidden.html`이 아직 v0.3 시절 임시 이미지(`moni_avatar.png` 등
   존재하지 않는 파일)를 참조 — 리뷰용 도구라 우선순위는 낮지만 다음에 같이 정리

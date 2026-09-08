@@ -76,7 +76,7 @@ function persistSnapshot(d){if(!d||!d.permission)return;const key=todayKey();sta
 function setTab(t){state.tab=t;render()}
 function refresh(){state.data=read();persistSnapshot(state.data);render()}
 window.onNativeResume=refresh;
-function share(i,format){if(preview||!N){toast(l('미리보기에서는 공유가 실행되지 않습니다.','プレビューでは共有は実行されません。','Sharing is disabled in preview.'));return}try{N.shareIncident(JSON.stringify(i),txt(names,i.type),txt(punch,i.type),detail(i),format)}catch(e){}}
+function share(i,format){if(preview||!N){toast(l('미리보기에서는 공유가 실행되지 않습니다.','プレビューでは共有は実行されません。','Sharing is disabled in preview.'));return}try{N.shareIncident(JSON.stringify(i),txt(names,i.type),txt(punch,i.type),detail(i),format,state.settings.language)}catch(e){}}
 function rarityClass(i){if(i.rarity!=='HIDDEN')return i.rarity.toLowerCase();return i.type==='HIDDEN_NIGHT_ACTIVITY'?'hidden opal':'hidden'}
 function rarityBadge(i){const map={NORMAL:'badge_normal.png',RARE:'badge_rare.png',EPIC:'badge_epic.png',LEGENDARY:'badge_legendary.png'};const f=i.rarity==='HIDDEN'?(i.type==='HIDDEN_NIGHT_ACTIVITY'?'badge_hidden_02.png':'badge_hidden_01.png'):map[i.rarity];return `<img class="rarity-img" src="visual/badges/${f}" alt="${esc(i.rarity)}">`}
 function incidentVisual(type){const map={

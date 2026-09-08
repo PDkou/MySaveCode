@@ -82,7 +82,7 @@ class NativeBridge(
     }
 
     @JavascriptInterface
-    fun shareIncident(incidentJson: String, title: String, punchline: String, detail: String, format: String) {
+    fun shareIncident(incidentJson: String, title: String, punchline: String, detail: String, format: String, lang: String) {
         val obj = JSONObject(incidentJson)
         val incident = DetectedIncident(
             type = IncidentType.valueOf(obj.getString("type")),
@@ -95,7 +95,7 @@ class NativeBridge(
         val cardFormat = if (format.equals("story", true)) ShareCardRenderer.Format.STORY else ShareCardRenderer.Format.SQUARE
         activity.runOnUiThread {
             val renderer = ShareCardRenderer(activity)
-            val bitmap = renderer.render(incident, title, punchline, detail, cardFormat)
+            val bitmap = renderer.render(incident, title, punchline, detail, cardFormat, lang)
             renderer.saveAndShare(bitmap, activity.getString(R.string.share_chooser))
         }
     }

@@ -7,3 +7,4 @@ sandbox that can't create git tags, not a store release history yet.
 |---|---:|---|---|---|
 | 0.2.0 | 2 | pending | development | WebView shell + native usage-analysis bridge + incident cards |
 | 0.5.0 | 5 | pending | development | Final v1.2 asset pack wired into `index.html` (badges, card templates/examples, character poses, backgrounds, logo, app icon); imported into the `MySaveCode` monorepo as `opened-again-android/` |
+| 0.6.0 | 6 | pending | development | `ShareCardRenderer` now draws the same final asset pack (background, card template art + tint, rarity badge, character pose, logo) instead of flat shapes/text; `shareIncident()` takes the in-app selected language for the logo |
