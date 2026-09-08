@@ -1,10 +1,17 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     kotlin("android")
 }
 
+// NOTE: use the imported `Properties` name here, not `java.util.Properties` --
+// the Android/Kotlin plugins applied above contribute a top-level Gradle
+// Kotlin-DSL accessor named `java` (the JavaPluginExtension accessor), which
+// shadows the `java.*` package prefix in this script and breaks the
+// fully-qualified form ("Unresolved reference: util").
 val keystorePropertiesFile = rootProject.file("keystore.properties")
-val keystoreProperties = java.util.Properties().apply {
+val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) keystorePropertiesFile.inputStream().use { load(it) }
 }
 
