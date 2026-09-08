@@ -9,7 +9,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
-import android.graphics.Path
 import android.graphics.RectF
 import android.net.Uri
 import android.provider.MediaStore
@@ -23,10 +22,23 @@ import java.util.Locale
 /**
  * Renders a shareable incident card as a bitmap, using the same final asset
  * pack the WebView UI does (`app/src/main/assets/visual/`) rather than
- * drawing everything as flat shapes/text. Layout mirrors index.html's
- * `.card` (art + tint overlay, badge instead of a text rarity label, MONI
- * posed per incident type in a right-hand "scene") so a shared image looks
- * like the same card the player saw in-app, not a different design.
+ * drawing everything as flat shapes/text.
+ *
+ * IMPORTANT asset choice: the card body uses `cards/frames/frame_*.png` --
+ * the actual blank, reusable card frames (per PROJECT_HANDOFF.md: "Use
+ * assets/cards/frames + assets/badges to render incident rarities"). It
+ * does NOT use `cards/templates/*` or `cards/examples/*`: those are
+ * finished mockups/reference art with placeholder or incident-specific
+ * text already baked into the pixels, meant for art reference, not for
+ * layering live text on top of at runtime (an earlier version of this
+ * file used templates/ by mistake, which both showed stale baked-in text
+ * and, because its aspect ratio didn't match the drawing area, got
+ * cropped).
+ *
+ * The frame art has a fixed aspect ratio (~0.8, width:height) that's
+ * consistent across rarities, so the card rect below is sized to match it
+ * exactly -- the frame is drawn with zero cropping, never "cover"-cropped
+ * into a mismatched box.
  */
 class ShareCardRenderer(private val context: Context) {
     enum class Format(val width: Int, val height: Int) { SQUARE(1080, 1080), STORY(1080, 1920) }
@@ -56,72 +68,69 @@ class ShareCardRenderer(private val context: Context) {
         }
 
         val margin = 78f
-        val top = if (format == Format.STORY) 330f else 110f
-        val bottom = if (format == Format.STORY) format.height - 330f else format.height - 110f
-        val rect = RectF(margin, top, format.width - margin, bottom)
+        val outerTop = if (format == Format.STORY) 330f else 110f
+        val outerBottom = if (format == Format.STORY) format.height - 330f else format.height - 110f
+        val rect = frameAlignedRect(margin, outerTop, format.width - margin, outerBottom)
 
-        // Card body: the rarity's illustrated template art, tinted for text
-        // legibility -- same "art + tint" recipe as index.html's
-        // `.card.<rarity>` background.
-        val template = assetBitmap(templateAsset(incident.rarity, opal))
+        // Solid backing first (in case the frame art has transparent gaps),
+        // then the frame art itself at its native aspect -- no tint overlay
+        // on top of it, since the frame's own interior (light for every
+        // rarity except the dark ANOMALY hidden variant) already gives the
+        // right contrast for the palette's text colors.
         paint.style = Paint.Style.FILL
-        if (template != null) {
-            c.save()
-            c.clipPath(roundedRectPath(rect, 46f))
-            drawCover(c, template, rect, paint)
-            c.restore()
-        } else {
-            paint.color = p.background
-            c.drawRoundRect(rect, 46f, 46f, paint)
+        paint.color = p.background
+        c.drawRoundRect(rect, 46f, 46f, paint)
+        assetBitmap(frameAsset(incident.rarity, opal))?.let { frame ->
+            drawCover(c, frame, rect, paint)
         }
-        paint.color = p.overlay
-        c.drawRoundRect(rect, 46f, 46f, paint)
-        paint.style = Paint.Style.STROKE; paint.strokeWidth = 9f; paint.color = p.border
-        c.drawRoundRect(rect, 46f, 46f, paint)
-        paint.style = Paint.Style.FILL
 
         // Text sits in the left column; MONI's scene occupies the right
         // column -- same split as index.html's `.card-body` grid.
-        val badgeH = 46f
-        val contentTop = top + 40f + badgeH + 24f
-        val footerTop = bottom - 130f
+        val pad = 56f
+        val badgeH = 44f
+        val contentTop = rect.top + 40f + badgeH + 20f
+        val footerTop = rect.bottom - 120f
         val leftColRight = rect.left + rect.width() * 0.56f
-        val sceneLeft = leftColRight + 28f
+        val leftTextWidth = leftColRight - (rect.left + pad) - 16f
+        val sceneLeft = leftColRight + 24f
 
         // Rarity badge image, replacing the plain rarity-name text label.
         assetBitmap(badgeAsset(incident.rarity, opal))?.let { badge ->
-            drawLeftAligned(c, badge, margin + 56f, top + 40f, badgeH, paint)
+            drawLeftAligned(c, badge, rect.left + pad, rect.top + 36f, badgeH, paint)
         }
 
-        paint.color = p.title; paint.textSize = 70f; paint.isFakeBoldText = true
-        c.drawText(title, margin + 56f, contentTop + 58f, paint)
-        paint.color = p.body; paint.textSize = 38f; paint.isFakeBoldText = false
-        drawWrapped(c, detail, margin + 56f, contentTop + 140f, leftColRight - (margin + 56f) - 16f, 52f, paint)
+        // Title wraps (up to the available left-column width) instead of a
+        // single unwrapped line -- a long incident name no longer clips or
+        // runs into MONI's scene on the right.
+        paint.color = p.title; paint.textSize = 58f; paint.isFakeBoldText = true
+        val titleEndY = drawWrapped(c, title, rect.left + pad, contentTop + 52f, leftTextWidth, 66f, paint)
+        paint.color = p.body; paint.textSize = 36f; paint.isFakeBoldText = false
+        drawWrapped(c, detail, rect.left + pad, titleEndY + 54f, leftTextWidth, 48f, paint)
 
         // MONI, posed to match the incident (mirrors index.html's
         // incidentVisual() map), bottom-anchored and centered in its box --
         // same as the web card's `.scene{align-items:flex-end}`.
         assetBitmap(characterAsset(incident.type))?.let { moni ->
-            val sceneBox = RectF(sceneLeft, contentTop, rect.right - 32f, footerTop)
+            val sceneBox = RectF(sceneLeft, contentTop, rect.right - 28f, footerTop)
             drawContain(c, moni, sceneBox, paint)
         }
 
-        paint.isFakeBoldText = true; paint.textSize = 50f; paint.color = p.title
-        drawWrapped(c, "“$punchline”", margin + 56f, bottom - 185f, leftColRight - (margin + 56f) - 16f, 64f, paint)
+        paint.isFakeBoldText = true; paint.textSize = 44f; paint.color = p.title
+        drawWrapped(c, "“$punchline”", rect.left + pad, rect.bottom - 165f, rect.width() - pad - 32f, 56f, paint)
 
         // Wordmark logo instead of a plain app-name text label, matching the
         // language actually selected in-app (not the device locale) -- text
         // fallback if the logo asset can't be decoded.
         val logo = assetBitmap(if (lang == "ja") "logo/logo_jp.png" else "logo/logo_ko.png")
         if (logo != null) {
-            drawLeftAligned(c, logo, margin + 56f, bottom - 100f, 32f, paint)
+            drawLeftAligned(c, logo, rect.left + pad, rect.bottom - 84f, 28f, paint)
         } else {
-            paint.isFakeBoldText = false; paint.textSize = 34f; paint.color = p.accent
-            c.drawText(context.getString(com.howling.openedagain.R.string.app_name), margin + 56f, bottom - 72f, paint)
+            paint.isFakeBoldText = false; paint.textSize = 30f; paint.color = p.accent
+            c.drawText(context.getString(com.howling.openedagain.R.string.app_name), rect.left + pad, rect.bottom - 60f, paint)
         }
-        paint.isFakeBoldText = false; paint.textSize = 34f; paint.color = p.accent
+        paint.isFakeBoldText = false; paint.textSize = 30f; paint.color = p.accent
         paint.textAlign = Paint.Align.RIGHT
-        c.drawText("MONI CASE FILE", format.width - margin - 56f, bottom - 72f, paint)
+        c.drawText("MONI CASE FILE", rect.right - pad, rect.bottom - 60f, paint)
         paint.textAlign = Paint.Align.LEFT
         return bitmap
     }
@@ -143,18 +152,38 @@ class ShareCardRenderer(private val context: Context) {
         context.startActivity(Intent.createChooser(intent, chooserTitle))
     }
 
+    // -- layout -----------------------------------------------------------
+
+    // frame_*.png is ~348x436 across every rarity (width:height ~= 0.8).
+    // Fit the largest rect of that aspect ratio inside the given bounds,
+    // centered, so the frame draws with zero cropping regardless of format.
+    private fun frameAlignedRect(left: Float, top: Float, right: Float, bottom: Float): RectF {
+        val frameAspect = 0.8f
+        val availW = right - left
+        val availH = bottom - top
+        var w = availW
+        var h = w / frameAspect
+        if (h > availH) {
+            h = availH
+            w = h * frameAspect
+        }
+        val cardLeft = left + (availW - w) / 2f
+        val cardTop = top + (availH - h) / 2f
+        return RectF(cardLeft, cardTop, cardLeft + w, cardTop + h)
+    }
+
     // -- asset lookup ---------------------------------------------------
 
     private fun assetBitmap(path: String): Bitmap? = runCatching {
         context.assets.open("visual/$path").use { BitmapFactory.decodeStream(it) }
     }.getOrNull()
 
-    private fun templateAsset(rarity: Rarity, opal: Boolean): String = when (rarity) {
-        Rarity.NORMAL -> "cards/templates/template_normal.png"
-        Rarity.RARE -> "cards/templates/template_rare.png"
-        Rarity.EPIC -> "cards/templates/template_epic.png"
-        Rarity.LEGENDARY -> "cards/templates/template_legendary.png"
-        Rarity.HIDDEN -> if (opal) "cards/templates/template_hidden_02.png" else "cards/templates/template_hidden_01.png"
+    private fun frameAsset(rarity: Rarity, opal: Boolean): String = when (rarity) {
+        Rarity.NORMAL -> "cards/frames/frame_normal.png"
+        Rarity.RARE -> "cards/frames/frame_rare.png"
+        Rarity.EPIC -> "cards/frames/frame_epic.png"
+        Rarity.LEGENDARY -> "cards/frames/frame_legendary.png"
+        Rarity.HIDDEN -> if (opal) "cards/frames/frame_hidden_02.png" else "cards/frames/frame_hidden_01.png"
     }
 
     private fun badgeAsset(rarity: Rarity, opal: Boolean): String = when (rarity) {
@@ -167,7 +196,7 @@ class ShareCardRenderer(private val context: Context) {
 
     // Same incident -> pose mapping as index.html's incidentVisual(), minus
     // the background half (the share card gets its background from the
-    // rarity template art instead, same as archive/records elsewhere).
+    // rarity frame art instead).
     private fun characterAsset(type: IncidentType): String = when (type) {
         IncidentType.QUICK_EXIT, IncidentType.RETURN_TO_START -> "character/basic/moni_sit_phone.png"
         IncidentType.REENTRY, IncidentType.REGULAR, IncidentType.FIRST_CONTACT, IncidentType.HUNDRED_VISITS -> "character/basic/moni_phone.png"
@@ -178,10 +207,6 @@ class ShareCardRenderer(private val context: Context) {
     }
 
     // -- drawing helpers --------------------------------------------------
-
-    private fun roundedRectPath(rect: RectF, radius: Float) = Path().apply {
-        addRoundRect(rect, radius, radius, Path.Direction.CW)
-    }
 
     /** Scales [bmp] to fully cover [dest] (may crop), centered. */
     private fun drawCover(canvas: Canvas, bmp: Bitmap, dest: RectF, paint: Paint) {
@@ -195,7 +220,7 @@ class ShareCardRenderer(private val context: Context) {
         canvas.restore()
     }
 
-    /** Scales [bmp] to fit fully inside [box] (may letterbox), bottom-anchored and centered. */
+    /** Scales [bmp] to fit fully inside [box] (may letterbox, never crops), bottom-anchored and centered. */
     private fun drawContain(canvas: Canvas, bmp: Bitmap, box: RectF, paint: Paint) {
         val scale = minOf(box.width() / bmp.width, box.height() / bmp.height)
         val w = bmp.width * scale
@@ -212,7 +237,8 @@ class ShareCardRenderer(private val context: Context) {
         canvas.drawBitmap(bmp, null, RectF(x, y, x + w, y + height), paint)
     }
 
-    private fun drawWrapped(canvas: Canvas, text: String, x: Float, y: Float, maxWidth: Float, lineHeight: Float, paint: Paint) {
+    /** Word-wraps [text] within [maxWidth]; returns the last line's baseline Y so callers can chain the next block after it. */
+    private fun drawWrapped(canvas: Canvas, text: String, x: Float, y: Float, maxWidth: Float, lineHeight: Float, paint: Paint): Float {
         var line = ""
         var cy = y
         text.split(Regex("\\s+")).forEach { word ->
@@ -222,5 +248,6 @@ class ShareCardRenderer(private val context: Context) {
             } else line = test
         }
         if (line.isNotBlank()) canvas.drawText(line, x, cy, paint)
+        return cy
     }
 }

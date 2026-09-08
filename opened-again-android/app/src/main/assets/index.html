@@ -40,14 +40,23 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .scene{background-size:cover!important;background-position:center!important}
 .scene .moni-asset{width:118px;height:118px;object-fit:contain;border-radius:0;margin-bottom:4px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.14))}
 .rarity-img{height:30px;width:auto;max-width:145px;object-fit:contain;display:block}
-.card.normal{background:linear-gradient(rgba(255,255,255,.92),rgba(255,255,255,.92)),url('visual/cards/templates/template_normal.png') center/cover no-repeat}
-.card.rare{background:linear-gradient(rgba(255,255,255,.90),rgba(255,255,255,.90)),url('visual/cards/templates/template_rare.png') center/cover no-repeat}
-.card.epic{background:linear-gradient(rgba(255,255,255,.88),rgba(255,255,255,.88)),url('visual/cards/templates/template_epic.png') center/cover no-repeat}
-.card.legendary{background:linear-gradient(rgba(255,252,238,.88),rgba(255,252,238,.88)),url('visual/cards/templates/template_legendary.png') center/cover no-repeat}
-.card.hidden:not(.opal){background:linear-gradient(rgba(3,25,35,.76),rgba(3,25,35,.76)),url('visual/cards/templates/template_hidden_01.png') center/cover no-repeat}
-.card.hidden.opal{background:linear-gradient(rgba(251,248,255,.76),rgba(251,248,255,.76)),url('visual/cards/templates/template_hidden_02.png') center/cover no-repeat}
+/* cards/frames/*.png are the real blank card frames (per PROJECT_HANDOFF.md:
+   "Use assets/cards/frames + assets/badges to render incident rarities").
+   cards/templates/* and cards/examples/* are finished mockup/reference art
+   with placeholder or incident-specific text already baked into the pixels
+   -- not meant to be layered under live text, and their fixed ~0.8 aspect
+   ratio doesn't match this card's content-driven height, so `cover` was
+   cropping the frame artwork. Each frame is anchored to the top of the
+   card and never cropped (`contain`); a flat rarity-tinted background
+   fills in below it once the card grows taller than the frame art. */
+.card.normal{background-color:#FBFAF7;background-image:url('visual/cards/frames/frame_normal.png');background-size:contain;background-position:top center;background-repeat:no-repeat}
+.card.rare{background-color:#F3F9FF;background-image:url('visual/cards/frames/frame_rare.png');background-size:contain;background-position:top center;background-repeat:no-repeat}
+.card.epic{background-color:#F8F1FF;background-image:url('visual/cards/frames/frame_epic.png');background-size:contain;background-position:top center;background-repeat:no-repeat}
+.card.legendary{background-color:#FFFBE9;background-image:url('visual/cards/frames/frame_legendary.png');background-size:contain;background-position:top center;background-repeat:no-repeat}
+.card.hidden:not(.opal){background-color:#071C29;background-image:url('visual/cards/frames/frame_hidden_01.png');background-size:contain;background-position:top center;background-repeat:no-repeat}
+.card.hidden.opal{background-color:#FBF6FF;background-image:url('visual/cards/frames/frame_hidden_02.png');background-size:contain;background-position:top center;background-repeat:no-repeat}
 .archive-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.archive-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:8px;min-height:220px;box-shadow:0 5px 16px rgba(70,50,35,.06);position:relative;overflow:hidden}.archive-card img{width:100%;height:165px;object-fit:cover;border-radius:13px}.archive-card b{font-size:13px;display:block;margin-top:7px}.archive-card span{font-size:10px;color:var(--muted)}.archive-card.locked img{filter:grayscale(1) brightness(.35);opacity:.7}.archive-card.locked:after{content:'???';position:absolute;inset:0;display:grid;place-items:center;font-size:26px;font-weight:1000;color:white;background:rgba(8,22,31,.15)}
+.archive-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:8px;min-height:220px;box-shadow:0 5px 16px rgba(70,50,35,.06);position:relative;overflow:hidden}.archive-card img{width:100%;height:165px;object-fit:contain;background:#F6F0E6;border-radius:13px}.archive-card b{font-size:13px;display:block;margin-top:7px}.archive-card span{font-size:10px;color:var(--muted)}.archive-card.locked img{filter:grayscale(1) brightness(.35);opacity:.7}.archive-card.locked:after{content:'???';position:absolute;inset:0;display:grid;place-items:center;font-size:26px;font-weight:1000;color:white;background:rgba(8,22,31,.15)}
 .record-decor{background:linear-gradient(90deg,rgba(255,249,240,.92),rgba(255,249,240,.72)),url('visual/backgrounds/bg_home_night.png') center/cover;border-radius:22px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:14px;color:#fff}.record-decor img{width:82px;height:82px;object-fit:contain}.record-decor b{font-size:18px}.record-decor p{font-size:11px;margin:4px 0 0;color:#F8EFE7}
 </style>
 </head>
