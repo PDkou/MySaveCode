@@ -28,8 +28,10 @@
   줄바꿈 없이 한 줄로 그려서, 아주 긴 사건명은 잘리거나 오른쪽 캐릭터 이미지와 겹칠 수 있음
   (detail/punchline은 줄바꿈 처리됨). 실기기에서 긴 제목으로 확인 필요.
 - HIDDEN 발견 전/후 상태 전환
-- `preview-board.html`/`preview-hidden.html`이 아직 v0.3 시절 임시 이미지(`moni_avatar.png` 등
-  존재하지 않는 파일)를 참조 — 리뷰용 도구라 우선순위는 낮지만 다음에 같이 정리
+- ~~`preview-board.html`/`preview-hidden.html`이 존재하지 않는 파일(`moni_avatar.png`)을 참조~~ —
+  v0.8에서 완료. `preview-hidden.html`은 실제 캐릭터 에셋으로 교체, `preview-board.html`은
+  버전 라벨 갱신 + HIDDEN 스와치 추가(그 과정에서 고정 높이 레이아웃 오버플로를 만들 뻔했다가
+  즉시 발견해서 수정 — `docs/DEVELOPMENT_HISTORY.md` v0.8 참고).
 
 ## 우선순위 D — 제품화
 - 앱명/스토어 설명 KR/JP 최종 확정
