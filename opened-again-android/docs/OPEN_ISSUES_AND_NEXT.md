@@ -8,6 +8,9 @@
 - 엣지투엣지 적용(v0.11) 후 실기기 확인 — 특히 제스처 내비게이션 기기에서
   `env(safe-area-inset-*)`가 실제로 올바른 값으로 채워져서 상단바/하단 제스처 영역에
   콘텐츠가 안 가려지는지, 3버튼 내비게이션 기기에서도 동일한지 확인 필요
+- `ShareCardRenderer`의 배경/캐릭터 겹침 수정(v0.12) 실기기 재확인 — "1:1 공유"/"스토리"
+  버튼으로 실제 공유 이미지를 생성해서 배경 이중 노출이 사라졌는지, 캐릭터가 의도한
+  위치에 한 번만 나오는지 확인
 
 ## 우선순위 B — 데이터 영속화
 - SharedPreferences 발견 여부만 저장하는 현재 구조를 Room 기반 사건 히스토리로 확장
@@ -16,12 +19,14 @@
 
 ## 우선순위 C — UI
 - ~~최종 에셋 팩을 코드에 다시 연결~~ — v0.5에서 완료 (`docs/DEVELOPMENT_HISTORY.md` v0.5 참고).
-- ~~`ShareCardRenderer`에 실제 에셋 반영~~ — v0.6에서 완료했으나 잘못된 에셋 폴더(`templates/`)를
-  써서 잘림 발생 → v0.7에서 `frames/`로 교체하고 비율 문제까지 수정 (`docs/DEVELOPMENT_HISTORY.md`
-  v0.7 참고).
-- `.card` CSS가 `cards/frames/*.png`를 카드 상단 배너처럼만 보여줌(`background-size:contain` +
-  `top center`) — 카드 전체를 감싸는 정식 테두리(9-patch/`border-image` 방식)는 아님. 지금은
-  잘리지 않고 자연스럽게는 보이지만, 카드 전체를 프레임으로 감싸고 싶다면 별도 작업 필요.
+- `ShareCardRenderer`에 실제 에셋 반영 — v0.6(첫 시도, templates/ 오선택) → v0.7(frames/로 교체,
+  비율 문제 수정) → v0.12(배경으로 쓴 `share_template_*`가 사실 완성된 카드라 프레임/캐릭터가
+  두 겹으로 겹치던 문제 수정, 배지도 프레임 코너 장식과 겹쳐서 제거)까지 세 차례 수정. 실기기
+  스크린샷으로 배경 겹침을 확인한 것이지 완전 검증된 상태는 아님 — 다음 실기기 확인 필요.
+- ~~`.card` CSS가 `cards/frames/*.png`를 배경으로 써서 카드 높이가 변할 때마다 위쪽 일부만
+  채워지고 나머지가 비어 보이던 문제~~ — v0.12에서 프레임 배경 자체를 제거하고 원래의
+  `.card:before{background:var(--glow)}` 그라데이션 틴트 방식으로 복귀해 해결. 프레임 아트는
+  비율을 직접 통제하는 `ShareCardRenderer`에서만 사용.
 - 보관함 그리드가 `cards/examples/*.png`(원래는 "향후 아트 참고용"으로 문서화된 자산)를 그대로
   썼다가 잘림(`object-fit:cover`)까지 있었음 — `contain`으로 고쳐서 잘림은 해결했지만, 근본적으로
   "발견 여부만 표시하는 대표 이미지"를 examples/ 목업이 아니라 frame+badge 조합으로 직접

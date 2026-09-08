@@ -57,10 +57,16 @@ class ShareCardRenderer(private val context: Context) {
         val c = Canvas(bitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-        // Full-bleed backdrop from the asset pack; a flat tone is the
-        // fallback if the asset can't be decoded for some reason.
-        val backdropAsset = if (format == Format.STORY) "backgrounds/share_template_vertical.png" else "backgrounds/share_template_square.png"
-        val backdrop = assetBitmap(backdropAsset)
+        // Full-bleed backdrop. NOTE: backgrounds/share_template_square.png
+        // and share_template_vertical.png look like plain backdrops but are
+        // actually complete, finished card designs in their own right --
+        // they already have their own decorative frame AND a MONI
+        // illustration baked into a bottom corner. Using either of those as
+        // a "backdrop" behind our own separately-drawn rarity frame doubled
+        // up both the frame and the character in the exported image. Use
+        // the tileable paw-print pattern instead, which has no baked-in
+        // frame/character to collide with.
+        val backdrop = assetBitmap("backgrounds/bg_pattern_beige.png")
         if (backdrop != null) {
             drawCover(c, backdrop, RectF(0f, 0f, format.width.toFloat(), format.height.toFloat()), paint)
         } else {
@@ -86,18 +92,18 @@ class ShareCardRenderer(private val context: Context) {
 
         // Text sits in the left column; MONI's scene occupies the right
         // column -- same split as index.html's `.card-body` grid.
+        // NOTE: no separate badge image here (unlike index.html's cards) --
+        // frame_*.png already has its own decorative corner ornaments (a
+        // detective hat, a paw medallion, a magnifier) baked into the same
+        // top area a badge pill would sit in, and the two visibly collided.
+        // The frame's distinct color per rarity already communicates which
+        // tier this is.
         val pad = 56f
-        val badgeH = 44f
-        val contentTop = rect.top + 40f + badgeH + 20f
+        val contentTop = rect.top + rect.height() * 0.12f
         val footerTop = rect.bottom - 120f
         val leftColRight = rect.left + rect.width() * 0.56f
         val leftTextWidth = leftColRight - (rect.left + pad) - 16f
         val sceneLeft = leftColRight + 24f
-
-        // Rarity badge image, replacing the plain rarity-name text label.
-        assetBitmap(badgeAsset(incident.rarity, opal))?.let { badge ->
-            drawLeftAligned(c, badge, rect.left + pad, rect.top + 36f, badgeH, paint)
-        }
 
         // Title wraps (up to the available left-column width) instead of a
         // single unwrapped line -- a long incident name no longer clips or
@@ -184,14 +190,6 @@ class ShareCardRenderer(private val context: Context) {
         Rarity.EPIC -> "cards/frames/frame_epic.png"
         Rarity.LEGENDARY -> "cards/frames/frame_legendary.png"
         Rarity.HIDDEN -> if (opal) "cards/frames/frame_hidden_02.png" else "cards/frames/frame_hidden_01.png"
-    }
-
-    private fun badgeAsset(rarity: Rarity, opal: Boolean): String = when (rarity) {
-        Rarity.NORMAL -> "badges/badge_normal.png"
-        Rarity.RARE -> "badges/badge_rare.png"
-        Rarity.EPIC -> "badges/badge_epic.png"
-        Rarity.LEGENDARY -> "badges/badge_legendary.png"
-        Rarity.HIDDEN -> if (opal) "badges/badge_hidden_02.png" else "badges/badge_hidden_01.png"
     }
 
     // Same incident -> pose mapping as index.html's incidentVisual(), minus
