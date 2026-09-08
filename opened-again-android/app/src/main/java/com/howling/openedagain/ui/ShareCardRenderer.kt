@@ -27,7 +27,7 @@ import java.util.Locale
  * IMPORTANT asset choice: the card body uses `cards/frames/frame_*.png` --
  * the actual blank, reusable card frames (per PROJECT_HANDOFF.md: "Use
  * assets/cards/frames + assets/badges to render incident rarities"). It
- * does NOT use `cards/templates/*` or `cards/examples/*`: those are
+ * does NOT use the cards/templates or cards/examples folders: those hold
  * finished mockups/reference art with placeholder or incident-specific
  * text already baked into the pixels, meant for art reference, not for
  * layering live text on top of at runtime (an earlier version of this
