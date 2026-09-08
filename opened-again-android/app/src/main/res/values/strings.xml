@@ -1,0 +1,45 @@
+<resources>
+    <string name="app_name">Opened Again?</string>
+    <string name="tagline">Your phone noticed something suspicious today.</string>
+    <string name="usage_permission_explain">Usage access is needed to detect incidents. Analysis stays on this device.</string>
+    <string name="open_settings">Enable usage access</string>
+    <string name="no_incident">No suspicious incident yet.</string>
+    <string name="found_incidents">%1$d incidents found today</string>
+    <string name="incident_quick_exit">quick exit</string>
+    <string name="punch_quick_exit">Case recorded.</string>
+    <string name="incident_reentry">reentry</string>
+    <string name="punch_reentry">Case recorded.</string>
+    <string name="incident_regular">regular</string>
+    <string name="punch_regular">Case recorded.</string>
+    <string name="incident_return_to_start">return to start</string>
+    <string name="punch_return_to_start">Case recorded.</string>
+    <string name="incident_patrol">patrol</string>
+    <string name="punch_patrol">Case recorded.</string>
+    <string name="incident_escape_failed">escape failed</string>
+    <string name="punch_escape_failed">Case recorded.</string>
+    <string name="incident_first_contact">first contact</string>
+    <string name="punch_first_contact">Case recorded.</string>
+    <string name="incident_night_patrol">night patrol</string>
+    <string name="punch_night_patrol">Case recorded.</string>
+    <string name="incident_app_wandering">app wandering</string>
+    <string name="punch_app_wandering">Case recorded.</string>
+    <string name="incident_hundred_visits">hundred visits</string>
+    <string name="punch_hundred_visits">Case recorded.</string>
+    <string name="incident_digital_lost">digital lost</string>
+    <string name="punch_digital_lost">Case recorded.</string>
+    <string name="incident_dawn_survivor">dawn survivor</string>
+    <string name="punch_dawn_survivor">Case recorded.</string>
+    <string name="incident_hidden_loop">hidden loop</string>
+    <string name="punch_hidden_loop">Case recorded.</string>
+    <string name="incident_hidden_night_activity">hidden night activity</string>
+    <string name="punch_hidden_night_activity">Case recorded.</string>
+
+    <string name="tab_cases">Cases</string><string name="tab_archive">Archive</string><string name="tab_records">Records</string>
+    <string name="today_representative">TODAY'S REPRESENTATIVE CASE</string>
+    <string name="related_observed">Also observed: %1$s</string>
+    <string name="share_square">Share 1:1</string><string name="share_story">Story 9:16</string><string name="share_chooser">Share case card</string>
+    <string name="archive_title">Case archive · %1$d cards discovered</string><string name="records_title">Today’s raw record</string>
+    <string name="record_usage">Total foreground time</string><string name="record_opens">App visits</string><string name="record_switches">App switches</string><string name="record_unique_apps">Unique apps</string>
+    <string name="detail_reentry">Reentered %1$d times · average return %2$d sec</string><string name="detail_quick_exit">Closed within 5 sec · %1$d times</string><string name="detail_opens">Opened %1$d times today</string><string name="detail_patrol">%1$d apps visited · %2$d switches</string><string name="detail_switches">%1$d app switches in one session</string><string name="detail_night">%1$d apps visited · %2$d min at night</string><string name="detail_escape">Returned %1$d times in a short window</string><string name="detail_return">Returned to the first app after %1$d visits</string><string name="detail_duration">Continued for %1$d minutes</string><string name="detail_loop">Two-app loop · %1$d switches</string><string name="detail_hidden_night">Short night check-ins · %1$d sessions</string><string name="detail_first_contact">Opened immediately after the first unlock</string>
+
+</resources>

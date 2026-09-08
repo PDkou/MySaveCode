@@ -1,0 +1,40 @@
+name: Build Opened Again Debug
+
+# Debug-build validation for opened-again-android/ (core Kotlin tests +
+# debug APK). This is the "does it actually compile" check — the sandbox
+# this app was developed in has no Android SDK/Gradle dependency access,
+# so this workflow is the only place a real build has run.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ open-again, main ]
+    paths:
+      - 'opened-again-android/app/**'
+      - 'opened-again-android/core/**'
+      - 'opened-again-android/*.gradle.kts'
+      - 'opened-again-android/gradle.properties'
+      - '.github/workflows/build-opened-again-gradle.yml'
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+
+      - name: gradle :core:test :app:assembleDebug
+        working-directory: opened-again-android
+        run: gradle :core:test :app:assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opened-again-debug-apk
+          path: opened-again-android/app/build/outputs/apk/debug/*.apk

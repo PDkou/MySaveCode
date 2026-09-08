@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">また開いた？</string>
+    <string name="tagline">あなたのスマホ、今日もちょっと変でした。</string>
+    <string name="usage_permission_explain">事件を検出するため、使用状況へのアクセスが必要です。分析は端末内で行います。</string>
+    <string name="open_settings">使用状況へのアクセスを許可</string>
+    <string name="no_incident">まだ怪しい事件はありません。</string>
+    <string name="found_incidents">本日、%1$d件の事件を確認しました</string>
+    <string name="incident_quick_exit">5秒撤退</string><string name="punch_quick_exit">何を確認したのかは不明です。</string>
+    <string name="incident_reentry">出戻り事件</string><string name="punch_reentry">さっき出たばかりです。</string>
+    <string name="incident_regular">常連客</string><string name="punch_regular">店員より頻繁に来ています。</string>
+    <string name="incident_return_to_start">振り出しに戻る</string><string name="punch_return_to_start">最終的に元の場所へ戻りました。</string>
+    <string name="incident_patrol">目的地不明</string><string name="punch_patrol">目的地は確認できませんでした。</string>
+    <string name="incident_escape_failed">脱出失敗</string><string name="punch_escape_failed">脱出には失敗しました。</string>
+    <string name="incident_first_contact">本日の第一声</string><string name="punch_first_contact">今日最初の挨拶はスマホでした。</string>
+    <string name="incident_night_patrol">深夜巡回</string><string name="punch_night_patrol">睡眠との接触は確認されていません。</string>
+    <string name="incident_app_wandering">アプリ徘徊</string><string name="punch_app_wandering">移動は多いですが、目的は確認できませんでした。</string>
+    <string name="incident_hundred_visits">100回訪問</string><string name="punch_hundred_visits">専用の入館証をご検討ください。</string>
+    <string name="incident_digital_lost">デジタル迷子</string><string name="punch_digital_lost">目的を見つけられないまま終了しました。</string>
+    <string name="incident_dawn_survivor">明け方の生存者</string><string name="punch_dawn_survivor">まだ起きていることを確認しました。</string>
+    <string name="incident_hidden_loop">無限ループ</string><string name="punch_hidden_loop">出口は存在していたものと推定されます。</string>
+    <string name="incident_hidden_night_activity">未確認夜間活動</string><string name="punch_hidden_night_activity">何を確認していたのかは不明です。</string>
+
+    <string name="tab_cases">事件</string><string name="tab_archive">保管庫</string><string name="tab_records">記録</string>
+    <string name="today_representative">本日の代表事件</string>
+    <string name="related_observed">同時観測: %1$s</string>
+    <string name="share_square">共有 1:1</string><string name="share_story">ストーリー 9:16</string><string name="share_chooser">事件カードを共有</string>
+    <string name="archive_title">事件保管庫 · 発見カード %1$d枚</string><string name="records_title">本日の生記録</string>
+    <string name="record_usage">合計使用時間</string><string name="record_opens">アプリ訪問</string><string name="record_switches">アプリ移動</string><string name="record_unique_apps">使用アプリ数</string>
+    <string name="detail_reentry">出戻り %1$d回 · 平均%2$d秒で復帰</string><string name="detail_quick_exit">5秒以内に終了 · %1$d回</string><string name="detail_opens">本日%1$d回訪問</string><string name="detail_patrol">%1$d個のアプリを訪問 · %2$d回移動</string><string name="detail_switches">1セッションで%1$d回アプリ移動</string><string name="detail_night">%1$d個のアプリを訪問 · 深夜%2$d分</string><string name="detail_escape">短時間に%1$d回戻りました</string><string name="detail_return">%1$d回移動した後、最初のアプリへ帰還</string><string name="detail_duration">%1$d分間継続して使用</string><string name="detail_loop">2アプリ間ループ · %1$d回移動</string><string name="detail_hidden_night">深夜の短時間接続 · %1$dセッション</string><string name="detail_first_contact">本日の最初のロック解除直後に起動</string>
+
+</resources>

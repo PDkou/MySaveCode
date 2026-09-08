@@ -62,5 +62,15 @@ they just happen to share source code and a database.
 
 - `game/` — a separate Godot/GDScript project ("Hungry Pack"), see its own
   `CLAUDE.md`.
+- `opened-again-android/` — "또 열었네? / また開いた？" (Opened Again), a native
+  Android WebView app (MONI, a detective cat, turns automatic phone-usage
+  patterns into collectible incident cards). Built on this repo's
+  `templates/android-webview-app-template.md` pipeline (WebView UI in one
+  `index.html`, thin Kotlin native shell, no server/account). See its own
+  `README.md` and `docs/` for product/architecture specs. CI workflows live
+  at this repo's root (`.github/workflows/build-opened-again-*.yml`) since
+  GitHub only reads workflows from there.
+- `templates/` — reusable pipeline templates distilled from past apps in
+  this repo (currently: the Android WebView app pipeline).
 - `web_test/`, `reports/` — standalone artifacts, not part of either app's
   build.
