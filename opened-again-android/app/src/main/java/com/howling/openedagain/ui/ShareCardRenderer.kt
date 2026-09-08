@@ -98,8 +98,17 @@ class ShareCardRenderer(private val context: Context) {
         // top area a badge pill would sit in, and the two visibly collided.
         // The frame's distinct color per rarity already communicates which
         // tier this is.
+        //
+        // contentTop's fraction was 0.12 until a real-device share-card
+        // screenshot showed the title/detail text spilling out past the
+        // card's visible border, directly under the hat/paw-medallion
+        // ornaments. Measuring the frame PNGs directly (pixel-color scan
+        // for where the hat/medallion decorations bottom out) put that at
+        // ~15-17% of the card's height across every rarity (same template,
+        // recolored) -- 0.12 sat text right on top of them. 0.22 clears
+        // both with a real margin.
         val pad = 56f
-        val contentTop = rect.top + rect.height() * 0.12f
+        val contentTop = rect.top + rect.height() * 0.22f
         val footerTop = rect.bottom - 120f
         val leftColRight = rect.left + rect.width() * 0.56f
         val leftTextWidth = leftColRight - (rect.left + pad) - 16f
@@ -136,7 +145,12 @@ class ShareCardRenderer(private val context: Context) {
         }
         paint.isFakeBoldText = false; paint.textSize = 30f; paint.color = p.accent
         paint.textAlign = Paint.Align.RIGHT
-        c.drawText("MONI CASE FILE", rect.right - pad, rect.bottom - 60f, paint)
+        // Anchored at leftColRight, not rect.right - pad: the frame's own
+        // magnifier ornament (bottom-right corner, measured at roughly the
+        // outer 24% x 28% of the card) sat exactly where a corner-pinned
+        // label would go and covered it. leftColRight keeps this label
+        // clear of that ornament across every rarity (same frame template).
+        c.drawText("MONI CASE FILE", leftColRight, rect.bottom - 60f, paint)
         paint.textAlign = Paint.Align.LEFT
         return bitmap
     }
