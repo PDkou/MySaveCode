@@ -5,11 +5,13 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.Shader
 import android.net.Uri
 import android.provider.MediaStore
 import com.howling.openedagain.core.DetectedIncident
@@ -66,9 +68,19 @@ class ShareCardRenderer(private val context: Context) {
         // up both the frame and the character in the exported image. Use
         // the tileable paw-print pattern instead, which has no baked-in
         // frame/character to collide with.
+        //
+        // bg_pattern_beige.png is a small (445x535) SEAMLESS TILE, not a
+        // single full-canvas image -- drawCover() was stretching that one
+        // copy ~2.4x to cover the 1080px canvas, blowing up every paw
+        // print/hat icon in it and making the card look small and the
+        // backdrop blurry/oversized by comparison (a real on-device export
+        // showed exactly that). Tile it at native resolution via a
+        // BitmapShader instead, same as a CSS `background-repeat`.
         val backdrop = assetBitmap("backgrounds/bg_pattern_beige.png")
         if (backdrop != null) {
-            drawCover(c, backdrop, RectF(0f, 0f, format.width.toFloat(), format.height.toFloat()), paint)
+            paint.shader = BitmapShader(backdrop, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT)
+            c.drawRect(0f, 0f, format.width.toFloat(), format.height.toFloat(), paint)
+            paint.shader = null
         } else {
             c.drawColor(Color.rgb(247, 241, 231))
         }
@@ -131,7 +143,15 @@ class ShareCardRenderer(private val context: Context) {
         }
 
         paint.isFakeBoldText = true; paint.textSize = 44f; paint.color = p.title
-        drawWrapped(c, "“$punchline”", rect.left + pad, rect.bottom - 165f, rect.width() - pad - 32f, 56f, paint)
+        // `rect.width() - pad - 32f` let a wrapped line run out to ~95% of
+        // the card width, but the frame art's visible border on the right
+        // side starts at ~87% (pixel-measured on frame_normal.png) -- a
+        // full-width punchline line was rendering its closing quote mark
+        // past the border, onto the beige backdrop (seen on a real
+        // exported card). rightSafeInset backs the wrap width off to end
+        // inside the border with a real margin.
+        val rightSafeInset = rect.width() * 0.16f
+        drawWrapped(c, "“$punchline”", rect.left + pad, rect.bottom - 165f, rect.width() - pad - rightSafeInset, 56f, paint)
 
         // Wordmark logo instead of a plain app-name text label, matching the
         // language actually selected in-app (not the device locale) -- text
