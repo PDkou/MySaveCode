@@ -1,5 +1,9 @@
 # ASSET_REQUESTS_FOR_DESIGN
 
+> **[해결됨 — v0.14]** 아래 3건 모두 `openedagainassetsv0.13currentclean.zip` 팩으로 회신
+> 받아 반영 완료. 내용은 `docs/DEVELOPMENT_HISTORY.md` v0.14, 정책은 `art/CURRENT_ASSET_POLICY.md`
+> 참고. 이 문서는 요청 당시 기록으로 남겨둠.
+
 디자인/아트 파이프라인 쪽에 그대로 전달할 수 있는 요청 목록. 코드로는 해결 불가능한
 원본 파일 문제만 정리했음 (코드 버그는 별도로 이미 다 고쳐서 여기 없음).
 

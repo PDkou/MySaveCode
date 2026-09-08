@@ -195,13 +195,20 @@ class ShareCardRenderer(private val context: Context) {
     // Same incident -> pose mapping as index.html's incidentVisual(), minus
     // the background half (the share card gets its background from the
     // rarity frame art instead).
+    //
+    // v0.14 asset pack: character/additional/ merged into character/basic/;
+    // character/expressions/* was fully replaced with a new "_phone" set
+    // (old exp_suspicious.png is gone); moni_sit_phone.png/moni_sleep.png
+    // were dropped for good (source-sheet contamination found during the
+    // design pipeline's re-crop pass, see docs/DEVELOPMENT_HISTORY.md v0.14).
     private fun characterAsset(type: IncidentType): String = when (type) {
-        IncidentType.QUICK_EXIT, IncidentType.RETURN_TO_START -> "character/basic/moni_sit_phone.png"
+        IncidentType.QUICK_EXIT -> "character/expressions/exp_side_eye_phone.png"
+        IncidentType.RETURN_TO_START -> "character/expressions/exp_thinking_phone.png"
         IncidentType.REENTRY, IncidentType.REGULAR, IncidentType.FIRST_CONTACT, IncidentType.HUNDRED_VISITS -> "character/basic/moni_phone.png"
         IncidentType.PATROL, IncidentType.APP_WANDERING, IncidentType.DIGITAL_LOST -> "character/basic/moni_magnifier.png"
-        IncidentType.ESCAPE_FAILED -> "character/additional/moni_under_blanket_phone.png"
-        IncidentType.NIGHT_PATROL, IncidentType.DAWN_SURVIVOR, IncidentType.HIDDEN_NIGHT_ACTIVITY -> "character/basic/moni_sleep.png"
-        IncidentType.HIDDEN_LOOP -> "character/expressions/exp_suspicious.png"
+        IncidentType.ESCAPE_FAILED -> "character/basic/moni_under_blanket_phone.png"
+        IncidentType.NIGHT_PATROL, IncidentType.DAWN_SURVIVOR, IncidentType.HIDDEN_NIGHT_ACTIVITY -> "character/expressions/exp_sleepy_phone.png"
+        IncidentType.HIDDEN_LOOP -> "character/expressions/exp_side_eye_phone.png"
     }
 
     // -- drawing helpers --------------------------------------------------

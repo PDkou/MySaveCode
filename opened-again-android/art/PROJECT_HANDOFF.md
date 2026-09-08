@@ -1,5 +1,13 @@
 # PROJECT_HANDOFF
 
+> **Superseded (v0.14, see `CURRENT_ASSET_POLICY.md`)**: points 3 and 4 below
+> ("use `share_template_*` for social share cards", "use `cards/examples` as
+> direct reference for future incident art") turned out to describe files
+> that are either already-finished designs or have real source-crop defects.
+> `CURRENT_ASSET_POLICY.md` / `EXCLUDED_ASSETS.md` / `DYNAMIC_SHARE_RENDERING_SPEC.md`
+> / `ADAPTIVE_ICON_SPEC.md` in this same folder are the current source of
+> truth for what's safe to use at runtime. Left below for history.
+
 Use this pack as the current baseline.
 
 ## Recommended implementation flow

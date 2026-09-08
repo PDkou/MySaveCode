@@ -209,3 +209,75 @@ v0.12 조사 중 사용자가 "폴더 이름 자체가 카드 예시(examples)�
   원본 파일 결함이라 재작업 요청 필요. `docs/OPEN_ISSUES_AND_NEXT.md`에 기록.
 - 검증: JS 문법 통과, Playwright로 보관함 탭 렌더링해 새 캐릭터 기반 썸네일이 등급별 색상과
   함께 깨끗하게 나오는 것 확인.
+
+## v0.14 — 디자인팀 회신 에셋 팩(v0.13 clean pack) 전체 반영: 뱃지 재크롭, 정식 적응형 아이콘, 캐릭터/배경/UI 아이콘 전면 재정리
+`docs/ASSET_REQUESTS_FOR_DESIGN.md`로 보낸 3건(뱃지 재크롭, 적응형 아이콘용 캐릭터 컷아웃,
+`share_template_*` 사용 스펙 확인)에 대한 회신으로 `openedagainassetsv0.13currentclean.zip`을
+받음. 요청한 3건 외에 훨씬 큰 범위의 전체 재정리가 함께 왔음 — 해시 비교로 확인한 결과 거의
+모든 파일이 새로 익스포트됨(캐릭터/배경/UI 아이콘/프롭 전부 포함, 프레임도 시각적으로는
+동일하지만 재익스포트됨). 새 팩은 자체 정책 문서(`CURRENT_ASSET_POLICY.md`,
+`EXCLUDED_ASSETS.md`, `DYNAMIC_SHARE_RENDERING_SPEC.md`, `ADAPTIVE_ICON_SPEC.md`)를
+동봉했고, 전부 `art/`로 복사해 현재 기준 문서로 삼음 (`art/PROJECT_HANDOFF.md`에는 낡은
+지침 위에 상단 경고를 추가).
+
+### 1. 뱃지 6종 재크롭 (요청 #1 해결)
+`badge_normal.png`을 제외한 5종을 새 파일로 전량 교체. 해시 비교로 `badge_normal.png`은
+기존과 동일(원래도 정상이었음), 나머지 5종은 전부 새 콘텐츠임을 확인.
+
+### 2. 정식 적응형 런처 아이콘 (요청 #2 해결)
+디자인팀이 캐릭터 단독 투명 배경 컷아웃(`adaptive_foreground_moni_1080.png`, 108dp 캔버스
+기준 세이프존 (210,210)-(870,870) 안에 배치됨)과 단색 배경(`adaptive_background_blue_1080.png`)
+을 회신. Pillow로 5개 밀도(mdpi 108/hdpi 162/xhdpi 216/xxhdpi 324/xxxhdpi 432px)로 리사이즈해
+`res/mipmap-<density>/ic_launcher_{foreground,background}.png`로 배치하고,
+`res/mipmap-anydpi-v26/ic_launcher.xml`·`ic_launcher_round.xml`(`<adaptive-icon>`으로 두
+레이어 참조)을 새로 추가. `AndroidManifest.xml`은 이미 `@mipmap/ic_launcher`를 참조하고
+있어서 매니페스트 변경 없이 그대로 적용됨(API 26+ 기기는 anydpi-v26 XML을, 그 미만은 v0.10의
+레거시 비트맵을 사용 — 이 앱의 minSdk가 29라 실제로는 항상 새 적응형 아이콘이 적용됨).
+
+### 3. `share_template_*` 사용 스펙 확정 (요청 #3 해결)
+디자인팀이 `share_template_square/vertical.png`은 정적 프로모션/스토어 스크린샷 전용이고
+사건별 동적 렌더링에는 쓰면 안 된다고 공식 확인(`SHARE_TEMPLATE_USAGE_SPEC.md`) — v0.12에서
+이미 그렇게 고쳐둔 현재 방식(무늬 배경 + 프레임 + 캐릭터 + 텍스트 + 뱃지를 동적으로 합성)이
+맞는 방향이었음이 확인됨. 두 이미지 자체는 `art/reference/static-share-templates/`로 옮기고
+런타임 에셋에서는 제거.
+
+### 4. 그 외 전면 재정리 (요청하지 않았지만 함께 온 것)
+- **오염 파일 3개 추가 발견 및 제거**: `moni_sit_phone.png`, `moni_sleep.png`,
+  `moni_thinking.png`에 인접 에셋 조각이 남아있는 것을 디자인팀이 재확인 과정에서 추가로
+  발견해 제외함. 이 세 파일은 `incidentVisual()`/`characterAsset()`/`preview-hidden.html`에서
+  전부 실사용 중이었음 — 대체 포즈로 교체:
+  - QUICK_EXIT → `character/expressions/exp_side_eye_phone.png`
+  - RETURN_TO_START → `character/expressions/exp_thinking_phone.png`
+  - NIGHT_PATROL/DAWN_SURVIVOR/HIDDEN_NIGHT_ACTIVITY → `character/expressions/exp_sleepy_phone.png`
+  - HIDDEN_LOOP(구 `exp_suspicious.png`) → `character/expressions/exp_side_eye_phone.png`
+- **폴더 구조 변경**: `character/additional/` → `character/basic/`으로 통합(`moni_under_
+  blanket_phone.png`, `moni_read_file.png` 등). `character/expressions/`는 이름 규칙이
+  전부 바뀐 새 세트(`exp_*_phone.png`, 10종)로 완전 교체. `effects/` + `speech/` →
+  `props/`로 통합(`prop_*.png` / `bubble_*.png` 접두사로 정리). `app-icon/`은
+  `legacy/`(기존 앱아이콘, 내용 동일)와 `adaptive/`(신규)로 분리. `backgrounds/bg_home_
+  {day,night}.png` → `bg_room_{day,night}.png`로 개명(내용은 새로 익스포트됨).
+  `logo/paw_symbol.png`(미사용)는 `brand/logo_paw.png`로 대체(현재도 미사용, 추후 대비).
+- **런타임에서 완전히 제거**: `cards/examples/`, `cards/templates/`, `cards/share/`,
+  `backgrounds/share_template_*.png` — 전부 코드에서 이미 미사용이었거나(examples는 v0.13에서
+  제거) 이번에 참고용으로 격리됨.
+- `logo/logo_ko.png`, `logo/logo_jp.png`(헤더 로고, 공유카드 로고)는 이번 팩에 포함되지 않아
+  기존 파일 그대로 유지 — 디자인팀 요청 3건에 로고가 없었기 때문에 범위 밖으로 보임.
+
+### 코드 변경
+- `index.html`: `.hero`/`.record-decor`의 배경 경로, `incidentVisual()`의 캐릭터+배경 맵
+  전체, `header()`의 앱 아이콘 경로(`app-icon/legacy/...`), `records()`의 `moni_read_file.png`
+  경로를 전부 새 경로/새 대체 포즈로 갱신.
+- `ShareCardRenderer.kt`: `characterAsset()`을 동일한 새 매핑으로 갱신.
+- `preview-hidden.html`: HIDDEN 두 카드의 캐릭터를 `exp_side_eye_phone.png`/
+  `exp_sleepy_phone.png`로 교체.
+
+### 검증
+- JS 문법(`node --check`), 모든 `.xml` 파싱(신규 적응형 아이콘 XML 포함), 모든 `.kt` 파일
+  중괄호/괄호/주석 중첩 균형 확인.
+- `index.html`/`preview-hidden.html`/`ShareCardRenderer.kt`가 참조하는 `visual/...` 경로
+  21개 전부 디스크 상의 실제 파일로 해석되는지 스크립트로 확인.
+- 옛 경로(`character/additional`, `moni_sit_phone`, `moni_sleep.png`, `moni_thinking`,
+  `exp_suspicious`, `bg_home_day/night`, `cards/templates`, `cards/examples`, `effects/`,
+  `speech/` 등)가 코드에 더 이상 살아있는 참조로 남아있지 않은지 grep으로 재확인(설명용
+  주석 안의 언급만 남음).
+- 실제 컴파일/실기기 확인은 이번에도 CI + 다음 실기기 테스트에서.
