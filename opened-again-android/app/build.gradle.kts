@@ -44,6 +44,19 @@ android {
             isMinifyEnabled = false
         }
     }
+
+    // Without this, AGP defaults compileDebugJavaWithJavac to 1.8 while the
+    // Kotlin plugin defaults compileDebugKotlin to the JDK running Gradle
+    // (17 in CI) -- Gradle then refuses the build over the mismatch. Pin
+    // both explicitly to the same target.
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 dependencies {
