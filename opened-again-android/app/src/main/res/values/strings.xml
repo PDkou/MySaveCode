@@ -35,7 +35,7 @@
     <string name="punch_hidden_night_activity">Case recorded.</string>
 
     <string name="tab_cases">Cases</string><string name="tab_archive">Archive</string><string name="tab_records">Records</string>
-    <string name="today_representative">TODAY'S REPRESENTATIVE CASE</string>
+    <string name="today_representative">TODAY\'S REPRESENTATIVE CASE</string>
     <string name="related_observed">Also observed: %1$s</string>
     <string name="share_square">Share 1:1</string><string name="share_story">Story 9:16</string><string name="share_chooser">Share case card</string>
     <string name="archive_title">Case archive · %1$d cards discovered</string><string name="records_title">Today’s raw record</string>
