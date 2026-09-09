@@ -44,6 +44,24 @@ class NativeBridge(
         }
     }
 
+    // v0.24: called from the onboarding screen's "알림 허용" button
+    // (index.html's onboardFinish(true)). POST_NOTIFICATIONS is only a
+    // runtime-requestable permission from API 33 -- pre-33 it's implicitly
+    // granted, so there's nothing to prompt for. Fire-and-forget: no
+    // onRequestPermissionsResult callback wired up, and nothing in the app
+    // branches on grant vs. deny, because there's no notification feature
+    // built yet to gate behind the result -- this only requests the OS
+    // permission proactively (matching what the onboarding art promises)
+    // so a future notification feature doesn't need its own separate
+    // permission-request UI.
+    @JavascriptInterface
+    fun requestNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return
+        activity.runOnUiThread {
+            activity.requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
+        }
+    }
+
     @JavascriptInterface
     fun analyzeToday(): String {
         if (!hasUsageAccess()) return JSONObject().put("permission", false).toString()

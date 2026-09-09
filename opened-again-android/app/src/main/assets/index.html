@@ -12,6 +12,18 @@
 }
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Noto Sans JP",sans-serif}
 body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),var(--bg)}button{font:inherit}.app{max-width:720px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 18px calc(90px + env(safe-area-inset-bottom))}
+/* v0.24: onboarding (see onboardScreen()/render() below). The two
+   onboarding images are full-screen 941x1672 compositions with their own
+   baked-in buttons -- per design's own handoff note, these are visual
+   comps only; real tap targets are transparent buttons laid over them in
+   code, positioned as % of the image's own box so they track the art
+   exactly regardless of device aspect ratio. `.app.onboard` drops the
+   normal page padding so the art can go edge-to-edge. */
+.app.onboard{padding:0;max-width:none}
+.onboard-frame{position:fixed;inset:0;overflow:hidden;background:#F7F1E7;z-index:20}
+.onboard-box{position:absolute;top:0;left:50%;height:100%;aspect-ratio:941/1672;transform:translateX(-50%)}
+.onboard-box img{display:block;width:100%;height:100%}
+.onboard-hit{position:absolute;border:0;background:transparent;padding:0;-webkit-tap-highlight-color:transparent}
 .brand{display:flex;align-items:center;gap:13px}.avatar{width:68px;height:68px;border-radius:22px;object-fit:cover;border:2px solid #E7D9C8;background:#DCEAFF;box-shadow:0 5px 18px rgba(80,60,40,.08)}
 .brand-main{flex:1}.brand h1{font-size:30px;margin:0;letter-spacing:-1.8px;line-height:1}.brand .sub{font-size:13px;color:var(--muted);margin-top:7px}.lang{border:1px solid var(--line);background:#fff;border-radius:14px;padding:8px 10px;font-weight:900;color:#665B53}.date{font-size:12px;color:var(--muted);margin:12px 2px 0}
 .permission,.empty{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-top:22px;box-shadow:var(--shadow)}.permission h2{margin:0 0 8px}.permission p{font-size:14px;line-height:1.6;color:var(--muted)}
@@ -68,10 +80,16 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 <script>
 const N=window.OpenedAgainNative;
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
+// v0.24: `?onboarding=0` forces the onboarding gate off regardless of
+// state.settings.onboardingSeen -- an escape hatch for screenshotting/
+// testing the rest of the app without clicking through onboarding every
+// time (default behavior, incl. under `preview=1`, is unchanged: onboarding
+// still gates a first-ever launch).
+const skipOnboarding=params.get('onboarding')==='0';
 // English strings exist throughout via l(ko, ja, en) but are not exposed yet —
 // flip `supported` back to include 'en' when English becomes a real target.
 const supported=['ko','ja'];const detected=(navigator.language||'ko').slice(0,2);
-const state={settings:{language:supported.includes(detected)?detected:'ko'},tab:params.get('tab')||'cases',data:null,history:{days:{},discoveries:{}}};
+const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false},onboardStep:1,tab:params.get('tab')||'cases',data:null,history:{days:{},discoveries:{}}};
 function l(ko,ja,en){return state.settings.language==='ko'?ko:state.settings.language==='ja'?ja:en}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function todayKey(){return new Date().toISOString().slice(0,10)}
@@ -157,6 +175,37 @@ function records(d){const s=d.summary||{};const rows=[[l('사용 시간','使用
 function openDetail(i){const m=i.metrics||{};document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDetail()"><div class="sheet"><div class="sheet-handle"></div><div class="detail-title">${l('사건 카드 상세','事件カード詳細','Incident card detail')}</div>${card(i,true)}<div class="detail-grid"><div class="detail-box"><b>${i.score||0}</b><span>${l('사건 점수','事件スコア','Case score')}</span></div><div class="detail-box"><b>${Object.values(m)[0]??'-'}</b><span>${l('핵심 측정값','主要測定値','Primary metric')}</span></div></div><button class="sheet-close" onclick="closeDetail()">${l('닫기','閉じる','Close')}</button></div></div>`}
 function closeDetail(){document.getElementById('overlay').innerHTML=''}
 function toast(t){const x=document.createElement('div');x.className='toast';x.textContent=t;document.body.appendChild(x);setTimeout(()=>x.remove(),1600)}
-function render(){const root=document.getElementById('app');let html=header();const d=state.data||read();state.data=d;if(!d.permission){html+=`<div class="permission"><h2>${l('모니가 사건을 조사하려면','MONIが事件を調べるには','To let MONI investigate')}</h2><p>${l('앱 사용 기록을 기기 안에서 분석하기 위한 사용정보 접근 권한이 필요합니다. 기록 내용은 서버로 보내지 않습니다.','端末内でアプリ利用記録を分析するため、使用状況へのアクセスが必要です。記録内容はサーバーへ送信しません。','Usage access is required to analyze app activity on-device. Your records are not sent to a server.')}</p><button class="primary" onclick="N&&N.openUsageSettings()">${l('사용정보 접근 허용','使用状況へのアクセスを許可','Allow usage access')}</button></div>`;root.innerHTML=html;return}html+=tabs();html+=state.tab==='cases'?cases(d):state.tab==='archive'?archive(d):records(d);html+=`<div class="foot">MONI · SMALL HABITS, BIG STORIES.</div>`;root.innerHTML=html}
+// v0.24: two-screen onboarding, gated by state.settings.onboardingSeen
+// (persisted via save(), same as every other setting). The source images
+// (visual/onboarding/{ko,jp}/onboarding_0{1,2}_{ko,jp}.png, 941x1672) are
+// full-screen comps with their own baked-in "다음"/"알림 허용"/"나중에"
+// buttons already drawn into the art -- per design's handoff note, real
+// taps are implemented as transparent buttons in code, not by trying to
+// make the rasterized art itself interactive. Coordinates below are the
+// pill buttons' actual pixel bounds (measured directly against the real
+// PNGs) expressed as % of the 941x1672 image, so `.onboard-box`'s
+// aspect-ratio-locked sizing (see CSS) keeps them aligned to the art on
+// any device aspect ratio.
+function onboardScreen(){
+  const lang=state.settings.language==='ja'?'jp':'ko';
+  const step=state.onboardStep===2?2:1;
+  const src=`visual/onboarding/${lang}/onboarding_0${step}_${lang}.png`;
+  const hits=step===1
+    ? `<button class="onboard-hit" style="left:10%;top:82.5%;width:80%;height:6.7%" onclick="onboardNext()" aria-label="${esc(l('다음','次へ','Next'))}"></button>`
+    : `<button class="onboard-hit" style="left:10%;top:76.6%;width:80%;height:6.7%" onclick="onboardFinish(true)" aria-label="${esc(l('알림 허용','通知を許可','Allow notifications'))}"></button><button class="onboard-hit" style="left:10%;top:84.6%;width:80%;height:5.1%" onclick="onboardFinish(false)" aria-label="${esc(l('나중에','あとで','Later'))}"></button>`;
+  return `<div class="onboard-frame"><div class="onboard-box"><img src="${src}" alt="">${hits}</div></div>`;
+}
+function onboardNext(){state.onboardStep=2;render()}
+// `allow` only decides whether we ask the OS for notification permission --
+// the app has no notification feature built yet to gate behind it (see
+// NativeBridge.requestNotificationPermission()'s own comment), so either
+// button finishes onboarding the same way. Fire-and-forget: we don't wait
+// for or branch on the OS permission result, matching the screen's own
+// "나중에도 설정에서 바꿀 수 있어요" copy.
+function onboardFinish(allow){
+  if(allow){try{N&&N.requestNotificationPermission&&N.requestNotificationPermission()}catch(e){}}
+  state.settings.onboardingSeen=true;save();state.onboardStep=1;render()
+}
+function render(){const root=document.getElementById('app');if(!skipOnboarding&&!state.settings.onboardingSeen){root.className='app onboard';root.innerHTML=onboardScreen();return}root.className='app';let html=header();const d=state.data||read();state.data=d;if(!d.permission){html+=`<div class="permission"><h2>${l('모니가 사건을 조사하려면','MONIが事件を調べるには','To let MONI investigate')}</h2><p>${l('앱 사용 기록을 기기 안에서 분석하기 위한 사용정보 접근 권한이 필요합니다. 기록 내용은 서버로 보내지 않습니다.','端末内でアプリ利用記録を分析するため、使用状況へのアクセスが必要です。記録内容はサーバーへ送信しません。','Usage access is required to analyze app activity on-device. Your records are not sent to a server.')}</p><button class="primary" onclick="N&&N.openUsageSettings()">${l('사용정보 접근 허용','使用状況へのアクセスを許可','Allow usage access')}</button></div>`;root.innerHTML=html;return}html+=tabs();html+=state.tab==='cases'?cases(d):state.tab==='archive'?archive(d):records(d);html+=`<div class="foot">MONI · SMALL HABITS, BIG STORIES.</div>`;root.innerHTML=html}
 restore();refresh();
 </script></body></html>
