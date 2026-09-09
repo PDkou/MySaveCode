@@ -1,13 +1,15 @@
 # ASSET_REQUESTS_FOR_DESIGN
 
-> **[전부 해결됨 — v0.14, v0.21, v0.22]** 1~3번은 `openedagainassetsv0.13currentclean.zip`
-> 팩으로 회신 받아 반영 완료(v0.14). 내용은 `docs/DEVELOPMENT_HISTORY.md` v0.14, 정책은
-> `art/CURRENT_ASSET_POLICY.md` 참고. **4번(등급별 단일 배경)은
-> `openedagainsharebackgroundsandlogosv0.19.zip`로 회신받아 v0.22에서 해결 —
-> `docs/DEVELOPMENT_HISTORY.md` v0.22 참고.** **5번(로고 발바닥 크롭)은 v0.21에서
-> 1차 반영했다가, 같은 v0.19 팩에 들어있던 레거시 캔버스 크기 재출력본(감독이 최종
-> 확정한 파일)으로 v0.22에서 다시 교체 — 디자인은 동일, 캔버스 크기만 원래 규격으로
-> 복귀.**
+> **[1~5번 해결됨 — v0.14, v0.21, v0.22 / 6번 회신 대기 중]** 1~3번은
+> `openedagainassetsv0.13currentclean.zip` 팩으로 회신 받아 반영 완료(v0.14).
+> 내용은 `docs/DEVELOPMENT_HISTORY.md` v0.14, 정책은 `art/CURRENT_ASSET_POLICY.md`
+> 참고. **4번(등급별 단일 배경)은 `openedagainsharebackgroundsandlogosv0.19.zip`로
+> 회신받아 v0.22에서 해결 — `docs/DEVELOPMENT_HISTORY.md` v0.22 참고.**
+> **5번(로고 발바닥 크롭)은 v0.21에서 1차 반영했다가, 같은 v0.19 팩에 들어있던
+> 레거시 캔버스 크기 재출력본(감독이 최종 확정한 파일)으로 v0.22에서 다시 교체 —
+> 디자인은 동일, 캔버스 크기만 원래 규격으로 복귀.** **6번(사건 일러스트 9종
+> scene 스타일 재작업, 2026-09-09 감독 확정)은 이제 막 요청 — 아직 디자인팀 회신
+> 전.**
 
 디자인/아트 파이프라인 쪽에 그대로 전달할 수 있는 요청 목록. 코드로는 해결 불가능한
 원본 파일 문제만 정리했음 (코드 버그는 별도로 이미 다 고쳐서 여기 없음).
@@ -143,6 +145,60 @@ LEGENDARY/HIDDEN_01/HIDDEN_02) + `common` 폴백까지 정사각/스토리 각 7
 19px/24px)로 다시 맞춘 버전이 들어있어 v0.22에서 이걸로 교체(디자인은 v0.21과
 동일, 캔버스 크기만 원래 규격 복귀). 자세한 내용은 `docs/DEVELOPMENT_HISTORY.md`
 v0.21/v0.22 참고.
+
+## 6. [감독 확정 — 디자인팀에 재요청] 사건 일러스트 9종을 "scene" 스타일 완성
+배경으로 다시 그려주세요
+
+### 배경
+v0.23에서 받은 사건별 전용 일러스트 14종(`incidents/card_ready/incident_*.png`,
+1200x675)은 매니페스트 자체가 두 가지 합성 모드로 나눠서 회신됨:
+
+- **`scene`(5종)**: REGULAR/APP_WANDERING/DAWN_SURVIVOR/HIDDEN_LOOP/
+  HIDDEN_NIGHT_ACTIVITY — 배경까지 통째로 그려진 완성된 한 장의 일러스트.
+- **`overlay`(9종)**: QUICK_EXIT/REENTRY/RETURN_TO_START/PATROL/
+  ESCAPE_FAILED/FIRST_CONTACT/NIGHT_PATROL/HUNDRED_VISITS/DIGITAL_LOST —
+  캐릭터+소품만 그려져 있고 나머지는 투명 배경(원래 index.html의 "사건" 탭
+  카드처럼, 기존 방/도시 사진 위에 얹어 쓰는 용도로 설계됨).
+
+문제는 **보관함(사건 컬렉션) 화면**에서 이 둘의 완성도 차이가 그대로
+드러남 — `scene` 5종은 한 장의 완성된 그림이라 보관함 타일에서도 근사하게
+나오는데, `overlay` 9종은 배경 사진을 뒤에 깔아줘도(v0.29) 캐릭터를
+확대/크롭해서 채워줘도(v0.30) 결국 "사진 위에 스티커 하나 붙여놓은" 느낌을
+벗어나지 못함. 감독 확인: 코드로 크롭/배경을 아무리 손봐도 "제대로 된
+일러스트가 아니면 재미없다"는 게 최종 판단 — 근본적으로 9종 다
+`scene`처럼 완성된 배경 일러스트로 다시 그려야 하는 상황.
+
+### 요청 스펙
+- **대상 9종** (한국어/일본어/영어, 사건 성격):
+  | IncidentType | 한국어 | 일본어 | 영어 |
+  |---|---|---|---|
+  | QUICK_EXIT | 5초컷 | 5秒撤退 | 5-second exit |
+  | REENTRY | 재입장 사건 | 出戻り事件 | Re-entry |
+  | RETURN_TO_START | 원점 회귀 | 振り出しに戻る | Back to start |
+  | PATROL | 목적불명 순찰 | 目的地不明 | Aimless patrol |
+  | ESCAPE_FAILED | 탈출 실패 | 脱出失敗 | Escape failed |
+  | FIRST_CONTACT | 오늘의 첫 상대 | 本日の第一声 | First contact |
+  | NIGHT_PATROL | 심야 순찰 | 深夜巡回 | Night patrol |
+  | HUNDRED_VISITS | 100회 방문 | 100回訪問 | 100 visits |
+  | DIGITAL_LOST | 디지털 미아 | デジタル迷子 | Digital lost |
+- **사이즈**: 기존과 동일하게 1200x675, 캐릭터+소품만이 아니라 배경까지
+  통째로 그려진 한 장의 완성 일러스트로 — 지금 있는 `scene` 5종
+  (REGULAR/APP_WANDERING/DAWN_SURVIVOR/HIDDEN_LOOP/HIDDEN_NIGHT_ACTIVITY,
+  `incidents/card_ready/incident_*.png`)이 참고 기준.
+- **구도/내용**: 지금 overlay 9종의 캐릭터 포즈/소품(시계, 문, 스마트폰,
+  이불, 앱 아이콘들 등)은 이미 사건 내용과 잘 맞으니 그대로 살리고,
+  배경(방/거실/야외 등 사건 성격에 맞는 장면)만 새로 채워 넣는 방향 추천 —
+  완전히 새로 디자인할 필요 없이 지금 캐릭터 구도에 배경을 더하는 정도로도
+  충분할 수 있음(디자인팀 판단에 맡김).
+- **캐릭터/프레임 없이 배경만은 아님**: 이번엔 반대로 캐릭터가 이미 있는
+  상태에서 배경만 채우는 것 — 4번 항목(공유카드 배경)과 헷갈리지 않게.
+
+### 참고 — 코드로 이미 시도한 임시 대응
+`index.html`의 archive() 보관함 렌더링에서 v0.29(overlay 타입에 방/도시
+사진 배경 추가), v0.30(`object-fit:cover`로 캐릭터 확대/중앙 크롭)까지
+순차로 개선했지만 감독 판단으로는 부족 — 이 요청이 정식 반영되면 두 코드
+변경 모두 자연스럽게 무의미해짐(scene 타입과 동일하게 렌더링되므로
+`overlay-fill`/배경 합성 로직 자체를 걷어낼 수 있음).
 
 ---
 현재 앱 자체 이슈 트래킹은 `docs/OPEN_ISSUES_AND_NEXT.md` 참고.
