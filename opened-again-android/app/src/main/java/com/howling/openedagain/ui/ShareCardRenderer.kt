@@ -5,13 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
-import android.graphics.Shader
 import android.net.Uri
 import android.provider.MediaStore
 import com.howling.openedagain.core.DetectedIncident
@@ -65,25 +63,24 @@ class ShareCardRenderer(private val context: Context) {
         // they already have their own decorative frame AND a MONI
         // illustration baked into a bottom corner. Using either of those as
         // a "backdrop" behind our own separately-drawn rarity frame doubled
-        // up both the frame and the character in the exported image. Use
-        // the tileable paw-print pattern instead, which has no baked-in
-        // frame/character to collide with.
+        // up both the frame and the character in the exported image.
         //
-        // bg_pattern_beige.png is a small (445x535) SEAMLESS TILE, not a
-        // single full-canvas image -- drawCover() was stretching that one
-        // copy ~2.4x to cover the 1080px canvas, blowing up every paw
-        // print/hat icon in it and making the card look small and the
-        // backdrop blurry/oversized by comparison (a real on-device export
-        // showed exactly that). Tile it at native resolution via a
-        // BitmapShader instead, same as a CSS `background-repeat`.
-        val backdrop = assetBitmap("backgrounds/bg_pattern_beige.png")
-        if (backdrop != null) {
-            paint.shader = BitmapShader(backdrop, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT)
-            c.drawRect(0f, 0f, format.width.toFloat(), format.height.toFloat(), paint)
-            paint.shader = null
-        } else {
-            c.drawColor(Color.rgb(247, 241, 231))
-        }
+        // bg_pattern_beige.png (445x535) was tried two ways and failed both:
+        // drawCover() stretched the one copy ~2.4x to cover the 1080px
+        // canvas, blowing up every paw/hat icon past its designed size and
+        // making the card look small next to it; tiling it with a
+        // BitmapShader instead (assuming, from its name, that it was a
+        // seamless repeat) just moved the problem -- the file itself is NOT
+        // a seamless tile (checked directly: its own edges don't match, so
+        // tiling draws a visible grid of seams), and a real export showed
+        // that too. Falling back to a flat fill using the pattern's own
+        // base tone (sampled from its blank areas, no paw/hat pixels) until
+        // design supplies either a real seamless tile or a single
+        // full-canvas backdrop -- flagged in
+        // docs/ASSET_REQUESTS_FOR_DESIGN.md. A flat fill can't itself have
+        // seams and reads as "one background" the way a real device
+        // screenshot showed the tiled version didn't.
+        c.drawColor(Color.rgb(250, 245, 232))
 
         val margin = 78f
         val outerTop = if (format == Format.STORY) 330f else 110f
@@ -121,7 +118,18 @@ class ShareCardRenderer(private val context: Context) {
         // both with a real margin.
         val pad = 56f
         val contentTop = rect.top + rect.height() * 0.22f
-        val footerTop = rect.bottom - 120f
+        // footerTop (MONI's scene-box bottom) used to be a fixed
+        // `rect.bottom - 120f`, which put MONI's bottom-anchored, mostly
+        // width-constrained image tall enough to still have pixels at the
+        // punchline's row below -- a real exported card showed MONI's legs
+        // and the punchline text drawn right on top of each other. Reserve
+        // a real fraction of the card's own height for the punchline+footer
+        // strip instead of a fixed pixel count, so MONI's box always ends
+        // above it regardless of format (SQUARE vs STORY have very
+        // different absolute heights). 2 lines is the measured worst case
+        // for every punch{} string in index.html at this card's width, so
+        // 28% leaves real margin around a 2-line quote + the footer row.
+        val footerTop = rect.bottom - rect.height() * 0.28f
         val leftColRight = rect.left + rect.width() * 0.56f
         val leftTextWidth = leftColRight - (rect.left + pad) - 16f
         val sceneLeft = leftColRight + 24f
@@ -151,17 +159,25 @@ class ShareCardRenderer(private val context: Context) {
         // exported card). rightSafeInset backs the wrap width off to end
         // inside the border with a real margin.
         val rightSafeInset = rect.width() * 0.16f
-        drawWrapped(c, "“$punchline”", rect.left + pad, rect.bottom - 165f, rect.width() - pad - rightSafeInset, 56f, paint)
+        // Starts right below footerTop (MONI's box bottom) instead of a
+        // fixed rect.bottom-165f -- that fixed offset was what let it land
+        // inside MONI's vertical span in the first place. drawWrapped
+        // returns where its last line actually landed, so the logo/caption
+        // row below can anchor off the real text height (1 or 2 lines)
+        // instead of assuming one line.
+        val punchEndY = drawWrapped(c, "“$punchline”", rect.left + pad, footerTop + 60f, rect.width() - pad - rightSafeInset, 56f, paint)
 
         // Wordmark logo instead of a plain app-name text label, matching the
         // language actually selected in-app (not the device locale) -- text
         // fallback if the logo asset can't be decoded.
+        val logoTop = punchEndY + 30f
         val logo = assetBitmap(if (lang == "ja") "logo/logo_jp.png" else "logo/logo_ko.png")
+        val captionY = logoTop + 24f
         if (logo != null) {
-            drawLeftAligned(c, logo, rect.left + pad, rect.bottom - 84f, 28f, paint)
+            drawLeftAligned(c, logo, rect.left + pad, logoTop, 28f, paint)
         } else {
             paint.isFakeBoldText = false; paint.textSize = 30f; paint.color = p.accent
-            c.drawText(context.getString(com.howling.openedagain.R.string.app_name), rect.left + pad, rect.bottom - 60f, paint)
+            c.drawText(context.getString(com.howling.openedagain.R.string.app_name), rect.left + pad, captionY, paint)
         }
         paint.isFakeBoldText = false; paint.textSize = 30f; paint.color = p.accent
         paint.textAlign = Paint.Align.RIGHT
@@ -170,7 +186,10 @@ class ShareCardRenderer(private val context: Context) {
         // outer 24% x 28% of the card) sat exactly where a corner-pinned
         // label would go and covered it. leftColRight keeps this label
         // clear of that ornament across every rarity (same frame template).
-        c.drawText("MONI CASE FILE", leftColRight, rect.bottom - 60f, paint)
+        // captionY (like logoTop) is anchored off the punchline's actual
+        // wrapped height rather than a fixed rect.bottom offset -- see
+        // punchEndY above.
+        c.drawText("MONI CASE FILE", leftColRight, captionY, paint)
         paint.textAlign = Paint.Align.LEFT
         return bitmap
     }
