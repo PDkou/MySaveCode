@@ -18,6 +18,13 @@
 - 백업 스키마 버전 지정
 
 ## 우선순위 C — UI
+- **`logo/logo_ko.png`, `logo/logo_jp.png` 발바닥 아이콘이 캔버스 경계에서 잘려있음
+  (미해결, 코드로 못 고침)**: 홈 화면 맨 위 헤더 로고에서 실기기로 확인됨 — CSS
+  레이아웃 문제인 줄 알았는데 파일 자체를 열어보니 발바닥 장식이 이미지 캔버스
+  가장자리에서 잘린 채로 저장돼 있었음(`logo_ko.png`는 우측만, `logo_jp.png`는
+  좌우 양쪽 다). 뱃지와 같은 종류의 원본 크롭 결함이라 디자인팀 재출력 필요 —
+  `docs/ASSET_REQUESTS_FOR_DESIGN.md` 5번 참고. 앱 켤 때마다 항상 보이는 자리라
+  노출 빈도 제일 높음.
 - ~~최종 에셋 팩을 코드에 다시 연결~~ — v0.5에서 완료 (`docs/DEVELOPMENT_HISTORY.md` v0.5 참고).
 - `ShareCardRenderer`에 실제 에셋 반영 — v0.6(첫 시도, templates/ 오선택) → v0.7(frames/로 교체,
   비율 문제 수정) → v0.12(배경으로 쓴 `share_template_*`가 사실 완성된 카드라 프레임/캐릭터가
