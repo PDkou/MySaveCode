@@ -92,9 +92,23 @@ class ShareCardRenderer(private val context: Context) {
             c.drawColor(Color.rgb(250, 245, 232))
         }
 
-        val margin = 78f
-        val outerTop = if (format == Format.STORY) 330f else 110f
-        val outerBottom = if (format == Format.STORY) format.height - 330f else format.height - 110f
+        // For SQUARE, outerTop/outerBottom (not margin) was the binding
+        // constraint: frameAlignedRect fits the frame's ~0.8 aspect ratio
+        // inside a 1:1 canvas, which is height-limited, so a large top/
+        // bottom margin (110f = 10.2% of the canvas) shrank the whole card
+        // -- it ended up only 688x860 inside a 1080x1080 canvas, with big
+        // (18%) empty margins on the left/right that made the card look
+        // small (reported on a real device even after the background-scale
+        // and text-position bugs above were already fixed). Cut both
+        // margins for SQUARE specifically -- STORY's large outerTop/
+        // outerBottom (330f) stays as-is; that one is intentional, not a
+        // bug: Instagram Stories overlays its own UI (progress bar,
+        // username, reply box) in those exact zones, so a story-format
+        // export needs that clearance or the app's own content gets
+        // covered by the platform's chrome.
+        val margin = if (format == Format.STORY) 78f else 50f
+        val outerTop = if (format == Format.STORY) 330f else 50f
+        val outerBottom = if (format == Format.STORY) format.height - 330f else format.height - 50f
         val rect = frameAlignedRect(margin, outerTop, format.width - margin, outerBottom)
 
         // Solid backing first (in case the frame art has transparent gaps),
