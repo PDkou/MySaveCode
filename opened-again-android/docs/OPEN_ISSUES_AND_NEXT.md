@@ -23,8 +23,10 @@
   줄 알았는데 파일 자체를 열어보니 발바닥 장식이 이미지 캔버스 가장자리에서 잘린 채로
   저장돼 있었음(`logo_ko.png`는 우측만, `logo_jp.png`는 좌우 양쪽 다). 뱃지와 같은
   종류의 원본 크롭 결함이라 디자인팀에 재출력 요청(`docs/ASSET_REQUESTS_FOR_DESIGN.md`
-  5번) → `lastgeneratedimages.zip`으로 회신받아 반영, 네 변 모두 투명 확인 완료. 실기기
-  최종 확인은 아직 필요(Playwright로 실제 `index.html` 렌더링까지만 확인함).
+  5번) → `lastgeneratedimages.zip`으로 회신받아 v0.21에 1차 반영, 네 변 모두 투명 확인
+  완료. 이후 감독이 `openedagainsharebackgroundsandlogosv0.19.zip`을 최종본으로 지정 —
+  같은 디자인을 원래 요청한 레거시 캔버스 크기로 다시 맞춘 버전으로 v0.22에서 재교체.
+  실기기 최종 확인은 아직 필요(Playwright로 실제 `index.html` 렌더링까지만 확인함).
 - ~~최종 에셋 팩을 코드에 다시 연결~~ — v0.5에서 완료 (`docs/DEVELOPMENT_HISTORY.md` v0.5 참고).
 - `ShareCardRenderer`에 실제 에셋 반영 — v0.6(첫 시도, templates/ 오선택) → v0.7(frames/로 교체,
   비율 문제 수정) → v0.12(배경으로 쓴 `share_template_*`가 사실 완성된 카드라 프레임/캐릭터가
@@ -33,8 +35,12 @@
   SHARE_TEMPLATE_USAGE_SPEC.md` 참고 — 현재의 동적 조합 방식이 맞는 방향이었음을 확인받음) →
   v0.15(실기기 공유카드 스크린샷에서 제목/서브텍스트가 프레임의 모자 장식 위로 흘러나오던
   문제, "MONI CASE FILE" 캡션이 돋보기 장식 밑에 깔리던 문제 수정 — `contentTop`/캡션 위치를
-  프레임 아트를 직접 픽셀 분석해서 다시 잡음). 이번에도 Python 시뮬레이션으로만 검증했고
-  실제 Kotlin Canvas 렌더링은 확인 못함 — 다음 실기기 확인 필요.
+  프레임 아트를 직접 픽셀 분석해서 다시 잡음) → v0.16~v0.20(배경 확대/이음매/문구-장식
+  충돌/왼쪽 여백/카드 크기 등 실기기 리포트 기반 연쇄 수정, 배경은 `TileMode.MIRROR`
+  타일링으로 임시 대응) → v0.22(디자인팀이 등급별 "타일 아닌 하나의" 배경 팩으로 회신,
+  타일링 코드를 완전히 걷어내고 정식 배경으로 전환 — `docs/ASSET_REQUESTS_FOR_DESIGN.md`
+  4번 참고). 이번에도 Python 시뮬레이션으로만 검증했고 실제 Kotlin Canvas 렌더링은
+  확인 못함 — 다음 실기기 확인 필요.
 - ~~`.card` CSS가 `cards/frames/*.png`를 배경으로 써서 카드 높이가 변할 때마다 위쪽 일부만
   채워지고 나머지가 비어 보이던 문제~~ — v0.12에서 프레임 배경 자체를 제거하고 원래의
   `.card:before{background:var(--glow)}` 그라데이션 틴트 방식으로 복귀해 해결. 프레임 아트는

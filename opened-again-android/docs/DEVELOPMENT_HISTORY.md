@@ -489,3 +489,41 @@ CSS 레이아웃 문제인 줄 알았는데, 파일을 직접 열어보니 `logo
 완전하게 나오는 것을 스크린샷으로 확인(`header_ko.png`, `header_jp.png`). 다만
 이번 수정은 원본 이미지 파일 교체이지 Canvas 레이아웃 코드 변경이 아니므로,
 `ShareCardRenderer`가 그리는 공유카드 쪽 로고도 실기기로 별도 확인 필요.
+
+## v0.22 — 공유카드 배경 요청(4번) 해결: 등급별 "타일 아닌 하나의" 배경으로 전면 교체
+감독이 "이 로고 zip 말고 `openedagainsharebackgroundsandlogosv0.19.zip`가 진짜"라고
+정정 — 열어보니 로고 재수정본뿐 아니라 `docs/ASSET_REQUESTS_FOR_DESIGN.md` 4번에서
+요청한 공유카드 배경까지 통째로 회신받은 팩이었음(README/QA_REPORT 포함, 총 20개
+파일).
+
+- **배경**: 정사각(1080x1080)/스토리(1080x1920) 각각 7종 — `common` +
+  NORMAL/RARE/EPIC/LEGENDARY/HIDDEN_01/HIDDEN_02. QA_REPORT로 전부 정확히
+  요청 사이즈(size_ok=True)임을 먼저 확인. 미리보기 시트로 직접 확인한 결과:
+  캐릭터/프레임 없이 순수 배경만, 발바닥+탐정모자 무늬 유지, 등급별 톤이
+  요청 스펙의 프레임 안쪽 색과 맞음(RARE=하늘색, EPIC=라벤더, LEGENDARY=
+  골드, NORMAL=따뜻한 크림, HIDDEN_01=옅은 무지개빛 오팔, HIDDEN_02=짙은
+  남색 별밤) — `CardStyle.isOpalHidden()`의 두 HIDDEN 계열과 색으로 대조해서
+  opal=true → `hidden_01`, opal=false(anomaly) → `hidden_02`로 매핑(주의:
+  `frameAsset()`의 기존 hidden_01/02 프레임 파일 인덱스와는 반대 방향이라
+  각자 자기 파일의 실제 톤 기준으로 따로 매핑함, 헷갈리지 않게 주석에 명시).
+  `common`은 특정 등급 파일이 없을 때의 폴백.
+- **로고**: 이번 팩의 `logo_ko.png`/`logo_jp.png`는 v0.21에서 반영한
+  2172x724 버전과 발바닥/글꼴이 사실상 동일한 디자인이지만, 원래 요청한
+  레거시 캔버스 크기(471x150 / 575x130)로 다시 맞춰 회신됨(QA_REPORT 기준
+  안전 여백 19px/24px 확보) — 감독이 지정한 "진짜" 파일이라 이걸로 교체.
+- `ShareCardRenderer.kt`: `BitmapShader`/`TileMode.MIRROR` 타일링 코드를
+  완전히 제거하고, `backgroundAsset(rarity, opal, format)`이 등급/포맷에 맞는
+  파일 경로를 반환 → 없으면 `commonBackgroundAsset(format)` 폴백 → 그것도
+  없으면 기존 단색 폴백. 새 배경은 캔버스와 정확히 같은 크기라 별도 스케일링이
+  불필요하지만, 방어적으로 `drawCover()`로 그림(향후 크기가 안 맞는 자산이
+  와도 안전). 이제 안 쓰는 `BitmapShader`/`Shader` import 제거.
+- `bg_pattern_beige.png` 파일 자체는 삭제하지 않고 유지(다른 문서에서 여전히
+  참조 중이라 그대로 둠) — 공유카드 렌더러만 새 배경으로 전환.
+
+**검증**: 실제 자산으로 Python/Pillow에서 `frameAlignedRect`/`drawCover` 로직을
+그대로 재현해 NORMAL/LEGENDARY/HIDDEN(오팔)/HIDDEN(어노말리)/EPIC(스토리)
+5개 조합을 렌더링 — 캐릭터/프레임 없는 순수 배경이 이음매 없이 캔버스
+전체를 채우고, 프레임이 그 위에 올바른 비율로 얹히는 것을 확인. 14개 배경
+경로(등급 6종 × 포맷 2 + common × 포맷 2)가 실제 asset 디렉터리에 전부
+존재하는지도 스크립트로 확인. Kotlin 괄호 균형 재확인(모두 일치). 실기기
+Canvas 렌더링 확인은 이번에도 필요.

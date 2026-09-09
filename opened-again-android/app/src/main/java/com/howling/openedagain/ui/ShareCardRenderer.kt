@@ -5,13 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
-import android.graphics.Shader
 import android.net.Uri
 import android.provider.MediaStore
 import com.howling.openedagain.core.DetectedIncident
@@ -59,35 +57,24 @@ class ShareCardRenderer(private val context: Context) {
         val c = Canvas(bitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-        // Full-bleed backdrop. NOTE: backgrounds/share_template_square.png
-        // and share_template_vertical.png look like plain backdrops but are
-        // actually complete, finished card designs in their own right --
-        // they already have their own decorative frame AND a MONI
-        // illustration baked into a bottom corner. Using either of those as
-        // a "backdrop" behind our own separately-drawn rarity frame doubled
-        // up both the frame and the character in the exported image.
-        //
-        // bg_pattern_beige.png (445x535) is NOT a seamless tile -- checked
-        // directly (its own left/right and top/bottom edge pixels don't
-        // match, there's a real brightness gradient across the file) -- so
-        // TileMode.REPEAT drew a visible seam grid on a real device. A flat
-        // fill using the pattern's base tone was tried as a stopgap, but
-        // the director wanted the actual decorative pattern kept, not
-        // replaced with a plain color. TileMode.MIRROR alternates a
-        // horizontally/vertically flipped copy at every repeat -- since a
-        // flipped copy's edge pixels are, by construction, identical to the
-        // original's edge pixels just mirrored, adjacent tiles always match
-        // exactly regardless of whether the source is seamless. Verified
-        // pixel-by-pixel on the real file: every internal and wraparound
-        // boundary matches exactly under this mode, with zero code beyond
-        // picking MIRROR over REPEAT. (A real seamless/full-canvas asset
-        // from design would still be nicer long-term -- still flagged in
-        // docs/ASSET_REQUESTS_FOR_DESIGN.md #4 -- but no longer blocking.)
-        val backdrop = assetBitmap("backgrounds/bg_pattern_beige.png")
+        // Full-bleed backdrop. v0.18-v0.21 tiled bg_pattern_beige.png (a
+        // 445x535 tile that turned out not to be seamless) with
+        // TileMode.MIRROR to hide the seam while keeping the paw/hat
+        // pattern -- a real fix, but still a mirrored-repeat look rather
+        // than the "one full-canvas image" the director asked design for
+        // (docs/ASSET_REQUESTS_FOR_DESIGN.md #4). Design replied with
+        // exactly that: a single, non-tiled background per rarity per
+        // format (backgrounds/share/<size>/bg_<rarity>_<square|vertical>.png,
+        // e.g. bg_normal_square.png), each already sized to match this
+        // renderer's own canvas exactly (1080x1080 / 1080x1920) and toned to
+        // the rarity's own frame-interior color from the request spec, plus
+        // a bg_common_* fallback in the same beige family as the old tile.
+        // drawCover (not a raw drawBitmap) still guards against any future
+        // asset that isn't an exact pixel match to the canvas.
+        val backdrop = assetBitmap(backgroundAsset(incident.rarity, opal, format))
+            ?: assetBitmap(commonBackgroundAsset(format))
         if (backdrop != null) {
-            paint.shader = BitmapShader(backdrop, Shader.TileMode.MIRROR, Shader.TileMode.MIRROR)
-            c.drawRect(0f, 0f, format.width.toFloat(), format.height.toFloat(), paint)
-            paint.shader = null
+            drawCover(c, backdrop, RectF(0f, 0f, format.width.toFloat(), format.height.toFloat()), paint)
         } else {
             c.drawColor(Color.rgb(250, 245, 232))
         }
@@ -291,6 +278,34 @@ class ShareCardRenderer(private val context: Context) {
         Rarity.EPIC -> "cards/frames/frame_epic.png"
         Rarity.LEGENDARY -> "cards/frames/frame_legendary.png"
         Rarity.HIDDEN -> if (opal) "cards/frames/frame_hidden_02.png" else "cards/frames/frame_hidden_01.png"
+    }
+
+    // backgrounds/share/<size>/bg_<rarity>_<square|vertical>.png -- design's
+    // v0.19 asset pack (docs/ASSET_REQUESTS_FOR_DESIGN.md #4). HIDDEN's two
+    // visual families (CardStyle.isOpalHidden) map to the pack's two HIDDEN
+    // backgrounds by tone, confirmed against the pack's own preview sheet:
+    // hidden_01 is the pale iridescent/opal one (this renderer's "opal"
+    // family), hidden_02 is the deep-navy starfield one (the "anomaly"
+    // family) -- opposite index from frameAsset()'s hidden_01/02, which
+    // names its files the other way around; each mapping is verified
+    // against its own asset's actual look, not assumed to match the other.
+    private fun backgroundAsset(rarity: Rarity, opal: Boolean, format: Format): String {
+        val size = if (format == Format.STORY) "1080x1920" else "1080x1080"
+        val suffix = if (format == Format.STORY) "vertical" else "square"
+        val rarityName = when (rarity) {
+            Rarity.NORMAL -> "normal"
+            Rarity.RARE -> "rare"
+            Rarity.EPIC -> "epic"
+            Rarity.LEGENDARY -> "legendary"
+            Rarity.HIDDEN -> if (opal) "hidden_01" else "hidden_02"
+        }
+        return "backgrounds/share/$size/bg_${rarityName}_$suffix.png"
+    }
+
+    private fun commonBackgroundAsset(format: Format): String {
+        val size = if (format == Format.STORY) "1080x1920" else "1080x1080"
+        val suffix = if (format == Format.STORY) "vertical" else "square"
+        return "backgrounds/share/$size/bg_common_$suffix.png"
     }
 
     // Same incident -> pose mapping as index.html's incidentVisual(), minus
