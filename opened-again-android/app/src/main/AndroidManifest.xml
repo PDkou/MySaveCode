@@ -5,7 +5,7 @@
          permission only on API 33+ (POST_NOTIFICATIONS didn't exist before
          that); harmless to declare unconditionally since the OS ignores it
          pre-33. No notification feature exists yet to actually use this
-         for -- see that method's own comment. -->
+         for, see that method's own comment. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application android:theme="@style/AppTheme" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true">
         <activity android:name=".MainActivity" android:exported="true">

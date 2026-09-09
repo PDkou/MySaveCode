@@ -683,3 +683,25 @@ EPIC/LEGENDARY/HIDDEN) 카드 전부 텍스트 영역에 은은한 무늬가 보
 제목/상세/문구 텍스트 가독성이 그대로 유지되는지 확대 스크린샷으로 확인 —
 특히 HIDDEN(어두운 남색 배경 + 흰 텍스트)에서도 무늬가 과하게 튀거나 글자를
 가리지 않는 것을 확인. `document.images` 깨진 이미지 0개.
+
+## v0.26 — v0.24 CI 빌드 실패 수정: AndroidManifest.xml 주석 안에 `--`
+v0.24 GitHub Actions 빌드가 `com.android.manifmerger.ManifestMerger2$
+MergeFailureException: Error parsing AndroidManifest.xml`로 실패. 원인은
+v0.24에서 `POST_NOTIFICATIONS` 권한 위에 달아둔 XML 주석 문장 안에 "for --
+see that method's own comment"처럼 이중 하이픈(`--`)이 들어있었던 것 — XML
+스펙상 주석 본문에는 `-->`로 닫는 부분 말고는 어디에도 `--`가 올 수 없음
+(HTML 주석과 달리 엄격하게 금지됨). Python `xml.etree.ElementTree`로
+직접 파싱해서 재현 확인 후, 문장을 "for, see that method's own
+comment"로 바꿔 이중 하이픈을 제거. 같은 파일 안에 다른 `--` 등장이
+없는지 grep으로 재확인, 파싱 성공까지 확인.
+
+이 버그는 이 세션에서 실제로 CI가 실패한 첫 사례 — 지금까지는 전부 로컬
+시뮬레이션/Playwright로만 검증하고 실제 GitHub Actions 빌드는 매번 통과했으나,
+이번엔 Kotlin/HTML 문법은 다 확인했지만 XML 주석 자체의 스펙 제약(이중 하이픈
+금지)은 미처 검증하지 못했음 — 앞으로 XML 파일에 인라인 주석을 달 때는
+`--`가 섞여 있지 않은지 직접 확인하는 습관 필요.
+
+**검증**: Python `xml.etree.ElementTree.parse()`로 수정 후 파일이 정상
+파싱됨을 확인. v0.25(카드 배경 무늬) 커밋에는 `AndroidManifest.xml` 변경이
+없어서 이 버그를 그대로 물려받아 v0.25 CI도 같은 이유로 실패할 상황이었음 —
+이 커밋으로 같이 해결.
