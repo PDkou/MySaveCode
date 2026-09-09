@@ -186,7 +186,7 @@ class ShareCardRenderer(private val context: Context) {
         // it's drawCover-ed instead -- cropped to fill the box completely,
         // verified against several scene illustrations that the centered
         // crop keeps the main subject in frame.
-        assetBitmap(incidentIllustrationAsset(incident.type))?.let { art ->
+        assetBitmap(incidentIllustrationAsset(incident.type, incident.rarity))?.let { art ->
             val sceneBox = RectF(sceneLeft, contentTop, rect.right - 28f, footerTop)
             if (isSceneIllustration(incident.type)) {
                 drawCover(c, art, sceneBox, paint)
@@ -351,7 +351,28 @@ class ShareCardRenderer(private val context: Context) {
     // both modes are drawn the same way here via drawContain() -- there's
     // no second layer for a 'scene' illustration to be composited onto or
     // instead of.
-    private fun incidentIllustrationAsset(type: IncidentType): String = when (type) {
+    // v0.31: per-rarity illustration variants (docs/ASSET_REQUESTS_FOR_DESIGN.md
+    // item 6, 2026-09-09) -- mirrors index.html's RARITY_ILLUSTRATION_VARIANTS/
+    // incidentArt() exactly, same empty-for-now set (no variant files exist
+    // yet, so every lookup falls back to incidentIllustrationBase()'s single
+    // per-type file with zero behavior change). Add "TYPE_RARITY" entries
+    // here in lockstep with index.html's set when design delivers files --
+    // HIDDEN_LOOP/HIDDEN_NIGHT_ACTIVITY never need one (always Rarity.HIDDEN).
+    private val rarityIllustrationVariants: Set<String> = setOf(
+        // "QUICK_EXIT_LEGENDARY", "QUICK_EXIT_EPIC", ...
+    )
+
+    private fun incidentIllustrationAsset(type: IncidentType, rarity: Rarity): String {
+        val base = incidentIllustrationBase(type)
+        val key = "${type.name}_${rarity.name}"
+        return if (rarityIllustrationVariants.contains(key)) {
+            base.removeSuffix(".png") + "_${rarity.name.lowercase()}.png"
+        } else {
+            base
+        }
+    }
+
+    private fun incidentIllustrationBase(type: IncidentType): String = when (type) {
         IncidentType.QUICK_EXIT -> "incidents/card_ready/incident_quick_exit.png"
         IncidentType.REENTRY -> "incidents/card_ready/incident_reentry.png"
         IncidentType.REGULAR -> "incidents/card_ready/incident_regular.png"

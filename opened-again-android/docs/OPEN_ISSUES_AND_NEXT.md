@@ -62,16 +62,22 @@
   `docs/UI_VISUAL_DIRECTION_REQUEST.md`, `docs/DEVELOPMENT_HISTORY.md` v0.23 참고.
   온보딩 화면 2종×KO/JP도 v0.24에서 마저 연결(화면 전환/버튼 히트 영역/실제
   알림 권한 요청까지 구현 — `docs/DEVELOPMENT_HISTORY.md` v0.24 참고).
-- **[2026-09-09, 감독 확정, 회신 대기, 범위 확대됨] 사건 일러스트 12종 전체 재작업
-  요청** — 보관함 화면에서 overlay 타입 9종이 scene 타입 5종에 비해 부실해
-  보인다는 지적 → v0.29(배경 사진 추가)/v0.30(캐릭터 확대 크롭)까지 코드로
-  완화 시도했지만 감독 판단으로는 부족. 이어서 "뭔가 AI틱스러워서"라는 더
-  근본적인 지적과 함께 범위 확대 확정 — HIDDEN 2종(HIDDEN_LOOP/
-  HIDDEN_NIGHT_ACTIVITY)만 빼고 12종(overlay 9종 + scene 중 REGULAR/
-  APP_WANDERING/DAWN_SURVIVOR) 전부 배경 추가가 아니라 **처음부터 다시
-  그리는** 것으로 디자인팀에 정식 요청함(`docs/ASSET_REQUESTS_FOR_DESIGN.md`
-  6번). 회신 오면 v0.29/v0.30의 임시 코드(overlay 배경 합성, `overlay-fill`
-  크롭)는 자연스럽게 걷어낼 수 있음.
+- **[2026-09-09, 감독 확정, 회신 대기, 범위 재확대] 사건 일러스트 전체
+  등급별(NORMAL/RARE/EPIC/LEGENDARY) 4종씩 재작업 요청, 총 50장** — 보관함
+  화면에서 overlay 타입 9종이 scene 타입 5종에 비해 부실해 보인다는 지적 →
+  v0.29(배경 사진 추가)/v0.30(캐릭터 확대 크롭)까지 코드로 완화 시도했지만
+  감독 판단으로는 부족 → "뭔가 AI틱스러워서"라는 지적으로 HIDDEN 2종 뺀 12종
+  전체를 처음부터 다시 그리는 것으로 확대 → HIDDEN 2종 그림도 다시 보여드리자
+  "이것도 포함, 그리고 등급별로 화려함 차이도 나게"로 재확대 확정("다양성이
+  중요한 앱이니까 어렵게 가자"). 최종 요청: 12종 × 4등급 = 48장 + HIDDEN 2종
+  × 1(등급 고정) = 총 50장, 등급이 오를수록 더 화려하게(구도/이펙트/표정 강도
+  전부 escalation) — 상세는 `docs/ASSET_REQUESTS_FOR_DESIGN.md` 6번 참고.
+  v0.31에서 `index.html`/`ShareCardRenderer.kt` 양쪽에 등급별 파일을 자동으로
+  찾아 쓰는 인프라(`RARITY_ILLUSTRATION_VARIANTS`/`incidentArt()`,
+  `rarityIllustrationVariants`/`incidentIllustrationAsset()`)를 미리 준비해둠 —
+  지금은 목록이 비어 있어 화면 변화 없이 전부 기존 그림으로 폴백, 파일
+  도착하면 목록에 키만 추가하면 바로 반영됨. 회신 오면 v0.29/v0.30의 overlay
+  배경 합성/`overlay-fill` 크롭 코드도 자연스럽게 걷어낼 수 있음.
   **남은 것**: 라벨 있는 UI 아이콘 10종은 자산만 받아뒀고 아직 미반영 — 텍스트
   기반 탭바/헤더를 아이콘 기반으로 바꾸는 마크업 변경이 필요한 별도 기능
   작업이라 다음 커밋으로 분리.

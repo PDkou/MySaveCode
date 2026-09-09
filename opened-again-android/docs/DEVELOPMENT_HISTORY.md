@@ -824,3 +824,34 @@ Kotlin 쪽처럼 알파 채널 픽셀을 읽어 바운딩박스를 잘라내는 
 `document.images` 깨진 이미지 0개. 이 정도로 충분한지, 아니면 9종 전부
 "scene" 타입처럼 완전히 새로 그린 배경 일러스트가 필요한지는 감독 확인
 필요 — 후자라면 디자인팀에 정식 요청 넣을 예정.
+
+## v0.31 — 등급별 사건 일러스트 인프라 (아직 화면 변화 없음, 파일 도착 대비)
+감독이 사건 일러스트 재작업 요청 범위를 최종 확정: HIDDEN 2종 포함 전체
+14종 중 12종은 **등급별(NORMAL/RARE/EPIC/LEGENDARY)로 각각 다른 그림**을
+받기로 함(`docs/ASSET_REQUESTS_FOR_DESIGN.md` 6번, 총 50장 요청). 문제는
+`Rarity`가 `IncidentType`에 고정된 값이 아니라 실사용 점수로 매번 다르게
+매겨진다는 것(`IncidentDetector.kt`) — 그래서 지금처럼 타입 하나당 그림
+하나만 있는 구조로는 "등급별로 다르게"를 반영할 방법 자체가 없었음. 아직
+디자인팀 회신(50장)이 오지 않았지만, 파일이 도착하자마자 바로 꽂아 쓸 수
+있도록 인프라만 먼저 준비:
+
+- `index.html`: `RARITY_ILLUSTRATION_VARIANTS`(빈 `Set`으로 시작)와
+  `incidentArt(basePath, type, rarity)` 추가 — `${type}_${rarity}` 키가
+  이 Set에 있으면 파일명에 `_<등급 소문자>`를 붙인 변형 파일을 쓰고, 없으면
+  지금까지 쓰던 단일 기본 파일로 그대로 폴백. `card()`는 `i.rarity`(그
+  사건이 실제로 뜬 등급)를, `archive()`는 `top||'NORMAL'`(그 타입으로
+  발견한 것 중 가장 높았던 등급)을 넘겨서 각자 맥락에 맞는 등급으로 조회.
+- `ShareCardRenderer.kt`: 같은 패턴으로 `rarityIllustrationVariants`(빈
+  `Set`)와 `incidentIllustrationAsset(type, rarity)` 추가 — 기존
+  `incidentIllustrationAsset(type)`은 `incidentIllustrationBase(type)`으로
+  이름만 바꿔서 유지. `render()`가 `incident.rarity`를 넘기도록 호출부 수정.
+- 지금은 두 Set이 전부 비어 있어서 **실제 화면은 v0.30과 완전히 동일** —
+  50장이 오면 각 언어(웹/Kotlin) Set에 `"QUICK_EXIT_LEGENDARY"` 같은 키만
+  추가하고 정해진 파일명(`incident_<기존파일명>_<등급>.png`)으로 에셋
+  폴더에 넣으면 그걸로 끝, 추가 코드 변경 불필요.
+
+**검증**: 실제 `index.html`을 Playwright로 렌더링 — "사건"/"보관함" 탭 모두
+`document.images` 깨진 이미지 0개, v0.30 스크린샷과 시각적으로 동일함을
+확인(폴백 경로가 제대로 동작). Kotlin 괄호 균형 재확인, 호출부가
+`incidentIllustrationAsset(incident.type, incident.rarity)` 2-인자로
+정확히 바뀐 것도 확인.

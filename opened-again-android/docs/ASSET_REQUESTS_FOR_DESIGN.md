@@ -7,10 +7,10 @@
 > 회신받아 v0.22에서 해결 — `docs/DEVELOPMENT_HISTORY.md` v0.22 참고.**
 > **5번(로고 발바닥 크롭)은 v0.21에서 1차 반영했다가, 같은 v0.19 팩에 들어있던
 > 레거시 캔버스 크기 재출력본(감독이 최종 확정한 파일)으로 v0.22에서 다시 교체 —
-> 디자인은 동일, 캔버스 크기만 원래 규격으로 복귀.** **6번(사건 일러스트
-> 재작업, 2026-09-09 감독 확정)은 처음엔 overlay 9종에 배경만 채우는
-> 요청이었다가, "AI틱스럽다"는 지적으로 범위가 확대돼서 HIDDEN 2종을 뺀 12종
-> 전체를 새로 그리는 요청으로 바뀜 — 아직 디자인팀 회신 전.**
+> 디자인은 동일, 캔버스 크기만 원래 규격으로 복귀.** **6번(사건 일러스트 재작업,
+> 2026-09-09 감독 확정)은 요청이 여러 번 확대됨 — 지금은 HIDDEN 2종 포함
+> 전체 14종을, 그중 12종은 등급별(NORMAL/RARE/EPIC/LEGENDARY) 4장씩 총 50장
+> 새로 그리는 요청 — 아직 디자인팀 회신 전.**
 
 디자인/아트 파이프라인 쪽에 그대로 전달할 수 있는 요청 목록. 코드로는 해결 불가능한
 원본 파일 문제만 정리했음 (코드 버그는 별도로 이미 다 고쳐서 여기 없음).
@@ -147,59 +147,98 @@ LEGENDARY/HIDDEN_01/HIDDEN_02) + `common` 폴백까지 정사각/스토리 각 7
 동일, 캔버스 크기만 원래 규격 복귀). 자세한 내용은 `docs/DEVELOPMENT_HISTORY.md`
 v0.21/v0.22 참고.
 
-## 6. [감독 확정 — 디자인팀에 재요청, 범위 확대됨] 사건 일러스트 12종 전체 새로 그리기
-(AI스러운 느낌 탈피)
+## 6. [감독 확정 — 디자인팀에 재요청, 범위 재확대] 사건 일러스트 전체를
+등급별(NORMAL/RARE/EPIC/LEGENDARY) 4종씩 새로 그리기 — 총 50장
 
-### 배경
-처음엔 overlay 9종에 배경만 채워 넣는 정도로 요청했으나(아래 "요청 처음
-버전" 참고), 감독이 이번엔 범위를 넓혀서 확정: **HIDDEN 2종
-(HIDDEN_LOOP/HIDDEN_NIGHT_ACTIVITY)을 뺀 나머지 12종 전부**를 배경만
-추가하는 게 아니라 **처음부터 다시 그려달라는 요청**. 이유: "뭔가
-AI틱스러워서" — 지금 세트가 톤/터치가 균일하고 개성이 약해서 AI로
-대량 생성한 티가 난다는 지적. 단순 구도/배경 보완이 아니라 **그림체
-자체를 더 의도적이고 손맛 있게** 다시 잡아달라는 요청임.
+### 배경 (요청이 세 번 바뀐 과정)
+1. 처음엔 overlay 9종에 배경만 채워 넣는 정도로 요청.
+2. "AI틱스럽다"는 지적으로 HIDDEN 2종을 뺀 12종 전부를 **완전히 다시
+   그리는** 것으로 범위 확대.
+3. HIDDEN 2종(무한루프/미확인 야간 활동)의 지금 그림을 다시 보여드렸더니
+   "이것도 다 포함시켜줘"로 재확대. **그리고 감독이 새 요구사항 추가**:
+   "등급별로 화려함의 차이도 생기게" — 즉, 그림을 사건 타입당 1장이 아니라
+   **사건 타입 × 등급 조합마다 따로** 그려서, 같은 사건이라도 등급이 높을수록
+   그림 자체가 더 화려하게 나오게 해달라는 것. "다양성이 중요한 앱이니까
+   어렵게 가자"고 명시적으로 확정.
 
-### 대상 12종 (한국어/일본어/영어, 기존 render_mode)
-| IncidentType | 한국어 | 일본어 | 영어 | 기존 모드 |
+**중요**: 사건 등급(Rarity)은 사건 타입에 고정된 게 아니라 실제 사용 점수에
+따라 매번 다르게 매겨짐(`IncidentDetector.kt`) — 예를 들어 "5초컷"도 점수에
+따라 NORMAL로도, LEGENDARY로도 뜰 수 있음. 그래서 "등급별로 다르게"를
+제대로 하려면 **같은 사건 타입이라도 등급 개수만큼 그림이 필요**함.
+
+### 대상과 개수
+- **12종** (QUICK_EXIT/REENTRY/REGULAR/RETURN_TO_START/PATROL/
+  ESCAPE_FAILED/FIRST_CONTACT/NIGHT_PATROL/APP_WANDERING/HUNDRED_VISITS/
+  DIGITAL_LOST/DAWN_SURVIVOR) × **4등급**(NORMAL/RARE/EPIC/LEGENDARY)
+  = **48장**
+- **HIDDEN 2종**(HIDDEN_LOOP/HIDDEN_NIGHT_ACTIVITY)은 항상 HIDDEN 등급
+  고정이라 등급 배수 필요 없음 — 지금 그림도 다른 12종보다 이미 화려한
+  편이지만 "AI틱함" 지적 대상에 포함됐으니 **1장씩만 새로 그리면 됨** = **2장**
+- **합계 50장**
+
+| IncidentType | 한국어 | 일본어 | 영어 | 등급 배수 |
 |---|---|---|---|---|
-| QUICK_EXIT | 5초컷 | 5秒撤退 | 5-second exit | overlay |
-| REENTRY | 재입장 사건 | 出戻り事件 | Re-entry | overlay |
-| REGULAR | 단골손님 | 常連客 | Regular | scene |
-| RETURN_TO_START | 원점 회귀 | 振り出しに戻る | Back to start | overlay |
-| PATROL | 목적불명 순찰 | 目的地不明 | Aimless patrol | overlay |
-| ESCAPE_FAILED | 탈출 실패 | 脱出失敗 | Escape failed | overlay |
-| FIRST_CONTACT | 오늘의 첫 상대 | 本日の第一声 | First contact | overlay |
-| NIGHT_PATROL | 심야 순찰 | 深夜巡回 | Night patrol | overlay |
-| APP_WANDERING | 앱 방황 | アプリ徘徊 | App wandering | scene |
-| HUNDRED_VISITS | 100회 방문 | 100回訪問 | 100 visits | overlay |
-| DIGITAL_LOST | 디지털 미아 | デジタル迷子 | Digital lost | overlay |
-| DAWN_SURVIVOR | 새벽 생존자 | 夜明けの生存者 | Dawn survivor | scene |
-
-**제외**: HIDDEN_LOOP(무한루프), HIDDEN_NIGHT_ACTIVITY(미확인 야간 활동) —
-이 2종은 이번 재작업 대상 아님(감독이 별도 언급 없었음 — 필요하면 이후
-추가 확인).
+| QUICK_EXIT | 5초컷 | 5秒撤退 | 5-second exit | ×4 |
+| REENTRY | 재입장 사건 | 出戻り事件 | Re-entry | ×4 |
+| REGULAR | 단골손님 | 常連客 | Regular | ×4 |
+| RETURN_TO_START | 원점 회귀 | 振り出しに戻る | Back to start | ×4 |
+| PATROL | 목적불명 순찰 | 目的地不明 | Aimless patrol | ×4 |
+| ESCAPE_FAILED | 탈출 실패 | 脱出失敗 | Escape failed | ×4 |
+| FIRST_CONTACT | 오늘의 첫 상대 | 本日の第一声 | First contact | ×4 |
+| NIGHT_PATROL | 심야 순찰 | 深夜巡回 | Night patrol | ×4 |
+| APP_WANDERING | 앱 방황 | アプリ徘徊 | App wandering | ×4 |
+| HUNDRED_VISITS | 100회 방문 | 100回訪問 | 100 visits | ×4 |
+| DIGITAL_LOST | 디지털 미아 | デジタル迷子 | Digital lost | ×4 |
+| DAWN_SURVIVOR | 새벽 생존자 | 夜明けの生存者 | Dawn survivor | ×4 |
+| HIDDEN_LOOP | 무한루프 | 無限ループ | Infinite loop | ×1 (HIDDEN 고정) |
+| HIDDEN_NIGHT_ACTIVITY | 미확인 야간 활동 | 未確認夜間活動 | Unidentified night activity | ×1 (HIDDEN 고정) |
 
 ### 요청 스펙
-- **사이즈**: 기존과 동일 1200x675, 캐릭터+배경까지 전부 포함된 완성
-  일러스트 한 장(예전 overlay처럼 투명 배경에 캐릭터만 있는 방식 아님).
-- **스타일 방향**: 톤/구도를 그대로 복제하지 말고, 감독이 세션 초반에
-  직접 골라서 "이런 느낌을 원했다"고 확정했던 목업
+- **사이즈**: 전부 1200x675, 캐릭터+배경까지 전부 포함된 완성 일러스트
+  한 장(투명 배경에 캐릭터만 있는 방식 아님).
+- **파일명 규칙**: 기존 12종 파일명에 등급 접미사만 붙이면 됨 —
+  `incident_<기존파일명>_<등급>.png` (등급은 normal/rare/epic/legendary
+  소문자). 예: `incident_quick_exit_normal.png`,
+  `incident_quick_exit_rare.png`, `incident_quick_exit_epic.png`,
+  `incident_quick_exit_legendary.png`. HIDDEN 2종은 등급 접미사 없이
+  기존 파일명 그대로 다시 그려서 회신(`incident_hidden_loop.png`,
+  `incident_hidden_night_activity.png`).
+- **등급별 화려함 escalation 기준**: 매번 새로 정하지 말고, 이미 승인되고
+  앱에 반영된 등급별 공유카드 배경(`backgrounds/share/1080x1080/
+  bg_<등급>_square.png`, v0.22에서 확정)의 톤/무드를 그대로 기준으로 삼을
+  것 — NORMAL은 차분한 크림톤/평범한 일상 장면, RARE는 옅은 하늘색 계열로
+  살짝 화사하게, EPIC은 라벤더/보라 계열로 몽환적이고 역동적인 구도,
+  LEGENDARY는 골드 톤에 빛줄기·이펙트를 더해 가장 극적으로. 즉 등급이
+  올라갈수록 색감뿐 아니라 **구도의 역동성, 이펙트(빛/반짝임/움직임선) 양,
+  캐릭터 표정의 강도**까지 같이 올라가야 함 — 지금 무한루프(HIDDEN)
+  일러스트가 여러 캐릭터+이펙트로 화려한 것이 그 다음 단계(그 위)의 참고
+  예시가 될 수 있음.
+- **스타일 방향(AI틱함 탈피)**: 톤/구도를 기계적으로 반복하지 말고, 감독이
+  세션 초반에 직접 골라서 "이런 느낌을 원했다"고 확정했던 목업
   (`art/reference/target-visual-direction/01_card_collection_sheet.png`)을
-  참고 기준으로 삼아 손그림 느낌/캐릭터별 표정과 구도의 다양성을 살려줄 것 —
-  같은 캐릭터 포즈가 소품만 바뀐 채 반복되는 인상을 피해야 함.
-- **내용/설정**: 각 사건 성격(시계=5초컷, 문=재입장, 이불=탈출 실패,
-  앱 아이콘들=디지털 미아 등)은 기존 구도가 이미 잘 맞았던 부분이라 참고
-  삼아도 되지만, 그대로 베끼지 말고 다시 그리는 김에 각 장면이 더 뚜렷하게
-  구분되도록 자유롭게 재해석해도 좋음.
+  참고 기준으로 삼아 손그림 느낌/캐릭터별 표정과 구도의 다양성을 살려줄 것.
+- **내용/설정**: 각 사건 성격(시계=5초컷, 문=재입장, 이불=탈출 실패, 앱
+  아이콘들=디지털 미아 등)은 기존 구도가 사건 내용과 잘 맞았던 부분이라
+  참고해도 되지만, 그대로 베끼지 말고 등급마다 다르게 재해석할 것 — 예:
+  "5초컷" NORMAL은 그냥 무심하게 폰을 다시 켜는 정도, LEGENDARY는 같은
+  상황이 훨씬 우스꽝스럽거나 드라마틱하게 과장된 버전으로.
 
-### 참고 — 요청 처음 버전(이제 이 항목으로 대체됨)
-처음엔 overlay 9종(QUICK_EXIT/REENTRY/RETURN_TO_START/PATROL/
-ESCAPE_FAILED/FIRST_CONTACT/NIGHT_PATROL/HUNDRED_VISITS/DIGITAL_LOST)만
-`scene` 5종처럼 배경을 채워 넣는 정도로 요청했었음 — 코드로 먼저
-완화(v0.29 배경 합성, v0.30 캐릭터 크롭 확대)해봤지만 감독 판단으로는
-부족했고, 곧이어 "AI틱스럽다"는 더 근본적인 지적과 함께 범위가 12종 전체
-재작업으로 확대됨. 두 코드 변경(overlay 배경 합성, `overlay-fill` 크롭)은
-이번 재작업 회신이 오면 자연스럽게 무의미해짐.
+### 참고 — 코드는 이미 준비해둠
+`index.html`(`RARITY_ILLUSTRATION_VARIANTS`/`incidentArt()`)과
+`ShareCardRenderer.kt`(`rarityIllustrationVariants`/
+`incidentIllustrationAsset()`)에 등급별 파일을 자동으로 찾아 쓰는 로직을
+미리 만들어둠(v0.31) — 지금은 목록이 비어 있어서 전부 기존 단일 그림으로
+폴백되고 있고(화면 변화 없음), 파일이 오면 두 곳의 목록에
+`"QUICK_EXIT_LEGENDARY"` 같은 키만 추가하고 파일을 정해진 이름으로
+`incidents/card_ready/`에 넣으면 바로 반영됨 — 그 외 코드 변경 불필요.
+
+### 참고 — 이전 요청 버전들(전부 이 항목으로 통합됨)
+처음엔 overlay 9종만 `scene` 5종처럼 배경을 채워 넣는 정도로 요청했었음 —
+코드로 먼저 완화(v0.29 배경 합성, v0.30 캐릭터 크롭 확대)해봤지만 감독
+판단으로는 부족했고, "AI틱스럽다"는 더 근본적인 지적 → 12종 전체 재작업으로
+확대 → HIDDEN 2종 포함 + 등급별 4배수로 다시 확대. 세 코드 변경(overlay
+배경 합성, `overlay-fill` 크롭, 등급별 변형 인프라)은 이번 재작업 회신이
+오면 필요 없어지거나(앞 둘) 실제로 쓰이게 됨(뒤 하나).
 
 ---
 현재 앱 자체 이슈 트래킹은 `docs/OPEN_ISSUES_AND_NEXT.md` 참고.
