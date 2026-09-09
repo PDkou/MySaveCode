@@ -8,14 +8,6 @@ public class ReminderReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context c, Intent source) {
         String language = c.getSharedPreferences("hello_today_preferences", Context.MODE_PRIVATE).getString("language", "en");
         long personId = source.getLongExtra("personId", -1L);
-        if (personId >= 0L) ReminderScheduler.markDelivered(c, personId);
-        String channel = "gentle_reminders";
-        NotificationManager nm = (NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel nc = new NotificationChannel(channel, text(language, "Contact reminders", "連絡リマインダー", "연락 알림"), NotificationManager.IMPORTANCE_DEFAULT);
-            nc.setDescription(text(language, "Reminders for people you want to contact", "連絡したい相手の通知", "등록한 사람의 연락 시기를 알려줍니다"));
-            nm.createNotificationChannel(nc);
-        }
         String name = source.getStringExtra("name");
         int interval = source.getIntExtra("interval", 7);
         int notifyHour = source.getIntExtra("notifyHour", 10);
@@ -24,6 +16,28 @@ public class ReminderReceiver extends BroadcastReceiver {
         int minDays = source.getIntExtra("minDays", 14);
         int maxDays = source.getIntExtra("maxDays", 28);
         boolean isTest = personId == ReminderScheduler.TEST_REMINDER_ID;
+        // A dismissed/ignored notification used to just delete the pending
+        // reminder record with nothing re-armed, so a person who never got
+        // acted on fell silent forever -- the app's whole pitch is a
+        // reminder that comes back, not a one-shot ping. Re-arm a same-time-
+        // tomorrow follow-up instead (identical to the "내일 다시"/Tomorrow
+        // action) so it keeps nagging daily until the user actually acts;
+        // completing or snoozing from the notification/app overwrites this
+        // pending alarm (same requestCode) the normal way, so there's no
+        // double-notify once they do. Test reminders are exempt -- a
+        // one-off connectivity check shouldn't turn into a recurring alarm.
+        if (personId >= 0L && !isTest) {
+            ReminderScheduler.snoozeOneDay(c, personId, name, interval, notifyHour, notifyMinute, reminderMode, minDays, maxDays);
+        } else if (personId >= 0L) {
+            ReminderScheduler.markDelivered(c, personId);
+        }
+        String channel = "gentle_reminders";
+        NotificationManager nm = (NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel nc = new NotificationChannel(channel, text(language, "Contact reminders", "連絡リマインダー", "연락 알림"), NotificationManager.IMPORTANCE_DEFAULT);
+            nc.setDescription(text(language, "Reminders for people you want to contact", "連絡したい相手の通知", "등록한 사람의 연락 시기를 알려줍니다"));
+            nm.createNotificationChannel(nc);
+        }
         int notificationId = (int) (personId & 0x7fffffff);
         // getLaunchIntentForPackage() can return null in rare device states
         // (e.g. the launcher activity being disabled/mid-replace); falling
