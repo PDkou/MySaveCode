@@ -527,3 +527,83 @@ CSS 레이아웃 문제인 줄 알았는데, 파일을 직접 열어보니 `logo
 경로(등급 6종 × 포맷 2 + common × 포맷 2)가 실제 asset 디렉터리에 전부
 존재하는지도 스크립트로 확인. Kotlin 괄호 균형 재확인(모두 일치). 실기기
 Canvas 렌더링 확인은 이번에도 필요.
+
+## v0.23 — 최종 비주얼 에셋 팩 통합: 사건별 전용 일러스트 14종 + 등급 알약 뱃지 + 상태 아트
+`docs/UI_VISUAL_DIRECTION_REQUEST.md`(목업 3장 기준 격차 분석)에 대한
+디자인팀 정식 회신 — `openedagainfinalvisualassets20260909` 4-part zip
+(전체 매니페스트: `art/handoff/2026-09-09-final-visual-assets/`). "지금
+작업하고 있어" 이후 받은 실제 결과물이며, 캐릭터/props/frame/ui 아이콘(라벨
+없는 버전)/공유배경/로고는 바이트 단위로 v0.22까지 있던 것과 동일함을 직접
+diff로 확인(= 그대로 캐리포워드, 재작업 불필요) — 진짜 새 콘텐츠만 골라서
+반영:
+
+- **사건별 전용 일러스트 14종** (`incidents/card_ready/incident_*.png`,
+  1200×675): `IncidentType` 14종이 캐릭터 포즈 6~7종을 공유하던 것을
+  전부 대체. 각 파일은 매니페스트의 `render_mode`가 `overlay`(투명 배경
+  위 캐릭터+소품 구성, 기존 방 사진 위에 얹는 용도) 또는
+  `scene`(캐릭터까지 포함된 완성된 배경, 그 자체로 전체 배경) 중 하나 —
+  `index.html`의 `incidentVisual()`이 이제 `[art, fallbackBg, mode]` 3튜플을
+  반환하고 `card()`/`archive()`가 모드에 따라 분기: overlay는 기존처럼
+  방/도시 배경 위에 일러스트를 얹고, scene은 일러스트 자체를
+  `.scene`(또는 `.archive-visual`)의 배경으로 직접 사용(캐릭터 오버레이
+  없음, 코너의 이모지 장식도 `scene-illustrated` 클래스로 숨김 처리).
+- **`ShareCardRenderer.kt`도 같은 14개 파일로 교체**
+  (`characterAsset()`→`incidentIllustrationAsset()`). 다만 첫 렌더링에서
+  실제 문제 발견: 공유카드의 캐릭터 박스는 세로로 긴(~0.7 비율) 모양인데
+  일러스트는 전부 가로로 넓음(~1.78 비율, 1200×675/1672×941) — 그냥
+  `drawContain`하면 캔버스 폭 기준으로 축소되면서 `overlay` 이미지는(투명
+  여백이 넓어서) 실제 캐릭터가 아주 작게 나오고, `scene` 이미지는 박스
+  세로 공간의 대부분이 빈 채로 남았음(Python/Pillow로 실제 자산 그대로
+  재현해서 확인). 수정: `overlay`는 알파 채널 기준으로 실제 그려진 픽셀의
+  바운딩 박스만 잘라낸(`opaqueBounds()`, 투명 여백만 제거하고 실제 그림은
+  전혀 자르지 않음) 뒤 `drawContain`; `scene`은 투명 여백이 없는 완성된
+  배경이라(= index.html의 `background-size:cover`와 동일 취급)
+  `drawCover`로 박스를 꽉 채우도록 크롭. 14개 전부 300×420 박스 기준으로
+  다시 렌더링해서 크롭 후에도 주요 피사체가 잘리지 않는지 눈으로 확인.
+- **등급 뱃지를 원형 PNG에서 CSS 알약(pill)+아이콘으로 교체**
+  (`rarity_symbols/rarity_*.png`, 6종: 발바닥/달/별/왕관/물음표 아이콘).
+  디자인팀의 명시적 요청("Build pill background/label in CSS/Canvas; do
+  not bake the old round badge into the pill")에 따라, 이미 정의돼 있었지만
+  실제로는 안 쓰이고 있던 `.rarity` CSS 클래스(핑크색 배경+텍스트, 등급별
+  `--border`/`--badgeText` 변수까지 이미 준비돼 있었음)를 되살려서
+  `rarityBadge()`가 `<img class="rarity-img">` 대신
+  `<span class="rarity"><img class="rarity-symbol">라벨</span>`을 반환하도록
+  교체. `HIDDEN.opal`(오팔/DREAM 계열, 옅은 배경)에 `--badgeText`가
+  정의돼 있지 않아 흰 텍스트가 옅은 배경 위에서 거의 안 보이던 대비 문제도
+  같이 발견해서 수정. `rarity_hidden_01/02`의 방향은
+  `frameAsset()`(카드 프레임)과 같은 방향(hidden_01=짙은 어노말리,
+  hidden_02=옅은 오팔) — v0.22의 공유카드 **배경** 팩과는 반대 방향이니
+  섞어 쓰지 않도록 각 자산군마다 프리뷰 시트로 직접 확인해서 매핑.
+- **빈 상태/잠금 카드 아트** (`states/empty_state.png`,
+  `states/locked_card.png`): "오늘의 사건" 탭에 사건이 없을 때의 빈 상태
+  문구에 캐릭터 일러스트를 추가(`.empty` CSS를 flex 레이아웃으로 변경).
+  보관함의 잠긴(미발견) 슬롯도 빈 칸 대신 자물쇠+발바닥 카드 아트로 표시.
+- **보류(이번엔 반영 안 함, 자산만 받아둠)**: 온보딩 화면 2종×KO/JP
+  (`onboarding/{ko,jp}/onboarding_0{1,2}_*.png`)과 라벨 있는 UI 아이콘
+  20종(`ui/icons/labeled/{ko,jp}/`, `ui/labels/{ko,jp}.json`)은 자산만
+  `app/src/main/assets/visual/`에 복사해두고 코드 연결은 다음 작업으로
+  미룸 — 매니페스트 자체가 "Onboarding images are full-screen localized
+  compositions... implement touch controls in code rather than relying on
+  rasterized button artwork"라고 명시했는데, 이 앱엔 애초에 온보딩 플로우
+  자체가 없어서(권한 요청 화면이 `render()` 안에 인라인으로만 있음) 이건
+  순수 자산 교체가 아니라 새 기능 구현(화면 전환, 버튼 히트 영역, 언어별
+  이미지 전환)이 필요해서 별도 커밋으로 분리하는 게 맞다고 판단. 라벨
+  아이콘도 현재 탭바/헤더가 텍스트 기반이라 아이콘 기반으로 바꾸려면
+  구조 변경이 필요 — 같은 이유로 분리.
+- 런처 아이콘은 매니페스트가 "NOT FINAL — retain project current icon"이라고
+  명시했으므로 손대지 않음.
+- `source_master/`(원본 대용량 마스터 파일, 파트당 최대 17MB대)는 앱에서
+  전혀 쓰지 않고 디자인팀 내부 수정용이라 저장소에 커밋하지 않음 — 대신
+  매니페스트/QA 리포트/READ ME만 `art/handoff/2026-09-09-final-visual-assets/`에
+  보관.
+
+**검증**: 실제 `index.html`을 Playwright로 렌더링 — "사건"/"보관함" 탭,
+카드 상세 모달, KO→JP 언어 전환까지 전부 `document.images`에 깨진 이미지
+0개 확인. 새 등급 알약 뱃지가 6개 등급(HIDDEN 01/02 포함) 전부 적절한
+배경색+대비로 렌더링되는 것을 스크린샷으로 확인. `ShareCardRenderer.kt`는
+Python/Pillow로 실제 프레임+배경+새 일러스트 조합을 재현해서 스퀘어/스토리,
+overlay/scene 각각 크롭 후에도 캐릭터가 박스 안에 적절한 크기로 들어오는
+것을 확인(수정 전: overlay는 캐릭터가 콩알만 하게, scene은 박스 대부분이
+빈 배경으로 나오는 버그를 먼저 재현하고 나서 고침). 14개 일러스트 전체를
+한 번에 렌더링한 대조 시트로 크롭 후 주요 피사체가 프레임을 벗어나지 않는지
+전수 확인. Kotlin 괄호/파운드 균형 재확인.

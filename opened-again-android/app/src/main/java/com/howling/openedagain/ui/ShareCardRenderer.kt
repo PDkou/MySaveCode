@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.RectF
 import android.net.Uri
 import android.provider.MediaStore
@@ -169,9 +170,32 @@ class ShareCardRenderer(private val context: Context) {
         // MONI, posed to match the incident (mirrors index.html's
         // incidentVisual() map), bottom-anchored and centered in its box --
         // same as the web card's `.scene{align-items:flex-end}`.
-        assetBitmap(characterAsset(incident.type))?.let { moni ->
+        // v0.23: the sceneBox here is portrait (~0.7 aspect, tuned for the
+        // old square-ish character cutouts) but every incident illustration
+        // is landscape (1200x675 or 1672x941, ~1.78 aspect) -- a naive
+        // drawContain() shrinks the WHOLE canvas to fit the box's width,
+        // and 'overlay' illustrations only use a small centered fraction of
+        // that canvas (the rest is transparent padding meant for a much
+        // wider box in index.html), so the actual character ended up
+        // tiny. Fixed per render_mode (see incidentIllustrationAsset()'s
+        // comment): 'overlay' art is trimmed to its opaque pixel bounds
+        // first (drops the wasted transparent margin, never crops real
+        // content) then drawContain-ed; 'scene' art has no transparent
+        // margin to trim (it's a full painted background, same as
+        // index.html's background-size:cover treatment for scene mode), so
+        // it's drawCover-ed instead -- cropped to fill the box completely,
+        // verified against several scene illustrations that the centered
+        // crop keeps the main subject in frame.
+        assetBitmap(incidentIllustrationAsset(incident.type))?.let { art ->
             val sceneBox = RectF(sceneLeft, contentTop, rect.right - 28f, footerTop)
-            drawContain(c, moni, sceneBox, paint)
+            if (isSceneIllustration(incident.type)) {
+                drawCover(c, art, sceneBox, paint)
+            } else {
+                val trimmed = opaqueBounds(art)?.let { b ->
+                    Bitmap.createBitmap(art, b.left, b.top, b.width(), b.height())
+                } ?: art
+                drawContain(c, trimmed, sceneBox, paint)
+            }
         }
 
         paint.isFakeBoldText = true; paint.textSize = 38f; paint.color = p.title
@@ -317,14 +341,63 @@ class ShareCardRenderer(private val context: Context) {
     // (old exp_suspicious.png is gone); moni_sit_phone.png/moni_sleep.png
     // were dropped for good (source-sheet contamination found during the
     // design pipeline's re-crop pass, see docs/DEVELOPMENT_HISTORY.md v0.14).
-    private fun characterAsset(type: IncidentType): String = when (type) {
-        IncidentType.QUICK_EXIT -> "character/expressions/exp_side_eye_phone.png"
-        IncidentType.RETURN_TO_START -> "character/expressions/exp_thinking_phone.png"
-        IncidentType.REENTRY, IncidentType.REGULAR, IncidentType.FIRST_CONTACT, IncidentType.HUNDRED_VISITS -> "character/basic/moni_phone.png"
-        IncidentType.PATROL, IncidentType.APP_WANDERING, IncidentType.DIGITAL_LOST -> "character/basic/moni_magnifier.png"
-        IncidentType.ESCAPE_FAILED -> "character/basic/moni_under_blanket_phone.png"
-        IncidentType.NIGHT_PATROL, IncidentType.DAWN_SURVIVOR, IncidentType.HIDDEN_NIGHT_ACTIVITY -> "character/expressions/exp_sleepy_phone.png"
-        IncidentType.HIDDEN_LOOP -> "character/expressions/exp_side_eye_phone.png"
+    // v0.23: replaced the 6-7 shared generic character poses with the 14
+    // dedicated per-IncidentType illustrations from the final visual asset
+    // handoff (docs/UI_VISUAL_DIRECTION_REQUEST.md gap #1, resolved -- same
+    // files index.html's incidentVisual() now uses). Unlike index.html,
+    // which has a separate background layer to distinguish 'overlay' vs
+    // 'scene' render_mode (see art/handoff/2026-09-09-final-visual-assets/
+    // ASSET_MANIFEST.json), this renderer has only the one scene box, so
+    // both modes are drawn the same way here via drawContain() -- there's
+    // no second layer for a 'scene' illustration to be composited onto or
+    // instead of.
+    private fun incidentIllustrationAsset(type: IncidentType): String = when (type) {
+        IncidentType.QUICK_EXIT -> "incidents/card_ready/incident_quick_exit.png"
+        IncidentType.REENTRY -> "incidents/card_ready/incident_reentry.png"
+        IncidentType.REGULAR -> "incidents/card_ready/incident_regular.png"
+        IncidentType.RETURN_TO_START -> "incidents/card_ready/incident_return_to_start.png"
+        IncidentType.PATROL -> "incidents/card_ready/incident_patrol.png"
+        IncidentType.ESCAPE_FAILED -> "incidents/card_ready/incident_escape_failed.png"
+        IncidentType.FIRST_CONTACT -> "incidents/card_ready/incident_first_contact.png"
+        IncidentType.NIGHT_PATROL -> "incidents/card_ready/incident_night_patrol.png"
+        IncidentType.APP_WANDERING -> "incidents/card_ready/incident_app_wandering.png"
+        IncidentType.HUNDRED_VISITS -> "incidents/card_ready/incident_hundred_visits.png"
+        IncidentType.DIGITAL_LOST -> "incidents/card_ready/incident_digital_lost.png"
+        IncidentType.DAWN_SURVIVOR -> "incidents/card_ready/incident_dawn_survivor.png"
+        IncidentType.HIDDEN_LOOP -> "incidents/card_ready/incident_hidden_loop.png"
+        IncidentType.HIDDEN_NIGHT_ACTIVITY -> "incidents/card_ready/incident_hidden_night_activity.png"
+    }
+
+    // Mirrors ASSET_MANIFEST.json's render_mode field (see
+    // art/handoff/2026-09-09-final-visual-assets/docs/ASSET_MANIFEST.json
+    // and index.html's incidentVisual(), which encodes the same data) --
+    // 'scene' illustrations are a complete painted background with no
+    // transparent margin, 'overlay' ones are a transparent character/prop
+    // composition meant to sit over something else.
+    private fun isSceneIllustration(type: IncidentType): Boolean = when (type) {
+        IncidentType.REGULAR, IncidentType.APP_WANDERING, IncidentType.DAWN_SURVIVOR,
+        IncidentType.HIDDEN_LOOP, IncidentType.HIDDEN_NIGHT_ACTIVITY -> true
+        else -> false
+    }
+
+    /** Returns the smallest rect enclosing every non-fully-transparent pixel in [bmp], or null if it's all transparent. */
+    private fun opaqueBounds(bmp: Bitmap): Rect? {
+        val w = bmp.width; val h = bmp.height
+        val pixels = IntArray(w * h)
+        bmp.getPixels(pixels, 0, w, 0, 0, w, h)
+        var minX = w; var minY = h; var maxX = -1; var maxY = -1
+        for (y in 0 until h) {
+            val row = y * w
+            for (x in 0 until w) {
+                if ((pixels[row + x] ushr 24) > 10) {
+                    if (x < minX) minX = x
+                    if (x > maxX) maxX = x
+                    if (y < minY) minY = y
+                    if (y > maxY) maxY = y
+                }
+            }
+        }
+        return if (maxX >= minX && maxY >= minY) Rect(minX, minY, maxX + 1, maxY + 1) else null
     }
 
     // -- drawing helpers --------------------------------------------------

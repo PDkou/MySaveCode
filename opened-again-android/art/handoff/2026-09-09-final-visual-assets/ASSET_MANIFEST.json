@@ -1,0 +1,219 @@
+{
+  "package": "Opened Again final visual assets",
+  "date": "2026-09-09",
+  "incidents": {
+    "QUICK_EXIT": {
+      "file": "runtime/incidents/card_ready/incident_quick_exit.png",
+      "master": "source_master/incidents/incident_quick_exit_master.png",
+      "render_mode": "overlay",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "REENTRY": {
+      "file": "runtime/incidents/card_ready/incident_reentry.png",
+      "master": "source_master/incidents/incident_reentry_master.png",
+      "render_mode": "overlay",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "REGULAR": {
+      "file": "runtime/incidents/card_ready/incident_regular.png",
+      "master": "source_master/incidents/incident_regular_master.png",
+      "render_mode": "scene",
+      "source_size": [
+        1672,
+        941
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "RETURN_TO_START": {
+      "file": "runtime/incidents/card_ready/incident_return_to_start.png",
+      "master": "source_master/incidents/incident_return_to_start_master.png",
+      "render_mode": "overlay",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "PATROL": {
+      "file": "runtime/incidents/card_ready/incident_patrol.png",
+      "master": "source_master/incidents/incident_patrol_master.png",
+      "render_mode": "overlay",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "ESCAPE_FAILED": {
+      "file": "runtime/incidents/card_ready/incident_escape_failed.png",
+      "master": "source_master/incidents/incident_escape_failed_master.png",
+      "render_mode": "overlay",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "FIRST_CONTACT": {
+      "file": "runtime/incidents/card_ready/incident_first_contact.png",
+      "master": "source_master/incidents/incident_first_contact_master.png",
+      "render_mode": "overlay",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "NIGHT_PATROL": {
+      "file": "runtime/incidents/card_ready/incident_night_patrol.png",
+      "master": "source_master/incidents/incident_night_patrol_master.png",
+      "render_mode": "overlay",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "APP_WANDERING": {
+      "file": "runtime/incidents/card_ready/incident_app_wandering.png",
+      "master": "source_master/incidents/incident_app_wandering_master.png",
+      "render_mode": "scene",
+      "source_size": [
+        1672,
+        941
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "HUNDRED_VISITS": {
+      "file": "runtime/incidents/card_ready/incident_hundred_visits.png",
+      "master": "source_master/incidents/incident_hundred_visits_master.png",
+      "render_mode": "overlay",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "DIGITAL_LOST": {
+      "file": "runtime/incidents/card_ready/incident_digital_lost.png",
+      "master": "source_master/incidents/incident_digital_lost_master.png",
+      "render_mode": "overlay",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "DAWN_SURVIVOR": {
+      "file": "runtime/incidents/card_ready/incident_dawn_survivor.png",
+      "master": "source_master/incidents/incident_dawn_survivor_master.png",
+      "render_mode": "scene",
+      "source_size": [
+        1672,
+        941
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "HIDDEN_LOOP": {
+      "file": "runtime/incidents/card_ready/incident_hidden_loop.png",
+      "master": "source_master/incidents/incident_hidden_loop_master.png",
+      "render_mode": "scene",
+      "source_size": [
+        1672,
+        941
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    },
+    "HIDDEN_NIGHT_ACTIVITY": {
+      "file": "runtime/incidents/card_ready/incident_hidden_night_activity.png",
+      "master": "source_master/incidents/incident_hidden_night_activity_master.png",
+      "render_mode": "scene",
+      "source_size": [
+        1672,
+        941
+      ],
+      "runtime_size": [
+        1200,
+        675
+      ]
+    }
+  },
+  "rarity_symbols": {
+    "NORMAL": "runtime/brand/rarity_symbols/rarity_normal.png",
+    "RARE": "runtime/brand/rarity_symbols/rarity_rare.png",
+    "EPIC": "runtime/brand/rarity_symbols/rarity_epic.png",
+    "LEGENDARY": "runtime/brand/rarity_symbols/rarity_legendary.png",
+    "HIDDEN_01": "runtime/brand/rarity_symbols/rarity_hidden_01.png",
+    "HIDDEN_02": "runtime/brand/rarity_symbols/rarity_hidden_02.png"
+  },
+  "onboarding": {
+    "ko": [
+      "runtime/onboarding/ko/onboarding_01_ko.png",
+      "runtime/onboarding/ko/onboarding_02_ko.png"
+    ],
+    "jp": [
+      "runtime/onboarding/jp/onboarding_01_jp.png",
+      "runtime/onboarding/jp/onboarding_02_jp.png"
+    ]
+  },
+  "states": {
+    "empty": "runtime/states/empty_state.png",
+    "locked": "runtime/states/locked_card.png"
+  },
+  "share_backgrounds": {
+    "square": "runtime/share/backgrounds/square",
+    "vertical": "runtime/share/backgrounds/vertical"
+  },
+  "logos": {
+    "ko": "runtime/brand/logo/logo_ko.png",
+    "jp": "runtime/brand/logo/logo_jp.png"
+  },
+  "app_icon_status": "NOT FINAL — retain project current icon until icon redesign is approved."
+}
