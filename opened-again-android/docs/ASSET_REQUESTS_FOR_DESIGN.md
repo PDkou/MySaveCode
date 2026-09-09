@@ -7,9 +7,10 @@
 > 회신받아 v0.22에서 해결 — `docs/DEVELOPMENT_HISTORY.md` v0.22 참고.**
 > **5번(로고 발바닥 크롭)은 v0.21에서 1차 반영했다가, 같은 v0.19 팩에 들어있던
 > 레거시 캔버스 크기 재출력본(감독이 최종 확정한 파일)으로 v0.22에서 다시 교체 —
-> 디자인은 동일, 캔버스 크기만 원래 규격으로 복귀.** **6번(사건 일러스트 9종
-> scene 스타일 재작업, 2026-09-09 감독 확정)은 이제 막 요청 — 아직 디자인팀 회신
-> 전.**
+> 디자인은 동일, 캔버스 크기만 원래 규격으로 복귀.** **6번(사건 일러스트
+> 재작업, 2026-09-09 감독 확정)은 처음엔 overlay 9종에 배경만 채우는
+> 요청이었다가, "AI틱스럽다"는 지적으로 범위가 확대돼서 HIDDEN 2종을 뺀 12종
+> 전체를 새로 그리는 요청으로 바뀜 — 아직 디자인팀 회신 전.**
 
 디자인/아트 파이프라인 쪽에 그대로 전달할 수 있는 요청 목록. 코드로는 해결 불가능한
 원본 파일 문제만 정리했음 (코드 버그는 별도로 이미 다 고쳐서 여기 없음).
@@ -146,59 +147,59 @@ LEGENDARY/HIDDEN_01/HIDDEN_02) + `common` 폴백까지 정사각/스토리 각 7
 동일, 캔버스 크기만 원래 규격 복귀). 자세한 내용은 `docs/DEVELOPMENT_HISTORY.md`
 v0.21/v0.22 참고.
 
-## 6. [감독 확정 — 디자인팀에 재요청] 사건 일러스트 9종을 "scene" 스타일 완성
-배경으로 다시 그려주세요
+## 6. [감독 확정 — 디자인팀에 재요청, 범위 확대됨] 사건 일러스트 12종 전체 새로 그리기
+(AI스러운 느낌 탈피)
 
 ### 배경
-v0.23에서 받은 사건별 전용 일러스트 14종(`incidents/card_ready/incident_*.png`,
-1200x675)은 매니페스트 자체가 두 가지 합성 모드로 나눠서 회신됨:
+처음엔 overlay 9종에 배경만 채워 넣는 정도로 요청했으나(아래 "요청 처음
+버전" 참고), 감독이 이번엔 범위를 넓혀서 확정: **HIDDEN 2종
+(HIDDEN_LOOP/HIDDEN_NIGHT_ACTIVITY)을 뺀 나머지 12종 전부**를 배경만
+추가하는 게 아니라 **처음부터 다시 그려달라는 요청**. 이유: "뭔가
+AI틱스러워서" — 지금 세트가 톤/터치가 균일하고 개성이 약해서 AI로
+대량 생성한 티가 난다는 지적. 단순 구도/배경 보완이 아니라 **그림체
+자체를 더 의도적이고 손맛 있게** 다시 잡아달라는 요청임.
 
-- **`scene`(5종)**: REGULAR/APP_WANDERING/DAWN_SURVIVOR/HIDDEN_LOOP/
-  HIDDEN_NIGHT_ACTIVITY — 배경까지 통째로 그려진 완성된 한 장의 일러스트.
-- **`overlay`(9종)**: QUICK_EXIT/REENTRY/RETURN_TO_START/PATROL/
-  ESCAPE_FAILED/FIRST_CONTACT/NIGHT_PATROL/HUNDRED_VISITS/DIGITAL_LOST —
-  캐릭터+소품만 그려져 있고 나머지는 투명 배경(원래 index.html의 "사건" 탭
-  카드처럼, 기존 방/도시 사진 위에 얹어 쓰는 용도로 설계됨).
+### 대상 12종 (한국어/일본어/영어, 기존 render_mode)
+| IncidentType | 한국어 | 일본어 | 영어 | 기존 모드 |
+|---|---|---|---|---|
+| QUICK_EXIT | 5초컷 | 5秒撤退 | 5-second exit | overlay |
+| REENTRY | 재입장 사건 | 出戻り事件 | Re-entry | overlay |
+| REGULAR | 단골손님 | 常連客 | Regular | scene |
+| RETURN_TO_START | 원점 회귀 | 振り出しに戻る | Back to start | overlay |
+| PATROL | 목적불명 순찰 | 目的地不明 | Aimless patrol | overlay |
+| ESCAPE_FAILED | 탈출 실패 | 脱出失敗 | Escape failed | overlay |
+| FIRST_CONTACT | 오늘의 첫 상대 | 本日の第一声 | First contact | overlay |
+| NIGHT_PATROL | 심야 순찰 | 深夜巡回 | Night patrol | overlay |
+| APP_WANDERING | 앱 방황 | アプリ徘徊 | App wandering | scene |
+| HUNDRED_VISITS | 100회 방문 | 100回訪問 | 100 visits | overlay |
+| DIGITAL_LOST | 디지털 미아 | デジタル迷子 | Digital lost | overlay |
+| DAWN_SURVIVOR | 새벽 생존자 | 夜明けの生存者 | Dawn survivor | scene |
 
-문제는 **보관함(사건 컬렉션) 화면**에서 이 둘의 완성도 차이가 그대로
-드러남 — `scene` 5종은 한 장의 완성된 그림이라 보관함 타일에서도 근사하게
-나오는데, `overlay` 9종은 배경 사진을 뒤에 깔아줘도(v0.29) 캐릭터를
-확대/크롭해서 채워줘도(v0.30) 결국 "사진 위에 스티커 하나 붙여놓은" 느낌을
-벗어나지 못함. 감독 확인: 코드로 크롭/배경을 아무리 손봐도 "제대로 된
-일러스트가 아니면 재미없다"는 게 최종 판단 — 근본적으로 9종 다
-`scene`처럼 완성된 배경 일러스트로 다시 그려야 하는 상황.
+**제외**: HIDDEN_LOOP(무한루프), HIDDEN_NIGHT_ACTIVITY(미확인 야간 활동) —
+이 2종은 이번 재작업 대상 아님(감독이 별도 언급 없었음 — 필요하면 이후
+추가 확인).
 
 ### 요청 스펙
-- **대상 9종** (한국어/일본어/영어, 사건 성격):
-  | IncidentType | 한국어 | 일본어 | 영어 |
-  |---|---|---|---|
-  | QUICK_EXIT | 5초컷 | 5秒撤退 | 5-second exit |
-  | REENTRY | 재입장 사건 | 出戻り事件 | Re-entry |
-  | RETURN_TO_START | 원점 회귀 | 振り出しに戻る | Back to start |
-  | PATROL | 목적불명 순찰 | 目的地不明 | Aimless patrol |
-  | ESCAPE_FAILED | 탈출 실패 | 脱出失敗 | Escape failed |
-  | FIRST_CONTACT | 오늘의 첫 상대 | 本日の第一声 | First contact |
-  | NIGHT_PATROL | 심야 순찰 | 深夜巡回 | Night patrol |
-  | HUNDRED_VISITS | 100회 방문 | 100回訪問 | 100 visits |
-  | DIGITAL_LOST | 디지털 미아 | デジタル迷子 | Digital lost |
-- **사이즈**: 기존과 동일하게 1200x675, 캐릭터+소품만이 아니라 배경까지
-  통째로 그려진 한 장의 완성 일러스트로 — 지금 있는 `scene` 5종
-  (REGULAR/APP_WANDERING/DAWN_SURVIVOR/HIDDEN_LOOP/HIDDEN_NIGHT_ACTIVITY,
-  `incidents/card_ready/incident_*.png`)이 참고 기준.
-- **구도/내용**: 지금 overlay 9종의 캐릭터 포즈/소품(시계, 문, 스마트폰,
-  이불, 앱 아이콘들 등)은 이미 사건 내용과 잘 맞으니 그대로 살리고,
-  배경(방/거실/야외 등 사건 성격에 맞는 장면)만 새로 채워 넣는 방향 추천 —
-  완전히 새로 디자인할 필요 없이 지금 캐릭터 구도에 배경을 더하는 정도로도
-  충분할 수 있음(디자인팀 판단에 맡김).
-- **캐릭터/프레임 없이 배경만은 아님**: 이번엔 반대로 캐릭터가 이미 있는
-  상태에서 배경만 채우는 것 — 4번 항목(공유카드 배경)과 헷갈리지 않게.
+- **사이즈**: 기존과 동일 1200x675, 캐릭터+배경까지 전부 포함된 완성
+  일러스트 한 장(예전 overlay처럼 투명 배경에 캐릭터만 있는 방식 아님).
+- **스타일 방향**: 톤/구도를 그대로 복제하지 말고, 감독이 세션 초반에
+  직접 골라서 "이런 느낌을 원했다"고 확정했던 목업
+  (`art/reference/target-visual-direction/01_card_collection_sheet.png`)을
+  참고 기준으로 삼아 손그림 느낌/캐릭터별 표정과 구도의 다양성을 살려줄 것 —
+  같은 캐릭터 포즈가 소품만 바뀐 채 반복되는 인상을 피해야 함.
+- **내용/설정**: 각 사건 성격(시계=5초컷, 문=재입장, 이불=탈출 실패,
+  앱 아이콘들=디지털 미아 등)은 기존 구도가 이미 잘 맞았던 부분이라 참고
+  삼아도 되지만, 그대로 베끼지 말고 다시 그리는 김에 각 장면이 더 뚜렷하게
+  구분되도록 자유롭게 재해석해도 좋음.
 
-### 참고 — 코드로 이미 시도한 임시 대응
-`index.html`의 archive() 보관함 렌더링에서 v0.29(overlay 타입에 방/도시
-사진 배경 추가), v0.30(`object-fit:cover`로 캐릭터 확대/중앙 크롭)까지
-순차로 개선했지만 감독 판단으로는 부족 — 이 요청이 정식 반영되면 두 코드
-변경 모두 자연스럽게 무의미해짐(scene 타입과 동일하게 렌더링되므로
-`overlay-fill`/배경 합성 로직 자체를 걷어낼 수 있음).
+### 참고 — 요청 처음 버전(이제 이 항목으로 대체됨)
+처음엔 overlay 9종(QUICK_EXIT/REENTRY/RETURN_TO_START/PATROL/
+ESCAPE_FAILED/FIRST_CONTACT/NIGHT_PATROL/HUNDRED_VISITS/DIGITAL_LOST)만
+`scene` 5종처럼 배경을 채워 넣는 정도로 요청했었음 — 코드로 먼저
+완화(v0.29 배경 합성, v0.30 캐릭터 크롭 확대)해봤지만 감독 판단으로는
+부족했고, 곧이어 "AI틱스럽다"는 더 근본적인 지적과 함께 범위가 12종 전체
+재작업으로 확대됨. 두 코드 변경(overlay 배경 합성, `overlay-fill` 크롭)은
+이번 재작업 회신이 오면 자연스럽게 무의미해짐.
 
 ---
 현재 앱 자체 이슈 트래킹은 `docs/OPEN_ISSUES_AND_NEXT.md` 참고.
