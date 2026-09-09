@@ -126,7 +126,18 @@ class ShareCardRenderer(private val context: Context) {
         // ~15-17% of the card's height across every rarity (same template,
         // recolored) -- 0.12 sat text right on top of them. 0.22 clears
         // both with a real margin.
-        val pad = 56f
+        // pad was a fixed 56f (8.1% of this card's width) from the very
+        // first version of this renderer, and every fix since v0.15 tuned
+        // contentTop/footerTop/punchWidth around it without ever
+        // rechecking it against the frame art itself. Pixel-measuring the
+        // frame's LEFT border (where the border stroke ends and the actual
+        // cream/gold interior begins, checked on both frame_normal.png and
+        // frame_legendary.png -- same template, consistent result) puts
+        // that at ~13.5% of the card's width, not 8.1% -- every text
+        // element anchored at `rect.left + pad` (title, detail, punchline,
+        // logo) has been starting slightly on top of the border stripe
+        // instead of clearly inside it. 14% clears it with a small margin.
+        val pad = rect.width() * 0.14f
         val contentTop = rect.top + rect.height() * 0.22f
         // footerTop (MONI's scene-box bottom) used to be a fixed
         // `rect.bottom - 120f`, which put MONI's bottom-anchored, mostly
@@ -177,8 +188,10 @@ class ShareCardRenderer(private val context: Context) {
         // real margin at every row it can reach, verified against all 14
         // punch{} strings in index.html (3 lines worst-case at this width
         // and the smaller 38px size below -- footerTop's 34% reserve above
-        // has room for exactly that).
-        val punchWidth = rect.width() * 0.55f
+        // has room for exactly that). Defined relative to the corrected
+        // `pad` above (62% right edge minus pad) so fixing the left inset
+        // didn't silently push this back into the magnifier's reach.
+        val punchWidth = rect.width() * 0.62f - pad
         // Starts right below footerTop (MONI's box bottom) instead of a
         // fixed rect.bottom-165f -- that fixed offset was what let it land
         // inside MONI's vertical span in the first place. drawWrapped
