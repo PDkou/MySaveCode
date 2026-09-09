@@ -1,9 +1,11 @@
 # ASSET_REQUESTS_FOR_DESIGN
 
-> **[1~3번 해결됨 — v0.14]** `openedagainassetsv0.13currentclean.zip` 팩으로 회신 받아
-> 반영 완료. 내용은 `docs/DEVELOPMENT_HISTORY.md` v0.14, 정책은 `art/CURRENT_ASSET_POLICY.md`
-> 참고. **4번은 v0.17~v0.18에서 코드로 이음매 문제 자체는 우회했지만, 감독 확정으로
-> "타일이 아닌 하나의 배경"을 신규 제작 요청하는 것으로 변경됨(진행 중).**
+> **[1~3번, 5번 해결됨 — v0.14, v0.21]** 1~3번은 `openedagainassetsv0.13currentclean.zip`
+> 팩으로 회신 받아 반영 완료(v0.14). 내용은 `docs/DEVELOPMENT_HISTORY.md` v0.14, 정책은
+> `art/CURRENT_ASSET_POLICY.md` 참고. **4번은 v0.17~v0.18에서 코드로 이음매 문제 자체는
+> 우회했지만, 감독 확정으로 "타일이 아닌 하나의 배경"을 신규 제작 요청하는 것으로
+> 변경됨(진행 중, 아직 회신 대기).** **5번(로고 발바닥 크롭)은 `lastgeneratedimages.zip`
+> 재출력본으로 v0.21에서 해결 완료 — `docs/DEVELOPMENT_HISTORY.md` v0.21 참고.**
 
 디자인/아트 파이프라인 쪽에 그대로 전달할 수 있는 요청 목록. 코드로는 해결 불가능한
 원본 파일 문제만 정리했음 (코드 버그는 별도로 이미 다 고쳐서 여기 없음).
@@ -104,7 +106,7 @@
 색과 이미 맞춰져 있고 필요하면 코드에서 바로 조정 가능 — 이 항목은 디자인팀
 요청과 무관함.
 
-## 5. [긴급] `logo/logo_ko.png`, `logo/logo_jp.png` — 발바닥 아이콘이 캔버스 경계에서
+## 5. [해결됨 — v0.21] `logo/logo_ko.png`, `logo/logo_jp.png` — 발바닥 아이콘이 캔버스 경계에서
 잘려서 저장돼 있음
 
 앱 맨 위 헤더(홈 화면 상단 타이틀 배너)에 매번 노출되는 로고 이미지. 실기기
@@ -123,6 +125,11 @@
 아이콘 위치/크롭만 다시 잡으면 됨.
 
 **영향**: 앱을 켤 때마다 홈 화면 맨 위에 항상 보이는 로고라 노출 빈도가 가장 높음.
+
+**해결**: `lastgeneratedimages.zip`으로 재출력본 회신받아 v0.21에 반영. 새 파일
+(둘 다 2172x724)은 네 변 전부 완전 투명 픽셀만 경계에 닿아있어 크롭 결함 해소
+확인, 텍스트 디자인은 동일 배경 위 비교로 그대로임을 확인. 자세한 내용은
+`docs/DEVELOPMENT_HISTORY.md` v0.21 참고.
 
 ---
 현재 앱 자체 이슈 트래킹은 `docs/OPEN_ISSUES_AND_NEXT.md` 참고.
