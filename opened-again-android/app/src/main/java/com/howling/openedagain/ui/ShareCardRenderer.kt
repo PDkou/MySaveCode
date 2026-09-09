@@ -5,11 +5,13 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.Shader
 import android.net.Uri
 import android.provider.MediaStore
 import com.howling.openedagain.core.DetectedIncident
@@ -65,22 +67,30 @@ class ShareCardRenderer(private val context: Context) {
         // a "backdrop" behind our own separately-drawn rarity frame doubled
         // up both the frame and the character in the exported image.
         //
-        // bg_pattern_beige.png (445x535) was tried two ways and failed both:
-        // drawCover() stretched the one copy ~2.4x to cover the 1080px
-        // canvas, blowing up every paw/hat icon past its designed size and
-        // making the card look small next to it; tiling it with a
-        // BitmapShader instead (assuming, from its name, that it was a
-        // seamless repeat) just moved the problem -- the file itself is NOT
-        // a seamless tile (checked directly: its own edges don't match, so
-        // tiling draws a visible grid of seams), and a real export showed
-        // that too. Falling back to a flat fill using the pattern's own
-        // base tone (sampled from its blank areas, no paw/hat pixels) until
-        // design supplies either a real seamless tile or a single
-        // full-canvas backdrop -- flagged in
-        // docs/ASSET_REQUESTS_FOR_DESIGN.md. A flat fill can't itself have
-        // seams and reads as "one background" the way a real device
-        // screenshot showed the tiled version didn't.
-        c.drawColor(Color.rgb(250, 245, 232))
+        // bg_pattern_beige.png (445x535) is NOT a seamless tile -- checked
+        // directly (its own left/right and top/bottom edge pixels don't
+        // match, there's a real brightness gradient across the file) -- so
+        // TileMode.REPEAT drew a visible seam grid on a real device. A flat
+        // fill using the pattern's base tone was tried as a stopgap, but
+        // the director wanted the actual decorative pattern kept, not
+        // replaced with a plain color. TileMode.MIRROR alternates a
+        // horizontally/vertically flipped copy at every repeat -- since a
+        // flipped copy's edge pixels are, by construction, identical to the
+        // original's edge pixels just mirrored, adjacent tiles always match
+        // exactly regardless of whether the source is seamless. Verified
+        // pixel-by-pixel on the real file: every internal and wraparound
+        // boundary matches exactly under this mode, with zero code beyond
+        // picking MIRROR over REPEAT. (A real seamless/full-canvas asset
+        // from design would still be nicer long-term -- still flagged in
+        // docs/ASSET_REQUESTS_FOR_DESIGN.md #4 -- but no longer blocking.)
+        val backdrop = assetBitmap("backgrounds/bg_pattern_beige.png")
+        if (backdrop != null) {
+            paint.shader = BitmapShader(backdrop, Shader.TileMode.MIRROR, Shader.TileMode.MIRROR)
+            c.drawRect(0f, 0f, format.width.toFloat(), format.height.toFloat(), paint)
+            paint.shader = null
+        } else {
+            c.drawColor(Color.rgb(250, 245, 232))
+        }
 
         val margin = 78f
         val outerTop = if (format == Format.STORY) 330f else 110f
@@ -126,10 +136,12 @@ class ShareCardRenderer(private val context: Context) {
         // a real fraction of the card's own height for the punchline+footer
         // strip instead of a fixed pixel count, so MONI's box always ends
         // above it regardless of format (SQUARE vs STORY have very
-        // different absolute heights). 2 lines is the measured worst case
-        // for every punch{} string in index.html at this card's width, so
-        // 28% leaves real margin around a 2-line quote + the footer row.
-        val footerTop = rect.bottom - rect.height() * 0.28f
+        // different absolute heights). 34% leaves room for a 3-line quote
+        // (the measured worst case at the narrower, magnifier-safe width
+        // below) plus the footer row; every character pose used here stays
+        // width-constrained by drawContain even at this shorter box height,
+        // so none of them actually render smaller.
+        val footerTop = rect.bottom - rect.height() * 0.34f
         val leftColRight = rect.left + rect.width() * 0.56f
         val leftTextWidth = leftColRight - (rect.left + pad) - 16f
         val sceneLeft = leftColRight + 24f
@@ -150,22 +162,30 @@ class ShareCardRenderer(private val context: Context) {
             drawContain(c, moni, sceneBox, paint)
         }
 
-        paint.isFakeBoldText = true; paint.textSize = 44f; paint.color = p.title
-        // `rect.width() - pad - 32f` let a wrapped line run out to ~95% of
-        // the card width, but the frame art's visible border on the right
-        // side starts at ~87% (pixel-measured on frame_normal.png) -- a
-        // full-width punchline line was rendering its closing quote mark
-        // past the border, onto the beige backdrop (seen on a real
-        // exported card). rightSafeInset backs the wrap width off to end
-        // inside the border with a real margin.
-        val rightSafeInset = rect.width() * 0.16f
+        paint.isFakeBoldText = true; paint.textSize = 38f; paint.color = p.title
+        // Earlier fixes here (v0.15/v0.16) treated this as "text runs past
+        // the plain border" and just backed the wrap width off the border
+        // edge (~87% of card width). That missed the real obstacle: the
+        // frame's magnifier ornament in the bottom-right corner is much
+        // bigger than the plain border and its left edge sweeps inward as
+        // you go down -- pixel-measured on frame_normal.png at the actual
+        // row band this text occupies (roughly 75-85% down the card), it
+        // intrudes as far as ~64% of the card's width, well short of the
+        // ~87% border-only estimate. A wide punchline line was rendering
+        // straight through it (confirmed via a Chromium re-render of the
+        // real asset). 55% keeps every line clear of the magnifier with
+        // real margin at every row it can reach, verified against all 14
+        // punch{} strings in index.html (3 lines worst-case at this width
+        // and the smaller 38px size below -- footerTop's 34% reserve above
+        // has room for exactly that).
+        val punchWidth = rect.width() * 0.55f
         // Starts right below footerTop (MONI's box bottom) instead of a
         // fixed rect.bottom-165f -- that fixed offset was what let it land
         // inside MONI's vertical span in the first place. drawWrapped
         // returns where its last line actually landed, so the logo/caption
-        // row below can anchor off the real text height (1 or 2 lines)
-        // instead of assuming one line.
-        val punchEndY = drawWrapped(c, "“$punchline”", rect.left + pad, footerTop + 60f, rect.width() - pad - rightSafeInset, 56f, paint)
+        // row below can anchor off the real text height (1-3 lines) instead
+        // of assuming one line.
+        val punchEndY = drawWrapped(c, "“$punchline”", rect.left + pad, footerTop + 50f, punchWidth, 46f, paint)
 
         // Wordmark logo instead of a plain app-name text label, matching the
         // language actually selected in-app (not the device locale) -- text
@@ -182,10 +202,11 @@ class ShareCardRenderer(private val context: Context) {
         paint.isFakeBoldText = false; paint.textSize = 30f; paint.color = p.accent
         paint.textAlign = Paint.Align.RIGHT
         // Anchored at leftColRight, not rect.right - pad: the frame's own
-        // magnifier ornament (bottom-right corner, measured at roughly the
-        // outer 24% x 28% of the card) sat exactly where a corner-pinned
-        // label would go and covered it. leftColRight keeps this label
-        // clear of that ornament across every rarity (same frame template).
+        // magnifier ornament (bottom-right corner -- see punchWidth's
+        // comment above for how far it actually reaches) sat exactly where
+        // a corner-pinned label would go and covered it. leftColRight keeps
+        // this label clear of that ornament across every rarity (same
+        // frame template).
         // captionY (like logoTop) is anchored off the punchline's actual
         // wrapped height rather than a fixed rect.bottom offset -- see
         // punchEndY above.
