@@ -365,3 +365,52 @@ A vertical decorative card frame background, portrait orientation. Bold clean bl
 
 ### HIDDEN
 A vertical decorative card frame background, portrait orientation. Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the overall visual style of the attached reference frame. Deep dark navy night-sky decorative border running along the outer edge with rounded corners and a subtle glowing cyan rim line (NOT bright flat teal), a scattering of tiny star accents confined only to the outer border band and the four corners. A small plain circular notch straddling the top-center edge of the border, left empty. Below that, a horizontal rounded-rectangle header panel area with a soft, plain, semi-translucent dark-navy-tinted glass fill, left empty inside. Below the header, a large plain rounded-rectangle window area with a simple dark, uncluttered background — no character, no scene, left empty for artwork to be added later. Below that, another horizontal rounded-rectangle panel matching the header's soft translucent style, left empty inside. The bottom area of the frame is kept plain and simple, no decoration. Deep navy night-sky palette overall, mysterious and quiet mood rather than loud or bright. Full illustrated background (not a transparent cutout for the whole canvas), no text, no watermark, no logos.
+
+---
+
+## 부록3: RARE/EPIC/LEGENDARY 프레임 재생성 (감독의 "MONI Event Card Layout Guide" 좌표 통일용)
+
+감독이 카드 레이아웃을 픽셀 좌표로 완전히 고정한 스펙 문서("MONI Event Card
+Layout Guide", 896x1318 기준)를 줬고, 이 좌표를 **5개 등급이 전부 동일하게**
+써야 함. 실제로 5장을 그 좌표에 맞춰봤더니 **NORMAL/HIDDEN 프레임은 잘
+맞는데 RARE/EPIC/LEGENDARY는 헤더판/아트창 경계가 그 좌표와 안 맞아서
+제목·통계 텍스트가 프레임 자체의 테두리선과 겹침** — 5장을 GPT로 따로
+생성하면서 내부 여백 비율이 미묘하게 달라진 게 원인. 감독 선택: **이
+3장을 다시 생성**해서 NORMAL/HIDDEN과 완전히 같은 내부 구조를 쓰도록 함.
+
+### 사용 방법 (본문과 동일하되 차이점만)
+- **캐릭터 참고 대신 `cards/frames/NORMAL_frame.png` 1장을 "레이아웃
+  구조" 참고용으로 첨부** — 이 프레임의 헤더판/아트창/정보판/하단 여백
+  위치와 크기를 픽셀 단위로 그대로 복사하고, 색상/장식(테두리 반짝임,
+  코너 장식, 배경 톤)만 등급에 맞게 바꿔달라고 요청.
+- 파일은 `cards/frames/RARE_frame.png` / `EPIC_frame.png` /
+  `LEGENDARY_frame.png`로 저장(기존 파일 덮어쓰기 — 구버전은 안 씀).
+- 세로 896x1318(or 그와 동일한 2:3에 가까운 비율), 배경 있는 완성형
+  이미지, no text, no watermark, no logos.
+- 받으면 실제 좌표를 다시 측정해서(v11 목업처럼) NORMAL/HIDDEN과 오차가
+  없는지 확인 후 반영함.
+
+### 공통 지시문 (아래 3개 프롬프트에 이미 포함됨) — 정확한 내부 좌표
+카드 전체 크기를 100%로 볼 때:
+- 헤더판(등급 라벨 + 제목 자리): 왼쪽 14.5%, 위 14.9%, 폭 70.3%, 높이 6.9%
+  (즉 위에서 14.9%~21.8% 구간)
+- 아트창: 왼쪽 12.6%, 위 21.9%, 폭 75.2%, 높이 46.6% (위에서 21.9%~68.5%
+  구간), 모서리 둥글게
+- 정보판(통계 + 대사 자리): 왼쪽 14.5%, 위 71.7%, 폭 70.3%, 높이 11.0%
+  (위에서 71.7%~82.7% 구간)
+- 하단 여백(케이스 번호 + 로고 자리): 왼쪽 14.5%, 위 83.7%, 폭 70.3%,
+  높이 3.5% (위에서 83.7%~87.2% 구간), 장식 없이 단순하게
+- 상단 중앙 엠블럼 노치: 가로 중앙 50%, 위 5.2%, 지름 카드 폭의 약 13%
+
+**중요: 위 비율은 참고용 설명일 뿐, 실제로는 첨부한 NORMAL_frame.png의
+저 4개 구역 위치/크기를 픽셀 단위로 그대로 베끼는 게 최우선.** 텍스트
+설명과 참고 이미지가 충돌하면 참고 이미지를 따를 것.
+
+### RARE (재생성)
+A vertical decorative card frame background, portrait orientation, matching the EXACT panel layout and proportions of the attached reference frame image — the header panel, art window, info panel, and bottom margin must sit at the identical position and size as in the reference, pixel-for-pixel proportionally. Only change the color palette and decorative motifs, not the geometry. Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the reference's overall art style. Light cool-blue decorative border running along the outer edge with rounded corners, a few small sparkle or star accents confined only to the outer border band and the four corners. A small plain circular notch straddling the top-center edge of the border, left empty, at the same position as the reference's notch. The header panel, art window, and info panel must be left empty (no character, no scene) with the same soft light-blue-tinted semi-translucent fill as the reference's own panels, at the reference's exact geometry. The bottom margin area is kept plain and simple, no decoration, same size as the reference's. Cool light-blue palette overall, gentle polish. Full illustrated background (not a transparent cutout), no text, no watermark, no logos.
+
+### EPIC (재생성)
+A vertical decorative card frame background, portrait orientation, matching the EXACT panel layout and proportions of the attached reference frame image — the header panel, art window, info panel, and bottom margin must sit at the identical position and size as in the reference, pixel-for-pixel proportionally. Only change the color palette and decorative motifs, not the geometry. Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the reference's overall art style. Dreamy purple/lavender decorative border running along the outer edge with rounded corners and a soft glowing halo, small floating sparkle and star accents confined only to the outer border band and the four corners. A small plain circular notch straddling the top-center edge of the border, left empty, at the same position as the reference's notch. The header panel, art window, and info panel must be left empty (no character, no scene) with the same soft lavender-tinted semi-translucent fill as the reference's own panels, at the reference's exact geometry. The bottom margin area is kept plain and simple, no decoration, same size as the reference's. Dreamy purple palette overall, slightly surreal mood. Full illustrated background (not a transparent cutout), no text, no watermark, no logos.
+
+### LEGENDARY (재생성)
+A vertical decorative card frame background, portrait orientation, matching the EXACT panel layout and proportions of the attached reference frame image — the header panel, art window, info panel, and bottom margin must sit at the identical position and size as in the reference, pixel-for-pixel proportionally. Only change the color palette and decorative motifs, not the geometry. Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the reference's overall art style. Rich gold ornate decorative border running along the outer edge with rounded corners, a radiant sunburst/ray pattern glowing behind the border, abundant small sparkle decorations confined only to the outer border band and the four corners. A small plain circular notch straddling the top-center edge of the border, left empty, at the same position as the reference's notch. The header panel, art window, and info panel must be left empty (no character, no scene) with the same soft warm-gold-tinted semi-translucent fill as the reference's own panels, at the reference's exact geometry. The bottom margin area is kept plain and simple, no decoration, same size as the reference's. Rich gold palette overall, maximum shine and polish — do NOT add castles, towers, banners, flags, coats of arms, crowns, laurel wreaths, thrones, or any medieval/kingdom/war imagery. Full illustrated background (not a transparent cutout), no text, no watermark, no logos.
