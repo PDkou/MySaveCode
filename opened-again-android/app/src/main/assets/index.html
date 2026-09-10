@@ -192,18 +192,25 @@ function cardPatternBg(i){const opal=i.type==='HIDDEN_NIGHT_ACTIVITY';const name
 // are already a complete painted background and are drawn as the card's
 // entire background instead (fallbackBg unused for those, kept in the
 // tuple only so callers don't need type-specific branching to find it).
+// v0.32: docs/ASSET_REQUESTS_FOR_DESIGN.md item 6's full 50-illustration
+// redraw (12 types x 4 rarities + 2 HIDDEN, delivered 2026-09-10) replaced
+// every 'overlay' type's transparent character cutout with a complete
+// painted scene, same as 'scene' types always were -- so every type is now
+// 'scene'. `fallbackBg` is kept in the tuple (now unused by every entry)
+// only as a defensive fallback for incidentArt()'s null-rarity case;
+// no code currently exercises it.
 function incidentVisual(type){const map={
- QUICK_EXIT:['visual/incidents/card_ready/incident_quick_exit.png','visual/backgrounds/bg_room_day.png','overlay'],
- REENTRY:['visual/incidents/card_ready/incident_reentry.png','visual/backgrounds/bg_room_day.png','overlay'],
+ QUICK_EXIT:['visual/incidents/card_ready/incident_quick_exit.png','visual/backgrounds/bg_room_day.png','scene'],
+ REENTRY:['visual/incidents/card_ready/incident_reentry.png','visual/backgrounds/bg_room_day.png','scene'],
  REGULAR:['visual/incidents/card_ready/incident_regular.png','visual/backgrounds/bg_room_day.png','scene'],
- RETURN_TO_START:['visual/incidents/card_ready/incident_return_to_start.png','visual/backgrounds/bg_room_night.png','overlay'],
- PATROL:['visual/incidents/card_ready/incident_patrol.png','visual/backgrounds/bg_city_night.png','overlay'],
- ESCAPE_FAILED:['visual/incidents/card_ready/incident_escape_failed.png','visual/backgrounds/bg_room_night.png','overlay'],
- FIRST_CONTACT:['visual/incidents/card_ready/incident_first_contact.png','visual/backgrounds/bg_room_day.png','overlay'],
- NIGHT_PATROL:['visual/incidents/card_ready/incident_night_patrol.png','visual/backgrounds/bg_city_night.png','overlay'],
+ RETURN_TO_START:['visual/incidents/card_ready/incident_return_to_start.png','visual/backgrounds/bg_room_night.png','scene'],
+ PATROL:['visual/incidents/card_ready/incident_patrol.png','visual/backgrounds/bg_city_night.png','scene'],
+ ESCAPE_FAILED:['visual/incidents/card_ready/incident_escape_failed.png','visual/backgrounds/bg_room_night.png','scene'],
+ FIRST_CONTACT:['visual/incidents/card_ready/incident_first_contact.png','visual/backgrounds/bg_room_day.png','scene'],
+ NIGHT_PATROL:['visual/incidents/card_ready/incident_night_patrol.png','visual/backgrounds/bg_city_night.png','scene'],
  APP_WANDERING:['visual/incidents/card_ready/incident_app_wandering.png','visual/backgrounds/bg_city_night.png','scene'],
- HUNDRED_VISITS:['visual/incidents/card_ready/incident_hundred_visits.png','visual/backgrounds/bg_room_day.png','overlay'],
- DIGITAL_LOST:['visual/incidents/card_ready/incident_digital_lost.png','visual/backgrounds/bg_city_night.png','overlay'],
+ HUNDRED_VISITS:['visual/incidents/card_ready/incident_hundred_visits.png','visual/backgrounds/bg_room_day.png','scene'],
+ DIGITAL_LOST:['visual/incidents/card_ready/incident_digital_lost.png','visual/backgrounds/bg_city_night.png','scene'],
  DAWN_SURVIVOR:['visual/incidents/card_ready/incident_dawn_survivor.png','visual/backgrounds/bg_room_night.png','scene'],
  HIDDEN_LOOP:['visual/incidents/card_ready/incident_hidden_loop.png','visual/backgrounds/bg_city_night.png','scene'],
  HIDDEN_NIGHT_ACTIVITY:['visual/incidents/card_ready/incident_hidden_night_activity.png','visual/backgrounds/bg_room_night.png','scene']};
@@ -212,18 +219,27 @@ function incidentVisual(type){const map={
 // item 6, 2026-09-09 -- "다양성이 중요하니까 등급별로 다르게" -- the same
 // 12 non-HIDDEN incident types can surface at NORMAL/RARE/EPIC/LEGENDARY
 // depending on the detected score, so a real per-rarity difference needs a
-// distinct illustration per (type, rarity) pair, not just per type). This
-// set starts EMPTY -- none of the ~48 variant files exist yet -- so
-// `incidentArt()` falls back to the single base illustration every type has
-// used since v0.23, with zero visual change until design delivers files.
-// To wire up a delivered variant: add "TYPE_RARITY" here (e.g.
-// "QUICK_EXIT_LEGENDARY") and drop the matching file at
-// incidents/card_ready/incident_<base-slug>_<rarity lowercase>.png (e.g.
-// incident_quick_exit_legendary.png) -- no other code change needed.
+// distinct illustration per (type, rarity) pair, not just per type).
 // HIDDEN_LOOP/HIDDEN_NIGHT_ACTIVITY are always Rarity.HIDDEN (see
 // IncidentDetector.kt), so they never need a variant entry here.
+// v0.32: full 50-illustration set delivered 2026-09-10 (GPT-generated per
+// docs/GPT_IMAGE_PROMPTS.md) -- all 12 types x 4 rarities now have their own
+// file, so every combination below is wired up; incidentIllustrationBase()'s
+// pre-v0.32 single file per type is kept on disk as an unused defensive
+// fallback only (incidentArt() falls back to it if `rarity` is ever falsy).
 const RARITY_ILLUSTRATION_VARIANTS = new Set([
-  // 'QUICK_EXIT_LEGENDARY', 'QUICK_EXIT_EPIC', ...
+  'QUICK_EXIT_NORMAL','QUICK_EXIT_RARE','QUICK_EXIT_EPIC','QUICK_EXIT_LEGENDARY',
+  'REENTRY_NORMAL','REENTRY_RARE','REENTRY_EPIC','REENTRY_LEGENDARY',
+  'REGULAR_NORMAL','REGULAR_RARE','REGULAR_EPIC','REGULAR_LEGENDARY',
+  'RETURN_TO_START_NORMAL','RETURN_TO_START_RARE','RETURN_TO_START_EPIC','RETURN_TO_START_LEGENDARY',
+  'PATROL_NORMAL','PATROL_RARE','PATROL_EPIC','PATROL_LEGENDARY',
+  'ESCAPE_FAILED_NORMAL','ESCAPE_FAILED_RARE','ESCAPE_FAILED_EPIC','ESCAPE_FAILED_LEGENDARY',
+  'FIRST_CONTACT_NORMAL','FIRST_CONTACT_RARE','FIRST_CONTACT_EPIC','FIRST_CONTACT_LEGENDARY',
+  'NIGHT_PATROL_NORMAL','NIGHT_PATROL_RARE','NIGHT_PATROL_EPIC','NIGHT_PATROL_LEGENDARY',
+  'APP_WANDERING_NORMAL','APP_WANDERING_RARE','APP_WANDERING_EPIC','APP_WANDERING_LEGENDARY',
+  'HUNDRED_VISITS_NORMAL','HUNDRED_VISITS_RARE','HUNDRED_VISITS_EPIC','HUNDRED_VISITS_LEGENDARY',
+  'DIGITAL_LOST_NORMAL','DIGITAL_LOST_RARE','DIGITAL_LOST_EPIC','DIGITAL_LOST_LEGENDARY',
+  'DAWN_SURVIVOR_NORMAL','DAWN_SURVIVOR_RARE','DAWN_SURVIVOR_EPIC','DAWN_SURVIVOR_LEGENDARY',
 ]);
 /** Swaps [basePath] for its rarity-specific variant if design has delivered one for (type, rarity); otherwise returns basePath unchanged. */
 function incidentArt(basePath, type, rarity){

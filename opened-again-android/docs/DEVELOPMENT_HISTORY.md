@@ -855,3 +855,54 @@ Kotlin 쪽처럼 알파 채널 픽셀을 읽어 바운딩박스를 잘라내는 
 확인(폴백 경로가 제대로 동작). Kotlin 괄호 균형 재확인, 호출부가
 `incidentIllustrationAsset(incident.type, incident.rarity)` 2-인자로
 정확히 바뀐 것도 확인.
+
+## v0.32 — 사건 일러스트 50장 전량 반영, overlay 모드 소멸
+v0.31에서 준비해둔 인프라에 실제 파일을 꽂아 넣는 작업. 그 사이 "디자인팀"이
+실제로는 감독이 직접 GPT에 이미지를 생성시키는 것이라는 게 드러나서
+(`docs/GPT_IMAGE_PROMPTS.md` 참고), 스펙 문서 대신 바로 붙여넣는 프롬프트
+50개를 만들어 전달 → 감독이 QUICK_EXIT LEGENDARY 1차 결과를 미리보기로
+공유했는데 "5초컷" 장면이 아니라 성벽/깃발/월계관이 나오는 정복 영웅 그림이
+나옴. 원인은 LEGENDARY 등급 지시문이 "epic celebratory mood",
+"heroically" 같은 추상적인 화려함 지시만 하다 보니 모델이 알아서 무관한
+배경 요소를 끌어다 붙인 것 — `GPT_IMAGE_PROMPTS.md`를 전면 개정(등급이
+올라가도 원래 장면/설정은 유지하라는 명시적 제약 추가, "heroically"→
+"dramatically" 등 판타지/시상식 연상 단어 순화)한 뒤 재생성해서 통과,
+ESCAPE_FAILED LEGENDARY도 같은 방식으로 확인받음. 이후 12종×4등급(48장) +
+HIDDEN 2종(2장) = 50장 전부를 4개 zip(`MONI_FINAL_50_PART1~4`)으로 회신
+받음.
+
+- 파일을 `incidents/card_ready/incident_<타입>_<등급 소문자>.png`(48개)와
+  `incident_hidden_loop.png`/`incident_hidden_night_activity.png`(HIDDEN
+  2종은 접미사 없이 기존 파일 덮어쓰기)로 배치.
+- `index.html`의 `RARITY_ILLUSTRATION_VARIANTS`와 `ShareCardRenderer.kt`의
+  `rarityIllustrationVariants`에 12종×4등급 = 48개 `"TYPE_RARITY"` 키를
+  전부 추가 — v0.31에서 준비해둔 인프라라 이 두 Set 채우는 것 외에 조회
+  로직 변경은 없음.
+- **부수 효과(예정돼 있던 정리)**: 새로 받은 50장은 전부 "완성된 배경
+  포함" 일러스트(투명 배경 캐릭터 컷아웃이 아님)라, 기존에 overlay
+  모드였던 9종(QUICK_EXIT/REENTRY/RETURN_TO_START/PATROL/ESCAPE_FAILED/
+  FIRST_CONTACT/NIGHT_PATROL/HUNDRED_VISITS/DIGITAL_LOST)도 이제 나머지
+  5종과 똑같이 `scene` 모드가 됨. `index.html`의 `incidentVisual()` 맵과
+  `ShareCardRenderer.kt`의 `isSceneIllustration()`(이제 타입 무관하게
+  항상 `true`)을 그에 맞춰 갱신 — 결과적으로 v0.29의 overlay 배경 합성
+  코드와 v0.30의 `overlay-fill`/`opaqueBounds()`+`drawContain()` 크롭
+  경로가 전부 죽은 코드가 됨. 완전히 지우지는 않고(향후 overlay 타입이
+  다시 생길 가능성 대비) 주석으로 "더는 어디서도 타지 않음"을 명시해둠.
+- 새로 받은 원본이 스펙으로 요청한 1200x675가 아니라 1672x941(같은 16:9
+  비율)로 옴 — 종횡비가 같아서 `drawCover`/`background-size:cover` 크롭
+  방식에는 영향 없음, 문제 없이 그대로 사용.
+
+**검증**: Playwright로 `index.html?preview=1&onboarding=0` 렌더링 —
+"사건" 탭 5장(HIDDEN/EPIC/RARE/NORMAL/LEGENDARY 각 1장)과 "보관함" 탭
+14칸 전부 스크린샷 확인, 깨진 이미지 없이 새 일러스트가 각 카드/타일의
+배경 전체를 채우는 것 확인(이전엔 overlay 타입이 좁은 캐릭터 하나만 뜨고
+나머지는 밋밋한 색 배경이었음). LEGENDARY 카드 상세 모달도 별도로 열어서
+`card-shine`/`card-emblem` 이펙트가 새 배경 위에서도 텍스트를 가리지
+않고 정상 작동하는 것 확인(v0.29의 `clip-path` 수정이 계속 유효함). JS
+문법(`node --check`)과 Kotlin 중괄호/괄호 균형 확인. 실제 Kotlin Canvas
+렌더링(`ShareCardRenderer`)은 이번에도 로직 검토로만 확인, 실기기 확인은
+아직 필요.
+
+**남은 것**: `incidents/card_ready/` 전체 용량이 91MB로 증가(신규 50장
+평균 장당 ~1.5MB) — APK 크기에 영향이 커서 WebP 변환/해상도 축소 여부는
+감독 확인 후 별도로 처리하기로 함.

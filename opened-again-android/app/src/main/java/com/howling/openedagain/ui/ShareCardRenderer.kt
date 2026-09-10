@@ -344,22 +344,35 @@ class ShareCardRenderer(private val context: Context) {
     // v0.23: replaced the 6-7 shared generic character poses with the 14
     // dedicated per-IncidentType illustrations from the final visual asset
     // handoff (docs/UI_VISUAL_DIRECTION_REQUEST.md gap #1, resolved -- same
-    // files index.html's incidentVisual() now uses). Unlike index.html,
-    // which has a separate background layer to distinguish 'overlay' vs
-    // 'scene' render_mode (see art/handoff/2026-09-09-final-visual-assets/
-    // ASSET_MANIFEST.json), this renderer has only the one scene box, so
-    // both modes are drawn the same way here via drawContain() -- there's
-    // no second layer for a 'scene' illustration to be composited onto or
-    // instead of.
+    // files index.html's incidentVisual() now uses). This renderer has only
+    // the one scene box, so there's no second background layer for a
+    // 'scene' illustration to be composited onto -- see isSceneIllustration()
+    // below for how 'scene' vs 'overlay' art is drawn differently here
+    // (drawCover vs. opaqueBounds()-trimmed drawContain); as of v0.32 every
+    // type resolves to 'scene'.
     // v0.31: per-rarity illustration variants (docs/ASSET_REQUESTS_FOR_DESIGN.md
     // item 6, 2026-09-09) -- mirrors index.html's RARITY_ILLUSTRATION_VARIANTS/
-    // incidentArt() exactly, same empty-for-now set (no variant files exist
-    // yet, so every lookup falls back to incidentIllustrationBase()'s single
-    // per-type file with zero behavior change). Add "TYPE_RARITY" entries
-    // here in lockstep with index.html's set when design delivers files --
-    // HIDDEN_LOOP/HIDDEN_NIGHT_ACTIVITY never need one (always Rarity.HIDDEN).
+    // incidentArt() exactly. HIDDEN_LOOP/HIDDEN_NIGHT_ACTIVITY never need an
+    // entry here (always Rarity.HIDDEN).
+    // v0.32: full 50-illustration set delivered 2026-09-10 (GPT-generated per
+    // docs/GPT_IMAGE_PROMPTS.md) -- all 12 types x 4 rarities now have their
+    // own file, so every combination below is wired up; incidentIllustrationBase()'s
+    // pre-v0.32 single file per type is kept on disk as an unused defensive
+    // fallback only (this lookup never misses for a NORMAL/RARE/EPIC/LEGENDARY
+    // rarity now).
     private val rarityIllustrationVariants: Set<String> = setOf(
-        // "QUICK_EXIT_LEGENDARY", "QUICK_EXIT_EPIC", ...
+        "QUICK_EXIT_NORMAL", "QUICK_EXIT_RARE", "QUICK_EXIT_EPIC", "QUICK_EXIT_LEGENDARY",
+        "REENTRY_NORMAL", "REENTRY_RARE", "REENTRY_EPIC", "REENTRY_LEGENDARY",
+        "REGULAR_NORMAL", "REGULAR_RARE", "REGULAR_EPIC", "REGULAR_LEGENDARY",
+        "RETURN_TO_START_NORMAL", "RETURN_TO_START_RARE", "RETURN_TO_START_EPIC", "RETURN_TO_START_LEGENDARY",
+        "PATROL_NORMAL", "PATROL_RARE", "PATROL_EPIC", "PATROL_LEGENDARY",
+        "ESCAPE_FAILED_NORMAL", "ESCAPE_FAILED_RARE", "ESCAPE_FAILED_EPIC", "ESCAPE_FAILED_LEGENDARY",
+        "FIRST_CONTACT_NORMAL", "FIRST_CONTACT_RARE", "FIRST_CONTACT_EPIC", "FIRST_CONTACT_LEGENDARY",
+        "NIGHT_PATROL_NORMAL", "NIGHT_PATROL_RARE", "NIGHT_PATROL_EPIC", "NIGHT_PATROL_LEGENDARY",
+        "APP_WANDERING_NORMAL", "APP_WANDERING_RARE", "APP_WANDERING_EPIC", "APP_WANDERING_LEGENDARY",
+        "HUNDRED_VISITS_NORMAL", "HUNDRED_VISITS_RARE", "HUNDRED_VISITS_EPIC", "HUNDRED_VISITS_LEGENDARY",
+        "DIGITAL_LOST_NORMAL", "DIGITAL_LOST_RARE", "DIGITAL_LOST_EPIC", "DIGITAL_LOST_LEGENDARY",
+        "DAWN_SURVIVOR_NORMAL", "DAWN_SURVIVOR_RARE", "DAWN_SURVIVOR_EPIC", "DAWN_SURVIVOR_LEGENDARY",
     )
 
     private fun incidentIllustrationAsset(type: IncidentType, rarity: Rarity): String {
@@ -395,11 +408,14 @@ class ShareCardRenderer(private val context: Context) {
     // 'scene' illustrations are a complete painted background with no
     // transparent margin, 'overlay' ones are a transparent character/prop
     // composition meant to sit over something else.
-    private fun isSceneIllustration(type: IncidentType): Boolean = when (type) {
-        IncidentType.REGULAR, IncidentType.APP_WANDERING, IncidentType.DAWN_SURVIVOR,
-        IncidentType.HIDDEN_LOOP, IncidentType.HIDDEN_NIGHT_ACTIVITY -> true
-        else -> false
-    }
+    // v0.32: docs/ASSET_REQUESTS_FOR_DESIGN.md item 6's full 50-illustration
+    // redraw (delivered 2026-09-10) replaced every former 'overlay' type's
+    // transparent character cutout with a complete painted scene, so every
+    // type is now 'scene' -- always drawCover in render() below. The
+    // opaqueBounds()/drawContain() 'overlay' path is kept for now as a
+    // defensive fallback (e.g. a future type reverting to a transparent
+    // cutout) but nothing currently reaches it.
+    private fun isSceneIllustration(type: IncidentType): Boolean = true
 
     /** Returns the smallest rect enclosing every non-fully-transparent pixel in [bmp], or null if it's all transparent. */
     private fun opaqueBounds(bmp: Bitmap): Rect? {

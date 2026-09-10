@@ -147,8 +147,20 @@ LEGENDARY/HIDDEN_01/HIDDEN_02) + `common` 폴백까지 정사각/스토리 각 7
 동일, 캔버스 크기만 원래 규격 복귀). 자세한 내용은 `docs/DEVELOPMENT_HISTORY.md`
 v0.21/v0.22 참고.
 
-## 6. [감독 확정 — 디자인팀에 재요청, 범위 재확대] 사건 일러스트 전체를
+## 6. [완료 — 2026-09-10, v0.32] 사건 일러스트 전체를
 등급별(NORMAL/RARE/EPIC/LEGENDARY) 4종씩 새로 그리기 — 총 50장
+
+### 완료 경위
+"디자인팀"이 실제로는 감독이 직접 GPT에 이미지를 생성시키는 것이라는 게
+확인돼서(`docs/GPT_IMAGE_PROMPTS.md` 참고), 아래 스펙 문서 대신 바로
+복붙 가능한 프롬프트 50개를 만들어 전달. 감독이 직접 하나씩 생성해서
+확인차 미리보기(QUICK_EXIT LEGENDARY, ESCAPE_FAILED LEGENDARY)를 거쳐
+50장 전부(`MONI_FINAL_50_PART1~4`)를 회신, v0.32에서 전량 반영 완료.
+중간에 QUICK_EXIT LEGENDARY 1차 생성 결과가 "5초컷" 대신 성/깃발/
+월계관이 나오는 정복 영웅 그림으로 나온 실패 사례가 있었고, 그걸
+계기로 `GPT_IMAGE_PROMPTS.md`를 전면 개정(장면 이탈 방지 제약 추가)
+한 뒤 재생성해서 통과함 — 자세한 경위는 그 문서의 "v2 개정" 절 참고.
+아래는 원 요청 스펙(참고용으로 남겨둠).
 
 ### 배경 (요청이 세 번 바뀐 과정)
 1. 처음엔 overlay 9종에 배경만 채워 넣는 정도로 요청.
@@ -223,22 +235,23 @@ v0.21/v0.22 참고.
   "5초컷" NORMAL은 그냥 무심하게 폰을 다시 켜는 정도, LEGENDARY는 같은
   상황이 훨씬 우스꽝스럽거나 드라마틱하게 과장된 버전으로.
 
-### 참고 — 코드는 이미 준비해둠
+### 참고 — 코드 반영 완료(v0.32)
 `index.html`(`RARITY_ILLUSTRATION_VARIANTS`/`incidentArt()`)과
 `ShareCardRenderer.kt`(`rarityIllustrationVariants`/
-`incidentIllustrationAsset()`)에 등급별 파일을 자동으로 찾아 쓰는 로직을
-미리 만들어둠(v0.31) — 지금은 목록이 비어 있어서 전부 기존 단일 그림으로
-폴백되고 있고(화면 변화 없음), 파일이 오면 두 곳의 목록에
-`"QUICK_EXIT_LEGENDARY"` 같은 키만 추가하고 파일을 정해진 이름으로
-`incidents/card_ready/`에 넣으면 바로 반영됨 — 그 외 코드 변경 불필요.
+`incidentIllustrationAsset()`)에 v0.31에서 미리 만들어둔 인프라 그대로,
+48개 `"TYPE_RARITY"` 키를 전부 채워 넣고 50개 파일을
+`incidents/card_ready/`에 배치. 부수효과로 기존 overlay 9종도 이제
+전부 완성된 배경 포함 일러스트라 `isSceneIllustration()`/
+`incidentVisual()`의 render_mode가 전부 `scene`으로 통일됨 —
+`opaqueBounds()`/`overlay-fill` 크롭 경로는 코드에 남겨뒀지만(향후
+overlay 타입이 다시 생길 경우 대비) 현재는 아무 곳에서도 타지 않음.
+자세한 내용은 `docs/DEVELOPMENT_HISTORY.md` v0.32 참고.
 
 ### 참고 — 이전 요청 버전들(전부 이 항목으로 통합됨)
 처음엔 overlay 9종만 `scene` 5종처럼 배경을 채워 넣는 정도로 요청했었음 —
 코드로 먼저 완화(v0.29 배경 합성, v0.30 캐릭터 크롭 확대)해봤지만 감독
 판단으로는 부족했고, "AI틱스럽다"는 더 근본적인 지적 → 12종 전체 재작업으로
-확대 → HIDDEN 2종 포함 + 등급별 4배수로 다시 확대. 세 코드 변경(overlay
-배경 합성, `overlay-fill` 크롭, 등급별 변형 인프라)은 이번 재작업 회신이
-오면 필요 없어지거나(앞 둘) 실제로 쓰이게 됨(뒤 하나).
+확대 → HIDDEN 2종 포함 + 등급별 4배수로 다시 확대.
 
 ---
 현재 앱 자체 이슈 트래킹은 `docs/OPEN_ISSUES_AND_NEXT.md` 참고.
