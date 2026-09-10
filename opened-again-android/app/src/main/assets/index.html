@@ -214,21 +214,27 @@ function cardPatternBg(i){const opal=i.type==='HIDDEN_NIGHT_ACTIVITY';const name
 // 'scene'. `fallbackBg` is kept in the tuple (now unused by every entry)
 // only as a defensive fallback for incidentArt()'s null-rarity case;
 // no code currently exercises it.
+// v0.34: all incident illustrations (base files + the 48 rarity variants
+// below) were re-encoded from PNG to WebP (q85) to cut incidents/card_ready/
+// from ~91MB to ~7MB -- these are painted scenes, not flat-color graphics,
+// so PNG was a poor fit for them; WebP's lossy compression is visually
+// indistinguishable at this quality and both Android's BitmapFactory and
+// WebView decode it natively, no compatibility concerns at minSdk 29.
 function incidentVisual(type){const map={
- QUICK_EXIT:['visual/incidents/card_ready/incident_quick_exit.png','visual/backgrounds/bg_room_day.png','scene'],
- REENTRY:['visual/incidents/card_ready/incident_reentry.png','visual/backgrounds/bg_room_day.png','scene'],
- REGULAR:['visual/incidents/card_ready/incident_regular.png','visual/backgrounds/bg_room_day.png','scene'],
- RETURN_TO_START:['visual/incidents/card_ready/incident_return_to_start.png','visual/backgrounds/bg_room_night.png','scene'],
- PATROL:['visual/incidents/card_ready/incident_patrol.png','visual/backgrounds/bg_city_night.png','scene'],
- ESCAPE_FAILED:['visual/incidents/card_ready/incident_escape_failed.png','visual/backgrounds/bg_room_night.png','scene'],
- FIRST_CONTACT:['visual/incidents/card_ready/incident_first_contact.png','visual/backgrounds/bg_room_day.png','scene'],
- NIGHT_PATROL:['visual/incidents/card_ready/incident_night_patrol.png','visual/backgrounds/bg_city_night.png','scene'],
- APP_WANDERING:['visual/incidents/card_ready/incident_app_wandering.png','visual/backgrounds/bg_city_night.png','scene'],
- HUNDRED_VISITS:['visual/incidents/card_ready/incident_hundred_visits.png','visual/backgrounds/bg_room_day.png','scene'],
- DIGITAL_LOST:['visual/incidents/card_ready/incident_digital_lost.png','visual/backgrounds/bg_city_night.png','scene'],
- DAWN_SURVIVOR:['visual/incidents/card_ready/incident_dawn_survivor.png','visual/backgrounds/bg_room_night.png','scene'],
- HIDDEN_LOOP:['visual/incidents/card_ready/incident_hidden_loop.png','visual/backgrounds/bg_city_night.png','scene'],
- HIDDEN_NIGHT_ACTIVITY:['visual/incidents/card_ready/incident_hidden_night_activity.png','visual/backgrounds/bg_room_night.png','scene']};
+ QUICK_EXIT:['visual/incidents/card_ready/incident_quick_exit.webp','visual/backgrounds/bg_room_day.png','scene'],
+ REENTRY:['visual/incidents/card_ready/incident_reentry.webp','visual/backgrounds/bg_room_day.png','scene'],
+ REGULAR:['visual/incidents/card_ready/incident_regular.webp','visual/backgrounds/bg_room_day.png','scene'],
+ RETURN_TO_START:['visual/incidents/card_ready/incident_return_to_start.webp','visual/backgrounds/bg_room_night.png','scene'],
+ PATROL:['visual/incidents/card_ready/incident_patrol.webp','visual/backgrounds/bg_city_night.png','scene'],
+ ESCAPE_FAILED:['visual/incidents/card_ready/incident_escape_failed.webp','visual/backgrounds/bg_room_night.png','scene'],
+ FIRST_CONTACT:['visual/incidents/card_ready/incident_first_contact.webp','visual/backgrounds/bg_room_day.png','scene'],
+ NIGHT_PATROL:['visual/incidents/card_ready/incident_night_patrol.webp','visual/backgrounds/bg_city_night.png','scene'],
+ APP_WANDERING:['visual/incidents/card_ready/incident_app_wandering.webp','visual/backgrounds/bg_city_night.png','scene'],
+ HUNDRED_VISITS:['visual/incidents/card_ready/incident_hundred_visits.webp','visual/backgrounds/bg_room_day.png','scene'],
+ DIGITAL_LOST:['visual/incidents/card_ready/incident_digital_lost.webp','visual/backgrounds/bg_city_night.png','scene'],
+ DAWN_SURVIVOR:['visual/incidents/card_ready/incident_dawn_survivor.webp','visual/backgrounds/bg_room_night.png','scene'],
+ HIDDEN_LOOP:['visual/incidents/card_ready/incident_hidden_loop.webp','visual/backgrounds/bg_city_night.png','scene'],
+ HIDDEN_NIGHT_ACTIVITY:['visual/incidents/card_ready/incident_hidden_night_activity.webp','visual/backgrounds/bg_room_night.png','scene']};
  return map[type]||['visual/character/basic/moni_default.png','visual/backgrounds/bg_room_day.png','overlay']}
 // v0.31: per-rarity illustration variants (docs/ASSET_REQUESTS_FOR_DESIGN.md
 // item 6, 2026-09-09 -- "다양성이 중요하니까 등급별로 다르게" -- the same
@@ -259,7 +265,7 @@ const RARITY_ILLUSTRATION_VARIANTS = new Set([
 /** Swaps [basePath] for its rarity-specific variant if design has delivered one for (type, rarity); otherwise returns basePath unchanged. */
 function incidentArt(basePath, type, rarity){
   if (!rarity || !RARITY_ILLUSTRATION_VARIANTS.has(`${type}_${rarity}`)) return basePath;
-  return basePath.replace(/\.png$/, `_${rarity.toLowerCase()}.png`);
+  return basePath.replace(/\.(png|webp)$/, `_${rarity.toLowerCase()}.$1`);
 }
 // NOTE: archive thumbnails do NOT use cards/examples/* -- that folder is
 // documented (PROJECT_HANDOFF.md) as art reference for making future

@@ -934,3 +934,29 @@ HIDDEN 2종(2장) = 50장 전부를 4개 zip(`MONI_FINAL_50_PART1~4`)으로 회�
 DIGITAL_LOST 클릭 → 모달은 뜨되 0/4, 4칸 전부 "?" 확인, (4) 실제 DOM
 클릭(함수 직접 호출이 아니라)으로도 모달이 열리는 것 확인, (5) 깨진
 이미지 0개. JS 문법(`node --check`) 확인.
+
+## v0.34 — 사건 일러스트 PNG → WebP 전환 (용량 92% 절감)
+v0.32에서 반영한 50장(+ 이제 안 쓰이는 구버전 12장)이 전부 PNG라
+`incidents/card_ready/` 용량이 91MB까지 늘어난 문제(`docs/OPEN_ISSUES_
+AND_NEXT.md` 참고)를 감독이 지적, 실제로 줄일 방법이 있는지 검토 요청.
+
+샘플 3장으로 PNG 재압축/JPEG/WebP를 비교: PNG는 재압축해도 56~57%까지만
+줄어듦(그라데이션·사진 느낌 일러스트엔 원래 안 맞는 포맷), WebP q80~85는
+원본 대비 5~11%까지 줄어듦 — 육안상 차이 없음을 실제 변환본으로 확인받고
+승인받아 전체 62개 파일(활성 50장 + 비활성 구버전 12장)을 WebP q85로
+일괄 재인코딩.
+
+- `index.html`의 `incidentVisual()` 14개 base 경로를 `.webp`로 변경,
+  `incidentArt()`의 등급 접미사 교체 정규식을 `.png`/`.webp` 둘 다
+  처리하도록 일반화(`/\.(png|webp)$/`)
+- `ShareCardRenderer.kt`의 `incidentIllustrationBase()` 14개 경로를
+  `.webp`로 변경, `incidentIllustrationAsset()`의 접미사 교체 로직도
+  확장자에 의존하지 않도록 `lastIndexOf('.')` 기반으로 일반화
+- `assetBitmap()`(`BitmapFactory.decodeStream()`)과 WebView `<img>`/
+  `background-image`는 원래 포맷 비의존적/WebP 기본 지원이라 디코딩 쪽
+  코드 변경은 필요 없었음(순수 데이터 교체)
+
+용량: 94.3MB → 7.2MB(파일 62개 기준, 7.6%). **검증**: Playwright로
+사건/보관함 탭 + 보관함 등급별 모달까지 다시 스크린샷 확인, 깨진 이미지
+0개, 이전 v0.32/v0.33 스크린샷과 시각적으로 동일함 확인. JS 문법
+(`node --check`)과 Kotlin 중괄호/괄호 균형 재확인.

@@ -379,27 +379,34 @@ class ShareCardRenderer(private val context: Context) {
         val base = incidentIllustrationBase(type)
         val key = "${type.name}_${rarity.name}"
         return if (rarityIllustrationVariants.contains(key)) {
-            base.removeSuffix(".png") + "_${rarity.name.lowercase()}.png"
+            val dot = base.lastIndexOf('.')
+            base.substring(0, dot) + "_${rarity.name.lowercase()}" + base.substring(dot)
         } else {
             base
         }
     }
 
+    // v0.34: all incident illustrations re-encoded from PNG to WebP (q85) to
+    // cut incidents/card_ready/ from ~91MB to ~7MB -- these are painted
+    // scenes, not flat-color graphics, so PNG was a poor fit; WebP's lossy
+    // compression is visually indistinguishable at this quality.
+    // BitmapFactory.decodeStream() (assetBitmap() below) is format-agnostic,
+    // so this is a pure data change, no decoding logic to update.
     private fun incidentIllustrationBase(type: IncidentType): String = when (type) {
-        IncidentType.QUICK_EXIT -> "incidents/card_ready/incident_quick_exit.png"
-        IncidentType.REENTRY -> "incidents/card_ready/incident_reentry.png"
-        IncidentType.REGULAR -> "incidents/card_ready/incident_regular.png"
-        IncidentType.RETURN_TO_START -> "incidents/card_ready/incident_return_to_start.png"
-        IncidentType.PATROL -> "incidents/card_ready/incident_patrol.png"
-        IncidentType.ESCAPE_FAILED -> "incidents/card_ready/incident_escape_failed.png"
-        IncidentType.FIRST_CONTACT -> "incidents/card_ready/incident_first_contact.png"
-        IncidentType.NIGHT_PATROL -> "incidents/card_ready/incident_night_patrol.png"
-        IncidentType.APP_WANDERING -> "incidents/card_ready/incident_app_wandering.png"
-        IncidentType.HUNDRED_VISITS -> "incidents/card_ready/incident_hundred_visits.png"
-        IncidentType.DIGITAL_LOST -> "incidents/card_ready/incident_digital_lost.png"
-        IncidentType.DAWN_SURVIVOR -> "incidents/card_ready/incident_dawn_survivor.png"
-        IncidentType.HIDDEN_LOOP -> "incidents/card_ready/incident_hidden_loop.png"
-        IncidentType.HIDDEN_NIGHT_ACTIVITY -> "incidents/card_ready/incident_hidden_night_activity.png"
+        IncidentType.QUICK_EXIT -> "incidents/card_ready/incident_quick_exit.webp"
+        IncidentType.REENTRY -> "incidents/card_ready/incident_reentry.webp"
+        IncidentType.REGULAR -> "incidents/card_ready/incident_regular.webp"
+        IncidentType.RETURN_TO_START -> "incidents/card_ready/incident_return_to_start.webp"
+        IncidentType.PATROL -> "incidents/card_ready/incident_patrol.webp"
+        IncidentType.ESCAPE_FAILED -> "incidents/card_ready/incident_escape_failed.webp"
+        IncidentType.FIRST_CONTACT -> "incidents/card_ready/incident_first_contact.webp"
+        IncidentType.NIGHT_PATROL -> "incidents/card_ready/incident_night_patrol.webp"
+        IncidentType.APP_WANDERING -> "incidents/card_ready/incident_app_wandering.webp"
+        IncidentType.HUNDRED_VISITS -> "incidents/card_ready/incident_hundred_visits.webp"
+        IncidentType.DIGITAL_LOST -> "incidents/card_ready/incident_digital_lost.webp"
+        IncidentType.DAWN_SURVIVOR -> "incidents/card_ready/incident_dawn_survivor.webp"
+        IncidentType.HIDDEN_LOOP -> "incidents/card_ready/incident_hidden_loop.webp"
+        IncidentType.HIDDEN_NIGHT_ACTIVITY -> "incidents/card_ready/incident_hidden_night_activity.webp"
     }
 
     // Mirrors ASSET_MANIFEST.json's render_mode field (see
