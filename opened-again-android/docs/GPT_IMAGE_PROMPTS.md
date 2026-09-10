@@ -302,3 +302,66 @@ A decorative circular medallion badge shell, empty/plain in the very center (a s
 
 ### HIDDEN
 A decorative circular medallion badge shell, empty/plain in the very center (a small flat circular area left simple, no icon inside it — an icon will be layered on top separately). Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the visual style of the attached reference badge. Deep dark navy ring design (NOT bright flat teal) with a subtle glowing cyan rim line, a scattering of tiny star accents on the ring like a night sky, mysterious and quiet mood rather than loud or bright. Transparent background, no text, no watermark, no logos, no drop shadow baked in.
+
+---
+
+## 부록2: 공유 카드 프레임 배경 5종 (신규, 존 지정형, Card Template v2용)
+
+지금까지는 프레임 테두리/헤더판/정보판/아트창을 전부 파이썬(PIL)으로 직접
+그렸음 — 감독 피드백: 이것도 직접 그리지 말고 GPT한테 일러스트+텍스트박스
+구역까지 지정해서 통째로 주문하라는 것. 아래 프롬프트는 카드 한 장 전체의
+**배경 프레임 이미지**(테두리 + 헤더판/아트창/정보판 자리까지 미리 그려진
+상태)를 주문하는 용도 — 실제 사건 일러스트와 텍스트는 이 배경 위에 나중에
+따로 얹음 (엠블럼도 위 부록1 배지를 별도로 얹음, 프레임 자체엔 안 그림).
+
+**기존 `cards/frames/frame_*.png`와의 차이:** 기존 프레임은 모자/돋보기/발바닥
+장식이 카드 곳곳에 걸쳐 있어서 뱃지·텍스트박스랑 계속 겹쳤던 게 문제였음
+(v3~v4 반복 수정 원인). 이번 요청은 **장식을 바깥쪽 테두리 모서리 안에만
+가두고, 안쪽 콘텐츠 구역(헤더/아트창/정보판)은 완전히 비워서** 그 문제
+자체를 없애는 게 핵심 — 프롬프트에 이 제약을 명시함.
+
+### 공통 레이아웃 지시 (모든 프롬프트에 이미 포함됨)
+캔버스 1000x1500 (세로 2:3) 기준 비율로:
+- 바깥 테두리: 캔버스 가장자리를 따라 두른 장식 띠, 두께는 캔버스 폭의
+  약 3%, 모서리는 둥글게. 장식(반짝임/문양 등)은 이 테두리와 네 모서리
+  안쪽에만 머무를 것 — 안쪽 콘텐츠 구역을 침범하지 말 것.
+- 상단 중앙: 테두리에 걸치는 작은 원형 노치(지름 캔버스 폭의 약 10%) —
+  나중에 별도 엠블럼 배지를 얹을 자리이니 비워둘 것(장식 없이 단순하게).
+- 헤더 패널: 위에서 약 10~19% 높이 구간, 좌우로 캔버스 폭의 약 82%를
+  차지하는 가로로 긴 둥근 사각형 — 반투명 유리/양피지 느낌의 은은한
+  패널로 안을 비워둘 것(텍스트가 나중에 그 위에 올라감).
+- 아트 창: 헤더 패널 바로 아래부터 약 20~58% 높이 구간, 헤더와 같은 좌우
+  폭 — 안을 단순하고 밝은 무지 배경으로 비워둘 것(캐릭터·장면 그리지
+  말 것 — 실제 사건 일러스트가 나중에 그 자리에 합성됨).
+- 정보 패널: 약 60~79% 높이 구간, 헤더/아트창과 같은 좌우 폭 — 헤더와
+  같은 반투명 패널 스타일로 비워둘 것.
+- 하단 약 80~95% 구간: 케이스 번호/로고가 나중에 들어갈 자리이니 장식
+  없이 단순하게 비워둘 것.
+
+### 사용 방법 (본문과 동일하되 차이점만)
+- 캐릭터 참고 이미지 대신 **`cards/frames/frame_legendary.png` 1장을
+  화풍 참고용으로 첨부** (다만 위 공통 레이아웃 지시대로 구역을 다시
+  잡아달라고 명시할 것 — 참고 이미지의 모자/돋보기 위치를 그대로 베끼면
+  똑같은 문제가 재발함).
+- 파일은 `app/src/main/assets/visual/cards/frames_v2/frame_v2_<등급>.png`로
+  저장 (예: `frame_v2_legendary.png`). HIDDEN은 `frame_v2_hidden.png` 1개.
+- 세로 1000x1500(2:3), 배경 있는 완성형 이미지(투명 아님 — 카드 전체
+  배경 역할), no text, no watermark, no logos.
+- 받으면 실제 구역 위치가 프롬프트 비율과 정확히 안 맞을 수 있음(이미지
+  생성 특성상) — 받는 대로 내가 픽셀 좌표를 다시 측정해서 목업에 맞춰
+  조정함, 그러니 대략 저 비율만 맞으면 충분함.
+
+### NORMAL
+A vertical decorative card frame background, portrait orientation. Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the overall visual style of the attached reference frame. Simple flat silver/pewter/gray decorative border running along the outer edge with rounded corners, minimal small paw-print or dot accents confined only to the outer border band and the four corners. A small plain circular notch straddling the top-center edge of the border, left empty. Below that, a horizontal rounded-rectangle header panel area with a soft, plain, semi-translucent parchment/cream fill, left empty inside. Below the header, a large plain rounded-rectangle window area with a simple light, uncluttered background — no character, no scene, left empty for artwork to be added later. Below that, another horizontal rounded-rectangle panel matching the header's soft translucent style, left empty inside. The bottom area of the frame is kept plain and simple, no decoration. Muted cream/beige/gray palette overall, no sparkle or glow effects, everyday low-key mood. Full illustrated background (not a transparent cutout for the whole canvas), no text, no watermark, no logos.
+
+### RARE
+A vertical decorative card frame background, portrait orientation. Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the overall visual style of the attached reference frame. Light cool-blue decorative border running along the outer edge with rounded corners, a few small sparkle or star accents confined only to the outer border band and the four corners. A small plain circular notch straddling the top-center edge of the border, left empty. Below that, a horizontal rounded-rectangle header panel area with a soft, plain, semi-translucent light-blue-tinted fill, left empty inside. Below the header, a large plain rounded-rectangle window area with a simple light, uncluttered background — no character, no scene, left empty for artwork to be added later. Below that, another horizontal rounded-rectangle panel matching the header's soft translucent style, left empty inside. The bottom area of the frame is kept plain and simple, no decoration. Cool light-blue palette overall, gentle polish, a touch of sparkle only on the outer border. Full illustrated background (not a transparent cutout for the whole canvas), no text, no watermark, no logos.
+
+### EPIC
+A vertical decorative card frame background, portrait orientation. Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the overall visual style of the attached reference frame. Dreamy purple/lavender decorative border running along the outer edge with rounded corners and a soft glowing halo, small floating sparkle and star accents confined only to the outer border band and the four corners. A small plain circular notch straddling the top-center edge of the border, left empty. Below that, a horizontal rounded-rectangle header panel area with a soft, plain, semi-translucent lavender-tinted fill, left empty inside. Below the header, a large plain rounded-rectangle window area with a simple light, uncluttered background — no character, no scene, left empty for artwork to be added later. Below that, another horizontal rounded-rectangle panel matching the header's soft translucent style, left empty inside. The bottom area of the frame is kept plain and simple, no decoration. Dreamy purple palette overall, dynamic glowing accents but only along the outer border, slightly surreal mood. Full illustrated background (not a transparent cutout for the whole canvas), no text, no watermark, no logos.
+
+### LEGENDARY
+A vertical decorative card frame background, portrait orientation. Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the overall visual style of the attached reference frame. Rich gold ornate decorative border running along the outer edge with rounded corners, a radiant sunburst/ray pattern glowing behind the border, abundant small sparkle decorations confined only to the outer border band and the four corners. A small plain circular notch straddling the top-center edge of the border, left empty. Below that, a horizontal rounded-rectangle header panel area with a soft, plain, semi-translucent warm-gold-tinted fill, left empty inside. Below the header, a large plain rounded-rectangle window area with a simple light, uncluttered background — no character, no scene, left empty for artwork to be added later. Below that, another horizontal rounded-rectangle panel matching the header's soft translucent style, left empty inside. The bottom area of the frame is kept plain and simple, no decoration. Rich gold palette overall, maximum shine and polish, but keep all decoration confined to the outer border — do NOT add castles, towers, banners, flags, coats of arms, crowns, laurel wreaths, thrones, or any medieval/kingdom/war imagery anywhere on the frame. Full illustrated background (not a transparent cutout for the whole canvas), no text, no watermark, no logos.
+
+### HIDDEN
+A vertical decorative card frame background, portrait orientation. Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the overall visual style of the attached reference frame. Deep dark navy night-sky decorative border running along the outer edge with rounded corners and a subtle glowing cyan rim line (NOT bright flat teal), a scattering of tiny star accents confined only to the outer border band and the four corners. A small plain circular notch straddling the top-center edge of the border, left empty. Below that, a horizontal rounded-rectangle header panel area with a soft, plain, semi-translucent dark-navy-tinted glass fill, left empty inside. Below the header, a large plain rounded-rectangle window area with a simple dark, uncluttered background — no character, no scene, left empty for artwork to be added later. Below that, another horizontal rounded-rectangle panel matching the header's soft translucent style, left empty inside. The bottom area of the frame is kept plain and simple, no decoration. Deep navy night-sky palette overall, mysterious and quiet mood rather than loud or bright. Full illustrated background (not a transparent cutout for the whole canvas), no text, no watermark, no logos.
