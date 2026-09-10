@@ -264,3 +264,41 @@ A cute chibi-style sticker illustration style, featuring multiple copies of MONI
 
 ### HIDDEN_NIGHT_ACTIVITY (미확인 야간 활동 / Unidentified night activity)
 A cute chibi-style sticker illustration of MONI, a small white-and-gray calico detective cat character. MONI wears a brown deerstalker hunting cap with a small bow on top, and a tan/khaki trench coat. MONI has round black eyes, pink inner ears, a small pink nose, and simple black whisker lines. Bold clean black outlines (sticker/vector style), flat cel-shaded coloring with soft warm highlights, kawaii chibi proportions — keep this exact character design consistent with the attached reference image. Scene: MONI hidden under a thick dark-blue blanket fort in a moonlit bedroom, the glowing phone screen lighting up their focused face from below, a huge full moon and glittering city skyline visible through a window behind sheer curtains, cozy clutter of books, a mug, and a sleeping second cat silhouette nearby, a mysterious hushed late-night atmosphere. Output size 1200x675 (16:9 landscape), full illustrated scene with complete background included (not a transparent cutout), no text, no watermark, no logos. The scene setting and action must exactly match the description above regardless of rarity tier — do not substitute a different scene or add unrelated environments.
+
+---
+
+## 부록: 공유 카드 등급 엠블럼 배지 5종 (신규, Card Template v2용)
+
+공유 카드(트레이딩카드 스타일 재구성, v5 목업 승인됨) 상단 중앙에 얹는 원형
+엠블럼을 지금은 파이썬으로 단색 원(`d.ellipse(fill=...)`) 위에 기존
+`rarity_*.png` 심볼을 얹어서 때우고 있음 — "방향은 좋은데 에셋을 더 뽑자"는
+피드백은 이 납작한 단색 원을 실제 "메달/배지"처럼 보이는 장식 에셋으로
+교체하자는 뜻으로 이해하고 아래 5개 프롬프트를 준비함.
+
+**주의: 심볼 아이콘 자체(발바닥/초승달/보라 스파클/왕관/물음표)는 이미
+`brand/rarity_symbols/`에 있고 품질도 좋아서 다시 안 뽑음.** 여기서 뽑는 건
+그 심볼을 얹을 **배지 테두리/받침(medallion shell)만** — 중앙은 비워두거나
+아주 단순하게 둬서, 기존 심볼 PNG를 그 위에 겹쳐 붙이는 방식 그대로 유지.
+
+### 사용 방법 (본문 "사용 방법"과 동일하되 차이점만)
+- 캐릭터 참고 이미지 대신 **스타일 참고용으로 `brand/rarity_symbols/rarity_legendary.png`
+  1장을 첨부** — 같은 굵은 검은 윤곽선 + 플랫 셀 셰이딩 + 스티커 느낌을
+  유지하기 위함 (캐릭터가 아니라 배지 자체의 화풍 참고 용도).
+- 파일은 받으면 `app/src/main/assets/visual/cards/badges/card_badge_<등급>.png`로
+  저장 (예: `card_badge_legendary.png`). HIDDEN은 `card_badge_hidden.png` 1개.
+- 배경 투명(PNG), 정사각형(예: 512x512), 배지가 캔버스의 80~90% 채우도록.
+
+### NORMAL
+A decorative circular medallion badge shell, empty/plain in the very center (a small flat circular area left simple, no icon inside it — an icon will be layered on top separately). Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the visual style of the attached reference badge. Simple flat pewter/silver ring design, minimal decoration, one thin inner ring line, a couple of small plain dot accents around the rim, muted cream/beige/gray tones, no sparkle or glow effects, low-key everyday feel. Transparent background, no text, no watermark, no logos, no drop shadow baked in.
+
+### RARE
+A decorative circular medallion badge shell, empty/plain in the very center (a small flat circular area left simple, no icon inside it — an icon will be layered on top separately). Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the visual style of the attached reference badge. Light cool-blue enamel ring design, a slightly more polished double ring border, a few small star-sparkle accents around the rim, soft blue palette, subtle soft glow. Transparent background, no text, no watermark, no logos, no drop shadow baked in.
+
+### EPIC
+A decorative circular medallion badge shell, empty/plain in the very center (a small flat circular area left simple, no icon inside it — an icon will be layered on top separately). Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the visual style of the attached reference badge. Dreamy purple/lavender ring design with a soft outer glow halo, small floating sparkle and star accents around the rim, a slightly more ornate double-ring border, dynamic and a little surreal. Transparent background, no text, no watermark, no logos, no drop shadow baked in.
+
+### LEGENDARY
+A decorative circular medallion badge shell, empty/plain in the very center (a small flat circular area left simple, no icon inside it — an icon will be layered on top separately). Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the visual style of the attached reference badge. Rich gold ornate ring design with a radiant sunburst/ray pattern glowing behind the rim, small decorative studs or gem-like accents evenly spaced around the border, abundant small sparkle decorations, maximum shine and polish. Do NOT add castles, banners, crowns, laurel wreaths, or medieval/kingdom imagery beyond the badge shell itself — escalate only through gold color, radiance, and sparkle. Transparent background, no text, no watermark, no logos, no drop shadow baked in.
+
+### HIDDEN
+A decorative circular medallion badge shell, empty/plain in the very center (a small flat circular area left simple, no icon inside it — an icon will be layered on top separately). Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the visual style of the attached reference badge. Deep dark navy ring design (NOT bright flat teal) with a subtle glowing cyan rim line, a scattering of tiny star accents on the ring like a night sky, mysterious and quiet mood rather than loud or bright. Transparent background, no text, no watermark, no logos, no drop shadow baked in.
