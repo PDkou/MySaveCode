@@ -8,7 +8,14 @@
 :root{
   --bg:#F7F1E7;--paper:#FFFEFB;--ink:#2F2A27;--muted:#8E8177;--brown:#9C7A5D;
   --normal:#D9D9D9;--rare:#70BFFF;--epic:#A86CFF;--legend:#FFD166;--hidden:#082B3B;
-  --radius:24px;--shadow:0 12px 34px rgba(80,62,48,.11);--line:#E9DED1
+  --radius:24px;--shadow:0 12px 34px rgba(80,62,48,.11);--line:#E9DED1;
+  /* v0.36: director feedback -- buttons across the app felt inconsistent/
+     uncomfortable to tap (the back button called out specifically). They'd
+     accreted separate one-off radius (13/14/16px) and padding values with
+     no shared system, and several (icon-btn, lang, share, sheet-close) sat
+     under Android's ~48dp recommended minimum touch target. One shared
+     radius + min-height for every tappable button from here on. */
+  --btn-radius:16px;--btn-min:46px
 }
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Noto Sans JP",sans-serif}
 body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),var(--bg)}button{font:inherit}.app{max-width:720px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 18px calc(90px + env(safe-area-inset-bottom))}
@@ -21,13 +28,24 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    normal page padding so the art can go edge-to-edge. */
 .app.onboard{padding:0;max-width:none}
 .onboard-frame{position:fixed;inset:0;overflow:hidden;background:#F7F1E7;z-index:20}
-.onboard-box{position:absolute;top:0;left:50%;height:100%;aspect-ratio:941/1672;transform:translateX(-50%)}
+/* v0.36: was sized by height:100% alone -- fine on screens shaped like the
+   941:1672 source image, but any device narrower/taller than that ratio
+   (nearly every modern Android phone: e.g. a 393x851 screen is ~0.46 vs the
+   image's ~0.56) forced the box wider than the viewport and .onboard-frame's
+   overflow:hidden clipped both sides, cutting off real content (side
+   decorations, the page-count dots). min()-based "contain" sizing picks
+   whichever of width/height is the binding constraint on THIS screen, so
+   the full image always fits with no cropping (only letterboxing on the
+   other axis, never overflow) -- verified against both a narrow/tall phone
+   and a squarer one. Hit-box % coordinates below still line up since the
+   box's rendered aspect ratio never changes, only its absolute size. */
+.onboard-box{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);aspect-ratio:941/1672;width:min(100vw,100vh * 941 / 1672);height:min(100vh,100vw * 1672 / 941)}
 .onboard-box img{display:block;width:100%;height:100%}
 .onboard-hit{position:absolute;border:0;background:transparent;padding:0;-webkit-tap-highlight-color:transparent}
 .brand{display:flex;align-items:center;gap:13px}.avatar{width:68px;height:68px;border-radius:22px;object-fit:cover;border:2px solid #E7D9C8;background:#DCEAFF;box-shadow:0 5px 18px rgba(80,60,40,.08)}
-.brand-main{flex:1}.brand h1{font-size:30px;margin:0;letter-spacing:-1.8px;line-height:1}.brand .sub{font-size:13px;color:var(--muted);margin-top:7px}.lang{border:1px solid var(--line);background:#fff;border-radius:14px;padding:8px 10px;font-weight:900;color:#665B53}.date{font-size:12px;color:var(--muted);margin:12px 2px 0}
+.brand-main{flex:1}.brand h1{font-size:30px;margin:0;letter-spacing:-1.8px;line-height:1}.brand .sub{font-size:13px;color:var(--muted);margin-top:7px}.lang{border:1px solid var(--line);background:#fff;border-radius:var(--btn-radius);min-height:var(--btn-min);padding:0 14px;font-weight:900;color:#665B53;display:inline-flex;align-items:center;justify-content:center}.date{font-size:12px;color:var(--muted);margin:12px 2px 0}
 .permission,.empty{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-top:22px;box-shadow:var(--shadow)}.permission h2{margin:0 0 8px}.permission p{font-size:14px;line-height:1.6;color:var(--muted)}
-.primary{border:0;border-radius:16px;padding:14px 18px;background:#6758F5;color:white;font-weight:900;width:100%;margin-top:14px;box-shadow:0 8px 18px rgba(103,88,245,.2)}
+.primary{border:0;border-radius:var(--btn-radius);min-height:calc(var(--btn-min) + 4px);padding:0 18px;background:#6758F5;color:white;font-weight:900;width:100%;margin-top:14px;box-shadow:0 8px 18px rgba(103,88,245,.2);display:flex;align-items:center;justify-content:center}
 /* v0.35: tab bar moved to the bottom of the screen (icon+label, 4 items)
    to match art/reference/target-visual-direction's mockups -- it had been
    sitting at the TOP as 3 plain text buttons, a real layout mismatch with
@@ -37,7 +55,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    a live text label so active/inactive styling and language switching both
    work without needing per-language image variants. */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,251,246,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:7px 6px calc(7px + env(safe-area-inset-bottom))}
-.tabbtn{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:14px;color:#9A8E83}
+.tabbtn{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:var(--btn-radius);color:#9A8E83;min-height:var(--btn-min)}
 .tabbtn img{width:23px;height:23px;object-fit:contain;opacity:.5}
 .tabbtn span{font-size:10px;font-weight:800}
 .tabbtn.active{background:#F3EBDE;color:#332C28}
@@ -72,12 +90,23 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .card-emblem{position:absolute;z-index:-1;right:-14px;bottom:-10px;width:130px;height:130px;object-fit:contain;opacity:.22;transform:rotate(-10deg);pointer-events:none;animation:emblemSpin 16s linear infinite}
 @keyframes emblemSpin{from{transform:rotate(-10deg)}to{transform:rotate(350deg)}}
 .card-shine{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden;clip-path:inset(0 0 0 58%)}
-.card-shine-bar{position:absolute;top:-30%;left:-70%;width:55%;height:160%;transform:rotate(14deg) translateX(0);animation:cardShine 3.4s ease-in-out infinite;will-change:transform}
-.epic .card-shine-bar{background:linear-gradient(180deg,transparent,rgba(214,170,255,.5) 40%,rgba(255,255,255,.82) 50%,rgba(214,170,255,.5) 60%,transparent)}
-.legendary .card-shine-bar{background:linear-gradient(180deg,transparent,rgba(255,214,120,.55) 40%,rgba(255,255,255,.82) 50%,rgba(255,214,120,.55) 60%,transparent)}
-@keyframes cardShine{0%,100%{transform:rotate(14deg) translateX(0)}50%{transform:rotate(14deg) translateX(260%)}}
+/* v0.36: director feedback -- the shine read as unnatural. Two real causes,
+   both visible freeze-framing the animation: (1) the old 0%->50%->100%
+   keyframe (both ends at translateX(0)) swept the bar right then
+   immediately reversed it back left every cycle -- a visible back-and-forth
+   "wiper" motion, not how light sweeps ever look. Real one-way sweep now:
+   0% at the start position, holds at the fully-off-screen end position from
+   35% through 100%, so the loop-restart jump back to 0% is invisible (both
+   positions are outside the clip-path). (2) peak brightness hit
+   rgba(255,255,255,.82), opaque enough to fully whiteout the share buttons
+   and illustration underneath it at peak -- toned down to a translucent
+   glint that tints without erasing what's under it. */
+.card-shine-bar{position:absolute;top:-30%;left:-70%;width:45%;height:160%;transform:rotate(14deg) translateX(0);animation:cardShine 4.5s ease-in-out infinite;will-change:transform}
+.epic .card-shine-bar{background:linear-gradient(180deg,transparent,rgba(214,170,255,.28) 42%,rgba(255,255,255,.4) 50%,rgba(214,170,255,.28) 58%,transparent)}
+.legendary .card-shine-bar{background:linear-gradient(180deg,transparent,rgba(255,214,120,.3) 42%,rgba(255,255,255,.42) 50%,rgba(255,214,120,.3) 58%,transparent)}
+@keyframes cardShine{0%{transform:rotate(14deg) translateX(0)}35%,100%{transform:rotate(14deg) translateX(260%)}}
 .epic{box-shadow:0 0 0 3px rgba(168,108,255,.55),0 16px 34px rgba(140,80,230,.4),var(--shadow)}
-.legendary{box-shadow:0 0 0 3px rgba(224,164,40,.6),0 16px 34px rgba(224,164,40,.42),var(--shadow)}.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 9px}.rarity{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:999px;background:var(--border);color:var(--badgeText,#fff);font-size:11px;font-weight:1000;letter-spacing:.6px}.rarity-symbol{width:14px;height:14px;object-fit:contain;display:block}.case-id{font-size:10px;color:var(--muted);font-weight:800}.card-body{display:grid;grid-template-columns:1.25fr .85fr;gap:10px;padding:4px 14px 14px;align-items:center}.case-title{font-size:25px;font-weight:1000;letter-spacing:-1.2px;line-height:1.05}.detail{font-size:13px;line-height:1.55;color:#655B54;margin-top:7px}.punch{font-size:16px;font-weight:1000;margin:12px 0 0;line-height:1.4}.scene{min-height:132px;border-radius:21px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative;background:var(--scene)}.scene img{width:112px;height:112px;object-fit:cover;border-radius:22px;margin-bottom:7px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.12))}.scene-mark{position:absolute;right:8px;top:8px;font-size:22px}.meta-strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 12px}.pill{background:rgba(255,255,255,.72);border:1px solid rgba(130,110,95,.16);border-radius:999px;padding:6px 9px;font-size:10px;font-weight:800;color:#675D56}.share-row{display:flex;gap:8px;padding:0 14px 14px}.share{flex:1;border:1px solid rgba(120,100,80,.22);background:rgba(255,255,255,.78);border-radius:13px;padding:10px;font-weight:900;color:#5B5048}.share:active{transform:scale(.98)}
+.legendary{box-shadow:0 0 0 3px rgba(224,164,40,.6),0 16px 34px rgba(224,164,40,.42),var(--shadow)}.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 9px}.rarity{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:999px;background:var(--border);color:var(--badgeText,#fff);font-size:11px;font-weight:1000;letter-spacing:.6px}.rarity-symbol{width:14px;height:14px;object-fit:contain;display:block}.case-id{font-size:10px;color:var(--muted);font-weight:800}.card-body{display:grid;grid-template-columns:1.25fr .85fr;gap:10px;padding:4px 14px 14px;align-items:center}.case-title{font-size:25px;font-weight:1000;letter-spacing:-1.2px;line-height:1.05}.detail{font-size:13px;line-height:1.55;color:#655B54;margin-top:7px}.punch{font-size:16px;font-weight:1000;margin:12px 0 0;line-height:1.4}.scene{min-height:132px;border-radius:21px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative;background:var(--scene)}.scene img{width:112px;height:112px;object-fit:cover;border-radius:22px;margin-bottom:7px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.12))}.scene-mark{position:absolute;right:8px;top:8px;font-size:22px}.meta-strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 12px}.pill{background:rgba(255,255,255,.72);border:1px solid rgba(130,110,95,.16);border-radius:999px;padding:6px 9px;font-size:10px;font-weight:800;color:#675D56}.share-row{display:flex;gap:8px;padding:0 14px 14px}.share{flex:1;border:1px solid rgba(120,100,80,.22);background:rgba(255,255,255,.78);border-radius:var(--btn-radius);min-height:var(--btn-min);padding:0 10px;font-weight:900;color:#5B5048;display:flex;align-items:center;justify-content:center}.share:active{transform:scale(.98)}
 /* v0.35: compact one-line case rows below the featured card (home screen
    mockup match) -- --scene/--border are set per rarity class the same way
    .card's rarity classes already do (see :root/.normal/.rare/etc above). */
@@ -103,7 +132,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .settings-row-text b{display:block;font-size:14px}
 .settings-row-text span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
 .settings-chevron{color:var(--muted);font-size:20px}
-.modal{position:fixed;inset:0;background:rgba(32,25,21,.55);display:flex;align-items:flex-end;justify-content:center;padding:18px 18px calc(18px + env(safe-area-inset-bottom));z-index:30}.sheet{max-width:720px;width:100%;background:var(--bg);border-radius:30px 30px 18px 18px;padding:15px;max-height:92vh;overflow:auto;box-shadow:0 -16px 60px rgba(0,0,0,.25)}.sheet-handle{width:44px;height:5px;border-radius:99px;background:#CDBFB4;margin:0 auto 11px}.sheet-close{width:100%;border:0;background:#E9DED1;padding:12px;border-radius:14px;font-weight:900;margin-top:9px}.detail-title{font-size:13px;color:var(--muted);text-align:center;margin:2px 0 10px}
+.modal{position:fixed;inset:0;background:rgba(32,25,21,.55);display:flex;align-items:flex-end;justify-content:center;padding:18px 18px calc(18px + env(safe-area-inset-bottom));z-index:30}.sheet{max-width:720px;width:100%;background:var(--bg);border-radius:30px 30px 18px 18px;padding:15px;max-height:92vh;overflow:auto;box-shadow:0 -16px 60px rgba(0,0,0,.25)}.sheet-handle{width:44px;height:5px;border-radius:99px;background:#CDBFB4;margin:0 auto 11px}.sheet-close{width:100%;border:0;background:#E9DED1;min-height:var(--btn-min);padding:0 12px;border-radius:var(--btn-radius);font-weight:900;margin-top:9px;display:flex;align-items:center;justify-content:center}.detail-title{font-size:13px;color:var(--muted);text-align:center;margin:2px 0 10px}
 /* v0.35: full-screen incident detail page (openDetail()/detailPage()),
    replacing the old bottom-sheet modal to match the mockup's dedicated
    "사건 카드 상세" screen -- own compact header (back/rarity/share), no
@@ -117,7 +146,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    the pill badge carries rarity color here, not the whole page). */
 .detail-page{padding:calc(14px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto;background:var(--bg) !important;color:var(--ink) !important;box-shadow:none !important}
 .detail-page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.icon-btn{border:1px solid var(--line);background:#fff;border-radius:14px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn{border:1px solid var(--line);background:#fff;border-radius:var(--btn-radius);width:var(--btn-min);height:var(--btn-min);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .icon-btn img{width:19px;height:19px;object-fit:contain}
 .detail-case-id{font-size:11px;color:var(--muted);font-weight:800}
 .detail-title-lg{font-size:30px;font-weight:1000;letter-spacing:-1.4px;line-height:1.08;margin-top:4px}
@@ -418,6 +447,9 @@ function records(d){const s=d.summary||{};const rows=[[l('사용 시간','使用
 // for now -- no theme system, and no destructive data actions were asked
 // for, so those rows don't do anything yet beyond stating the current
 // (only) state.
+// NOTE: the "앱 정보"/version string in the row list below is a plain
+// literal, not read from build.gradle.kts (no bridge call exposes it to
+// JS) -- keep it manually in sync with versionName on every version bump.
 function settings(){
   let hasAccess=null;try{hasAccess=N?N.hasUsageAccess():null}catch(e){}
   const accessLabel=hasAccess===true?l('허용됨','許可済み','Allowed'):hasAccess===false?l('허용 필요 · 탭해서 이동','許可が必要 · タップで移動','Needs permission -- tap to open'):l('탭해서 확인','タップして確認','Tap to check');
@@ -431,7 +463,7 @@ ${row(iconEmoji('📊'),l('사용정보 접근','使用状況へのアクセス'
 ${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),null,false)}
 ${row(iconEmoji('💾'),l('데이터 관리','データ管理','Data'),l('기록은 이 기기에만 저장됩니다','記録はこの端末にのみ保存されます','Your records stay on this device only'),null,false)}
 ${row(iconEmoji('❓'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),null,false)}
-${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.35.0',null,false)}
+${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.36.0',null,false)}
 </div>`
 }
 function closeOverlay(){document.getElementById('overlay').innerHTML=''}

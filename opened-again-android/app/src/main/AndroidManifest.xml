@@ -7,7 +7,16 @@
          pre-33. No notification feature exists yet to actually use this
          for, see that method's own comment. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <application android:theme="@style/AppTheme" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true">
+    <!-- v0.36: targetSdk 36 (Android 16) readiness pass, director flagged
+         that release considerations for newer Android hadn't been looked at
+         at all. enableOnBackInvokedCallback opts into the predictive-back
+         gesture system (default OFF pre-16, and apps that don't opt in get
+         a logcat warning on 13+ and none of the system back-preview
+         animation); MainActivity's existing onBackPressed() override
+         keeps working unchanged, since without a registered
+         OnBackInvokedCallback the platform's compatibility path still
+         calls it, so this is a behavior-preserving opt-in, not a rewrite. -->
+    <application android:theme="@style/AppTheme" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:enableOnBackInvokedCallback="true">
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

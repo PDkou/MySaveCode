@@ -5,10 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.RectF
 import android.net.Uri
@@ -186,8 +188,36 @@ class ShareCardRenderer(private val context: Context) {
         // it's drawCover-ed instead -- cropped to fill the box completely,
         // verified against several scene illustrations that the centered
         // crop keeps the main subject in frame.
+        // v0.36: director feedback -- the exported card "그냥 카드 프레임에
+        // 일러스트를 합성한 느낌" (looks like an illustration just glued onto
+        // a card frame, no harmony). Root cause: this box was designed back
+        // when illustrations were transparent character cutouts meant to
+        // float on the frame's own background, so a plain hard-edged
+        // drawCover was invisible -- there was no separate rectangle to see.
+        // Since v0.32 every illustration is a complete painted scene with
+        // its own independent background (a room, a night sky...), so that
+        // same hard rectangle now reads as a foreign sticker dropped onto
+        // the card instead of blending into it (index.html doesn't have
+        // this problem because there the illustration simply *is* the
+        // card's own background for 'scene' types, not a separate box).
+        // Closest fix without redesigning the whole card: round the box's
+        // corners to match the web card's .scene radius, add a soft shadow
+        // so it reads as a deliberately-placed photo rather than a flat
+        // paste, and stroke it in the rarity's own border color so it ties
+        // into the same palette as the frame around it.
         assetBitmap(incidentIllustrationAsset(incident.type, incident.rarity))?.let { art ->
             val sceneBox = RectF(sceneLeft, contentTop, rect.right - 28f, footerTop)
+            val sceneRadius = 28f
+            val scenePath = Path().apply { addRoundRect(sceneBox, sceneRadius, sceneRadius, Path.Direction.CW) }
+
+            paint.style = Paint.Style.FILL
+            paint.color = Color.argb(50, 30, 22, 14)
+            paint.maskFilter = BlurMaskFilter(16f, BlurMaskFilter.Blur.NORMAL)
+            c.drawRoundRect(RectF(sceneBox.left, sceneBox.top + 8f, sceneBox.right, sceneBox.bottom + 10f), sceneRadius, sceneRadius, paint)
+            paint.maskFilter = null
+
+            c.save()
+            c.clipPath(scenePath)
             if (isSceneIllustration(incident.type)) {
                 drawCover(c, art, sceneBox, paint)
             } else {
@@ -196,6 +226,13 @@ class ShareCardRenderer(private val context: Context) {
                 } ?: art
                 drawContain(c, trimmed, sceneBox, paint)
             }
+            c.restore()
+
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = 5f
+            paint.color = p.border
+            c.drawRoundRect(sceneBox, sceneRadius, sceneRadius, paint)
+            paint.style = Paint.Style.FILL
         }
 
         paint.isFakeBoldText = true; paint.textSize = 38f; paint.color = p.title
