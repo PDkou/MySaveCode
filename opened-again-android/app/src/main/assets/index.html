@@ -28,7 +28,20 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .brand-main{flex:1}.brand h1{font-size:30px;margin:0;letter-spacing:-1.8px;line-height:1}.brand .sub{font-size:13px;color:var(--muted);margin-top:7px}.lang{border:1px solid var(--line);background:#fff;border-radius:14px;padding:8px 10px;font-weight:900;color:#665B53}.date{font-size:12px;color:var(--muted);margin:12px 2px 0}
 .permission,.empty{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-top:22px;box-shadow:var(--shadow)}.permission h2{margin:0 0 8px}.permission p{font-size:14px;line-height:1.6;color:var(--muted)}
 .primary{border:0;border-radius:16px;padding:14px 18px;background:#6758F5;color:white;font-weight:900;width:100%;margin-top:14px;box-shadow:0 8px 18px rgba(103,88,245,.2)}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:17px;background:#ECE3D7;padding:5px;border-radius:18px}.tab{border:0;background:transparent;padding:10px 8px;border-radius:13px;color:#796D65;font-weight:800}.tab.active{background:white;color:#332C28;box-shadow:0 3px 12px rgba(70,50,35,.09)}
+/* v0.35: tab bar moved to the bottom of the screen (icon+label, 4 items)
+   to match art/reference/target-visual-direction's mockups -- it had been
+   sitting at the TOP as 3 plain text buttons, a real layout mismatch with
+   the approved mockup that went unnoticed until the director asked about
+   it directly. Uses the unlabeled icon set (docs/UI_VISUAL_DIRECTION_
+   REQUEST.md item 5, delivered 2026-09-09, never wired up before now) plus
+   a live text label so active/inactive styling and language switching both
+   work without needing per-language image variants. */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,251,246,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:7px 6px calc(7px + env(safe-area-inset-bottom))}
+.tabbtn{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:14px;color:#9A8E83}
+.tabbtn img{width:23px;height:23px;object-fit:contain;opacity:.5}
+.tabbtn span{font-size:10px;font-weight:800}
+.tabbtn.active{background:#F3EBDE;color:#332C28}
+.tabbtn.active img{opacity:1}
 .hero{margin-top:17px;background:linear-gradient(135deg,#FFF9F0 0%,#EFE1CE 100%);border:1px solid #EADAC5;border-radius:27px;padding:17px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;min-height:124px;position:relative}.hero:after{content:"";position:absolute;right:120px;bottom:-32px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.42)}.hero img{width:132px;height:96px;object-fit:cover;object-position:50% 10%;border-radius:19px;position:relative;z-index:1}.hero h2{margin:0;font-size:21px;letter-spacing:-.8px}.hero p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.55;max-width:310px}
 .daily-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:11px}.mini-stat{background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:15px;padding:10px 7px;text-align:center}.mini-stat b{display:block;font-size:17px}.mini-stat span{font-size:10px;color:var(--muted)}
 .section-title{display:flex;align-items:end;justify-content:space-between;margin:24px 2px 10px}.section-title h2{margin:0;font-size:20px;letter-spacing:-.7px}.count{font-size:12px;color:var(--muted)}
@@ -65,13 +78,59 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 @keyframes cardShine{0%,100%{transform:rotate(14deg) translateX(0)}50%{transform:rotate(14deg) translateX(260%)}}
 .epic{box-shadow:0 0 0 3px rgba(168,108,255,.55),0 16px 34px rgba(140,80,230,.4),var(--shadow)}
 .legendary{box-shadow:0 0 0 3px rgba(224,164,40,.6),0 16px 34px rgba(224,164,40,.42),var(--shadow)}.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 9px}.rarity{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:999px;background:var(--border);color:var(--badgeText,#fff);font-size:11px;font-weight:1000;letter-spacing:.6px}.rarity-symbol{width:14px;height:14px;object-fit:contain;display:block}.case-id{font-size:10px;color:var(--muted);font-weight:800}.card-body{display:grid;grid-template-columns:1.25fr .85fr;gap:10px;padding:4px 14px 14px;align-items:center}.case-title{font-size:25px;font-weight:1000;letter-spacing:-1.2px;line-height:1.05}.detail{font-size:13px;line-height:1.55;color:#655B54;margin-top:7px}.punch{font-size:16px;font-weight:1000;margin:12px 0 0;line-height:1.4}.scene{min-height:132px;border-radius:21px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative;background:var(--scene)}.scene img{width:112px;height:112px;object-fit:cover;border-radius:22px;margin-bottom:7px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.12))}.scene-mark{position:absolute;right:8px;top:8px;font-size:22px}.meta-strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 12px}.pill{background:rgba(255,255,255,.72);border:1px solid rgba(130,110,95,.16);border-radius:999px;padding:6px 9px;font-size:10px;font-weight:800;color:#675D56}.share-row{display:flex;gap:8px;padding:0 14px 14px}.share{flex:1;border:1px solid rgba(120,100,80,.22);background:rgba(255,255,255,.78);border-radius:13px;padding:10px;font-weight:900;color:#5B5048}.share:active{transform:scale(.98)}
+/* v0.35: compact one-line case rows below the featured card (home screen
+   mockup match) -- --scene/--border are set per rarity class the same way
+   .card's rarity classes already do (see :root/.normal/.rare/etc above). */
+.case-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.case-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--border,var(--line));border-radius:16px;padding:11px 13px;cursor:pointer}
+.case-row-icon{font-size:20px;width:36px;height:36px;border-radius:12px;background:var(--scene,#F6F0E6);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.case-row-text{flex:1;min-width:0}
+.case-row-text b{display:block;font-size:14px}
+.case-row-text span{display:block;font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.case-row .rarity{flex-shrink:0}
 .normal{--border:var(--normal);--badgeText:#393939;--glow:linear-gradient(120deg,#fff,#ececec);--scene:linear-gradient(160deg,#f9f9f9,#ececec)}.rare{--border:var(--rare);--glow:linear-gradient(120deg,#C9EAFF,#F7FBFF);--scene:linear-gradient(160deg,#E8F6FF,#CDEAFF)}.epic{--border:var(--epic);--glow:linear-gradient(120deg,#E6D1FF,#FFDCFB);--scene:linear-gradient(160deg,#302557,#6C478F)}.legendary{--border:var(--legend);--badgeText:#5E4300;--glow:linear-gradient(120deg,#FFE697,#FFF6C7);--scene:radial-gradient(circle at 50% 28%,#FFF9C6,#F2C43E 65%,#B47913)}
 .hidden{--border:#0AB6D4;--glow:linear-gradient(135deg,#031923,#0A4C67);--scene:radial-gradient(circle at 50% 30%,#104F68,#061A26 75%);background:#071C29;color:#E9FBFF;box-shadow:0 16px 38px rgba(0,31,45,.28)}.hidden.opal{--border:#DDE8FF;--badgeText:#342D46;--glow:linear-gradient(135deg,#FFE9F7,#DFF8FF,#EEE0FF,#FFF6C6);--scene:linear-gradient(145deg,#271E57,#453A84 45%,#B963B6);background:#FBF8FF;color:#342D46}.hidden .detail,.hidden .case-id{color:#B9DFE8}.hidden.opal .detail,.hidden.opal .case-id{color:#675E7E}.hidden .share{color:#E9FBFF;border-color:#23647A;background:#0A2938}.hidden.opal .share{color:#4B4161;background:rgba(255,255,255,.76);border-color:#D8CDE8}
 .featured{transform:translateZ(0)}.featured .card-body{grid-template-columns:1fr 1fr}.featured .scene{min-height:155px}.featured .scene img{width:135px;height:135px}
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{background:white;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 5px 14px rgba(70,50,35,.04)}.stat b{display:block;font-size:23px}.stat span{font-size:11px;color:var(--muted)}
 .archive-progress{background:white;border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}.bar{height:9px;background:#EEE6DC;border-radius:99px;overflow:hidden;margin-top:10px}.bar>i{display:block;height:100%;background:linear-gradient(90deg,#7ABEFF,#A56CFF,#FFD166);border-radius:99px}.archive-item{background:white;border:1px solid var(--line);border-radius:18px;padding:14px 15px;margin:8px 0}.archive-top{display:flex;justify-content:space-between;align-items:center}.archive-name{font-weight:900}.rarity-dots{display:flex;gap:5px;margin-top:9px}.dot{width:25px;height:8px;border-radius:10px;background:#ECE5DD}.dot.on.n{background:var(--normal)}.dot.on.r{background:var(--rare)}.dot.on.e{background:var(--epic)}.dot.on.l{background:var(--legend)}.locked{opacity:.48}.hidden-line{background:linear-gradient(90deg,#071C29,#143D51);color:#E9FBFF;border-color:#19536C}.hidden-line .dot{background:#235164}
 .record-list{margin-top:12px}.record-app{display:flex;align-items:center;justify-content:space-between;padding:12px 2px;border-bottom:1px solid #E8DED3}.record-app b{font-size:13px}.record-app span{font-size:12px;color:var(--muted)}
-.modal{position:fixed;inset:0;background:rgba(32,25,21,.55);display:flex;align-items:flex-end;justify-content:center;padding:18px 18px calc(18px + env(safe-area-inset-bottom));z-index:30}.sheet{max-width:720px;width:100%;background:var(--bg);border-radius:30px 30px 18px 18px;padding:15px;max-height:92vh;overflow:auto;box-shadow:0 -16px 60px rgba(0,0,0,.25)}.sheet-handle{width:44px;height:5px;border-radius:99px;background:#CDBFB4;margin:0 auto 11px}.sheet-close{width:100%;border:0;background:#E9DED1;padding:12px;border-radius:14px;font-weight:900;margin-top:9px}.detail-title{font-size:13px;color:var(--muted);text-align:center;margin:2px 0 10px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.detail-box{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px}.detail-box b{font-size:18px;display:block}.detail-box span{font-size:10px;color:var(--muted)}
+.settings-list{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.settings-row{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px 14px;cursor:pointer}
+.settings-row.static{cursor:default}
+.settings-row img{width:26px;height:26px;object-fit:contain;flex-shrink:0}
+.settings-emoji{font-size:22px;width:26px;text-align:center;flex-shrink:0}
+.settings-row-text{flex:1;min-width:0}
+.settings-row-text b{display:block;font-size:14px}
+.settings-row-text span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.settings-chevron{color:var(--muted);font-size:20px}
+.modal{position:fixed;inset:0;background:rgba(32,25,21,.55);display:flex;align-items:flex-end;justify-content:center;padding:18px 18px calc(18px + env(safe-area-inset-bottom));z-index:30}.sheet{max-width:720px;width:100%;background:var(--bg);border-radius:30px 30px 18px 18px;padding:15px;max-height:92vh;overflow:auto;box-shadow:0 -16px 60px rgba(0,0,0,.25)}.sheet-handle{width:44px;height:5px;border-radius:99px;background:#CDBFB4;margin:0 auto 11px}.sheet-close{width:100%;border:0;background:#E9DED1;padding:12px;border-radius:14px;font-weight:900;margin-top:9px}.detail-title{font-size:13px;color:var(--muted);text-align:center;margin:2px 0 10px}
+/* v0.35: full-screen incident detail page (openDetail()/detailPage()),
+   replacing the old bottom-sheet modal to match the mockup's dedicated
+   "사건 카드 상세" screen -- own compact header (back/rarity/share), no
+   brand header or bottom tab bar (see render()'s state.detailItem branch). */
+/* the rarity class (normal/rare/epic/legendary/hidden) is applied here too
+   so --border/--scene are available for the badge pill and scene box, but
+   those classes also set a whole-element background+text color (designed
+   for self-contained .card, where that's the entire card's own dark/light
+   theme) -- force this page back to the app's normal light background/ink
+   regardless of which rarity class rides along, matching the mockup (only
+   the pill badge carries rarity color here, not the whole page). */
+.detail-page{padding:calc(14px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto;background:var(--bg) !important;color:var(--ink) !important;box-shadow:none !important}
+.detail-page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.icon-btn{border:1px solid var(--line);background:#fff;border-radius:14px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn img{width:19px;height:19px;object-fit:contain}
+.detail-case-id{font-size:11px;color:var(--muted);font-weight:800}
+.detail-title-lg{font-size:30px;font-weight:1000;letter-spacing:-1.4px;line-height:1.08;margin-top:4px}
+.detail-sub{font-size:14px;color:#655B54;line-height:1.5;margin-top:8px}
+.detail-scene{min-height:220px;border-radius:22px;margin-top:16px;background:var(--scene,#F6F0E6);background-size:cover;background-position:center;position:relative}
+.detail-punch{font-size:18px;font-weight:1000;margin:16px 0 0;line-height:1.4}
+.detail-stats{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-top:18px}
+.detail-stats>b{font-size:13px;display:block;margin-bottom:8px}
+.detail-stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid #EFE7DB}
+.detail-stat-row:first-of-type{border-top:0}
+.detail-stat-row span{font-size:12px;color:var(--muted)}
+.detail-stat-row b{font-size:14px;font-weight:900}
+.detail-share-btn{margin-top:18px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2F2926;color:white;border-radius:999px;padding:10px 15px;font-size:12px;font-weight:800;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .foot{font-size:10px;text-align:center;color:#A4978E;margin-top:28px;letter-spacing:.7px}
 @media(max-width:430px){.app{padding-left:14px;padding-right:14px}.brand h1{font-size:27px}.avatar{width:60px;height:60px}.card-body{grid-template-columns:1.22fr .78fr}.case-title{font-size:22px}.scene{min-height:118px}.scene img{width:98px;height:98px}.daily-strip{gap:5px}.mini-stat{padding:9px 3px}}
@@ -146,7 +205,7 @@ const skipOnboarding=params.get('onboarding')==='0';
 // English strings exist throughout via l(ko, ja, en) but are not exposed yet —
 // flip `supported` back to include 'en' when English becomes a real target.
 const supported=['ko','ja'];const detected=(navigator.language||'ko').slice(0,2);
-const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false},onboardStep:1,tab:params.get('tab')||'cases',data:null,history:{days:{},discoveries:{}}};
+const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false},onboardStep:1,tab:params.get('tab')||'cases',data:null,detailItem:null,history:{days:{},discoveries:{}}};
 function l(ko,ja,en){return state.settings.language==='ko'?ko:state.settings.language==='ja'?ja:en}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function todayKey(){return new Date().toISOString().slice(0,10)}
@@ -288,8 +347,23 @@ function card(i,featured=false){const cls=`card ${rarityClass(i)} ${featured?'fe
   return `<article class="${cls}" onclick='openDetail(${JSON.stringify(i).replace(/'/g,"&#39;")})'><div class="card-pattern" style="background-image:url('${cardPatternBg(i)}')"></div>${impactLayers}<div class="card-head">${rarityBadge(i)}<span class="case-id">CASE #${caseNo(i)}</span></div><div class="card-body"><div><div class="case-title">${esc(txt(names,i.type))}</div><div class="detail">${esc(detail(i))}</div><div class="punch">“${esc(txt(punch,i.type))}”</div></div><div class="${sceneCls}" style="background-image:linear-gradient(rgba(255,255,255,.04),rgba(255,255,255,.04)),url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span>${mode==='overlay'?`<img class="moni-asset" src="${art}" alt="MONI">`:''}</div></div><div class="meta-strip"><span class="pill">SCORE ${i.score||0}</span>${i.primaryPackage?`<span class="pill">${esc(compactPkg(i.primaryPackage))}</span>`:''}<span class="pill">${l('자동 분석','自動分析','Auto analysis')}</span></div><div class="share-row" onclick="event.stopPropagation()"><button class="share" onclick='share(${JSON.stringify(i).replace(/'/g,"&#39;")},"square")'>${l('1:1 공유','1:1 共有','Share 1:1')}</button><button class="share" onclick='share(${JSON.stringify(i).replace(/'/g,"&#39;")},"story")'>${l('스토리','ストーリー','Story')}</button></div></article>`}
 function header(){const logo=state.settings.language==='ja'?'visual/logo/logo_jp.png':'visual/logo/logo_ko.png';return `<div class="brand"><img class="avatar" src="visual/app-icon/legacy/app_icon_phone.png"><div class="brand-main"><img class="brand-logo" src="${logo}" alt="Opened Again"><div class="sub">${l('내 폰이 오늘도 보고 있었다.','スマホは今日も見ていました。','Your phone was watching again.')}</div></div><button class="lang" onclick="cycleLang()">${state.settings.language.toUpperCase()}</button></div><div class="date">${new Date().toLocaleDateString()}</div>`}
 function cycleLang(){const i=supported.indexOf(state.settings.language);state.settings.language=supported[(i+1)%supported.length];save();render()}
-function tabs(){return `<div class="tabs"><button class="tab ${state.tab==='cases'?'active':''}" onclick="setTab('cases')">${l('사건','事件','Cases')}</button><button class="tab ${state.tab==='archive'?'active':''}" onclick="setTab('archive')">${l('보관함','保管庫','Archive')}</button><button class="tab ${state.tab==='records'?'active':''}" onclick="setTab('records')">${l('기록','記録','Records')}</button></div>`}
-function cases(d){const cards=d.report?.cards||[],s=d.summary||{};return `<section class="hero"><div><h2>${l('오늘도 수고했어요.','今日もおつかれさま。','Another day investigated.')}</h2><p>${l('모니가 오늘의 수상한 스마트폰 행동을 정리했습니다.','MONIが今日のちょっと怪しいスマホ行動をまとめました。','MONI summarized today\'s suspicious little phone habits.')}</p></div><img class="hero-moni" src="visual/character/basic/moni_phone.png"></section><div class="daily-strip"><div class="mini-stat"><b>${s.openCount||0}</b><span>${l('앱 실행','起動','opens')}</span></div><div class="mini-stat"><b>${fmtMs(s.totalUsageMs||0)}</b><span>${l('사용','使用','usage')}</span></div><div class="mini-stat"><b>${s.unlockSessions||0}</b><span>${l('잠금해제','解除','unlocks')}</span></div><div class="mini-stat"><b>${cards.length}</b><span>${l('사건','事件','cases')}</span></div></div><div class="section-title"><h2>${l('오늘의 사건','本日の事件','Today\'s cases')}</h2><span class="count">${cards.length}${l('건','件','')}</span></div>${cards.length?cards.map((x,i)=>card(x,i===0)).join(''):`<div class="empty"><img src="visual/states/empty_state.png" alt=""><p>${l('아직 특별한 사건이 없습니다. 평소처럼 사용해 주세요.','まだ特別な事件はありません。いつも通りお使いください。','No unusual cases yet. Use your phone as usual.')}</p></div>`}`}
+function tabs(){const items=[
+  {id:'cases',icon:'home',label:l('홈','ホーム','Home')},
+  {id:'records',icon:'records',label:l('기록','記録','Records')},
+  {id:'archive',icon:'collection',label:l('보관함','保管庫','Archive')},
+  {id:'settings',icon:'settings',label:l('설정','設定','Settings')},
+];
+  return `<div class="tabbar">${items.map(it=>`<button class="tabbtn ${state.tab===it.id?'active':''}" onclick="setTab('${it.id}')"><img src="visual/ui/icons/unlabeled/icon_${it.icon}.png" alt=""><span>${it.label}</span></button>`).join('')}</div>`}
+// v0.35: one featured full card + the rest as a compact one-line-per-case
+// list, matching art/reference/target-visual-direction's home screen
+// mockup (it showed every other case as a small icon+title+rarity row, not
+// a full stack of expanded cards). compactCase() below is the row; the
+// mockup's row also shows a time ("19:41") but incident objects carry no
+// timestamp field (see IncidentDetector.kt/demo()'s card shape) -- rather
+// than fabricate one, the row omits it and shows the same real detail()
+// sentence the full card uses instead.
+function compactCase(i){return `<div class="case-row ${rarityClass(i)}" onclick='openDetail(${JSON.stringify(i).replace(/'/g,"&#39;")})'><span class="case-row-icon">${iconFor(i)}</span><div class="case-row-text"><b>${esc(txt(names,i.type))}</b><span>${esc(detail(i))}</span></div>${rarityBadge(i)}</div>`}
+function cases(d){const cards=d.report?.cards||[],s=d.summary||{};const [featured,...rest]=cards;return `<section class="hero"><div><h2>${l('오늘도 수고했어요.','今日もおつかれさま。','Another day investigated.')}</h2><p>${l('모니가 오늘의 수상한 스마트폰 행동을 정리했습니다.','MONIが今日のちょっと怪しいスマホ行動をまとめました。','MONI summarized today\'s suspicious little phone habits.')}</p></div><img class="hero-moni" src="visual/character/basic/moni_phone.png"></section><div class="daily-strip"><div class="mini-stat"><b>${s.openCount||0}</b><span>${l('앱 실행','起動','opens')}</span></div><div class="mini-stat"><b>${fmtMs(s.totalUsageMs||0)}</b><span>${l('사용','使用','usage')}</span></div><div class="mini-stat"><b>${s.unlockSessions||0}</b><span>${l('잠금해제','解除','unlocks')}</span></div><div class="mini-stat"><b>${cards.length}</b><span>${l('사건','事件','cases')}</span></div></div><div class="section-title"><h2>${l('오늘의 사건','本日の事件','Today\'s cases')}</h2><span class="count">${cards.length}${l('건','件','')}</span></div>${cards.length?card(featured,true)+(rest.length?`<div class="case-list">${rest.map(compactCase).join('')}</div>`:''):`<div class="empty"><img src="visual/states/empty_state.png" alt=""><p>${l('아직 특별한 사건이 없습니다. 평소처럼 사용해 주세요.','まだ特別な事件はありません。いつも通りお使いください。','No unusual cases yet. Use your phone as usual.')}</p></div>`}`}
 function archive(d){const items=d.archive?.items||[];const found=Object.keys(state.history.discoveries).length||d.archive?.discoveredCount||0;const pct=Math.round(found/Math.max(1,items.length)*100);return `<div class="section-title"><h2>${l('사건 보관함','事件保管庫','Case archive')}</h2><span class="count">${found}/${items.length}</span></div><div class="archive-progress"><b>${l('발견 진행도','発見進捗','Discovery progress')} ${pct}%</b><div class="bar"><i style="width:${pct}%"></i></div></div><div class="archive-grid">${items.map(x=>{const rar=state.history.discoveries[x.type]||[];const foundAny=x.found||rar.length>0;const locked=x.hidden&&!foundAny;const top=bestRarity(rar);const cls=locked?'':archiveRarityClass(x.type,top||'NORMAL');const [artBase,bg,mode]=incidentVisual(x.type);const art=incidentArt(artBase,x.type,top||'NORMAL');
       // v0.29: overlay-mode illustrations are a transparent character+prop
       // cutout with a lot of empty space (see ShareCardRenderer.kt's
@@ -324,7 +398,7 @@ function openArchiveDetail(type){
     // showing a HIDDEN type's art before it's actually been discovered.
     if(!found.length)return;
     const art=incidentArt(artBase,type,'HIDDEN');
-    document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDetail()"><div class="sheet"><div class="sheet-handle"></div><div class="detail-title">${l('사건 보관함 상세','事件保管庫詳細','Archive detail')}</div><div class="archive-detail-hero"><img src="${art}" alt=""><b>${esc(txt(names,type))}</b><span>“${esc(txt(punch,type))}”</span></div><button class="sheet-close" onclick="closeDetail()">${l('닫기','閉じる','Close')}</button></div></div>`;
+    document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="detail-title">${l('사건 보관함 상세','事件保管庫詳細','Archive detail')}</div><div class="archive-detail-hero"><img src="${art}" alt=""><b>${esc(txt(names,type))}</b><span>“${esc(txt(punch,type))}”</span></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
     return;
   }
   const rarities=['NORMAL','RARE','EPIC','LEGENDARY'];
@@ -333,11 +407,73 @@ function openArchiveDetail(type){
     const style=got?` style="background-image:url('${incidentArt(artBase,type,r)}')"`:'';
     return `<div class="rarity-cell ${got?r.toLowerCase():'locked'}"><div class="rarity-cell-visual"${style}>${got?'':'<span>?</span>'}</div><span>${got?r:'???'}</span></div>`;
   }).join('');
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDetail()"><div class="sheet"><div class="sheet-handle"></div><div class="detail-title">${l('등급별 수집 현황','等級別コレクション','Collection by rarity')}</div><div class="archive-detail-head"><b>${esc(txt(names,type))}</b><span>${found.length}/4 ${l('등급 수집','等級収集','rarities')}</span></div><div class="rarity-cell-grid">${cells}</div><button class="sheet-close" onclick="closeDetail()">${l('닫기','閉じる','Close')}</button></div></div>`;
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="detail-title">${l('등급별 수집 현황','等級別コレクション','Collection by rarity')}</div><div class="archive-detail-head"><b>${esc(txt(names,type))}</b><span>${found.length}/4 ${l('등급 수집','等級収集','rarities')}</span></div><div class="rarity-cell-grid">${cells}</div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
 }
 function records(d){const s=d.summary||{};const rows=[[l('사용 시간','使用時間','Usage'),fmtMs(s.totalUsageMs||0)],[l('앱 실행','アプリ起動','Opens'),s.openCount||0],[l('앱 전환','アプリ切替','Switches'),s.switchCount||0],[l('잠금 해제 세션','ロック解除セッション','Unlock sessions'),s.unlockSessions||0],[l('사용 앱','利用アプリ','Unique apps'),s.uniqueApps||0],[l('심야 사용','深夜利用','Night usage'),fmtMs(s.nightUsageMs||0)]];const top=(s.topPackages||[]);return `<div class="section-title"><h2>${l('오늘의 기록','本日の記録','Today\'s record')}</h2></div><div class="record-decor"><img src="visual/character/basic/moni_read_file.png"><div><b>${l('오늘의 수사 보고서','本日の捜査報告','Today\'s investigation report')}</b><p>${l('숫자도 모니가 차분히 정리했습니다.','数字もMONIが静かにまとめました。','MONI filed the numbers too.')}</p></div></div><div class="stats">${rows.map(([a,b])=>`<div class="stat"><b>${esc(b)}</b><span>${esc(a)}</span></div>`).join('')}</div><div class="section-title"><h2>${l('가장 오래 본 앱','最も長く見たアプリ','Top apps')}</h2></div><div class="record-list">${top.length?top.map((x,i)=>`<div class="record-app"><b>${i+1}. ${esc(compactPkg(x.packageName))}</b><span>${fmtMs(x.durationMs)}</span></div>`).join(''):`<div class="empty">${l('기록이 없습니다.','記録がありません。','No records.')}</div>`}</div>`}
-function openDetail(i){const m=i.metrics||{};document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDetail()"><div class="sheet"><div class="sheet-handle"></div><div class="detail-title">${l('사건 카드 상세','事件カード詳細','Incident card detail')}</div>${card(i,true)}<div class="detail-grid"><div class="detail-box"><b>${i.score||0}</b><span>${l('사건 점수','事件スコア','Case score')}</span></div><div class="detail-box"><b>${Object.values(m)[0]??'-'}</b><span>${l('핵심 측정값','主要測定値','Primary metric')}</span></div></div><button class="sheet-close" onclick="closeDetail()">${l('닫기','閉じる','Close')}</button></div></div>`}
-function closeDetail(){document.getElementById('overlay').innerHTML=''}
+// v0.35: settings tab (docs/UI_VISUAL_DIRECTION_REQUEST.md item 5's 4th
+// bottom-nav destination -- the app previously had no settings screen at
+// all). Reachable regardless of usage-access permission state (unlike the
+// other 3 tabs, which need real usage data) since it's mostly static/
+// account-level info. Theme/data-management/help are informational only
+// for now -- no theme system, and no destructive data actions were asked
+// for, so those rows don't do anything yet beyond stating the current
+// (only) state.
+function settings(){
+  let hasAccess=null;try{hasAccess=N?N.hasUsageAccess():null}catch(e){}
+  const accessLabel=hasAccess===true?l('허용됨','許可済み','Allowed'):hasAccess===false?l('허용 필요 · 탭해서 이동','許可が必要 · タップで移動','Needs permission -- tap to open'):l('탭해서 확인','タップして確認','Tap to check');
+  const row=(icon,title,sub,onclick,clickable=true)=>`<div class="settings-row${clickable?'':' static'}"${onclick?` onclick="${onclick}"`:''}>${icon}<div class="settings-row-text"><b>${title}</b><span>${sub}</span></div>${clickable?'<span class="settings-chevron">›</span>':''}</div>`;
+  const iconImg=name=>`<img src="visual/ui/icons/unlabeled/icon_${name}.png" alt="">`;
+  const iconEmoji=e=>`<span class="settings-emoji">${e}</span>`;
+  return `<div class="section-title"><h2>${l('설정','設定','Settings')}</h2></div><div class="settings-list">
+${row(iconImg('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','cycleLang()')}
+${row(iconImg('notification'),l('알림 권한','通知許可','Notifications'),l('탭해서 허용하기','タップして許可','Tap to allow'),'N&&N.requestNotificationPermission()')}
+${row(iconEmoji('📊'),l('사용정보 접근','使用状況へのアクセス','Usage access'),accessLabel,'N&&N.openUsageSettings()')}
+${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),null,false)}
+${row(iconEmoji('💾'),l('데이터 관리','データ管理','Data'),l('기록은 이 기기에만 저장됩니다','記録はこの端末にのみ保存されます','Your records stay on this device only'),null,false)}
+${row(iconEmoji('❓'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),null,false)}
+${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.35.0',null,false)}
+</div>`
+}
+function closeOverlay(){document.getElementById('overlay').innerHTML=''}
+// v0.35: incident card detail is now a full-screen page (back arrow +
+// centered rarity pill + share icon header, stats box, single share
+// button) instead of a bottom-sheet modal, matching art/reference/
+// target-visual-direction's "사건 카드 상세" mockup screen. state.detailItem
+// holds the open incident; render() renders detailPage() in place of the
+// normal header+tabs+content when it's set (see render() below), and
+// closeDetail() clears it and re-renders back to whatever tab was active.
+// A plain object here (evaluated once at script load) would freeze every
+// label in whichever language was active on page load -- l() itself is
+// fine called fresh per render, but a *lookup table built from l() calls*
+// isn't, since building it is a one-time evaluation. Function instead, so
+// each metricRow() call resolves labels in the language active right now.
+function metricLabel(k){switch(k){
+  case'count':return l('합계 횟수','合計回数','Total count');
+  case'opens':return l('합계 방문','合計訪問','Total visits');
+  case'switches':return l('전환 횟수','切替回数','Switches');
+  case'uniqueApps':return l('사용 앱 수','利用アプリ数','Apps used');
+  case'reopens':return l('재실행 횟수','再起動回数','Reopens');
+  case'unlocks':return l('접속 횟수','接続回数','Check-ins');
+  case'avgGapMs':return l('평균 간격','平均間隔','Avg gap');
+  case'durationMs':return l('총 사용 시간','総使用時間','Total duration');
+  default:return k;
+}}
+function metricRow(k,v){const val=/Ms$/.test(k)?fmtMs(v||0):v;return [metricLabel(k),val]}
+function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVisual(i.type);const art=incidentArt(artBase,i.type,i.rarity);const sceneBg=mode==='scene'?art:bg;
+  const statRows=Object.entries(m).map(([k,v])=>metricRow(k,v));
+  const shareArg=JSON.stringify(i).replace(/'/g,"&#39;");
+  return `<div class="detail-page ${rarityClass(i)}">
+    <div class="detail-page-head"><button class="icon-btn" onclick="closeDetail()"><img src="visual/ui/icons/unlabeled/icon_back.png" alt="${l('뒤로','戻る','Back')}"></button>${rarityBadge(i)}<button class="icon-btn" onclick='share(${shareArg},"square")'><img src="visual/ui/icons/unlabeled/icon_share.png" alt="${l('공유','シェア','Share')}"></button></div>
+    <div class="detail-case-id">CASE #${caseNo(i)} · ${new Date().toLocaleDateString()}</div>
+    <div class="detail-title-lg">${esc(txt(names,i.type))}</div>
+    <div class="detail-sub">${esc(detail(i))}</div>
+    <div class="detail-scene" style="background-image:linear-gradient(rgba(255,255,255,.04),rgba(255,255,255,.04)),url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span></div>
+    <div class="detail-punch">“${esc(txt(punch,i.type))}”</div>
+    ${statRows.length?`<div class="detail-stats"><b>${l('이 사건의 기록','この事件の記録','About this case')}</b>${statRows.map(([k,v])=>`<div class="detail-stat-row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>`:''}
+    <button class="primary detail-share-btn" onclick='share(${shareArg},"square")'>${l('공유하기','シェアする','Share')}</button>
+  </div>`}
+function openDetail(i){state.detailItem=i;render()}
+function closeDetail(){state.detailItem=null;render()}
 function toast(t){const x=document.createElement('div');x.className='toast';x.textContent=t;document.body.appendChild(x);setTimeout(()=>x.remove(),1600)}
 // v0.24: two-screen onboarding, gated by state.settings.onboardingSeen
 // (persisted via save(), same as every other setting). The source images
@@ -370,6 +506,18 @@ function onboardFinish(allow){
   if(allow){try{N&&N.requestNotificationPermission&&N.requestNotificationPermission()}catch(e){}}
   state.settings.onboardingSeen=true;save();state.onboardStep=1;render()
 }
-function render(){const root=document.getElementById('app');if(!skipOnboarding&&!state.settings.onboardingSeen){root.className='app onboard';root.innerHTML=onboardScreen();return}root.className='app';let html=header();const d=state.data||read();state.data=d;if(!d.permission){html+=`<div class="permission"><h2>${l('모니가 사건을 조사하려면','MONIが事件を調べるには','To let MONI investigate')}</h2><p>${l('앱 사용 기록을 기기 안에서 분석하기 위한 사용정보 접근 권한이 필요합니다. 기록 내용은 서버로 보내지 않습니다.','端末内でアプリ利用記録を分析するため、使用状況へのアクセスが必要です。記録内容はサーバーへ送信しません。','Usage access is required to analyze app activity on-device. Your records are not sent to a server.')}</p><button class="primary" onclick="N&&N.openUsageSettings()">${l('사용정보 접근 허용','使用状況へのアクセスを許可','Allow usage access')}</button></div>`;root.innerHTML=html;return}html+=tabs();html+=state.tab==='cases'?cases(d):state.tab==='archive'?archive(d):records(d);html+=`<div class="foot">MONI · SMALL HABITS, BIG STORIES.</div>`;root.innerHTML=html}
+function render(){const root=document.getElementById('app');if(!skipOnboarding&&!state.settings.onboardingSeen){root.className='app onboard';root.innerHTML=onboardScreen();return}
+  // v0.35: full-screen detail page takes over completely (its own compact
+  // header, no brand header/bottom tab bar) -- checked before header()
+  // even runs, matching the mockup's dedicated "사건 카드 상세" screen.
+  if(state.detailItem){root.className='app detail-mode';root.innerHTML=detailPage(state.detailItem);return}
+  root.className='app';let html=header();
+  // v0.35: settings is reachable regardless of usage-access permission --
+  // it's account/app-level info, not usage-derived, unlike the other 3
+  // tabs which need real analyzed data. Checked before the permission gate
+  // below so a user who hasn't granted access yet still has somewhere to
+  // go via the bottom tab bar instead of being fully stuck.
+  if(state.tab==='settings'){html+=settings();html+=tabs();root.innerHTML=html;return}
+  const d=state.data||read();state.data=d;if(!d.permission){html+=`<div class="permission"><h2>${l('모니가 사건을 조사하려면','MONIが事件を調べるには','To let MONI investigate')}</h2><p>${l('앱 사용 기록을 기기 안에서 분석하기 위한 사용정보 접근 권한이 필요합니다. 기록 내용은 서버로 보내지 않습니다.','端末内でアプリ利用記録を分析するため、使用状況へのアクセスが必要です。記録内容はサーバーへ送信しません。','Usage access is required to analyze app activity on-device. Your records are not sent to a server.')}</p><button class="primary" onclick="N&&N.openUsageSettings()">${l('사용정보 접근 허용','使用状況へのアクセスを許可','Allow usage access')}</button></div>`;html+=tabs();root.innerHTML=html;return}html+=state.tab==='cases'?cases(d):state.tab==='archive'?archive(d):records(d);html+=`<div class="foot">MONI · SMALL HABITS, BIG STORIES.</div>`;html+=tabs();root.innerHTML=html}
 restore();refresh();
 </script></body></html>
