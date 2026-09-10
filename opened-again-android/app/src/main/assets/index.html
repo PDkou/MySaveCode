@@ -114,7 +114,22 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    중앙(대부분 캐릭터가 있는 자리) 기준으로 crop -- 여백이 크게 줄고
    캐릭터가 타일을 훨씬 더 채우게 됨. 잠금 카드(`locked_card.png`)는
    카드 전체가 유의미한 그림이라 그대로 `contain` 유지. */
-.archive-visual .overlay-fill{object-fit:cover}.archive-card b{font-size:13px;display:block;margin-top:7px}.archive-card span{font-size:10px;color:var(--muted)}.archive-card.locked .archive-visual{filter:grayscale(1) brightness(.7);opacity:.7}.archive-card.locked:after{content:'???';position:absolute;inset:0;display:grid;place-items:center;font-size:26px;font-weight:1000;color:white;background:rgba(8,22,31,.15)}
+.archive-visual .overlay-fill{object-fit:cover}.archive-card b{font-size:13px;display:block;margin-top:7px}.archive-card span{font-size:10px;color:var(--muted)}.archive-card.locked .archive-visual{filter:grayscale(1) brightness(.7);opacity:.7}.archive-card.locked:after{content:'???';position:absolute;inset:0;display:grid;place-items:center;font-size:26px;font-weight:1000;color:white;background:rgba(8,22,31,.15)}.archive-card:not(.locked){cursor:pointer}
+/* v0.33: archive card detail modal (openArchiveDetail()) -- a 2x2 grid of
+   per-rarity thumbnails for regular types, or a single hero image for
+   HIDDEN types (they have no rarity breakdown to show). */
+.archive-detail-head{display:flex;justify-content:space-between;align-items:baseline;padding:2px 2px 12px}.archive-detail-head b{font-size:17px}.archive-detail-head span{font-size:11px;color:var(--muted)}
+.rarity-cell-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.rarity-cell{border:2px solid var(--line);border-radius:16px;padding:8px;text-align:center;background:#fff}
+.rarity-cell.normal{border-color:var(--normal)}.rarity-cell.rare{border-color:var(--rare)}.rarity-cell.epic{border-color:var(--epic)}.rarity-cell.legendary{border-color:var(--legend)}
+.rarity-cell.locked{border-color:var(--line);opacity:.55}
+.rarity-cell-visual{width:100%;height:120px;border-radius:12px;background:#F3EEE6 center/cover no-repeat;display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.rarity-cell-visual span{font-size:26px;color:var(--muted);font-weight:1000}
+.rarity-cell>span{font-size:11px;font-weight:900;display:block}
+.archive-detail-hero{text-align:center;padding:2px}
+.archive-detail-hero img{width:100%;border-radius:16px;margin-bottom:10px}
+.archive-detail-hero b{font-size:16px;display:block}
+.archive-detail-hero>span{font-size:12px;color:var(--muted);display:block;margin-top:4px}
 .record-decor{background:linear-gradient(90deg,rgba(255,249,240,.92),rgba(255,249,240,.72)),url('visual/backgrounds/bg_room_night.png') center/cover;border-radius:22px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:14px;color:var(--ink)}.record-decor img{width:82px;height:82px;object-fit:contain}.record-decor b{font-size:18px}.record-decor p{font-size:11px;margin:4px 0 0;color:var(--muted)}
 </style>
 </head>
@@ -280,7 +295,40 @@ function archive(d){const items=d.archive?.items||[];const found=Object.keys(sta
       // full illustrated thumbnails. Now both modes get a real background
       // image here too (scene: the illustration itself; overlay: its
       // paired room/city photo), matching card()'s treatment.
-      const visualStyle=(!locked)?` style="background-image:url('${mode==='scene'?art:bg}');background-size:cover;background-position:center"`:'';const visualImg=locked?`<img src="visual/states/locked_card.png" alt="">`:(mode==='overlay'?`<img class="overlay-fill" src="${art}" alt="">`:'');return `<div class="archive-card ${cls} ${locked?'locked':''}"><div class="archive-visual"${visualStyle}>${visualImg}</div><b>${locked?'???':esc(txt(names,x.type))}</b><span>${locked?l('아직 발견되지 않음','未発見','Undiscovered'):(top||l('발견됨','発見済み','Found'))}</span></div>`}).join('')}</div>`}
+      const visualStyle=(!locked)?` style="background-image:url('${mode==='scene'?art:bg}');background-size:cover;background-position:center"`:'';const visualImg=locked?`<img src="visual/states/locked_card.png" alt="">`:(mode==='overlay'?`<img class="overlay-fill" src="${art}" alt="">`:'');
+      // v0.33: clicking a discovered archive card opens a modal showing
+      // every rarity found for that type so far (openArchiveDetail()) --
+      // locked (never-found) cards stay inert.
+      const clickAttr=locked?'':` onclick="openArchiveDetail('${x.type}')"`;
+      return `<div class="archive-card ${cls} ${locked?'locked':''}"${clickAttr}><div class="archive-visual"${visualStyle}>${visualImg}</div><b>${locked?'???':esc(txt(names,x.type))}</b><span>${locked?l('아직 발견되지 않음','未発見','Undiscovered'):(top||l('발견됨','発見済み','Found'))}</span></div>`}).join('')}</div>`}
+// v0.33: archive card detail modal -- shows every rarity tier discovered so
+// far for a type (state.history.discoveries[type], an array of rarity
+// strings appended in persistSnapshot()). Non-HIDDEN types get a 4-cell
+// NORMAL/RARE/EPIC/LEGENDARY grid, each cell showing that rarity's actual
+// illustration (via incidentArt(), same lookup card()/archive() use) once
+// discovered, or a plain '?' placeholder tile until then. HIDDEN types
+// only ever have one rarity (always Rarity.HIDDEN, see IncidentDetector.kt)
+// so there's nothing to break down -- just show the single illustration.
+function openArchiveDetail(type){
+  const found=state.history.discoveries[type]||[];
+  const [artBase]=incidentVisual(type);
+  if(type.startsWith('HIDDEN')){
+    // HIDDEN types are only ever clickable once found (see archive()'s
+    // clickAttr, gated on `locked`), but guard here too rather than ever
+    // showing a HIDDEN type's art before it's actually been discovered.
+    if(!found.length)return;
+    const art=incidentArt(artBase,type,'HIDDEN');
+    document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDetail()"><div class="sheet"><div class="sheet-handle"></div><div class="detail-title">${l('사건 보관함 상세','事件保管庫詳細','Archive detail')}</div><div class="archive-detail-hero"><img src="${art}" alt=""><b>${esc(txt(names,type))}</b><span>“${esc(txt(punch,type))}”</span></div><button class="sheet-close" onclick="closeDetail()">${l('닫기','閉じる','Close')}</button></div></div>`;
+    return;
+  }
+  const rarities=['NORMAL','RARE','EPIC','LEGENDARY'];
+  const cells=rarities.map(r=>{
+    const got=found.includes(r);
+    const style=got?` style="background-image:url('${incidentArt(artBase,type,r)}')"`:'';
+    return `<div class="rarity-cell ${got?r.toLowerCase():'locked'}"><div class="rarity-cell-visual"${style}>${got?'':'<span>?</span>'}</div><span>${got?r:'???'}</span></div>`;
+  }).join('');
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDetail()"><div class="sheet"><div class="sheet-handle"></div><div class="detail-title">${l('등급별 수집 현황','等級別コレクション','Collection by rarity')}</div><div class="archive-detail-head"><b>${esc(txt(names,type))}</b><span>${found.length}/4 ${l('등급 수집','等級収集','rarities')}</span></div><div class="rarity-cell-grid">${cells}</div><button class="sheet-close" onclick="closeDetail()">${l('닫기','閉じる','Close')}</button></div></div>`;
+}
 function records(d){const s=d.summary||{};const rows=[[l('사용 시간','使用時間','Usage'),fmtMs(s.totalUsageMs||0)],[l('앱 실행','アプリ起動','Opens'),s.openCount||0],[l('앱 전환','アプリ切替','Switches'),s.switchCount||0],[l('잠금 해제 세션','ロック解除セッション','Unlock sessions'),s.unlockSessions||0],[l('사용 앱','利用アプリ','Unique apps'),s.uniqueApps||0],[l('심야 사용','深夜利用','Night usage'),fmtMs(s.nightUsageMs||0)]];const top=(s.topPackages||[]);return `<div class="section-title"><h2>${l('오늘의 기록','本日の記録','Today\'s record')}</h2></div><div class="record-decor"><img src="visual/character/basic/moni_read_file.png"><div><b>${l('오늘의 수사 보고서','本日の捜査報告','Today\'s investigation report')}</b><p>${l('숫자도 모니가 차분히 정리했습니다.','数字もMONIが静かにまとめました。','MONI filed the numbers too.')}</p></div></div><div class="stats">${rows.map(([a,b])=>`<div class="stat"><b>${esc(b)}</b><span>${esc(a)}</span></div>`).join('')}</div><div class="section-title"><h2>${l('가장 오래 본 앱','最も長く見たアプリ','Top apps')}</h2></div><div class="record-list">${top.length?top.map((x,i)=>`<div class="record-app"><b>${i+1}. ${esc(compactPkg(x.packageName))}</b><span>${fmtMs(x.durationMs)}</span></div>`).join(''):`<div class="empty">${l('기록이 없습니다.','記録がありません。','No records.')}</div>`}</div>`}
 function openDetail(i){const m=i.metrics||{};document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeDetail()"><div class="sheet"><div class="sheet-handle"></div><div class="detail-title">${l('사건 카드 상세','事件カード詳細','Incident card detail')}</div>${card(i,true)}<div class="detail-grid"><div class="detail-box"><b>${i.score||0}</b><span>${l('사건 점수','事件スコア','Case score')}</span></div><div class="detail-box"><b>${Object.values(m)[0]??'-'}</b><span>${l('핵심 측정값','主要測定値','Primary metric')}</span></div></div><button class="sheet-close" onclick="closeDetail()">${l('닫기','閉じる','Close')}</button></div></div>`}
 function closeDetail(){document.getElementById('overlay').innerHTML=''}
