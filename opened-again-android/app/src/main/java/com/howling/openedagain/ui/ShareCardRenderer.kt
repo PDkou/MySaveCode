@@ -8,11 +8,14 @@ import android.graphics.BitmapFactory
 import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.Shader
+import android.graphics.Typeface
 import android.net.Uri
 import android.provider.MediaStore
 import com.howling.openedagain.core.DetectedIncident
@@ -21,30 +24,54 @@ import com.howling.openedagain.core.Rarity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.sin
 
 /**
- * Renders a shareable incident card as a bitmap, using the same final asset
- * pack the WebView UI does (`app/src/main/assets/visual/`) rather than
- * drawing everything as flat shapes/text.
+ * Renders a shareable incident card as a TCG-style ("Pokemon/Yu-Gi-Oh
+ * card") trading-card bitmap.
  *
- * IMPORTANT asset choice: the card body uses `cards/frames/frame_*.png` --
- * the actual blank, reusable card frames (per PROJECT_HANDOFF.md: "Use
- * assets/cards/frames + assets/badges to render incident rarities"). It
- * does NOT use the cards/templates or cards/examples folders: those hold
- * finished mockups/reference art with placeholder or incident-specific
- * text already baked into the pixels, meant for art reference, not for
- * layering live text on top of at runtime (an earlier version of this
- * file used templates/ by mistake, which both showed stale baked-in text
- * and, because its aspect ratio didn't match the drawing area, got
- * cropped).
+ * This is a straight Kotlin port of the confirmed Python/PIL mockup
+ * (`sim_tcg_v16.py`, iterated to final with the director over many rounds
+ * and confirmed with "좋아 일단 이걸로 확정지어보자") -- see
+ * `docs/CARD_LAYOUT_SPEC.md` for the coordinate spec and `CardStyle.kt`
+ * for the per-rarity color/foil-title spec. Both files are the actual
+ * single source of truth; this class only turns them into Canvas calls.
  *
- * The frame art has a fixed aspect ratio (~0.8, width:height) that's
- * consistent across rarities, so the card rect below is sized to match it
- * exactly -- the frame is drawn with zero cropping, never "cover"-cropped
- * into a mismatched box.
+ * ARCHITECTURE: earlier attempts asked GPT to bake the whole card
+ * (header/art/info panel geometry included) into one image per rarity,
+ * which cannot reproduce identical internal layout across 5 separate
+ * generations ("카드마다 사이즈가 다 틀리다"). The fix the director landed
+ * on: `cards/frame_bg/<rarity>.webp` is now ONLY an atmospheric
+ * background + border -- no baked panels -- and every piece of actual
+ * content (art window, header/info panels, chip, title, emblem, case tag,
+ * logo) is drawn by this class at fixed coordinates from [CardLayout],
+ * identical across all 5 rarities, then uniformly scaled to fit whatever
+ * output [Format] is requested. Only the color inputs
+ * (`CardStyle.tcgPalette`/`foilTitle`) and the frame/medallion image
+ * assets vary by rarity.
  */
 class ShareCardRenderer(private val context: Context) {
     enum class Format(val width: Int, val height: Int) { SQUARE(1080, 1080), STORY(1080, 1920) }
+
+    /**
+     * The card's own fixed geometry, 1:1 with `GEOMETRY` in sim_tcg_v16.py
+     * and the coordinate table in docs/CARD_LAYOUT_SPEC.md. Native canvas
+     * is 1024x1536 -- every rarity uses these exact numbers; only the
+     * uniform `scale` factor computed in [drawTcgCard] changes per [Format].
+     */
+    private object CardLayout {
+        const val W = 1024f
+        const val H = 1536f
+        val HEADER = RectF(97f, 200f, 925f, 309f)
+        val ART = RectF(103f, 315f, 919f, 935f)
+        val INFO = RectF(97f, 1116f, 925f, 1385f)
+        const val EMBLEM_CX = 508f
+        const val EMBLEM_CY = 125f
+        const val EMBLEM_D = 162f
+    }
 
     fun render(
         incident: DetectedIncident,
@@ -54,27 +81,15 @@ class ShareCardRenderer(private val context: Context) {
         format: Format,
         lang: String = "ko"
     ): Bitmap {
+        val rarity = incident.rarity
         val opal = CardStyle.isOpalHidden(incident.type)
-        val p = CardStyle.palette(incident.rarity, opal)
         val bitmap = Bitmap.createBitmap(format.width, format.height, Bitmap.Config.ARGB_8888)
         val c = Canvas(bitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-        // Full-bleed backdrop. v0.18-v0.21 tiled bg_pattern_beige.png (a
-        // 445x535 tile that turned out not to be seamless) with
-        // TileMode.MIRROR to hide the seam while keeping the paw/hat
-        // pattern -- a real fix, but still a mirrored-repeat look rather
-        // than the "one full-canvas image" the director asked design for
-        // (docs/ASSET_REQUESTS_FOR_DESIGN.md #4). Design replied with
-        // exactly that: a single, non-tiled background per rarity per
-        // format (backgrounds/share/<size>/bg_<rarity>_<square|vertical>.png,
-        // e.g. bg_normal_square.png), each already sized to match this
-        // renderer's own canvas exactly (1080x1080 / 1080x1920) and toned to
-        // the rarity's own frame-interior color from the request spec, plus
-        // a bg_common_* fallback in the same beige family as the old tile.
-        // drawCover (not a raw drawBitmap) still guards against any future
-        // asset that isn't an exact pixel match to the canvas.
-        val backdrop = assetBitmap(backgroundAsset(incident.rarity, opal, format))
+        // Full-bleed outer backdrop, independent of the card face itself --
+        // unchanged from the pre-redesign renderer (docs/ASSET_REQUESTS_FOR_DESIGN.md #4).
+        val backdrop = assetBitmap(backgroundAsset(rarity, opal, format))
             ?: assetBitmap(commonBackgroundAsset(format))
         if (backdrop != null) {
             drawCover(c, backdrop, RectF(0f, 0f, format.width.toFloat(), format.height.toFloat()), paint)
@@ -82,211 +97,17 @@ class ShareCardRenderer(private val context: Context) {
             c.drawColor(Color.rgb(250, 245, 232))
         }
 
-        // For SQUARE, outerTop/outerBottom (not margin) was the binding
-        // constraint: frameAlignedRect fits the frame's ~0.8 aspect ratio
-        // inside a 1:1 canvas, which is height-limited, so a large top/
-        // bottom margin (110f = 10.2% of the canvas) shrank the whole card
-        // -- it ended up only 688x860 inside a 1080x1080 canvas, with big
-        // (18%) empty margins on the left/right that made the card look
-        // small (reported on a real device even after the background-scale
-        // and text-position bugs above were already fixed). Cut both
-        // margins for SQUARE specifically -- STORY's large outerTop/
-        // outerBottom (330f) stays as-is; that one is intentional, not a
-        // bug: Instagram Stories overlays its own UI (progress bar,
-        // username, reply box) in those exact zones, so a story-format
-        // export needs that clearance or the app's own content gets
-        // covered by the platform's chrome.
+        // The TCG card itself renders edge-to-edge within `rect` (matching
+        // the confirmed mockup 1:1 aside from uniform scale) -- STORY
+        // reserves 330px top/bottom outside `rect` for Instagram's own
+        // overlaid UI (progress bar, username, reply box); SQUARE just
+        // needs a small margin so the card isn't flush with the canvas edge.
         val margin = if (format == Format.STORY) 78f else 50f
         val outerTop = if (format == Format.STORY) 330f else 50f
         val outerBottom = if (format == Format.STORY) format.height - 330f else format.height - 50f
-        val rect = frameAlignedRect(margin, outerTop, format.width - margin, outerBottom)
+        val rect = cardAlignedRect(margin, outerTop, format.width - margin, outerBottom)
 
-        // Solid backing first (in case the frame art has transparent gaps),
-        // then the frame art itself at its native aspect -- no tint overlay
-        // on top of it, since the frame's own interior (light for every
-        // rarity except the dark ANOMALY hidden variant) already gives the
-        // right contrast for the palette's text colors.
-        paint.style = Paint.Style.FILL
-        paint.color = p.background
-        c.drawRoundRect(rect, 46f, 46f, paint)
-        assetBitmap(frameAsset(incident.rarity, opal))?.let { frame ->
-            drawCover(c, frame, rect, paint)
-        }
-
-        // Text sits in the left column; MONI's scene occupies the right
-        // column -- same split as index.html's `.card-body` grid.
-        // NOTE: no separate badge image here (unlike index.html's cards) --
-        // frame_*.png already has its own decorative corner ornaments (a
-        // detective hat, a paw medallion, a magnifier) baked into the same
-        // top area a badge pill would sit in, and the two visibly collided.
-        // The frame's distinct color per rarity already communicates which
-        // tier this is.
-        //
-        // contentTop's fraction was 0.12 until a real-device share-card
-        // screenshot showed the title/detail text spilling out past the
-        // card's visible border, directly under the hat/paw-medallion
-        // ornaments. Measuring the frame PNGs directly (pixel-color scan
-        // for where the hat/medallion decorations bottom out) put that at
-        // ~15-17% of the card's height across every rarity (same template,
-        // recolored) -- 0.12 sat text right on top of them. 0.22 clears
-        // both with a real margin.
-        // pad was a fixed 56f (8.1% of this card's width) from the very
-        // first version of this renderer, and every fix since v0.15 tuned
-        // contentTop/footerTop/punchWidth around it without ever
-        // rechecking it against the frame art itself. Pixel-measuring the
-        // frame's LEFT border (where the border stroke ends and the actual
-        // cream/gold interior begins, checked on both frame_normal.png and
-        // frame_legendary.png -- same template, consistent result) puts
-        // that at ~13.5% of the card's width, not 8.1% -- every text
-        // element anchored at `rect.left + pad` (title, detail, punchline,
-        // logo) has been starting slightly on top of the border stripe
-        // instead of clearly inside it. 14% clears it with a small margin.
-        val pad = rect.width() * 0.14f
-        val contentTop = rect.top + rect.height() * 0.22f
-        // footerTop (MONI's scene-box bottom) used to be a fixed
-        // `rect.bottom - 120f`, which put MONI's bottom-anchored, mostly
-        // width-constrained image tall enough to still have pixels at the
-        // punchline's row below -- a real exported card showed MONI's legs
-        // and the punchline text drawn right on top of each other. Reserve
-        // a real fraction of the card's own height for the punchline+footer
-        // strip instead of a fixed pixel count, so MONI's box always ends
-        // above it regardless of format (SQUARE vs STORY have very
-        // different absolute heights). 34% leaves room for a 3-line quote
-        // (the measured worst case at the narrower, magnifier-safe width
-        // below) plus the footer row; every character pose used here stays
-        // width-constrained by drawContain even at this shorter box height,
-        // so none of them actually render smaller.
-        val footerTop = rect.bottom - rect.height() * 0.34f
-        val leftColRight = rect.left + rect.width() * 0.56f
-        val leftTextWidth = leftColRight - (rect.left + pad) - 16f
-        val sceneLeft = leftColRight + 24f
-
-        // Title wraps (up to the available left-column width) instead of a
-        // single unwrapped line -- a long incident name no longer clips or
-        // runs into MONI's scene on the right.
-        paint.color = p.title; paint.textSize = 58f; paint.isFakeBoldText = true
-        val titleEndY = drawWrapped(c, title, rect.left + pad, contentTop + 52f, leftTextWidth, 66f, paint)
-        paint.color = p.body; paint.textSize = 36f; paint.isFakeBoldText = false
-        drawWrapped(c, detail, rect.left + pad, titleEndY + 54f, leftTextWidth, 48f, paint)
-
-        // MONI, posed to match the incident (mirrors index.html's
-        // incidentVisual() map), bottom-anchored and centered in its box --
-        // same as the web card's `.scene{align-items:flex-end}`.
-        // v0.23: the sceneBox here is portrait (~0.7 aspect, tuned for the
-        // old square-ish character cutouts) but every incident illustration
-        // is landscape (1200x675 or 1672x941, ~1.78 aspect) -- a naive
-        // drawContain() shrinks the WHOLE canvas to fit the box's width,
-        // and 'overlay' illustrations only use a small centered fraction of
-        // that canvas (the rest is transparent padding meant for a much
-        // wider box in index.html), so the actual character ended up
-        // tiny. Fixed per render_mode (see incidentIllustrationAsset()'s
-        // comment): 'overlay' art is trimmed to its opaque pixel bounds
-        // first (drops the wasted transparent margin, never crops real
-        // content) then drawContain-ed; 'scene' art has no transparent
-        // margin to trim (it's a full painted background, same as
-        // index.html's background-size:cover treatment for scene mode), so
-        // it's drawCover-ed instead -- cropped to fill the box completely,
-        // verified against several scene illustrations that the centered
-        // crop keeps the main subject in frame.
-        // v0.36: director feedback -- the exported card "그냥 카드 프레임에
-        // 일러스트를 합성한 느낌" (looks like an illustration just glued onto
-        // a card frame, no harmony). Root cause: this box was designed back
-        // when illustrations were transparent character cutouts meant to
-        // float on the frame's own background, so a plain hard-edged
-        // drawCover was invisible -- there was no separate rectangle to see.
-        // Since v0.32 every illustration is a complete painted scene with
-        // its own independent background (a room, a night sky...), so that
-        // same hard rectangle now reads as a foreign sticker dropped onto
-        // the card instead of blending into it (index.html doesn't have
-        // this problem because there the illustration simply *is* the
-        // card's own background for 'scene' types, not a separate box).
-        // Closest fix without redesigning the whole card: round the box's
-        // corners to match the web card's .scene radius, add a soft shadow
-        // so it reads as a deliberately-placed photo rather than a flat
-        // paste, and stroke it in the rarity's own border color so it ties
-        // into the same palette as the frame around it.
-        assetBitmap(incidentIllustrationAsset(incident.type, incident.rarity))?.let { art ->
-            val sceneBox = RectF(sceneLeft, contentTop, rect.right - 28f, footerTop)
-            val sceneRadius = 28f
-            val scenePath = Path().apply { addRoundRect(sceneBox, sceneRadius, sceneRadius, Path.Direction.CW) }
-
-            paint.style = Paint.Style.FILL
-            paint.color = Color.argb(50, 30, 22, 14)
-            paint.maskFilter = BlurMaskFilter(16f, BlurMaskFilter.Blur.NORMAL)
-            c.drawRoundRect(RectF(sceneBox.left, sceneBox.top + 8f, sceneBox.right, sceneBox.bottom + 10f), sceneRadius, sceneRadius, paint)
-            paint.maskFilter = null
-
-            c.save()
-            c.clipPath(scenePath)
-            if (isSceneIllustration(incident.type)) {
-                drawCover(c, art, sceneBox, paint)
-            } else {
-                val trimmed = opaqueBounds(art)?.let { b ->
-                    Bitmap.createBitmap(art, b.left, b.top, b.width(), b.height())
-                } ?: art
-                drawContain(c, trimmed, sceneBox, paint)
-            }
-            c.restore()
-
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = 5f
-            paint.color = p.border
-            c.drawRoundRect(sceneBox, sceneRadius, sceneRadius, paint)
-            paint.style = Paint.Style.FILL
-        }
-
-        paint.isFakeBoldText = true; paint.textSize = 38f; paint.color = p.title
-        // Earlier fixes here (v0.15/v0.16) treated this as "text runs past
-        // the plain border" and just backed the wrap width off the border
-        // edge (~87% of card width). That missed the real obstacle: the
-        // frame's magnifier ornament in the bottom-right corner is much
-        // bigger than the plain border and its left edge sweeps inward as
-        // you go down -- pixel-measured on frame_normal.png at the actual
-        // row band this text occupies (roughly 75-85% down the card), it
-        // intrudes as far as ~64% of the card's width, well short of the
-        // ~87% border-only estimate. A wide punchline line was rendering
-        // straight through it (confirmed via a Chromium re-render of the
-        // real asset). 55% keeps every line clear of the magnifier with
-        // real margin at every row it can reach, verified against all 14
-        // punch{} strings in index.html (3 lines worst-case at this width
-        // and the smaller 38px size below -- footerTop's 34% reserve above
-        // has room for exactly that). Defined relative to the corrected
-        // `pad` above (62% right edge minus pad) so fixing the left inset
-        // didn't silently push this back into the magnifier's reach.
-        val punchWidth = rect.width() * 0.62f - pad
-        // Starts right below footerTop (MONI's box bottom) instead of a
-        // fixed rect.bottom-165f -- that fixed offset was what let it land
-        // inside MONI's vertical span in the first place. drawWrapped
-        // returns where its last line actually landed, so the logo/caption
-        // row below can anchor off the real text height (1-3 lines) instead
-        // of assuming one line.
-        val punchEndY = drawWrapped(c, "“$punchline”", rect.left + pad, footerTop + 50f, punchWidth, 46f, paint)
-
-        // Wordmark logo instead of a plain app-name text label, matching the
-        // language actually selected in-app (not the device locale) -- text
-        // fallback if the logo asset can't be decoded.
-        val logoTop = punchEndY + 30f
-        val logo = assetBitmap(if (lang == "ja") "logo/logo_jp.png" else "logo/logo_ko.png")
-        val captionY = logoTop + 24f
-        if (logo != null) {
-            drawLeftAligned(c, logo, rect.left + pad, logoTop, 28f, paint)
-        } else {
-            paint.isFakeBoldText = false; paint.textSize = 30f; paint.color = p.accent
-            c.drawText(context.getString(com.howling.openedagain.R.string.app_name), rect.left + pad, captionY, paint)
-        }
-        paint.isFakeBoldText = false; paint.textSize = 30f; paint.color = p.accent
-        paint.textAlign = Paint.Align.RIGHT
-        // Anchored at leftColRight, not rect.right - pad: the frame's own
-        // magnifier ornament (bottom-right corner -- see punchWidth's
-        // comment above for how far it actually reaches) sat exactly where
-        // a corner-pinned label would go and covered it. leftColRight keeps
-        // this label clear of that ornament across every rarity (same
-        // frame template).
-        // captionY (like logoTop) is anchored off the punchline's actual
-        // wrapped height rather than a fixed rect.bottom offset -- see
-        // punchEndY above.
-        c.drawText("MONI CASE FILE", leftColRight, captionY, paint)
-        paint.textAlign = Paint.Align.LEFT
+        drawTcgCard(c, paint, rect, incident, title, detail, punchline)
         return bitmap
     }
 
@@ -307,49 +128,458 @@ class ShareCardRenderer(private val context: Context) {
         context.startActivity(Intent.createChooser(intent, chooserTitle))
     }
 
-    // -- layout -----------------------------------------------------------
+    // -- the card itself ---------------------------------------------------
 
-    // frame_*.png is ~348x436 across every rarity (width:height ~= 0.8).
-    // Fit the largest rect of that aspect ratio inside the given bounds,
-    // centered, so the frame draws with zero cropping regardless of format.
-    private fun frameAlignedRect(left: Float, top: Float, right: Float, bottom: Float): RectF {
-        val frameAspect = 0.8f
+    /**
+     * Draws the whole TCG card into [rect], scaled uniformly from the
+     * [CardLayout] geometry (native 1024x1536) -- one `scale` factor for
+     * every element, never a per-element recomputation (CARD_LAYOUT_SPEC.md
+     * principle #3). Layer order matches sim_tcg_v16.py's render() exactly:
+     * frame bg -> art -> emblem glow (fx) -> header panel -> rarity chip ->
+     * title -> info panel -> stat/quote/diamond -> case tag + logo -> emblem
+     * medallion + symbol (or HIDDEN's bespoke glyph treatment).
+     */
+    private fun drawTcgCard(
+        c: Canvas,
+        paint: Paint,
+        rect: RectF,
+        incident: DetectedIncident,
+        title: String,
+        stat: String,
+        quote: String
+    ) {
+        val rarity = incident.rarity
+        val pal = CardStyle.tcgPalette(rarity)
+        val scale = rect.width() / CardLayout.W
+        fun sx(v: Float) = rect.left + v * scale
+        fun sy(v: Float) = rect.top + v * scale
+        fun s(v: Float) = v * scale
+
+        val header = RectF(sx(CardLayout.HEADER.left), sy(CardLayout.HEADER.top), sx(CardLayout.HEADER.right), sy(CardLayout.HEADER.bottom))
+        val art = RectF(sx(CardLayout.ART.left), sy(CardLayout.ART.top), sx(CardLayout.ART.right), sy(CardLayout.ART.bottom))
+        val info = RectF(sx(CardLayout.INFO.left), sy(CardLayout.INFO.top), sx(CardLayout.INFO.right), sy(CardLayout.INFO.bottom))
+        val ecx = sx(CardLayout.EMBLEM_CX)
+        val ecy = sy(CardLayout.EMBLEM_CY)
+        val ed = s(CardLayout.EMBLEM_D)
+
+        val titleTypeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        val sansBoldTypeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+        val statTypeface = Typeface.create(Typeface.SERIF, Typeface.NORMAL)
+
+        // 1. Frame background -- pure atmospheric art + border, native
+        // aspect already matches `rect`'s (both 1024:1536), so a plain
+        // scale-to-fit never crops it.
+        assetBitmap(frameBgAsset(rarity))?.let { c.drawBitmap(it, null, rect, paint) }
+
+        // 2. Art window -- cover-fit incident illustration, rounded, with
+        // a glow-colored outline stroke.
+        val artRadius = s(30f)
+        assetBitmap(incidentIllustrationAsset(incident.type, rarity))?.let { illo ->
+            val artPath = Path().apply { addRoundRect(art, artRadius, artRadius, Path.Direction.CW) }
+            c.save()
+            c.clipPath(artPath)
+            drawCover(c, illo, art, paint)
+            c.restore()
+        }
+        paint.reset(); paint.isAntiAlias = true
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = s(3f)
+        paint.color = pal.glow
+        c.drawRoundRect(art, artRadius, artRadius, paint)
+
+        // 3. Emblem glow -- drawn BEFORE the header panel: its blur radius
+        // reaches down past the emblem into the header's own y-range, and a
+        // radial glow drawn AFTER an opaque-ish panel it overlaps paints a
+        // visible haze on top of it (found in the mockup, fixed by draw order).
+        if (pal.fx >= 1) radialGlow(c, ecx, ecy, ed * 0.85f, pal.glow, s(22f), 140)
+        if (pal.fx >= 2) radialGlow(c, ecx, ecy, ed * 1.3f, pal.glow, s(40f), 90)
+
+        // 4. Header panel -- translucent, identical box every rarity.
+        val headerAlpha = if (rarity == Rarity.HIDDEN) 210 else 235
+        translucentPanel(c, header, s(22f), pal.panel, headerAlpha, pal.glow, s(2f))
+
+        // 5. Rarity label chip. All 5 rarities get a filled pill in the
+        // rarity's own color (director: "노멀도 레어도 [칩] 해줘"); HIDDEN
+        // gets a fancier gradient-filled version with flanking sparkles
+        // ("가장 얻기 힘든거니까 좀 더 화려하게").
+        val rarityTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            typeface = sansBoldTypeface
+            textSize = s(22f)
+        }
+        val labelText = rarity.name
+        val lw = rarityTextPaint.measureText(labelText)
+        val chip = RectF(sx(CardLayout.HEADER.left + 26f), sy(CardLayout.HEADER.top + 15f), sx(CardLayout.HEADER.left + 26f) + lw + s(20f), sy(CardLayout.HEADER.top + 15f) + s(26f))
+        val chipRadius = s(13f)
+        if (rarity == Rarity.HIDDEN) {
+            val gradientColors = intArrayOf(Color.rgb(70, 190, 210), Color.rgb(225, 252, 255), Color.rgb(90, 210, 225))
+            val chipPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.FILL
+                shader = LinearGradient(chip.left, 0f, chip.right, 0f, gradientColors, null, Shader.TileMode.CLAMP)
+            }
+            c.drawRoundRect(chip, chipRadius, chipRadius, chipPaint)
+            paint.reset(); paint.isAntiAlias = true
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = s(2f)
+            paint.color = Color.rgb(235, 255, 255)
+            c.drawRoundRect(chip, chipRadius, chipRadius, paint)
+            val sparkColor = Color.rgb(210, 245, 250)
+            drawStar(c, chip.left - s(12f), (chip.top + chip.bottom) / 2f, s(6f), sparkColor)
+            drawStar(c, chip.right + s(12f), (chip.top + chip.bottom) / 2f, s(6f), sparkColor)
+        } else {
+            paint.reset(); paint.isAntiAlias = true
+            paint.style = Paint.Style.FILL
+            paint.color = pal.glow
+            c.drawRoundRect(chip, chipRadius, chipRadius, paint)
+        }
+        rarityTextPaint.color = pal.chipTextColor
+        drawTextTopLeft(c, labelText, chip.left + s(10f), chip.top + s(3f), rarityTextPaint)
+
+        // 6. Title -- foil (glow + outline + gradient fill) for EPIC and up,
+        // plain flat ink for NORMAL/RARE.
+        val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            typeface = titleTypeface
+            textSize = s(50f)
+        }
+        val foil = CardStyle.foilTitle(rarity)
+        val titleX = sx(CardLayout.HEADER.left + 26f)
+        val titleTop = sy(CardLayout.HEADER.top + 46f)
+        if (foil != null) {
+            drawFoilText(c, titleX, titleTop, title, titlePaint, foil.colors, foil.outline, foil.glow, foil.vertical, s(4f), s(5f))
+        } else {
+            titlePaint.color = pal.text
+            drawTextTopLeft(c, title, titleX, titleTop, titlePaint)
+        }
+
+        // 7. Info panel.
+        translucentPanel(c, info, s(24f), pal.panel, headerAlpha, pal.glow, s(2f))
+        val statPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            typeface = statTypeface
+            textSize = s(28f)
+            color = pal.text
+        }
+        drawTextTopLeft(c, stat, sx(CardLayout.INFO.left + 26f), sy(CardLayout.INFO.top + 26f), statPaint)
+
+        val quotePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            typeface = titleTypeface
+            textSize = s(36f)
+            color = pal.text
+        }
+        val wrapWidth = s(CardLayout.INFO.width() - 52f)
+        val quoteLines = wrapLines("“$quote”", quotePaint, wrapWidth)
+        var qy = sy(CardLayout.INFO.top + 68f)
+        val lineHeight = s(44f)
+        for (line in quoteLines) {
+            drawTextTopLeft(c, line, sx(CardLayout.INFO.left + 26f), qy, quotePaint)
+            qy += lineHeight
+        }
+        val diamondCx = (info.left + info.right) / 2f
+        val diamondCy = qy + s(22f)
+        val dr = s(7f)
+        paint.reset(); paint.isAntiAlias = true
+        paint.style = Paint.Style.FILL
+        paint.color = pal.text
+        val diamondPath = Path().apply {
+            moveTo(diamondCx, diamondCy - dr)
+            lineTo(diamondCx + dr, diamondCy)
+            lineTo(diamondCx, diamondCy + dr)
+            lineTo(diamondCx - dr, diamondCy)
+            close()
+        }
+        c.drawPath(diamondPath, paint)
+
+        // 8. Case tag + logo, footer row inside the info panel. The case
+        // number is a fixed placeholder carried over unchanged from every
+        // confirmed mockup render (CASE #4821 on all 5 rarities) -- not a
+        // real per-share incident id; wiring a real one in is a follow-up,
+        // not part of this visual-design port.
+        val caseTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            typeface = sansBoldTypeface
+            textSize = s(22f)
+            color = pal.text
+        }
+        val caseText = "CASE #4821"
+        val caseTextWidth = caseTextPaint.measureText(caseText)
+        val caseBox = RectF(
+            sx(CardLayout.INFO.left + 46f), sy(CardLayout.INFO.bottom - 58f),
+            sx(CardLayout.INFO.left + 46f) + caseTextWidth + s(28f), sy(CardLayout.INFO.bottom - 58f) + s(40f)
+        )
+        paint.reset(); paint.isAntiAlias = true
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = s(2f)
+        paint.color = pal.glow
+        c.drawRoundRect(caseBox, s(10f), s(10f), paint)
+        drawTextTopLeft(c, caseText, caseBox.left + s(14f), caseBox.top + s(8f), caseTextPaint)
+
+        assetBitmap("logo/logo_ko.png")?.let { logo ->
+            val maxW = s(140f); val maxH = s(44f)
+            val logoScale = min(maxW / logo.width, maxH / logo.height)
+            val lw2 = logo.width * logoScale; val lh2 = logo.height * logoScale
+            val lx = info.right - s(24f) - lw2
+            val ly = caseBox.top + (s(40f) - lh2) / 2f
+            c.drawBitmap(logo, null, RectF(lx, ly, lx + lw2, ly + lh2), paint)
+        }
+
+        // 9. Emblem -- medallion shell, size-corrected per rarity so the
+        // visible ring reads consistently despite each source PNG having a
+        // different own-canvas fill ratio (CardStyle.TcgPalette.medalFix doc).
+        val medSize = ed * pal.medalFix
+        assetBitmap(medallionAsset(rarity))?.let { medallion ->
+            val medRect = RectF(ecx - medSize / 2f, ecy - medSize / 2f, ecx + medSize / 2f, ecy + medSize / 2f)
+            c.drawBitmap(medallion, null, medRect, paint)
+        }
+
+        if (pal.fx >= 1) {
+            emblemSparkles(c, ecx, ecy, medSize * 0.62f, pal.glow, if (pal.fx == 1) 6 else 9, if (pal.fx == 1) 5f to 9f else 6f to 12f)
+        }
+
+        val symbolAsset = raritySymbolAsset(rarity)
+        if (symbolAsset != null) {
+            assetBitmap(symbolAsset)?.let { sym ->
+                val symD = ed * 0.5f
+                val symScale = min(symD / sym.width, symD / sym.height)
+                val sw = sym.width * symScale; val sh = sym.height * symScale
+                val symRect = RectF(ecx - sw / 2f, ecy - sh / 2f, ecx + sw / 2f, ecy + sh / 2f)
+                c.drawBitmap(sym, null, symRect, paint)
+            }
+        } else {
+            // HIDDEN -- director: "히든 앰블렘이랑 타이틀은 좀 더 히든스럽게".
+            // A quiet, mysterious treatment instead of the epic/legendary
+            // sparkle-celebration look: a soft double glow ring behind the
+            // medallion, a bright core glow behind the glyph, and a scatter
+            // of small dots orbiting close to the ring.
+            radialGlow(c, ecx, ecy, ed * 1.15f, Color.rgb(30, 120, 150), s(34f), 110)
+            val ringR = medSize * 0.62f
+            paint.reset(); paint.isAntiAlias = true
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = s(2f)
+            paint.color = Color.rgb(120, 220, 235)
+            c.drawCircle(ecx, ecy, ringR, paint)
+            paint.strokeWidth = s(1f)
+            paint.color = Color.argb(120, 120, 220, 235)
+            c.drawCircle(ecx, ecy, ringR + s(10f), paint)
+
+            paint.reset(); paint.isAntiAlias = true
+            paint.style = Paint.Style.FILL
+            paint.color = Color.rgb(200, 240, 245)
+            for (i in 0 until 10) {
+                val ang = (2 * PI / 10) * i + 0.2
+                val px = ecx + (ringR + s(16f)) * cos(ang).toFloat()
+                val py = ecy + (ringR + s(16f)) * sin(ang).toFloat() * 0.95f
+                c.drawCircle(px, py, s(2f), paint)
+            }
+
+            val glyph = "?"
+            val glyphPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                typeface = sansBoldTypeface
+                textSize = s(90f)
+            }
+            val gw = glyphPaint.measureText(glyph)
+            val glyphX = ecx - gw / 2f
+            val glyphTop = ecy - s(55f)
+            val glyphBaseline = glyphTop - glyphPaint.ascent()
+
+            val glowPaint = Paint(glyphPaint).apply {
+                style = Paint.Style.FILL
+                color = Color.rgb(150, 225, 240)
+                alpha = 255
+                maskFilter = BlurMaskFilter(s(6f), BlurMaskFilter.Blur.NORMAL)
+            }
+            c.drawText(glyph, glyphX, glyphBaseline, glowPaint)
+
+            glyphPaint.style = Paint.Style.FILL
+            glyphPaint.color = Color.rgb(232, 246, 250)
+            c.drawText(glyph, glyphX, glyphBaseline, glyphPaint)
+        }
+    }
+
+    // -- foil text / glow / sparkle helpers --------------------------------
+
+    /**
+     * TCG-style foil card-name text: a soft glow behind everything, a solid
+     * dark outline (a thick stroke pass), then a gradient fill on top --
+     * `Canvas.drawText` only paints glyph pixels regardless of the Paint
+     * used, so the gradient fill naturally lands only on the glyphs
+     * themselves with no separate masking step (unlike the PIL mockup,
+     * which had to rasterize an explicit alpha mask to get the same clip).
+     *
+     * [vertical] samples the gradient top-to-bottom across the text's own
+     * bounding box (every letter shaded identically, for legibility on
+     * light EPIC/LEGENDARY panels); otherwise left-to-right (HIDDEN's
+     * rainbow sweep, safe against its dark panel -- see CardStyle.kt).
+     */
+    private fun drawFoilText(
+        canvas: Canvas,
+        x: Float,
+        yTop: Float,
+        text: String,
+        basePaint: Paint,
+        colors: IntArray,
+        outlineColor: Int,
+        glowColor: Int,
+        vertical: Boolean,
+        outlineWidth: Float,
+        glowBlur: Float
+    ) {
+        val baseline = yTop - basePaint.ascent()
+
+        val glowPaint = Paint(basePaint).apply {
+            style = Paint.Style.FILL
+            color = glowColor
+            alpha = 200
+            maskFilter = BlurMaskFilter(glowBlur, BlurMaskFilter.Blur.NORMAL)
+        }
+        canvas.drawText(text, x, baseline, glowPaint)
+
+        val outlinePaint = Paint(basePaint).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = outlineWidth
+            color = outlineColor
+            maskFilter = null
+            alpha = 255
+        }
+        canvas.drawText(text, x, baseline, outlinePaint)
+
+        val bounds = Rect()
+        basePaint.getTextBounds(text, 0, text.length, bounds)
+        val gradientShader = if (vertical) {
+            LinearGradient(0f, baseline + bounds.top, 0f, baseline + bounds.bottom, colors, null, Shader.TileMode.CLAMP)
+        } else {
+            LinearGradient(x + bounds.left, 0f, x + bounds.right, 0f, colors, null, Shader.TileMode.CLAMP)
+        }
+        val fillPaint = Paint(basePaint).apply {
+            style = Paint.Style.FILL
+            shader = gradientShader
+            maskFilter = null
+            alpha = 255
+        }
+        canvas.drawText(text, x, baseline, fillPaint)
+    }
+
+    private fun drawTextTopLeft(canvas: Canvas, text: String, x: Float, yTop: Float, paint: Paint) {
+        canvas.drawText(text, x, yTop - paint.ascent(), paint)
+    }
+
+    private fun wrapLines(text: String, paint: Paint, maxWidth: Float): List<String> {
+        val words = text.split(" ")
+        val lines = mutableListOf<String>()
+        var cur = ""
+        for (w in words) {
+            val trial = if (cur.isEmpty()) w else "$cur $w"
+            if (paint.measureText(trial) <= maxWidth || cur.isEmpty()) {
+                cur = trial
+            } else {
+                lines.add(cur)
+                cur = w
+            }
+        }
+        if (cur.isNotEmpty()) lines.add(cur)
+        return lines
+    }
+
+    // NOTE on all the Paint(...).apply{} blocks in this file: never write
+    // `prop = prop` (or `this.prop = prop`) where the RHS name is a bare
+    // identifier that also happens to be a Paint property name (color,
+    // alpha, strokeWidth, shader, ...) -- inside `apply`, an unqualified
+    // name matching the receiver's own property shadows an outer
+    // parameter/local of the same name, so the RHS silently reads the
+    // receiver's own (unset/copied) value instead of the intended
+    // argument. Every helper below deliberately gives its parameters
+    // names that can't collide with a Paint property for this reason.
+    private fun translucentPanel(canvas: Canvas, box: RectF, radius: Float, fillColor: Int, fillAlpha: Int, outlineColor: Int, outlineWidth: Float) {
+        val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = fillColor
+            alpha = fillAlpha
+        }
+        canvas.drawRoundRect(box, radius, radius, fillPaint)
+        val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = outlineWidth
+            color = outlineColor
+        }
+        canvas.drawRoundRect(box, radius, radius, strokePaint)
+    }
+
+    private fun radialGlow(canvas: Canvas, cx: Float, cy: Float, radius: Float, tint: Int, blur: Float, opacity: Int) {
+        val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = tint
+            alpha = opacity
+            maskFilter = BlurMaskFilter(blur, BlurMaskFilter.Blur.NORMAL)
+        }
+        canvas.drawCircle(cx, cy, radius, glowPaint)
+    }
+
+    /** An 8-point sparkle-star shape (main axis points at r, diagonals at 0.28r) -- matches sim_tcg_v16.py's draw_star. */
+    private fun drawStar(canvas: Canvas, cx: Float, cy: Float, r: Float, fillColor: Int) {
+        val path = Path().apply {
+            moveTo(cx, cy - r)
+            lineTo(cx + r * 0.28f, cy - r * 0.28f)
+            lineTo(cx + r, cy)
+            lineTo(cx + r * 0.28f, cy + r * 0.28f)
+            lineTo(cx, cy + r)
+            lineTo(cx - r * 0.28f, cy + r * 0.28f)
+            lineTo(cx - r, cy)
+            lineTo(cx - r * 0.28f, cy - r * 0.28f)
+            close()
+        }
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = fillColor }
+        canvas.drawPath(path, paint)
+    }
+
+    /** A ring of sparkle stars around the emblem, escalating with fx level -- kept close to the emblem so it doesn't compete with the frame's own border decoration. */
+    private fun emblemSparkles(canvas: Canvas, cx: Float, cy: Float, ringR: Float, color: Int, count: Int, sizeRange: Pair<Float, Float>) {
+        val alphaColor = Color.argb(235, Color.red(color), Color.green(color), Color.blue(color))
+        for (i in 0 until count) {
+            val ang = (2 * PI / count) * i + 0.4
+            val px = cx + ringR * cos(ang).toFloat()
+            val py = cy + ringR * sin(ang).toFloat() * 0.9f
+            val r = sizeRange.first + (sizeRange.second - sizeRange.first) * ((i * 37) % 10) / 10f
+            drawStar(canvas, px, py, r, alphaColor)
+        }
+    }
+
+    // -- layout ------------------------------------------------------------
+
+    /** Fits the largest rect of the card's own 1024:1536 aspect inside the given bounds, centered -- the card renders edge-to-edge within this rect. */
+    private fun cardAlignedRect(left: Float, top: Float, right: Float, bottom: Float): RectF {
+        val cardAspect = CardLayout.W / CardLayout.H
         val availW = right - left
         val availH = bottom - top
         var w = availW
-        var h = w / frameAspect
+        var h = w / cardAspect
         if (h > availH) {
             h = availH
-            w = h * frameAspect
+            w = h * cardAspect
         }
         val cardLeft = left + (availW - w) / 2f
         val cardTop = top + (availH - h) / 2f
         return RectF(cardLeft, cardTop, cardLeft + w, cardTop + h)
     }
 
-    // -- asset lookup ---------------------------------------------------
+    // -- asset lookup -------------------------------------------------------
 
     private fun assetBitmap(path: String): Bitmap? = runCatching {
         context.assets.open("visual/$path").use { BitmapFactory.decodeStream(it) }
     }.getOrNull()
 
-    private fun frameAsset(rarity: Rarity, opal: Boolean): String = when (rarity) {
-        Rarity.NORMAL -> "cards/frames/frame_normal.png"
-        Rarity.RARE -> "cards/frames/frame_rare.png"
-        Rarity.EPIC -> "cards/frames/frame_epic.png"
-        Rarity.LEGENDARY -> "cards/frames/frame_legendary.png"
-        Rarity.HIDDEN -> if (opal) "cards/frames/frame_hidden_02.png" else "cards/frames/frame_hidden_01.png"
+    private fun frameBgAsset(rarity: Rarity): String = "cards/frame_bg/${rarity.name.lowercase()}.webp"
+
+    private fun medallionAsset(rarity: Rarity): String = "cards/medallions/${rarity.name.lowercase()}.webp"
+
+    private fun raritySymbolAsset(rarity: Rarity): String? = when (rarity) {
+        Rarity.NORMAL -> "brand/rarity_symbols/rarity_normal.png"
+        Rarity.RARE -> "brand/rarity_symbols/rarity_rare.png"
+        Rarity.EPIC -> "brand/rarity_symbols/rarity_epic.png"
+        Rarity.LEGENDARY -> "brand/rarity_symbols/rarity_legendary.png"
+        Rarity.HIDDEN -> null
     }
 
-    // backgrounds/share/<size>/bg_<rarity>_<square|vertical>.png -- design's
-    // v0.19 asset pack (docs/ASSET_REQUESTS_FOR_DESIGN.md #4). HIDDEN's two
-    // visual families (CardStyle.isOpalHidden) map to the pack's two HIDDEN
-    // backgrounds by tone, confirmed against the pack's own preview sheet:
-    // hidden_01 is the pale iridescent/opal one (this renderer's "opal"
-    // family), hidden_02 is the deep-navy starfield one (the "anomaly"
-    // family) -- opposite index from frameAsset()'s hidden_01/02, which
-    // names its files the other way around; each mapping is verified
-    // against its own asset's actual look, not assumed to match the other.
+    // backgrounds/share/<size>/bg_<rarity>_<square|vertical>.png -- the
+    // outer canvas backdrop, independent of the TCG card face itself.
+    // HIDDEN's two visual families (CardStyle.isOpalHidden) map to the
+    // pack's two HIDDEN backgrounds by tone: hidden_01 is the pale
+    // iridescent/opal one, hidden_02 is the deep-navy starfield one.
     private fun backgroundAsset(rarity: Rarity, opal: Boolean, format: Format): String {
         val size = if (format == Format.STORY) "1080x1920" else "1080x1080"
         val suffix = if (format == Format.STORY) "vertical" else "square"
@@ -369,34 +599,10 @@ class ShareCardRenderer(private val context: Context) {
         return "backgrounds/share/$size/bg_common_$suffix.png"
     }
 
-    // Same incident -> pose mapping as index.html's incidentVisual(), minus
-    // the background half (the share card gets its background from the
-    // rarity frame art instead).
-    //
-    // v0.14 asset pack: character/additional/ merged into character/basic/;
-    // character/expressions/* was fully replaced with a new "_phone" set
-    // (old exp_suspicious.png is gone); moni_sit_phone.png/moni_sleep.png
-    // were dropped for good (source-sheet contamination found during the
-    // design pipeline's re-crop pass, see docs/DEVELOPMENT_HISTORY.md v0.14).
-    // v0.23: replaced the 6-7 shared generic character poses with the 14
-    // dedicated per-IncidentType illustrations from the final visual asset
-    // handoff (docs/UI_VISUAL_DIRECTION_REQUEST.md gap #1, resolved -- same
-    // files index.html's incidentVisual() now uses). This renderer has only
-    // the one scene box, so there's no second background layer for a
-    // 'scene' illustration to be composited onto -- see isSceneIllustration()
-    // below for how 'scene' vs 'overlay' art is drawn differently here
-    // (drawCover vs. opaqueBounds()-trimmed drawContain); as of v0.32 every
-    // type resolves to 'scene'.
-    // v0.31: per-rarity illustration variants (docs/ASSET_REQUESTS_FOR_DESIGN.md
-    // item 6, 2026-09-09) -- mirrors index.html's RARITY_ILLUSTRATION_VARIANTS/
-    // incidentArt() exactly. HIDDEN_LOOP/HIDDEN_NIGHT_ACTIVITY never need an
-    // entry here (always Rarity.HIDDEN).
-    // v0.32: full 50-illustration set delivered 2026-09-10 (GPT-generated per
-    // docs/GPT_IMAGE_PROMPTS.md) -- all 12 types x 4 rarities now have their
-    // own file, so every combination below is wired up; incidentIllustrationBase()'s
-    // pre-v0.32 single file per type is kept on disk as an unused defensive
-    // fallback only (this lookup never misses for a NORMAL/RARE/EPIC/LEGENDARY
-    // rarity now).
+    // Same incident -> illustration mapping the pre-redesign renderer used
+    // (unrelated to the card-face visual redesign -- the art window just
+    // needs *a* bitmap to cover-fit). v0.31/v0.32: per-rarity illustration
+    // variants, all 12 types x 4 rarities have their own file.
     private val rarityIllustrationVariants: Set<String> = setOf(
         "QUICK_EXIT_NORMAL", "QUICK_EXIT_RARE", "QUICK_EXIT_EPIC", "QUICK_EXIT_LEGENDARY",
         "REENTRY_NORMAL", "REENTRY_RARE", "REENTRY_EPIC", "REENTRY_LEGENDARY",
@@ -423,12 +629,6 @@ class ShareCardRenderer(private val context: Context) {
         }
     }
 
-    // v0.34: all incident illustrations re-encoded from PNG to WebP (q85) to
-    // cut incidents/card_ready/ from ~91MB to ~7MB -- these are painted
-    // scenes, not flat-color graphics, so PNG was a poor fit; WebP's lossy
-    // compression is visually indistinguishable at this quality.
-    // BitmapFactory.decodeStream() (assetBitmap() below) is format-agnostic,
-    // so this is a pure data change, no decoding logic to update.
     private fun incidentIllustrationBase(type: IncidentType): String = when (type) {
         IncidentType.QUICK_EXIT -> "incidents/card_ready/incident_quick_exit.webp"
         IncidentType.REENTRY -> "incidents/card_ready/incident_reentry.webp"
@@ -446,42 +646,7 @@ class ShareCardRenderer(private val context: Context) {
         IncidentType.HIDDEN_NIGHT_ACTIVITY -> "incidents/card_ready/incident_hidden_night_activity.webp"
     }
 
-    // Mirrors ASSET_MANIFEST.json's render_mode field (see
-    // art/handoff/2026-09-09-final-visual-assets/docs/ASSET_MANIFEST.json
-    // and index.html's incidentVisual(), which encodes the same data) --
-    // 'scene' illustrations are a complete painted background with no
-    // transparent margin, 'overlay' ones are a transparent character/prop
-    // composition meant to sit over something else.
-    // v0.32: docs/ASSET_REQUESTS_FOR_DESIGN.md item 6's full 50-illustration
-    // redraw (delivered 2026-09-10) replaced every former 'overlay' type's
-    // transparent character cutout with a complete painted scene, so every
-    // type is now 'scene' -- always drawCover in render() below. The
-    // opaqueBounds()/drawContain() 'overlay' path is kept for now as a
-    // defensive fallback (e.g. a future type reverting to a transparent
-    // cutout) but nothing currently reaches it.
-    private fun isSceneIllustration(type: IncidentType): Boolean = true
-
-    /** Returns the smallest rect enclosing every non-fully-transparent pixel in [bmp], or null if it's all transparent. */
-    private fun opaqueBounds(bmp: Bitmap): Rect? {
-        val w = bmp.width; val h = bmp.height
-        val pixels = IntArray(w * h)
-        bmp.getPixels(pixels, 0, w, 0, 0, w, h)
-        var minX = w; var minY = h; var maxX = -1; var maxY = -1
-        for (y in 0 until h) {
-            val row = y * w
-            for (x in 0 until w) {
-                if ((pixels[row + x] ushr 24) > 10) {
-                    if (x < minX) minX = x
-                    if (x > maxX) maxX = x
-                    if (y < minY) minY = y
-                    if (y > maxY) maxY = y
-                }
-            }
-        }
-        return if (maxX >= minX && maxY >= minY) Rect(minX, minY, maxX + 1, maxY + 1) else null
-    }
-
-    // -- drawing helpers --------------------------------------------------
+    // -- generic bitmap helpers ---------------------------------------------
 
     /** Scales [bmp] to fully cover [dest] (may crop), centered. */
     private fun drawCover(canvas: Canvas, bmp: Bitmap, dest: RectF, paint: Paint) {
@@ -493,36 +658,5 @@ class ShareCardRenderer(private val context: Context) {
         canvas.clipRect(dest)
         canvas.drawBitmap(bmp, matrix, paint)
         canvas.restore()
-    }
-
-    /** Scales [bmp] to fit fully inside [box] (may letterbox, never crops), bottom-anchored and centered. */
-    private fun drawContain(canvas: Canvas, bmp: Bitmap, box: RectF, paint: Paint) {
-        val scale = minOf(box.width() / bmp.width, box.height() / bmp.height)
-        val w = bmp.width * scale
-        val h = bmp.height * scale
-        val left = box.left + (box.width() - w) / 2f
-        val top = box.bottom - h
-        canvas.drawBitmap(bmp, null, RectF(left, top, left + w, top + h), paint)
-    }
-
-    /** Draws [bmp] at a fixed height, left-aligned at ([x], [y]), preserving aspect ratio. */
-    private fun drawLeftAligned(canvas: Canvas, bmp: Bitmap, x: Float, y: Float, height: Float, paint: Paint) {
-        val scale = height / bmp.height
-        val w = bmp.width * scale
-        canvas.drawBitmap(bmp, null, RectF(x, y, x + w, y + height), paint)
-    }
-
-    /** Word-wraps [text] within [maxWidth]; returns the last line's baseline Y so callers can chain the next block after it. */
-    private fun drawWrapped(canvas: Canvas, text: String, x: Float, y: Float, maxWidth: Float, lineHeight: Float, paint: Paint): Float {
-        var line = ""
-        var cy = y
-        text.split(Regex("\\s+")).forEach { word ->
-            val test = if (line.isBlank()) word else "$line $word"
-            if (paint.measureText(test) > maxWidth && line.isNotBlank()) {
-                canvas.drawText(line, x, cy, paint); cy += lineHeight; line = word
-            } else line = test
-        }
-        if (line.isNotBlank()) canvas.drawText(line, x, cy, paint)
-        return cy
     }
 }
