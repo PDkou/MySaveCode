@@ -414,3 +414,53 @@ A vertical decorative card frame background, portrait orientation, matching the 
 
 ### LEGENDARY (재생성)
 A vertical decorative card frame background, portrait orientation, matching the EXACT panel layout and proportions of the attached reference frame image — the header panel, art window, info panel, and bottom margin must sit at the identical position and size as in the reference, pixel-for-pixel proportionally. Only change the color palette and decorative motifs, not the geometry. Bold clean black outline (sticker/vector style), flat cel-shaded coloring, matching the reference's overall art style. Rich gold ornate decorative border running along the outer edge with rounded corners, a radiant sunburst/ray pattern glowing behind the border, abundant small sparkle decorations confined only to the outer border band and the four corners. A small plain circular notch straddling the top-center edge of the border, left empty, at the same position as the reference's notch. The header panel, art window, and info panel must be left empty (no character, no scene) with the same soft warm-gold-tinted semi-translucent fill as the reference's own panels, at the reference's exact geometry. The bottom margin area is kept plain and simple, no decoration, same size as the reference's. Rich gold palette overall, maximum shine and polish — do NOT add castles, towers, banners, flags, coats of arms, crowns, laurel wreaths, thrones, or any medieval/kingdom/war imagery. Full illustrated background (not a transparent cutout), no text, no watermark, no logos.
+
+---
+
+## 부록5: 프레임 배경 재-재생성 — 내부 패널 요구조건 삭제 (조립 순서 확정 이후)
+
+감독이 실제 조립 순서를 확정함:
+
+1. 등급별 프레임 배경
+2. 상단 메달 쉘
+3. 메달 중앙 아이콘
+4. 중앙 일러스트
+5. 상단 등급명
+6. 상단 제목
+7. 하단 수치 정보
+8. 하단 코멘트
+9. 케이스 번호
+10. 우하단 로고
+
+**1번(프레임 배경) 위에 2~10번을 전부 "고정 좌표"로 얹는 구조** — 즉 프레임
+배경은 헤더판/아트창/정보판이 어디 있는지 신경 쓸 필요가 전혀 없음. 그
+자리는 코드가 항상 똑같은 좌표에 텍스트/일러스트/장식을 얹기 때문에,
+프레임 배경 그림 자체에 그 구역을 비워두거나 맞출 필요가 없어짐.
+
+**부록2/부록3(위)은 이제 안 씀 — "헤더판/아트창/정보판을 정확히 이 위치에
+비워두라"는 요구조건이 있었던 게, 등급마다 GPT가 조금씩 다르게 그리면서
+"카드마다 사이즈가 다 틀리다"는 문제의 근본 원인이었음.** 이번 프롬프트는
+그 요구조건을 통째로 뺐음 — 그냥 등급별 분위기 있는 배경+테두리 그림이면
+충분함. 등급 간에 안쪽 비율이 안 맞아도 전혀 문제 없음(코드가 그 위에
+항상 같은 자리에 얹으니까).
+
+### 사용 방법
+- 캐릭터/레이아웃 참고 이미지 없이 그냥 아래 프롬프트만 써도 됨(참고 이미지
+  써도 무방하지만 필수 아님).
+- 파일은 `cards/frames/<등급>_frame.png`로 저장(기존 파일 덮어쓰기).
+- 세로 1024x1536(2:3 근처) 비율.
+
+### NORMAL
+A vertical decorative card background, portrait orientation, muted cream/beige/gray palette, subtle soft cloudy light streaks, simple flat silver/pewter decorative border running along the outer edge with rounded corners, minimal small paw-print or dot accents scattered near the corners and edges. Bold clean black outline (sticker/vector style), flat cel-shaded coloring. No characters, no scene objects — just an atmospheric textured background with a border, meant to have other elements placed on top of it later. Everyday low-key mood, no sparkle or glow effects. Full illustrated background (not a transparent cutout), no text, no watermark, no logos.
+
+### RARE
+A vertical decorative card background, portrait orientation, cool light-blue palette, soft glowing cloudy light streaks, light cool-blue decorative border running along the outer edge with rounded corners, a few small sparkle or star accents scattered near the corners and edges. Bold clean black outline (sticker/vector style), flat cel-shaded coloring. No characters, no scene objects — just an atmospheric textured background with a border, meant to have other elements placed on top of it later. Gentle polish, calm mood. Full illustrated background (not a transparent cutout), no text, no watermark, no logos.
+
+### EPIC
+A vertical decorative card background, portrait orientation, dreamy purple/lavender palette, soft glowing light streaks, dreamy purple decorative border running along the outer edge with rounded corners and a soft glowing halo, small floating sparkle and star accents scattered near the corners and edges. Bold clean black outline (sticker/vector style), flat cel-shaded coloring. No characters, no scene objects — just an atmospheric textured background with a border, meant to have other elements placed on top of it later. Slightly surreal, dynamic mood. Full illustrated background (not a transparent cutout), no text, no watermark, no logos.
+
+### LEGENDARY
+A vertical decorative card background, portrait orientation, rich gold palette, radiant sunburst/ray light streaks, rich gold ornate decorative border running along the outer edge with rounded corners, abundant small sparkle decorations scattered near the corners and edges. Bold clean black outline (sticker/vector style), flat cel-shaded coloring. No characters, no scene objects — just an atmospheric textured background with a border, meant to have other elements placed on top of it later. Maximum shine and polish — do NOT add castles, towers, banners, flags, coats of arms, crowns, laurel wreaths, thrones, or any medieval/kingdom/war imagery. Full illustrated background (not a transparent cutout), no text, no watermark, no logos.
+
+### HIDDEN
+A vertical decorative card background, portrait orientation, deep dark navy night-sky palette with scattered tiny stars, a subtle glowing cyan rim light along the outer edge with rounded corners (NOT bright flat teal fill), a scattering of tiny star accents near the corners and edges. Bold clean black outline (sticker/vector style), flat cel-shaded coloring. No characters, no scene objects — just an atmospheric textured background with a border, meant to have other elements placed on top of it later. Mysterious and quiet mood rather than loud or bright. Full illustrated background (not a transparent cutout), no text, no watermark, no logos.
