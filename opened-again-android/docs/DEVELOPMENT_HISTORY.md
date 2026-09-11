@@ -1237,3 +1237,47 @@ JS 키 이름이 그대로 노출되고 있었음(`metricLabel()`의 `default` �
 `ease-out`/`6s`) 확인. Kotlin 쪽(FileProvider, edge-to-edge 분기, lang
 로고)은 로컬 JVM/kotlinc 부재로 실제 컴파일은 이번에도 CI에 의존 --
 괄호 균형 검사와 전체 수동 리뷰로 정적 검증.
+
+## v0.39 — 카드 빛 효과, 감독이 직접 만든 프로토타입으로 교체
+v0.38에서 타이밍(ease-in-out→ease-out, 스침 비율/주기)만 조정했는데도
+감독이 "그냥 한줄 경계선으로 빛이 생기는 효과잖아"라고 재차 지적 -- 실제로
+`.card-shine-bar`는 회전된 사각형 DIV에 세로 그라디언트를 입힌 것뿐이라,
+타이밍을 아무리 만져도 빛의 생김새(각지고 균일한 띠) 자체는 그대로였음.
+
+감독이 이 대화에서 보낸 v0.38 확인용 영상(`shine_v038_cropped.webm`)을
+직접 화면 녹화 → 다른 AI 도구로 재구성 → `card_shine_soft.mp4` +
+`card-shine.css` + `card_preview_base.png` + `README.txt`로 묶은
+`card_shine_soft_pack.zip`을 만들어 보내줌. 받은 mp4가 실제로 감독이
+보낸 게 맞는지(같은 카드/케이스번호였음) 먼저 확인차 되물었고, 확인 후
+아래처럼 검증·반영:
+
+- **육안으로는 효과가 거의 안 보여서** (피크 알파가 0.18로 아주 은은함)
+  프레임을 정지 이미지와 픽셀 diff로 비교해 실제로 대각선 띠가 이동하며
+  나타난다는 걸 정량적으로 확인 (diff 최댓값 프레임에서 로컬 픽셀 차이
+  199/765 확인, 카드 배경이 압축된 mp4라 원본 대비 실제 렌더링에서는 더
+  또렷할 것으로 판단).
+- 기술적 차이: 기존 방식은 회전된 고정폭 DIV(`.card-shine-bar`, rotate+
+  translateX)였는데, 새 방식은 `.card` 자체의 `::after` 의사요소 하나에
+  이미 108도로 기울어진 대각선 그라디언트를 넣고 그 안에서만 슬라이드시켜
+  "각진 박스가 지나가는" 느낌 자체가 원천적으로 없음. 여기에 위치 이동뿐
+  아니라 opacity까지 같이 페이드 인/아웃(0%~8% 숨김 → 13%~43% 표시 →
+  49%부터 다시 숨김, 4.8s linear)시켜서 "슥 나타났다 슥 사라지는" 자연스러운
+  느낌 추가. `prefers-reduced-motion` 대응도 새로 포함.
+- 등급별 색조(보라/금색) 구분은 의도적으로 버림 -- 실제 홀로그램/유리
+  반사는 카드 고유색과 무관하게 대체로 흰색이라, 색을 안 넣는 쪽이 더
+  사실적이라고 판단(감독에게 별도 확인 없이 진행한 판단 사항이라 보고
+  필요).
+- `.card`가 이미 `border-radius`/`overflow:hidden`/`isolation:isolate`를
+  갖고 있어서, 새 클래스를 자식 DIV 2개(`.card-shine`+`.card-shine-bar`)
+  대신 `.card` 자체에 바로 얹는 구조로 단순화 -- `card()` 함수의 `cls`
+  조합에 `card-shine`을 추가하고 `impactLayers`에서 옛 shine 마크업 제거.
+- **텍스트 가독성 재확인**: 새 효과는 v0.29가 걱정했던 clip-path 텍스트
+  보호가 없는 구조라, 스침이 대사/제목 텍스트 위를 지나가도 안전한지
+  Playwright로 애니메이션을 여러 위상(phase)에 고정시켜 캡처 -- 피크
+  알파가 워낙 낮아(0.18) 어느 프레임에서도 텍스트가 전혀 안 씻겨나감을
+  확인.
+
+버전 39/0.39.0. Playwright로 클래스 조합(`card epic featured card-shine`),
+`@keyframes card-soft-shine` CSSOM 값, `prefers-reduced-motion:reduce` 시
+애니메이션 비활성화, 여러 애니메이션 위상에서의 텍스트 가독성, 가로
+오버플로 없음까지 전부 확인.

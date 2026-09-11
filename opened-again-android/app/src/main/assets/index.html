@@ -82,52 +82,44 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    순수 CSS 애니메이션으로 EPIC/LEGENDARY 전용 연출 추가 (NORMAL/RARE/HIDDEN은
    그대로 -- HIDDEN은 이미 전용 다크 테마로 차별화돼 있어서 대상에서 제외).
    `.card-emblem`은 등급 심볼(별/왕관)을 카드 우하단에 크게, 아주 옅게 깔아서
-   "각인" 느낌, `.card-shine`은 카드를 스치는 하이라이트 애니메이션.
-   v0.28에서 그림자/워터마크를 애니메이션으로 바꿨었으나, 실기기 피드백
-   두 가지로 v0.29에서 다시 갈아엎음:
-   1) "상세 화면에서 카드 빛 때문에 문구가 안 보임" -- 스침 효과가 카드
-      전체(텍스트 영역 포함)를 흰빛으로 덮어서 실제로 글자가 안 보이는
-      수준이었음. `.card-shine`을 카드 오른쪽(그림/테두리) 구역에만
-      `clip-path`로 가두고, 왼쪽 텍스트 컬럼(대략 58% 지점부터 왼쪽)은
-      절대 안 덮게 함.
-   2) "애니메이션 때문에 렉 걸림" -- `box-shadow`의 번짐/두께 값 자체를
-      매 프레임 바꾸는 애니메이션(`epicPulse`/`legendaryPulse`)과
-      `background-position`을 매 프레임 바꾸는 스침 애니메이션은 둘 다
-      GPU 합성이 안 되고 매 프레임 실제로 다시 칠해야 해서(리페인트) 실기기에서
-      버벅임 -- 특히 카드가 여러 장 스크롤되는 리스트에서. 그림자는 애니메이션을
-      완전히 없애고 고정값으로 되돌리고(펄스 효과는 포기, 렉이 우선), 스침은
-      `background-position` 대신 `transform`(GPU 합성 전용 속성)으로 슬라이드하는
-      막대 하나를 별도 자식 요소로 분리해서 다시 구현. 워터마크 회전은
-      `transform:rotate()`라 원래도 GPU 합성이라 그대로 둠. */
+   "각인" 느낌, 빛 스침 효과는 아래 `.card-shine` 연혁 참고. */
 .card-emblem{position:absolute;z-index:-1;right:-14px;bottom:-10px;width:130px;height:130px;object-fit:contain;opacity:.22;transform:rotate(-10deg);pointer-events:none;animation:emblemSpin 16s linear infinite}
 @keyframes emblemSpin{from{transform:rotate(-10deg)}to{transform:rotate(350deg)}}
-.card-shine{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden;clip-path:inset(0 0 0 58%)}
-/* v0.36: director feedback -- the shine read as unnatural. Two real causes,
-   both visible freeze-framing the animation: (1) the old 0%->50%->100%
-   keyframe (both ends at translateX(0)) swept the bar right then
-   immediately reversed it back left every cycle -- a visible back-and-forth
-   "wiper" motion, not how light sweeps ever look. Real one-way sweep now:
-   0% at the start position, holds at the fully-off-screen end position from
-   35% through 100%, so the loop-restart jump back to 0% is invisible (both
-   positions are outside the clip-path). (2) peak brightness hit
-   rgba(255,255,255,.82), opaque enough to fully whiteout the share buttons
-   and illustration underneath it at peak -- toned down to a translucent
-   glint that tints without erasing what's under it.
-   v0.38: director feedback -- still read as unnatural after v0.36's fix.
-   Root cause this time: `ease-in-out` on the 0%->35% sweep segment meant
-   the bar started slow (an obviously artificial windup before a light
-   "starts moving"), sped up in the middle, then slowed to a stop right as
-   it left the card -- a real glint doesn't wind up before it appears, and
-   the 35%/65% split (sweep vs. pause) also made the sweep feel too frequent
-   relative to the calm. Switched to `ease-out` (the bar starts at full
-   speed immediately -- matches how a glint of light actually appears --
-   and only decelerates on its way out) and shrank the active sweep to the
-   first ~18% of a longer 6s cycle, so the pause between glints reads as a
-   deliberate calm rather than a fast-repeating loop. */
-.card-shine-bar{position:absolute;top:-30%;left:-70%;width:45%;height:160%;transform:rotate(14deg) translateX(0);animation:cardShine 6s ease-out infinite;will-change:transform}
-.epic .card-shine-bar{background:linear-gradient(180deg,transparent,rgba(214,170,255,.28) 42%,rgba(255,255,255,.4) 50%,rgba(214,170,255,.28) 58%,transparent)}
-.legendary .card-shine-bar{background:linear-gradient(180deg,transparent,rgba(255,214,120,.3) 42%,rgba(255,255,255,.42) 50%,rgba(255,214,120,.3) 58%,transparent)}
-@keyframes cardShine{0%{transform:rotate(14deg) translateX(0)}18%,100%{transform:rotate(14deg) translateX(260%)}}
+/* 빛 스침 효과 연혁:
+   v0.28: box-shadow/background-position 애니메이션 -- 매 프레임 리페인트라
+   실기기에서 렉.
+   v0.29: transform 기반 슬라이드 막대(자식 DIV 2개)로 교체 + 텍스트 컬럼을
+   clip-path로 보호(스침이 카드 전체를 흰빛으로 덮어 문구가 안 보였던 문제).
+   v0.36: 왕복(wiper) 운동 → 단방향 스침, 피크 밝기 하향.
+   v0.38: `ease-in-out`의 느린 도입부 → `ease-out`, 스침 비율/주기 조정.
+   v0.38(2차): 그래도 "그냥 회전한 사각형 그라디언트 띠가 지나가는 것"으로
+   보인다는 지적 -- 감독이 직접 프로토타입(카드 화면 녹화 → 재구성 →
+   card-shine.css)을 만들어 보내줘서 그대로 반영. 회전된 박스 대신 각도가
+   이미 포함된 대각선 그라디언트를 카드 전체 크기 의사요소(`::after`) 하나로
+   슬라이드시키며 opacity까지 함께 페이드 인/아웃 -- 실제 유리/홀로그램
+   반사에 더 가까움. 등급별 색조 구분(보라/금색)은 버림 -- 실제 홀로 반사는
+   카드 색과 무관하게 대체로 흰색/은색이라 색을 안 넣는 쪽이 더 사실적.
+   `.card`가 이미 border-radius/overflow:hidden/isolation:isolate를
+   갖고 있어서(위 `.card` 규칙) 별도 래퍼 DIV 없이 `.card` 자체에 이
+   클래스를 얹는 구조로 단순화됨 -- 기존엔 자식 DIV 2개(`.card-shine`+
+   `.card-shine-bar`)가 필요했음. `prefers-reduced-motion`도 새로 지원. */
+.card-shine::after{
+  content:"";position:absolute;inset:-35% -65%;pointer-events:none;z-index:3;
+  background:linear-gradient(108deg,
+    transparent 43%,rgba(255,255,255,.015) 45%,
+    rgba(255,255,255,.055) 47%,rgba(255,255,255,.18) 50%,
+    rgba(255,255,255,.055) 53%,rgba(255,255,255,.015) 55%,transparent 57%);
+  transform:translateX(-70%);opacity:0;
+  animation:card-soft-shine 4.8s linear infinite;will-change:transform,opacity
+}
+@keyframes card-soft-shine{
+  0%,8%{transform:translateX(-70%);opacity:0}
+  13%{opacity:1}
+  43%{opacity:1}
+  49%{transform:translateX(70%);opacity:0}
+  100%{transform:translateX(70%);opacity:0}
+}
+@media (prefers-reduced-motion:reduce){.card-shine::after{animation:none;opacity:0}}
 .epic{box-shadow:0 0 0 3px rgba(168,108,255,.55),0 16px 34px rgba(140,80,230,.4),var(--shadow)}
 .legendary{box-shadow:0 0 0 3px rgba(224,164,40,.6),0 16px 34px rgba(224,164,40,.42),var(--shadow)}.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 9px}.rarity{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:999px;background:var(--border);color:var(--badgeText,#fff);font-size:11px;font-weight:1000;letter-spacing:.6px}.rarity-symbol{width:14px;height:14px;object-fit:contain;display:block}.case-id{font-size:11px;color:var(--muted);font-weight:800}.card-body{display:grid;grid-template-columns:1.25fr .85fr;gap:10px;padding:4px 14px 14px;align-items:center}.case-title{font-size:25px;font-weight:1000;letter-spacing:-1.2px;line-height:1.05}.detail{font-size:13px;line-height:1.55;color:#655B54;margin-top:7px}.punch{font-size:16px;font-weight:1000;margin:12px 0 0;line-height:1.4}.scene{min-height:132px;border-radius:21px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative;background:var(--scene)}.scene img{width:112px;height:112px;object-fit:cover;border-radius:22px;margin-bottom:7px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.12))}.scene-mark{position:absolute;right:8px;top:8px;font-size:22px}.meta-strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 12px}.pill{background:rgba(255,255,255,.72);border:1px solid rgba(130,110,95,.16);border-radius:999px;padding:6px 9px;font-size:11px;font-weight:800;color:#675D56}.share-row{display:flex;gap:8px;padding:0 14px 14px}.share{flex:1;border:1px solid rgba(120,100,80,.22);background:rgba(255,255,255,.78);border-radius:var(--btn-radius);min-height:var(--btn-min);padding:0 10px;font-weight:900;color:#5B5048;display:flex;align-items:center;justify-content:center}.share:active{transform:scale(.98)}
 /* v0.35: compact one-line case rows below the featured card (home screen
@@ -405,14 +397,20 @@ function incidentArt(basePath, type, rarity){
 function archiveRarityClass(type,rarity){if(rarity!=='HIDDEN')return (rarity||'normal').toLowerCase();return type==='HIDDEN_NIGHT_ACTIVITY'?'hidden opal':'hidden'}
 function iconFor(i){return i.type==='NIGHT_PATROL'?'🌙':i.type==='HUNDRED_VISITS'?'👑':i.type==='RETURN_TO_START'?'↩️':i.type==='QUICK_EXIT'?'⏱️':i.type==='HIDDEN_LOOP'?'♾️':i.type==='HIDDEN_NIGHT_ACTIVITY'?'✨':'🐾'}
 function caseNo(i){return String(Math.abs((i.type||'CASE').split('').reduce((a,c)=>a+c.charCodeAt(0),0)*17)%10000).padStart(4,'0')}
-function card(i,featured=false){const cls=`card ${rarityClass(i)} ${featured?'featured':''}`;const [artBase,bg,mode]=incidentVisual(i.type);const art=incidentArt(artBase,i.type,i.rarity);const sceneBg=mode==='scene'?art:bg;const sceneCls=`scene${mode==='scene'?' scene-illustrated':''}`;
+function card(i,featured=false){
   // v0.27: EPIC/LEGENDARY-only "impact" layers (see the .card-emblem/
   // .card-shine CSS comment) -- a big faint rarity symbol watermark plus a
   // diagonal shine sweep. Gated on i.rarity directly rather than
   // rarityClass(i)'s string (which also handles HIDDEN's "hidden opal"
   // two-class case we deliberately don't want here).
   const impact=i.rarity==='EPIC'||i.rarity==='LEGENDARY';
-  const impactLayers=impact?`<img class="card-emblem" src="visual/brand/rarity_symbols/rarity_${i.rarity.toLowerCase()}.png" alt=""><div class="card-shine"><div class="card-shine-bar"></div></div>`:'';
+  // v0.38(2차): `card-shine` is now applied directly to the `.card` element
+  // itself (its `::after` pseudo-element does the whole effect) instead of
+  // needing a separate child wrapper DIV -- `.card` already has the
+  // border-radius/overflow:hidden/isolation:isolate the effect needs.
+  const cls=`card ${rarityClass(i)} ${featured?'featured':''} ${impact?'card-shine':''}`;
+  const [artBase,bg,mode]=incidentVisual(i.type);const art=incidentArt(artBase,i.type,i.rarity);const sceneBg=mode==='scene'?art:bg;const sceneCls=`scene${mode==='scene'?' scene-illustrated':''}`;
+  const impactLayers=impact?`<img class="card-emblem" src="visual/brand/rarity_symbols/rarity_${i.rarity.toLowerCase()}.png" alt="">`:'';
   return `<article class="${cls}" onclick='openDetail(${JSON.stringify(i).replace(/'/g,"&#39;")})'><div class="card-pattern" style="background-image:url('${cardPatternBg(i)}')"></div>${impactLayers}<div class="card-head">${rarityBadge(i)}<span class="case-id">CASE #${caseNo(i)}</span></div><div class="card-body"><div><div class="case-title">${esc(txt(names,i.type))}</div><div class="detail">${esc(detail(i))}</div><div class="punch">“${esc(txt(punch,i.type))}”</div></div><div class="${sceneCls}" style="background-image:linear-gradient(rgba(255,255,255,.04),rgba(255,255,255,.04)),url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span>${mode==='overlay'?`<img class="moni-asset" src="${art}" alt="MONI">`:''}</div></div><div class="meta-strip"><span class="pill">SCORE ${i.score||0}</span>${i.primaryPackage?`<span class="pill">${esc(compactPkg(i.primaryPackage))}</span>`:''}<span class="pill">${l('자동 분석','自動分析','Auto analysis')}</span></div><div class="share-row" onclick="event.stopPropagation()"><button class="share" onclick='share(${JSON.stringify(i).replace(/'/g,"&#39;")},"square")'>${l('1:1 공유','1:1 共有','Share 1:1')}</button><button class="share" onclick='share(${JSON.stringify(i).replace(/'/g,"&#39;")},"story")'>${l('스토리','ストーリー','Story')}</button></div></article>`}
 function header(){const logo=state.settings.language==='ja'?'visual/logo/logo_jp.png':'visual/logo/logo_ko.png';return `<div class="brand"><img class="avatar" src="visual/app-icon/legacy/app_icon_phone.png"><div class="brand-main"><img class="brand-logo" src="${logo}" alt="Opened Again"><div class="sub">${l('내 폰이 오늘도 보고 있었다.','スマホは今日も見ていました。','Your phone was watching again.')}</div></div><button class="lang" onclick="cycleLang()">${state.settings.language.toUpperCase()}</button></div><div class="date">${new Date().toLocaleDateString()}</div>`}
 function cycleLang(){const i=supported.indexOf(state.settings.language);state.settings.language=supported[(i+1)%supported.length];save();render()}
@@ -503,7 +501,7 @@ ${row(iconEmoji('📊'),l('사용정보 접근','使用状況へのアクセス'
 ${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),null,false)}
 ${row(iconEmoji('💾'),l('데이터 관리','データ管理','Data'),l('기록은 이 기기에만 저장됩니다','記録はこの端末にのみ保存されます','Your records stay on this device only'),null,false)}
 ${row(iconEmoji('❓'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),null,false)}
-${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.38.0',null,false)}
+${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.39.0',null,false)}
 </div>`
 }
 function closeOverlay(){document.getElementById('overlay').innerHTML=''}
