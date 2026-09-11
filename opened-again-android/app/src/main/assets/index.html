@@ -82,64 +82,34 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    순수 CSS 애니메이션으로 EPIC/LEGENDARY 전용 연출 추가 (NORMAL/RARE/HIDDEN은
    그대로 -- HIDDEN은 이미 전용 다크 테마로 차별화돼 있어서 대상에서 제외).
    `.card-emblem`은 등급 심볼(별/왕관)을 카드 우하단에 크게, 아주 옅게 깔아서
-   "각인" 느낌, 빛 스침 효과는 아래 `.card-shine` 연혁 참고. */
+   "각인" 느낌, 빛 효과 연혁은 아래 참고 (v0.41부터 `.holo-canvas` --
+   card()/createCardHolo()의 JS 주석 참고, 여기 CSS엔 위치 지정만 남음). */
 .card-emblem{position:absolute;z-index:-1;right:-14px;bottom:-10px;width:130px;height:130px;object-fit:contain;opacity:.22;transform:rotate(-10deg);pointer-events:none;animation:emblemSpin 16s linear infinite}
 @keyframes emblemSpin{from{transform:rotate(-10deg)}to{transform:rotate(350deg)}}
-/* 빛 스침 효과 연혁:
+/* 빛 효과 연혁 (v0.28~v0.40은 카드 전체에 CSS로 스침 효과, v0.41에서 아트창
+   전용 Canvas 홀로그램 효과로 전면 교체):
    v0.28: box-shadow/background-position 애니메이션 -- 매 프레임 리페인트라
    실기기에서 렉.
    v0.29: transform 기반 슬라이드 막대(자식 DIV 2개)로 교체 + 텍스트 컬럼을
    clip-path로 보호(스침이 카드 전체를 흰빛으로 덮어 문구가 안 보였던 문제).
    v0.36: 왕복(wiper) 운동 → 단방향 스침, 피크 밝기 하향.
    v0.38: `ease-in-out`의 느린 도입부 → `ease-out`, 스침 비율/주기 조정.
-   v0.38(2차): 그래도 "그냥 회전한 사각형 그라디언트 띠가 지나가는 것"으로
-   보인다는 지적 -- 감독이 직접 프로토타입(카드 화면 녹화 → 재구성 →
-   card-shine.css)을 만들어 보내줘서 그대로 반영. 회전된 박스 대신 각도가
-   이미 포함된 대각선 그라디언트를 카드 전체 크기 의사요소(`::after`) 하나로
-   슬라이드시키며 opacity까지 함께 페이드 인/아웃 -- 실제 유리/홀로그램
-   반사에 더 가까움. 등급별 색조 구분(보라/금색)은 버림 -- 실제 홀로 반사는
-   카드 색과 무관하게 대체로 흰색/은색이라 색을 안 넣는 쪽이 더 사실적.
-   `.card`가 이미 border-radius/overflow:hidden/isolation:isolate를
-   갖고 있어서(위 `.card` 규칙) 별도 래퍼 DIV 없이 `.card` 자체에 이
-   클래스를 얹는 구조로 단순화됨 -- 기존엔 자식 DIV 2개(`.card-shine`+
-   `.card-shine-bar`)가 필요했음. `prefers-reduced-motion`도 새로 지원. */
-.card-shine::after{
-  content:"";position:absolute;inset:-35% -65%;pointer-events:none;z-index:3;
-  /* v0.39(2차): director feedback -- still reads as "a line passing by" on
-     a real device. First attempted fix (blur) was solving the wrong
-     problem: measured the rendered pixels directly (isolated the
-     ::after's own gradient against a flat background, scanned every
-     translateX offset) and the ORIGINAL 43%/50%/57% stops were already
-     smooth pixel-to-pixel (max 2/255 jump between adjacent pixels) --
-     blurring already-soft edges doesn't change the fact that the bright
-     zone itself is only a 14%-wide band of this oversized element, which
-     is simply a THIN STROKE shape regardless of how soft its edges are
-     (confirmed visually: a clearly linear diagonal stroke, just with soft
-     edges). Real light/glass reflections aren't a stroke at all -- they're
-     a broad graduated glow. Fix: widened the transparent->peak->transparent
-     span from 14% of the gradient line to the full 0%-100%, so brightness
-     builds and fades continuously across nearly the whole sweep with no
-     bounded "band" anywhere -- confirmed via the same pixel scan that this
-     now reads as a broad soft diagonal glow, not a stroke. No blur needed
-     once the shape itself has no thin core to soften, which also avoids
-     running a real-time blur filter over this oversized element every
-     frame (a possible real-device performance risk the blur attempt would
-     have introduced). */
-  background:linear-gradient(108deg,
-    transparent 0%,rgba(255,255,255,.05) 25%,
-    rgba(255,255,255,.15) 50%,
-    rgba(255,255,255,.05) 75%,transparent 100%);
-  transform:translateX(-70%);opacity:0;
-  animation:card-soft-shine 4.8s linear infinite;will-change:transform,opacity
-}
-@keyframes card-soft-shine{
-  0%,8%{transform:translateX(-70%);opacity:0}
-  13%{opacity:1}
-  43%{opacity:1}
-  49%{transform:translateX(70%);opacity:0}
-  100%{transform:translateX(70%);opacity:0}
-}
-@media (prefers-reduced-motion:reduce){.card-shine::after{animation:none;opacity:0}}
+   v0.38(2차): "회전한 사각형 그라디언트 띠"로 보인다는 지적 -- 감독이
+   프로토타입(card-shine.css)을 보내줘서 반영. 대각선 그라디언트를 카드
+   전체 크기 의사요소(`::after`) 하나로 슬라이드+opacity 페이드.
+   v0.39(2차): 그래도 "선"으로 보임 -- 그라디언트 전환 구간을 0~100%로
+   넓혀서 좁은 띠 구조 자체를 제거.
+   v0.40: 그래도 실기기에서 "하얀선이 지나간다"는 지적 -- 감독이 이번엔
+   포켓몬 카드 CSS 프로젝트(poke-holo.simey.me)를 참고한 Canvas 2D
+   프로토타입(card-holo.js)을 보내줌. CSS 그라디언트로는 결국 "카드
+   전체를 가로지르는 띠"라는 형태를 벗어날 수 없었던 반면, 이 방식은
+   효과를 아예 아트창(`.scene`) 안에만 가두고(카드 전체가 아님 -- 텍스트
+   영역은 구조적으로 닿을 수 없음), 무지개 회절광+유리 클리어코트
+   반사+고정된 반짝이 조각+테두리 rim light를 캔버스 픽셀 단위로 합성.
+   원본은 이 화면 특정 스크린샷(380x326)에 맞춰 달빛/고양이 얼굴 위치를
+   직접 좌표로 지정했지만, 실제 앱은 카드마다 다른 일러스트를 아트창
+   크기(기기별로 다름)에 맞춰 쓰므로 그 부분은 일러스트 내용 기반(밝기)
+   판정으로 일반화 -- createCardHolo() 자체 주석 참고. */
 .epic{box-shadow:0 0 0 3px rgba(168,108,255,.55),0 16px 34px rgba(140,80,230,.4),var(--shadow)}
 .legendary{box-shadow:0 0 0 3px rgba(224,164,40,.6),0 16px 34px rgba(224,164,40,.42),var(--shadow)}.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 9px}.rarity{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:999px;background:var(--border);color:var(--badgeText,#fff);font-size:11px;font-weight:1000;letter-spacing:.6px}.rarity-symbol{width:14px;height:14px;object-fit:contain;display:block}.case-id{font-size:11px;color:var(--muted);font-weight:800}.card-body{display:grid;grid-template-columns:1.25fr .85fr;gap:10px;padding:4px 14px 14px;align-items:center}.case-title{font-size:25px;font-weight:1000;letter-spacing:-1.2px;line-height:1.05}.detail{font-size:13px;line-height:1.55;color:#655B54;margin-top:7px}.punch{font-size:16px;font-weight:1000;margin:12px 0 0;line-height:1.4}.scene{min-height:132px;border-radius:21px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative;background:var(--scene)}.scene img{width:112px;height:112px;object-fit:cover;border-radius:22px;margin-bottom:7px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.12))}.scene-mark{position:absolute;right:8px;top:8px;font-size:22px}.meta-strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 12px}.pill{background:rgba(255,255,255,.72);border:1px solid rgba(130,110,95,.16);border-radius:999px;padding:6px 9px;font-size:11px;font-weight:800;color:#675D56}.share-row{display:flex;gap:8px;padding:0 14px 14px}.share{flex:1;border:1px solid rgba(120,100,80,.22);background:rgba(255,255,255,.78);border-radius:var(--btn-radius);min-height:var(--btn-min);padding:0 10px;font-weight:900;color:#5B5048;display:flex;align-items:center;justify-content:center}.share:active{transform:scale(.98)}
 /* v0.35: compact one-line case rows below the featured card (home screen
@@ -215,6 +185,12 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .hero{background-image:linear-gradient(90deg,rgba(255,249,240,.88),rgba(255,249,240,.58)),url('visual/backgrounds/bg_room_day.png');background-size:cover;background-position:center}
 .hero .hero-moni{width:120px;height:108px;object-fit:contain;border-radius:0;background:transparent}
 .scene{background-size:cover!important;background-position:center!important}
+/* v0.41: EPIC/LEGENDARY holofoil canvas overlay -- see createCardHolo() JS
+   comment for the full story. Sits over .scene's own background-image
+   (which stays as a plain fallback -- the canvas re-draws the same art on
+   top of it, so a browser that can't run the script, or a reduced-motion
+   viewer where mountHolo() never mounts it, still shows the plain photo). */
+.holo-canvas{position:absolute;inset:0;pointer-events:none;width:100%;height:100%}
 .scene .moni-asset{width:118px;height:118px;object-fit:contain;border-radius:0;margin-bottom:4px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.14))}
 /* v0.23: incident illustration pack (docs/UI_VISUAL_DIRECTION_REQUEST.md).
    'scene' render_mode incidents are a full illustrated background (no
@@ -418,20 +394,144 @@ function archiveRarityClass(type,rarity){if(rarity!=='HIDDEN')return (rarity||'n
 function iconFor(i){return i.type==='NIGHT_PATROL'?'🌙':i.type==='HUNDRED_VISITS'?'👑':i.type==='RETURN_TO_START'?'↩️':i.type==='QUICK_EXIT'?'⏱️':i.type==='HIDDEN_LOOP'?'♾️':i.type==='HIDDEN_NIGHT_ACTIVITY'?'✨':'🐾'}
 function caseNo(i){return String(Math.abs((i.type||'CASE').split('').reduce((a,c)=>a+c.charCodeAt(0),0)*17)%10000).padStart(4,'0')}
 function card(i,featured=false){
-  // v0.27: EPIC/LEGENDARY-only "impact" layers (see the .card-emblem/
-  // .card-shine CSS comment) -- a big faint rarity symbol watermark plus a
-  // diagonal shine sweep. Gated on i.rarity directly rather than
-  // rarityClass(i)'s string (which also handles HIDDEN's "hidden opal"
-  // two-class case we deliberately don't want here).
+  // v0.27: EPIC/LEGENDARY-only "impact" layers -- a big faint rarity symbol
+  // watermark plus (v0.41 on) the art-window holofoil canvas. Gated on
+  // i.rarity directly rather than rarityClass(i)'s string (which also
+  // handles HIDDEN's "hidden opal" two-class case we deliberately don't
+  // want here).
   const impact=i.rarity==='EPIC'||i.rarity==='LEGENDARY';
-  // v0.38(2차): `card-shine` is now applied directly to the `.card` element
-  // itself (its `::after` pseudo-element does the whole effect) instead of
-  // needing a separate child wrapper DIV -- `.card` already has the
-  // border-radius/overflow:hidden/isolation:isolate the effect needs.
-  const cls=`card ${rarityClass(i)} ${featured?'featured':''} ${impact?'card-shine':''}`;
+  const cls=`card ${rarityClass(i)} ${featured?'featured':''}`;
   const [artBase,bg,mode]=incidentVisual(i.type);const art=incidentArt(artBase,i.type,i.rarity);const sceneBg=mode==='scene'?art:bg;const sceneCls=`scene${mode==='scene'?' scene-illustrated':''}`;
   const impactLayers=impact?`<img class="card-emblem" src="visual/brand/rarity_symbols/rarity_${i.rarity.toLowerCase()}.png" alt="">`:'';
-  return `<article class="${cls}" onclick='openDetail(${JSON.stringify(i).replace(/'/g,"&#39;")})'><div class="card-pattern" style="background-image:url('${cardPatternBg(i)}')"></div>${impactLayers}<div class="card-head">${rarityBadge(i)}<span class="case-id">CASE #${caseNo(i)}</span></div><div class="card-body"><div><div class="case-title">${esc(txt(names,i.type))}</div><div class="detail">${esc(detail(i))}</div><div class="punch">“${esc(txt(punch,i.type))}”</div></div><div class="${sceneCls}" style="background-image:linear-gradient(rgba(255,255,255,.04),rgba(255,255,255,.04)),url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span>${mode==='overlay'?`<img class="moni-asset" src="${art}" alt="MONI">`:''}</div></div><div class="meta-strip"><span class="pill">SCORE ${i.score||0}</span>${i.primaryPackage?`<span class="pill">${esc(compactPkg(i.primaryPackage))}</span>`:''}<span class="pill">${l('자동 분석','自動分析','Auto analysis')}</span></div><div class="share-row" onclick="event.stopPropagation()"><button class="share" onclick='share(${JSON.stringify(i).replace(/'/g,"&#39;")},"square")'>${l('1:1 공유','1:1 共有','Share 1:1')}</button><button class="share" onclick='share(${JSON.stringify(i).replace(/'/g,"&#39;")},"story")'>${l('스토리','ストーリー','Story')}</button></div></article>`}
+  // v0.41: the holofoil canvas is only markup here -- mountHolo() (called
+  // right after render() injects this HTML) finds it, sizes it to .scene's
+  // actual rendered box, and starts createCardHolo()'s animation loop.
+  // data-art carries the same URL .scene's own CSS background-image uses,
+  // so the canvas draws the identical art (the CSS background stays as a
+  // plain fallback underneath -- see the .holo-canvas CSS comment).
+  const holoCanvas=impact?`<canvas class="holo-canvas" data-art="${sceneBg}"></canvas>`:'';
+  return `<article class="${cls}" onclick='openDetail(${JSON.stringify(i).replace(/'/g,"&#39;")})'><div class="card-pattern" style="background-image:url('${cardPatternBg(i)}')"></div>${impactLayers}<div class="card-head">${rarityBadge(i)}<span class="case-id">CASE #${caseNo(i)}</span></div><div class="card-body"><div><div class="case-title">${esc(txt(names,i.type))}</div><div class="detail">${esc(detail(i))}</div><div class="punch">“${esc(txt(punch,i.type))}”</div></div><div class="${sceneCls}" style="background-image:linear-gradient(rgba(255,255,255,.04),rgba(255,255,255,.04)),url('${sceneBg}')">${holoCanvas}<span class="scene-mark">${iconFor(i)}</span>${mode==='overlay'?`<img class="moni-asset" src="${art}" alt="MONI">`:''}</div></div><div class="meta-strip"><span class="pill">SCORE ${i.score||0}</span>${i.primaryPackage?`<span class="pill">${esc(compactPkg(i.primaryPackage))}</span>`:''}<span class="pill">${l('자동 분석','自動分析','Auto analysis')}</span></div><div class="share-row" onclick="event.stopPropagation()"><button class="share" onclick='share(${JSON.stringify(i).replace(/'/g,"&#39;")},"square")'>${l('1:1 공유','1:1 共有','Share 1:1')}</button><button class="share" onclick='share(${JSON.stringify(i).replace(/'/g,"&#39;")},"story")'>${l('스토리','ストーリー','Story')}</button></div></article>`}
+// v0.41: EPIC/LEGENDARY card art gets a real holofoil shimmer instead of a
+// CSS sweep -- three CSS attempts (v0.38/v0.39/v0.40) all read as "a line
+// crossing the card" on a real device no matter how the gradient was
+// shaped, because a CSS overlay spanning the whole card is structurally a
+// band/stripe shape. The director sent a Canvas 2D prototype (referencing
+// https://poke-holo.simey.me/'s approach: a shared virtual light driving a
+// rainbow diffraction layer + an elliptical clear-coat glare + stationary
+// sparkle grains + a shifting rim light) that confines the whole effect to
+// the art window's own pixels -- text is structurally unreachable, not
+// just avoided by a mask/clip-path like the old CSS version needed.
+//
+// The original prototype (card-holo.js in the pack) hardcoded its masks to
+// the exact 380x326 pixel layout of ONE specific screenshot (a moon-glow
+// boost box and a "protect the cat's face" cutout at fixed x/y) -- real
+// cards use dozens of different illustrations at whatever width .scene
+// happens to render at on a given device, so those fixed coordinates would
+// be wrong (or just wrong-shaped) for almost every other case. Adapted here:
+// - Canvas is sized to .scene's own actual box (read via
+//   getBoundingClientRect() in mountHolo()), not a fixed 380x326.
+// - The illustration-specific "moon" boost and "cat face" protection are
+//   dropped; only the generic luminance rule remains (brighter pixels in
+//   the actual image -- sky, lit windows, moonlight -- get more shimmer,
+//   regardless of what the illustration actually contains), with its
+//   coefficient raised slightly to compensate for losing that manual boost.
+// - The rim light and sparkle-grain clip now trace the canvas's own bounds
+//   (matching .scene's 21px border-radius) instead of a hardcoded
+//   whole-card-relative box.
+function createCardHolo(canvas,image,makeCanvas){
+  const W=canvas.width,H=canvas.height,ctx=canvas.getContext('2d');
+  const layer=makeCanvas(W,H),l=layer.getContext('2d');
+  const base=makeCanvas(W,H),b=base.getContext('2d');b.drawImage(image,0,0,W,H);
+  const radius=21; // matches .scene{border-radius:21px}
+  function rounded(c,x,y,w,h,r){c.beginPath();if(c.roundRect)c.roundRect(x,y,w,h,r);else c.rect(x,y,w,h)}
+  // v0.41 fix: found via testing (Playwright, same file:// loading this
+  // WebView uses) -- getImageData()/putImageData() on any canvas that ever
+  // had a file://-loaded <img> drawn into it (however indirectly) throws
+  // "SecurityError: tainted by cross-origin data" in Chromium's canvas
+  // model, crashing this on every single card. The original prototype used
+  // getImageData to build a luminance-weighted alpha mask (brighter parts
+  // of the art shimmer more). Dropped entirely rather than worked around --
+  // every remaining call below is drawImage/gradients/compositing, which
+  // are pure *write* operations Chromium never blocks regardless of the
+  // source image's origin, so this file makes zero getImageData/
+  // putImageData calls anywhere. The radial "gate" gradient already gives
+  // the shimmer a soft circular falloff without needing per-pixel weighting.
+  let seed=27;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+  const flakeCount=Math.max(24,Math.round(W*H/380));
+  const flakes=Array.from({length:flakeCount},()=>({x:random()*W,y:random()*H,nx:random()*2-1,ny:random()*2-1,r:.3+random()*.65}));
+  const fallSigma=Math.max(W,H)*.55;
+  function render(t,px,py,effects=true){
+    const angle=t*Math.PI/4;
+    if(px===undefined){px=Math.sin(angle)*.82;py=Math.cos(angle)*.52}
+    ctx.clearRect(0,0,W,H);ctx.drawImage(base,0,0);
+    if(!effects)return;
+    const lx=W/2+px*W*.48,ly=H/2+py*H*.48;
+    l.clearRect(0,0,W,H);l.globalCompositeOperation='source-over';
+    const spectrum=l.createLinearGradient(lx-W*.6,ly-H*.6,lx+W*.6,ly+H*.7);
+    const cols=['#7542dd','#48b4ed','#89e6d7','#f0ddfa','#d78ce4','#9770e8','#5bd2df'];
+    cols.forEach((v,idx)=>spectrum.addColorStop(idx/6,v));l.fillStyle=spectrum;l.fillRect(0,0,W,H);
+    l.globalCompositeOperation='destination-in';
+    const gate=l.createRadialGradient(lx,ly,Math.min(W,H)*.03,lx,ly,Math.max(W,H)*.85);
+    gate.addColorStop(0,'rgba(255,255,255,.76)');gate.addColorStop(.48,'rgba(255,255,255,.45)');gate.addColorStop(1,'rgba(255,255,255,0)');
+    l.fillStyle=gate;l.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation='color';ctx.globalAlpha=.64;ctx.drawImage(layer,0,0);ctx.globalCompositeOperation='screen';ctx.globalAlpha=.12;ctx.drawImage(layer,0,0);
+    // clear-coat elliptical glare -- no moving rectangular edge anywhere.
+    l.globalCompositeOperation='source-over';l.clearRect(0,0,W,H);l.save();
+    l.translate(lx,ly);l.rotate(-.42);l.scale(1,1.65);
+    const glareR=Math.max(W,H)*.32;
+    const glare=l.createRadialGradient(0,0,0,0,0,glareR);
+    glare.addColorStop(0,'rgba(239,252,255,.42)');glare.addColorStop(.32,'rgba(218,245,255,.20)');glare.addColorStop(1,'rgba(255,255,255,0)');
+    l.fillStyle=glare;l.fillRect(-glareR,-glareR,glareR*2,glareR*2);l.restore();
+    ctx.globalCompositeOperation='screen';ctx.globalAlpha=1;ctx.drawImage(layer,0,0);
+    // stationary foil grains -- they catch light, they don't travel.
+    ctx.save();rounded(ctx,0,0,W,H,radius);ctx.clip();
+    for(const f of flakes){
+      const spec=Math.exp(-((px-f.nx)**2+(py-f.ny)**2)*15);
+      const fall=Math.exp(-((f.x-lx)**2+(f.y-ly)**2)/(fallSigma*fallSigma));
+      const a=spec*fall*.65;if(a<.04)continue;
+      ctx.fillStyle=`rgba(205,238,255,${a})`;ctx.fillRect(f.x,f.y,f.r,f.r);
+      if(a>.36&&f.r>.8){ctx.strokeStyle=`rgba(247,244,255,${(a-.30)*1.2})`;ctx.lineWidth=.65;ctx.beginPath();ctx.moveTo(f.x-2,f.y);ctx.lineTo(f.x+2,f.y);ctx.moveTo(f.x,f.y-2);ctx.lineTo(f.x,f.y+2);ctx.stroke()}
+    }
+    ctx.restore();
+    // rim light around the art window's own border (never the whole card).
+    l.globalCompositeOperation='source-over';l.clearRect(0,0,W,H);
+    const rim=l.createLinearGradient(lx-W*.45,ly-H*.45,lx+W*.45,ly+H*.45);
+    rim.addColorStop(0,'rgba(127,83,217,0)');rim.addColorStop(.35,'rgba(139,222,255,.25)');rim.addColorStop(.5,'rgba(246,247,255,.95)');rim.addColorStop(.64,'rgba(219,166,255,.35)');rim.addColorStop(1,'rgba(126,82,218,0)');
+    l.strokeStyle=rim;l.lineWidth=2;rounded(l,1,1,W-2,H-2,Math.max(0,radius-1));l.stroke();
+    ctx.globalCompositeOperation='screen';ctx.drawImage(layer,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
+  }
+  return {render};
+}
+let holoRaf=null;
+function stopHolo(){if(holoRaf){cancelAnimationFrame(holoRaf);holoRaf=null}}
+// Only the featured card ever carries a .holo-canvas (see card()), so there
+// is at most one to mount. Self-terminates once its canvas leaves the DOM
+// (the next render() call replaces #app's innerHTML wholesale) instead of
+// relying solely on the caller remembering to stopHolo() first -- belt and
+// suspenders against the exact "orphaned rAF loop" leak the pack's own
+// README warned about.
+function mountHolo(){
+  const canvas=document.querySelector('.holo-canvas');
+  if(!canvas)return;
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const rect=canvas.parentElement.getBoundingClientRect();
+  const w=Math.max(1,Math.round(rect.width)),h=Math.max(1,Math.round(rect.height));
+  canvas.width=w;canvas.height=h;
+  const img=new Image();
+  img.onload=()=>{
+    if(!document.body.contains(canvas))return;
+    const makeCanvas=(cw,ch)=>{const c=document.createElement('canvas');c.width=cw;c.height=ch;return c};
+    const effect=createCardHolo(canvas,img,makeCanvas);
+    const start=performance.now();
+    function tick(now){
+      if(!document.body.contains(canvas)){holoRaf=null;return}
+      effect.render((now-start)/1000);
+      holoRaf=requestAnimationFrame(tick);
+    }
+    holoRaf=requestAnimationFrame(tick);
+  };
+  img.src=canvas.dataset.art;
+}
 function header(){const logo=state.settings.language==='ja'?'visual/logo/logo_jp.png':'visual/logo/logo_ko.png';return `<div class="brand"><img class="avatar" src="visual/app-icon/legacy/app_icon_phone.png"><div class="brand-main"><img class="brand-logo" src="${logo}" alt="Opened Again"><div class="sub">${l('내 폰이 오늘도 보고 있었다.','スマホは今日も見ていました。','Your phone was watching again.')}</div></div><button class="lang" onclick="cycleLang()">${state.settings.language.toUpperCase()}</button></div><div class="date">${new Date().toLocaleDateString()}</div>`}
 function cycleLang(){const i=supported.indexOf(state.settings.language);state.settings.language=supported[(i+1)%supported.length];save();render()}
 function tabs(){const items=[
@@ -521,7 +621,7 @@ ${row(iconEmoji('📊'),l('사용정보 접근','使用状況へのアクセス'
 ${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),null,false)}
 ${row(iconEmoji('💾'),l('데이터 관리','データ管理','Data'),l('기록은 이 기기에만 저장됩니다','記録はこの端末にのみ保存されます','Your records stay on this device only'),null,false)}
 ${row(iconEmoji('❓'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),null,false)}
-${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.40.0',null,false)}
+${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.41.0',null,false)}
 </div>`
 }
 function closeOverlay(){document.getElementById('overlay').innerHTML=''}
@@ -601,7 +701,14 @@ function onboardFinish(allow){
   if(allow){try{N&&N.requestNotificationPermission&&N.requestNotificationPermission()}catch(e){}}
   state.settings.onboardingSeen=true;save();state.onboardStep=1;render()
 }
-function render(){const root=document.getElementById('app');if(!skipOnboarding&&!state.settings.onboardingSeen){root.className='app onboard';root.innerHTML=onboardScreen();return}
+function render(){
+  // v0.41: every branch below replaces #app's innerHTML wholesale, which
+  // would otherwise orphan any running holofoil rAF loop from the previous
+  // render -- cancel it unconditionally up front (mountHolo() also
+  // self-checks via document.body.contains() as a second safety net, see
+  // its own comment, but this avoids even one wasted frame).
+  stopHolo();
+  const root=document.getElementById('app');if(!skipOnboarding&&!state.settings.onboardingSeen){root.className='app onboard';root.innerHTML=onboardScreen();return}
   // v0.35: full-screen detail page takes over completely (its own compact
   // header, no brand header/bottom tab bar) -- checked before header()
   // even runs, matching the mockup's dedicated "사건 카드 상세" screen.
@@ -613,6 +720,6 @@ function render(){const root=document.getElementById('app');if(!skipOnboarding&&
   // below so a user who hasn't granted access yet still has somewhere to
   // go via the bottom tab bar instead of being fully stuck.
   if(state.tab==='settings'){html+=settings();html+=tabs();root.innerHTML=html;return}
-  const d=state.data||read();state.data=d;if(!d.permission){html+=`<div class="permission"><h2>${l('모니가 사건을 조사하려면','MONIが事件を調べるには','To let MONI investigate')}</h2><p>${l('앱 사용 기록을 기기 안에서 분석하기 위한 사용정보 접근 권한이 필요합니다. 기록 내용은 서버로 보내지 않습니다.','端末内でアプリ利用記録を分析するため、使用状況へのアクセスが必要です。記録内容はサーバーへ送信しません。','Usage access is required to analyze app activity on-device. Your records are not sent to a server.')}</p><button class="primary" onclick="N&&N.openUsageSettings()">${l('사용정보 접근 허용','使用状況へのアクセスを許可','Allow usage access')}</button></div>`;html+=tabs();root.innerHTML=html;return}html+=state.tab==='cases'?cases(d):state.tab==='archive'?archive(d):records(d);html+=`<div class="foot">MONI · SMALL HABITS, BIG STORIES.</div>`;html+=tabs();root.innerHTML=html}
+  const d=state.data||read();state.data=d;if(!d.permission){html+=`<div class="permission"><h2>${l('모니가 사건을 조사하려면','MONIが事件を調べるには','To let MONI investigate')}</h2><p>${l('앱 사용 기록을 기기 안에서 분석하기 위한 사용정보 접근 권한이 필요합니다. 기록 내용은 서버로 보내지 않습니다.','端末内でアプリ利用記録を分析するため、使用状況へのアクセスが必要です。記録内容はサーバーへ送信しません。','Usage access is required to analyze app activity on-device. Your records are not sent to a server.')}</p><button class="primary" onclick="N&&N.openUsageSettings()">${l('사용정보 접근 허용','使用状況へのアクセスを許可','Allow usage access')}</button></div>`;html+=tabs();root.innerHTML=html;return}html+=state.tab==='cases'?cases(d):state.tab==='archive'?archive(d):records(d);html+=`<div class="foot">MONI · SMALL HABITS, BIG STORIES.</div>`;html+=tabs();root.innerHTML=html;if(state.tab==='cases')mountHolo()}
 restore();refresh();
 </script></body></html>
