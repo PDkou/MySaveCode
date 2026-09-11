@@ -26,8 +26,16 @@ public class ReminderReceiver extends BroadcastReceiver {
         // pending alarm (same requestCode) the normal way, so there's no
         // double-notify once they do. Test reminders are exempt -- a
         // one-off connectivity check shouldn't turn into a recurring alarm.
+        //
+        // This native-side reschedule is invisible to the JS side unless
+        // queued through NotificationActionStore the same way a tapped
+        // "내일 다시" action is (see NotificationActionReceiver) -- otherwise
+        // the alarm correctly re-fires tomorrow, but state.people[].nextAt in
+        // index.html never advances, so the app keeps showing the old date
+        // for that person even though a new notification is really coming.
         if (personId >= 0L && !isTest) {
-            ReminderScheduler.snoozeOneDay(c, personId, name, interval, notifyHour, notifyMinute, reminderMode, minDays, maxDays);
+            long nextAt = ReminderScheduler.snoozeOneDay(c, personId, name, interval, notifyHour, notifyMinute, reminderMode, minDays, maxDays);
+            NotificationActionStore.add(c, "snooze", personId, System.currentTimeMillis(), nextAt);
         } else if (personId >= 0L) {
             ReminderScheduler.markDelivered(c, personId);
         }
