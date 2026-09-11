@@ -1168,3 +1168,72 @@ shadowing 버그 패턴을 전 파일에 걸쳐 재검색해 전부 수정)로 �
 검증. 좌표/색상/레이어 순서는 감독이 실제로 확정한 `sim_tcg_v16.py`
 렌더 결과와 1:1 대응하도록 맞춤. 실기기 최종 확인은 아직 필요(v0.36
 item 6와 동일한 검증 공백 — 이 렌더러는 매번 이 한계를 안고 감).
+
+## v0.38 — 실기기 피드백 8건 일괄 수정
+감독이 v0.37 APK를 실기기에 설치해보고 스크린샷 5장과 함께 준 피드백
+8건을 하나씩 수정.
+
+1. **공유 버튼이 자동으로 갤러리 저장**: `ShareCardRenderer.saveAndShare()`가
+   공유 시트를 열기도 전에 `MediaStore.Images.Media`로 항상 Pictures 갤러리에
+   영구 저장부터 하고 있었음 -- 사용자가 실제로 공유를 완료했는지와 무관하게.
+   캐시 전용 파일(`cacheDir/shares/share_card.png`, 매번 덮어씀)에 쓰고
+   `FileProvider`로 `content://` Uri를 공유 시트에 넘기도록 교체 -- 사용자가
+   시트 안에서 직접 "저장" 대상을 고르지 않는 한 갤러리에 아무것도 남지 않음.
+   `androidx.core:core` 의존성 신규 추가(이 앱의 유일한 AndroidX 의존성),
+   매니페스트에 `FileProvider` provider 선언 + `res/xml/file_paths.xml` 신규.
+2. **모달이 한 화면에 안 들어가고 스크롤 시 닫기 버튼이 사라짐**: `.sheet`가
+   `overflow:auto`로 손잡이/제목/닫기 버튼을 전부 한 덩어리로 스크롤시켜서,
+   내용이 길면(또는 화면이 작으면) 닫기 버튼 자체가 스크롤해야 보이는 경우가
+   있었음. `.sheet`를 flex column으로 바꿔 손잡이/닫기 버튼은 고정, 중간
+   콘텐츠만 `.sheet-scroll`로 감싸 필요할 때만 자체 스크롤 -- 닫기 버튼은
+   항상 화면 안에 보임(Playwright로 `getBoundingClientRect()` 검증).
+3. **일본어로 전환해도 공유 카드 로고가 한국어**: v0.37 TCG 재설계 때
+   `drawTcgCard()`의 로고 조회가 `render()`가 받는 `lang` 파라미터를 아예
+   안 쓰고 `"logo/logo_ko.png"`를 하드코딩하고 있던 회귀 -- 감독이 보낸
+   일본어 카드 스크린샷에서 로고만 한글로 나온 것으로 확인. `lang`을
+   `drawTcgCard()`까지 관통시켜 `ja`일 때 `logo_jp.png`를 쓰도록 수정
+   (index.html의 `header()` 로고 교체와 동일한 `lang` 소스).
+4. **상태표시줄까지 화면이 표시됨**: `MainActivity.kt`가 API 30+ 전부에서
+   `setDecorFitsSystemWindows(false)` + 투명 바로 스스로 edge-to-edge를 켜고
+   있었음 -- 정작 강제되는 건 Android 15(API 35)부터뿐. API 30-34는 원래
+   불필요했던 선택이라 상태표시줄 영역에 콘텐츠가 번져 보이는 원인이 됨.
+   API 35+ (targetSdk 36에서 실제로 피할 수 없는 구간)에서만 edge-to-edge를
+   유지하고, 그 아래는 `AppTheme`의 불투명 상태/내비게이션 바(`#FAF6ED`)로
+   되돌림.
+5. **오늘의 사건 카드 빛 애니메이션이 여전히 부자연스러움**: v0.36에서
+   왕복 운동(wiper)은 고쳤지만, `ease-in-out` 타이밍이 스침 구간(0%→35%)
+   전체에 걸려서 빛이 "천천히 감아 올렸다가" 움직이는 인위적인 도입부가
+   남아있었음 -- 실제 빛 반사는 그렇게 시작하지 않음. `ease-out`(즉시 최고
+   속도로 시작해서 빠져나갈 때만 감속)으로 바꾸고, 스침 구간을 전체 주기의
+   35%에서 18%로 줄이고 주기 자체도 4.5s→6s로 늘려서 반짝임 사이 여백이
+   더 차분하게 느껴지도록 조정.
+6. **전반적인 가독성**: `--muted`(통계 라벨/상세 설명/설정 부제 등 앱
+   전체의 보조 텍스트 색)가 배경 대비 3.36:1(흰 카드 배경 대비로도
+   3.7~3.8:1)로 WCAG AA 최소 기준(4.5:1) 미달이었음 -- 같은 색조를
+   유지하면서 어둡게 조정(`#6B5F54`, 실측 대비 5.5:1 이상). 가장 작았던
+   10~11px 라벨류(탭바 라벨, 미니 통계, 케이스 ID, 필, 압축 리스트 부제,
+   설정 부제, 보관함 카드 라벨 등)를 1px씩 상향.
+7. **탭 이동 시 스크롤 위치가 유지돼 빈 화면이 보임**: `#app` innerHTML을
+   통째로 교체하는 SPA 구조라 브라우저가 스크롤을 알아서 리셋하지 않음 --
+   홈에서 스크롤한 채로 기록/보관함 등으로 이동하면 새 탭이 그 위치에서
+   시작해 내용이 짧으면 아래가 비어 보임. `setTab()`/`openDetail()`/
+   `closeDetail()`(전체화면 사건 상세도 같은 문제) 전부에
+   `window.scrollTo(0,0)` 추가.
+8. **보관함 카드 탭 시 파란 하이라이트 잔상**: WebView 기본
+   `-webkit-tap-highlight-color`가 탭 후 바로 안 사라지고 남아있던 문제 --
+   `*{-webkit-tap-highlight-color:transparent}`로 앱 전체에서 비활성화
+   (`.share:active` 등 명시적으로 정의된 눌림 효과는 그대로 유지).
+
+작업 중 감독 스크린샷에서 추가로 발견한 실제 버그 1건도 같이 수정:
+사건 상세 페이지의 ESCAPE_FAILED 통계에 `windowMs` 라벨이 없어서 원시
+JS 키 이름이 그대로 노출되고 있었음(`metricLabel()`의 `default` 폴백) --
+`재실행 구간`/`再起動の時間幅`/`Reopen window` 케이스 추가.
+
+버전 38/0.38.0. Playwright(393x851)로 검증: `-webkit-tap-highlight-color`
+전역 적용 확인, 홈/보관함 탭 가로 스크롤 없음, 탭 전환 전후
+`window.scrollY` 0으로 리셋, 보관함 상세 모달의 `.sheet-close`가 항상
+뷰포트 안(스크롤 불필요), `windowMs` 라벨 정상 출력, 설정 화면 버전
+문자열 갱신 확인, `@keyframes cardShine`의 실제 CSSOM 값(`18%,100%`/
+`ease-out`/`6s`) 확인. Kotlin 쪽(FileProvider, edge-to-edge 분기, lang
+로고)은 로컬 JVM/kotlinc 부재로 실제 컴파일은 이번에도 CI에 의존 --
+괄호 균형 검사와 전체 수동 리뷰로 정적 검증.

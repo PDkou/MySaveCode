@@ -111,10 +111,12 @@
   `ShareCardRenderer`의 제목(title)은 여전히 줄바꿈 없이 한 줄로 그려서, 아주 긴
   사건명은 헤더 패널 폭을 넘어갈 수 있음(stat/quote는 줄바꿈 처리됨). 실기기에서
   긴 제목으로 확인 필요.
-- v0.37 공유 카드 TCG 재설계 실기기 최종 확인 — 이 세션은 로컬 JVM/Android 런타임이
-  없어서 Kotlin Canvas 코드를 직접 실행해본 적이 없음(Python/PIL 목업으로만 검증,
-  `docs/DEVELOPMENT_HISTORY.md` v0.37 참고). 다음에 실기기 스크린샷으로 5등급 전부
-  (특히 HIDDEN의 이중 글로우 링/foil 타이틀 렌더링) 확인 필요.
+- ~~v0.37 공유 카드 TCG 재설계 실기기 최종 확인~~ — 감독이 v0.37 APK를 실기기에
+  설치하고 LEGENDARY 카드(일본어) 스크린샷으로 확인, 레이아웃/foil 타이틀/엠블럼
+  전부 의도대로 렌더링됨. 다만 그 스크린샷에서 로고만 언어 설정과 무관하게
+  한국어로 나오는 실제 회귀를 발견 → v0.38에서 수정(`docs/DEVELOPMENT_HISTORY.md`
+  v0.38 참고). NORMAL/RARE/EPIC/HIDDEN 나머지 등급은 아직 실기기 스크린샷 없음 —
+  특히 HIDDEN의 이중 글로우 링 렌더링은 여전히 미확인.
 - ~~런처 아이콘 없음~~ — v0.10에서 레거시 아이콘으로 완료, v0.14에서 정식 적응형 아이콘으로
   업그레이드. 디자인팀이 세이프존 패딩 포함 캐릭터 단독 투명 배경 컷아웃(`adaptive_foreground_
   moni_1080.png`) + 단색 배경(`adaptive_background_blue_1080.png`)을 회신해줘서 `mipmap-

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backs the FileProvider declared in AndroidManifest.xml. Only exposes
+     the one cache subfolder ShareCardRenderer.saveAndShare() writes the
+     share-card PNG into, nothing else in the app's cache or files dirs. -->
+<paths>
+    <cache-path name="shares" path="shares/" />
+</paths>

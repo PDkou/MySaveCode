@@ -1,6 +1,5 @@
 package com.howling.openedagain.ui
 
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -17,13 +16,12 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.net.Uri
-import android.provider.MediaStore
+import androidx.core.content.FileProvider
 import com.howling.openedagain.core.DetectedIncident
 import com.howling.openedagain.core.IncidentType
 import com.howling.openedagain.core.Rarity
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.io.File
+import java.io.FileOutputStream
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
@@ -107,19 +105,24 @@ class ShareCardRenderer(private val context: Context) {
         val outerBottom = if (format == Format.STORY) format.height - 330f else format.height - 50f
         val rect = cardAlignedRect(margin, outerTop, format.width - margin, outerBottom)
 
-        drawTcgCard(c, paint, rect, incident, title, detail, punchline)
+        drawTcgCard(c, paint, rect, incident, title, detail, punchline, lang)
         return bitmap
     }
 
+    // v0.38: director feedback -- tapping the share button silently saved a
+    // permanent copy into the public Pictures gallery via MediaStore before
+    // the share sheet even opened, regardless of whether the user actually
+    // picked a target (or backed out). Write to a private cache file and
+    // hand the OS share sheet a FileProvider content:// Uri instead --
+    // nothing lands in the user's gallery unless *they* explicitly choose a
+    // save/download target inside that sheet. A single fixed filename
+    // (overwritten every share) avoids letting this cache grow unbounded,
+    // since these files were never meant to be kept.
     fun saveAndShare(bitmap: Bitmap, chooserTitle: String) {
-        val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-        val values = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, "opened_again_$stamp.png")
-            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-            if (android.os.Build.VERSION.SDK_INT >= 29) put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/OpenedAgain")
-        }
-        val uri: Uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return
-        context.contentResolver.openOutputStream(uri)?.use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        val dir = File(context.cacheDir, "shares").apply { mkdirs() }
+        val file = File(dir, "share_card.png")
+        FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        val uri: Uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)
@@ -146,7 +149,8 @@ class ShareCardRenderer(private val context: Context) {
         incident: DetectedIncident,
         title: String,
         stat: String,
-        quote: String
+        quote: String,
+        lang: String
     ) {
         val rarity = incident.rarity
         val pal = CardStyle.tcgPalette(rarity)
@@ -310,7 +314,15 @@ class ShareCardRenderer(private val context: Context) {
         c.drawRoundRect(caseBox, s(10f), s(10f), paint)
         drawTextTopLeft(c, caseText, caseBox.left + s(14f), caseBox.top + s(8f), caseTextPaint)
 
-        assetBitmap("logo/logo_ko.png")?.let { logo ->
+        // v0.38: director feedback -- switching the app's in-app language to
+        // Japanese still put the Korean wordmark on the share card, because
+        // this lookup ignored the `lang` param entirely and always loaded
+        // logo_ko.png. `lang` is the in-app selected language passed all the
+        // way from NativeBridge.shareIncident() (see render()'s doc), not the
+        // device locale -- matches the same lang source index.html's own
+        // header() logo swap already uses.
+        val logoAsset = if (lang == "ja") "logo/logo_jp.png" else "logo/logo_ko.png"
+        assetBitmap(logoAsset)?.let { logo ->
             val maxW = s(140f); val maxH = s(44f)
             val logoScale = min(maxW / logo.width, maxH / logo.height)
             val lw2 = logo.width * logoScale; val lh2 = logo.height * logoScale

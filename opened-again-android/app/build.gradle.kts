@@ -34,8 +34,8 @@ android {
         applicationId = "com.howling.openedagain"
         minSdk = 29
         targetSdk = 36
-        versionCode = 37
-        versionName = "0.37.0"
+        versionCode = 38
+        versionName = "0.38.0"
     }
 
     buildTypes {
@@ -61,4 +61,10 @@ kotlin {
 
 dependencies {
     implementation(project(":core"))
+    // v0.38: FileProvider (androidx.core.content.FileProvider) for sharing a
+    // cache-only bitmap file without saving it to the public gallery -- see
+    // ShareCardRenderer.saveAndShare(). The app otherwise has zero AndroidX
+    // dependencies (bare android.app.Activity, no AppCompat); this is the
+    // one narrow addition needed for that fix.
+    implementation("androidx.core:core:1.13.1")
 }

@@ -6,7 +6,14 @@
 <title>또 열었네?</title>
 <style>
 :root{
-  --bg:#F7F1E7;--paper:#FFFEFB;--ink:#2F2A27;--muted:#8E8177;--brown:#9C7A5D;
+  --bg:#F7F1E7;--paper:#FFFEFB;--ink:#2F2A27;--muted:#6B5F54;--brown:#9C7A5D;
+  /* v0.38: director feedback -- "가독성을 높이도록". --muted (used for every
+     secondary/label line across the app -- stat labels, detail text, case
+     ids, settings subtext) measured 3.36:1 contrast against --bg (and
+     3.7-3.8:1 against the white card/row backgrounds), below WCAG AA's
+     4.5:1 minimum for normal-size text. Darkened to keep the same warm
+     brown-gray hue while clearing AA on every background it's actually
+     used against (5.5:1+ measured against --bg/white/paper). */
   --normal:#D9D9D9;--rare:#70BFFF;--epic:#A86CFF;--legend:#FFD166;--hidden:#082B3B;
   --radius:24px;--shadow:0 12px 34px rgba(80,62,48,.11);--line:#E9DED1;
   /* v0.36: director feedback -- buttons across the app felt inconsistent/
@@ -17,7 +24,12 @@
      radius + min-height for every tappable button from here on. */
   --btn-radius:16px;--btn-min:46px
 }
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Noto Sans JP",sans-serif}
+/* v0.38: director feedback -- tapping an archive card (or any other
+   clickable row) left a lingering blue highlight overlay after the tap,
+   sometimes not fading until a later interaction. That's WebView's default
+   `-webkit-tap-highlight-color`; disabling it app-wide (every element still
+   gets its own `:active` feedback where one is defined, e.g. `.share:active`) */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Noto Sans JP",sans-serif}
 body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),var(--bg)}button{font:inherit}.app{max-width:720px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 18px calc(90px + env(safe-area-inset-bottom))}
 /* v0.24: onboarding (see onboardScreen()/render() below). The two
    onboarding images are full-screen 941x1672 compositions with their own
@@ -57,11 +69,11 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,251,246,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:7px 6px calc(7px + env(safe-area-inset-bottom))}
 .tabbtn{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:var(--btn-radius);color:#9A8E83;min-height:var(--btn-min)}
 .tabbtn img{width:23px;height:23px;object-fit:contain;opacity:.5}
-.tabbtn span{font-size:10px;font-weight:800}
+.tabbtn span{font-size:11px;font-weight:800}
 .tabbtn.active{background:#F3EBDE;color:#332C28}
 .tabbtn.active img{opacity:1}
 .hero{margin-top:17px;background:linear-gradient(135deg,#FFF9F0 0%,#EFE1CE 100%);border:1px solid #EADAC5;border-radius:27px;padding:17px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;min-height:124px;position:relative}.hero:after{content:"";position:absolute;right:120px;bottom:-32px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.42)}.hero img{width:132px;height:96px;object-fit:cover;object-position:50% 10%;border-radius:19px;position:relative;z-index:1}.hero h2{margin:0;font-size:21px;letter-spacing:-.8px}.hero p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.55;max-width:310px}
-.daily-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:11px}.mini-stat{background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:15px;padding:10px 7px;text-align:center}.mini-stat b{display:block;font-size:17px}.mini-stat span{font-size:10px;color:var(--muted)}
+.daily-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:11px}.mini-stat{background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:15px;padding:10px 7px;text-align:center}.mini-stat b{display:block;font-size:17px}.mini-stat span{font-size:11px;color:var(--muted)}
 .section-title{display:flex;align-items:end;justify-content:space-between;margin:24px 2px 10px}.section-title h2{margin:0;font-size:20px;letter-spacing:-.7px}.count{font-size:12px;color:var(--muted)}
 .card{position:relative;border-radius:28px;padding:0;margin:13px 0;background:#fff;border:2px solid var(--border);box-shadow:var(--shadow);overflow:hidden;isolation:isolate}.card:before{content:"";position:absolute;inset:0;background:var(--glow);opacity:.33;pointer-events:none;z-index:-2}.card:after{content:"";position:absolute;inset:5px;border-radius:22px;border:1px solid rgba(255,255,255,.55);pointer-events:none;z-index:4}.card-pattern{position:absolute;inset:0;z-index:-1;opacity:.16;background-size:cover;background-position:center;pointer-events:none}.hidden .card-pattern{opacity:.3}
 /* v0.27: "노멀/레어는 됐는데 에픽/레전더리는 더 임팩트 있어야 하지 않냐"는
@@ -100,13 +112,24 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    positions are outside the clip-path). (2) peak brightness hit
    rgba(255,255,255,.82), opaque enough to fully whiteout the share buttons
    and illustration underneath it at peak -- toned down to a translucent
-   glint that tints without erasing what's under it. */
-.card-shine-bar{position:absolute;top:-30%;left:-70%;width:45%;height:160%;transform:rotate(14deg) translateX(0);animation:cardShine 4.5s ease-in-out infinite;will-change:transform}
+   glint that tints without erasing what's under it.
+   v0.38: director feedback -- still read as unnatural after v0.36's fix.
+   Root cause this time: `ease-in-out` on the 0%->35% sweep segment meant
+   the bar started slow (an obviously artificial windup before a light
+   "starts moving"), sped up in the middle, then slowed to a stop right as
+   it left the card -- a real glint doesn't wind up before it appears, and
+   the 35%/65% split (sweep vs. pause) also made the sweep feel too frequent
+   relative to the calm. Switched to `ease-out` (the bar starts at full
+   speed immediately -- matches how a glint of light actually appears --
+   and only decelerates on its way out) and shrank the active sweep to the
+   first ~18% of a longer 6s cycle, so the pause between glints reads as a
+   deliberate calm rather than a fast-repeating loop. */
+.card-shine-bar{position:absolute;top:-30%;left:-70%;width:45%;height:160%;transform:rotate(14deg) translateX(0);animation:cardShine 6s ease-out infinite;will-change:transform}
 .epic .card-shine-bar{background:linear-gradient(180deg,transparent,rgba(214,170,255,.28) 42%,rgba(255,255,255,.4) 50%,rgba(214,170,255,.28) 58%,transparent)}
 .legendary .card-shine-bar{background:linear-gradient(180deg,transparent,rgba(255,214,120,.3) 42%,rgba(255,255,255,.42) 50%,rgba(255,214,120,.3) 58%,transparent)}
-@keyframes cardShine{0%{transform:rotate(14deg) translateX(0)}35%,100%{transform:rotate(14deg) translateX(260%)}}
+@keyframes cardShine{0%{transform:rotate(14deg) translateX(0)}18%,100%{transform:rotate(14deg) translateX(260%)}}
 .epic{box-shadow:0 0 0 3px rgba(168,108,255,.55),0 16px 34px rgba(140,80,230,.4),var(--shadow)}
-.legendary{box-shadow:0 0 0 3px rgba(224,164,40,.6),0 16px 34px rgba(224,164,40,.42),var(--shadow)}.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 9px}.rarity{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:999px;background:var(--border);color:var(--badgeText,#fff);font-size:11px;font-weight:1000;letter-spacing:.6px}.rarity-symbol{width:14px;height:14px;object-fit:contain;display:block}.case-id{font-size:10px;color:var(--muted);font-weight:800}.card-body{display:grid;grid-template-columns:1.25fr .85fr;gap:10px;padding:4px 14px 14px;align-items:center}.case-title{font-size:25px;font-weight:1000;letter-spacing:-1.2px;line-height:1.05}.detail{font-size:13px;line-height:1.55;color:#655B54;margin-top:7px}.punch{font-size:16px;font-weight:1000;margin:12px 0 0;line-height:1.4}.scene{min-height:132px;border-radius:21px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative;background:var(--scene)}.scene img{width:112px;height:112px;object-fit:cover;border-radius:22px;margin-bottom:7px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.12))}.scene-mark{position:absolute;right:8px;top:8px;font-size:22px}.meta-strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 12px}.pill{background:rgba(255,255,255,.72);border:1px solid rgba(130,110,95,.16);border-radius:999px;padding:6px 9px;font-size:10px;font-weight:800;color:#675D56}.share-row{display:flex;gap:8px;padding:0 14px 14px}.share{flex:1;border:1px solid rgba(120,100,80,.22);background:rgba(255,255,255,.78);border-radius:var(--btn-radius);min-height:var(--btn-min);padding:0 10px;font-weight:900;color:#5B5048;display:flex;align-items:center;justify-content:center}.share:active{transform:scale(.98)}
+.legendary{box-shadow:0 0 0 3px rgba(224,164,40,.6),0 16px 34px rgba(224,164,40,.42),var(--shadow)}.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 9px}.rarity{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:999px;background:var(--border);color:var(--badgeText,#fff);font-size:11px;font-weight:1000;letter-spacing:.6px}.rarity-symbol{width:14px;height:14px;object-fit:contain;display:block}.case-id{font-size:11px;color:var(--muted);font-weight:800}.card-body{display:grid;grid-template-columns:1.25fr .85fr;gap:10px;padding:4px 14px 14px;align-items:center}.case-title{font-size:25px;font-weight:1000;letter-spacing:-1.2px;line-height:1.05}.detail{font-size:13px;line-height:1.55;color:#655B54;margin-top:7px}.punch{font-size:16px;font-weight:1000;margin:12px 0 0;line-height:1.4}.scene{min-height:132px;border-radius:21px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative;background:var(--scene)}.scene img{width:112px;height:112px;object-fit:cover;border-radius:22px;margin-bottom:7px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.12))}.scene-mark{position:absolute;right:8px;top:8px;font-size:22px}.meta-strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 12px}.pill{background:rgba(255,255,255,.72);border:1px solid rgba(130,110,95,.16);border-radius:999px;padding:6px 9px;font-size:11px;font-weight:800;color:#675D56}.share-row{display:flex;gap:8px;padding:0 14px 14px}.share{flex:1;border:1px solid rgba(120,100,80,.22);background:rgba(255,255,255,.78);border-radius:var(--btn-radius);min-height:var(--btn-min);padding:0 10px;font-weight:900;color:#5B5048;display:flex;align-items:center;justify-content:center}.share:active{transform:scale(.98)}
 /* v0.35: compact one-line case rows below the featured card (home screen
    mockup match) -- --scene/--border are set per rarity class the same way
    .card's rarity classes already do (see :root/.normal/.rare/etc above). */
@@ -115,7 +138,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .case-row-icon{font-size:20px;width:36px;height:36px;border-radius:12px;background:var(--scene,#F6F0E6);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .case-row-text{flex:1;min-width:0}
 .case-row-text b{display:block;font-size:14px}
-.case-row-text span{display:block;font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.case-row-text span{display:block;font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .case-row .rarity{flex-shrink:0}
 .normal{--border:var(--normal);--badgeText:#393939;--glow:linear-gradient(120deg,#fff,#ececec);--scene:linear-gradient(160deg,#f9f9f9,#ececec)}.rare{--border:var(--rare);--glow:linear-gradient(120deg,#C9EAFF,#F7FBFF);--scene:linear-gradient(160deg,#E8F6FF,#CDEAFF)}.epic{--border:var(--epic);--glow:linear-gradient(120deg,#E6D1FF,#FFDCFB);--scene:linear-gradient(160deg,#302557,#6C478F)}.legendary{--border:var(--legend);--badgeText:#5E4300;--glow:linear-gradient(120deg,#FFE697,#FFF6C7);--scene:radial-gradient(circle at 50% 28%,#FFF9C6,#F2C43E 65%,#B47913)}
 .hidden{--border:#0AB6D4;--glow:linear-gradient(135deg,#031923,#0A4C67);--scene:radial-gradient(circle at 50% 30%,#104F68,#061A26 75%);background:#071C29;color:#E9FBFF;box-shadow:0 16px 38px rgba(0,31,45,.28)}.hidden.opal{--border:#DDE8FF;--badgeText:#342D46;--glow:linear-gradient(135deg,#FFE9F7,#DFF8FF,#EEE0FF,#FFF6C6);--scene:linear-gradient(145deg,#271E57,#453A84 45%,#B963B6);background:#FBF8FF;color:#342D46}.hidden .detail,.hidden .case-id{color:#B9DFE8}.hidden.opal .detail,.hidden.opal .case-id{color:#675E7E}.hidden .share{color:#E9FBFF;border-color:#23647A;background:#0A2938}.hidden.opal .share{color:#4B4161;background:rgba(255,255,255,.76);border-color:#D8CDE8}
@@ -130,9 +153,19 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .settings-emoji{font-size:22px;width:26px;text-align:center;flex-shrink:0}
 .settings-row-text{flex:1;min-width:0}
 .settings-row-text b{display:block;font-size:14px}
-.settings-row-text span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.settings-row-text span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .settings-chevron{color:var(--muted);font-size:20px}
-.modal{position:fixed;inset:0;background:rgba(32,25,21,.55);display:flex;align-items:flex-end;justify-content:center;padding:18px 18px calc(18px + env(safe-area-inset-bottom));z-index:30}.sheet{max-width:720px;width:100%;background:var(--bg);border-radius:30px 30px 18px 18px;padding:15px;max-height:92vh;overflow:auto;box-shadow:0 -16px 60px rgba(0,0,0,.25)}.sheet-handle{width:44px;height:5px;border-radius:99px;background:#CDBFB4;margin:0 auto 11px}.sheet-close{width:100%;border:0;background:#E9DED1;min-height:var(--btn-min);padding:0 12px;border-radius:var(--btn-radius);font-weight:900;margin-top:9px;display:flex;align-items:center;justify-content:center}.detail-title{font-size:13px;color:var(--muted);text-align:center;margin:2px 0 10px}
+.modal{position:fixed;inset:0;background:rgba(32,25,21,.55);display:flex;align-items:flex-end;justify-content:center;padding:18px 18px calc(18px + env(safe-area-inset-bottom));z-index:30}
+/* v0.38: director feedback -- opening a modal didn't reliably fit on one
+   screen; when its content overflowed, `overflow:auto` scrolled the WHOLE
+   sheet (handle, title AND the close button together), so a long enough
+   content list (or just a short screen) could scroll `.sheet-close` itself
+   out of view, needing an extra scroll just to find how to close it. Split
+   `.sheet` into a fixed header/footer (handle + close button, never
+   scroll) and a `.sheet-scroll` middle region that scrolls on its own when
+   content doesn't fit -- the close button (and handle) are now always
+   visible without scrolling, regardless of content length. */
+.sheet{max-width:720px;width:100%;background:var(--bg);border-radius:30px 30px 18px 18px;padding:15px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 -16px 60px rgba(0,0,0,.25)}.sheet-scroll{overflow:auto;min-height:0}.sheet-handle{width:44px;height:5px;border-radius:99px;background:#CDBFB4;margin:0 auto 11px;flex-shrink:0}.sheet-close{width:100%;border:0;background:#E9DED1;min-height:var(--btn-min);padding:0 12px;border-radius:var(--btn-radius);font-weight:900;margin-top:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}.detail-title{font-size:13px;color:var(--muted);text-align:center;margin:2px 0 10px}
 /* v0.35: full-screen incident detail page (openDetail()/detailPage()),
    replacing the old bottom-sheet modal to match the mockup's dedicated
    "사건 카드 상세" screen -- own compact header (back/rarity/share), no
@@ -148,7 +181,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .detail-page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .icon-btn{border:1px solid var(--line);background:#fff;border-radius:var(--btn-radius);width:var(--btn-min);height:var(--btn-min);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .icon-btn img{width:19px;height:19px;object-fit:contain}
-.detail-case-id{font-size:11px;color:var(--muted);font-weight:800}
+.detail-case-id{font-size:12px;color:var(--muted);font-weight:800}
 .detail-title-lg{font-size:30px;font-weight:1000;letter-spacing:-1.4px;line-height:1.08;margin-top:4px}
 .detail-sub{font-size:14px;color:#655B54;line-height:1.5;margin-top:8px}
 .detail-scene{min-height:220px;border-radius:22px;margin-top:16px;background:var(--scene,#F6F0E6);background-size:cover;background-position:center;position:relative}
@@ -202,7 +235,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    중앙(대부분 캐릭터가 있는 자리) 기준으로 crop -- 여백이 크게 줄고
    캐릭터가 타일을 훨씬 더 채우게 됨. 잠금 카드(`locked_card.png`)는
    카드 전체가 유의미한 그림이라 그대로 `contain` 유지. */
-.archive-visual .overlay-fill{object-fit:cover}.archive-card b{font-size:13px;display:block;margin-top:7px}.archive-card span{font-size:10px;color:var(--muted)}.archive-card.locked .archive-visual{filter:grayscale(1) brightness(.7);opacity:.7}.archive-card.locked:after{content:'???';position:absolute;inset:0;display:grid;place-items:center;font-size:26px;font-weight:1000;color:white;background:rgba(8,22,31,.15)}.archive-card:not(.locked){cursor:pointer}
+.archive-visual .overlay-fill{object-fit:cover}.archive-card b{font-size:13px;display:block;margin-top:7px}.archive-card span{font-size:11px;color:var(--muted)}.archive-card.locked .archive-visual{filter:grayscale(1) brightness(.7);opacity:.7}.archive-card.locked:after{content:'???';position:absolute;inset:0;display:grid;place-items:center;font-size:26px;font-weight:1000;color:white;background:rgba(8,22,31,.15)}.archive-card:not(.locked){cursor:pointer}
 /* v0.33: archive card detail modal (openArchiveDetail()) -- a 2x2 grid of
    per-rarity thumbnails for regular types, or a single hero image for
    HIDDEN types (they have no rarity breakdown to show). */
@@ -251,7 +284,14 @@ function detail(i){const m=i.metrics||{};switch(i.type){case'REENTRY':return l(`
 function demo(){return {permission:true,summary:{totalUsageMs:8580000,openCount:37,switchCount:84,uniqueApps:9,unlockSessions:24,nightUsageMs:2100000,topPackages:[{packageName:'com.instagram.android',durationMs:3180000},{packageName:'com.google.android.youtube',durationMs:2220000},{packageName:'com.kakao.talk',durationMs:1080000}]},report:{totalIncidents:5,hiddenCount:1,legendaryCount:1,cards:[{type:'HIDDEN_LOOP',rarity:'HIDDEN',score:220,metrics:{switches:8}},{type:'NIGHT_PATROL',rarity:'EPIC',score:80,metrics:{uniqueApps:8,durationMs:2100000}},{type:'RETURN_TO_START',rarity:'RARE',score:44,metrics:{visits:6,uniqueApps:4}},{type:'QUICK_EXIT',rarity:'NORMAL',score:18,metrics:{count:5}},{type:'HUNDRED_VISITS',rarity:'LEGENDARY',score:112,metrics:{opens:104}}]},archive:{discoveredCount:8,items:Object.keys(names).map((type,i)=>({type,hidden:type.startsWith('HIDDEN'),found:i<8||type==='HIDDEN_LOOP'}))}}}
 function read(){if(preview||!N)return demo();try{return JSON.parse(N.analyzeToday())}catch(e){return demo()}}
 function persistSnapshot(d){if(!d||!d.permission)return;const key=todayKey();state.history.days[key]={summary:d.summary,report:{totalIncidents:d.report?.totalIncidents||0,hiddenCount:d.report?.hiddenCount||0,legendaryCount:d.report?.legendaryCount||0}};(d.report?.cards||[]).forEach(i=>{const arr=state.history.discoveries[i.type]||[];if(!arr.includes(i.rarity))arr.push(i.rarity);state.history.discoveries[i.type]=arr});save()}
-function setTab(t){state.tab=t;render()}
+// v0.38: director feedback -- switching tabs after scrolling down on one
+// (e.g. Home) kept the OLD scroll offset once the new tab's shorter content
+// replaced it, so the page could open mid-scroll showing blank space below
+// a short tab's content instead of starting at its top. Since this is a
+// single #app innerHTML swap (not real navigation), the browser has no
+// reason to reset scroll on its own -- do it explicitly on every place
+// content changes.
+function setTab(t){state.tab=t;window.scrollTo(0,0);render()}
 function refresh(){state.data=read();persistSnapshot(state.data);render()}
 window.onNativeResume=refresh;
 function share(i,format){if(preview||!N){toast(l('미리보기에서는 공유가 실행되지 않습니다.','プレビューでは共有は実行されません。','Sharing is disabled in preview.'));return}try{N.shareIncident(JSON.stringify(i),txt(names,i.type),txt(punch,i.type),detail(i),format,state.settings.language)}catch(e){}}
@@ -427,7 +467,7 @@ function openArchiveDetail(type){
     // showing a HIDDEN type's art before it's actually been discovered.
     if(!found.length)return;
     const art=incidentArt(artBase,type,'HIDDEN');
-    document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="detail-title">${l('사건 보관함 상세','事件保管庫詳細','Archive detail')}</div><div class="archive-detail-hero"><img src="${art}" alt=""><b>${esc(txt(names,type))}</b><span>“${esc(txt(punch,type))}”</span></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+    document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('사건 보관함 상세','事件保管庫詳細','Archive detail')}</div><div class="archive-detail-hero"><img src="${art}" alt=""><b>${esc(txt(names,type))}</b><span>“${esc(txt(punch,type))}”</span></div></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
     return;
   }
   const rarities=['NORMAL','RARE','EPIC','LEGENDARY'];
@@ -436,7 +476,7 @@ function openArchiveDetail(type){
     const style=got?` style="background-image:url('${incidentArt(artBase,type,r)}')"`:'';
     return `<div class="rarity-cell ${got?r.toLowerCase():'locked'}"><div class="rarity-cell-visual"${style}>${got?'':'<span>?</span>'}</div><span>${got?r:'???'}</span></div>`;
   }).join('');
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="detail-title">${l('등급별 수집 현황','等級別コレクション','Collection by rarity')}</div><div class="archive-detail-head"><b>${esc(txt(names,type))}</b><span>${found.length}/4 ${l('등급 수집','等級収集','rarities')}</span></div><div class="rarity-cell-grid">${cells}</div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('등급별 수집 현황','等級別コレクション','Collection by rarity')}</div><div class="archive-detail-head"><b>${esc(txt(names,type))}</b><span>${found.length}/4 ${l('등급 수집','等級収集','rarities')}</span></div><div class="rarity-cell-grid">${cells}</div></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
 }
 function records(d){const s=d.summary||{};const rows=[[l('사용 시간','使用時間','Usage'),fmtMs(s.totalUsageMs||0)],[l('앱 실행','アプリ起動','Opens'),s.openCount||0],[l('앱 전환','アプリ切替','Switches'),s.switchCount||0],[l('잠금 해제 세션','ロック解除セッション','Unlock sessions'),s.unlockSessions||0],[l('사용 앱','利用アプリ','Unique apps'),s.uniqueApps||0],[l('심야 사용','深夜利用','Night usage'),fmtMs(s.nightUsageMs||0)]];const top=(s.topPackages||[]);return `<div class="section-title"><h2>${l('오늘의 기록','本日の記録','Today\'s record')}</h2></div><div class="record-decor"><img src="visual/character/basic/moni_read_file.png"><div><b>${l('오늘의 수사 보고서','本日の捜査報告','Today\'s investigation report')}</b><p>${l('숫자도 모니가 차분히 정리했습니다.','数字もMONIが静かにまとめました。','MONI filed the numbers too.')}</p></div></div><div class="stats">${rows.map(([a,b])=>`<div class="stat"><b>${esc(b)}</b><span>${esc(a)}</span></div>`).join('')}</div><div class="section-title"><h2>${l('가장 오래 본 앱','最も長く見たアプリ','Top apps')}</h2></div><div class="record-list">${top.length?top.map((x,i)=>`<div class="record-app"><b>${i+1}. ${esc(compactPkg(x.packageName))}</b><span>${fmtMs(x.durationMs)}</span></div>`).join(''):`<div class="empty">${l('기록이 없습니다.','記録がありません。','No records.')}</div>`}</div>`}
 // v0.35: settings tab (docs/UI_VISUAL_DIRECTION_REQUEST.md item 5's 4th
@@ -463,7 +503,7 @@ ${row(iconEmoji('📊'),l('사용정보 접근','使用状況へのアクセス'
 ${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),null,false)}
 ${row(iconEmoji('💾'),l('데이터 관리','データ管理','Data'),l('기록은 이 기기에만 저장됩니다','記録はこの端末にのみ保存されます','Your records stay on this device only'),null,false)}
 ${row(iconEmoji('❓'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),null,false)}
-${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.36.0',null,false)}
+${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.38.0',null,false)}
 </div>`
 }
 function closeOverlay(){document.getElementById('overlay').innerHTML=''}
@@ -488,6 +528,11 @@ function metricLabel(k){switch(k){
   case'unlocks':return l('접속 횟수','接続回数','Check-ins');
   case'avgGapMs':return l('평균 간격','平均間隔','Avg gap');
   case'durationMs':return l('총 사용 시간','総使用時間','Total duration');
+  // v0.38: found while checking a director screenshot -- IncidentDetector.kt's
+  // ESCAPE_FAILED metrics carry a `windowMs` field (the reopen streak's own
+  // time span, see IncidentDetector.kt) with no case here, so it fell
+  // through to `default` and showed the raw JS key name in the detail page.
+  case'windowMs':return l('재실행 구간','再起動の時間幅','Reopen window');
   default:return k;
 }}
 function metricRow(k,v){const val=/Ms$/.test(k)?fmtMs(v||0):v;return [metricLabel(k),val]}
@@ -504,8 +549,8 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
     ${statRows.length?`<div class="detail-stats"><b>${l('이 사건의 기록','この事件の記録','About this case')}</b>${statRows.map(([k,v])=>`<div class="detail-stat-row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>`:''}
     <button class="primary detail-share-btn" onclick='share(${shareArg},"square")'>${l('공유하기','シェアする','Share')}</button>
   </div>`}
-function openDetail(i){state.detailItem=i;render()}
-function closeDetail(){state.detailItem=null;render()}
+function openDetail(i){state.detailItem=i;window.scrollTo(0,0);render()}
+function closeDetail(){state.detailItem=null;window.scrollTo(0,0);render()}
 function toast(t){const x=document.createElement('div');x.className='toast';x.textContent=t;document.body.appendChild(x);setTimeout(()=>x.remove(),1600)}
 // v0.24: two-screen onboarding, gated by state.settings.onboardingSeen
 // (persisted via save(), same as every other setting). The source images

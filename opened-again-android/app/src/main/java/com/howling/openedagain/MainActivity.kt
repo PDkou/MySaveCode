@@ -15,20 +15,28 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Android 15 (API 35, our targetSdk) forces edge-to-edge on every app
-        // regardless of what it asks for -- solid statusBarColor/
-        // navigationBarColor are ignored there. So on API 30+ (where
-        // setDecorFitsSystemWindows exists) we opt into edge-to-edge
-        // ourselves with transparent bars; index.html's `.app` padding
-        // already reserves `env(safe-area-inset-top/bottom)` (see its
-        // `viewport-fit=cover` meta tag) so content still clears the status
-        // bar and the gesture/button nav area instead of sitting under them.
-        // Only the narrow API 29 slice (below R, where the OS doesn't force
-        // this) keeps the old opaque-bar, non-edge-to-edge layout.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        // v0.38: director feedback -- avoid drawing content all the way up
+        // under the status bar wherever that's actually avoidable. The
+        // previous version opted into edge-to-edge (transparent bars) on
+        // every API 30+ device on the theory that "35+ forces it anyway, so
+        // stay consistent below that too" -- but API 30-34 do NOT force it;
+        // that was an unforced choice that made the status bar area feel
+        // like content was bleeding into it. Only Android 15+ (API 35, our
+        // targetSdk) truly leaves no opaque-bar option (solid statusBarColor/
+        // navigationBarColor are ignored there) -- everywhere below that now
+        // keeps the traditional opaque status/nav bars from AppTheme
+        // (styles.xml already sets a matching #FAF6ED + light icons).
+        // index.html's `.app` padding still reserves
+        // `env(safe-area-inset-top/bottom)` (`viewport-fit=cover`), which
+        // safely no-ops to ~0 when the bars are opaque and non-overlapping.
+        if (Build.VERSION.SDK_INT >= 35) {
             window.setDecorFitsSystemWindows(false)
             window.statusBarColor = Color.TRANSPARENT
             window.navigationBarColor = Color.TRANSPARENT
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(true)
+            window.statusBarColor = Color.rgb(250, 246, 237)
+            window.navigationBarColor = Color.rgb(250, 246, 237)
         } else {
             window.statusBarColor = Color.rgb(250, 246, 237)
             window.navigationBarColor = Color.rgb(250, 246, 237)
