@@ -464,3 +464,32 @@ A vertical decorative card background, portrait orientation, rich gold palette, 
 
 ### HIDDEN
 A vertical decorative card background, portrait orientation, deep dark navy night-sky palette with scattered tiny stars, a subtle glowing cyan rim light along the outer edge with rounded corners (NOT bright flat teal fill), a scattering of tiny star accents near the corners and edges. Bold clean black outline (sticker/vector style), flat cel-shaded coloring. No characters, no scene objects — just an atmospheric textured background with a border, meant to have other elements placed on top of it later. Mysterious and quiet mood rather than loud or bright. Full illustrated background (not a transparent cutout), no text, no watermark, no logos.
+
+## 부록6: 홈 화면 "오늘의 사건" 카드 빛 효과 -- 이미지 에셋으로 교체
+
+감독 지적: index.html의 `.card-shine-bar`가 지금은 순수 CSS
+`linear-gradient` 막대(반투명 흰색이 가운데로 갈수록 진해지는 직사각형
+띠)를 회전+이동시키는 것뿐이라, "그냥 한 줄 경계선으로 빛이 생기는 효과"로
+보임 -- v0.36/v0.38에서 타이밍(왕복→단방향, ease-in-out→ease-out)만
+반복해서 만졌지 정작 빛 자체의 생김새(flat gradient 띠)는 한 번도 안
+바꿨었음. 진짜 렌즈플레어/유리 반사 느낌을 내려면 CSS 그라디언트로는
+한계가 있어서, GPT로 실제 빛 이미지를 뽑아 `background-image`로 교체하는
+방향.
+
+### 사용 방법
+- 아래 두 프롬프트로 각각 한 장씩 생성 (EPIC/LEGENDARY용 -- 이 효과는
+  이 두 등급에만 붙음, NORMAL/RARE/HIDDEN은 대상 아님).
+- 투명 배경 PNG로 받아서 `visual/effects/shine_epic.png`,
+  `visual/effects/shine_legendary.png`로 저장.
+- 세로로 긴 비율(약 1:3, 예: 400x1200) -- 코드가 이미 `rotate(14deg)`로
+  기울이고 `translateX()`로 이동시키므로, 이미지 자체는 기울일 필요 없이
+  똑바로 선 띠 모양이면 됨.
+- 이미지를 받으면 `.card-shine-bar`의 `background:linear-gradient(...)`를
+  `background-image:url('visual/effects/shine_<rarity>.png');
+  background-size:100% 100%`로 교체하는 코드 작업은 이쪽에서 진행.
+
+### EPIC (보라)
+A single vertical light streak / lens flare glint on a fully transparent background, tall narrow proportions (roughly 1:3, taller than wide). Soft realistic glass-reflection quality -- NOT a flat rectangular gradient bar. Bright feathered-white core running down the center, tapering smoothly through a soft lavender/purple glow (#D6AAFF-ish) on both sides, fading completely to transparent at the left and right edges and at the top and bottom ends (no hard edges anywhere). A few tiny soft sparkle points scattered near the brightest part of the streak. Photographic/realistic light quality, not a flat vector illustration. No text, no watermark, no border, no background scene -- just the glowing streak on transparent.
+
+### LEGENDARY (금색)
+A single vertical light streak / lens flare glint on a fully transparent background, tall narrow proportions (roughly 1:3, taller than wide). Soft realistic glass-reflection quality -- NOT a flat rectangular gradient bar. Bright feathered-white core running down the center, tapering smoothly through a warm gold glow (#FFD678-ish) on both sides, fading completely to transparent at the left and right edges and at the top and bottom ends (no hard edges anywhere). A few tiny soft sparkle points scattered near the brightest part of the streak. Photographic/realistic light quality, not a flat vector illustration. No text, no watermark, no border, no background scene -- just the glowing streak on transparent.
