@@ -105,10 +105,30 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    `.card-shine-bar`)가 필요했음. `prefers-reduced-motion`도 새로 지원. */
 .card-shine::after{
   content:"";position:absolute;inset:-35% -65%;pointer-events:none;z-index:3;
+  /* v0.39(2차): director feedback -- still reads as "a line passing by" on
+     a real device. First attempted fix (blur) was solving the wrong
+     problem: measured the rendered pixels directly (isolated the
+     ::after's own gradient against a flat background, scanned every
+     translateX offset) and the ORIGINAL 43%/50%/57% stops were already
+     smooth pixel-to-pixel (max 2/255 jump between adjacent pixels) --
+     blurring already-soft edges doesn't change the fact that the bright
+     zone itself is only a 14%-wide band of this oversized element, which
+     is simply a THIN STROKE shape regardless of how soft its edges are
+     (confirmed visually: a clearly linear diagonal stroke, just with soft
+     edges). Real light/glass reflections aren't a stroke at all -- they're
+     a broad graduated glow. Fix: widened the transparent->peak->transparent
+     span from 14% of the gradient line to the full 0%-100%, so brightness
+     builds and fades continuously across nearly the whole sweep with no
+     bounded "band" anywhere -- confirmed via the same pixel scan that this
+     now reads as a broad soft diagonal glow, not a stroke. No blur needed
+     once the shape itself has no thin core to soften, which also avoids
+     running a real-time blur filter over this oversized element every
+     frame (a possible real-device performance risk the blur attempt would
+     have introduced). */
   background:linear-gradient(108deg,
-    transparent 43%,rgba(255,255,255,.015) 45%,
-    rgba(255,255,255,.055) 47%,rgba(255,255,255,.18) 50%,
-    rgba(255,255,255,.055) 53%,rgba(255,255,255,.015) 55%,transparent 57%);
+    transparent 0%,rgba(255,255,255,.05) 25%,
+    rgba(255,255,255,.15) 50%,
+    rgba(255,255,255,.05) 75%,transparent 100%);
   transform:translateX(-70%);opacity:0;
   animation:card-soft-shine 4.8s linear infinite;will-change:transform,opacity
 }
@@ -501,7 +521,7 @@ ${row(iconEmoji('📊'),l('사용정보 접근','使用状況へのアクセス'
 ${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),null,false)}
 ${row(iconEmoji('💾'),l('데이터 관리','データ管理','Data'),l('기록은 이 기기에만 저장됩니다','記録はこの端末にのみ保存されます','Your records stay on this device only'),null,false)}
 ${row(iconEmoji('❓'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),null,false)}
-${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.39.0',null,false)}
+${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.40.0',null,false)}
 </div>`
 }
 function closeOverlay(){document.getElementById('overlay').innerHTML=''}
