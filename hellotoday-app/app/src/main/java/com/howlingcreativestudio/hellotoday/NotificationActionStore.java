@@ -14,8 +14,20 @@ final class NotificationActionStore {
         try {
             String raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, "[]");
             JSONArray items = new JSONArray(raw);
-            items.put(new JSONObject().put("type", type).put("personId", personId).put("at", at).put("nextAt", nextAt));
-            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, items.toString()).apply();
+            // Keep at most one pending action per person: a newer action for the
+            // same person (e.g. a notification-button tap) always supersedes an
+            // older queued one (e.g. that same alarm's automatic next-day re-arm
+            // -- see ReminderReceiver), and the consumer applies them in order
+            // anyway, so dropping superseded entries here just keeps this array
+            // from growing without bound for a person who ignores reminders for
+            // a long stretch without reopening the app.
+            JSONArray kept = new JSONArray();
+            for (int i = 0; i < items.length(); i++) {
+                JSONObject item = items.getJSONObject(i);
+                if (item.optLong("personId", -1L) != personId) kept.put(item);
+            }
+            kept.put(new JSONObject().put("type", type).put("personId", personId).put("at", at).put("nextAt", nextAt));
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, kept.toString()).apply();
         } catch (Exception ignored) {}
     }
 
