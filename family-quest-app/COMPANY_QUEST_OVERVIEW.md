@@ -111,12 +111,22 @@
     갈라져 나가 있던 다른 무관한 브랜치(`open-again` 등)는 자기 브랜치에 박제된 **구버전**
     `vercel.json`을 계속 씁니다 -- production과 다시 합쳐지기 전까지는 새 로직을 전혀 못
     받습니다. 이 때문에 `open-again`에서 같은 오탐(무관한 변경인데 빌드 시도 → 실패 메일)이
-    한 번 더 발생. `vercel.json`은 갈라진 브랜치엔 소급 적용이 안 되는 게 근본 한계이므로,
-    **Vercel 대시보드의 Ignored Build Step에도 동일한 커맨드를 (Custom으로) 등록**해서
-    최종 해결했습니다 -- 대시보드 설정은 브랜치에 무관하게 항상 적용되므로, 이미 갈라진
-    브랜치는 물론 앞으로 새로 생길 무관한 브랜치까지 커밋 없이 한 번에 커버됩니다. 결론적으로
-    **`vercel.json`(브랜치별, 우리 저장소 로직의 근거 문서 역할)과 대시보드 설정(전역
-    안전망) 둘 다 같은 커맨드로 맞춰두는 게 맞는 최종 형태**입니다.
+    한 번 더 발생.
+    - 처음엔 **Vercel 대시보드의 Ignored Build Step에도 동일한 커맨드를 (Custom으로)
+      등록**하면 해결될 거라 생각했지만, 이건 **틀렸습니다** -- Vercel 공식 문서상
+      `vercel.json`의 `ignoreCommand`가 있으면 그게 대시보드 설정보다 항상 우선합니다.
+      즉 이미 (낡은) `vercel.json`을 갖고 있는 브랜치엔 대시보드 설정이 전혀 안 먹힙니다.
+      대시보드 설정은 **애초에 `business-quest-app/vercel.json`이 없는 브랜치**(예:
+      `HelloToday`, `claude/category-data-management-app-jo6f6i`)에만 안전망으로
+      작동합니다.
+    - 이미 낡은 `vercel.json`을 갖고 있던 `open-again`, `claude/travel-photo-map-app-c6p5p6`
+      두 브랜치는 **그 파일 자체를 삭제**하는 것으로 해결했습니다(두 프로젝트 다
+      business-quest-app을 전혀 안 쓰므로 파일이 있을 이유가 없음). 파일이 없어지면
+      비로소 대시보드 설정으로 정상 폴백됩니다.
+    - 결론: **`vercel.json`은 갈라진 브랜치에 소급 적용이 안 되는 게 근본 한계**이며,
+      대시보드 설정은 그 브랜치에 자기만의 `vercel.json`이 없을 때만 유효합니다. 이미
+      갈라진 브랜치가 business-quest-app을 정말 안 쓴다면 그 브랜치의 stale
+      `vercel.json`을 지우는 것이 유일한 실제 해결책입니다.
 
 ## 5. 수익화 (B2B 구독) — 요약
 
