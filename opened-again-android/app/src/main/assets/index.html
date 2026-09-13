@@ -55,7 +55,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .onboard-box img{display:block;width:100%;height:100%}
 .onboard-hit{position:absolute;border:0;background:transparent;padding:0;-webkit-tap-highlight-color:transparent}
 .brand{display:flex;align-items:center;gap:13px}.avatar{width:68px;height:68px;border-radius:22px;object-fit:cover;border:2px solid #E7D9C8;background:#DCEAFF;box-shadow:0 5px 18px rgba(80,60,40,.08)}
-.brand-main{flex:1}.brand h1{font-size:30px;margin:0;letter-spacing:-1.8px;line-height:1}.brand .sub{font-size:13px;color:var(--muted);margin-top:7px}.lang{border:1px solid var(--line);background:#fff;border-radius:var(--btn-radius);min-height:var(--btn-min);padding:0 14px;font-weight:900;color:#665B53;display:inline-flex;align-items:center;justify-content:center}.date{font-size:12px;color:var(--muted);margin:12px 2px 0}
+.brand-main{flex:1}.brand h1{font-size:30px;margin:0;letter-spacing:-1.8px;line-height:1}.brand .sub{font-size:13px;color:var(--muted);margin-top:7px}.date{font-size:12px;color:var(--muted);margin:12px 2px 0}
 .permission,.empty{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-top:22px;box-shadow:var(--shadow)}.permission h2{margin:0 0 8px}.permission p{font-size:14px;line-height:1.6;color:var(--muted)}
 .primary{border:0;border-radius:var(--btn-radius);min-height:calc(var(--btn-min) + 4px);padding:0 18px;background:#6758F5;color:white;font-weight:900;width:100%;margin-top:14px;box-shadow:0 8px 18px rgba(103,88,245,.2);display:flex;align-items:center;justify-content:center}
 /* v0.35: tab bar moved to the bottom of the screen (icon+label, 4 items)
@@ -139,7 +139,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    landed -- reads as broken even when the onclick handler ran fine. `.share`
    already had this fix (`.share:active` above); extend the same instant
    press feedback to every other primary tap target. */
-.settings-row:active,.case-row:active,.archive-card:active,.card:active,.icon-btn:active,.primary:active,.tabbtn:active,.sheet-close:active,.sheet-actions button:active,.lang:active{transform:scale(.97)}
+.settings-row:active,.case-row:active,.archive-card:active,.card:active,.icon-btn:active,.primary:active,.tabbtn:active,.sheet-close:active,.sheet-actions button:active{transform:scale(.97)}
 .settings-row img{width:26px;height:26px;object-fit:contain;flex-shrink:0}
 .settings-emoji{font-size:22px;width:26px;text-align:center;flex-shrink:0}
 .settings-row-text{flex:1;min-width:0}
@@ -267,7 +267,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.45.0';
+const APP_VERSION='0.46.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -616,7 +616,12 @@ function mountHolo(){
   };
   img.src=canvas.dataset.art;
 }
-function header(){const logo=state.settings.language==='ja'?'visual/logo/logo_jp.png':'visual/logo/logo_ko.png';return `<div class="brand"><img class="avatar" src="visual/app-icon/legacy/app_icon_phone.png"><div class="brand-main"><img class="brand-logo" src="${logo}" alt="Opened Again"><div class="sub">${l('내 폰이 오늘도 보고 있었다.','スマホは今日も見ていました。','Your phone was watching again.')}</div></div><button class="lang" onclick="cycleLang()">${state.settings.language.toUpperCase()}</button></div><div class="date">${new Date().toLocaleDateString()}</div>`}
+// v0.46: director feedback -- language switching lived in two places (this
+// header badge and the settings language row), doing the exact same thing
+// -- redundant, and every extra place a setting can be changed is another
+// place to keep in sync/explain. Dropped the header badge; the settings row
+// (cycleLang() is still used there) is the one real place to change it now.
+function header(){const logo=state.settings.language==='ja'?'visual/logo/logo_jp.png':'visual/logo/logo_ko.png';return `<div class="brand"><img class="avatar" src="visual/app-icon/legacy/app_icon_phone.png"><div class="brand-main"><img class="brand-logo" src="${logo}" alt="Opened Again"><div class="sub">${l('내 폰이 오늘도 보고 있었다.','スマホは今日も見ていました。','Your phone was watching again.')}</div></div></div><div class="date">${new Date().toLocaleDateString()}</div>`}
 function cycleLang(){const i=supported.indexOf(state.settings.language);state.settings.language=supported[(i+1)%supported.length];save();render()}
 function tabs(){const items=[
   {id:'cases',icon:'home',label:l('홈','ホーム','Home')},
