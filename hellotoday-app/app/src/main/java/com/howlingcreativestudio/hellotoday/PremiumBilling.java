@@ -86,7 +86,14 @@ final class PremiumBilling implements PurchasesUpdatedListener {
 
     /** Fast, synchronous read for NativeBridge.isPremium() -- last known state, not a live query. */
     boolean isUnlockedCached() {
-        return prefs().getBoolean(KEY_UNLOCKED, false);
+        return isUnlockedPersisted(activity);
+    }
+
+    /** Same read as isUnlockedCached(), but callable from a plain Context --
+     *  for background paths (e.g. NotificationActionReceiver, handling a
+     *  notification button tap) that have no Activity instance to ask. */
+    static boolean isUnlockedPersisted(Context context) {
+        return context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_UNLOCKED, false);
     }
 
     void launchPurchase() {

@@ -25,6 +25,12 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
  * following a completed task -- would work against that (and risks
  * tripping AdMob's own policy against ads at unexpected points).
  *
+ * The same two actions are also reachable straight from a notification's own
+ * buttons ("연락했어요"/"내일 다시"), handled by NotificationActionReceiver
+ * with no Activity around to show anything in -- recordBackgroundAction()
+ * lets that path count toward the same cadence without needing one, via the
+ * "owed" flag maybeShow() checks the next time the app is actually open.
+ *
  * Never shown at all once PremiumBilling's ad-removal purchase is unlocked
  * -- checked fresh on every call (not cached at construction), so buying
  * mid-session takes effect on the very next would-be ad.
@@ -45,6 +51,7 @@ final class InterstitialAdManager {
     static final String INTERSTITIAL_UNIT_ID = "ca-app-pub-4220607528679200/8936210332";
     private static final String PREFS = "hello_today_ads";
     private static final String KEY_ACTION_COUNT = "action_count";
+    private static final String KEY_AD_OWED = "ad_owed";
     private static final int SHOW_EVERY_N_ACTIONS = 3;
 
     private final Activity activity;
@@ -65,6 +72,23 @@ final class InterstitialAdManager {
         MobileAds.initialize(activity, status -> loadNext());
     }
 
+    /** Counts a "task completed" action from a background context that has
+     *  no Activity to show an ad in -- specifically, a notification button
+     *  tap ("연락했어요"/"내일 다시") handled by NotificationActionReceiver,
+     *  which runs as a plain broadcast with the app not open. Bumps the same
+     *  persisted counter maybeShow() uses; if this action lands on a
+     *  SHOW_EVERY_N_ACTIONS multiple, marks an ad as owed so the next
+     *  maybeShow() call -- whenever the app is next actually open -- shows
+     *  one, instead of that opportunity silently expiring unseen. */
+    static void recordBackgroundAction(Context context) {
+        if (PremiumBilling.isUnlockedPersisted(context)) return;
+        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        int count = prefs.getInt(KEY_ACTION_COUNT, 0) + 1;
+        SharedPreferences.Editor editor = prefs.edit().putInt(KEY_ACTION_COUNT, count);
+        if (count % SHOW_EVERY_N_ACTIONS == 0) editor.putBoolean(KEY_AD_OWED, true);
+        editor.apply();
+    }
+
     /** Call from a natural pause point. No-op for ad-free users, and a
      *  silent no-op (never blocks the caller) if no ad happens to be
      *  loaded yet -- missing one impression beats stalling the UI. */
@@ -73,8 +97,11 @@ final class InterstitialAdManager {
 
         SharedPreferences prefs = prefs();
         int count = prefs.getInt(KEY_ACTION_COUNT, 0) + 1;
-        prefs.edit().putInt(KEY_ACTION_COUNT, count).apply();
-        if (count % SHOW_EVERY_N_ACTIONS != 0) return;
+        boolean owed = prefs.getBoolean(KEY_AD_OWED, false);
+        SharedPreferences.Editor editor = prefs.edit().putInt(KEY_ACTION_COUNT, count);
+        if (owed) editor.putBoolean(KEY_AD_OWED, false);
+        editor.apply();
+        if (!owed && count % SHOW_EVERY_N_ACTIONS != 0) return;
 
         InterstitialAd ad = loadedAd;
         if (ad == null) {

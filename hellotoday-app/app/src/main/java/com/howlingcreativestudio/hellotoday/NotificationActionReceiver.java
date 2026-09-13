@@ -31,6 +31,12 @@ public class NotificationActionReceiver extends BroadcastReceiver {
                 ? ReminderScheduler.snoozeOneDay(context, personId, name, interval, notifyHour, notifyMinute, reminderMode, minDays, maxDays)
                 : ReminderScheduler.completeFromNotification(context, personId, name, interval, notifyHour, notifyMinute, reminderMode, minDays, maxDays);
         NotificationActionStore.add(context, action, personId, now, nextAt);
+        // Same "task completed" moment as tapping the equivalent button
+        // in-app (see complete()/snooze() in index.html) -- count it toward
+        // the free-tier interstitial cadence too, so a user who mostly
+        // manages reminders from the notification instead of opening the
+        // app isn't quietly exempt from ever seeing an ad.
+        InterstitialAdManager.recordBackgroundAction(context);
     }
 
     private void showTestResult(Context context, String language, String message) {
