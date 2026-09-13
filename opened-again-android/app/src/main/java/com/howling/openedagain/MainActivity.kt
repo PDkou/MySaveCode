@@ -76,6 +76,13 @@ class MainActivity : Activity() {
     // canGoBack()/goBack() check as a fallback in the "nothing to close"
     // branch -- harmless since it's normally false, but a safety net if the
     // WebView ever does perform a real navigation.
+    // v0.44: window.onNativeBackPressed() now always returns true (reaching
+    // the home tab opens an exit-confirmation sheet instead of reporting
+    // "nothing to close" -- see its own comment), so in normal operation
+    // this method never calls super.onBackPressed() at all anymore; exiting
+    // now only happens via NativeBridge.exitApp() once the user confirms.
+    // The fallback below still matters if evaluateJavascript's callback
+    // never fires or throws before the page has finished loading.
     override fun onBackPressed() {
         if (!::webView.isInitialized) {
             super.onBackPressed()

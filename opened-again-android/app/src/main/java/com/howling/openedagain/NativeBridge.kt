@@ -140,6 +140,17 @@ class NativeBridge(
         discovery.reset()
     }
 
+    // v0.44: director feedback -- the home-tab back press should confirm
+    // "정말 종료하시겠습니까?" before actually exiting, instead of exiting on
+    // the very next press. index.html's openExitConfirm() sheet now owns
+    // that decision entirely (window.onNativeBackPressed() always returns
+    // true, see its own comment) -- this is the one path that still
+    // actually finishes the Activity once the user has confirmed.
+    @JavascriptInterface
+    fun exitApp() {
+        activity.runOnUiThread { activity.finish() }
+    }
+
     private fun summaryToJson(s: DailyUsageSummary) = JSONObject().apply {
         put("startTime", s.startTime)
         put("endTime", s.endTime)

@@ -161,6 +161,10 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    (openResetConfirm()) -- same fixed-footer-never-scrolls layout as
    .sheet-close, just split into a cancel + destructive-confirm pair. */
 .sheet-actions{display:flex;gap:8px;margin-top:9px;flex-shrink:0}.sheet-actions button{flex:1;border:0;min-height:var(--btn-min);padding:0 12px;border-radius:var(--btn-radius);font-weight:900;display:flex;align-items:center;justify-content:center}.sheet-actions .cancel{background:#E9DED1;color:var(--ink)}.sheet-actions .danger{background:#E0574A;color:#fff}
+/* v0.44: non-destructive confirm (exit-app), same weight as .primary's
+   purple rather than .danger's red -- leaving the app loses nothing, so it
+   shouldn't read as alarming as a data-reset confirmation does. */
+.sheet-actions .confirm{background:#6758F5;color:#fff}
 /* v0.35: full-screen incident detail page (openDetail()/detailPage()),
    replacing the old bottom-sheet modal to match the mockup's dedicated
    "사건 카드 상세" screen -- own compact header (back/rarity/share), no
@@ -263,7 +267,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.43.0';
+const APP_VERSION='0.44.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -310,13 +314,26 @@ window.onNativeResume=refresh;
 // confirm / help / about) sits above everything, then the full-screen
 // detail page, then a non-home tab -- so back closes exactly one layer at
 // a time instead of jumping straight past open UI.
+// v0.44: director feedback -- reaching the home tab with nothing left to
+// close should ask "정말 종료하시겠습니까?" (are you sure you want to
+// exit?) rather than exiting immediately on the very next back press.
+// openExitConfirm() shows that as one more #overlay sheet -- which means
+// this now always returns true: MainActivity no longer exits on its own at
+// all, the confirm sheet's own "종료" button is what actually calls
+// N.exitApp() (Activity.finish()). A second back press while that sheet is
+// open hits the overlay branch above and just closes it (cancel), matching
+// how a native back button dismisses an AlertDialog instead of confirming it.
 window.onNativeBackPressed=function(){
   const overlay=document.getElementById('overlay');
   if(overlay&&overlay.innerHTML.trim()){closeOverlay();return true}
   if(state.detailItem){closeDetail();return true}
   if(state.tab!=='cases'){setTab('cases');return true}
-  return false
+  openExitConfirm();
+  return true
 };
+function openExitConfirm(){
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('앱 종료','アプリを終了','Exit app')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0;text-align:center">${l('정말 종료하시겠습니까?','本当に終了しますか？','Are you sure you want to exit?')}</p></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="N&&N.exitApp&&N.exitApp()">${l('종료','終了','Exit')}</button></div></div></div>`;
+}
 function share(i,format){if(preview||!N){toast(l('미리보기에서는 공유가 실행되지 않습니다.','プレビューでは共有は実行されません。','Sharing is disabled in preview.'));return}try{N.shareIncident(JSON.stringify(i),txt(names,i.type),txt(punch,i.type),detail(i),format,state.settings.language)}catch(e){}}
 function rarityClass(i){if(i.rarity!=='HIDDEN')return i.rarity.toLowerCase();return i.type==='HIDDEN_NIGHT_ACTIVITY'?'hidden opal':'hidden'}
 // v0.23: replaced the old baked round-badge image (visual/badges/*.png,
