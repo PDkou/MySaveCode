@@ -13,12 +13,17 @@ import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 
 /**
- * Interstitial ads for the free tier. `index.html` calls maybeShow() from
- * one deliberate spot -- right after completing a "연락했어요" contact log
- * (see complete() in index.html) -- a natural pause point, not mid-task.
+ * Interstitial ads for the free tier. `index.html` calls maybeShow() from a
+ * handful of deliberate spots -- completing a "연락했어요" contact log,
+ * snoozing/rescheduling a reminder ("내일 다시" / date change), and saving a
+ * person (see complete()/snooze()/snoozeToDate()/savePerson() in
+ * index.html) -- each one a natural pause point where the user just
+ * finished a task, never a navigation action (tab switch, back, cancel).
  * Shown at most every SHOW_EVERY_N_ACTIONS such calls, never every time:
  * this app's whole pitch is being quiet and unobtrusive, and an interstitial
- * on every single action would work against that.
+ * on every single action -- or one that interrupts navigation instead of
+ * following a completed task -- would work against that (and risks
+ * tripping AdMob's own policy against ads at unexpected points).
  *
  * Never shown at all once PremiumBilling's ad-removal purchase is unlocked
  * -- checked fresh on every call (not cached at construction), so buying
