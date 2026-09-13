@@ -7,6 +7,13 @@
          pre-33. No notification feature exists yet to actually use this
          for, see that method's own comment. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- v0.47: the daily-reminder feature that finally uses POST_NOTIFICATIONS
+         (ReminderScheduler/DailyReminderReceiver) is a plain repeating
+         AlarmManager alarm, which the OS clears on reboot -- this lets
+         BootReceiver re-arm it if the user had the "일일 리마인더" setting
+         toggle on. No exact-alarm permission needed since scheduling uses
+         setInexactRepeating(), which requires none. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- v0.36: targetSdk 36 (Android 16) readiness pass, director flagged
          that release considerations for newer Android hadn't been looked at
          at all. enableOnBackInvokedCallback opts into the predictive-back
@@ -25,7 +32,9 @@
         </activity>
         <!-- v0.38: backs ShareCardRenderer.saveAndShare(), which hands the OS
              share sheet a content:// Uri for a cache-only file instead of
-             saving a permanent copy into the public gallery. -->
+             saving a permanent copy into the public gallery. v0.47:
+             NativeBridge.exportBackup() reuses the same provider/mechanism
+             for the backup-export cache file (see file_paths.xml). -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -35,5 +44,13 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+        <!-- v0.47: daily-reminder notification -- see ReminderScheduler.kt.
+             Neither receiver needs to be reachable from outside this app. -->
+        <receiver android:name=".DailyReminderReceiver" android:exported="false" />
+        <receiver android:name=".BootReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

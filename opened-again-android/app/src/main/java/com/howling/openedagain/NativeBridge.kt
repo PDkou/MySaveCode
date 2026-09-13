@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.webkit.JavascriptInterface
+import androidx.core.content.FileProvider
 import com.howling.openedagain.core.*
 import com.howling.openedagain.data.DiscoveryRepository
 import com.howling.openedagain.data.UsageEventCollector
@@ -149,6 +150,54 @@ class NativeBridge(
     @JavascriptInterface
     fun exitApp() {
         activity.runOnUiThread { activity.finish() }
+    }
+
+    // v0.47: complement to resetAllData() -- lets the user pull their own
+    // copy of the same backup payload index.html already keeps in
+    // localStorage/the native backup file, in case they want it before
+    // resetting or switching devices. Written to its own cache subfolder
+    // (separate from ShareCardRenderer's "shares") and shared the same way
+    // saveAndShare() shares a card image: a cache-only file handed to the
+    // OS share sheet via FileProvider, nothing written to the public
+    // filesystem unless the user explicitly picks a save target there.
+    @JavascriptInterface
+    fun exportBackup(json: String) {
+        activity.runOnUiThread {
+            runCatching {
+                val dir = File(activity.cacheDir, "exports").apply { mkdirs() }
+                val file = File(dir, "opened_again_backup.json")
+                file.writeText(json, Charsets.UTF_8)
+                val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.fileprovider", file)
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "application/json"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                activity.startActivity(Intent.createChooser(intent, activity.getString(R.string.export_chooser)))
+            }
+        }
+    }
+
+    // v0.47: settings "일일 리마인더" toggle -- see ReminderScheduler for the
+    // actual AlarmManager scheduling/cancellation logic.
+    @JavascriptInterface
+    fun scheduleDailyReminder() {
+        ReminderScheduler.schedule(activity)
+    }
+
+    @JavascriptInterface
+    fun cancelDailyReminder() {
+        ReminderScheduler.cancel(activity)
+    }
+
+    // v0.47: mirrors index.html's state.settings.language into a small
+    // native SharedPreferences flag every time it changes (see
+    // syncLanguageToNative() there) -- DailyReminderReceiver has no other
+    // way to know which language the user actually sees in-app, since
+    // that setting normally lives only in the WebView's own localStorage.
+    @JavascriptInterface
+    fun setLanguage(lang: String) {
+        activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).edit().putString("language", lang).apply()
     }
 
     private fun summaryToJson(s: DailyUsageSummary) = JSONObject().apply {

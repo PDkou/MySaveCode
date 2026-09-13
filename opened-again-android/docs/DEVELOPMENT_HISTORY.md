@@ -1541,3 +1541,77 @@ v0.43에서 뒤로가기 처리를 고친 직후 디렉터가 이어서 준 피�
 존재하지 않는 것, 설정 → 언어 행을 눌렀을 때 `state.settings.language`
 가 여전히 정상적으로 전환되는 것(ko→ja), `.brand` 레이아웃이 배지 없이도
 안 깨지는 것을 스크린샷으로 확인, 콘솔 에러 0건.
+
+## v0.47 — 제안 6건 중 5건 구현 (주간 요약/백업 내보내기/제목 줄바꿈/개인정보방침/일일 알림)
+디렉터가 "필요하면 다 만들어줘"라고 해서, 직전에 제안했던 6개 항목 중
+5개를 실제로 구현. (실기기에서만 확인 가능한 "HIDDEN 등급 실기기 확인"은
+코드로 만들 수 있는 게 아니라서 QA 체크리스트 항목으로만 남겨둠.)
+
+1. **기록 탭에 "최근 7일" 요약 추가**: `state.history.days`는 v0.35부터
+   매일 `persistSnapshot()`으로 계속 쌓이고 있었는데, 정작 어느 화면도
+   이걸 읽어서 보여주지 않는 순수 쓰기 전용 데이터였음. `weekRecap()`을
+   새로 만들어 최근 7일(오늘 포함)의 일별 사건 수를 막대 그래프로
+   보여주고, 저장된 기록이 없는 날(설치 전/미사용)은 0건이 아니라
+   회색의 "데이터 없음" 막대로 구분해서 "그날 진짜 0건"과 헷갈리지
+   않게 함. 기존 `.share:active` 패턴처럼 앱 자체 보라색(`#6758F5`)
+   단일 색상만 써서 새 팔레트를 끌어들이지 않음.
+2. **데이터 내보내기 기능 추가**: v0.43의 "데이터 초기화"와 짝을 이루는
+   기능 — `NativeBridge.exportBackup()`이 `{settings,history}` JSON을
+   캐시 파일(`cacheDir/exports/`, 기존 공유 카드와 같은 방식으로
+   `FileProvider` 경유)로 써서 OS 공유 시트로 넘김. `file_paths.xml`에
+   새 `<cache-path name="exports">` 항목 추가. 설정에 "데이터 내보내기"
+   행을 새로 추가(비파괴적 동작이라 초기화와 달리 확인 절차 없이 바로 실행).
+3. **공유 카드 긴 제목 처리**: `docs/OPEN_ISSUES_AND_NEXT.md`에 남아있던
+   "제목이 줄바꿈 없이 한 줄이라 아주 긴 사건명은 헤더 패널을 넘어갈 수
+   있음" 항목 해결. stat/quote처럼 줄바꿈시키는 대신(헤더 패널이 두 줄을
+   담을 만큼 높지 않아서 넘칠 위험이 더 큼), 패널 폭에 들어올 때까지
+   폰트 크기를 2px씩 줄이는 방식 채택 — 최소 28f 아래로는 안 줄어들게
+   바닥을 둠. `titleTop`이 텍스트 크기와 무관한 고정 앵커라 크기가
+   줄어도 위치가 흐트러지지 않음.
+4. **개인정보처리방침 초안 추가**: `PACKAGE_USAGE_STATS`를 쓰는 앱이라
+   스토어 등록 전 필요(`docs/BUILD_RELEASE_GUIDE.md`에 이미 체크리스트로
+   있던 항목). 설정에 새 행을 추가해 시트로 열리는 초안 작성 — 이번
+   세션에서 직접 확인한 실제 코드 동작(사용정보 접근으로 읽는 정보의
+   범위, 서버 미전송, 세 곳의 로컬 저장, 초기화 기능)을 기준으로 정직하게
+   서술했지만 법무 검토를 거친 문서는 아님. 문의 이메일/최종 수정일은
+   `[...]` 자리표시자로 의도적으로 비워둠 — **실제 스토어 등록 전 반드시
+   채워야 함.**
+5. **일일 리마인더 알림 기능 신규 구현** (가장 큰 작업): v0.24부터
+   온보딩에서 `POST_NOTIFICATIONS` 권한을 요청해왔지만 실제로 쓰는 알림
+   기능이 하나도 없었던 것(`NativeBridge.kt`/`docs/OPEN_ISSUES_AND_NEXT.md`
+   에 이미 남아있던 지적)을 마침내 해결. `ReminderScheduler`(신규) 객체가
+   `AlarmManager.setInexactRepeating()`으로 매일 저녁 9시 알람을 걸고,
+   `SharedPreferences`에 켜짐/꺼짐 상태를 저장(재부팅으로 알람 자체는
+   사라지므로 `BootReceiver`(신규)가 `BOOT_COMPLETED`를 받아 재등록).
+   `DailyReminderReceiver`(신규)가 실제 알림을 만들어 띄우고, 탭하면
+   `MainActivity`가 열리도록 `PendingIntent` 연결. `WorkManager`(새
+   Gradle 의존성 필요) 대신 순정 `AlarmManager`를 택해서 의존성 추가
+   없이 구현 — `setInexactRepeating`은 정확 알람 권한도 필요 없어서
+   API 31+ 알람 권한 복잡도도 피함. 설정에 "일일 리마인더" 켬/끔 토글
+   행을 새로 추가(눌러서 켤 때 알림 권한도 같이 요청, 실제 표시 여부는
+   `DailyReminderReceiver`가 `NotificationManagerCompat.areNotificationsEnabled()`
+   로 다시 확인). 알림 문구는 기기 언어가 아니라 **앱 안에서 실제로 보고
+   있는 언어**를 따라가야 해서, `index.html`이 언어를 바꿀 때마다
+   `NativeBridge.setLanguage()`로 네이티브 `SharedPreferences`(`app_prefs`)
+   에 동기화해두고(`syncLanguageToNative()`, 시작 시 1회 + 언어 전환마다
+   호출) `DailyReminderReceiver`가 그 값을 읽어 한국어/일본어 문구를
+   고름 — WebView가 안 떠 있는 상태(리시버가 실행되는 시점)에서도 JS
+   쪽 언어 설정을 읽을 방법이 이것뿐이라 필요했던 우회.
+   `AndroidManifest.xml`에 `RECEIVE_BOOT_COMPLETED` 권한과 두 리시버
+   등록 추가. 알림 아이콘은 전용 모노크롬 에셋이 아직 없어서 런처
+   mipmap을 그대로 재사용(동작은 하지만 상태표시줄 가이드라인상 이상적인
+   모양은 아님 — 나중에 전용 에셋으로 교체 여지 있음).
+
+버전 47/0.47.0. Playwright로 검증: 최근 7일 막대가 채워진 날/빈 날을
+올바르게 구분하고 합계가 정확한 것(가짜 데이터 3일치 삽입 후 확인),
+설정에 10개 행이 전부 올바른 순서로 렌더링되는 것, 일일 리마인더 토글이
+`N`이 없는 프리뷰 환경에서도 안전하게 두 번 눌러 원상복구되는 것,
+데이터 내보내기 함수가 올바른 JSON 페이로드를 만들고 `N` 없이도 예외
+없이 끝나는 것, 개인정보처리방침 시트가 자리표시자를 포함해 렌더링되는
+것, 기존 v0.43~v0.46의 뒤로가기/초기화/설정 회귀 스위트 전부 재확인,
+콘솔 에러 0건. `ReminderScheduler.kt`/`DailyReminderReceiver.kt`/
+`BootReceiver.kt`(신규 3파일)와 `NativeBridge.kt`/`ShareCardRenderer.kt`
+변경분은 중괄호/괄호 균형만 로컬 확인, 실제 컴파일과 알림 동작 자체의
+실기기 확인은 이번에도 CI/실기기에 의존(특히 AlarmManager/
+NotificationChannel처럼 Android 프레임워크에 직접 의존하는 코드는 이
+세션의 JVM 전용 테스트 하네스로도 검증 불가능한 영역).

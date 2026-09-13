@@ -244,6 +244,20 @@ class ShareCardRenderer(private val context: Context) {
             typeface = titleTypeface
             textSize = s(50f)
         }
+        // v0.47: director feedback -- unlike stat/quote below (already
+        // wrapLines()'d), the title never wrapped or shrank, so a long
+        // enough incident name could measure wider than the header panel
+        // and spill past its right edge. Not wrapped to a 2nd line instead
+        // -- the header panel isn't tall enough to fit two lines at a
+        // readable size without overlapping the art window underneath it
+        // -- shrink the single line down until it measures inside the
+        // panel, with a floor so an absurd name still renders instead of
+        // shrinking to nothing. titleTop is a fixed anchor independent of
+        // text size, so a smaller line still sits correctly inside the panel.
+        val titleMaxWidth = s(CardLayout.HEADER.width() - 52f)
+        while (titlePaint.measureText(title) > titleMaxWidth && titlePaint.textSize > s(28f)) {
+            titlePaint.textSize -= s(2f)
+        }
         val foil = CardStyle.foilTitle(rarity)
         val titleX = sx(CardLayout.HEADER.left + 26f)
         val titleTop = sy(CardLayout.HEADER.top + 46f)
