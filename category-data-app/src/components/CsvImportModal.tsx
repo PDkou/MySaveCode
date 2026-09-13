@@ -81,7 +81,11 @@ export function CsvImportModal({ category, onImport, onClose }: CsvImportModalPr
       {preview && (
         <ConfirmDialog
           title="데이터 가져오기"
-          message={`항목 ${preview.matchedColumns}/${preview.totalColumns}개가 일치했고, ${preview.entries.length}건을 새로 추가해요. 계속할까요?`}
+          message={`항목 ${preview.matchedColumns}/${preview.totalColumns}개가 일치했고, ${preview.entries.length}건을 새로 추가해요.${
+            preview.invalidCells > 0
+              ? ` 숫자/금액 항목 중 ${preview.invalidCells}칸은 값을 알아볼 수 없어 비워둘게요.`
+              : ''
+          } 계속할까요?`}
           confirmLabel="가져오기"
           onConfirm={() => {
             onImport(preview.entries);

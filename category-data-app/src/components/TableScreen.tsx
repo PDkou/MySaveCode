@@ -72,7 +72,7 @@ export function TableScreen({
           className="icon-btn"
           onClick={() => downloadCsv(buildCsv(category, filteredEntries), csvFilename(category.name))}
           aria-label="CSV로 내보내기"
-          disabled={entries.length === 0}
+          disabled={filteredEntries.length === 0}
         >
           <DownloadIcon size={18} />
         </button>
@@ -88,7 +88,7 @@ export function TableScreen({
             else window.print();
           }}
           aria-label="PDF로 내보내기"
-          disabled={entries.length === 0}
+          disabled={filteredEntries.length === 0}
         >
           <PdfIcon size={18} />
         </button>

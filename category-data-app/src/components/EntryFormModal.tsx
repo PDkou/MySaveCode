@@ -28,12 +28,22 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
     return base;
   });
   const [reminders, setReminders] = useState<Record<string, boolean>>(() => ({ ...initial?.reminders }));
-  // Recurrence only makes sense with exactly one date field to anchor it
-  // to -- with zero there's nothing to advance, with two-plus it'd be
-  // ambiguous which one recurs. See lib/recurrence.ts for how this plays
-  // out once an occurrence comes due.
+  // Recurrence only makes sense with exactly one date field to anchor a
+  // *new* recurrence to -- with zero there's nothing to advance, with
+  // two-plus it'd be ambiguous which one recurs. See lib/recurrence.ts
+  // for how this plays out once an occurrence comes due.
+  //
+  // An entry that already has a recurrence keeps editing access to it
+  // even if the category later grows a second date field -- otherwise
+  // adding an unrelated field would silently turn this entry's
+  // recurrence off the next time it's saved (recurrenceField would go
+  // null, so submit() below drops it regardless of recurrenceUnit).
   const dateFields = category.fields.filter((f) => f.type === 'date');
-  const recurrenceField = dateFields.length === 1 ? dateFields[0] : null;
+  const initialRecurrence = initial?.recurrence;
+  const existingAnchorField = initialRecurrence
+    ? category.fields.find((f) => f.id === initialRecurrence.anchorFieldId && f.type === 'date')
+    : undefined;
+  const recurrenceField = existingAnchorField ?? (dateFields.length === 1 ? dateFields[0] : null);
   const [recurrenceUnit, setRecurrenceUnit] = useState<RecurrenceUnit | ''>(() => initial?.recurrence?.unit ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);

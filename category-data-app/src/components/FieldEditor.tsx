@@ -81,6 +81,7 @@ export function FieldEditor({ category, onAddField, onUpdateField, onRemoveField
 
       {addingField && (
         <FieldFormModal
+          existingNames={category.fields.map((f) => f.name)}
           onSave={(field) => {
             onAddField(field);
             setAddingField(false);
@@ -92,6 +93,7 @@ export function FieldEditor({ category, onAddField, onUpdateField, onRemoveField
       {editingField && (
         <FieldFormModal
           initial={editingField}
+          existingNames={category.fields.filter((f) => f.id !== editingField.id).map((f) => f.name)}
           onSave={(patch) => {
             onUpdateField(editingField.id, patch);
             setEditingField(null);

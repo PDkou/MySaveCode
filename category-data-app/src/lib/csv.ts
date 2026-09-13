@@ -9,7 +9,10 @@ import { getNativeBridge, downloadBlob } from './native';
 const UTF8_BOM = String.fromCharCode(0xfeff);
 
 function escapeCsvCell(value: string): string {
-  if (/["\n,]/.test(value)) {
+  // \r alone (not just \n) needs quoting too -- rows below are joined
+  // with \r\n, so an unquoted stray \r inside a value reads as a row
+  // break to a spreadsheet re-opening the file.
+  if (/["\n\r,]/.test(value)) {
     return `"${value.replace(/"/g, '""')}"`;
   }
   return value;
@@ -123,18 +126,36 @@ export function parseCsv(text: string): string[][] {
   return rows.filter((r) => !(r.length === 1 && r[0] === ''));
 }
 
-function fieldValueFromCsvCell(field: FieldDef, cell: string): string {
+// Returns the value to store plus whether the cell had to be dropped as
+// unparseable, so the caller can warn rather than silently corrupt a
+// number/currency field's totals and sort order.
+function fieldValueFromCsvCell(field: FieldDef, cell: string): { value: string; invalid: boolean } {
   if (field.type === 'checkbox') {
     const v = cell.trim().toLowerCase();
-    return v === '1' || v === 'true' ? 'true' : '';
+    return { value: v === '1' || v === 'true' ? 'true' : '', invalid: false };
   }
-  return cell;
+  if (field.type === 'number' || field.type === 'currency') {
+    const trimmed = cell.trim();
+    if (trimmed === '') return { value: '', invalid: false };
+    // A spreadsheet commonly re-renders an exported "15000" as "15,000"
+    // or "₩15,000" -- strip thousands separators/currency marks so the
+    // round-trip export-edit-reimport case still parses, but still
+    // reject genuine garbage rather than storing it verbatim (lib/format.ts's
+    // sumField and DataTable's sort both assume Number(value) is valid).
+    const normalized = trimmed.replace(/[₩$,\s]/g, '');
+    if (!/^-?\d+(\.\d+)?$/.test(normalized)) {
+      return { value: '', invalid: true };
+    }
+    return { value: normalized, invalid: false };
+  }
+  return { value: cell, invalid: false };
 }
 
 export interface CsvImportResult {
   entries: Record<string, string>[];
   matchedColumns: number;
   totalColumns: number;
+  invalidCells: number;
 }
 
 // Maps CSV columns to this category's fields by exact header-name match
@@ -145,12 +166,21 @@ export interface CsvImportResult {
 // where the headers already line up.
 export function parseCsvForCategory(category: Category, text: string): CsvImportResult {
   const rows = parseCsv(text);
-  if (rows.length === 0) return { entries: [], matchedColumns: 0, totalColumns: 0 };
+  if (rows.length === 0) return { entries: [], matchedColumns: 0, totalColumns: 0, invalidCells: 0 };
 
   const header = rows[0].map((h) => h.trim());
-  const columnFields = header.map((h) => category.fields.find((f) => f.name === h) ?? null);
+  // FieldFormModal blocks creating a second field with the same name,
+  // but a category created before that check (or a hand-edited backup)
+  // could still have a duplicate -- treat a name that matches more than
+  // one field as unmatched rather than guessing which field the column
+  // meant, silently leaving the other one blank on every row.
+  const columnFields = header.map((h) => {
+    const matches = category.fields.filter((f) => f.name === h);
+    return matches.length === 1 ? matches[0] : null;
+  });
   const matchedColumns = columnFields.filter(Boolean).length;
 
+  let invalidCells = 0;
   const entries = rows
     .slice(1)
     .filter((r) => r.some((cell) => cell.trim() !== ''))
@@ -158,10 +188,12 @@ export function parseCsvForCategory(category: Category, text: string): CsvImport
       const values: Record<string, string> = {};
       columnFields.forEach((field, idx) => {
         if (!field) return;
-        values[field.id] = fieldValueFromCsvCell(field, r[idx] ?? '');
+        const { value, invalid } = fieldValueFromCsvCell(field, r[idx] ?? '');
+        if (invalid) invalidCells++;
+        values[field.id] = value;
       });
       return values;
     });
 
-  return { entries, matchedColumns, totalColumns: header.length };
+  return { entries, matchedColumns, totalColumns: header.length, invalidCells };
 }

@@ -14,18 +14,25 @@ const TYPE_LABELS: Record<FieldType, string> = {
 
 interface FieldFormModalProps {
   initial?: FieldDef;
+  // Other fields' names in this category (excluding this field's own, when
+  // editing) -- CSV import matches columns to fields by name alone
+  // (lib/csv.ts), so two fields sharing a name makes that match ambiguous
+  // and one of them silently never gets imported into. See FieldEditor.
+  existingNames: string[];
   onSave: (field: { name: string; type: FieldType; options?: string[]; required: boolean }) => void;
   onDelete?: () => void;
   onClose: () => void;
 }
 
-export function FieldFormModal({ initial, onSave, onDelete, onClose }: FieldFormModalProps) {
+export function FieldFormModal({ initial, existingNames, onSave, onDelete, onClose }: FieldFormModalProps) {
   const [name, setName] = useState(initial?.name ?? '');
   const [type, setType] = useState<FieldType>(initial?.type ?? 'text');
   const [optionsText, setOptionsText] = useState((initial?.options ?? []).join(', '));
   const [required, setRequired] = useState(initial?.required ?? false);
 
-  const canSubmit = name.trim().length > 0 && (type !== 'select' || optionsText.trim().length > 0);
+  const trimmedName = name.trim();
+  const isDuplicateName = existingNames.some((n) => n.toLowerCase() === trimmedName.toLowerCase());
+  const canSubmit = trimmedName.length > 0 && !isDuplicateName && (type !== 'select' || optionsText.trim().length > 0);
 
   const submit = () => {
     if (!canSubmit) return;
@@ -61,12 +68,13 @@ export function FieldFormModal({ initial, onSave, onDelete, onClose }: FieldForm
       </label>
       <input
         id="field-name"
-        className="text-input"
+        className={`text-input ${isDuplicateName ? 'invalid' : ''}`}
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="예: 지출 항목"
         autoFocus
       />
+      {isDuplicateName && <p className="error-hint">이미 같은 이름의 항목이 있어요. 다른 이름을 써주세요.</p>}
 
       <span className="field-label">유형</span>
       <div className="choice-row wrap">
