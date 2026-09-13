@@ -1615,3 +1615,15 @@ v0.43에서 뒤로가기 처리를 고친 직후 디렉터가 이어서 준 피�
 실기기 확인은 이번에도 CI/실기기에 의존(특히 AlarmManager/
 NotificationChannel처럼 Android 프레임워크에 직접 의존하는 코드는 이
 세션의 JVM 전용 테스트 하네스로도 검증 불가능한 영역).
+
+**CI 1차 실패 및 즉시 수정**: 첫 푸시가 `:app:processDebugMainManifest`
+에서 `ManifestMerger2$MergeFailureException: Error parsing
+AndroidManifest.xml`로 실패. 원인은 이번에 새로 추가한 매니페스트
+주석 2군데에 `--`(더블 하이픈)를 구두점처럼 썼던 것 -- XML 명세상
+주석 본문 안에는 `-->` 종료 부분을 제외하면 `--`가 전혀 올 수 없어서
+파서가 주석을 못 닫고 있었음(기존 매니페스트 주석들은 전부 세미콜론/
+쉼표만 쓰고 있어서 이 문제가 없었는데, 이번 신규 주석에서만 `--`를
+구분자로 썼다가 걸림). `--`를 세미콜론/쉼표로 바꿔서 즉시 재푸시,
+`python3 -c "import xml.etree.ElementTree as ET; ET.parse(...)"`로
+사전에 XML 파싱 자체가 되는지, 정규식으로 모든 `<!-- ... -->` 주석
+본문에 `--`가 안 남아있는지 재확인 후 푸시.

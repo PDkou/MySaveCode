@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- v0.47: the daily-reminder feature that finally uses POST_NOTIFICATIONS
          (ReminderScheduler/DailyReminderReceiver) is a plain repeating
-         AlarmManager alarm, which the OS clears on reboot -- this lets
+         AlarmManager alarm, which the OS clears on reboot; this lets
          BootReceiver re-arm it if the user had the "일일 리마인더" setting
          toggle on. No exact-alarm permission needed since scheduling uses
          setInexactRepeating(), which requires none. -->
@@ -44,7 +44,7 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-        <!-- v0.47: daily-reminder notification -- see ReminderScheduler.kt.
+        <!-- v0.47: daily-reminder notification, see ReminderScheduler.kt.
              Neither receiver needs to be reachable from outside this app. -->
         <receiver android:name=".DailyReminderReceiver" android:exported="false" />
         <receiver android:name=".BootReceiver" android:exported="false">
