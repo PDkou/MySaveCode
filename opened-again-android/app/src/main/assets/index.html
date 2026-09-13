@@ -191,7 +191,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    top of it, so a browser that can't run the script, or a reduced-motion
    viewer where mountHolo() never mounts it, still shows the plain photo). */
 .holo-canvas{position:absolute;inset:0;pointer-events:none;width:100%;height:100%}
-.scene .moni-asset{width:118px;height:118px;object-fit:contain;border-radius:0;margin-bottom:4px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.14))}
+.scene .moni-asset{width:118px;height:118px;object-fit:contain;border-radius:0;margin-bottom:4px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.14));position:relative;z-index:1}
 /* v0.23: incident illustration pack (docs/UI_VISUAL_DIRECTION_REQUEST.md).
    'scene' render_mode incidents are a full illustrated background (no
    separate MONI overlay drawn on top -- see incidentVisual()/card()), so
@@ -438,11 +438,24 @@ function card(i,featured=false){
 // - The rim light and sparkle-grain clip now trace the canvas's own bounds
 //   (matching .scene's 21px border-radius) instead of a hardcoded
 //   whole-card-relative box.
-function createCardHolo(canvas,image,makeCanvas){
+function createCardHolo(canvas,image,makeCanvas,dpr=1){
   const W=canvas.width,H=canvas.height,ctx=canvas.getContext('2d');
   const layer=makeCanvas(W,H),l=layer.getContext('2d');
-  const base=makeCanvas(W,H),b=base.getContext('2d');b.drawImage(image,0,0,W,H);
-  const radius=21; // matches .scene{border-radius:21px}
+  const base=makeCanvas(W,H),b=base.getContext('2d');
+  // v0.41(2차): code review found a real bug -- a plain drawImage(image,0,0,W,H)
+  // stretches the source art to exactly fill the canvas, ignoring its own
+  // aspect ratio, while the .scene element right underneath uses
+  // `background-size:cover` (crops instead of stretching). Every shipped
+  // illustration is a ~1.78:1 landscape photo and .scene's own rendered box
+  // is close to square, so the canvas's opaque per-frame redraw was visibly
+  // squashing every EPIC/LEGENDARY card's artwork. Match cover's own math
+  // (scale by the larger ratio, center-crop) so the holofoil layer draws
+  // the exact same crop the plain CSS background underneath it shows.
+  const iw=image.naturalWidth||image.width,ih=image.naturalHeight||image.height;
+  const coverScale=Math.max(W/iw,H/ih);
+  const dw=iw*coverScale,dh=ih*coverScale;
+  b.drawImage(image,(W-dw)/2,(H-dh)/2,dw,dh);
+  const radius=21*dpr; // matches .scene{border-radius:21px}, scaled to W/H's device-pixel resolution
   function rounded(c,x,y,w,h,r){c.beginPath();if(c.roundRect)c.roundRect(x,y,w,h,r);else c.rect(x,y,w,h)}
   // v0.41 fix: found via testing (Playwright, same file:// loading this
   // WebView uses) -- getImageData()/putImageData() on any canvas that ever
@@ -458,7 +471,7 @@ function createCardHolo(canvas,image,makeCanvas){
   // the shimmer a soft circular falloff without needing per-pixel weighting.
   let seed=27;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
   const flakeCount=Math.max(24,Math.round(W*H/380));
-  const flakes=Array.from({length:flakeCount},()=>({x:random()*W,y:random()*H,nx:random()*2-1,ny:random()*2-1,r:.3+random()*.65}));
+  const flakes=Array.from({length:flakeCount},()=>({x:random()*W,y:random()*H,nx:random()*2-1,ny:random()*2-1,r:(.3+random()*.65)*dpr}));
   const fallSigma=Math.max(W,H)*.55;
   function render(t,px,py,effects=true){
     const angle=t*Math.PI/4;
@@ -490,14 +503,14 @@ function createCardHolo(canvas,image,makeCanvas){
       const fall=Math.exp(-((f.x-lx)**2+(f.y-ly)**2)/(fallSigma*fallSigma));
       const a=spec*fall*.65;if(a<.04)continue;
       ctx.fillStyle=`rgba(205,238,255,${a})`;ctx.fillRect(f.x,f.y,f.r,f.r);
-      if(a>.36&&f.r>.8){ctx.strokeStyle=`rgba(247,244,255,${(a-.30)*1.2})`;ctx.lineWidth=.65;ctx.beginPath();ctx.moveTo(f.x-2,f.y);ctx.lineTo(f.x+2,f.y);ctx.moveTo(f.x,f.y-2);ctx.lineTo(f.x,f.y+2);ctx.stroke()}
+      if(a>.36&&f.r>.8*dpr){ctx.strokeStyle=`rgba(247,244,255,${(a-.30)*1.2})`;ctx.lineWidth=.65*dpr;ctx.beginPath();ctx.moveTo(f.x-2*dpr,f.y);ctx.lineTo(f.x+2*dpr,f.y);ctx.moveTo(f.x,f.y-2*dpr);ctx.lineTo(f.x,f.y+2*dpr);ctx.stroke()}
     }
     ctx.restore();
     // rim light around the art window's own border (never the whole card).
     l.globalCompositeOperation='source-over';l.clearRect(0,0,W,H);
     const rim=l.createLinearGradient(lx-W*.45,ly-H*.45,lx+W*.45,ly+H*.45);
     rim.addColorStop(0,'rgba(127,83,217,0)');rim.addColorStop(.35,'rgba(139,222,255,.25)');rim.addColorStop(.5,'rgba(246,247,255,.95)');rim.addColorStop(.64,'rgba(219,166,255,.35)');rim.addColorStop(1,'rgba(126,82,218,0)');
-    l.strokeStyle=rim;l.lineWidth=2;rounded(l,1,1,W-2,H-2,Math.max(0,radius-1));l.stroke();
+    l.strokeStyle=rim;l.lineWidth=2*dpr;rounded(l,dpr,dpr,W-2*dpr,H-2*dpr,Math.max(0,radius-dpr));l.stroke();
     ctx.globalCompositeOperation='screen';ctx.drawImage(layer,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
   }
   return {render};
@@ -516,12 +529,23 @@ function mountHolo(){
   if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   const rect=canvas.parentElement.getBoundingClientRect();
   const w=Math.max(1,Math.round(rect.width)),h=Math.max(1,Math.round(rect.height));
-  canvas.width=w;canvas.height=h;
+  // v0.41(2차): code review found the canvas backing store was sized to
+  // plain CSS pixels while .holo-canvas{width:100%;height:100%} stretches
+  // it to fill the same CSS-pixel box -- on a real ~2.5-3x devicePixelRatio
+  // Android screen the browser then upsamples that low-res buffer, so the
+  // holofoil layer read visibly blurrier than the crisp img/background
+  // content it sits directly on top of. Size the backing store in device
+  // pixels instead; createCardHolo() takes `dpr` to scale its few absolute-
+  // pixel constants (border radius, stroke widths, flake size) to match --
+  // everything else in there is already a fraction of W/H, so it scales
+  // for free.
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
   const img=new Image();
   img.onload=()=>{
     if(!document.body.contains(canvas))return;
     const makeCanvas=(cw,ch)=>{const c=document.createElement('canvas');c.width=cw;c.height=ch;return c};
-    const effect=createCardHolo(canvas,img,makeCanvas);
+    const effect=createCardHolo(canvas,img,makeCanvas,dpr);
     const start=performance.now();
     function tick(now){
       if(!document.body.contains(canvas)){holoRaf=null;return}
@@ -621,7 +645,7 @@ ${row(iconEmoji('📊'),l('사용정보 접근','使用状況へのアクセス'
 ${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),null,false)}
 ${row(iconEmoji('💾'),l('데이터 관리','データ管理','Data'),l('기록은 이 기기에만 저장됩니다','記録はこの端末にのみ保存されます','Your records stay on this device only'),null,false)}
 ${row(iconEmoji('❓'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),null,false)}
-${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.41.0',null,false)}
+${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.42.0',null,false)}
 </div>`
 }
 function closeOverlay(){document.getElementById('overlay').innerHTML=''}
