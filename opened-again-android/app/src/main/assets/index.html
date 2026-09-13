@@ -139,7 +139,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    landed -- reads as broken even when the onclick handler ran fine. `.share`
    already had this fix (`.share:active` above); extend the same instant
    press feedback to every other primary tap target. */
-.settings-row:active,.case-row:active,.archive-card:active,.card:active,.icon-btn:active,.primary:active,.tabbtn:active,.sheet-close:active,.sheet-actions button:active{transform:scale(.97)}
+.settings-row:active,.case-row:active,.archive-card:active,.card:active,.icon-btn:active,.primary:active,.tabbtn:active,.sheet-close:active,.sheet-actions button:active,.lang:active{transform:scale(.97)}
 .settings-row img{width:26px;height:26px;object-fit:contain;flex-shrink:0}
 .settings-emoji{font-size:22px;width:26px;text-align:center;flex-shrink:0}
 .settings-row-text{flex:1;min-width:0}
@@ -267,7 +267,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.44.0';
+const APP_VERSION='0.45.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -323,7 +323,15 @@ window.onNativeResume=refresh;
 // N.exitApp() (Activity.finish()). A second back press while that sheet is
 // open hits the overlay branch above and just closes it (cancel), matching
 // how a native back button dismisses an AlertDialog instead of confirming it.
+// v0.45: found while re-checking item 4's "전체적으로" (throughout) ask --
+// the two-screen onboarding flow (onboardScreen()) was missed. It renders
+// in place of everything else (#overlay/#detailItem/#tab all stay at their
+// defaults during onboarding, so none of the checks below ever fire), so
+// back on the second onboarding screen fell straight through to the
+// exit-confirm sheet instead of returning to the first screen. Checked
+// first since onboarding fully replaces #app's content.
 window.onNativeBackPressed=function(){
+  if(!skipOnboarding&&!state.settings.onboardingSeen&&state.onboardStep===2){state.onboardStep=1;render();return true}
   const overlay=document.getElementById('overlay');
   if(overlay&&overlay.innerHTML.trim()){closeOverlay();return true}
   if(state.detailItem){closeDetail();return true}
