@@ -128,6 +128,18 @@ class NativeBridge(
         if (backupFile.exists()) backupFile.readText(Charsets.UTF_8) else ""
     }.getOrDefault("")
 
+    // v0.43: director feedback -- there was no data-reset feature anywhere.
+    // Clears both native-side persistence layers (the backup file and
+    // DiscoveryRepository's SharedPreferences); index.html's resetAllData()
+    // calls this and clears its own localStorage/in-memory state alongside
+    // it, so all three copies of "what has this device found so far" are
+    // wiped together instead of drifting out of sync.
+    @JavascriptInterface
+    fun resetAllData() {
+        runCatching { backupFile.delete() }
+        discovery.reset()
+    }
+
     private fun summaryToJson(s: DailyUsageSummary) = JSONObject().apply {
         put("startTime", s.startTime)
         put("endTime", s.endTime)

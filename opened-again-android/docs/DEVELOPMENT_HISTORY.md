@@ -1400,3 +1400,71 @@ LEGENDARY일 때만 정확히 1개 생성(압축 리스트 행/NORMAL 카드는 
 CSS 크기*3에 정확히 맞는지, 일러스트 비율이 찌그러지지 않는지 스크린샷,
 기존 v0.41 회귀 스위트(캔버스 개수/콘솔 에러/탭 왕복 누수/reduced-motion)
 전부 재확인.
+
+## v0.43 — 실기기 피드백 5건: 뒤로가기가 앱을 꺼버림, 초기화 기능 없음, 설정 무반응
+디렉터가 v0.42.0 APK를 직접 설치해 보낸 5건 피드백을 수정.
+
+1. **뒤로가기를 누르면 앱이 꺼짐(1/2/4번)**: 근본 원인은 이 앱이
+   단일 페이지 WebView 앱이라는 구조 자체 -- 탭 전환(`state.tab`),
+   사건 상세 페이지(`state.detailItem`), 보관함 모달(`#overlay`)이
+   전부 같은 `file:///android_asset/index.html` URL 위에서 JS 상태만
+   바꾸고 다시 렌더링하는 것이지 실제 페이지 이동이 아님. 그래서
+   `MainActivity.onBackPressed()`가 의존하던 `webView.canGoBack()`은
+   구조적으로 항상 `false`였고, 뒤로가기를 누를 때마다 곧바로
+   `super.onBackPressed()`(액티비티 종료)로 빠졌음 -- 앱을 켠 직후든
+   사건 상세 화면이든 예외 없이 재현됨.
+   `index.html`에 `window.onNativeBackPressed()`를 새로 추가해 JS
+   레이어가 "지금 닫을 화면이 있는지"를 먼저 판단하도록 하고
+   (열려 있는 `#overlay` 모달 → 사건 상세 페이지 → 홈이 아닌 탭, 이
+   순서로 한 겹씩만 닫음), `MainActivity.onBackPressed()`는
+   `webView.evaluateJavascript()`로 이 함수를 먼저 호출해 그 결과가
+   `true`가 아닐 때만(=닫을 화면이 이제 없을 때만) 기존
+   `canGoBack()`/`super.onBackPressed()` 경로로 넘어가도록 수정.
+   (`evaluateJavascript`의 콜백 결과값은 따옴표가 포함된 JSON 문자열로
+   오므로 비교 전에 트림 처리.)
+2. **데이터 초기화 기능이 없음(3번)**: 설정 화면에 파괴적 동작이
+   아예 없었음. "데이터 관리" 행을 실제 초기화 액션으로 바꾸고, 실수
+   방지를 위해 보관함 상세와 같은 `#overlay` 시트 패턴으로 확인
+   모달(`openResetConfirm()`)을 먼저 띄운 뒤 확정해야 실행되게 함.
+   이 앱은 "발견한 카드" 상태를 세 곳에 따로 들고 있어서
+   (JS `localStorage`의 `opened_again_state`, 네이티브 백업 파일
+   `opened_again_backup.json`, `DiscoveryRepository`의
+   `SharedPreferences`) 셋 다 같이 지워야 보관함이 실제로 빈 상태로
+   보임 -- `NativeBridge.resetAllData()`(백업 파일 삭제 +
+   `DiscoveryRepository.reset()`)를 새로 추가하고, JS의
+   `resetAllData()`가 `localStorage.removeItem()` +
+   `N.resetAllData()` + 메모리상 `state.history` 초기화를 한 번에
+   처리하도록 구성. 초기화 직후 `refresh()`를 호출해 오늘 하루치는
+   자연스럽게 다시 분석되도록 함(이미 사용한 오늘 기록까지 지우는 건
+   "초기화"의 취지에 안 맞음).
+3. **설정 화면 버튼들이 눌러도 반응 없음(5번)**: 두 가지 원인이 겹쳐
+   있었음. (a) 실제로 아무 동작도 없던 행이 있었음 -- 테마/데이터
+   관리/도움말/앱 정보 4개 행이 전부 `clickable=false`(온클릭 없음,
+   화살표 없음)로 만들어져 있었는데, 이는 "아직 요청받은 기능이 없어서"
+   그런 것이었지 디자인 의도가 아니었음. 데이터 관리는 위 2번 초기화로,
+   도움말/앱 정보는 보관함 상세와 같은 시트 패턴의 안내 모달
+   (`openHelpSheet()`/`openAboutSheet()`)로, 테마는 아직 전환할 대상이
+   없어 대신 안내 토스트("다른 테마는 준비 중입니다")로 눌렀을 때
+   반드시 어떤 반응이 오도록 수정. (b) 더 근본적인 원인은 설정 화면에만
+   있는 게 아니었음 -- 앱 전역에서 `-webkit-tap-highlight-color`를
+   꺼뒀는데(v0.38 잔상 버그 수정) 대부분의 버튼(`.settings-row`,
+   `.case-row`, `.archive-card`, `.card`, `.icon-btn`, `.primary`,
+   `.tabbtn`, `.sheet-close`)에 자체 `:active` 스타일이 없어서, 터치 시
+   다음 렌더링이 끝날 때까지 아무 시각적 피드백이 없었음 -- 온클릭
+   핸들러는 정상 실행되고 있어도 실기기에서는 "안 눌린다"로 느껴짐.
+   기존에 이미 이 처리가 돼 있던 `.share:active{transform:scale(.98)}`
+   와 같은 패턴으로 위 요소들에 눌렀을 때 즉시 축소되는 `:active` 피드백
+   을 공통으로 추가.
+
+버전 43/0.43.0. Playwright로 검증: `preview=1` 데모 모드에서
+`window.onNativeBackPressed()`가 보관함/도움말/초기화 확인 모달이 열려
+있을 때 닫기만 하고 `true` 반환, 사건 상세 페이지가 열려 있을 때 닫고
+`true` 반환, 홈이 아닌 탭에서 홈으로 이동 후 `true` 반환, 그 다음(닫을
+화면이 없을 때) `false` 반환하는 것까지 4단계 전부 확인. 설정 화면의
+7개 행 전부가 화살표(`.settings-chevron`)를 갖고 `static` 클래스가
+없는 것 확인. `resetAllData()` 호출 전후로 `localStorage`에 심어둔
+가짜 발견 기록이 실제로 지워지는 것과 초기화 확인 시트/도움말 시트/앱
+정보 시트가 올바른 버전 문자열(v0.43.0)과 함께 렌더링되는 것을
+스크린샷으로 확인, 콘솔 에러 0건. `MainActivity.kt`/`NativeBridge.kt`/
+`DiscoveryRepository.kt`는 이번에도 실제 컴파일은 CI에 의존(중괄호/
+괄호 균형만 로컬에서 확인).

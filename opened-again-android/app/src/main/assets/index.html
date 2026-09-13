@@ -131,6 +131,15 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .settings-list{display:flex;flex-direction:column;gap:8px;margin-top:4px}
 .settings-row{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px 14px;cursor:pointer}
 .settings-row.static{cursor:default}
+/* v0.43: director feedback -- "many buttons in settings don't respond when
+   tapped." Root cause is app-wide, not settings-specific: `*` disables
+   `-webkit-tap-highlight-color` globally (see that rule's own comment above)
+   and most tap targets had no `:active` state of their own to replace it
+   with, so a tap gave zero visual feedback until the next full render
+   landed -- reads as broken even when the onclick handler ran fine. `.share`
+   already had this fix (`.share:active` above); extend the same instant
+   press feedback to every other primary tap target. */
+.settings-row:active,.case-row:active,.archive-card:active,.card:active,.icon-btn:active,.primary:active,.tabbtn:active,.sheet-close:active,.sheet-actions button:active{transform:scale(.97)}
 .settings-row img{width:26px;height:26px;object-fit:contain;flex-shrink:0}
 .settings-emoji{font-size:22px;width:26px;text-align:center;flex-shrink:0}
 .settings-row-text{flex:1;min-width:0}
@@ -148,6 +157,10 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    content doesn't fit -- the close button (and handle) are now always
    visible without scrolling, regardless of content length. */
 .sheet{max-width:720px;width:100%;background:var(--bg);border-radius:30px 30px 18px 18px;padding:15px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 -16px 60px rgba(0,0,0,.25)}.sheet-scroll{overflow:auto;min-height:0}.sheet-handle{width:44px;height:5px;border-radius:99px;background:#CDBFB4;margin:0 auto 11px;flex-shrink:0}.sheet-close{width:100%;border:0;background:#E9DED1;min-height:var(--btn-min);padding:0 12px;border-radius:var(--btn-radius);font-weight:900;margin-top:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}.detail-title{font-size:13px;color:var(--muted);text-align:center;margin:2px 0 10px}
+/* v0.43: two-button footer for the "데이터 초기화" confirmation sheet
+   (openResetConfirm()) -- same fixed-footer-never-scrolls layout as
+   .sheet-close, just split into a cancel + destructive-confirm pair. */
+.sheet-actions{display:flex;gap:8px;margin-top:9px;flex-shrink:0}.sheet-actions button{flex:1;border:0;min-height:var(--btn-min);padding:0 12px;border-radius:var(--btn-radius);font-weight:900;display:flex;align-items:center;justify-content:center}.sheet-actions .cancel{background:#E9DED1;color:var(--ink)}.sheet-actions .danger{background:#E0574A;color:#fff}
 /* v0.35: full-screen incident detail page (openDetail()/detailPage()),
    replacing the old bottom-sheet modal to match the mockup's dedicated
    "사건 카드 상세" screen -- own compact header (back/rarity/share), no
@@ -245,6 +258,12 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 <body><main class="app" id="app"></main><div id="overlay"></div>
 <script>
 const N=window.OpenedAgainNative;
+// v0.43: single source of truth for the version string shown in the "앱
+// 정보" settings row and its detail sheet -- still has to be kept in sync
+// with app/build.gradle.kts's versionName by hand (no bridge call exposes
+// it to JS, see settings()'s own longstanding comment), but at least isn't
+// duplicated a second time within this file anymore.
+const APP_VERSION='0.43.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -282,6 +301,22 @@ function persistSnapshot(d){if(!d||!d.permission)return;const key=todayKey();sta
 function setTab(t){state.tab=t;window.scrollTo(0,0);render()}
 function refresh(){state.data=read();persistSnapshot(state.data);render()}
 window.onNativeResume=refresh;
+// v0.43: director feedback -- the hardware back button always exited the
+// app (see MainActivity.kt's onBackPressed() comment for the root cause).
+// MainActivity now calls this before deciding whether to exit: returning
+// true means "already handled, don't exit," false means "nothing left to
+// close, go ahead." Checked in the order things actually stack on top of
+// the base tab content -- the #overlay sheet (archive modal / reset
+// confirm / help / about) sits above everything, then the full-screen
+// detail page, then a non-home tab -- so back closes exactly one layer at
+// a time instead of jumping straight past open UI.
+window.onNativeBackPressed=function(){
+  const overlay=document.getElementById('overlay');
+  if(overlay&&overlay.innerHTML.trim()){closeOverlay();return true}
+  if(state.detailItem){closeDetail();return true}
+  if(state.tab!=='cases'){setTab('cases');return true}
+  return false
+};
 function share(i,format){if(preview||!N){toast(l('미리보기에서는 공유가 실행되지 않습니다.','プレビューでは共有は実行されません。','Sharing is disabled in preview.'));return}try{N.shareIncident(JSON.stringify(i),txt(names,i.type),txt(punch,i.type),detail(i),format,state.settings.language)}catch(e){}}
 function rarityClass(i){if(i.rarity!=='HIDDEN')return i.rarity.toLowerCase();return i.type==='HIDDEN_NIGHT_ACTIVITY'?'hidden opal':'hidden'}
 // v0.23: replaced the old baked round-badge image (visual/badges/*.png,
@@ -625,13 +660,19 @@ function records(d){const s=d.summary||{};const rows=[[l('사용 시간','使用
 // bottom-nav destination -- the app previously had no settings screen at
 // all). Reachable regardless of usage-access permission state (unlike the
 // other 3 tabs, which need real usage data) since it's mostly static/
-// account-level info. Theme/data-management/help are informational only
-// for now -- no theme system, and no destructive data actions were asked
-// for, so those rows don't do anything yet beyond stating the current
-// (only) state.
-// NOTE: the "앱 정보"/version string in the row list below is a plain
-// literal, not read from build.gradle.kts (no bridge call exposes it to
-// JS) -- keep it manually in sync with versionName on every version bump.
+// account-level info.
+// v0.43: director feedback -- (a) no data-reset feature existed anywhere,
+// and (b) settings felt broadly unresponsive, citing rows that did nothing
+// when tapped. Theme/data-management/help/about were all `clickable=false`
+// (no onclick, no chevron) purely because nothing real had been asked of
+// them yet -- on a touchscreen that reads as "these buttons are broken,"
+// not "these are informational," since there's no hover/cursor affordance
+// to tell the two apart the way there is on desktop. Every row is now
+// really clickable: Data opens the new reset-confirmation sheet, Help/About
+// open an info sheet (reusing the same #overlay modal pattern as the
+// archive detail view), and Theme -- which genuinely has nothing to switch
+// to yet -- at least acknowledges the tap with a toast instead of silently
+// doing nothing.
 function settings(){
   let hasAccess=null;try{hasAccess=N?N.hasUsageAccess():null}catch(e){}
   const accessLabel=hasAccess===true?l('허용됨','許可済み','Allowed'):hasAccess===false?l('허용 필요 · 탭해서 이동','許可が必要 · タップで移動','Needs permission -- tap to open'):l('탭해서 확인','タップして確認','Tap to check');
@@ -642,11 +683,39 @@ function settings(){
 ${row(iconImg('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','cycleLang()')}
 ${row(iconImg('notification'),l('알림 권한','通知許可','Notifications'),l('탭해서 허용하기','タップして許可','Tap to allow'),'N&&N.requestNotificationPermission()')}
 ${row(iconEmoji('📊'),l('사용정보 접근','使用状況へのアクセス','Usage access'),accessLabel,'N&&N.openUsageSettings()')}
-${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),null,false)}
-${row(iconEmoji('💾'),l('데이터 관리','データ管理','Data'),l('기록은 이 기기에만 저장됩니다','記録はこの端末にのみ保存されます','Your records stay on this device only'),null,false)}
-${row(iconEmoji('❓'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),null,false)}
-${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v0.42.0',null,false)}
+${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),"toast(l('다른 테마는 준비 중입니다','他のテーマは準備中です','More themes are coming soon'))")}
+${row(iconEmoji('💾'),l('데이터 관리','データ管理','Data'),l('탭해서 초기화하기','タップして初期化','Tap to reset'),'openResetConfirm()')}
+${row(iconEmoji('❓'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),'openHelpSheet()')}
+${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v'+APP_VERSION,'openAboutSheet()')}
 </div>`
+}
+// v0.43: destructive, so it goes through a confirmation sheet rather than
+// firing on the first tap -- reuses the same #overlay/.modal/.sheet pattern
+// openArchiveDetail() already established, just with a two-button
+// .sheet-actions footer (cancel + danger) instead of the usual single
+// .sheet-close.
+function openResetConfirm(){
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('데이터 초기화','データの初期化','Reset data')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0">${l('오늘까지 모은 모든 기록과 보관함 카드가 이 기기에서 완전히 삭제됩니다. 이 작업은 되돌릴 수 없습니다.','これまでに集めた記録と保管庫のカードがこの端末から完全に削除されます。この操作は元に戻せません。','All records and archived cards collected so far will be permanently deleted from this device. This cannot be undone.')}</p></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="danger" onclick="resetAllData()">${l('초기화','初期化','Reset')}</button></div></div></div>`;
+}
+// Clears all three copies of "what has this device found so far" (see
+// NativeBridge.kt's resetAllData()/DiscoveryRepository.reset() for the
+// native-side half) and re-runs today's analysis fresh, same as a normal
+// refresh() -- any usage from today gets naturally rediscovered rather than
+// being left in a half-reset state.
+function resetAllData(){
+  localStorage.removeItem('opened_again_state');
+  try{N&&N.resetAllData&&N.resetAllData()}catch(e){}
+  state.history={days:{},discoveries:{}};
+  state.data=null;
+  closeOverlay();
+  toast(l('초기화되었습니다','初期化されました','Data has been reset'));
+  refresh();
+}
+function openHelpSheet(){
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('도움말','ヘルプ','Help')}</div><p style="font-size:13px;line-height:1.7;color:var(--ink);margin:4px 0 0">${l('모니는 스마트폰의 사용 기록을 매일 조사해 특이한 습관을 사건 카드로 정리해 드려요. 홈 탭에서 오늘의 사건을, 기록 탭에서 오늘 하루의 숫자를, 보관함 탭에서 지금까지 모은 카드를 확인할 수 있어요. 모든 기록은 이 기기 안에만 저장되고 서버로 전송되지 않아요.','MONIはスマホの利用記録を毎日調べて、気になる習慣を事件カードにまとめます。ホームで今日の事件を、記録で本日の数字を、保管庫でこれまで集めたカードを確認できます。すべての記録はこの端末内にのみ保存され、サーバーへは送信されません。','MONI investigates your phone usage every day and turns odd habits into incident cards. Check today\'s case on Home, today\'s numbers on Records, and everything you\'ve collected on Archive. Every record stays on this device only and is never sent to a server.')}</p></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+}
+function openAboutSheet(){
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('앱 정보','アプリ情報','About')}</div><div style="text-align:center;padding:6px 0 2px"><b style="font-size:16px">${l('또 열었네?','また開いた？','Opened Again?')}</b><div style="font-size:12px;color:var(--muted);margin-top:4px">v${APP_VERSION} · Howling</div></div></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
 }
 function closeOverlay(){document.getElementById('overlay').innerHTML=''}
 // v0.35: incident card detail is now a full-screen page (back arrow +

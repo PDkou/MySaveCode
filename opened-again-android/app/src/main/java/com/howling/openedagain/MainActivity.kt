@@ -62,7 +62,34 @@ class MainActivity : Activity() {
         }
     }
 
+    // v0.43: director feedback -- the hardware back button always exited the
+    // app, even right after opening it or from the incident detail page.
+    // Root cause: this is a single-page WebView app that never performs a
+    // real navigation -- state.tab/state.detailItem/#overlay (tabs, the
+    // detail page, the archive modal) are all just JS state mutations
+    // re-rendered onto the same file:///android_asset/index.html URL, so
+    // webView.canGoBack() below is structurally always false and every back
+    // press fell straight through to super.onBackPressed() (finish the
+    // Activity). Ask the JS layer first whether there's an in-app screen to
+    // close instead (window.onNativeBackPressed(), added in index.html) and
+    // only exit when it reports there's nothing left to close. Keep the old
+    // canGoBack()/goBack() check as a fallback in the "nothing to close"
+    // branch -- harmless since it's normally false, but a safety net if the
+    // WebView ever does perform a real navigation.
     override fun onBackPressed() {
-        if (::webView.isInitialized && webView.canGoBack()) webView.goBack() else super.onBackPressed()
+        if (!::webView.isInitialized) {
+            super.onBackPressed()
+            return
+        }
+        webView.evaluateJavascript(
+            "(function(){try{return window.onNativeBackPressed?!!window.onNativeBackPressed():false}catch(e){return false}})()"
+        ) { result ->
+            // evaluateJavascript's result is JSON-encoded (a quoted "true"/
+            // "false" string, not a bare boolean) -- trim the quotes before
+            // comparing.
+            if (result?.trim('"') != "true") {
+                if (webView.canGoBack()) webView.goBack() else super.onBackPressed()
+            }
+        }
     }
 }
