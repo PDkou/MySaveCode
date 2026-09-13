@@ -4,9 +4,11 @@ import android.app.Activity
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.window.OnBackInvokedDispatcher
 import com.howling.openedagain.data.DiscoveryRepository
 
 class MainActivity : Activity() {
@@ -50,9 +52,37 @@ class MainActivity : Activity() {
             webViewClient = WebViewClient()
             webChromeClient = WebChromeClient()
             addJavascriptInterface(NativeBridge(this@MainActivity, DiscoveryRepository(this@MainActivity)), "OpenedAgainNative")
+            // v0.48: director feedback -- the screen kept scrolling/bouncing
+            // even on short content that doesn't need to scroll (the
+            // incident detail page, for one) -- Android WebView's default
+            // overscroll edge-glow/rubber-band effect firing on a page with
+            // no real overflow. This is a View-level behavior (independent
+            // of CSS), so it has to be turned off on the WebView itself.
+            overScrollMode = View.OVER_SCROLL_NEVER
             loadUrl("file:///android_asset/index.html")
         }
         setContentView(webView)
+
+        // v0.48: director feedback (real device) -- the hardware back
+        // button still just exited the app despite v0.43's fix below.
+        // Root cause: onBackPressed() is deprecated from API 33 onward, and
+        // with enableOnBackInvokedCallback="true" (v0.36) plus this app's
+        // targetSdk 36, the platform's "still calls onBackPressed() for
+        // compatibility" fallback documented in the v0.36 manifest comment
+        // turned out not to be reliable enough in practice on a real
+        // device/OS build -- a gap no amount of Playwright/headless-Chromium
+        // testing could have caught, since that only exercises the JS side
+        // (window.onNativeBackPressed()) and never touches this native
+        // dispatch path at all. The officially correct fix for a predictive
+        // -back-enabled app is to register a real OnBackInvokedCallback
+        // instead of relying on the deprecated method -- do that on API 33+
+        // and keep the onBackPressed() override below only as the API
+        // 29-32 code path (OnBackInvokedCallback doesn't exist before 33).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT
+            ) { handleBackPress() }
+        }
     }
 
     override fun onResume() {
@@ -68,24 +98,30 @@ class MainActivity : Activity() {
     // real navigation -- state.tab/state.detailItem/#overlay (tabs, the
     // detail page, the archive modal) are all just JS state mutations
     // re-rendered onto the same file:///android_asset/index.html URL, so
-    // webView.canGoBack() below is structurally always false and every back
-    // press fell straight through to super.onBackPressed() (finish the
-    // Activity). Ask the JS layer first whether there's an in-app screen to
-    // close instead (window.onNativeBackPressed(), added in index.html) and
-    // only exit when it reports there's nothing left to close. Keep the old
-    // canGoBack()/goBack() check as a fallback in the "nothing to close"
-    // branch -- harmless since it's normally false, but a safety net if the
-    // WebView ever does perform a real navigation.
+    // webView.canGoBack() below is structurally always false. Ask the JS
+    // layer first whether there's an in-app screen to close instead
+    // (window.onNativeBackPressed(), added in index.html) and only exit
+    // when it reports there's nothing left to close; keep the old
+    // canGoBack()/goBack() check as a fallback -- harmless since it's
+    // normally false, but a safety net if the WebView ever does perform a
+    // real navigation.
     // v0.44: window.onNativeBackPressed() now always returns true (reaching
     // the home tab opens an exit-confirmation sheet instead of reporting
-    // "nothing to close" -- see its own comment), so in normal operation
-    // this method never calls super.onBackPressed() at all anymore; exiting
-    // now only happens via NativeBridge.exitApp() once the user confirms.
-    // The fallback below still matters if evaluateJavascript's callback
-    // never fires or throws before the page has finished loading.
-    override fun onBackPressed() {
+    // "nothing to close"), so in normal operation this never reaches the
+    // finish() fallback at all; exiting now only happens via
+    // NativeBridge.exitApp() once the user confirms.
+    // v0.48: this used to be the whole story, called only from the
+    // deprecated onBackPressed() override below -- pulled the actual logic
+    // out into this method so onCreate()'s OnBackInvokedCallback (the real,
+    // reliable entry point on API 33+, see its own comment) can call the
+    // exact same logic. finish() replaces the old super.onBackPressed()
+    // call since a plain Activity's default onBackPressed() just finishes
+    // anyway (no fragment back stack exists here), and finish() is the only
+    // option available from a callback that isn't itself an onBackPressed()
+    // override.
+    private fun handleBackPress() {
         if (!::webView.isInitialized) {
-            super.onBackPressed()
+            finish()
             return
         }
         webView.evaluateJavascript(
@@ -95,8 +131,19 @@ class MainActivity : Activity() {
             // "false" string, not a bare boolean) -- trim the quotes before
             // comparing.
             if (result?.trim('"') != "true") {
-                if (webView.canGoBack()) webView.goBack() else super.onBackPressed()
+                if (webView.canGoBack()) webView.goBack() else finish()
             }
         }
+    }
+
+    // v0.48: kept only as the API 29-32 code path -- OnBackInvokedCallback
+    // (registered in onCreate() for API 33+) doesn't exist before 33, and
+    // is the one actually reliable on newer OS versions/targetSdk 36 (see
+    // that registration's own comment for why the deprecated method alone
+    // turned out not to be enough despite the v0.36 manifest opt-in).
+    @Suppress("DEPRECATION")
+    override fun onBackPressed() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) return
+        handleBackPress()
     }
 }

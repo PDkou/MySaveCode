@@ -1627,3 +1627,46 @@ AndroidManifest.xml`로 실패. 원인은 이번에 새로 추가한 매니페�
 `python3 -c "import xml.etree.ElementTree as ET; ET.parse(...)"`로
 사전에 XML 파싱 자체가 되는지, 정규식으로 모든 `<!-- ... -->` 주석
 본문에 `--`가 안 남아있는지 재확인 후 푸시.
+
+## v0.48 — 뒤로가기가 여전히 앱을 꺼버림(실기기), 화면 오버스크롤 튕김
+디렉터가 v0.47.0 APK를 실기기에 설치해서 알려준 피드백 2건.
+
+1. **뒤로가기를 눌러도 여전히 그냥 앱이 꺼짐**: v0.43~v0.45에 걸쳐 JS
+   쪽 로직(`window.onNativeBackPressed()`)은 Playwright로 4단계 시나리오
+   전부 통과시켰는데, 정작 실기기에서는 하나도 안 먹힌 것으로 확인됨.
+   원인을 다시 파보니, 그 Playwright 테스트들은 전부 `window.onNativeBackPressed()`
+   라는 **JS 함수 자체의 로직**만 브라우저에서 직접 호출해서 검증한 것이지,
+   실제 하드웨어 뒤로가기 버튼이 안드로이드 프레임워크를 거쳐
+   `MainActivity.onBackPressed()`까지 도달하는 **네이티브 디스패치 경로**는
+   애초에 검증할 방법이 없었음(헤드리스 크로미움에는 안드로이드의 뒤로가기
+   디스패치 시스템 자체가 없음) — 이 세션 통틀어 남아있던 진짜 사각지대.
+   실제 원인: `onBackPressed()`는 API 33부터 공식적으로 deprecated고,
+   v0.36에서 켠 `enableOnBackInvokedCallback="true"` + 이 앱의 targetSdk
+   36 조합에서는, "앱이 자체 콜백을 등록 안 하면 시스템이 호환성 차원에서
+   `onBackPressed()`를 계속 호출해준다"는 v0.36 매니페스트 주석의 전제가
+   실제 기기/OS 빌드에서는 충분히 안정적으로 동작하지 않았던 것으로 보임.
+   공식적으로 맞는 해결책은 deprecated 메서드에 기대는 대신 진짜
+   `OnBackInvokedCallback`을 직접 등록하는 것 — `MainActivity.onCreate()`
+   에서 API 33+일 때 `onBackInvokedDispatcher.registerOnBackInvokedCallback()`
+   으로 동일한 로직(`handleBackPress()`로 분리)을 등록하고, 기존
+   `onBackPressed()` 오버라이드는 API 29~32 전용 경로로만 남김(33+에서는
+   콜백이 등록된 순간부터 시스템이 그쪽으로만 디스패치하므로 이 메서드
+   자체가 호출 안 됨 — 방어적으로 조기 return 추가). `super.onBackPressed()`
+   호출은 `finish()`로 통일(이 앱엔 프래그먼트 백스택이 없어서 둘의 실제
+   동작은 동일하고, 콜백 쪽에서는 애초에 `onBackPressed()`를 오버라이드한
+   게 아니라서 `super` 호출 자체가 불가능함).
+2. **화면이 계속 스크롤(튕김)됨**: 사건 상세 페이지처럼 스크롤이 필요
+   없을 만큼 짧은 화면에서도 안드로이드 WebView 기본 오버스크롤
+   글로우/러버밴드 효과가 발생하고 있었음 — CSS가 아니라 View 레벨
+   동작이라 `MainActivity`의 `WebView`에 `overScrollMode =
+   View.OVER_SCROLL_NEVER`를 직접 설정해서 끔. 크로미움 자체의 스크롤
+   체이닝 대비로 `html,body`에 `overscroll-behavior:none`도 방어적으로
+   추가.
+
+버전 48/0.48.0. **중요한 한계**: 뒤로가기 수정은 Playwright/헤드리스
+크로미움으로 검증할 방법이 구조적으로 없음(브레이스/괄호 균형만 로컬
+확인) — `OnBackInvokedCallback` 등록과 실제 하드웨어 버튼 동작은 이번에도
+실기기 확인에 전적으로 의존. 오버스크롤 수정도 마찬가지로 실제 튕김
+효과 자체는 실기기에서만 눈으로 확인 가능. JS 쪽(CSS 변경, 문법)만
+`node --check`로 재확인, 기존 v0.43~v0.47 회귀 스위트는 이번 변경과
+무관해서(둘 다 네이티브 Kotlin/CSS 변경) 재실행하지 않음.
