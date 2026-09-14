@@ -64,12 +64,34 @@ class NativeBridge(
     // ACTION_USAGE_ACCESS_SETTINGS intent -- reliability over the
     // (unreliable anyway) chance of a direct jump; the Toast alone still
     // tells the user what to look for in the list either way.
+    // v0.58: director asked for more, after v0.55/v0.56's Toast-only
+    // guidance -- "수많은 앱들중에 우리 앱이 어디있는지 알려주는 것까지
+    // 기능으로 넣으면 좋겠지" (with so many apps in the list, it'd be
+    // good to actually show where ours is). Looked into what's actually
+    // possible: Android's app sandboxing means we have NO way to draw an
+    // arrow/highlight over a row inside the Settings app's own screen from
+    // here -- that would need SYSTEM_ALERT_WINDOW (a draw-over-other-apps
+    // permission) plus an AccessibilityService to even find the row to
+    // point at, both far heavier and more privacy-sensitive than what
+    // this feature is worth, directly against Play Store policy for
+    // non-accessibility use, and ironically another permission ask on top
+    // of the very screen we're trying to make less annoying. So this is a
+    // real platform ceiling, not something worth working around with
+    // heavyweight permissions -- the honest options left are all still
+    // "tell them what to look for", just made a bit more concrete: the
+    // guidance now also suggests using the search icon several Android
+    // skins (Samsung One UI's "특별 접근"/Special access list included)
+    // put on this exact screen, which -- when present -- finds the app
+    // far faster than scanning a long unsorted list by eye ever could.
     @JavascriptInterface
     fun openUsageSettings() {
         activity.runOnUiThread {
             val lang = activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).getString("language", "ko")
             val appName = if (lang == "ja") "また開いた？" else "또 열었네?"
-            val guide = if (lang == "ja") "\"${appName}\"を探してオンにしてください" else "\"${appName}\"를 찾아 켜주세요"
+            val guide = if (lang == "ja")
+                "\"${appName}\"を探してオンにしてください（検索アイコンがあれば名前で検索も可能です）"
+            else
+                "\"${appName}\"를 찾아 켜주세요 (검색 아이콘이 있다면 이름으로 검색해보세요)"
             android.widget.Toast.makeText(activity, guide, android.widget.Toast.LENGTH_LONG).show()
             activity.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
