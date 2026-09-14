@@ -206,6 +206,23 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    regardless of which rarity class rides along, matching the mockup (only
    the pill badge carries rarity color here, not the whole page). */
 .detail-page{padding:calc(14px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto;background:var(--bg) !important;color:var(--ink) !important;box-shadow:none !important}
+/* v0.50: director feedback -- the incident detail page "still scrolls"
+   even though its own content clearly fits on screen with room to spare.
+   Root cause found by measuring actual computed heights: `.app`'s base
+   rule reserves `calc(90px + env(safe-area-inset-bottom))` of
+   padding-bottom for the bottom tab bar (tabs() is fixed-positioned, so
+   that space has to be reserved so content doesn't render underneath it)
+   -- but `root.className='app detail-mode'` (render()'s state.detailItem
+   branch) never rendered tabs() at all, and `.detail-page` right inside
+   it already carries its own appropriate bottom padding. The two stacked
+   (90px+ from .app, unused here, plus .detail-page's own) pushed total
+   page height past the viewport on a real device with less usable height
+   than this was tested against (status bar + 3-button/gesture nav chrome
+   eating into it) -- v0.48's overscroll fix addressed a real but
+   different problem (the bounce/glow effect on short content) and didn't
+   touch this actual height overflow at all. Zero out the inherited
+   padding specifically for detail mode. */
+.app.detail-mode{padding-bottom:0}
 .detail-page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .icon-btn{border:1px solid var(--line);background:#fff;border-radius:var(--btn-radius);width:var(--btn-min);height:var(--btn-min);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .icon-btn img{width:19px;height:19px;object-fit:contain}
@@ -296,7 +313,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.49.0';
+const APP_VERSION='0.50.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -630,6 +647,22 @@ function mountHolo(){
   // for free.
   const dpr=window.devicePixelRatio||1;
   canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
+  // v0.50: director feedback -- the featured card's art occasionally
+  // renders as scrambled/torn horizontal color bands instead of the real
+  // illustration. Nothing in createCardHolo()'s own drawing code produces
+  // that shape of corruption, and the image is never drawn before its
+  // onload fires below -- the likelier cause is a real Android WebView/GPU
+  // driver quirk where a canvas backing store, immediately after being
+  // resized (which is supposed to reset it to fully transparent per spec),
+  // briefly shows leftover/uninitialized GPU texture memory instead on
+  // some devices, until something actually paints into it. Explicitly
+  // clearing right after the resize is a no-op on spec-compliant browsers
+  // and a cheap defensive fix if that's what's happening here -- can't be
+  // reproduced or confirmed in this sandbox (no way to trigger a
+  // device/driver-specific GPU rendering bug in headless Chromium), so
+  // this needs a real-device recheck across a few card opens to see if the
+  // glitch still occurs.
+  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
   const img=new Image();
   img.onload=()=>{
     if(!document.body.contains(canvas))return;
