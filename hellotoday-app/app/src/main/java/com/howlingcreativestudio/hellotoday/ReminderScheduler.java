@@ -16,10 +16,7 @@ final class ReminderScheduler {
     private ReminderScheduler() {}
 
     static void scheduleTest(Context context) {
-        // TEMP (screenshot capture only -- revert before any real release):
-        // "엄마" instead of "Test" so the test notification's title reads
-        // like a real reminder (see ReminderReceiver's matching temp change).
-        schedule(context, TEST_REMINDER_ID, "엄마", System.currentTimeMillis() + 5 * 60 * 1000L, true, 0, -1, -1, "fixed", 14, 28);
+        schedule(context, TEST_REMINDER_ID, "Test", System.currentTimeMillis() + 5 * 60 * 1000L, true, 0, -1, -1, "fixed", 14, 28);
     }
 
     static void schedule(Context context, long personId, String name, long atMillis, boolean persist, int intervalDays, int notifyHour, int notifyMinute, String reminderMode, int minDays, int maxDays) {
