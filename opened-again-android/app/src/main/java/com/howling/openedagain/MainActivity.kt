@@ -49,6 +49,16 @@ class MainActivity : Activity() {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.allowFileAccess = true
+            // v0.49: director feedback -- "글씨/아이콘 크기가 이상함." WebView
+            // scales all text by the device's system font-size (accessibility)
+            // setting by default, but PNG/emoji icons sized in fixed px don't
+            // scale with it -- on any device where that system setting isn't
+            // exactly 100% (larger text is a common accessibility choice,
+            // especially on Korean phones), the intended text-to-icon ratio
+            // this design was built around silently breaks. Pin textZoom to
+            // 100 so this app's own font-size choices are what actually
+            // render, independent of that per-device setting.
+            settings.textZoom = 100
             webViewClient = WebViewClient()
             webChromeClient = WebChromeClient()
             addJavascriptInterface(NativeBridge(this@MainActivity, DiscoveryRepository(this@MainActivity)), "OpenedAgainNative")

@@ -30,7 +30,14 @@
    `-webkit-tap-highlight-color`; disabling it app-wide (every element still
    gets its own `:active` feedback where one is defined, e.g. `.share:active`) */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Noto Sans JP",sans-serif;overscroll-behavior:none}
-body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),var(--bg)}button{font:inherit}.app{max-width:720px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 18px calc(90px + env(safe-area-inset-bottom))}
+body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),var(--bg)}button{font:inherit}
+/* v0.49: director feedback -- "여백이 이상함(좌우 여백, 카드/버튼 사이
+   간격)", referencing well-known Korean apps' proportions. 18px/14px side
+   margins were on the tight end of what apps like 카카오톡(16px)/
+   토스(~20px)/당근마켓(16px) actually use -- bumped both toward that
+   range rather than picking an outlier. See the matching @media block
+   below for the narrow-screen side. */
+.app{max-width:720px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 20px calc(90px + env(safe-area-inset-bottom))}
 /* v0.24: onboarding (see onboardScreen()/render() below). The two
    onboarding images are full-screen 941x1672 compositions with their own
    baked-in buttons -- per design's own handoff note, these are visual
@@ -73,7 +80,15 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .tabbtn.active{background:#F3EBDE;color:#332C28}
 .tabbtn.active img{opacity:1}
 .hero{margin-top:17px;background:linear-gradient(135deg,#FFF9F0 0%,#EFE1CE 100%);border:1px solid #EADAC5;border-radius:27px;padding:17px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;min-height:124px;position:relative}.hero:after{content:"";position:absolute;right:120px;bottom:-32px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.42)}.hero img{width:132px;height:96px;object-fit:cover;object-position:50% 10%;border-radius:19px;position:relative;z-index:1}.hero h2{margin:0;font-size:21px;letter-spacing:-.8px}.hero p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.55;max-width:310px}
-.daily-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:11px}.mini-stat{background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:15px;padding:10px 7px;text-align:center}.mini-stat b{display:block;font-size:17px}.mini-stat span{font-size:11px;color:var(--muted)}
+/* v0.49: director feedback -- "홈화면에 사용한 시간의 비율이 이상함."
+   4 equal-width columns worked for opens/unlocks/cases (1-2 digit
+   numbers) but the usage-time cell's actual content (`fmtMs()`, e.g.
+   "2시간 23분") is 3-4x longer and wrapped to 2 lines while its siblings
+   stayed on 1 -- the one cell visibly taller/off-balance from the rest of
+   the row. Widened that column's share instead of keeping 4 even
+   fractions, verified against real fmtMs() output at common Korean phone
+   widths (360-412px) until it stays on one line. */
+.daily-strip{display:grid;grid-template-columns:0.85fr 1.5fr 0.85fr 0.7fr;gap:8px;margin-top:11px}.mini-stat{background:rgba(255,255,255,.72);border:1px solid var(--line);border-radius:15px;padding:10px 6px;text-align:center}.mini-stat b{display:block;font-size:17px;white-space:nowrap}.mini-stat span{font-size:11px;color:var(--muted)}
 .section-title{display:flex;align-items:end;justify-content:space-between;margin:24px 2px 10px}.section-title h2{margin:0;font-size:20px;letter-spacing:-.7px}.count{font-size:12px;color:var(--muted)}
 .card{position:relative;border-radius:28px;padding:0;margin:13px 0;background:#fff;border:2px solid var(--border);box-shadow:var(--shadow);overflow:hidden;isolation:isolate}.card:before{content:"";position:absolute;inset:0;background:var(--glow);opacity:.33;pointer-events:none;z-index:-2}.card:after{content:"";position:absolute;inset:5px;border-radius:22px;border:1px solid rgba(255,255,255,.55);pointer-events:none;z-index:4}.card-pattern{position:absolute;inset:0;z-index:-1;opacity:.16;background-size:cover;background-position:center;pointer-events:none}.hidden .card-pattern{opacity:.3}
 /* v0.27: "노멀/레어는 됐는데 에픽/레전더리는 더 임팩트 있어야 하지 않냐"는
@@ -115,7 +130,11 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 /* v0.35: compact one-line case rows below the featured card (home screen
    mockup match) -- --scene/--border are set per rarity class the same way
    .card's rarity classes already do (see :root/.normal/.rare/etc above). */
-.case-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+/* v0.49: 8px -> 10px, same "카드/버튼 사이 간격" pass as .stats/
+   .settings-list below -- a touch more breathing room between stacked
+   cards/rows, closer to what apps like 토스/카카오뱅크 use between list
+   items (roughly 8-12px) than the tighter 8px this had across the board. */
+.case-list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
 .case-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--border,var(--line));border-radius:16px;padding:11px 13px;cursor:pointer}
 .case-row-icon{font-size:20px;width:36px;height:36px;border-radius:12px;background:var(--scene,#F6F0E6);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .case-row-text{flex:1;min-width:0}
@@ -125,7 +144,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .normal{--border:var(--normal);--badgeText:#393939;--glow:linear-gradient(120deg,#fff,#ececec);--scene:linear-gradient(160deg,#f9f9f9,#ececec)}.rare{--border:var(--rare);--glow:linear-gradient(120deg,#C9EAFF,#F7FBFF);--scene:linear-gradient(160deg,#E8F6FF,#CDEAFF)}.epic{--border:var(--epic);--glow:linear-gradient(120deg,#E6D1FF,#FFDCFB);--scene:linear-gradient(160deg,#302557,#6C478F)}.legendary{--border:var(--legend);--badgeText:#5E4300;--glow:linear-gradient(120deg,#FFE697,#FFF6C7);--scene:radial-gradient(circle at 50% 28%,#FFF9C6,#F2C43E 65%,#B47913)}
 .hidden{--border:#0AB6D4;--glow:linear-gradient(135deg,#031923,#0A4C67);--scene:radial-gradient(circle at 50% 30%,#104F68,#061A26 75%);background:#071C29;color:#E9FBFF;box-shadow:0 16px 38px rgba(0,31,45,.28)}.hidden.opal{--border:#DDE8FF;--badgeText:#342D46;--glow:linear-gradient(135deg,#FFE9F7,#DFF8FF,#EEE0FF,#FFF6C6);--scene:linear-gradient(145deg,#271E57,#453A84 45%,#B963B6);background:#FBF8FF;color:#342D46}.hidden .detail,.hidden .case-id{color:#B9DFE8}.hidden.opal .detail,.hidden.opal .case-id{color:#675E7E}.hidden .share{color:#E9FBFF;border-color:#23647A;background:#0A2938}.hidden.opal .share{color:#4B4161;background:rgba(255,255,255,.76);border-color:#D8CDE8}
 .featured{transform:translateZ(0)}.featured .card-body{grid-template-columns:1fr 1fr}.featured .scene{min-height:155px}.featured .scene img{width:135px;height:135px}
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{background:white;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 5px 14px rgba(70,50,35,.04)}.stat b{display:block;font-size:23px}.stat span{font-size:11px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.stat{background:white;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 5px 14px rgba(70,50,35,.04)}.stat b{display:block;font-size:23px}.stat span{font-size:11px;color:var(--muted)}
 .archive-progress{background:white;border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}.bar{height:9px;background:#EEE6DC;border-radius:99px;overflow:hidden;margin-top:10px}.bar>i{display:block;height:100%;background:linear-gradient(90deg,#7ABEFF,#A56CFF,#FFD166);border-radius:99px}.archive-item{background:white;border:1px solid var(--line);border-radius:18px;padding:14px 15px;margin:8px 0}.archive-top{display:flex;justify-content:space-between;align-items:center}.archive-name{font-weight:900}.rarity-dots{display:flex;gap:5px;margin-top:9px}.dot{width:25px;height:8px;border-radius:10px;background:#ECE5DD}.dot.on.n{background:var(--normal)}.dot.on.r{background:var(--rare)}.dot.on.e{background:var(--epic)}.dot.on.l{background:var(--legend)}.locked{opacity:.48}.hidden-line{background:linear-gradient(90deg,#071C29,#143D51);color:#E9FBFF;border-color:#19536C}.hidden-line .dot{background:#235164}
 .record-list{margin-top:12px}.record-app{display:flex;align-items:center;justify-content:space-between;padding:12px 2px;border-bottom:1px solid #E8DED3}.record-app b{font-size:13px}.record-app span{font-size:12px;color:var(--muted)}
 /* v0.47: "최근 7일" recap bars (records()/weekRecap()) -- a single-hue
@@ -138,7 +157,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .week-bar{width:100%;max-width:22px;border-radius:6px 6px 3px 3px;background:#6758F5;opacity:.5}
 .week-bar.today{opacity:1}
 .week-bar.empty{background:var(--line);opacity:1}
-.settings-list{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.settings-list{display:flex;flex-direction:column;gap:10px;margin-top:4px}
 .settings-row{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px 14px;cursor:pointer}
 .settings-row.static{cursor:default}
 /* v0.43: director feedback -- "many buttons in settings don't respond when
@@ -204,7 +223,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .detail-share-btn{margin-top:18px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2F2926;color:white;border-radius:999px;padding:10px 15px;font-size:12px;font-weight:800;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .foot{font-size:10px;text-align:center;color:#A4978E;margin-top:28px;letter-spacing:.7px}
-@media(max-width:430px){.app{padding-left:14px;padding-right:14px}.brand h1{font-size:27px}.avatar{width:60px;height:60px}.card-body{grid-template-columns:1.22fr .78fr}.case-title{font-size:22px}.scene{min-height:118px}.scene img{width:98px;height:98px}.daily-strip{gap:5px}.mini-stat{padding:9px 3px}}
+@media(max-width:430px){.app{padding-left:16px;padding-right:16px}.brand h1{font-size:27px}.avatar{width:60px;height:60px}.card-body{grid-template-columns:1.22fr .78fr}.case-title{font-size:22px}.scene{min-height:118px}.scene img{width:98px;height:98px}.daily-strip{gap:6px}.mini-stat{padding:9px 4px}}
 
 /* v0.4 asset integration */
 .brand-logo{height:46px;max-width:220px;object-fit:contain;object-position:left center;display:block}
@@ -277,7 +296,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.48.0';
+const APP_VERSION='0.49.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
