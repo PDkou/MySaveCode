@@ -14,6 +14,25 @@
          toggle on. No exact-alarm permission needed since scheduling uses
          setInexactRepeating(), which requires none. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- v0.62: director feedback ; "가장 오래 본 앱" 이름이 여전히
+         알아보기 힘든 형태로 나온다는 지적. NativeBridge.appLabel()
+         (PackageManager.getApplicationInfo) 자체는 v0.51부터 있었지만,
+         targetSdk 30 이상(이 앱은 36)에서는 안드로이드의 패키지 가시성
+         제한 때문에 매니페스트에 선언되지 않은 다른 앱은 조회 시
+         NameNotFoundException이 나서 사실상 거의 모든 실제 설치 앱에서
+         빈 문자열로 실패, index.html의 compactPkg()가 조용히 예전의
+         읽기 힘든 패키지명 기반 표시로 폴백하고 있었음(코드 자체는
+         v0.51 그대로 정상 동작 ; 이 매니페스트 선언 누락이 실제
+         원인). QUERY_ALL_PACKAGES는 플레이스토어 심사에서 별도 소명이
+         필요한 민감 권한이라 쓰지 않고, 구글이 공식 권장하는 "홈
+         화면에 아이콘이 있는 앱들(=사용자가 실제로 인지하는 앱)만
+         보이게" 하는 <queries> 선언으로 해결. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
     <!-- v0.36: targetSdk 36 (Android 16) readiness pass, director flagged
          that release considerations for newer Android hadn't been looked at
          at all. enableOnBackInvokedCallback opts into the predictive-back
