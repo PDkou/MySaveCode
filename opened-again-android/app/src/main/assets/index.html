@@ -451,7 +451,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.63.0';
+const APP_VERSION='0.64.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1252,15 +1252,22 @@ function openAboutSheet(){
 // docs/BUILD_RELEASE_GUIDE.md). This is an honest technical description of
 // what the code actually does (verified against NativeBridge.kt/
 // UsageEventCollector.kt/DiscoveryRepository.kt this session), NOT
-// reviewed legal copy -- the bracketed placeholders (contact address,
-// effective date) are deliberately left unfilled and MUST be replaced
-// before this app is ever submitted to a store; whoever does that pass
-// should also confirm the copy still matches the code at that time.
+// reviewed legal copy.
+// v0.64: director filled in the two bracketed placeholders this had been
+// left with since v0.47 -- contact email is db5704@gmail.com (director's
+// own instruction: same address the "Hello, Today" app in this monorepo
+// already uses for its own contact/특정商取引法 disclosure, confirmed by
+// reading hellotoday-app/app/src/main/assets/index.html on the
+// origin/HelloToday branch), and the "last updated" date is today's date
+// at the director's own explicit ok ("오늘날짜라도 상관없으면"). Still NOT
+// reviewed legal copy -- whoever does a real legal pass before store
+// submission should re-confirm this date and that the copy still matches
+// the code's actual behavior at that time.
 function openPrivacySheet(){
   const body=l(
-    `<b>수집하는 정보</b><br>안드로이드의 '사용정보 접근' 권한을 통해 제공되는 앱 사용 이벤트(패키지명, 발생 시각, 앱 실행/전환/화면 켜짐·꺼짐/잠금 해제 여부)만 읽습니다. 이름, 연락처, 위치, 메시지 내용, 다른 앱의 실제 콘텐츠는 전혀 수집하지 않습니다.<br><br><b>저장 위치</b><br>모든 기록은 이 기기 안에만 저장됩니다(앱 저장소·SharedPreferences). 외부 서버로 전송되지 않고, 다른 사람이나 회사와 공유되지 않습니다.<br><br><b>권한 사용 목적</b><br>· 사용정보 접근: 오늘의 사건 카드를 만드는 분석에만 사용<br>· 알림: 리마인더 등 인앱 알림 기능에만 사용<br><br><b>데이터 삭제</b><br>설정 → 데이터 관리에서 언제든 기기의 모든 기록을 완전히 삭제할 수 있고, 앱을 삭제하면 남아있던 기록도 함께 삭제됩니다.<br><br><b>문의</b><br>[문의 이메일 주소를 입력하세요]<br><br><span style="color:var(--muted);font-size:11px">최종 수정: [출시 전 날짜를 입력하세요] · 이 화면은 코드 동작 기준 초안이며 스토어 등록 전 검토가 필요합니다.</span>`,
-    `<b>収集する情報</b><br>Androidの「使用状況へのアクセス」権限で得られるアプリ利用イベント(パッケージ名、発生時刻、起動/切替/画面オン・オフ/ロック解除)のみを読み取ります。氏名、連絡先、位置情報、メッセージ内容、他アプリの実際のコンテンツは一切収集しません。<br><br><b>保存場所</b><br>すべての記録はこの端末内にのみ保存されます(アプリストレージ・SharedPreferences)。外部サーバーへは送信されず、第三者と共有されません。<br><br><b>権限の利用目的</b><br>・使用状況へのアクセス: 本日の事件カード作成の分析にのみ使用<br>・通知: リマインダーなどアプリ内通知機能にのみ使用<br><br><b>データの削除</b><br>設定 → データ管理からいつでも端末上の全記録を完全に削除でき、アプリを削除すると残っていた記録も一緒に削除されます。<br><br><b>お問い合わせ</b><br>[問い合わせ用メールアドレスを入力してください]<br><br><span style="color:var(--muted);font-size:11px">最終更新: [公開前に日付を入力してください]・この画面はコードの動作に基づく草案で、ストア申請前にレビューが必要です。</span>`,
-    `<b>Data collected</b><br>Only app usage events provided by Android's Usage Access permission (package name, timestamp, foreground/background/screen on-off/unlock). No name, contacts, location, message content, or other apps' actual content is ever collected.<br><br><b>Where it's stored</b><br>Everything stays on this device (app storage/SharedPreferences). Nothing is sent to a server or shared with anyone.<br><br><b>Why each permission is used</b><br>· Usage Access: only to analyze today's activity into incident cards<br>· Notifications: only for in-app reminders<br><br><b>Deleting your data</b><br>Settings → Data lets you erase everything on this device at any time; uninstalling the app removes it too.<br><br><b>Contact</b><br>[add a contact email]<br><br><span style="color:var(--muted);font-size:11px">Last updated: [add a date before launch] · This draft reflects the code's actual behavior and needs review before any store submission.</span>`
+    `<b>수집하는 정보</b><br>안드로이드의 '사용정보 접근' 권한을 통해 제공되는 앱 사용 이벤트(패키지명, 발생 시각, 앱 실행/전환/화면 켜짐·꺼짐/잠금 해제 여부)만 읽습니다. 이름, 연락처, 위치, 메시지 내용, 다른 앱의 실제 콘텐츠는 전혀 수집하지 않습니다.<br><br><b>저장 위치</b><br>모든 기록은 이 기기 안에만 저장됩니다(앱 저장소·SharedPreferences). 외부 서버로 전송되지 않고, 다른 사람이나 회사와 공유되지 않습니다.<br><br><b>권한 사용 목적</b><br>· 사용정보 접근: 오늘의 사건 카드를 만드는 분석에만 사용<br>· 알림: 리마인더 등 인앱 알림 기능에만 사용<br><br><b>데이터 삭제</b><br>설정 → 데이터 관리에서 언제든 기기의 모든 기록을 완전히 삭제할 수 있고, 앱을 삭제하면 남아있던 기록도 함께 삭제됩니다.<br><br><b>문의</b><br>db5704@gmail.com<br><br><span style="color:var(--muted);font-size:11px">최종 수정: 2026년 9월 14일 · 이 화면은 코드 동작 기준 초안이며 스토어 등록 전 검토가 필요합니다.</span>`,
+    `<b>収集する情報</b><br>Androidの「使用状況へのアクセス」権限で得られるアプリ利用イベント(パッケージ名、発生時刻、起動/切替/画面オン・オフ/ロック解除)のみを読み取ります。氏名、連絡先、位置情報、メッセージ内容、他アプリの実際のコンテンツは一切収集しません。<br><br><b>保存場所</b><br>すべての記録はこの端末内にのみ保存されます(アプリストレージ・SharedPreferences)。外部サーバーへは送信されず、第三者と共有されません。<br><br><b>権限の利用目的</b><br>・使用状況へのアクセス: 本日の事件カード作成の分析にのみ使用<br>・通知: リマインダーなどアプリ内通知機能にのみ使用<br><br><b>データの削除</b><br>設定 → データ管理からいつでも端末上の全記録を完全に削除でき、アプリを削除すると残っていた記録も一緒に削除されます。<br><br><b>お問い合わせ</b><br>db5704@gmail.com<br><br><span style="color:var(--muted);font-size:11px">最終更新: 2026年9月14日・この画面はコードの動作に基づく草案で、ストア申請前にレビューが必要です。</span>`,
+    `<b>Data collected</b><br>Only app usage events provided by Android's Usage Access permission (package name, timestamp, foreground/background/screen on-off/unlock). No name, contacts, location, message content, or other apps' actual content is ever collected.<br><br><b>Where it's stored</b><br>Everything stays on this device (app storage/SharedPreferences). Nothing is sent to a server or shared with anyone.<br><br><b>Why each permission is used</b><br>· Usage Access: only to analyze today's activity into incident cards<br>· Notifications: only for in-app reminders<br><br><b>Deleting your data</b><br>Settings → Data lets you erase everything on this device at any time; uninstalling the app removes it too.<br><br><b>Contact</b><br>db5704@gmail.com<br><br><span style="color:var(--muted);font-size:11px">Last updated: September 14, 2026 · This draft reflects the code's actual behavior and needs review before any store submission.</span>`
   );
   document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('개인정보처리방침','プライバシーポリシー','Privacy policy')}</div><p style="font-size:13px;line-height:1.7;color:var(--ink);margin:4px 0 0">${body}</p></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
 }
