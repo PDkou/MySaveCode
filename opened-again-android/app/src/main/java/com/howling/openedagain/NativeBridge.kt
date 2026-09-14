@@ -38,10 +38,34 @@ class NativeBridge(
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
+    // v0.55: director feedback -- "알림 허용 하는거 누를때 이 앱이
+    // 어디에 있는지 표시하는 기능도 있었으면" -- turned out (confirmed
+    // with the director) to mean the USAGE ACCESS permission specifically:
+    // ACTION_USAGE_ACCESS_SETTINGS dumps every installed app into one long
+    // system list with no way to tell which row is this one, so finding
+    // "또 열었네?" in it is genuinely hard. Two-part fix: (1) try jumping
+    // straight to this app's own row via the `package:` data URI some
+    // Android versions/OEMs honor for this action (undocumented but widely
+    // relied on -- silently falls back to the plain list-only intent if a
+    // device throws on it, e.g. no matching activity for that data URI);
+    // (2) either way, a native Toast (survives the switch away from the
+    // WebView into Settings, unlike an in-page HTML toast) names the exact
+    // app label to look for, so even where (1) doesn't jump directly the
+    // user knows what they're hunting for. Language mirrors setLanguage()'s
+    // own SharedPreferences flag, same as DailyReminderReceiver's notification
+    // text -- index.html's own state.settings.language isn't reachable here.
     @JavascriptInterface
     fun openUsageSettings() {
         activity.runOnUiThread {
-            activity.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            val lang = activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).getString("language", "ko")
+            val appName = if (lang == "ja") "また開いた？" else "또 열었네?"
+            val guide = if (lang == "ja") "\"${appName}\"を探してオンにしてください" else "\"${appName}\"를 찾아 켜주세요"
+            android.widget.Toast.makeText(activity, guide, android.widget.Toast.LENGTH_LONG).show()
+            val directIntent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                data = android.net.Uri.parse("package:${activity.packageName}")
+            }
+            runCatching { activity.startActivity(directIntent) }
+                .onFailure { activity.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
         }
     }
 
