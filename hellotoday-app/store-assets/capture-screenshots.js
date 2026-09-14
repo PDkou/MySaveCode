@@ -36,7 +36,7 @@ const LOCALES = {
     outDir: 'screenshots',
     googleFont: { family: 'Noto+Sans+KR:wght@400;500;700|Noto+Serif+KR:wght@500;600;700' },
     people: [
-      { name: '엄마', relation: '가족', memo: '다음 주에 병원 같이 가기로 했다고 하셨음' },
+      { name: '엄마', relation: '가족', memo: '다음 주에 같이 병원 가기로 했어요.' },
       { name: '민수', relation: '친구', memo: '' }
     ]
   },
