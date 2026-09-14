@@ -170,6 +170,19 @@
   리마인더, `ReminderScheduler`/`DailyReminderReceiver`)이 생겨서 이 권한을
   실제로 사용하기 시작함. 자세한 내용은 `docs/DEVELOPMENT_HISTORY.md` v0.47 참고.
 - release signing / AAB / closed test
+- **수익화 1단계(v0.65) — director 준비 필요**: 배너/전면 광고(AdMob)와
+  "광고 제거" 1회성 인앱결제(Google Play Billing) 코드는 완성됐지만,
+  전부 구글 공식 테스트 ID로만 동작함(`ca-app-pub-3940256099942544~...`
+  등, 실제 광고/수익 발생 없음). 스토어 출시 전 director가 직접 해야
+  할 것: (1) admob.google.com에서 실제 앱 등록 후 진짜 App ID +
+  배너/전면 광고 단위 ID 발급 → `AndroidManifest.xml`의 메타데이터와
+  `AdManager.kt`의 두 ID 상수를 교체, (2) Play Console → 수익 창출 →
+  제품 → 인앱 상품에서 `remove_ads`라는 이름의 1회성(non-consumable)
+  상품을 실제로 생성(안 하면 구매 버튼이 "상품 없음" 오류로 항상
+  실패). 코스메틱 보너스(감독이 "1번" 옵션에서 언급한 소소한 보상)
+  자체 콘텐츠는 아직 미정 — 별도 디자인 결정 필요. 개별/팩 단위
+  코스메틱 인앱결제(옵션 3)는 감독 지시대로 "앱이 커지면" 재검토,
+  지금은 보류.
 
 ## 기술 부채
 - WebView JS와 Android strings.xml의 문자열 소스가 중복될 수 있음

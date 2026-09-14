@@ -23,7 +23,9 @@ import java.time.ZoneId
  */
 class NativeBridge(
     private val activity: Activity,
-    private val discovery: DiscoveryRepository
+    private val discovery: DiscoveryRepository,
+    private val adManager: AdManager,
+    private val billingManager: BillingManager
 ) {
     private val backupFile = File(activity.filesDir, "opened_again_backup.json")
 
@@ -199,9 +201,43 @@ class NativeBridge(
     // that decision entirely (window.onNativeBackPressed() always returns
     // true, see its own comment) -- this is the one path that still
     // actually finishes the Activity once the user has confirmed.
+    // v0.65: director-approved monetization -- an interstitial ad is shown
+    // once here, right as the user confirms "종료", before the Activity
+    // actually finishes (skipped entirely if ads are removed, or none is
+    // loaded yet -- see AdManager.showExitInterstitialThenFinish()).
     @JavascriptInterface
     fun exitApp() {
-        activity.runOnUiThread { activity.finish() }
+        activity.runOnUiThread {
+            adManager.showExitInterstitialThenFinish { activity.finish() }
+        }
+    }
+
+    // v0.65: director-approved monetization -- index.html's render() calls
+    // this (via its syncBannerVisibility() helper) on every render so the
+    // native banner only shows on the Records/Archive tabs, and never while
+    // the detail page, the daily reveal, or onboarding is covering them.
+    @JavascriptInterface
+    fun setBannerVisible(visible: Boolean) {
+        adManager.setBannerVisible(visible)
+    }
+
+    // index.html's settings "광고 제거" row reads this to show either a
+    // "구매하기" or "구매 완료" state.
+    @JavascriptInterface
+    fun isAdsRemoved(): Boolean = billingManager.isAdsRemoved()
+
+    // index.html's settings "광고 제거" row's tap handler when not yet purchased.
+    @JavascriptInterface
+    fun purchaseRemoveAds() {
+        billingManager.purchaseRemoveAds()
+    }
+
+    // index.html's settings "구매 복원" row -- lets a returning/reinstalled
+    // user re-apply a purchase already made on their Play account, without
+    // needing to pay again.
+    @JavascriptInterface
+    fun restorePurchases() {
+        billingManager.restorePurchases()
     }
 
     // v0.47: complement to resetAllData() -- lets the user pull their own

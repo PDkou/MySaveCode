@@ -34,8 +34,8 @@ android {
         applicationId = "com.howling.openedagain"
         minSdk = 29
         targetSdk = 36
-        versionCode = 64
-        versionName = "0.64.0"
+        versionCode = 65
+        versionName = "0.65.0"
     }
 
     buildTypes {
@@ -67,4 +67,11 @@ dependencies {
     // dependencies (bare android.app.Activity, no AppCompat); this is the
     // one narrow addition needed for that fix.
     implementation("androidx.core:core:1.13.1")
+    // v0.65: director-approved monetization -- banner/interstitial ads
+    // (AdManager.kt) and the one-time "remove ads" purchase (BillingManager.kt).
+    // Both are Google's own current stable lines; play-services-ads pulls in
+    // its own network stack (needs the new INTERNET/ACCESS_NETWORK_STATE
+    // manifest permissions -- see AndroidManifest.xml's v0.65 comment).
+    implementation("com.google.android.gms:play-services-ads:23.6.0")
+    implementation("com.android.billingclient:billing-ktx:7.1.1")
 }

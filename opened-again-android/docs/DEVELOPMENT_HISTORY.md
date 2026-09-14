@@ -2365,3 +2365,94 @@ v0.63에서 플래그했던 개인정보처리방침 시트의 `[문의 이메�
 회귀 스위트 재확인, 콘솔 에러 0건. `docs/OPEN_ISSUES_AND_NEXT.md`도
 갱신(체크리스트의 "법무 검토" 부분만 남기고 자리표시자 항목은 해결
 처리).
+
+## v0.65 — 수익화 1단계: 광고 제거 인앱결제 + 배너/전면 광고 (감독 지시)
+감독의 명시적 지시: "1번으로 하는데 2번도 적용해 그리고 보관이랑
+기록만이아니라 스마트폰 물리적인 뒤로가기 버튼누를 때 나오는 앱
+종료하시겠습니까 에도 넣으면 좋을듯 좀 커지면 3번도 생각해보는것도
+나쁘지 않다고 생가갛ㅁ" -- 앞서 제시한 4가지 수익화안 중 1번(광고
+제거 + 소소한 코스메틱 보너스 1회성 인앱결제)과 2번(배너 광고)을
+함께 적용하되, 배너는 기록/보관함 탭뿐 아니라 뒤로가기 종료 확인
+화면에도 광고를 넣고, 3번(개별 코스메틱 인앱결제)은 "앱이 좀
+커지면" 나중에 고려하기로 명확히 보류.
+
+이 앱은 v0.64까지 완전히 오프라인이었던 첫 네트워크 권한 추가라
+아키텍처적으로 이번 세션 중 가장 큰 변화. 광고망은 감독과 별도로
+확정한 이름은 아니지만 업계 표준인 Google AdMob으로, 결제는 Google
+Play Billing으로 진행(둘 다 안드로이드에서 사실상 유일하게 합리적인
+선택).
+
+**1. 배너 광고 (기록/보관함 탭 전용)**: `AdManager.kt`(신규) -- AdMob
+SDK 초기화, 배너 `AdView` 생성/부착. `MainActivity.kt`의
+`setContentView(webView)`(WebView 하나만 전체 화면을 차지하던 구조)를
+수직 `LinearLayout`(WebView weight=1 + 배너용 `FrameLayout`, 기본
+GONE)으로 재구성 -- 네이티브 배너는 WebView의 HTML/JS 안에 넣을 수
+없는 진짜 Android View라 이 구조 변경이 필요했음. index.html의
+`render()`에 `syncBannerVisibility()` 헬퍼를 추가해서 매 렌더링마다
+"현재 탭이 기록/보관함이면서 상세페이지/리빌/온보딩 오버레이가 아무
+것도 안 덮여 있을 때"만 `N.setBannerVisible(true)`를 호출 --
+`setTab()`만 훅으로 쓰면 온보딩/리빌/상세페이지처럼 `setTab()`을
+거치지 않고 `#app`을 통째로 갈아치우는 화면 전환을 놓치므로 `render()`
+자체에 넣음(디테일 페이지를 열고 닫는 왕복까지 Playwright로 직접
+검증).
+
+**2. 뒤로가기 종료 확인 화면의 전면 광고**: `NativeBridge.kt`의
+`exitApp()`을 바로 `finish()`하던 것에서
+`AdManager.showExitInterstitialThenFinish { activity.finish() }`로
+변경 -- 로드된 전면 광고가 있으면 보여주고 닫힌 뒤에, 없거나(오프라인,
+아직 로드 전) 광고 제거를 구매했으면 즉시 `finish()`. index.html의
+`openExitConfirm()` 자체는 변경 없음(네이티브 쪽에서만 처리).
+
+**3. "광고 제거" 1회성 인앱결제**: `BillingManager.kt`(신규) -- Google
+Play Billing으로 `remove_ads` 상품(1회성/non-consumable)을 조회 →
+구매 → 승인(acknowledge, 3일 내 필수) → `SharedPreferences`("app_prefs",
+기존 언어 설정과 같은 파일)에 `ads_removed` 플래그로 영구 저장 → 앱
+시작 시 `queryPurchasesAsync`로 재설치/기기 변경 시에도 복원. 설정
+화면에 "광고 제거"(미구매 시 탭해서 구매, 구매 완료 시 정적 행으로
+전환)와 "구매 복원" 행 추가 -- 구매 결과는 네이티브 Play 결제창을
+거쳐 비동기로 오므로 JS에 직접 콜백을 만들지 않고, 기존
+`onNativeResume=refresh()`가 앱 복귀 시 어차피 다시 렌더링하는 흐름을
+그대로 활용(설정 탭이 열려 있으면 `N.isAdsRemoved()`를 매번 새로
+읽음). 코스메틱 보너스 자체 내용은 이번 버전에 포함 안 함(디자인
+결정이 더 필요, 별도 후속 작업).
+
+**4. 개인정보처리방침 갱신**: v0.64까지의 "모든 기록은 이 기기 안에만
+저장되고 외부 서버로 전송되지 않는다"는 문구가 광고 SDK/결제 SDK의
+네트워크 통신 때문에 더 이상 정확하지 않게 되어, "광고 및
+인앱결제" 섹션을 새로 추가(AdMob/Play Billing이 별도의 구글 서비스이며
+인터넷 연결과 광고 식별자 등 기기 정보를 다룰 수 있다는 점을 명시,
+단 이 앱이 직접 만드는 사용 기록 자체는 여전히 기기 밖으로 나가지
+않는다는 점은 구분해서 명확히 함). 한국어/일본어/영어 3개 언어 모두
+반영.
+
+**아직 실제 코드로 처리할 수 없는 것 (director가 직접 준비해야 함)**:
+- 실제 AdMob 계정 + App ID + 배너/전면 광고 단위 ID (admob.google.com
+  에서 앱 등록 후 발급) -- 지금은 구글 공식 테스트 ID
+  (`ca-app-pub-3940256099942544~3347511713` 등)로 개발/검증만 해둠,
+  테스트 모드라 실제 광고도 실제 수익도 발생하지 않음.
+- Play Console에 `remove_ads`라는 이름의 1회성 인앱상품을 실제로
+  만들어야 구매 플로우가 실제로 동작함(그전까지는 "상품 없음" 오류로
+  실패).
+
+매니페스트에 `INTERNET`/`ACCESS_NETWORK_STATE` 권한과 AdMob
+`APPLICATION_ID` 메타데이터 추가, `app/build.gradle.kts`에
+`play-services-ads`/`billing-ktx` 의존성 추가. XML 주석에 리터럴
+`--`가 들어가는 걸 이번에도 초안 작성 중 두 번 발견해서(v0.62와 같은
+종류의 실수) `python3 -c "import xml.etree.ElementTree..."` +
+리터럴 `--` 정규식 스캔으로 push 전에 잡아서 수정.
+
+버전 65/0.65.0. 검증: (a) JS 쪽은 Playwright로 전부 확인 --
+기록/보관함 탭 전환 시 배너 표시(true/false), 상세페이지 진입/이탈
+시 배너 숨김/재표시, 설정 탭의 "광고 제거"/"구매 복원" 행 렌더링,
+`purchaseRemoveAds()`/`restorePurchases()`가 네이티브 브릿지를
+정확히 1회씩 호출하는 것, 구매 완료 상태로 전환 시 행이 "구매
+완료"로 바뀌고 "구매 복원" 행이 사라지는 것, 개인정보처리방침 새
+섹션 노출, 기존 종료 확인 시트 정상 동작(네이티브 전용 변경이라 JS는
+그대로) -- 콘솔 에러 0건. CSS 룰 개수도 재확인(213개, 기존 기준선
+유지, 이번엔 CSS 자체를 안 건드렸지만 회귀 확인 습관상 재확인).
+(b) Kotlin(AdManager/BillingManager/MainActivity/NativeBridge)은 이
+샌드박스에 Android SDK/Gradle 의존성 접근이 없어(기존에 문서화된
+제약) 로컬 컴파일은 불가 -- 중괄호/괄호 균형 확인 + 코드 리뷰로
+직접 검토 후, `.github/workflows/build-opened-again-gradle.yml`(실제
+`gradle :core:test :app:assembleDebug`를 수행하는 유일한 곳) CI로
+최종 컴파일 검증.

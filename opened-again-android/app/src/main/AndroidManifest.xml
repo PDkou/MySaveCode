@@ -14,6 +14,17 @@
          toggle on. No exact-alarm permission needed since scheduling uses
          setInexactRepeating(), which requires none. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- v0.65: director-approved monetization plan (수익화 방안) ;
+         1) 광고 제거 + 소소한 코스메틱 보너스 1회성 인앱결제, 2) 기록/
+         보관함 탭 + 뒤로가기 종료 확인 화면의 배너/전면 광고. AdMob
+         (com.google.android.gms:play-services-ads, AdManager.kt)과 Google
+         Play Billing(com.android.billingclient:billing-ktx,
+         BillingManager.kt) 모두 네트워크 접근이 필요 ; 이 앱은 v0.64까지
+         완전히 오프라인이었으므로 이번이 첫 네트워크 권한 추가.
+         ACCESS_NETWORK_STATE는 광고 SDK가 연결 상태에 따라 요청을
+         스킵/재시도하기 위해 관례적으로 함께 선언. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- v0.62: director feedback ; "가장 오래 본 앱" 이름이 여전히
          알아보기 힘든 형태로 나온다는 지적. NativeBridge.appLabel()
          (PackageManager.getApplicationInfo) 자체는 v0.51부터 있었지만,
@@ -43,6 +54,18 @@
          OnBackInvokedCallback the platform's compatibility path still
          calls it, so this is a behavior-preserving opt-in, not a rewrite. -->
     <application android:theme="@style/AppTheme" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:enableOnBackInvokedCallback="true">
+        <!-- v0.65: REQUIRED by the Google Mobile Ads SDK ; it refuses to
+             initialize without this meta-data and crashes at MobileAds.initialize().
+             This is Google's own official TEST App ID (safe to ship while
+             developing/testing; renders real test-mode ad creative with zero
+             real-money/policy risk). MUST be swapped for the director's own
+             real AdMob App ID (from admob.google.com, after creating the app
+             there) before this can show real ads / earn real revenue ; see
+             AdManager.kt's own header comment for the matching ad-unit-ID
+             placeholders that need the same swap. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

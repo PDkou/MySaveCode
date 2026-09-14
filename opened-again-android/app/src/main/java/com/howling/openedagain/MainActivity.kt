@@ -5,14 +5,27 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.window.OnBackInvokedDispatcher
 import com.howling.openedagain.data.DiscoveryRepository
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
+
+    // v0.65: director-approved monetization -- see AdManager.kt/BillingManager.kt
+    // for the full plan. Both are created here (not lazily in NativeBridge)
+    // since they need Activity lifecycle/UI access (a real View for the
+    // banner, launchBillingFlow() needs the Activity itself); NativeBridge
+    // just forwards JS calls to them.
+    lateinit var adManager: AdManager
+        private set
+    lateinit var billingManager: BillingManager
+        private set
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +57,15 @@ class MainActivity : Activity() {
             window.navigationBarColor = Color.rgb(250, 246, 237)
         }
 
+        // v0.65: created before the WebView below since NativeBridge (wired
+        // into the WebView right after) needs both to forward JS calls to.
+        // isAdsRemoved is a lambda rather than a direct call so AdManager
+        // always reads BillingManager's current persisted flag, not a
+        // snapshot taken before BillingManager finishes its own async
+        // restorePurchases() check on cold start.
+        billingManager = BillingManager(this) { removed -> if (removed) adManager.onAdsRemoved() }
+        adManager = AdManager(this) { billingManager.isAdsRemoved() }
+
         webView = WebView(this).apply {
             setBackgroundColor(Color.rgb(250, 246, 237))
             settings.javaScriptEnabled = true
@@ -61,7 +83,10 @@ class MainActivity : Activity() {
             settings.textZoom = 100
             webViewClient = WebViewClient()
             webChromeClient = WebChromeClient()
-            addJavascriptInterface(NativeBridge(this@MainActivity, DiscoveryRepository(this@MainActivity)), "OpenedAgainNative")
+            addJavascriptInterface(
+                NativeBridge(this@MainActivity, DiscoveryRepository(this@MainActivity), adManager, billingManager),
+                "OpenedAgainNative"
+            )
             // v0.48: director feedback -- the screen kept scrolling/bouncing
             // even on short content that doesn't need to scroll (the
             // incident detail page, for one) -- Android WebView's default
@@ -71,7 +96,31 @@ class MainActivity : Activity() {
             overScrollMode = View.OVER_SCROLL_NEVER
             loadUrl("file:///android_asset/index.html")
         }
-        setContentView(webView)
+
+        // v0.65: was a bare `setContentView(webView)` -- restructured into a
+        // vertical LinearLayout so a native banner AdView can sit below the
+        // WebView (an AdView is a real Android View, not something that can
+        // live inside the WebView's own HTML/JS content). The WebView takes
+        // all leftover space (weight 1) so the banner container -- hidden by
+        // default, only shown on the Records/Archive tabs, see
+        // AdManager.setBannerVisible() -- never steals layout space from the
+        // WebView while it's empty.
+        val bannerContainer = FrameLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            visibility = View.GONE
+        }
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(webView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+            addView(bannerContainer)
+        }
+        setContentView(root)
+        adManager.attachBannerContainer(bannerContainer)
+        adManager.init()
+        billingManager.start()
 
         // v0.48: director feedback (real device) -- the hardware back
         // button still just exited the app despite v0.43's fix below.

@@ -451,7 +451,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.64.0';
+const APP_VERSION='0.65.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1157,18 +1157,47 @@ function settings(){
   const row=(icon,title,sub,onclick,clickable=true)=>`<div class="settings-row${clickable?'':' static'}"${onclick?` onclick="${onclick}"`:''}>${icon}<div class="settings-row-text"><b>${title}</b><span>${sub}</span></div>${clickable?'<span class="settings-chevron">›</span>':''}</div>`;
   const iconImg=name=>`<img src="visual/ui/icons/unlabeled/icon_${name}.png" alt="">`;
   const iconEmoji=e=>`<span class="settings-emoji">${e}</span>`;
+  // v0.65: director-approved monetization -- one-time "remove ads" purchase
+  // (option 1 of the discussed plan). Reads fresh on every render so it
+  // reflects BillingManager's persisted flag as soon as a purchase/restore
+  // completes and the app re-renders (onNativeResume -> refresh() -> render()
+  // covers returning from the native Play Billing purchase sheet; no extra
+  // native-to-JS push needed). Defaults to "not removed" in preview/no-N
+  // contexts, same fallback style as hasAccess above.
+  let adsRemoved=false;try{adsRemoved=N&&N.isAdsRemoved?N.isAdsRemoved():false}catch(e){}
+  const adsRow=adsRemoved
+    ? row(iconEmoji('🚫'),l('광고 제거','広告を削除','Remove ads'),l('구매 완료 · 광고가 표시되지 않습니다','購入済み · 広告は表示されません','Purchased -- ads are hidden'),null,false)
+    : row(iconEmoji('🚫'),l('광고 제거','広告を削除','Remove ads'),l('탭해서 구매하기 (배너·전면 광고 제거)','タップして購入(バナー・全画面広告を削除)','Tap to buy (removes banner & interstitial ads)'),'purchaseRemoveAds()');
   return `<div class="section-title"><h2>${l('설정','設定','Settings')}</h2></div><div class="settings-list">
 ${row(iconImg('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','cycleLang()')}
 ${row(iconImg('notification'),l('알림 권한','通知許可','Notifications'),l('탭해서 허용하기','タップして許可','Tap to allow'),'N&&N.requestNotificationPermission()')}
 ${row(iconEmoji('⏰'),l('일일 리마인더','デイリーリマインダー','Daily reminder'),state.settings.dailyReminder?l(`매일 ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}에 알림 · 탭해서 변경`,`毎日${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}に通知 · タップで変更`,`Notifies daily at ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')} -- tap to change`):l('꺼짐 · 탭해서 켜기','オフ · タップでオン','Off -- tap to turn on'),'openReminderSheet()')}
 ${row(iconEmoji('📊'),l('사용정보 접근','使用状況へのアクセス','Usage access'),accessLabel,'N&&N.openUsageSettings()')}
 ${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),"toast(l('다른 테마는 준비 중입니다','他のテーマは準備中です','More themes are coming soon'))")}
+${adsRow}
+${adsRemoved?'':row(iconEmoji('♻️'),l('구매 복원','購入の復元','Restore purchase'),l('다른 기기/재설치 시 여기서 복원하세요','別端末・再インストール時はここで復元','Restore a purchase after reinstalling or on a new device'),'restorePurchases()')}
 ${row(iconEmoji('💾'),l('데이터 관리','データ管理','Data'),l('탭해서 초기화하기','タップして初期化','Tap to reset'),'openResetConfirm()')}
 ${row(iconEmoji('📤'),l('데이터 내보내기','データのエクスポート','Export data'),l('백업 파일로 저장/공유하기','バックアップファイルとして保存・共有','Save or share as a backup file'),'exportBackupData()')}
 ${row(iconEmoji('❓'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),'openHelpSheet()')}
 ${row(iconEmoji('🔒'),l('개인정보처리방침','プライバシーポリシー','Privacy policy'),l('어떤 정보를 어떻게 다루는지','どんな情報をどう扱うか','What data is handled and how'),'openPrivacySheet()')}
 ${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v'+APP_VERSION,'openAboutSheet()')}
 </div>`
+}
+// v0.65: director-approved monetization -- settings' "광고 제거" row tap
+// handler. The actual purchase result comes back asynchronously to the
+// native side (Play Billing's own purchase sheet + PurchasesUpdatedListener,
+// see BillingManager.kt) with no direct callback into JS, so this only
+// kicks the flow off and gives immediate feedback that the tap registered;
+// the row itself flips to "구매 완료" the next time settings() renders
+// (onNativeResume already re-renders on returning from that purchase sheet).
+function purchaseRemoveAds(){
+  if(preview||!N){toast(l('미리보기에서는 구매를 진행할 수 없습니다.','プレビューでは購入できません。','Purchases are disabled in preview.'));return}
+  try{N.purchaseRemoveAds&&N.purchaseRemoveAds()}catch(e){}
+}
+function restorePurchases(){
+  if(preview||!N){toast(l('미리보기에서는 복원을 진행할 수 없습니다.','プレビューでは復元できません。','Restoring is disabled in preview.'));return}
+  try{N.restorePurchases&&N.restorePurchases()}catch(e){}
+  toast(l('구매 내역을 확인하고 있습니다...','購入履歴を確認しています…','Checking your purchase history...'));
 }
 // v0.43: destructive, so it goes through a confirmation sheet rather than
 // firing on the first tap -- reuses the same #overlay/.modal/.sheet pattern
@@ -1253,6 +1282,17 @@ function openAboutSheet(){
 // what the code actually does (verified against NativeBridge.kt/
 // UsageEventCollector.kt/DiscoveryRepository.kt this session), NOT
 // reviewed legal copy.
+// v0.65: director-approved monetization made the previous "모든 기록은 이
+// 기기 안에만 저장됩니다... 외부 서버로 전송되지 않고" claim materially
+// inaccurate -- AdMob (banner/interstitial ads) and Google Play Billing
+// (the one-time "remove ads" purchase) both make their own network calls
+// and are third-party Google services, unlike this app's own usage-data
+// analysis (which genuinely still never leaves the device). Added a new
+// "광고 및 인앱결제" section disclosing this plainly instead of silently
+// leaving the old on-device-only claim standing now that it's no longer
+// true for these two features specifically -- still scoped to "what data
+// AdMob/Play Billing may see," not our own analysis data, which this
+// section is careful to say remains untouched.
 // v0.64: director filled in the two bracketed placeholders this had been
 // left with since v0.47 -- contact email is db5704@gmail.com (director's
 // own instruction: same address the "Hello, Today" app in this monorepo
@@ -1265,9 +1305,9 @@ function openAboutSheet(){
 // the code's actual behavior at that time.
 function openPrivacySheet(){
   const body=l(
-    `<b>수집하는 정보</b><br>안드로이드의 '사용정보 접근' 권한을 통해 제공되는 앱 사용 이벤트(패키지명, 발생 시각, 앱 실행/전환/화면 켜짐·꺼짐/잠금 해제 여부)만 읽습니다. 이름, 연락처, 위치, 메시지 내용, 다른 앱의 실제 콘텐츠는 전혀 수집하지 않습니다.<br><br><b>저장 위치</b><br>모든 기록은 이 기기 안에만 저장됩니다(앱 저장소·SharedPreferences). 외부 서버로 전송되지 않고, 다른 사람이나 회사와 공유되지 않습니다.<br><br><b>권한 사용 목적</b><br>· 사용정보 접근: 오늘의 사건 카드를 만드는 분석에만 사용<br>· 알림: 리마인더 등 인앱 알림 기능에만 사용<br><br><b>데이터 삭제</b><br>설정 → 데이터 관리에서 언제든 기기의 모든 기록을 완전히 삭제할 수 있고, 앱을 삭제하면 남아있던 기록도 함께 삭제됩니다.<br><br><b>문의</b><br>db5704@gmail.com<br><br><span style="color:var(--muted);font-size:11px">최종 수정: 2026년 9월 14일 · 이 화면은 코드 동작 기준 초안이며 스토어 등록 전 검토가 필요합니다.</span>`,
-    `<b>収集する情報</b><br>Androidの「使用状況へのアクセス」権限で得られるアプリ利用イベント(パッケージ名、発生時刻、起動/切替/画面オン・オフ/ロック解除)のみを読み取ります。氏名、連絡先、位置情報、メッセージ内容、他アプリの実際のコンテンツは一切収集しません。<br><br><b>保存場所</b><br>すべての記録はこの端末内にのみ保存されます(アプリストレージ・SharedPreferences)。外部サーバーへは送信されず、第三者と共有されません。<br><br><b>権限の利用目的</b><br>・使用状況へのアクセス: 本日の事件カード作成の分析にのみ使用<br>・通知: リマインダーなどアプリ内通知機能にのみ使用<br><br><b>データの削除</b><br>設定 → データ管理からいつでも端末上の全記録を完全に削除でき、アプリを削除すると残っていた記録も一緒に削除されます。<br><br><b>お問い合わせ</b><br>db5704@gmail.com<br><br><span style="color:var(--muted);font-size:11px">最終更新: 2026年9月14日・この画面はコードの動作に基づく草案で、ストア申請前にレビューが必要です。</span>`,
-    `<b>Data collected</b><br>Only app usage events provided by Android's Usage Access permission (package name, timestamp, foreground/background/screen on-off/unlock). No name, contacts, location, message content, or other apps' actual content is ever collected.<br><br><b>Where it's stored</b><br>Everything stays on this device (app storage/SharedPreferences). Nothing is sent to a server or shared with anyone.<br><br><b>Why each permission is used</b><br>· Usage Access: only to analyze today's activity into incident cards<br>· Notifications: only for in-app reminders<br><br><b>Deleting your data</b><br>Settings → Data lets you erase everything on this device at any time; uninstalling the app removes it too.<br><br><b>Contact</b><br>db5704@gmail.com<br><br><span style="color:var(--muted);font-size:11px">Last updated: September 14, 2026 · This draft reflects the code's actual behavior and needs review before any store submission.</span>`
+    `<b>수집하는 정보</b><br>안드로이드의 '사용정보 접근' 권한을 통해 제공되는 앱 사용 이벤트(패키지명, 발생 시각, 앱 실행/전환/화면 켜짐·꺼짐/잠금 해제 여부)만 읽습니다. 이름, 연락처, 위치, 메시지 내용, 다른 앱의 실제 콘텐츠는 전혀 수집하지 않습니다.<br><br><b>저장 위치</b><br>모든 기록은 이 기기 안에만 저장됩니다(앱 저장소·SharedPreferences). 외부 서버로 전송되지 않고, 다른 사람이나 회사와 공유되지 않습니다.<br><br><b>권한 사용 목적</b><br>· 사용정보 접근: 오늘의 사건 카드를 만드는 분석에만 사용<br>· 알림: 리마인더 등 인앱 알림 기능에만 사용<br><br><b>광고 및 인앱결제</b><br>기록/보관함 화면과 앱 종료 확인 화면에는 Google AdMob 광고가 표시될 수 있고, '광고 제거' 구매는 Google Play 결제 시스템을 통해 처리됩니다. 이 두 기능은 Google의 서비스이며, 위에서 설명한 사용정보 분석 기록과는 별개로 인터넷 연결이 필요하고 Google의 자체 정책에 따라 광고 식별자 등 기기 정보를 처리할 수 있습니다. 이 앱이 직접 수집하는 사용 기록 자체는 여전히 기기 밖으로 전송되지 않습니다. '광고 제거'를 구매하면 이 기기에서 광고 표시가 모두 중단됩니다.<br><br><b>데이터 삭제</b><br>설정 → 데이터 관리에서 언제든 기기의 모든 기록을 완전히 삭제할 수 있고, 앱을 삭제하면 남아있던 기록도 함께 삭제됩니다.<br><br><b>문의</b><br>db5704@gmail.com<br><br><span style="color:var(--muted);font-size:11px">최종 수정: 2026년 9월 14일 · 이 화면은 코드 동작 기준 초안이며 스토어 등록 전 검토가 필요합니다.</span>`,
+    `<b>収集する情報</b><br>Androidの「使用状況へのアクセス」権限で得られるアプリ利用イベント(パッケージ名、発生時刻、起動/切替/画面オン・オフ/ロック解除)のみを読み取ります。氏名、連絡先、位置情報、メッセージ内容、他アプリの実際のコンテンツは一切収集しません。<br><br><b>保存場所</b><br>すべての記録はこの端末内にのみ保存されます(アプリストレージ・SharedPreferences)。外部サーバーへは送信されず、第三者と共有されません。<br><br><b>権限の利用目的</b><br>・使用状況へのアクセス: 本日の事件カード作成の分析にのみ使用<br>・通知: リマインダーなどアプリ内通知機能にのみ使用<br><br><b>広告とアプリ内課金</b><br>記録・保管庫画面と終了確認画面にはGoogle AdMobの広告が表示される場合があり、「広告を削除」の購入はGoogle Playの決済システムで処理されます。この2つはGoogleのサービスであり、上記の利用状況分析とは別にインターネット接続が必要で、Google自身のポリシーに従って広告識別子など端末情報を扱う場合があります。このアプリが直接収集する利用記録自体は引き続き端末外へ送信されません。「広告を削除」を購入すると、この端末での広告表示はすべて停止します。<br><br><b>データの削除</b><br>設定 → データ管理からいつでも端末上の全記録を完全に削除でき、アプリを削除すると残っていた記録も一緒に削除されます。<br><br><b>お問い合わせ</b><br>db5704@gmail.com<br><br><span style="color:var(--muted);font-size:11px">最終更新: 2026年9月14日・この画面はコードの動作に基づく草案で、ストア申請前にレビューが必要です。</span>`,
+    `<b>Data collected</b><br>Only app usage events provided by Android's Usage Access permission (package name, timestamp, foreground/background/screen on-off/unlock). No name, contacts, location, message content, or other apps' actual content is ever collected.<br><br><b>Where it's stored</b><br>Everything stays on this device (app storage/SharedPreferences). Nothing is sent to a server or shared with anyone.<br><br><b>Why each permission is used</b><br>· Usage Access: only to analyze today's activity into incident cards<br>· Notifications: only for in-app reminders<br><br><b>Ads & in-app purchase</b><br>The Records/Archive screens and the exit-confirmation screen may show Google AdMob ads, and the "Remove ads" purchase is processed through Google Play's billing system. Both are Google services, separate from the usage analysis described above -- they require an internet connection and may handle device information such as an advertising ID under Google's own policies. The usage data this app itself collects still never leaves the device. Buying "Remove ads" stops all ads on this device.<br><br><b>Deleting your data</b><br>Settings → Data lets you erase everything on this device at any time; uninstalling the app removes it too.<br><br><b>Contact</b><br>db5704@gmail.com<br><br><span style="color:var(--muted);font-size:11px">Last updated: September 14, 2026 · This draft reflects the code's actual behavior and needs review before any store submission.</span>`
   );
   document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('개인정보처리방침','プライバシーポリシー','Privacy policy')}</div><p style="font-size:13px;line-height:1.7;color:var(--ink);margin:4px 0 0">${body}</p></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
 }
@@ -1557,6 +1597,19 @@ function onboardFinish(allow){
   if(hasAccess===false){try{N.openUsageSettings()}catch(e){}}
   render()
 }
+// v0.65: director-approved monetization -- native banner ad shown ONLY on
+// the Records("기록")/Archive("보관함") tabs, never home/detail/reveal/
+// settings/onboarding. Computed from the same state render() already
+// branches on (so it agrees with whatever actually ends up on screen) and
+// called once per render() rather than only from setTab() -- reveal/detail
+// overlays and onboarding fully replace #app's content without going
+// through setTab(), so a tab-switch-only hook would miss opening/closing
+// those. AdManager.setBannerVisible() also independently forces this off
+// entirely once ads are removed, so this never needs to check that itself.
+function syncBannerVisibility(){
+  const show=(!skipOnboarding&&!state.settings.onboardingSeen)?false:!!(!state.revealItem&&!state.detailItem&&(state.tab==='records'||state.tab==='archive'));
+  try{N&&N.setBannerVisible&&N.setBannerVisible(show)}catch(e){}
+}
 function render(){
   // v0.41: every branch below replaces #app's innerHTML wholesale, which
   // would otherwise orphan any running holofoil rAF loop from the previous
@@ -1564,6 +1617,7 @@ function render(){
   // self-checks via document.body.contains() as a second safety net, see
   // its own comment, but this avoids even one wasted frame).
   stopHolo();
+  syncBannerVisibility();
   const root=document.getElementById('app');if(!skipOnboarding&&!state.settings.onboardingSeen){root.className='app onboard';root.innerHTML=onboardScreen();return}
   // v0.60: the daily card-reveal overlay (see refresh()/revealScreen())
   // fully replaces #app's content too, same shape as the detailItem
