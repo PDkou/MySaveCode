@@ -339,6 +339,32 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .detail-stat-row span{font-size:11px;color:var(--page-muted,var(--muted))}
 .detail-stat-row b{font-size:13px;font-weight:900}
 .detail-share-btn{margin-top:10px;flex:0 0 auto}
+/* v0.60: director feedback -- a Pocket-pack-opening-style reveal for the
+   day's top card when the app is opened (see refresh()/revealScreen()).
+   Reuses .detail-page/.tcg-card/.tcg-card-wrap wholesale (same fixed-
+   height flex column, same fitTcgCard() auto-sizing, same holo effect) --
+   these rules only add the reveal-specific chrome (flash burst/title/
+   continue button) and the card's one-shot spin-in entrance on top. */
+/* v0.60(2차): was inset:0 on the full (non-square, portrait) page box with
+   the keyframes just scaling that whole element -- radial-gradient(circle)
+   still stretches to the box's own aspect ratio, so scaling a tall
+   rectangle read as a stretched blob, not a burst. A fixed-size square
+   (vmin-based, so it's a true circle regardless of viewport shape)
+   centered via transform:translate(-50%,-50%) fixes the shape; the
+   translate has to be repeated in every keyframe alongside scale() since
+   an animation's transform keyframes replace the element's base transform
+   outright rather than composing with it. */
+.reveal-flash{position:fixed;top:50%;left:50%;width:140vmin;height:140vmin;pointer-events:none;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.95) 0%,rgba(255,255,255,0) 62%);opacity:0;animation:revealFlash 1.1s ease-out both;z-index:1}
+@keyframes revealFlash{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}25%{opacity:1;transform:translate(-50%,-50%) scale(.6)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.4)}}
+.reveal-title{text-align:center;font-size:20px;font-weight:1000;flex:0 0 auto;opacity:0;animation:revealFadeIn .6s ease-out .15s both}
+@keyframes revealFadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+/* The card itself flips/scales in from face-down -- the actual "pack
+   opening" motion Pocket uses -- then the page's own base .tcg-card
+   transition (still present, unaffected) takes back over for any drag
+   tilt once this one-shot animation finishes. */
+.tcg-card.reveal-anim{animation:revealCardIn .8s cubic-bezier(.22,1,.36,1) .25s both}
+@keyframes revealCardIn{0%{transform:scale(.4) rotateY(180deg);opacity:0}55%{opacity:1}75%{transform:scale(1.06) rotateY(0deg)}100%{transform:scale(1) rotateY(0deg);opacity:1}}
+.reveal-continue{margin-top:14px;flex:0 0 auto;opacity:0;animation:revealFadeIn .5s ease-out .9s both}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2F2926;color:white;border-radius:999px;padding:10px 15px;font-size:12px;font-weight:800;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .foot{font-size:10px;text-align:center;color:#A4978E;margin-top:28px;letter-spacing:.7px}
 @media(max-width:430px){.app{padding-left:16px;padding-right:16px}.brand h1{font-size:27px}.avatar{width:60px;height:60px}.card-body{grid-template-columns:1.22fr .78fr}.case-title{font-size:22px}.scene{min-height:118px}.scene img{width:98px;height:98px}.daily-strip{gap:6px}.mini-stat{padding:9px 4px}}
@@ -425,7 +451,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.59.0';
+const APP_VERSION='0.60.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -433,10 +459,16 @@ const params=new URLSearchParams(location.search);const preview=params.get('prev
 // time (default behavior, incl. under `preview=1`, is unchanged: onboarding
 // still gates a first-ever launch).
 const skipOnboarding=params.get('onboarding')==='0';
+// v0.60: same escape-hatch pattern as `?onboarding=0` above -- the daily
+// card-reveal overlay (revealScreen()) otherwise arms on every fresh
+// preview/test load (no localStorage yet means no revealShownDate for
+// today), which would swallow every screenshot/interaction test aimed at
+// the actual cases/detail screens underneath it.
+const skipReveal=params.get('reveal')==='0';
 // English strings exist throughout via l(ko, ja, en) but are not exposed yet —
 // flip `supported` back to include 'en' when English becomes a real target.
 const supported=['ko','ja'];const detected=(navigator.language||'ko').slice(0,2);
-const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false,dailyReminder:false,reminderHour:21,reminderMinute:0},onboardStep:1,tab:params.get('tab')||'cases',data:null,detailItem:null,history:{days:{},discoveries:{}}};
+const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false,dailyReminder:false,reminderHour:21,reminderMinute:0},onboardStep:1,tab:params.get('tab')||'cases',data:null,detailItem:null,revealItem:null,history:{days:{},discoveries:{},revealShownDate:null}};
 function l(ko,ja,en){return state.settings.language==='ko'?ko:state.settings.language==='ja'?ja:en}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function todayKey(){return new Date().toISOString().slice(0,10)}
@@ -471,7 +503,30 @@ function persistSnapshot(d){if(!d||!d.permission)return;const key=todayKey();sta
 // reason to reset scroll on its own -- do it explicitly on every place
 // content changes.
 function setTab(t){state.tab=t;window.scrollTo(0,0);render()}
-function refresh(){state.data=read();persistSnapshot(state.data);render()}
+// v0.60: director feedback -- "저녁9시?에 통계로 알려줄때 앱을 열때
+// 가장 많이 접근된 카드를 뙇하고 보여주면 더 좋을꺼같아 어떤어떤
+// 사건 발견됨! 하면서 카드가 휘리릭 돌아가면서" (when opening the app
+// [after the evening reminder], dramatically reveal the day's top card --
+// "such-and-such discovered!" with the card spinning in, Pocket
+// pack-opening style). cards[0] is the same incident cases() already
+// treats as "featured" (`const [featured,...rest]=cards`), so this reuses
+// that exact convention rather than recomputing "most notable" itself.
+// Gated to once per calendar day (state.history.revealShownDate) so it
+// reads as a daily event, not a nag on every resume -- refresh() itself
+// runs on every cold start AND app resume (window.onNativeResume=refresh
+// below), so the date check is what actually limits this, not call
+// frequency.
+function shouldShowReveal(d){
+  if(skipReveal||!d||!d.permission)return false;
+  const cards=d.report?.cards||[];
+  return cards.length>0&&state.history.revealShownDate!==todayKey();
+}
+function dismissReveal(){state.history.revealShownDate=todayKey();save();state.revealItem=null;render()}
+function refresh(){
+  state.data=read();persistSnapshot(state.data);
+  if(shouldShowReveal(state.data))state.revealItem=state.data.report.cards[0];
+  render()
+}
 window.onNativeResume=refresh;
 // v0.43: director feedback -- the hardware back button always exited the
 // app (see MainActivity.kt's onBackPressed() comment for the root cause).
@@ -500,6 +555,11 @@ window.onNativeResume=refresh;
 // first since onboarding fully replaces #app's content.
 window.onNativeBackPressed=function(){
   if(!skipOnboarding&&!state.settings.onboardingSeen&&state.onboardStep===2){state.onboardStep=1;render();return true}
+  // v0.60: the daily card-reveal overlay (revealScreen()) fully replaces
+  // #app's content the same way onboarding/detailItem do -- dismiss it
+  // like a normal back-closeable layer instead of falling through to the
+  // exit-confirm sheet underneath it.
+  if(state.revealItem){dismissReveal();return true}
   const overlay=document.getElementById('overlay');
   if(overlay&&overlay.innerHTML.trim()){closeOverlay();return true}
   if(state.detailItem){closeDetail();return true}
@@ -690,9 +750,15 @@ function card(i,featured=false){
 // - The rim light and sparkle-grain clip trace the canvas's own bounds
 //   (matching .tcg-card's own border-radius) instead of a hardcoded
 //   fixed-screenshot-relative box.
-function createCardHolo(canvas,makeCanvas,dpr=1){
+// v0.60: director feedback -- "레전더리는 금색 에픽은 보라색으로
+// 프리즘효과를 주고 히든은 레인보우로 효과를 주는게 더 좋을꺼같아"
+// (gold for LEGENDARY, purple for EPIC, rainbow for HIDDEN). The spectrum
+// gradient used to be one fixed palette for every rarity; `spectrumColors`
+// (from holoSpectrum(), see detailPage()) now swaps it per rarity instead.
+function createCardHolo(canvas,makeCanvas,dpr=1,spectrumColors){
   const W=canvas.width,H=canvas.height,ctx=canvas.getContext('2d');
   const layer=makeCanvas(W,H),l=layer.getContext('2d');
+  const cols=spectrumColors&&spectrumColors.length?spectrumColors:['#7542dd','#48b4ed','#89e6d7','#f0ddfa','#d78ce4','#9770e8','#5bd2df'];
   // v0.53 had this at 16 to match .tcg-art{border-radius:16px} (the art
   // window this canvas used to be confined to); v0.59 moved the canvas to
   // cover the whole .tcg-card{border-radius:26px} instead (see this
@@ -724,7 +790,6 @@ function createCardHolo(canvas,makeCanvas,dpr=1){
     const lx=W/2+px*W*.48,ly=H/2+py*H*.48;
     l.clearRect(0,0,W,H);l.globalCompositeOperation='source-over';
     const spectrum=l.createLinearGradient(lx-W*.6,ly-H*.6,lx+W*.6,ly+H*.7);
-    const cols=['#7542dd','#48b4ed','#89e6d7','#f0ddfa','#d78ce4','#9770e8','#5bd2df'];
     cols.forEach((v,idx)=>spectrum.addColorStop(idx/6,v));l.fillStyle=spectrum;l.fillRect(0,0,W,H);
     l.globalCompositeOperation='destination-in';
     const gate=l.createRadialGradient(lx,ly,Math.min(W,H)*.03,lx,ly,Math.max(W,H)*.85);
@@ -776,8 +841,14 @@ function mountHolo(){
   if(!canvas)return;
   if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   const scene=canvas.parentElement;
-  const rect=scene.getBoundingClientRect();
-  const w=Math.max(1,Math.round(rect.width)),h=Math.max(1,Math.round(rect.height));
+  // v0.60: offsetWidth/offsetHeight, not getBoundingClientRect() -- the
+  // latter reflects `scene`'s current CSS transform (revealScreen()'s
+  // one-shot spin-in entrance can still be mid-animation the instant this
+  // runs, right after render() sets the new HTML), so sizing off it could
+  // bake a temporarily shrunk/skewed backing-store size into the canvas
+  // for its whole lifetime. offset* is always the untransformed layout
+  // size regardless of any transform in flight.
+  const w=Math.max(1,Math.round(scene.offsetWidth)),h=Math.max(1,Math.round(scene.offsetHeight));
   // v0.41(2차): code review found the canvas backing store was sized to
   // plain CSS pixels while .holo-canvas{width:100%;height:100%} stretches
   // it to fill the same CSS-pixel box -- on a real ~2.5-3x devicePixelRatio
@@ -812,7 +883,12 @@ function mountHolo(){
   // createCardHolo()'s own comment), there's nothing to load first, so
   // this starts immediately instead of behind an img.onload.
   const makeCanvas=(cw,ch)=>{const c=document.createElement('canvas');c.width=cw;c.height=ch;return c};
-  const effect=createCardHolo(canvas,makeCanvas,dpr);
+  // v0.60: per-rarity spectrum colors (see holoSpectrum()) travel through
+  // as a plain data attribute -- mountHolo() itself stays generic and
+  // doesn't need to know about rarities at all, same as it never needed
+  // to know about card layout.
+  const spectrumColors=(canvas.dataset.spectrum||'').split(',').filter(Boolean);
+  const effect=createCardHolo(canvas,makeCanvas,dpr,spectrumColors);
   const start=performance.now();
 
   // v0.52: director feedback -- "카드 수집요소가 우리의 강점인데
@@ -1228,6 +1304,19 @@ function foilTitleStyle(rarity){switch(rarity){
   case'HIDDEN':return{colors:['#FF5A5A','#FFB93C','#F0E646','#5ADC78','#50C8EB','#7882F5','#D26EEB'],outline:'#030E14',glow:'#D2D2FA'};
   default:return null;
 }}
+// v0.60: director feedback -- "레전더리는 금색 에픽은 보라색으로
+// 프리즘효과를 주고 히든은 레인보우로 효과를 주는게 더 좋을꺼같아"
+// (LEGENDARY gold, EPIC purple, HIDDEN rainbow prism). Feeds
+// createCardHolo()'s spectrum gradient (see mountHolo()) -- HIDDEN reuses
+// foilTitleStyle('HIDDEN')'s own rainbow outright rather than a second
+// hand-picked array, so the card's shimmer and its title's foil gradient
+// are always the exact same rainbow.
+function holoSpectrum(rarity){switch(rarity){
+  case'LEGENDARY':return['#FFEFAF','#FFD166','#F5B841','#FFF6D9','#E0A94C','#FFE9A0','#CDA03C'];
+  case'EPIC':return['#E6D1FF','#A86CFF','#7542DD','#F0DFFF','#9669C8','#C396EB','#5B2FA8'];
+  case'HIDDEN':return foilTitleStyle('HIDDEN').colors;
+  default:return['#7542DD','#48B4ED','#89E6D7','#F0DDFA','#D78CE4','#9770E8','#5BD2DF'];
+}}
 // Same HIDDEN-opal-variant logic as cardPatternBg() above, just pointed at
 // the vertical share backgrounds (backgrounds/share/1080x1920/) instead of
 // the square ones -- this is the exact art the share PNG's backdrop uses.
@@ -1258,11 +1347,12 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
   const rarity=i.rarity||'NORMAL';
   const pal=tcgPalette(rarity);
   const foil=foilTitleStyle(rarity);
-  // Same EPIC/LEGENDARY-only gating card()'s own "impact" layers use --
-  // the holo effect stays a top-rarity showcase, not a blanket effect on
-  // every card, matching the v0.27 design intent that established that
-  // split in the first place.
-  const impact=rarity==='EPIC'||rarity==='LEGENDARY';
+  // v0.27 established EPIC/LEGENDARY as the "impact"-layer tier (still
+  // true for card()'s own home-screen watermark, a separate gate in a
+  // separate function); v0.60 adds HIDDEN to the holo effect specifically,
+  // now that it gets its own dedicated rainbow spectrum (holoSpectrum())
+  // instead of just inheriting whatever EPIC/LEGENDARY used.
+  const impact=rarity==='EPIC'||rarity==='LEGENDARY'||rarity==='HIDDEN';
   const frameUrl=`visual/cards/frame_bg/${rarity.toLowerCase()}.webp`;
   const medallionUrl=`visual/cards/medallions/${rarity.toLowerCase()}.webp`;
   // v0.54: director feedback -- "배경도 검은 배경이네;; 그냥 저
@@ -1285,7 +1375,7 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
   // children) -- see createCardHolo()/mountHolo()'s own v0.59 comments for
   // why this alone makes the whole card draggable and shimmering instead
   // of just the art window.
-  const holoCanvas=impact?`<canvas class="holo-canvas"></canvas>`:'';
+  const holoCanvas=impact?`<canvas class="holo-canvas" data-spectrum="${holoSpectrum(rarity).join(',')}"></canvas>`:'';
   return `<div class="detail-backdrop" style="background-image:url('${backdropUrl}')"></div>
   <div class="detail-page ${rarityClass(i)}" style="--tcg-border:${pal.border};${pageVars}">
     <div class="detail-page-head"><button class="icon-btn" onclick="closeDetail()"><img src="visual/ui/icons/unlabeled/icon_back.png" alt="${l('뒤로','戻る','Back')}"></button>${rarityBadge(i)}<button class="icon-btn" onclick='share(${shareArg},"square")'><img src="visual/ui/icons/unlabeled/icon_share.png" alt="${l('공유','シェア','Share')}"></button></div>
@@ -1319,11 +1409,68 @@ function fitTcgCard(){
   card.style.width='';
   const availH=wrap.clientHeight;
   if(!availH)return;
-  const naturalH=card.getBoundingClientRect().height;
+  // v0.60: offsetHeight, not getBoundingClientRect().height -- the latter
+  // reflects the card's current CSS transform (rotateX/rotateY tilt while
+  // dragging, or revealScreen()'s one-shot scale/rotateY entrance
+  // animation), so measuring it mid-animation could read a temporarily
+  // shrunk or skewed size and size the card wrong. offsetHeight is always
+  // the untransformed layout size regardless of any transform in flight.
+  const naturalH=card.offsetHeight;
   if(naturalH>availH)card.style.width=Math.max(140,Math.floor(availH*1024/1536))+'px';
 }
-function openDetail(i){state.detailItem=i;window.scrollTo(0,0);render()}
+// v0.60: revealItem=null defensively -- normal UI has no way to reach
+// openDetail() while a reveal is still showing (its card has no click
+// handler of its own, only the continue button, which goes through
+// dismissReveal() first), but render() checks revealItem before
+// detailItem, so anything that ever DID call this while one was armed
+// would silently keep showing the reveal instead. Cheap insurance against
+// that, not a currently-reachable bug.
+function openDetail(i){state.revealItem=null;state.detailItem=i;window.scrollTo(0,0);render()}
 function closeDetail(){state.detailItem=null;window.scrollTo(0,0);render()}
+// v0.60: director feedback -- "저녁9시?에 통계로 알려줄때 앱을 열때
+// 가장 많이 접근된 카드를 뙇하고 보여주면 더 좋을꺼같아 어떤어떤
+// 사건 발견됨! 하면서 카드가 휘리릭 돌아가면서" (dramatically reveal the
+// day's top card when opening the app -- "such-and-such discovered!"
+// with the card spinning in, Pocket pack-opening style). Reuses
+// detailPage()'s own .tcg-card markup/holo effect wholesale (same
+// frame/header/art/info/emblem/holo-canvas, same tcgPalette()/
+// foilTitleStyle()/holoSpectrum() colors) rather than a second visual
+// system -- only the surrounding chrome differs: no back/share header or
+// stats/share button, instead a flash burst + "발견!" title above the
+// card and a single continue button below, and the card itself gets a
+// one-shot spin-in entrance (.reveal-anim, see its CSS) instead of
+// appearing flat. shouldShowReveal()/dismissReveal() (see refresh()) gate
+// this to once per calendar day.
+function revealScreen(i){
+  const rarity=i.rarity||'NORMAL';
+  const pal=tcgPalette(rarity);
+  const foil=foilTitleStyle(rarity);
+  const impact=rarity==='EPIC'||rarity==='LEGENDARY'||rarity==='HIDDEN';
+  const [artBase,bg,mode]=incidentVisual(i.type);const art=incidentArt(artBase,i.type,i.rarity);const sceneBg=mode==='scene'?art:bg;
+  const frameUrl=`visual/cards/frame_bg/${rarity.toLowerCase()}.webp`;
+  const medallionUrl=`visual/cards/medallions/${rarity.toLowerCase()}.webp`;
+  const backdropUrl=cardPatternBg(i);
+  const isDarkMood=rarity==='HIDDEN';
+  const pageVars=isDarkMood
+    ?'--page-text:#E9FBFF;--page-muted:rgba(233,251,255,.68);--page-panel:rgba(255,255,255,.08);--page-panel-line:rgba(255,255,255,.18);--page-stat-line:rgba(255,255,255,.16)'
+    :'--page-text:#2F2A27;--page-muted:#6B5F54;--page-panel:rgba(255,255,255,.78);--page-panel-line:rgba(120,100,80,.14);--page-stat-line:#EFE7DB';
+  const titleTxt=esc(txt(names,i.type));
+  const titleStyle=foil?` style="--foil-colors:${foil.colors.join(',')};--foil-outline:${foil.outline};--foil-glow:${foil.glow}"`:'';
+  const holoCanvas=impact?`<canvas class="holo-canvas" data-spectrum="${holoSpectrum(rarity).join(',')}"></canvas>`:'';
+  return `<div class="detail-backdrop" style="background-image:url('${backdropUrl}')"></div>
+  <div class="detail-page reveal-mode ${rarityClass(i)}" style="--tcg-border:${pal.border};${pageVars}">
+    <div class="reveal-flash"></div>
+    <div class="reveal-title">${esc(l('오늘의 사건 발견!','本日の事件を発見！','Case discovered!'))}</div>
+    <div class="tcg-card-wrap"><div class="tcg-card reveal-anim" style="background-image:url('${frameUrl}')">
+      <div class="tcg-header" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-title${foil?' foil':''}"${titleStyle}>${titleTxt}</div></div>
+      <div class="tcg-art" style="background-image:url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span></div>
+      <div class="tcg-emblem" style="background-image:url('${medallionUrl}')"></div>
+      <div class="tcg-info" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-punch">“${esc(txt(punch,i.type))}”</div></div>
+      ${holoCanvas}
+    </div></div>
+    <button class="primary reveal-continue" onclick="dismissReveal()">${l('확인','確認','OK')}</button>
+  </div>`;
+}
 function toast(t){const x=document.createElement('div');x.className='toast';x.textContent=t;document.body.appendChild(x);setTimeout(()=>x.remove(),1600)}
 // v0.24: two-screen onboarding, gated by state.settings.onboardingSeen
 // (persisted via save(), same as every other setting). The source images
@@ -1382,6 +1529,12 @@ function render(){
   // its own comment, but this avoids even one wasted frame).
   stopHolo();
   const root=document.getElementById('app');if(!skipOnboarding&&!state.settings.onboardingSeen){root.className='app onboard';root.innerHTML=onboardScreen();return}
+  // v0.60: the daily card-reveal overlay (see refresh()/revealScreen())
+  // fully replaces #app's content too, same shape as the detailItem
+  // branch right below (reuses the same fixed-height "app detail-mode"
+  // flex column and fitTcgCard()/mountHolo() wiring) -- checked first so
+  // it takes priority the moment it's armed.
+  if(state.revealItem){root.className='app detail-mode';root.innerHTML=revealScreen(state.revealItem);fitTcgCard();mountHolo();return}
   // v0.35: full-screen detail page takes over completely (its own compact
   // header, no brand header/bottom tab bar) -- checked before header()
   // even runs, matching the mockup's dedicated "사건 카드 상세" screen.
