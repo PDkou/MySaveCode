@@ -43,17 +43,27 @@ class NativeBridge(
     // with the director) to mean the USAGE ACCESS permission specifically:
     // ACTION_USAGE_ACCESS_SETTINGS dumps every installed app into one long
     // system list with no way to tell which row is this one, so finding
-    // "또 열었네?" in it is genuinely hard. Two-part fix: (1) try jumping
-    // straight to this app's own row via the `package:` data URI some
-    // Android versions/OEMs honor for this action (undocumented but widely
-    // relied on -- silently falls back to the plain list-only intent if a
-    // device throws on it, e.g. no matching activity for that data URI);
-    // (2) either way, a native Toast (survives the switch away from the
-    // WebView into Settings, unlike an in-page HTML toast) names the exact
-    // app label to look for, so even where (1) doesn't jump directly the
-    // user knows what they're hunting for. Language mirrors setLanguage()'s
-    // own SharedPreferences flag, same as DailyReminderReceiver's notification
-    // text -- index.html's own state.settings.language isn't reachable here.
+    // "또 열었네?" in it is genuinely hard. Added a native Toast (survives
+    // the switch away from the WebView into Settings, unlike an in-page
+    // HTML toast) naming the exact app label to look for. Language mirrors
+    // setLanguage()'s own SharedPreferences flag, same as
+    // DailyReminderReceiver's notification text -- index.html's own
+    // state.settings.language isn't reachable here.
+    //
+    // v0.55(2차): that version ALSO tried jumping straight to this app's
+    // own row via a `package:` data URI on the same intent (undocumented
+    // but several apps rely on it on some Android versions/OEMs). Real-
+    // device regression: on the director's device this made the very
+    // first "사용정보 접근 허용" tap on cold start silently no-op --
+    // startActivity() doesn't throw even when the resolved
+    // activity immediately finishes/no-ops on an intent shape it doesn't
+    // actually support, so the runCatching fallback never triggered; the
+    // user just landed back in the app (still without the permission) and
+    // had to tap the button a second time. Dropped the data URI entirely
+    // and went back to the plain, universally-supported
+    // ACTION_USAGE_ACCESS_SETTINGS intent -- reliability over the
+    // (unreliable anyway) chance of a direct jump; the Toast alone still
+    // tells the user what to look for in the list either way.
     @JavascriptInterface
     fun openUsageSettings() {
         activity.runOnUiThread {
@@ -61,11 +71,7 @@ class NativeBridge(
             val appName = if (lang == "ja") "また開いた？" else "또 열었네?"
             val guide = if (lang == "ja") "\"${appName}\"を探してオンにしてください" else "\"${appName}\"를 찾아 켜주세요"
             android.widget.Toast.makeText(activity, guide, android.widget.Toast.LENGTH_LONG).show()
-            val directIntent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
-                data = android.net.Uri.parse("package:${activity.packageName}")
-            }
-            runCatching { activity.startActivity(directIntent) }
-                .onFailure { activity.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+            activity.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
     }
 
