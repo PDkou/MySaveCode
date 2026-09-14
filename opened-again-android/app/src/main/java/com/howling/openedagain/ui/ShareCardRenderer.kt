@@ -335,7 +335,7 @@ class ShareCardRenderer(private val context: Context) {
         // way from NativeBridge.shareIncident() (see render()'s doc), not the
         // device locale -- matches the same lang source index.html's own
         // header() logo swap already uses.
-        val logoAsset = if (lang == "ja") "logo/logo_jp.png" else "logo/logo_ko.png"
+        val logoAsset = if (lang == "ja") "logo/logo_jp.webp" else "logo/logo_ko.webp"
         assetBitmap(logoAsset)?.let { logo ->
             val maxW = s(140f); val maxH = s(44f)
             val logoScale = min(maxW / logo.width, maxH / logo.height)
@@ -594,18 +594,27 @@ class ShareCardRenderer(private val context: Context) {
     private fun medallionAsset(rarity: Rarity): String = "cards/medallions/${rarity.name.lowercase()}.webp"
 
     private fun raritySymbolAsset(rarity: Rarity): String? = when (rarity) {
-        Rarity.NORMAL -> "brand/rarity_symbols/rarity_normal.png"
-        Rarity.RARE -> "brand/rarity_symbols/rarity_rare.png"
-        Rarity.EPIC -> "brand/rarity_symbols/rarity_epic.png"
-        Rarity.LEGENDARY -> "brand/rarity_symbols/rarity_legendary.png"
+        Rarity.NORMAL -> "brand/rarity_symbols/rarity_normal.webp"
+        Rarity.RARE -> "brand/rarity_symbols/rarity_rare.webp"
+        Rarity.EPIC -> "brand/rarity_symbols/rarity_epic.webp"
+        Rarity.LEGENDARY -> "brand/rarity_symbols/rarity_legendary.webp"
         Rarity.HIDDEN -> null
     }
 
-    // backgrounds/share/<size>/bg_<rarity>_<square|vertical>.png -- the
+    // backgrounds/share/<size>/bg_<rarity>_<square|vertical>.webp -- the
     // outer canvas backdrop, independent of the TCG card face itself.
     // HIDDEN's two visual families (CardStyle.isOpalHidden) map to the
     // pack's two HIDDEN backgrounds by tone: hidden_01 is the pale
     // iridescent/opal one, hidden_02 is the deep-navy starfield one.
+    // v0.67: director flagged the app's install size -- these 14 files were
+    // 1-2MB PNGs each (19MB total) despite being soft gradient/pattern
+    // illustrations WebP compresses extremely well at high quality; verified
+    // visually indistinguishable at quality=90 (see DEVELOPMENT_HISTORY.md
+    // v0.67) before converting. BitmapFactory.decodeStream() (assetBitmap()
+    // below) already decodes WebP natively, same as frameBgAsset()/
+    // medallionAsset() above have relied on since before this file's own
+    // v0.53 redesign -- no decoding logic changes needed here, only the
+    // asset filename extensions.
     private fun backgroundAsset(rarity: Rarity, opal: Boolean, format: Format): String {
         val size = if (format == Format.STORY) "1080x1920" else "1080x1080"
         val suffix = if (format == Format.STORY) "vertical" else "square"
@@ -616,13 +625,13 @@ class ShareCardRenderer(private val context: Context) {
             Rarity.LEGENDARY -> "legendary"
             Rarity.HIDDEN -> if (opal) "hidden_01" else "hidden_02"
         }
-        return "backgrounds/share/$size/bg_${rarityName}_$suffix.png"
+        return "backgrounds/share/$size/bg_${rarityName}_$suffix.webp"
     }
 
     private fun commonBackgroundAsset(format: Format): String {
         val size = if (format == Format.STORY) "1080x1920" else "1080x1080"
         val suffix = if (format == Format.STORY) "vertical" else "square"
-        return "backgrounds/share/$size/bg_common_$suffix.png"
+        return "backgrounds/share/$size/bg_common_$suffix.webp"
     }
 
     // Same incident -> illustration mapping the pre-redesign renderer used

@@ -2568,3 +2568,83 @@ DetectorSmoke/DetectorRegression 재실행 -- 둘 다 그대로 통과, 필드
 룰 개수 재확인(213개, 변동 없음), 기존 회귀 스위트(뒤로가기/온보딩/
 리빌/카드 3종/드래그/백업 스키마/메트릭 라벨) 전부 재확인, 콘솔
 에러 0건.
+
+## v0.67 — 앱 용량 대폭 축소: 사용하지 않는 이미지 삭제 + PNG를 WebP로 전환 (감독 지시)
+감독 피드백: "슬슬 내부테스트를 abb로 변환해서 해볼까? 앱이 너무
+용량이 큰데 어떻게 안돼나?" (내부 테스트를 위해 AAB 빌드도 검토하고,
+앱 용량이 너무 큰 것도 어떻게 좀 해줄 수 있는지).
+
+`app/src/main/assets/visual/` 폴더(당시 43MB, 앱 전체 용량의 사실상
+전부)를 전수 조사 -- 두 가지 원인 발견:
+
+**1. 완전히 사용되지 않는 이미지 파일 (5.7MB, 코드 변경 없이 그냥 삭제)**:
+`index.html`/모든 Kotlin 파일을 대상으로 모든 이미지 폴더의 참조
+여부를 하나하나 대조(템플릿 문자열로 동적 조합되는 경로는 별도로
+직접 확인 -- 예: `incidents/card_ready/*_normal.webp` 같은 등급별
+변형은 실제로 `incidentArt()`가 런타임에 조합해서 쓰고 있어서 살려둠).
+확인 결과 완전히 죽은 파일들:
+- `visual/badges/*` (6개, v0.23에서 이미 CSS 배지로 대체하고 안 지운
+  옛날 배지 이미지)
+- `visual/cards/frames/*` (6개) -- 코드 주석에 "Deliberately NOT
+  using cards/frames/*.png"라고 명시까지 돼 있던 파일
+- `visual/app-icon/adaptive/*`, `app_icon_magnifier.png` -- 실제
+  런처 아이콘은 `res/mipmap-*/`에 별도로 있고, 이 파일들은 그
+  소스로 쓰였을 원본이 실수로 assets에도 같이 들어간 것으로 보임
+- `visual/ui/icons/labeled/*`(한/일 19개) -- 코드 주석에 "Uses the
+  unlabeled icon set"이라고 이미 적혀 있던, 안 쓰는 라벨형 아이콘 세트
+- `visual/ui/icons/unlabeled/icon_close.png`, `icon_filter.png` --
+  닫기 버튼은 텍스트("닫기") 버튼이라 아이콘이 필요 없었고, 필터
+  기능 자체가 앱에 없음
+- `visual/props/*` 전체(17개), `visual/character/expressions/*`
+  전체(10개), `visual/character/basic/*`의 3개(default/phone/
+  read_file)를 제외한 나머지 10개 -- 어디에서도 참조되지 않는
+  캐릭터 소품/표정 시트
+- `visual/brand/logo_paw.png`, `visual/backgrounds/bg_pattern_beige.png`
+
+**2. 실제 쓰이는 이미지가 전부 무손실 PNG였던 것 (27.5MB -> 1.7MB,
+WebP로 전환)**: 공유카드 배경(`backgrounds/share/`, 1080x1080/
+1080x1920, 14개 파일이 1~2MB씩 -- 19MB), 온보딩 일러스트(4개,
+6.2MB), 상태 이미지(잠금/빈 상태, 1MB), 실내/야외 배경 3종,
+캐릭터 3종, 등급 심볼 6종, 로고 2종, 헤더 아바타 1종까지 전부
+PNG였음. 전부 부드러운 그라데이션/일러스트 계열이라 무손실일
+필요가 없는데도 무손실 포맷을 쓰고 있었던 것 -- Python
+Pillow로 quality=90 WebP 변환 테스트 결과 파일당 90~98% 용량
+감소(예: 전설 등급 공유배경 1.2MB -> 54KB)를 확인했고, 원본과
+실제로 나란히 놓고 비교(배경 텍스처, 온보딩 캐릭터 라인아트를
+3~4배 확대까지 해서 확인)해도 육안으로 차이를 못 느낄 정도라
+전부 quality=90으로 일괄 전환. `assets/` 안의 WebP는 v0.32/v0.53
+때부터 이미 다른 자산(카드 프레임/메달리온, 사건 일러스트)에
+써오던 포맷이라 안드로이드 `BitmapFactory`/WebView 양쪽 다 새
+디코딩 코드가 필요 없음 -- `ShareCardRenderer.kt`(공유카드를
+실제로 렌더링하는 네이티브 코드)의 해당 확장자 문자열들과
+`index.html`의 경로 참조(하드코딩된 것과 템플릿 리터럴로 조합되는
+것 모두)를 전부 `.png` -> `.webp`로 맞춰서 갱신.
+
+결과: `visual/` 폴더가 43MB -> 11MB(약 74% 감소). 남은 11MB의
+대부분은 사건 일러스트(`incidents/`, 7MB, 이미 v0.32부터 WebP)와
+카드 프레임/메달리온(`cards/`, 1.5MB, 이미 v0.53부터 WebP)이라 더
+줄일 여지는 크지 않음.
+
+검증: (a) Playwright로 홈/기록/보관함/설정 4개 탭, 5개 등급의 상세
+페이지, 온보딩 2단계 x 한/일 전체를 순회하면서 모든 `<img>`와 CSS
+`background-image`가 실제로 로드되는지(깨진 이미지 0건) 확인,
+기존 회귀 스위트(뒤로가기/온보딩 체이닝/리빌/카드 3종/드래그/백업
+스키마/메트릭 라벨/광고 배너 가시성) 전부 재확인 -- 콘솔 에러 0건,
+CSS 룰 개수 불변(213개). 스크린샷으로 홈/온보딩/기록/보관함 화면
+직접 육안 확인(원본과 구분 안 됨). (b) `ShareCardRenderer.kt`의
+네이티브 공유카드 렌더링 자체는 이 샌드박스에서 실행할 수 없어
+코드 리뷰로만 확인 -- 다만 같은 `assetBitmap()` 헬퍼가 `frame_bg`/
+`medallions`/사건 일러스트의 WebP를 v0.32/v0.53부터 이미 문제없이
+읽어 왔으므로 새 디코딩 경로가 아님. 그래도 실제 공유 이미지
+내보내기 결과는 다음 실기기 확인 때 한 번 더 봐야 함(다른
+Kotlin/네이티브 전용 변경들과 같은 이유).
+
+**AAB(내부 테스트) 관련**: 이 저장소에는 서명된 릴리즈 AAB를 만드는
+`build-opened-again-release.yml` 워크플로가 이미 있음(`gradle
+:app:bundleRelease`, `workflow_dispatch`로 수동 실행) -- 다만
+`ANDROID_KEYSTORE_B64`/`ANDROID_STORE_PASSWORD`/`ANDROID_KEY_ALIAS`/
+`ANDROID_KEY_PASSWORD` 4개 GitHub Actions 시크릿이 설정돼 있어야
+실제로 돌아감. 용량 축소가 반영된 이번 버전으로 실행해서 실제로
+동작하는지 확인 예정.
+
+버전 67/0.67.0.

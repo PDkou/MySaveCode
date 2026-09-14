@@ -17,6 +17,13 @@
   테두리를 추가해서 "그냥 합성한 느낌" 피드백에 대응했으나, 이번에도 Python
   시뮬레이션으로만 확인함 — 실제 Kotlin Canvas 렌더링 결과는 여전히 미확인, 다음
   실기기 확인 때 우선적으로 봐야 함.
+- v0.67에서 `ShareCardRenderer.kt`가 읽는 배경/로고/등급심볼 에셋을
+  PNG에서 WebP로 전량 교체(용량 축소) — `assetBitmap()`이 이미
+  `frame_bg`/`medallions`/사건 일러스트 WebP를 v0.32/v0.53부터 문제없이
+  읽어 왔던 것과 같은 디코딩 경로라 위험은 낮다고 판단했지만, 실제
+  "1:1 공유"/"스토리" 버튼으로 만들어지는 공유 이미지 자체는 이
+  샌드박스에서 실행해볼 수 없어 코드 리뷰로만 확인함 — 다음 실기기
+  확인 때 위 항목과 같이 볼 것.
 - 안드로이드 16(API 36) 출시 준비 점검 — v0.36에서 predictive back
   (`enableOnBackInvokedCallback`) 하나는 반영했으나, `allowBackup`용
   `dataExtractionRules`/`fullBackupContent` 명시, 16 KB 페이지 정렬(네이티브
