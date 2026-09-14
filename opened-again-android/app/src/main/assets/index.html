@@ -350,14 +350,22 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .hero .hero-moni{width:120px;height:108px;object-fit:contain;border-radius:0;background:transparent}
 .scene{background-size:cover!important;background-position:center!important}
 /* v0.41: EPIC/LEGENDARY holofoil canvas overlay -- see createCardHolo() JS
-   comment for the full story. Sits over its parent's own background-image
-   (which stays as a plain fallback -- the canvas re-draws the same art on
-   top of it, so a browser that can't run the script, or a reduced-motion
-   viewer where mountHolo() never mounts it, still shows the plain photo).
-   v0.53: that parent is detailPage()'s .tcg-art now, not the home card's
+   comment for the full story.
+   v0.53: mounts inside detailPage()'s .tcg-card now, not the home card's
    .scene (see card()/mountHolo()'s own v0.53 comments) -- this rule needs
-   no change either way since it only cares about its own box. */
-.holo-canvas{position:absolute;inset:0;pointer-events:none;width:100%;height:100%}
+   no change either way since it only cares about its own box.
+   v0.59: was confined to .tcg-art (inset:0 relative to that box); now a
+   direct child of .tcg-card itself, so the same inset:0 covers the WHOLE
+   card instead -- director feedback that the tilt/shimmer should engage
+   over the entire card, not just the art window. createCardHolo() no
+   longer redraws the card's real content into the canvas at all (it can't
+   -- the canvas now spans the frame art/header/art/info/medallion
+   together, not one photo it could copy), so `mix-blend-mode:screen`
+   blends its shimmer-only, otherwise-transparent pixels with whatever
+   real card content sits behind it -- a plain photo/reduced-motion
+   fallback needs no special-casing here since it's just whatever's
+   already underneath, unchanged, when this canvas draws nothing at all. */
+.holo-canvas{position:absolute;inset:0;pointer-events:none;width:100%;height:100%;mix-blend-mode:screen}
 .scene .moni-asset{width:118px;height:118px;object-fit:contain;border-radius:0;margin-bottom:4px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.14));position:relative;z-index:1}
 /* v0.23: incident illustration pack (docs/UI_VISUAL_DIRECTION_REQUEST.md).
    'scene' render_mode incidents are a full illustrated background (no
@@ -417,7 +425,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.58.0';
+const APP_VERSION='0.59.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -638,44 +646,59 @@ function card(i,featured=false){
 // the art window's own pixels -- text is structurally unreachable, not
 // just avoided by a mask/clip-path like the old CSS version needed.
 //
+// v0.59: director feedback on the real device -- the drag-to-tilt only
+// engaged while dragging over the art window, and the shimmer itself only
+// ever covered that window too; both should cover the whole card. Two
+// changes made this possible together:
+// 1. The canvas now mounts as a direct child of .tcg-card (see
+//    detailPage()) instead of .tcg-art, sized to the whole card via CSS
+//    inset:0 -- mountHolo() never assumed a specific parent, so this alone
+//    makes both the drag-detection area (pointer listeners attach to
+//    canvas.parentElement) and the shimmer's own canvas bounds span the
+//    entire card with no JS changes needed there.
+// 2. This function no longer redraws a copy of the art photo into the
+//    canvas at all (the removed `image`/`base` parameter and its
+//    cover-fit-crop math from here on down) -- with the canvas now
+//    covering the WHOLE card (frame art + header panel + art photo + info
+//    panel + medallion, all real DOM/CSS content, not one photo this
+//    function could redraw itself), redrawing the right composite here
+//    would mean reimplementing the entire card's rendering in Canvas 2D.
+//    Instead the canvas stays fully transparent except for the shimmer
+//    layers themselves, and CSS `mix-blend-mode:screen` on `.holo-canvas`
+//    blends those directly with whatever real card content sits behind
+//    it in the DOM -- the browser does the compositing, so every rarity's
+//    frame/panels/art/medallion get the same holographic sheen without
+//    this function ever needing to know what they look like. Every
+//    ctx.drawImage below is now plain source-over onto that transparent
+//    canvas instead of the old color/screen blends against a pre-drawn
+//    photo (screen was already this effect's own dominant blend mode for
+//    its two most visible layers, so `mix-blend-mode:screen` for the
+//    whole canvas keeps the same overall character).
+//
 // The original prototype (card-holo.js in the pack) hardcoded its masks to
 // the exact 380x326 pixel layout of ONE specific screenshot (a moon-glow
 // boost box and a "protect the cat's face" cutout at fixed x/y) -- real
-// cards use dozens of different illustrations at whatever width .scene
+// cards use dozens of different illustrations at whatever size the card
 // happens to render at on a given device, so those fixed coordinates would
 // be wrong (or just wrong-shaped) for almost every other case. Adapted here:
-// - Canvas is sized to .scene's own actual box (read via
+// - Canvas is sized to the card's own actual box (read via
 //   getBoundingClientRect() in mountHolo()), not a fixed 380x326.
-// - The illustration-specific "moon" boost and "cat face" protection are
-//   dropped; only the generic luminance rule remains (brighter pixels in
-//   the actual image -- sky, lit windows, moonlight -- get more shimmer,
-//   regardless of what the illustration actually contains), with its
-//   coefficient raised slightly to compensate for losing that manual boost.
-// - The rim light and sparkle-grain clip now trace the canvas's own bounds
-//   (matching .scene's 21px border-radius) instead of a hardcoded
-//   whole-card-relative box.
-function createCardHolo(canvas,image,makeCanvas,dpr=1){
+// - The illustration-specific "moon" boost, "cat face" protection, and
+//   (v0.41 fix, see below) the luminance-weighted masking entirely are all
+//   dropped; the radial "gate" gradient alone gives the shimmer its soft
+//   circular falloff.
+// - The rim light and sparkle-grain clip trace the canvas's own bounds
+//   (matching .tcg-card's own border-radius) instead of a hardcoded
+//   fixed-screenshot-relative box.
+function createCardHolo(canvas,makeCanvas,dpr=1){
   const W=canvas.width,H=canvas.height,ctx=canvas.getContext('2d');
   const layer=makeCanvas(W,H),l=layer.getContext('2d');
-  const base=makeCanvas(W,H),b=base.getContext('2d');
-  // v0.41(2차): code review found a real bug -- a plain drawImage(image,0,0,W,H)
-  // stretches the source art to exactly fill the canvas, ignoring its own
-  // aspect ratio, while the .scene element right underneath uses
-  // `background-size:cover` (crops instead of stretching). Every shipped
-  // illustration is a ~1.78:1 landscape photo and .scene's own rendered box
-  // is close to square, so the canvas's opaque per-frame redraw was visibly
-  // squashing every EPIC/LEGENDARY card's artwork. Match cover's own math
-  // (scale by the larger ratio, center-crop) so the holofoil layer draws
-  // the exact same crop the plain CSS background underneath it shows.
-  const iw=image.naturalWidth||image.width,ih=image.naturalHeight||image.height;
-  const coverScale=Math.max(W/iw,H/ih);
-  const dw=iw*coverScale,dh=ih*coverScale;
-  b.drawImage(image,(W-dw)/2,(H-dh)/2,dw,dh);
-  // v0.53: was 21 to match .scene{border-radius:21px} (the home card's art
-  // window, where this canvas used to mount) -- now mounts in detailPage()'s
-  // .tcg-art{border-radius:16px} instead, so the rim-light/sparkle clip
-  // below matches that box's actual rounded corners.
-  const radius=16*dpr; // matches .tcg-art{border-radius:16px}, scaled to W/H's device-pixel resolution
+  // v0.53 had this at 16 to match .tcg-art{border-radius:16px} (the art
+  // window this canvas used to be confined to); v0.59 moved the canvas to
+  // cover the whole .tcg-card{border-radius:26px} instead (see this
+  // function's own top-of-file comment), so the rim-light/sparkle clip
+  // below now matches THAT box's rounded corners.
+  const radius=26*dpr; // matches .tcg-card{border-radius:26px}, scaled to W/H's device-pixel resolution
   function rounded(c,x,y,w,h,r){c.beginPath();if(c.roundRect)c.roundRect(x,y,w,h,r);else c.rect(x,y,w,h)}
   // v0.41 fix: found via testing (Playwright, same file:// loading this
   // WebView uses) -- getImageData()/putImageData() on any canvas that ever
@@ -685,10 +708,10 @@ function createCardHolo(canvas,image,makeCanvas,dpr=1){
   // getImageData to build a luminance-weighted alpha mask (brighter parts
   // of the art shimmer more). Dropped entirely rather than worked around --
   // every remaining call below is drawImage/gradients/compositing, which
-  // are pure *write* operations Chromium never blocks regardless of the
+  // are pure *write* operations Chromium never blocks regardless of any
   // source image's origin, so this file makes zero getImageData/
-  // putImageData calls anywhere. The radial "gate" gradient already gives
-  // the shimmer a soft circular falloff without needing per-pixel weighting.
+  // putImageData calls anywhere (moot now anyway, v0.59, since this
+  // function no longer draws any image at all -- see top-of-file comment).
   let seed=27;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
   const flakeCount=Math.max(24,Math.round(W*H/380));
   const flakes=Array.from({length:flakeCount},()=>({x:random()*W,y:random()*H,nx:random()*2-1,ny:random()*2-1,r:(.3+random()*.65)*dpr}));
@@ -696,7 +719,7 @@ function createCardHolo(canvas,image,makeCanvas,dpr=1){
   function render(t,px,py,effects=true){
     const angle=t*Math.PI/4;
     if(px===undefined){px=Math.sin(angle)*.82;py=Math.cos(angle)*.52}
-    ctx.clearRect(0,0,W,H);ctx.drawImage(base,0,0);
+    ctx.clearRect(0,0,W,H);
     if(!effects)return;
     const lx=W/2+px*W*.48,ly=H/2+py*H*.48;
     l.clearRect(0,0,W,H);l.globalCompositeOperation='source-over';
@@ -707,7 +730,11 @@ function createCardHolo(canvas,image,makeCanvas,dpr=1){
     const gate=l.createRadialGradient(lx,ly,Math.min(W,H)*.03,lx,ly,Math.max(W,H)*.85);
     gate.addColorStop(0,'rgba(255,255,255,.76)');gate.addColorStop(.48,'rgba(255,255,255,.45)');gate.addColorStop(1,'rgba(255,255,255,0)');
     l.fillStyle=gate;l.fillRect(0,0,W,H);
-    ctx.globalCompositeOperation='color';ctx.globalAlpha=.64;ctx.drawImage(layer,0,0);ctx.globalCompositeOperation='screen';ctx.globalAlpha=.12;ctx.drawImage(layer,0,0);
+    // v0.59: was ctx.globalCompositeOperation='color'/'screen' against the
+    // photo this function used to redraw into ctx itself -- now just a
+    // plain translucent wash (mix-blend-mode:screen on the canvas element
+    // handles blending with the real card behind it instead).
+    ctx.globalAlpha=.5;ctx.drawImage(layer,0,0);ctx.globalAlpha=1;
     // clear-coat elliptical glare -- no moving rectangular edge anywhere.
     l.globalCompositeOperation='source-over';l.clearRect(0,0,W,H);l.save();
     l.translate(lx,ly);l.rotate(-.42);l.scale(1,1.65);
@@ -715,7 +742,7 @@ function createCardHolo(canvas,image,makeCanvas,dpr=1){
     const glare=l.createRadialGradient(0,0,0,0,0,glareR);
     glare.addColorStop(0,'rgba(239,252,255,.42)');glare.addColorStop(.32,'rgba(218,245,255,.20)');glare.addColorStop(1,'rgba(255,255,255,0)');
     l.fillStyle=glare;l.fillRect(-glareR,-glareR,glareR*2,glareR*2);l.restore();
-    ctx.globalCompositeOperation='screen';ctx.globalAlpha=1;ctx.drawImage(layer,0,0);
+    ctx.drawImage(layer,0,0);
     // stationary foil grains -- they catch light, they don't travel.
     ctx.save();rounded(ctx,0,0,W,H,radius);ctx.clip();
     for(const f of flakes){
@@ -726,12 +753,12 @@ function createCardHolo(canvas,image,makeCanvas,dpr=1){
       if(a>.36&&f.r>.8*dpr){ctx.strokeStyle=`rgba(247,244,255,${(a-.30)*1.2})`;ctx.lineWidth=.65*dpr;ctx.beginPath();ctx.moveTo(f.x-2*dpr,f.y);ctx.lineTo(f.x+2*dpr,f.y);ctx.moveTo(f.x,f.y-2*dpr);ctx.lineTo(f.x,f.y+2*dpr);ctx.stroke()}
     }
     ctx.restore();
-    // rim light around the art window's own border (never the whole card).
+    // rim light around the whole card's own border.
     l.globalCompositeOperation='source-over';l.clearRect(0,0,W,H);
     const rim=l.createLinearGradient(lx-W*.45,ly-H*.45,lx+W*.45,ly+H*.45);
     rim.addColorStop(0,'rgba(127,83,217,0)');rim.addColorStop(.35,'rgba(139,222,255,.25)');rim.addColorStop(.5,'rgba(246,247,255,.95)');rim.addColorStop(.64,'rgba(219,166,255,.35)');rim.addColorStop(1,'rgba(126,82,218,0)');
     l.strokeStyle=rim;l.lineWidth=2*dpr;rounded(l,dpr,dpr,W-2*dpr,H-2*dpr,Math.max(0,radius-dpr));l.stroke();
-    ctx.globalCompositeOperation='screen';ctx.drawImage(layer,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
+    ctx.drawImage(layer,0,0);
   }
   return {render};
 }
@@ -779,89 +806,100 @@ function mountHolo(){
   // this needs a real-device recheck across a few card opens to see if the
   // glitch still occurs.
   canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
-  const img=new Image();
-  img.onload=()=>{
-    if(!document.body.contains(canvas))return;
-    const makeCanvas=(cw,ch)=>{const c=document.createElement('canvas');c.width=cw;c.height=ch;return c};
-    const effect=createCardHolo(canvas,img,makeCanvas,dpr);
-    const start=performance.now();
+  // v0.59: used to wait for an <img> of the card art to load before
+  // starting (createCardHolo() redrew it into the canvas itself) -- now
+  // that this function draws nothing but the shimmer layers (see
+  // createCardHolo()'s own comment), there's nothing to load first, so
+  // this starts immediately instead of behind an img.onload.
+  const makeCanvas=(cw,ch)=>{const c=document.createElement('canvas');c.width=cw;c.height=ch;return c};
+  const effect=createCardHolo(canvas,makeCanvas,dpr);
+  const start=performance.now();
 
-    // v0.52: director feedback -- "카드 수집요소가 우리의 강점인데
-    // Pocket처럼 카드에 애니메이션이 있었으면 좋겠음" (Pokemon TCG
-    // Pocket-style interactive card holofoil). createCardHolo()'s render()
-    // already accepted an explicit light-position override (px,py) for
-    // exactly this -- it just never had an input source feeding it besides
-    // the automatic sweep. Wire up touch/pointer drag on the art window so
-    // dragging tilts the shine toward the touch point, same interaction
-    // language as Pocket's card-tilt effect; releasing (or never touching)
-    // falls back to the existing automatic sweep. touch-action:none stops
-    // the page itself from trying to scroll/pan while actively tilting.
-    // v0.53: this mounts on detailPage()'s tcg-art now, not the home card's
-    // .scene -- `scene` below is still just whatever element is this
-    // canvas's parent (mountHolo() never assumed a specific class name), so
-    // nothing in this block needed to change for the move.
-    // v0.54: director feedback -- "카드 자체가 움직이지는 않네" (the card
-    // itself doesn't move). Everything above only ever moved the *light*
-    // inside the art window; the card frame around it stayed flat. cardEl
-    // (found via closest() so this stays generic if .holo-canvas ever
-    // mounts somewhere without a .tcg-card ancestor again) now also gets a
-    // real 3D tilt (rotateX/rotateY) driven by the exact same drag
-    // position, so dragging reads as physically tilting the card -- the
-    // actual Pocket motion -- not just its light shifting in place.
-    const cardEl=scene.closest('.tcg-card');
-    const MAX_TILT_DEG=14;
-    scene.style.touchAction='none';
-    let drag=null; // {startX,startY,moved} while the pointer is down
-    let manualPos=null; // {px,py} while actively tilting, else null (auto-sweep)
-    const DRAG_THRESHOLD=8; // px of movement before a press counts as a tilt, not a tap
-    function toNormalized(clientX,clientY){
-      const r=scene.getBoundingClientRect();
-      const px=((clientX-r.left)/r.width)*2-1;
-      const py=((clientY-r.top)/r.height)*2-1;
-      return {px:Math.max(-1,Math.min(1,px)),py:Math.max(-1,Math.min(1,py))};
+  // v0.52: director feedback -- "카드 수집요소가 우리의 강점인데
+  // Pocket처럼 카드에 애니메이션이 있었으면 좋겠음" (Pokemon TCG
+  // Pocket-style interactive card holofoil). createCardHolo()'s render()
+  // already accepted an explicit light-position override (px,py) for
+  // exactly this -- it just never had an input source feeding it besides
+  // the automatic sweep. Wire up touch/pointer drag on the art window so
+  // dragging tilts the shine toward the touch point, same interaction
+  // language as Pocket's card-tilt effect; releasing (or never touching)
+  // falls back to the existing automatic sweep. touch-action:none stops
+  // the page itself from trying to scroll/pan while actively tilting.
+  // v0.53: this mounts on detailPage()'s tcg-art now, not the home card's
+  // .scene -- `scene` below is still just whatever element is this
+  // canvas's parent (mountHolo() never assumed a specific class name), so
+  // nothing in this block needed to change for the move.
+  // v0.54: director feedback -- "카드 자체가 움직이지는 않네" (the card
+  // itself doesn't move). Everything above only ever moved the *light*
+  // inside the art window; the card frame around it stayed flat. cardEl
+  // (found via closest() so this stays generic if .holo-canvas ever
+  // mounts somewhere without a .tcg-card ancestor again) now also gets a
+  // real 3D tilt (rotateX/rotateY) driven by the exact same drag
+  // position, so dragging reads as physically tilting the card -- the
+  // actual Pocket motion -- not just its light shifting in place.
+  // v0.59: director feedback -- confirmed on the real device that the
+  // tilt worked, but only while dragging over the art window specifically
+  // ("일러스트있는 부분을 드래그해야 움직이는 것을 확인했어"), and asked
+  // for the whole card to be draggable with the shimmer covering all of
+  // it. Both follow from the same change: the canvas (and so `scene`,
+  // still just canvas.parentElement) now mounts as a direct child of
+  // .tcg-card instead of .tcg-art (see detailPage()) -- every listener
+  // below already attaches to `scene`, so moving what `scene` IS moves
+  // the entire drag-detection area (and therefore the tilt and the
+  // shimmer's own light-position input) to the whole card with no changes
+  // needed in this block at all.
+  const cardEl=scene.closest('.tcg-card');
+  const MAX_TILT_DEG=14;
+  scene.style.touchAction='none';
+  let drag=null; // {startX,startY,moved} while the pointer is down
+  let manualPos=null; // {px,py} while actively tilting, else null (auto-sweep)
+  const DRAG_THRESHOLD=8; // px of movement before a press counts as a tilt, not a tap
+  function toNormalized(clientX,clientY){
+    const r=scene.getBoundingClientRect();
+    const px=((clientX-r.left)/r.width)*2-1;
+    const py=((clientY-r.top)/r.height)*2-1;
+    return {px:Math.max(-1,Math.min(1,px)),py:Math.max(-1,Math.min(1,py))};
+  }
+  scene.addEventListener('pointerdown',e=>{drag={startX:e.clientX,startY:e.clientY,moved:false}});
+  scene.addEventListener('pointermove',e=>{
+    if(!drag)return;
+    if(!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>DRAG_THRESHOLD){
+      drag.moved=true;
+      if(cardEl)cardEl.classList.add('tilting'); // drop the snap-back transition while actively dragging so the tilt tracks the finger with no lag
     }
-    scene.addEventListener('pointerdown',e=>{drag={startX:e.clientX,startY:e.clientY,moved:false}});
-    scene.addEventListener('pointermove',e=>{
-      if(!drag)return;
-      if(!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>DRAG_THRESHOLD){
-        drag.moved=true;
-        if(cardEl)cardEl.classList.add('tilting'); // drop the snap-back transition while actively dragging so the tilt tracks the finger with no lag
-      }
-      if(drag.moved){
-        manualPos=toNormalized(e.clientX,e.clientY);
-        if(cardEl)cardEl.style.transform=`rotateX(${(-manualPos.py*MAX_TILT_DEG).toFixed(2)}deg) rotateY(${(manualPos.px*MAX_TILT_DEG).toFixed(2)}deg)`;
-        e.preventDefault();
-      }
-    });
-    function endDrag(){
-      if(drag&&drag.moved){
-        // A real tilt gesture happened -- swallow whatever click it would
-        // otherwise produce. On the home card this used to matter a lot
-        // (it would otherwise open the detail page mid-drag, same
-        // tap-vs-drag distinction Pocket itself makes); tcg-art has no
-        // click handler of its own now that this lives on the detail page
-        // itself, so this is a harmless no-op here -- kept rather than
-        // special-cased so mountHolo() stays one function that works
-        // wherever a .holo-canvas shows up next.
-        const suppressClick=ev=>{ev.stopPropagation();scene.removeEventListener('click',suppressClick,true)};
-        scene.addEventListener('click',suppressClick,true);
-      }
-      if(cardEl){cardEl.classList.remove('tilting');cardEl.style.transform=''} // .tcg-card's own transition eases this back flat
-      drag=null;manualPos=null;
+    if(drag.moved){
+      manualPos=toNormalized(e.clientX,e.clientY);
+      if(cardEl)cardEl.style.transform=`rotateX(${(-manualPos.py*MAX_TILT_DEG).toFixed(2)}deg) rotateY(${(manualPos.px*MAX_TILT_DEG).toFixed(2)}deg)`;
+      e.preventDefault();
     }
-    scene.addEventListener('pointerup',endDrag);
-    scene.addEventListener('pointercancel',endDrag);
-    scene.addEventListener('pointerleave',endDrag);
+  });
+  function endDrag(){
+    if(drag&&drag.moved){
+      // A real tilt gesture happened -- swallow whatever click it would
+      // otherwise produce. On the home card this used to matter a lot
+      // (it would otherwise open the detail page mid-drag, same
+      // tap-vs-drag distinction Pocket itself makes); the card has no
+      // click handler of its own now that this lives on the detail page
+      // itself, so this is a harmless no-op here -- kept rather than
+      // special-cased so mountHolo() stays one function that works
+      // wherever a .holo-canvas shows up next.
+      const suppressClick=ev=>{ev.stopPropagation();scene.removeEventListener('click',suppressClick,true)};
+      scene.addEventListener('click',suppressClick,true);
+    }
+    if(cardEl){cardEl.classList.remove('tilting');cardEl.style.transform=''} // .tcg-card's own transition eases this back flat
+    drag=null;manualPos=null;
+  }
+  scene.addEventListener('pointerup',endDrag);
+  scene.addEventListener('pointercancel',endDrag);
+  scene.addEventListener('pointerleave',endDrag);
 
-    function tick(now){
-      if(!document.body.contains(canvas)){holoRaf=null;return}
-      if(manualPos)effect.render((now-start)/1000,manualPos.px,manualPos.py);
-      else effect.render((now-start)/1000);
-      holoRaf=requestAnimationFrame(tick);
-    }
+  function tick(now){
+    if(!document.body.contains(canvas)){holoRaf=null;return}
+    if(manualPos)effect.render((now-start)/1000,manualPos.px,manualPos.py);
+    else effect.render((now-start)/1000);
     holoRaf=requestAnimationFrame(tick);
-  };
-  img.src=canvas.dataset.art;
+  }
+  holoRaf=requestAnimationFrame(tick);
 }
 // v0.46: director feedback -- language switching lived in two places (this
 // header badge and the settings language row), doing the exact same thing
@@ -1242,7 +1280,12 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
     :'--page-text:#2F2A27;--page-muted:#6B5F54;--page-panel:rgba(255,255,255,.78);--page-panel-line:rgba(120,100,80,.14);--page-stat-line:#EFE7DB';
   const titleTxt=esc(txt(names,i.type));
   const titleStyle=foil?` style="--foil-colors:${foil.colors.join(',')};--foil-outline:${foil.outline};--foil-glow:${foil.glow}"`:'';
-  const holoCanvas=impact?`<canvas class="holo-canvas" data-art="${sceneBg}"></canvas>`:'';
+  // v0.59: moved from inside .tcg-art to a direct child of .tcg-card
+  // (last, so it paints on top of the other absolutely-positioned tcg-*
+  // children) -- see createCardHolo()/mountHolo()'s own v0.59 comments for
+  // why this alone makes the whole card draggable and shimmering instead
+  // of just the art window.
+  const holoCanvas=impact?`<canvas class="holo-canvas"></canvas>`:'';
   return `<div class="detail-backdrop" style="background-image:url('${backdropUrl}')"></div>
   <div class="detail-page ${rarityClass(i)}" style="--tcg-border:${pal.border};${pageVars}">
     <div class="detail-page-head"><button class="icon-btn" onclick="closeDetail()"><img src="visual/ui/icons/unlabeled/icon_back.png" alt="${l('뒤로','戻る','Back')}"></button>${rarityBadge(i)}<button class="icon-btn" onclick='share(${shareArg},"square")'><img src="visual/ui/icons/unlabeled/icon_share.png" alt="${l('공유','シェア','Share')}"></button></div>
@@ -1250,9 +1293,10 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
     <div class="detail-sub">${esc(detail(i))}</div>
     <div class="tcg-card-wrap"><div class="tcg-card" style="background-image:url('${frameUrl}')">
       <div class="tcg-header" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-title${foil?' foil':''}"${titleStyle}>${titleTxt}</div></div>
-      <div class="tcg-art" style="background-image:url('${sceneBg}')">${holoCanvas}<span class="scene-mark">${iconFor(i)}</span></div>
+      <div class="tcg-art" style="background-image:url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span></div>
       <div class="tcg-emblem" style="background-image:url('${medallionUrl}')"></div>
       <div class="tcg-info" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-punch">“${esc(txt(punch,i.type))}”</div><div class="tcg-chip" style="--tcg-chip:${pal.chip}">CASE #${caseNo(i)}</div></div>
+      ${holoCanvas}
     </div></div>
     ${statRows.length?`<div class="detail-stats"><b>${l('이 사건의 기록','この事件の記録','About this case')}</b>${statRows.map(([k,v])=>`<div class="detail-stat-row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>`:''}
     <button class="primary detail-share-btn" onclick='share(${shareArg},"square")'>${l('공유하기','シェアする','Share')}</button>
