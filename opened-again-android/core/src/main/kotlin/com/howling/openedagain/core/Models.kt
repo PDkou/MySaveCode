@@ -48,7 +48,23 @@ data class DetectedIncident(
     val endTime: Long,
     val primaryPackage: String? = null,
     val metrics: Map<String, Long> = emptyMap(),
-    val related: List<IncidentType> = emptyList()
+    val related: List<IncidentType> = emptyList(),
+    // v0.66: director feedback -- "무슨앱을 들어갔는지 어떤일이일어나서
+    // 이걸얻었는지" (which app, what happened) wasn't answerable for the
+    // multi-app "wandering"-style incidents (PATROL/APP_WANDERING/
+    // NIGHT_PATROL/DIGITAL_LOST/DAWN_SURVIVOR/HIDDEN_NIGHT_ACTIVITY), which
+    // always passed primaryPackage=null since there's no single app the
+    // incident is "about." topPackage instead names the single
+    // most-visited app within that incident's own window -- purely for
+    // display text, deliberately NEVER used as resolve()'s dedup/grouping
+    // key (that stays primaryPackage-only) so this cannot change how many
+    // incidents surface per day or which ones win the rarity caps, only
+    // what their description can say.
+    val topPackage: String? = null,
+    // HIDDEN_LOOP is specifically "two apps alternating" -- primaryPackage
+    // now names one of them, this the other, so the card can finally say
+    // which two apps instead of "두 앱 사이" (between two apps, no names).
+    val secondaryPackage: String? = null
 )
 
 data class DailyUsageSummary(

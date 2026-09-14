@@ -451,7 +451,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.65.0';
+const APP_VERSION='0.66.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -502,8 +502,83 @@ function compactPkg(p){
   try{if(N&&N.appLabel){const label=N.appLabel(p);if(label)return label}}catch(e){}
   return p.split('.').pop().replace(/_/g,' ')
 }
-function detail(i){const m=i.metrics||{};switch(i.type){case'REENTRY':return l(`빠른 재입장 ${m.count||1}회 · 평균 ${Math.floor((m.avgGapMs||0)/1000)}초`,`素早い再入場 ${m.count||1}回・平均${Math.floor((m.avgGapMs||0)/1000)}秒`,`${m.count||1} quick returns · avg ${Math.floor((m.avgGapMs||0)/1000)}s`);case'QUICK_EXIT':return l(`${m.count||0}회의 짧은 실행이 발견됨`,`短い起動を${m.count||0}回確認`,`Detected ${m.count||0} short opens`);case'REGULAR':case'HUNDRED_VISITS':return l(`오늘 ${m.opens||0}회 방문`,`本日${m.opens||0}回訪問`,`${m.opens||0} visits today`);case'PATROL':case'DIGITAL_LOST':return l(`앱 ${m.uniqueApps||0}개 · 전환 ${m.switches||0}회`,`アプリ${m.uniqueApps||0}個・切替${m.switches||0}回`,`${m.uniqueApps||0} apps · ${m.switches||0} switches`);case'NIGHT_PATROL':return l(`앱 ${m.uniqueApps||0}개 · ${Math.floor((m.durationMs||0)/60000)}분`,`アプリ${m.uniqueApps||0}個・${Math.floor((m.durationMs||0)/60000)}分`,`${m.uniqueApps||0} apps · ${Math.floor((m.durationMs||0)/60000)}m`);case'APP_WANDERING':return l(`앱 전환 ${m.switches||0}회`,`アプリ切替${m.switches||0}回`,`${m.switches||0} app switches`);case'ESCAPE_FAILED':return l(`재실행 ${m.reopens||0}회`,`再起動${m.reopens||0}回`,`${m.reopens||0} reopens`);case'FIRST_CONTACT':return l('잠금 해제 직후 첫 앱 실행','ロック解除直後の最初のアプリ','First app after unlock');case'HIDDEN_LOOP':return l(`두 앱 사이 전환 ${m.switches||0}회`,`2アプリ間を${m.switches||0}回切替`,`${m.switches||0} switches between two apps`);case'HIDDEN_NIGHT_ACTIVITY':return l(`심야 짧은 접속 ${m.unlocks||5}회`,`深夜の短い接続 ${m.unlocks||5}回`,`${m.unlocks||5} short night checks`);default:return l('오늘의 사용 기록에서 발견되었습니다.','本日の利用記録から発見されました。','Found in today\'s usage record.')}}
-function demo(){return {permission:true,summary:{totalUsageMs:8580000,openCount:37,switchCount:84,uniqueApps:9,unlockSessions:24,nightUsageMs:2100000,topPackages:[{packageName:'com.instagram.android',durationMs:3180000},{packageName:'com.google.android.youtube',durationMs:2220000},{packageName:'com.kakao.talk',durationMs:1080000}]},report:{totalIncidents:5,hiddenCount:1,legendaryCount:1,cards:[{type:'HIDDEN_LOOP',rarity:'HIDDEN',score:220,metrics:{switches:8}},{type:'NIGHT_PATROL',rarity:'EPIC',score:80,metrics:{uniqueApps:8,durationMs:2100000}},{type:'RETURN_TO_START',rarity:'RARE',score:44,metrics:{visits:6,uniqueApps:4}},{type:'QUICK_EXIT',rarity:'NORMAL',score:18,metrics:{count:5}},{type:'HUNDRED_VISITS',rarity:'LEGENDARY',score:112,metrics:{opens:104}}]},archive:{discoveredCount:8,items:Object.keys(names).map((type,i)=>({type,hidden:type.startsWith('HIDDEN'),found:i<8||type==='HIDDEN_LOOP'}))}}}
+// v0.66: director feedback -- "무슨앱을 들어갔는지 어떤일이일어나서
+// 이걸얻었는지 자세히 알려줬음 좋겠음" (too unfriendly -- want to know
+// exactly which app and what happened to earn this card). The old version
+// only ever showed a bare stat ("5회의 짧은 실행이 발견됨") with no app
+// name at all, even though most incidents already carry i.primaryPackage.
+// Rewritten so every type reads as a real sentence naming the actual
+// app(s) involved via compactPkg() -- real per-app types (QUICK_EXIT,
+// REENTRY, ESCAPE_FAILED, REGULAR, HUNDRED_VISITS, FIRST_CONTACT,
+// RETURN_TO_START) use i.primaryPackage directly; the multi-app
+// "wandering"-style types (PATROL/APP_WANDERING/NIGHT_PATROL/DIGITAL_LOST/
+// DAWN_SURVIVOR/HIDDEN_NIGHT_ACTIVITY) use the new i.topPackage (the single
+// most-visited app within that incident, added purely for this description
+// text -- see core's IncidentDetector.kt/Models.kt v0.66 comments) alongside
+// the app COUNT, since those are inherently "many apps" stories; HIDDEN_LOOP
+// now names both alternating apps via primaryPackage+secondaryPackage
+// instead of the old "두 앱 사이" (between two apps, no names). The app
+// name always sits inside a fixed noun phrase ("'{app}' 앱을/에" in Korean)
+// so Korean particle attachment (을/를, 이/가) lands on the fixed word "앱"
+// rather than on an arbitrary real-world app name, which sidesteps needing
+// batchim-aware grammar for names we don't control. topPackage can still be
+// missing in principle (`mostVisitedPackage()` returns null on an empty
+// visit list) -- each multi-app case has a same-meaning fallback sentence
+// without a specific name for that edge case.
+function fmtDurShort(ms){return (ms||0)<60000?`${Math.floor((ms||0)/1000)}${l('초','秒','s')}`:fmtMs(ms||0)}
+function detail(i){
+  const m=i.metrics||{};
+  const app=i.primaryPackage?compactPkg(i.primaryPackage):null;
+  const top=i.topPackage?compactPkg(i.topPackage):null;
+  switch(i.type){
+    case'QUICK_EXIT':
+      return app?l(`'${app}' 앱을 ${m.count||0}번이나 짧게 열었다가 바로 닫았어요`,`「${app}」を${m.count||0}回、開いてすぐ閉じました`,`Opened ${app} briefly ${m.count||0} times and closed it right away`)
+        :l(`${m.count||0}회의 짧은 실행이 발견됨`,`短い起動を${m.count||0}回確認`,`Detected ${m.count||0} short opens`);
+    case'REENTRY':
+      return app?l(`'${app}' 앱에서 나갔다가 ${Math.floor((m.avgGapMs||0)/1000)}초 만에 다시 들어가기를 ${m.count||1}번 반복했어요`,`「${app}」を出た後、${Math.floor((m.avgGapMs||0)/1000)}秒で戻ることを${m.count||1}回繰り返しました`,`Left ${app} and came back within ${Math.floor((m.avgGapMs||0)/1000)}s, ${m.count||1} times in a row`)
+        :l(`빠른 재입장 ${m.count||1}회 · 평균 ${Math.floor((m.avgGapMs||0)/1000)}초`,`素早い再入場 ${m.count||1}回・平均${Math.floor((m.avgGapMs||0)/1000)}秒`,`${m.count||1} quick returns · avg ${Math.floor((m.avgGapMs||0)/1000)}s`);
+    case'ESCAPE_FAILED':
+      return app?l(`'${app}' 앱을 끄려다 ${fmtDurShort(m.windowMs)} 사이에 ${m.reopens||0}번이나 다시 열었어요`,`「${app}」を閉じようとして${fmtDurShort(m.windowMs)}の間に${m.reopens||0}回も再び開きました`,`Tried to quit ${app} but reopened it ${m.reopens||0} times within ${fmtDurShort(m.windowMs)}`)
+        :l(`재실행 ${m.reopens||0}회`,`再起動${m.reopens||0}回`,`${m.reopens||0} reopens`);
+    case'REGULAR':
+      return app?l(`오늘 '${app}' 앱에 ${m.opens||0}번 들어갔어요`,`本日「${app}」に${m.opens||0}回入りました`,`Opened ${app} ${m.opens||0} times today`)
+        :l(`오늘 ${m.opens||0}회 방문`,`本日${m.opens||0}回訪問`,`${m.opens||0} visits today`);
+    case'HUNDRED_VISITS':
+      return app?l(`'${app}' 앱에 오늘 무려 ${m.opens||0}번이나 접속했어요`,`「${app}」に本日なんと${m.opens||0}回もアクセスしました`,`Visited ${app} a whopping ${m.opens||0} times today`)
+        :l(`오늘 ${m.opens||0}회 방문`,`本日${m.opens||0}回訪問`,`${m.opens||0} visits today`);
+    case'FIRST_CONTACT':
+      return app?l(`잠금을 풀자마자 ${Math.floor((m.afterUnlockMs||0)/1000)}초 만에 '${app}' 앱부터 열었어요`,`ロック解除後${Math.floor((m.afterUnlockMs||0)/1000)}秒で真っ先に「${app}」を開きました`,`Opened ${app} first, just ${Math.floor((m.afterUnlockMs||0)/1000)}s after unlocking`)
+        :l('잠금 해제 직후 첫 앱 실행','ロック解除直後の最初のアプリ','First app after unlock');
+    case'RETURN_TO_START':
+      return app?l(`'${app}' 앱에서 시작해 다른 앱 ${m.uniqueApps||0}개를 돌아다니다 다시 '${app}' 앱으로 돌아왔어요`,`「${app}」から始めて他のアプリを${m.uniqueApps||0}個回った末、また「${app}」に戻ってきました`,`Started at ${app}, wandered through ${m.uniqueApps||0} other apps, and came right back to ${app}`)
+        :l(`앱 ${m.uniqueApps||0}개를 돌아 제자리로 복귀`,`アプリ${m.uniqueApps||0}個を回って元の場所へ`,`Wandered through ${m.uniqueApps||0} apps and circled back`);
+    case'PATROL':
+      return top?l(`'${top}' 앱을 포함해 짧은 시간에 앱 ${m.uniqueApps||0}개를 훑어봤어요`,`「${top}」を含め、短時間でアプリを${m.uniqueApps||0}個見て回りました`,`Skimmed through ${m.uniqueApps||0} apps in a short time, including ${top}`)
+        :l(`앱 ${m.uniqueApps||0}개 · 전환 ${m.switches||0}회`,`アプリ${m.uniqueApps||0}個・切替${m.switches||0}回`,`${m.uniqueApps||0} apps · ${m.switches||0} switches`);
+    case'DIGITAL_LOST':
+      return top?l(`'${top}' 앱 등 ${m.uniqueApps||0}개 앱 사이를 ${m.switches||0}번 헤매다 제자리로 돌아왔어요`,`「${top}」など${m.uniqueApps||0}個のアプリの間を${m.switches||0}回さまよった末、元の場所に戻りました`,`Wandered ${m.switches||0} times across ${m.uniqueApps||0} apps including ${top}, then circled back to where you started`)
+        :l(`앱 ${m.uniqueApps||0}개 · 전환 ${m.switches||0}회`,`アプリ${m.uniqueApps||0}個・切替${m.switches||0}回`,`${m.uniqueApps||0} apps · ${m.switches||0} switches`);
+    case'NIGHT_PATROL':
+      return top?l(`심야에 '${top}' 앱 등 ${m.uniqueApps||0}개 앱을 오가며 ${fmtDurShort(m.durationMs)} 동안 깨어있었어요`,`深夜に「${top}」など${m.uniqueApps||0}個のアプリを行き来しながら${fmtDurShort(m.durationMs)}起きていました`,`Stayed up ${fmtDurShort(m.durationMs)} at night, hopping across ${m.uniqueApps||0} apps including ${top}`)
+        :l(`앱 ${m.uniqueApps||0}개 · ${fmtDurShort(m.durationMs)}`,`アプリ${m.uniqueApps||0}個・${fmtDurShort(m.durationMs)}`,`${m.uniqueApps||0} apps · ${fmtDurShort(m.durationMs)}`);
+    case'APP_WANDERING':
+      return top?l(`'${top}' 앱 등 여러 앱 사이를 ${m.switches||0}번이나 옮겨 다녔어요`,`「${top}」など複数のアプリ間を${m.switches||0}回も行き来しました`,`Bounced between apps ${m.switches||0} times, including ${top}`)
+        :l(`앱 전환 ${m.switches||0}회`,`アプリ切替${m.switches||0}回`,`${m.switches||0} app switches`);
+    case'DAWN_SURVIVOR':
+      return top?l(`새벽에 '${top}' 앱을 보며 ${fmtDurShort(m.durationMs)} 동안 깨어있었어요`,`明け方に「${top}」を見ながら${fmtDurShort(m.durationMs)}起きていました`,`Stayed awake at dawn for ${fmtDurShort(m.durationMs)}, mostly on ${top}`)
+        :l(`새벽에 ${fmtDurShort(m.durationMs)} 동안 깨어있었어요`,`明け方に${fmtDurShort(m.durationMs)}起きていました`,`Stayed awake at dawn for ${fmtDurShort(m.durationMs)}`);
+    case'HIDDEN_LOOP':{
+      const app2=i.secondaryPackage?compactPkg(i.secondaryPackage):null;
+      return (app&&app2)?l(`'${app}' 앱과 '${app2}' 앱 사이를 ${m.switches||0}번이나 오갔어요`,`「${app}」と「${app2}」の間を${m.switches||0}回も行き来しました`,`Bounced between ${app} and ${app2} ${m.switches||0} times`)
+        :l(`두 앱 사이 전환 ${m.switches||0}회`,`2アプリ間を${m.switches||0}回切替`,`${m.switches||0} switches between two apps`);
+    }
+    case'HIDDEN_NIGHT_ACTIVITY':
+      return top?l(`심야에 '${top}' 앱 등을 ${m.unlockSessions||0}번 짧게 확인했어요 (총 ${fmtDurShort(m.totalUsageMs)})`,`深夜に「${top}」などを${m.unlockSessions||0}回、短く確認しました(計${fmtDurShort(m.totalUsageMs)})`,`Checked apps like ${top} briefly ${m.unlockSessions||0} times at night (${fmtDurShort(m.totalUsageMs)} total)`)
+        :l(`심야 짧은 접속 ${m.unlockSessions||0}회`,`深夜の短い接続 ${m.unlockSessions||0}回`,`${m.unlockSessions||0} short night checks`);
+    default:return l('오늘의 사용 기록에서 발견되었습니다.','本日の利用記録から発見されました。','Found in today\'s usage record.')
+  }
+}
+function demo(){return {permission:true,summary:{totalUsageMs:8580000,openCount:37,switchCount:84,uniqueApps:9,unlockSessions:24,nightUsageMs:2100000,topPackages:[{packageName:'com.instagram.android',durationMs:3180000},{packageName:'com.google.android.youtube',durationMs:2220000},{packageName:'com.kakao.talk',durationMs:1080000}]},report:{totalIncidents:5,hiddenCount:1,legendaryCount:1,cards:[{type:'HIDDEN_LOOP',rarity:'HIDDEN',score:220,primaryPackage:'com.instagram.android',secondaryPackage:'com.google.android.youtube',metrics:{switches:8}},{type:'NIGHT_PATROL',rarity:'EPIC',score:80,topPackage:'com.kakao.talk',metrics:{uniqueApps:8,durationMs:2100000}},{type:'RETURN_TO_START',rarity:'RARE',score:44,primaryPackage:'com.instagram.android',metrics:{visits:6,uniqueApps:4}},{type:'QUICK_EXIT',rarity:'NORMAL',score:18,primaryPackage:'com.kakao.talk',metrics:{count:5}},{type:'HUNDRED_VISITS',rarity:'LEGENDARY',score:112,primaryPackage:'com.google.android.youtube',metrics:{opens:104}}]},archive:{discoveredCount:8,items:Object.keys(names).map((type,i)=>({type,hidden:type.startsWith('HIDDEN'),found:i<8||type==='HIDDEN_LOOP'}))}}}
 function read(){if(preview||!N)return demo();try{return JSON.parse(N.analyzeToday())}catch(e){return demo()}}
 function persistSnapshot(d){if(!d||!d.permission)return;const key=todayKey();state.history.days[key]={summary:d.summary,report:{totalIncidents:d.report?.totalIncidents||0,hiddenCount:d.report?.hiddenCount||0,legendaryCount:d.report?.legendaryCount||0}};(d.report?.cards||[]).forEach(i=>{const arr=state.history.discoveries[i.type]||[];if(!arr.includes(i.rarity))arr.push(i.rarity);state.history.discoveries[i.type]=arr});save()}
 // v0.38: director feedback -- switching tabs after scrolling down on one

@@ -158,7 +158,8 @@ class IncidentDetector(
                 else -> Rarity.RARE
             }
             out += incident(IncidentType.PATROL, rarity, s.startTime, s.endTime, null,
-                mapOf("uniqueApps" to s.uniqueApps.toLong(), "switches" to s.switches.toLong()))
+                mapOf("uniqueApps" to s.uniqueApps.toLong(), "switches" to s.switches.toLong()),
+                topPackage = mostVisitedPackage(s.visits))
         }
 
         if (duration <= config.wanderingWindowMs * 2 && s.switches >= config.wanderingRareSwitches) {
@@ -169,7 +170,8 @@ class IncidentDetector(
                 else -> Rarity.RARE
             }
             out += incident(IncidentType.APP_WANDERING, rarity, s.startTime, s.endTime, null,
-                mapOf("switches" to s.switches.toLong(), "avgStayMs" to avg))
+                mapOf("switches" to s.switches.toLong(), "avgStayMs" to avg),
+                topPackage = mostVisitedPackage(s.visits))
         }
 
         if (isNight(s.startTime) && s.uniqueApps >= 3) {
@@ -179,7 +181,8 @@ class IncidentDetector(
                 else -> Rarity.RARE
             }
             out += incident(IncidentType.NIGHT_PATROL, rarity, s.startTime, s.endTime, null,
-                mapOf("uniqueApps" to s.uniqueApps.toLong(), "durationMs" to duration))
+                mapOf("uniqueApps" to s.uniqueApps.toLong(), "durationMs" to duration),
+                topPackage = mostVisitedPackage(s.visits))
         }
 
         // Digital lost requires a complex session, not merely high app count.
@@ -187,15 +190,16 @@ class IncidentDetector(
         if (returnsToStart && s.uniqueApps >= 8 && s.switches >= 12 && duration <= 10 * 60_000L) {
             val rarity = if (s.uniqueApps >= 10 && s.switches >= 18) Rarity.LEGENDARY else Rarity.EPIC
             out += incident(IncidentType.DIGITAL_LOST, rarity, s.startTime, s.endTime, null,
-                mapOf("uniqueApps" to s.uniqueApps.toLong(), "switches" to s.switches.toLong()))
+                mapOf("uniqueApps" to s.uniqueApps.toLong(), "switches" to s.switches.toLong()),
+                topPackage = mostVisitedPackage(s.visits))
         }
 
         // Hidden loop: strict two-app alternation.
         if (duration <= config.hiddenLoopWindowMs && s.switches >= config.hiddenLoopSwitches) {
             val uniq = pkgs.distinct()
             if (uniq.size == 2 && pkgs.zipWithNext().all { it.first != it.second }) {
-                out += incident(IncidentType.HIDDEN_LOOP, Rarity.HIDDEN, s.startTime, s.endTime, null,
-                    mapOf("switches" to s.switches.toLong()))
+                out += incident(IncidentType.HIDDEN_LOOP, Rarity.HIDDEN, s.startTime, s.endTime, uniq[0],
+                    mapOf("switches" to s.switches.toLong()), secondaryPackage = uniq[1])
             }
         }
     }
@@ -206,7 +210,8 @@ class IncidentDetector(
             if (duration >= 20 * 60_000L) {
                 out += incident(IncidentType.DAWN_SURVIVOR,
                     if (duration >= 30 * 60_000L || hour(s.endTime) >= 4) Rarity.LEGENDARY else Rarity.EPIC,
-                    s.startTime, s.endTime, null, mapOf("durationMs" to duration))
+                    s.startTime, s.endTime, null, mapOf("durationMs" to duration),
+                    topPackage = mostVisitedPackage(s.visits))
             }
         }
     }
@@ -216,11 +221,13 @@ class IncidentDetector(
         if (night.size < config.hiddenNightMinUnlocks) return
         val total = night.sumOf { it.endTime - it.startTime }
         val mostlyShort = night.count { it.endTime - it.startTime <= config.hiddenNightMaxSessionMs } >= (night.size * 0.8).toInt()
-        val unique = night.flatMap { it.visits }.map { it.packageName }.distinct().size
+        val nightVisits = night.flatMap { it.visits }
+        val unique = nightVisits.map { it.packageName }.distinct().size
         if (mostlyShort && total <= config.hiddenNightMaxTotalUsageMs && unique >= 3) {
             out += incident(IncidentType.HIDDEN_NIGHT_ACTIVITY, Rarity.HIDDEN,
                 night.first().startTime, night.last().endTime, null,
-                mapOf("unlockSessions" to night.size.toLong(), "totalUsageMs" to total, "uniqueApps" to unique.toLong()))
+                mapOf("unlockSessions" to night.size.toLong(), "totalUsageMs" to total, "uniqueApps" to unique.toLong()),
+                topPackage = mostVisitedPackage(nightVisits))
         }
     }
 
@@ -229,15 +236,24 @@ class IncidentDetector(
     private fun isHiddenNight(ms: Long): Boolean = hour(ms) in 2 until 5
     private fun hour(ms: Long): Int = Instant.ofEpochMilli(ms).atZone(zoneId).hour
 
-    private fun incident(type: IncidentType, rarity: Rarity, start: Long, end: Long, pkg: String?, metrics: Map<String, Long>): DetectedIncident {
+    private fun incident(
+        type: IncidentType, rarity: Rarity, start: Long, end: Long, pkg: String?, metrics: Map<String, Long>,
+        topPackage: String? = null, secondaryPackage: String? = null
+    ): DetectedIncident {
         val metricBonus = metrics.values.sumOf { value ->
             when {
                 value > 60_000 -> (value / 60_000).coerceAtMost(20)
                 else -> value.coerceAtMost(20)
             }
         }.coerceAtMost(50).toInt()
-        return DetectedIncident(type, rarity, baseScore(rarity) + metricBonus, start, end, pkg, metrics)
+        return DetectedIncident(type, rarity, baseScore(rarity) + metricBonus, start, end, pkg, metrics, topPackage = topPackage, secondaryPackage = secondaryPackage)
     }
+
+    // v0.66: the single most-visited package within a list of visits --
+    // used only as topPackage (display text), never as the primaryPackage
+    // dedup/grouping key, see DetectedIncident's own comment on why.
+    private fun mostVisitedPackage(visits: List<AppVisit>): String? =
+        visits.groupingBy { it.packageName }.eachCount().maxByOrNull { it.value }?.key
 
     private fun baseScore(r: Rarity) = when (r) {
         Rarity.NORMAL -> 10

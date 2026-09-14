@@ -328,6 +328,13 @@ class NativeBridge(
         put("startTime", i.startTime)
         put("endTime", i.endTime)
         put("primaryPackage", i.primaryPackage)
+        // v0.66: director feedback -- incident card descriptions didn't say
+        // which app or what actually happened. topPackage/secondaryPackage
+        // are display-only additions on DetectedIncident (see Models.kt's
+        // own comment) that index.html's detail() now reads to name real
+        // apps in the description text.
+        put("topPackage", i.topPackage)
+        put("secondaryPackage", i.secondaryPackage)
         put("metrics", JSONObject(i.metrics))
         put("related", JSONArray(i.related.map { it.name }))
     }
