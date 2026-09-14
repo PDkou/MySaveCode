@@ -31,10 +31,12 @@
   기록 탭에 "최근 7일" 막대 요약을 추가해서 실제로 화면에 노출. 저장 방식 자체
   (SharedPreferences/localStorage)는 안 바뀌었으니, 위 Room 이전 항목은 여전히
   남아있음 — 지금은 그 위에 얹은 소비 화면만 생김.
-- 백업 스키마 버전 지정 — v0.47에서 사용자가 직접 백업 JSON을 내보낼 수 있는
-  기능(`NativeBridge.exportBackup()`, 설정 → 데이터 내보내기)이 생겼지만,
-  내보내는 JSON 자체에는 여전히 스키마 버전 필드가 없음 -- 이 항목은 그대로
-  남아있음.
+- ~~백업 스키마 버전 지정~~ — v0.63에서 해결. `save()`(로컬스토리지/네이티브
+  백업)와 `exportBackupData()`(설정 → 데이터 내보내기) 둘 다 페이로드에
+  `schemaVersion:1`을 추가. `restore()`는 여전히 `settings`/`history`만
+  읽고 나머지 필드는 무시하므로 기존 백업 파일의 복원 결과는 그대로이고,
+  앞으로 저장 형태가 바뀔 때 `restore()`가 버전을 보고 분기할 수 있는
+  발판만 마련한 것.
 
 ## 우선순위 C — UI
 - ~~`logo/logo_ko.png`, `logo/logo_jp.png` 발바닥 아이콘이 캔버스 경계에서 잘려있음~~ —
@@ -133,6 +135,16 @@
   anydpi-v26/ic_launcher{,_round}.xml` + 5개 밀도별 foreground/background PNG로 반영. 레거시
   비트맵 아이콘은 API 26 미만 폴백용으로 그대로 유지.
 - HIDDEN 발견 전/후 상태 전환
+- ~~사건 상세 페이지 통계 항목 라벨 중 일부가 번역 없이 영어 키 그대로
+  노출~~ — v0.63에서 발견/해결. `metricLabel()`이 `windowMs`(v0.38에서
+  이미 한 번 겪은 것과 같은 종류) 외에도 `afterUnlockMs`(FIRST_CONTACT),
+  `avgStayMs`(APP_WANDERING), `visits`(RETURN_TO_START -- 실제로 실기기
+  스크린샷에서 확인됨), `totalUsageMs`(HIDDEN_NIGHT_ACTIVITY)는 아예
+  케이스가 없어서 `default: return k`로 원본 영문 키가 그대로 표시되고
+  있었고, `unlockSessions`(HIDDEN_NIGHT_ACTIVITY)는 케이스 이름이
+  `unlocks`로 잘못 붙어 있어 사실상 죽은 코드였음. `IncidentDetector.kt`가
+  실제로 만드는 모든 metrics 키를 전수 대조해서 5개 다 추가/수정 -- 이제
+  Playwright로 13개 실제 키 전부 번역된 라벨이 나오는 것 확인.
 - ~~`preview-board.html`/`preview-hidden.html`이 존재하지 않는 파일(`moni_avatar.png`)을 참조~~ —
   v0.8에서 완료. `preview-hidden.html`은 실제 캐릭터 에셋으로 교체, `preview-board.html`은
   버전 라벨 갱신 + HIDDEN 스와치 추가(그 과정에서 고정 높이 레이아웃 오버플로를 만들 뻔했다가
@@ -159,4 +171,9 @@
 - WebView JS와 Android strings.xml의 문자열 소스가 중복될 수 있음
 - SharedPreferences의 discovery count는 `type|rarity` 조합 개수이지 사건 종류 고유 개수와 다를 수 있음
 - `analyzeToday()`가 호출될 때마다 당일 전체를 다시 분석하므로 데이터량/기기별 비용 확인 필요
-- 앱 패키지명을 사용자 친화적 앱명으로 매핑하는 레이어 필요
+- ~~앱 패키지명을 사용자 친화적 앱명으로 매핑하는 레이어 필요~~ — v0.51에서
+  `NativeBridge.appLabel()`(PackageManager)로 구현됐으나, 안드로이드 11+
+  패키지 가시성 제한 때문에 매니페스트 선언이 없으면 실기기에서 대부분
+  실패해 조용히 예전 표시로 폴백하던 문제가 있었음 -- v0.62에서
+  `<queries>`(홈 화면 아이콘이 있는 앱만 조회 가능) 선언을 추가해 실제로
+  동작하도록 완결.

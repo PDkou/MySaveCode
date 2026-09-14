@@ -451,7 +451,18 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.62.0';
+const APP_VERSION='0.63.0';
+// v0.63: director asked for a general pass over what else needs fixing --
+// docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
+// JSON (save()'s localStorage/native copy, and exportBackupData()'s
+// user-facing export) carries no schema version field at all, so a future
+// version that needs to change {settings,history}'s shape would have no
+// way to tell an old backup from a new one before trying to load it.
+// restore() only ever reads x.settings/x.history and ignores unknown
+// fields, so adding this is purely additive -- doesn't change what old
+// backups restore as today, just gives a future restore() something to
+// branch on.
+const BACKUP_SCHEMA_VERSION=1;
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -472,7 +483,7 @@ const state={settings:{language:supported.includes(detected)?detected:'ko',onboa
 function l(ko,ja,en){return state.settings.language==='ko'?ko:state.settings.language==='ja'?ja:en}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function todayKey(){return new Date().toISOString().slice(0,10)}
-function save(){const payload={settings:state.settings,history:state.history};localStorage.setItem('opened_again_state',JSON.stringify(payload));try{N&&N.saveBackupJson(JSON.stringify(payload))}catch(e){}}
+function save(){const payload={schemaVersion:BACKUP_SCHEMA_VERSION,settings:state.settings,history:state.history};localStorage.setItem('opened_again_state',JSON.stringify(payload));try{N&&N.saveBackupJson(JSON.stringify(payload))}catch(e){}}
 function restore(){let raw=localStorage.getItem('opened_again_state');if(!raw){try{raw=N&&N.loadBackupJson()}catch(e){}}if(raw){try{const x=JSON.parse(raw);Object.assign(state.settings,x.settings||{});state.history=x.history||state.history}catch(e){}}}
 const RARITY_RANK={NORMAL:0,RARE:1,EPIC:2,LEGENDARY:3,HIDDEN:4};
 function bestRarity(list){return list.slice().sort((a,b)=>(RARITY_RANK[b]??0)-(RARITY_RANK[a]??0))[0]}
@@ -1227,7 +1238,7 @@ function turnOffReminder(){
 // to the OS share sheet). Non-destructive, so unlike reset this fires
 // straight from the settings row with no confirmation step.
 function exportBackupData(){
-  try{N&&N.exportBackup&&N.exportBackup(JSON.stringify({settings:state.settings,history:state.history}))}catch(e){}
+  try{N&&N.exportBackup&&N.exportBackup(JSON.stringify({schemaVersion:BACKUP_SCHEMA_VERSION,settings:state.settings,history:state.history}))}catch(e){}
 }
 function openHelpSheet(){
   document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('도움말','ヘルプ','Help')}</div><p style="font-size:13px;line-height:1.7;color:var(--ink);margin:4px 0 0">${l('모니는 스마트폰의 사용 기록을 매일 조사해 특이한 습관을 사건 카드로 정리해 드려요. 홈 탭에서 오늘의 사건을, 기록 탭에서 오늘 하루의 숫자를, 보관함 탭에서 지금까지 모은 카드를 확인할 수 있어요. 모든 기록은 이 기기 안에만 저장되고 서버로 전송되지 않아요.','MONIはスマホの利用記録を毎日調べて、気になる習慣を事件カードにまとめます。ホームで今日の事件を、記録で本日の数字を、保管庫でこれまで集めたカードを確認できます。すべての記録はこの端末内にのみ保存され、サーバーへは送信されません。','MONI investigates your phone usage every day and turns odd habits into incident cards. Check today\'s case on Home, today\'s numbers on Records, and everything you\'ve collected on Archive. Every record stays on this device only and is never sent to a server.')}</p></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
@@ -1272,7 +1283,14 @@ function metricLabel(k){switch(k){
   case'switches':return l('전환 횟수','切替回数','Switches');
   case'uniqueApps':return l('사용 앱 수','利用アプリ数','Apps used');
   case'reopens':return l('재실행 횟수','再起動回数','Reopens');
-  case'unlocks':return l('접속 횟수','接続回数','Check-ins');
+  // v0.63: director asked for a general pass over anything still needing
+  // fixing -- cross-checked every metrics key IncidentDetector.kt's
+  // incident() calls actually emit against this switch and found this
+  // case had the wrong key name the whole time: the real metrics map uses
+  // "unlockSessions" (HIDDEN_NIGHT_ACTIVITY), not "unlocks" -- this case
+  // was dead code, and that incident's stat row always fell through to
+  // `default` and showed the raw English key instead.
+  case'unlockSessions':return l('접속 횟수','接続回数','Check-ins');
   case'avgGapMs':return l('평균 간격','平均間隔','Avg gap');
   case'durationMs':return l('총 사용 시간','総使用時間','Total duration');
   // v0.38: found while checking a director screenshot -- IncidentDetector.kt's
@@ -1280,6 +1298,17 @@ function metricLabel(k){switch(k){
   // time span, see IncidentDetector.kt) with no case here, so it fell
   // through to `default` and showed the raw JS key name in the detail page.
   case'windowMs':return l('재실행 구간','再起動の時間幅','Reopen window');
+  // v0.63: same class of gap as windowMs above, found the same way (cross-
+  // checking every metrics key against this switch) -- these three were
+  // never covered at all: afterUnlockMs (FIRST_CONTACT), avgStayMs
+  // (APP_WANDERING), visits (RETURN_TO_START); totalUsageMs
+  // (HIDDEN_NIGHT_ACTIVITY) reuses durationMs's own wording since they mean
+  // the same thing to a user (a summed usage duration) in different
+  // incidents' metrics.
+  case'afterUnlockMs':return l('잠금 해제 후 시간','ロック解除後の時間','Time after unlock');
+  case'avgStayMs':return l('평균 체류 시간','平均滞在時間','Avg time per app');
+  case'visits':return l('방문 횟수','訪問回数','Visit count');
+  case'totalUsageMs':return l('총 사용 시간','総使用時間','Total duration');
   default:return k;
 }}
 function metricRow(k,v){const val=/Ms$/.test(k)?fmtMs(v||0):v;return [metricLabel(k),val]}
