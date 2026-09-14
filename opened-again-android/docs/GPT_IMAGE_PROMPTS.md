@@ -524,26 +524,25 @@ icon_notification.png)을 쓰고, 나머지 5개 행(테마/데이터 관리/데
    `settings()`의 해당 행을 `iconEmoji('...')`에서
    `iconImg('<파일명 접두어>')`로 바꾸는 코드 작업은 이쪽에서 진행.
 
-### 공통 스타일 고정 문구 (모든 프롬프트에 포함됨, 따로 안 써도 됨)
-> A simple flat line-art UI icon sticker, bold clean black outlines (uniform stroke weight), plain white fill, on a fully transparent background, with a thin white sticker-style border outlining the whole icon shape (same visual treatment as a die-cut sticker). No gradients, no shading, no color, no text, no background scene, no drop shadow beyond the thin sticker border. Centered, roughly square composition with even padding on all sides. Simple enough to stay legible at a very small size (under 30px).
+### 아이콘별 프롬프트 (그대로 복붙, 스타일 문구가 매번 이미 포함돼 있음)
 
-### 테마 → `icon_theme.png`
-[스타일 고정 문구] A palette icon: a rounded artist's paint palette shape with a thumb hole, with a few simple round paint-dab circles on its surface (outlined only, not filled with color per the no-color rule above).
+**테마 → `icon_theme.png`**
+> A simple flat line-art UI icon sticker, bold clean black outlines (uniform stroke weight), plain white fill, on a fully transparent background, with a thin white sticker-style border outlining the whole icon shape (same visual treatment as a die-cut sticker). No gradients, no shading, no color, no text, no background scene, no drop shadow beyond the thin sticker border. Centered, roughly square composition with even padding on all sides. Simple enough to stay legible at a very small size (under 30px). A palette icon: a rounded artist's paint palette shape with a thumb hole, with a few simple round paint-dab circles on its surface (outlined only, not filled with color per the no-color rule above).
 
-### 데이터 관리 → `icon_data.png`
-[스타일 고정 문구] A stacked-disks/database icon: two or three simple ellipses stacked vertically with short connecting side lines, like a classic "database" symbol.
+**데이터 관리 → `icon_data.png`**
+> A simple flat line-art UI icon sticker, bold clean black outlines (uniform stroke weight), plain white fill, on a fully transparent background, with a thin white sticker-style border outlining the whole icon shape (same visual treatment as a die-cut sticker). No gradients, no shading, no color, no text, no background scene, no drop shadow beyond the thin sticker border. Centered, roughly square composition with even padding on all sides. Simple enough to stay legible at a very small size (under 30px). A stacked-disks/database icon: two or three simple ellipses stacked vertically with short connecting side lines, like a classic "database" symbol.
 
-### 데이터 내보내기 → `icon_export.png`
-[스타일 고정 문구] An export icon: a simple upward-pointing arrow rising out of an open box/tray shape (box outline at the bottom, arrow pointing up and out of it).
+**데이터 내보내기 → `icon_export.png`**
+> A simple flat line-art UI icon sticker, bold clean black outlines (uniform stroke weight), plain white fill, on a fully transparent background, with a thin white sticker-style border outlining the whole icon shape (same visual treatment as a die-cut sticker). No gradients, no shading, no color, no text, no background scene, no drop shadow beyond the thin sticker border. Centered, roughly square composition with even padding on all sides. Simple enough to stay legible at a very small size (under 30px). An export icon: a simple upward-pointing arrow rising out of an open box/tray shape (box outline at the bottom, arrow pointing up and out of it).
 
-### 도움말 → `icon_help.png`
-[스타일 고정 문구] A help icon: a single bold question mark centered inside a simple circle outline.
+**도움말 → `icon_help.png`**
+> A simple flat line-art UI icon sticker, bold clean black outlines (uniform stroke weight), plain white fill, on a fully transparent background, with a thin white sticker-style border outlining the whole icon shape (same visual treatment as a die-cut sticker). No gradients, no shading, no color, no text, no background scene, no drop shadow beyond the thin sticker border. Centered, roughly square composition with even padding on all sides. Simple enough to stay legible at a very small size (under 30px). A help icon: a single bold question mark centered inside a simple circle outline.
 
-### 개인정보처리방침 → `icon_privacy.png`
-[스타일 고정 문구] A privacy/lock icon: a simple padlock shape (rounded body with a shackle loop on top), viewed straight-on.
+**개인정보처리방침 → `icon_privacy.png`**
+> A simple flat line-art UI icon sticker, bold clean black outlines (uniform stroke weight), plain white fill, on a fully transparent background, with a thin white sticker-style border outlining the whole icon shape (same visual treatment as a die-cut sticker). No gradients, no shading, no color, no text, no background scene, no drop shadow beyond the thin sticker border. Centered, roughly square composition with even padding on all sides. Simple enough to stay legible at a very small size (under 30px). A privacy/lock icon: a simple padlock shape (rounded body with a shackle loop on top), viewed straight-on.
 
-### 일일 리마인더 → `icon_reminder.png`
-[스타일 고정 문구] An alarm clock icon: a simple round clock face with two small bell/legs bumps on top and short clock hands showing a time, classic alarm-clock silhouette.
+**일일 리마인더 → `icon_reminder.png`**
+> A simple flat line-art UI icon sticker, bold clean black outlines (uniform stroke weight), plain white fill, on a fully transparent background, with a thin white sticker-style border outlining the whole icon shape (same visual treatment as a die-cut sticker). No gradients, no shading, no color, no text, no background scene, no drop shadow beyond the thin sticker border. Centered, roughly square composition with even padding on all sides. Simple enough to stay legible at a very small size (under 30px). An alarm clock icon: a simple round clock face with two small bell/legs bumps on top and short clock hands showing a time, classic alarm-clock silhouette.
 
-### 앱 정보 → `icon_about.png`
-[스타일 고정 문구] An info icon: a single bold lowercase "i" (a dot above a vertical bar) centered inside a simple circle outline.
+**앱 정보 → `icon_about.png`**
+> A simple flat line-art UI icon sticker, bold clean black outlines (uniform stroke weight), plain white fill, on a fully transparent background, with a thin white sticker-style border outlining the whole icon shape (same visual treatment as a die-cut sticker). No gradients, no shading, no color, no text, no background scene, no drop shadow beyond the thin sticker border. Centered, roughly square composition with even padding on all sides. Simple enough to stay legible at a very small size (under 30px). An info icon: a single bold lowercase "i" (a dot above a vertical bar) centered inside a simple circle outline.
