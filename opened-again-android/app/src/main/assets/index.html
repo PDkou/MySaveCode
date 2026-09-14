@@ -194,18 +194,24 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    purple rather than .danger's red -- leaving the app loses nothing, so it
    shouldn't read as alarming as a data-reset confirmation does. */
 .sheet-actions .confirm{background:#6758F5;color:#fff}
-/* v0.35: full-screen incident detail page (openDetail()/detailPage()),
-   replacing the old bottom-sheet modal to match the mockup's dedicated
-   "사건 카드 상세" screen -- own compact header (back/rarity/share), no
-   brand header or bottom tab bar (see render()'s state.detailItem branch). */
-/* the rarity class (normal/rare/epic/legendary/hidden) is applied here too
-   so --border/--scene are available for the badge pill and scene box, but
-   those classes also set a whole-element background+text color (designed
-   for self-contained .card, where that's the entire card's own dark/light
-   theme) -- force this page back to the app's normal light background/ink
-   regardless of which rarity class rides along, matching the mockup (only
-   the pill badge carries rarity color here, not the whole page). */
-.detail-page{padding:calc(14px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto;background:var(--bg) !important;color:var(--ink) !important;box-shadow:none !important}
+/* v0.53: director feedback -- (1) the Pocket-style interactive holofoil
+   effect (createCardHolo()/mountHolo()) belonged on the "card screen" you
+   get when TAPPING an incident, not on the home screen's small featured
+   card where v0.52 had put it; (2) this detail page's white-background/
+   differently-colored-middle-layer look was "별로" (not good) -- it
+   should instead feel like the share card (ShareCardRenderer.kt/
+   CardStyle.kt's dark atmospheric bordered TCG-card look), with the
+   Pocket effect layered on top of THAT. Full redesign below: the page is
+   now a full-bleed dark backdrop (the exact same
+   backgrounds/share/1080x1920/bg_<rarity>_vertical.png art the share PNG
+   uses) behind a bordered "TCG card" component that reuses the exact same
+   frame_bg/medallion webp assets and per-rarity palette CardStyle.kt
+   defines natively (see tcgPalette()/foilTitleStyle(), which mirror
+   CardStyle.kt's Kotlin tables 1:1) -- and the interactive holo canvas
+   moved onto that card's own art window (tcg-art) instead of .scene. The
+   old "force this page back to light bg regardless of rarity class"
+   override is gone on purpose -- a dark theme is now the whole point. */
+.detail-page{position:relative;min-height:100%;padding:calc(14px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto;background:transparent !important;color:#fff !important;box-shadow:none !important}
 /* v0.50: director feedback -- the incident detail page "still scrolls"
    even though its own content clearly fits on screen with room to spare.
    Root cause found by measuring actual computed heights: `.app`'s base
@@ -222,20 +228,53 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    different problem (the bounce/glow effect on short content) and didn't
    touch this actual height overflow at all. Zero out the inherited
    padding specifically for detail mode. */
-.app.detail-mode{padding-bottom:0}
+.app.detail-mode{padding-bottom:0;background:#0A0A0C}
+/* v0.53: fixed full-bleed backdrop behind the whole detail page -- a
+   sibling of .detail-page rather than its background-image, so it covers
+   the true viewport (including under the status bar) regardless of
+   .detail-page's own max-width/padding box. A soft top-to-bottom scrim on
+   top keeps the back/share icon buttons and card readable over whatever
+   the source art looks like at the edges. */
+.detail-backdrop{position:fixed;inset:0;z-index:-2;background-size:cover;background-position:center;background-color:#0A0A0C}
+.detail-backdrop:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,4,6,.6) 0%,rgba(4,4,6,.28) 26%,rgba(4,4,6,.5) 74%,rgba(4,4,6,.88) 100%)}
 .detail-page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .icon-btn{border:1px solid var(--line);background:#fff;border-radius:var(--btn-radius);width:var(--btn-min);height:var(--btn-min);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .icon-btn img{width:19px;height:19px;object-fit:contain}
-.detail-case-id{font-size:12px;color:var(--muted);font-weight:800}
-.detail-title-lg{font-size:30px;font-weight:1000;letter-spacing:-1.4px;line-height:1.08;margin-top:4px}
-.detail-sub{font-size:14px;color:#655B54;line-height:1.5;margin-top:8px}
-.detail-scene{min-height:220px;border-radius:22px;margin-top:16px;background:var(--scene,#F6F0E6);background-size:cover;background-position:center;position:relative}
-.detail-punch{font-size:18px;font-weight:1000;margin:16px 0 0;line-height:1.4}
-.detail-stats{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-top:18px}
+/* v0.53: tried recoloring .icon-btn for this page's dark backdrop (a
+   translucent dark chip + brightness(0) invert(1) on the glyph) but
+   icon_back.png/icon_share.png are two-tone assets (a near-white circle
+   fill with a black glyph cut into it, not a single-color glyph on
+   transparent) -- brightness(0) crushes both tones to black and invert(1)
+   then turns both to identical white, erasing the glyph into a flat white
+   dot. The plain white .icon-btn (unchanged from every other page) reads
+   fine floating over a dark backdrop as-is -- no override needed. */
+.detail-case-id{font-size:12px;color:rgba(255,255,255,.62);font-weight:800;text-align:center}
+.detail-sub{font-size:13px;color:rgba(255,255,255,.82);line-height:1.5;margin-top:6px;text-align:center}
+/* v0.53: the "TCG card" component -- a bordered frame (frame_bg/<rarity>.webp,
+   the same texture ShareCardRenderer.kt draws the share PNG's frame from)
+   sized to the same 1024x1536 aspect ratio as CardLayout's native canvas,
+   so the header/art/info/emblem rects below (CardLayout's own pixel rects
+   converted from 1024x1536 to %) line up with the frame art exactly like
+   they do in the Kotlin renderer. */
+.tcg-card-wrap{max-width:360px;margin:14px auto 0;position:relative}
+.tcg-card{position:relative;width:100%;aspect-ratio:1024/1536;border-radius:26px;overflow:hidden;background-size:cover;background-position:center;box-shadow:0 22px 55px rgba(0,0,0,.55),0 0 0 2px var(--tcg-border,rgba(255,255,255,.3))}
+.tcg-header{position:absolute;left:9.5%;top:13%;width:81%;height:7.1%;display:flex;align-items:center;padding:0 4%;border-radius:10px;background:var(--tcg-panel,#fff)}
+.tcg-title{font-size:clamp(13px,4.2vw,19px);font-weight:1000;letter-spacing:-.6px;color:var(--tcg-text,#2F2A27);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+/* v0.53: EPIC/LEGENDARY/HIDDEN titles get the same foil-gradient text
+   treatment CardStyle.kt's FoilTitleStyle draws natively (a gradient fill
+   + outline + soft glow) -- foilTitleStyle() below supplies the 3 CSS
+   custom properties this reads. */
+.tcg-title.foil{background-image:linear-gradient(180deg,var(--foil-colors));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.4px var(--foil-outline,transparent);filter:drop-shadow(0 0 5px var(--foil-glow,transparent))}
+.tcg-art{position:absolute;left:10%;top:20.5%;width:80%;height:40.4%;border-radius:16px;overflow:hidden;background-size:cover;background-position:center}
+.tcg-emblem{position:absolute;left:50%;top:8.1%;width:15.8%;aspect-ratio:1/1;transform:translate(-50%,-50%);background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));pointer-events:none}
+.tcg-info{position:absolute;left:9.5%;top:72.7%;width:81%;height:17.5%;border-radius:14px;background:var(--tcg-panel,#fff);color:var(--tcg-text,#2F2A27);padding:9px 12px;overflow:auto;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.tcg-punch{font-size:13px;font-weight:1000;line-height:1.32}
+.tcg-chip{font-size:10px;font-weight:800;color:var(--tcg-chip,#675D56);opacity:.85}
+.detail-stats{background:rgba(20,18,22,.55);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:14px 16px;margin-top:20px;color:#fff}
 .detail-stats>b{font-size:13px;display:block;margin-bottom:8px}
-.detail-stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid #EFE7DB}
+.detail-stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid rgba(255,255,255,.14)}
 .detail-stat-row:first-of-type{border-top:0}
-.detail-stat-row span{font-size:12px;color:var(--muted)}
+.detail-stat-row span{font-size:12px;color:rgba(255,255,255,.62)}
 .detail-stat-row b{font-size:14px;font-weight:900}
 .detail-share-btn{margin-top:18px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2F2926;color:white;border-radius:999px;padding:10px 15px;font-size:12px;font-weight:800;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.2)}
@@ -249,10 +288,13 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .hero .hero-moni{width:120px;height:108px;object-fit:contain;border-radius:0;background:transparent}
 .scene{background-size:cover!important;background-position:center!important}
 /* v0.41: EPIC/LEGENDARY holofoil canvas overlay -- see createCardHolo() JS
-   comment for the full story. Sits over .scene's own background-image
+   comment for the full story. Sits over its parent's own background-image
    (which stays as a plain fallback -- the canvas re-draws the same art on
    top of it, so a browser that can't run the script, or a reduced-motion
-   viewer where mountHolo() never mounts it, still shows the plain photo). */
+   viewer where mountHolo() never mounts it, still shows the plain photo).
+   v0.53: that parent is detailPage()'s .tcg-art now, not the home card's
+   .scene (see card()/mountHolo()'s own v0.53 comments) -- this rule needs
+   no change either way since it only cares about its own box. */
 .holo-canvas{position:absolute;inset:0;pointer-events:none;width:100%;height:100%}
 .scene .moni-asset{width:118px;height:118px;object-fit:contain;border-radius:0;margin-bottom:4px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.14));position:relative;z-index:1}
 /* v0.23: incident illustration pack (docs/UI_VISUAL_DIRECTION_REQUEST.md).
@@ -313,7 +355,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.52.0';
+const APP_VERSION='0.53.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -510,23 +552,19 @@ function archiveRarityClass(type,rarity){if(rarity!=='HIDDEN')return (rarity||'n
 function iconFor(i){return i.type==='NIGHT_PATROL'?'🌙':i.type==='HUNDRED_VISITS'?'👑':i.type==='RETURN_TO_START'?'↩️':i.type==='QUICK_EXIT'?'⏱️':i.type==='HIDDEN_LOOP'?'♾️':i.type==='HIDDEN_NIGHT_ACTIVITY'?'✨':'🐾'}
 function caseNo(i){return String(Math.abs((i.type||'CASE').split('').reduce((a,c)=>a+c.charCodeAt(0),0)*17)%10000).padStart(4,'0')}
 function card(i,featured=false){
-  // v0.27: EPIC/LEGENDARY-only "impact" layers -- a big faint rarity symbol
-  // watermark plus (v0.41 on) the art-window holofoil canvas. Gated on
-  // i.rarity directly rather than rarityClass(i)'s string (which also
-  // handles HIDDEN's "hidden opal" two-class case we deliberately don't
-  // want here).
+  // v0.27: EPIC/LEGENDARY-only "impact" layer -- a big faint rarity symbol
+  // watermark. Gated on i.rarity directly rather than rarityClass(i)'s
+  // string (which also handles HIDDEN's "hidden opal" two-class case we
+  // deliberately don't want here).
+  // v0.53: the art-window holofoil canvas that used to live here too
+  // (v0.41-v0.52) moved to detailPage()'s tcg-art -- director feedback:
+  // the Pocket-style interactive effect belonged on the card screen you
+  // get from TAPPING an incident, not on this home-screen preview of it.
   const impact=i.rarity==='EPIC'||i.rarity==='LEGENDARY';
   const cls=`card ${rarityClass(i)} ${featured?'featured':''}`;
   const [artBase,bg,mode]=incidentVisual(i.type);const art=incidentArt(artBase,i.type,i.rarity);const sceneBg=mode==='scene'?art:bg;const sceneCls=`scene${mode==='scene'?' scene-illustrated':''}`;
   const impactLayers=impact?`<img class="card-emblem" src="visual/brand/rarity_symbols/rarity_${i.rarity.toLowerCase()}.png" alt="">`:'';
-  // v0.41: the holofoil canvas is only markup here -- mountHolo() (called
-  // right after render() injects this HTML) finds it, sizes it to .scene's
-  // actual rendered box, and starts createCardHolo()'s animation loop.
-  // data-art carries the same URL .scene's own CSS background-image uses,
-  // so the canvas draws the identical art (the CSS background stays as a
-  // plain fallback underneath -- see the .holo-canvas CSS comment).
-  const holoCanvas=impact?`<canvas class="holo-canvas" data-art="${sceneBg}"></canvas>`:'';
-  return `<article class="${cls}" onclick='openDetail(${JSON.stringify(i).replace(/'/g,"&#39;")})'><div class="card-pattern" style="background-image:url('${cardPatternBg(i)}')"></div>${impactLayers}<div class="card-head">${rarityBadge(i)}<span class="case-id">CASE #${caseNo(i)}</span></div><div class="card-body"><div><div class="case-title">${esc(txt(names,i.type))}</div><div class="detail">${esc(detail(i))}</div><div class="punch">“${esc(txt(punch,i.type))}”</div></div><div class="${sceneCls}" style="background-image:linear-gradient(rgba(255,255,255,.04),rgba(255,255,255,.04)),url('${sceneBg}')">${holoCanvas}<span class="scene-mark">${iconFor(i)}</span>${mode==='overlay'?`<img class="moni-asset" src="${art}" alt="MONI">`:''}</div></div><div class="meta-strip"><span class="pill">SCORE ${i.score||0}</span>${i.primaryPackage?`<span class="pill">${esc(compactPkg(i.primaryPackage))}</span>`:''}<span class="pill">${l('자동 분석','自動分析','Auto analysis')}</span></div><div class="share-row" onclick="event.stopPropagation()"><button class="share" onclick='share(${JSON.stringify(i).replace(/'/g,"&#39;")},"square")'>${l('1:1 공유','1:1 共有','Share 1:1')}</button><button class="share" onclick='share(${JSON.stringify(i).replace(/'/g,"&#39;")},"story")'>${l('스토리','ストーリー','Story')}</button></div></article>`}
+  return `<article class="${cls}" onclick='openDetail(${JSON.stringify(i).replace(/'/g,"&#39;")})'><div class="card-pattern" style="background-image:url('${cardPatternBg(i)}')"></div>${impactLayers}<div class="card-head">${rarityBadge(i)}<span class="case-id">CASE #${caseNo(i)}</span></div><div class="card-body"><div><div class="case-title">${esc(txt(names,i.type))}</div><div class="detail">${esc(detail(i))}</div><div class="punch">“${esc(txt(punch,i.type))}”</div></div><div class="${sceneCls}" style="background-image:linear-gradient(rgba(255,255,255,.04),rgba(255,255,255,.04)),url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span>${mode==='overlay'?`<img class="moni-asset" src="${art}" alt="MONI">`:''}</div></div><div class="meta-strip"><span class="pill">SCORE ${i.score||0}</span>${i.primaryPackage?`<span class="pill">${esc(compactPkg(i.primaryPackage))}</span>`:''}<span class="pill">${l('자동 분석','自動分析','Auto analysis')}</span></div><div class="share-row" onclick="event.stopPropagation()"><button class="share" onclick='share(${JSON.stringify(i).replace(/'/g,"&#39;")},"square")'>${l('1:1 공유','1:1 共有','Share 1:1')}</button><button class="share" onclick='share(${JSON.stringify(i).replace(/'/g,"&#39;")},"story")'>${l('스토리','ストーリー','Story')}</button></div></article>`}
 // v0.41: EPIC/LEGENDARY card art gets a real holofoil shimmer instead of a
 // CSS sweep -- three CSS attempts (v0.38/v0.39/v0.40) all read as "a line
 // crossing the card" on a real device no matter how the gradient was
@@ -571,7 +609,11 @@ function createCardHolo(canvas,image,makeCanvas,dpr=1){
   const coverScale=Math.max(W/iw,H/ih);
   const dw=iw*coverScale,dh=ih*coverScale;
   b.drawImage(image,(W-dw)/2,(H-dh)/2,dw,dh);
-  const radius=21*dpr; // matches .scene{border-radius:21px}, scaled to W/H's device-pixel resolution
+  // v0.53: was 21 to match .scene{border-radius:21px} (the home card's art
+  // window, where this canvas used to mount) -- now mounts in detailPage()'s
+  // .tcg-art{border-radius:16px} instead, so the rim-light/sparkle clip
+  // below matches that box's actual rounded corners.
+  const radius=16*dpr; // matches .tcg-art{border-radius:16px}, scaled to W/H's device-pixel resolution
   function rounded(c,x,y,w,h,r){c.beginPath();if(c.roundRect)c.roundRect(x,y,w,h,r);else c.rect(x,y,w,h)}
   // v0.41 fix: found via testing (Playwright, same file:// loading this
   // WebView uses) -- getImageData()/putImageData() on any canvas that ever
@@ -633,12 +675,13 @@ function createCardHolo(canvas,image,makeCanvas,dpr=1){
 }
 let holoRaf=null;
 function stopHolo(){if(holoRaf){cancelAnimationFrame(holoRaf);holoRaf=null}}
-// Only the featured card ever carries a .holo-canvas (see card()), so there
-// is at most one to mount. Self-terminates once its canvas leaves the DOM
-// (the next render() call replaces #app's innerHTML wholesale) instead of
-// relying solely on the caller remembering to stopHolo() first -- belt and
-// suspenders against the exact "orphaned rAF loop" leak the pack's own
-// README warned about.
+// v0.53: only detailPage()'s tcg-art ever carries a .holo-canvas now (moved
+// off the home screen's featured card -- see card()'s own v0.53 comment),
+// so there is at most one to mount. Self-terminates once its canvas leaves
+// the DOM (the next render() call replaces #app's innerHTML wholesale)
+// instead of relying solely on the caller remembering to stopHolo() first
+// -- belt and suspenders against the exact "orphaned rAF loop" leak the
+// pack's own README warned about.
 function mountHolo(){
   const canvas=document.querySelector('.holo-canvas');
   if(!canvas)return;
@@ -691,6 +734,10 @@ function mountHolo(){
     // language as Pocket's card-tilt effect; releasing (or never touching)
     // falls back to the existing automatic sweep. touch-action:none stops
     // the page itself from trying to scroll/pan while actively tilting.
+    // v0.53: this mounts on detailPage()'s tcg-art now, not the home card's
+    // .scene -- `scene` below is still just whatever element is this
+    // canvas's parent (mountHolo() never assumed a specific class name), so
+    // nothing in this block needed to change for the move.
     scene.style.touchAction='none';
     let drag=null; // {startX,startY,moved} while the pointer is down
     let manualPos=null; // {px,py} while actively tilting, else null (auto-sweep)
@@ -709,11 +756,14 @@ function mountHolo(){
     });
     function endDrag(){
       if(drag&&drag.moved){
-        // A real tilt gesture happened -- swallow the click that would
-        // otherwise open the detail page (same tap-vs-drag distinction
-        // Pocket itself makes: a quick tap opens the card, a drag just
-        // tilts it). One-shot capture-phase listener so it only ever
-        // blocks the single click this drag would have produced.
+        // A real tilt gesture happened -- swallow whatever click it would
+        // otherwise produce. On the home card this used to matter a lot
+        // (it would otherwise open the detail page mid-drag, same
+        // tap-vs-drag distinction Pocket itself makes); tcg-art has no
+        // click handler of its own now that this lives on the detail page
+        // itself, so this is a harmless no-op here -- kept rather than
+        // special-cased so mountHolo() stays one function that works
+        // wherever a .holo-canvas shows up next.
         const suppressClick=ev=>{ev.stopPropagation();scene.removeEventListener('click',suppressClick,true)};
         scene.addEventListener('click',suppressClick,true);
       }
@@ -1039,16 +1089,71 @@ function metricLabel(k){switch(k){
   default:return k;
 }}
 function metricRow(k,v){const val=/Ms$/.test(k)?fmtMs(v||0):v;return [metricLabel(k),val]}
+// v0.53: per-rarity TCG card palette -- mirrors CardStyle.kt's
+// CardStyle.tcgPalette() Kotlin table 1:1 (border/glow/text/panel/chip
+// colors, converted from Color.rgb(r,g,b) ints to hex) so the detail
+// page's card view uses the exact same colors the share-card PNG does.
+function tcgPalette(rarity){switch(rarity){
+  case'NORMAL':return{border:'#B2AEA6',glow:'#C8C4BC',text:'#36312D',panel:'#FFFFFF',chip:'#37322E'};
+  case'RARE':return{border:'#60A0D6',glow:'#96CDF0',text:'#1E324E',panel:'#E1F0FF',chip:'#142841'};
+  case'EPIC':return{border:'#9669C8',glow:'#C396EB',text:'#37234E',panel:'#ECE0FA',chip:'#FFFFFF'};
+  case'LEGENDARY':return{border:'#CDA03C',glow:'#F0CD6E',text:'#46320C',panel:'#FCF0D2',chip:'#1E140A'};
+  case'HIDDEN':return{border:'#46AFC3',glow:'#6EDCEB',text:'#DCF5FA',panel:'#0A1E30',chip:'#061C22'};
+  default:return{border:'#B2AEA6',glow:'#C8C4BC',text:'#36312D',panel:'#FFFFFF',chip:'#37322E'};
+}}
+// v0.53: mirrors CardStyle.kt's CardStyle.foilTitle() -- EPIC/LEGENDARY/
+// HIDDEN titles get a gradient-fill + outline + glow instead of a flat
+// color; null (NORMAL/RARE) means .tcg-title stays plain (see its CSS).
+function foilTitleStyle(rarity){switch(rarity){
+  case'EPIC':return{colors:['#965FC8','#4B1E78'],outline:'#230C37',glow:'#BE8CEB'};
+  case'LEGENDARY':return{colors:['#BE8C2D','#6E480C'],outline:'#301E05',glow:'#FAD26E'};
+  case'HIDDEN':return{colors:['#FF5A5A','#FFB93C','#F0E646','#5ADC78','#50C8EB','#7882F5','#D26EEB'],outline:'#030E14',glow:'#D2D2FA'};
+  default:return null;
+}}
+// Same HIDDEN-opal-variant logic as cardPatternBg() above, just pointed at
+// the vertical share backgrounds (backgrounds/share/1080x1920/) instead of
+// the square ones -- this is the exact art the share PNG's backdrop uses.
+function detailBgName(i){const opal=i.type==='HIDDEN_NIGHT_ACTIVITY';return i.rarity==='HIDDEN'?(opal?'hidden_01':'hidden_02'):(i.rarity||'NORMAL').toLowerCase()}
+// v0.53: full redesign -- director feedback (see this file's other v0.53
+// comments for the full story). The page is now a TCG "card view": a
+// full-bleed atmospheric backdrop (the same share-card background art)
+// behind a bordered card component (the same frame_bg/medallion webp
+// assets + tcgPalette()/foilTitleStyle() colors ShareCardRenderer.kt uses
+// for the shareable PNG), with the interactive holofoil canvas
+// (createCardHolo()/mountHolo(), moved off the home screen's featured
+// card) mounted on the card's own art window. header/art/info/emblem
+// rects below are CardLayout's own pixel rects (native 1024x1536 canvas:
+// HEADER (97,200)-(925,309), ART (103,315)-(919,935), INFO (97,1116)-
+// (925,1385), EMBLEM cx=508,cy=125,d=162) converted to % -- see the
+// matching .tcg-* CSS rules.
 function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVisual(i.type);const art=incidentArt(artBase,i.type,i.rarity);const sceneBg=mode==='scene'?art:bg;
   const statRows=Object.entries(m).map(([k,v])=>metricRow(k,v));
   const shareArg=JSON.stringify(i).replace(/'/g,"&#39;");
-  return `<div class="detail-page ${rarityClass(i)}">
+  const rarity=i.rarity||'NORMAL';
+  const pal=tcgPalette(rarity);
+  const foil=foilTitleStyle(rarity);
+  // Same EPIC/LEGENDARY-only gating card()'s own "impact" layers use --
+  // the holo effect stays a top-rarity showcase, not a blanket effect on
+  // every card, matching the v0.27 design intent that established that
+  // split in the first place.
+  const impact=rarity==='EPIC'||rarity==='LEGENDARY';
+  const frameUrl=`visual/cards/frame_bg/${rarity.toLowerCase()}.webp`;
+  const medallionUrl=`visual/cards/medallions/${rarity.toLowerCase()}.webp`;
+  const backdropUrl=`visual/backgrounds/share/1080x1920/bg_${detailBgName(i)}_vertical.png`;
+  const titleTxt=esc(txt(names,i.type));
+  const titleStyle=foil?` style="--foil-colors:${foil.colors.join(',')};--foil-outline:${foil.outline};--foil-glow:${foil.glow}"`:'';
+  const holoCanvas=impact?`<canvas class="holo-canvas" data-art="${sceneBg}"></canvas>`:'';
+  return `<div class="detail-backdrop" style="background-image:url('${backdropUrl}')"></div>
+  <div class="detail-page ${rarityClass(i)}" style="--tcg-border:${pal.border}">
     <div class="detail-page-head"><button class="icon-btn" onclick="closeDetail()"><img src="visual/ui/icons/unlabeled/icon_back.png" alt="${l('뒤로','戻る','Back')}"></button>${rarityBadge(i)}<button class="icon-btn" onclick='share(${shareArg},"square")'><img src="visual/ui/icons/unlabeled/icon_share.png" alt="${l('공유','シェア','Share')}"></button></div>
     <div class="detail-case-id">CASE #${caseNo(i)} · ${new Date().toLocaleDateString()}</div>
-    <div class="detail-title-lg">${esc(txt(names,i.type))}</div>
     <div class="detail-sub">${esc(detail(i))}</div>
-    <div class="detail-scene" style="background-image:linear-gradient(rgba(255,255,255,.04),rgba(255,255,255,.04)),url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span></div>
-    <div class="detail-punch">“${esc(txt(punch,i.type))}”</div>
+    <div class="tcg-card-wrap"><div class="tcg-card" style="background-image:url('${frameUrl}')">
+      <div class="tcg-header" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-title${foil?' foil':''}"${titleStyle}>${titleTxt}</div></div>
+      <div class="tcg-art" style="background-image:url('${sceneBg}')">${holoCanvas}<span class="scene-mark">${iconFor(i)}</span></div>
+      <div class="tcg-emblem" style="background-image:url('${medallionUrl}')"></div>
+      <div class="tcg-info" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-punch">“${esc(txt(punch,i.type))}”</div><div class="tcg-chip" style="--tcg-chip:${pal.chip}">CASE #${caseNo(i)}</div></div>
+    </div></div>
     ${statRows.length?`<div class="detail-stats"><b>${l('이 사건의 기록','この事件の記録','About this case')}</b>${statRows.map(([k,v])=>`<div class="detail-stat-row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>`:''}
     <button class="primary detail-share-btn" onclick='share(${shareArg},"square")'>${l('공유하기','シェアする','Share')}</button>
   </div>`}
@@ -1097,7 +1202,10 @@ function render(){
   // v0.35: full-screen detail page takes over completely (its own compact
   // header, no brand header/bottom tab bar) -- checked before header()
   // even runs, matching the mockup's dedicated "사건 카드 상세" screen.
-  if(state.detailItem){root.className='app detail-mode';root.innerHTML=detailPage(state.detailItem);return}
+  // v0.53: mountHolo() moved here from the cases-tab branch below --
+  // detailPage()'s tcg-art is where the holofoil canvas mounts now, not
+  // the home screen's featured card (see this file's other v0.53 comments).
+  if(state.detailItem){root.className='app detail-mode';root.innerHTML=detailPage(state.detailItem);mountHolo();return}
   root.className='app';let html=header();
   // v0.35: settings is reachable regardless of usage-access permission --
   // it's account/app-level info, not usage-derived, unlike the other 3
@@ -1105,6 +1213,6 @@ function render(){
   // below so a user who hasn't granted access yet still has somewhere to
   // go via the bottom tab bar instead of being fully stuck.
   if(state.tab==='settings'){html+=settings();html+=tabs();root.innerHTML=html;return}
-  const d=state.data||read();state.data=d;if(!d.permission){html+=`<div class="permission"><h2>${l('모니가 사건을 조사하려면','MONIが事件を調べるには','To let MONI investigate')}</h2><p>${l('앱 사용 기록을 기기 안에서 분석하기 위한 사용정보 접근 권한이 필요합니다. 기록 내용은 서버로 보내지 않습니다.','端末内でアプリ利用記録を分析するため、使用状況へのアクセスが必要です。記録内容はサーバーへ送信しません。','Usage access is required to analyze app activity on-device. Your records are not sent to a server.')}</p><button class="primary" onclick="N&&N.openUsageSettings()">${l('사용정보 접근 허용','使用状況へのアクセスを許可','Allow usage access')}</button></div>`;html+=tabs();root.innerHTML=html;return}html+=state.tab==='cases'?cases(d):state.tab==='archive'?archive(d):records(d);html+=`<div class="foot">MONI · SMALL HABITS, BIG STORIES.</div>`;html+=tabs();root.innerHTML=html;if(state.tab==='cases')mountHolo()}
+  const d=state.data||read();state.data=d;if(!d.permission){html+=`<div class="permission"><h2>${l('모니가 사건을 조사하려면','MONIが事件を調べるには','To let MONI investigate')}</h2><p>${l('앱 사용 기록을 기기 안에서 분석하기 위한 사용정보 접근 권한이 필요합니다. 기록 내용은 서버로 보내지 않습니다.','端末内でアプリ利用記録を分析するため、使用状況へのアクセスが必要です。記録内容はサーバーへ送信しません。','Usage access is required to analyze app activity on-device. Your records are not sent to a server.')}</p><button class="primary" onclick="N&&N.openUsageSettings()">${l('사용정보 접근 허용','使用状況へのアクセスを許可','Allow usage access')}</button></div>`;html+=tabs();root.innerHTML=html;return}html+=state.tab==='cases'?cases(d):state.tab==='archive'?archive(d):records(d);html+=`<div class="foot">MONI · SMALL HABITS, BIG STORIES.</div>`;html+=tabs();root.innerHTML=html}
 restore();syncLanguageToNative();refresh();
 </script></body></html>
