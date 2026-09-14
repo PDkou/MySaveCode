@@ -313,7 +313,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.50.0';
+const APP_VERSION='0.51.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -324,7 +324,7 @@ const skipOnboarding=params.get('onboarding')==='0';
 // English strings exist throughout via l(ko, ja, en) but are not exposed yet —
 // flip `supported` back to include 'en' when English becomes a real target.
 const supported=['ko','ja'];const detected=(navigator.language||'ko').slice(0,2);
-const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false,dailyReminder:false},onboardStep:1,tab:params.get('tab')||'cases',data:null,detailItem:null,history:{days:{},discoveries:{}}};
+const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false,dailyReminder:false,reminderHour:21,reminderMinute:0},onboardStep:1,tab:params.get('tab')||'cases',data:null,detailItem:null,history:{days:{},discoveries:{}}};
 function l(ko,ja,en){return state.settings.language==='ko'?ko:state.settings.language==='ja'?ja:en}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function todayKey(){return new Date().toISOString().slice(0,10)}
@@ -336,7 +336,17 @@ const names={QUICK_EXIT:['5초컷','5秒撤退','5-second exit'],REENTRY:['재�
 const punch={QUICK_EXIT:['무엇을 확인했는지는 알 수 없습니다.','何を確認したのかは不明です。','What you checked remains unknown.'],REENTRY:['방금 나온 곳 맞습니다.','さっき出たばかりです。','You were just here.'],REGULAR:['직원보다 자주 방문하고 있습니다.','店員より頻繁に来ています。','You visit more often than the staff.'],RETURN_TO_START:['결국 처음으로 돌아왔습니다.','最終的に元の場所へ戻りました。','You eventually returned to the beginning.'],PATROL:['목적지는 확인되지 않았습니다.','目的地は確認できませんでした。','No destination was confirmed.'],ESCAPE_FAILED:['탈출 시도는 실패했습니다.','脱出には失敗しました。','The escape attempt failed.'],FIRST_CONTACT:['오늘의 첫 인사를 휴대폰과 나눴습니다.','今日最初の挨拶はスマホでした。','Your first hello went to your phone.'],NIGHT_PATROL:['수면과의 접촉은 확인되지 않았습니다.','睡眠との接触は確認されていません。','No contact with sleep was confirmed.'],APP_WANDERING:['이동은 많았지만 목적은 확인되지 않았습니다.','移動は多いものの目的は不明です。','Lots of movement. Purpose unknown.'],HUNDRED_VISITS:['별도의 출입증 발급을 검토하십시오.','専用の入館証をご検討ください。','Consider applying for a permanent pass.'],DIGITAL_LOST:['본인의 목적을 찾지 못한 채 종료되었습니다.','目的を見つけられないまま終了しました。','The session ended without finding its purpose.'],DAWN_SURVIVOR:['아직도 깨어 있는 것으로 확인되었습니다.','まだ起きていることを確認しました。','You were confirmed to still be awake.'],HIDDEN_LOOP:['출구는 존재했던 것으로 추정됩니다.','出口は存在していたものと推定されます。','An exit is believed to have existed.'],HIDDEN_NIGHT_ACTIVITY:['무엇을 확인하고 있었는지는 불명입니다.','何を確認していたのかは不明です。','What was being checked remains unknown.']};
 function txt(map,type){const a=map[type]||[type,type,type];return state.settings.language==='ko'?a[0]:state.settings.language==='ja'?a[1]:a[2]}
 function fmtMs(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);return h?`${h}${l('시간','時間','h')} ${m}${l('분','分','m')}`:`${m}${l('분','分','m')}`}
-function compactPkg(p){if(!p)return l('앱','アプリ','App');return p.split('.').pop().replace(/_/g,' ')}
+// v0.51: director feedback -- this used to just show the package name's
+// last dotted segment (e.g. "talk" for com.kakao.talk), which reads as a
+// programmer artifact, not an app name a user recognizes. N.appLabel()
+// resolves the real installed-app label via PackageManager; falls back to
+// the old split('.').pop() behavior if that comes back empty (app
+// uninstalled since, lookup failure, or N unavailable in preview mode).
+function compactPkg(p){
+  if(!p)return l('앱','アプリ','App');
+  try{if(N&&N.appLabel){const label=N.appLabel(p);if(label)return label}}catch(e){}
+  return p.split('.').pop().replace(/_/g,' ')
+}
 function detail(i){const m=i.metrics||{};switch(i.type){case'REENTRY':return l(`빠른 재입장 ${m.count||1}회 · 평균 ${Math.floor((m.avgGapMs||0)/1000)}초`,`素早い再入場 ${m.count||1}回・平均${Math.floor((m.avgGapMs||0)/1000)}秒`,`${m.count||1} quick returns · avg ${Math.floor((m.avgGapMs||0)/1000)}s`);case'QUICK_EXIT':return l(`${m.count||0}회의 짧은 실행이 발견됨`,`短い起動を${m.count||0}回確認`,`Detected ${m.count||0} short opens`);case'REGULAR':case'HUNDRED_VISITS':return l(`오늘 ${m.opens||0}회 방문`,`本日${m.opens||0}回訪問`,`${m.opens||0} visits today`);case'PATROL':case'DIGITAL_LOST':return l(`앱 ${m.uniqueApps||0}개 · 전환 ${m.switches||0}회`,`アプリ${m.uniqueApps||0}個・切替${m.switches||0}回`,`${m.uniqueApps||0} apps · ${m.switches||0} switches`);case'NIGHT_PATROL':return l(`앱 ${m.uniqueApps||0}개 · ${Math.floor((m.durationMs||0)/60000)}분`,`アプリ${m.uniqueApps||0}個・${Math.floor((m.durationMs||0)/60000)}分`,`${m.uniqueApps||0} apps · ${Math.floor((m.durationMs||0)/60000)}m`);case'APP_WANDERING':return l(`앱 전환 ${m.switches||0}회`,`アプリ切替${m.switches||0}回`,`${m.switches||0} app switches`);case'ESCAPE_FAILED':return l(`재실행 ${m.reopens||0}회`,`再起動${m.reopens||0}回`,`${m.reopens||0} reopens`);case'FIRST_CONTACT':return l('잠금 해제 직후 첫 앱 실행','ロック解除直後の最初のアプリ','First app after unlock');case'HIDDEN_LOOP':return l(`두 앱 사이 전환 ${m.switches||0}회`,`2アプリ間を${m.switches||0}回切替`,`${m.switches||0} switches between two apps`);case'HIDDEN_NIGHT_ACTIVITY':return l(`심야 짧은 접속 ${m.unlocks||5}회`,`深夜の短い接続 ${m.unlocks||5}回`,`${m.unlocks||5} short night checks`);default:return l('오늘의 사용 기록에서 발견되었습니다.','本日の利用記録から発見されました。','Found in today\'s usage record.')}}
 function demo(){return {permission:true,summary:{totalUsageMs:8580000,openCount:37,switchCount:84,uniqueApps:9,unlockSessions:24,nightUsageMs:2100000,topPackages:[{packageName:'com.instagram.android',durationMs:3180000},{packageName:'com.google.android.youtube',durationMs:2220000},{packageName:'com.kakao.talk',durationMs:1080000}]},report:{totalIncidents:5,hiddenCount:1,legendaryCount:1,cards:[{type:'HIDDEN_LOOP',rarity:'HIDDEN',score:220,metrics:{switches:8}},{type:'NIGHT_PATROL',rarity:'EPIC',score:80,metrics:{uniqueApps:8,durationMs:2100000}},{type:'RETURN_TO_START',rarity:'RARE',score:44,metrics:{visits:6,uniqueApps:4}},{type:'QUICK_EXIT',rarity:'NORMAL',score:18,metrics:{count:5}},{type:'HUNDRED_VISITS',rarity:'LEGENDARY',score:112,metrics:{opens:104}}]},archive:{discoveredCount:8,items:Object.keys(names).map((type,i)=>({type,hidden:type.startsWith('HIDDEN'),found:i<8||type==='HIDDEN_LOOP'}))}}}
 function read(){if(preview||!N)return demo();try{return JSON.parse(N.analyzeToday())}catch(e){return demo()}}
@@ -708,7 +718,39 @@ function tabs(){const items=[
 // than fabricate one, the row omits it and shows the same real detail()
 // sentence the full card uses instead.
 function compactCase(i){return `<div class="case-row ${rarityClass(i)}" onclick='openDetail(${JSON.stringify(i).replace(/'/g,"&#39;")})'><span class="case-row-icon">${iconFor(i)}</span><div class="case-row-text"><b>${esc(txt(names,i.type))}</b><span>${esc(detail(i))}</span></div>${rarityBadge(i)}</div>`}
-function cases(d){const cards=d.report?.cards||[],s=d.summary||{};const [featured,...rest]=cards;return `<section class="hero"><div><h2>${l('오늘도 수고했어요.','今日もおつかれさま。','Another day investigated.')}</h2><p>${l('모니가 오늘의 수상한 스마트폰 행동을 정리했습니다.','MONIが今日のちょっと怪しいスマホ行動をまとめました。','MONI summarized today\'s suspicious little phone habits.')}</p></div><img class="hero-moni" src="visual/character/basic/moni_phone.png"></section><div class="daily-strip"><div class="mini-stat"><b>${s.openCount||0}</b><span>${l('앱 실행','起動','opens')}</span></div><div class="mini-stat"><b>${fmtMs(s.totalUsageMs||0)}</b><span>${l('사용','使用','usage')}</span></div><div class="mini-stat"><b>${s.unlockSessions||0}</b><span>${l('잠금해제','解除','unlocks')}</span></div><div class="mini-stat"><b>${cards.length}</b><span>${l('사건','事件','cases')}</span></div></div><div class="section-title"><h2>${l('오늘의 사건','本日の事件','Today\'s cases')}</h2><span class="count">${cards.length}${l('건','件','')}</span></div>${cards.length?card(featured,true)+(rest.length?`<div class="case-list">${rest.map(compactCase).join('')}</div>`:''):`<div class="empty"><img src="visual/states/empty_state.png" alt=""><p>${l('아직 특별한 사건이 없습니다. 평소처럼 사용해 주세요.','まだ特別な事件はありません。いつも通りお使いください。','No unusual cases yet. Use your phone as usual.')}</p></div>`}`}
+// v0.51: director feedback -- "오늘도 수고했어요 화면은 그냥 맨날 저
+// 문구면 재미가없음" (the same hero banner text every single day gets
+// boring). Reacts to today's actual report instead of always showing the
+// same line: an empty day, a day with a HIDDEN find, and a multi-LEGENDARY
+// day each get their own callout; otherwise rotates through a pool of
+// generic variants keyed off the calendar day so it's stable within a day
+// (no flicker on re-render) but changes daily.
+function heroGreeting(d){
+  const report=d.report||{};
+  const cards=report.cards||[];
+  if(cards.length===0){
+    return [l('오늘은 조용하네요.','今日は静かですね。','It\'s quiet today.'),
+      l('아직 특이한 사건이 감지되지 않았어요.','まだ変わった事件は検知されていません。','No unusual cases detected yet.')];
+  }
+  if((report.hiddenCount||0)>0){
+    return [l('오늘, 뭔가 수상한 걸 찾았어요.','今日、何か怪しいものを見つけました。','Something suspicious turned up today.'),
+      l('숨겨진 사건이 하나 포함돼 있어요.','隠された事件がひとつ含まれています。','A hidden case is in today\'s report.')];
+  }
+  if((report.legendaryCount||0)>=2){
+    return [l('오늘은 유난히 특별한 하루였어요.','今日は特別な一日でした。','Today was an unusually special day.'),
+      l('레전더리 사건이 여러 건 발견됐어요.','レジェンダリー事件が複数見つかりました。','Multiple legendary cases were found.')];
+  }
+  const pool=[
+    [l('오늘도 수고했어요.','今日もおつかれさま。','Another day investigated.'),l('모니가 오늘의 수상한 스마트폰 행동을 정리했습니다.','MONIが今日のちょっと怪しいスマホ行動をまとめました。','MONI summarized today\'s suspicious little phone habits.')],
+    [l('오늘도 폰이 다 보고 있었어요.','今日もスマホは見ていました。','Your phone was watching, as always.'),l('모니가 몰래 기록을 남겨뒀어요.','MONIがこっそり記録を残しました。','MONI quietly kept the records.')],
+    [l('수사는 계속됩니다.','捜査は続きます。','The investigation continues.'),l('오늘 하루도 흥미로운 단서가 있었어요.','今日も興味深い手がかりがありました。','Today had its share of interesting clues.')],
+    [l('모니의 하루 보고서가 도착했어요.','MONIの本日の報告書が届きました。','MONI\'s daily report has arrived.'),l('놓친 게 있을지도 몰라요.','見逃したことがあるかもしれません。','You might have missed something.')],
+    [l('사건 파일이 갱신됐어요.','事件ファイルが更新されました。','The case file has been updated.'),l('오늘 당신의 폰은 바빴답니다.','今日もあなたのスマホは忙しかったです。','Your phone had a busy day.')]
+  ];
+  const dayIndex=Math.floor(Date.now()/86400000);
+  return pool[dayIndex%pool.length];
+}
+function cases(d){const cards=d.report?.cards||[],s=d.summary||{};const [featured,...rest]=cards;const [heroTitle,heroSub]=heroGreeting(d);return `<section class="hero"><div><h2>${heroTitle}</h2><p>${heroSub}</p></div><img class="hero-moni" src="visual/character/basic/moni_phone.png"></section><div class="daily-strip"><div class="mini-stat"><b>${s.openCount||0}</b><span>${l('앱 실행','起動','opens')}</span></div><div class="mini-stat"><b>${fmtMs(s.totalUsageMs||0)}</b><span>${l('사용','使用','usage')}</span></div><div class="mini-stat"><b>${s.unlockSessions||0}</b><span>${l('잠금해제','解除','unlocks')}</span></div><div class="mini-stat"><b>${cards.length}</b><span>${l('사건','事件','cases')}</span></div></div><div class="section-title"><h2>${l('오늘의 사건','本日の事件','Today\'s cases')}</h2><span class="count">${cards.length}${l('건','件','')}</span></div>${cards.length?card(featured,true)+(rest.length?`<div class="case-list">${rest.map(compactCase).join('')}</div>`:''):`<div class="empty"><img src="visual/states/empty_state.png" alt=""><p>${l('아직 특별한 사건이 없습니다. 평소처럼 사용해 주세요.','まだ特別な事件はありません。いつも通りお使いください。','No unusual cases yet. Use your phone as usual.')}</p></div>`}`}
 function archive(d){const items=d.archive?.items||[];const found=Object.keys(state.history.discoveries).length||d.archive?.discoveredCount||0;const pct=Math.round(found/Math.max(1,items.length)*100);return `<div class="section-title"><h2>${l('사건 보관함','事件保管庫','Case archive')}</h2><span class="count">${found}/${items.length}</span></div><div class="archive-progress"><b>${l('발견 진행도','発見進捗','Discovery progress')} ${pct}%</b><div class="bar"><i style="width:${pct}%"></i></div></div><div class="archive-grid">${items.map(x=>{const rar=state.history.discoveries[x.type]||[];const foundAny=x.found||rar.length>0;const locked=x.hidden&&!foundAny;const top=bestRarity(rar);const cls=locked?'':archiveRarityClass(x.type,top||'NORMAL');const [artBase,bg,mode]=incidentVisual(x.type);const art=incidentArt(artBase,x.type,top||'NORMAL');
       // v0.29: overlay-mode illustrations are a transparent character+prop
       // cutout with a lot of empty space (see ShareCardRenderer.kt's
@@ -807,7 +849,7 @@ function settings(){
   return `<div class="section-title"><h2>${l('설정','設定','Settings')}</h2></div><div class="settings-list">
 ${row(iconImg('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','cycleLang()')}
 ${row(iconImg('notification'),l('알림 권한','通知許可','Notifications'),l('탭해서 허용하기','タップして許可','Tap to allow'),'N&&N.requestNotificationPermission()')}
-${row(iconEmoji('⏰'),l('일일 리마인더','デイリーリマインダー','Daily reminder'),state.settings.dailyReminder?l('저녁 9시에 알림 · 탭해서 끄기','夜9時に通知 · タップでオフ','Notifies at 9 PM -- tap to turn off'):l('꺼짐 · 탭해서 켜기','オフ · タップでオン','Off -- tap to turn on'),'toggleDailyReminder()')}
+${row(iconEmoji('⏰'),l('일일 리마인더','デイリーリマインダー','Daily reminder'),state.settings.dailyReminder?l(`매일 ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}에 알림 · 탭해서 변경`,`毎日${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}に通知 · タップで変更`,`Notifies daily at ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')} -- tap to change`):l('꺼짐 · 탭해서 켜기','オフ · タップでオン','Off -- tap to turn on'),'openReminderSheet()')}
 ${row(iconEmoji('📊'),l('사용정보 접근','使用状況へのアクセス','Usage access'),accessLabel,'N&&N.openUsageSettings()')}
 ${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),"toast(l('다른 테마는 준비 중입니다','他のテーマは準備中です','More themes are coming soon'))")}
 ${row(iconEmoji('💾'),l('데이터 관리','データ管理','Data'),l('탭해서 초기화하기','タップして初期化','Tap to reset'),'openResetConfirm()')}
@@ -842,20 +884,42 @@ function resetAllData(){
 // v0.47: settings "일일 리마인더" row -- the app has requested
 // POST_NOTIFICATIONS since v0.24's onboarding with no notification feature
 // to use it for (see NativeBridge.kt's own longstanding comment on that).
-// Turning this on also requests the OS permission (harmless/no-op if
-// already granted or already denied) since scheduling an alarm alone
-// doesn't get a notification permission the user hasn't granted -- the
-// actual gating happens in DailyReminderReceiver via
+// v0.51: director feedback -- "일일 리마인더 같은경우는 차라리 유저한테
+// 언제 알릴지 유저가 정하는게 좋다고 생각함" (let the user pick the time
+// instead of a fixed 9pm). Replaced the old single-tap on/off toggle with
+// a sheet holding a native <input type="time"> (tapping it opens Android's
+// own time-picker dialog -- standard WebView behavior, no custom native UI
+// needed) plus an on/off action. Turning it on also requests the OS
+// notification permission (harmless/no-op if already granted or denied)
+// since scheduling an alarm alone doesn't grant one -- the actual gating
+// happens in DailyReminderReceiver via
 // NotificationManagerCompat.areNotificationsEnabled() when it fires.
-function toggleDailyReminder(){
-  const next=!state.settings.dailyReminder;
-  if(next){
-    try{N&&N.requestNotificationPermission&&N.requestNotificationPermission()}catch(e){}
-    try{N&&N.scheduleDailyReminder&&N.scheduleDailyReminder()}catch(e){}
-  }else{
-    try{N&&N.cancelDailyReminder&&N.cancelDailyReminder()}catch(e){}
-  }
-  state.settings.dailyReminder=next;save();render();
+function openReminderSheet(){
+  const hh=String(state.settings.reminderHour).padStart(2,'0');
+  const mm=String(state.settings.reminderMinute).padStart(2,'0');
+  const isOn=state.settings.dailyReminder;
+  const leftBtn=isOn
+    ?`<button class="cancel" onclick="turnOffReminder()">${l('끄기','オフにする','Turn off')}</button>`
+    :`<button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button>`;
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('일일 리마인더','デイリーリマインダー','Daily reminder')}</div><div style="display:flex;flex-direction:column;gap:14px;align-items:center;padding:6px 0"><input type="time" id="reminderTimeInput" value="${hh}:${mm}" style="font-size:22px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)"><p style="font-size:12px;color:var(--muted);text-align:center;margin:0">${l('이 시간에 오늘의 사건을 확인하라고 알려드려요.','この時間に今日の事件を確認するようお知らせします。','We\'ll remind you to check today\'s cases at this time.')}</p></div></div><div class="sheet-actions">${leftBtn}<button class="confirm" onclick="saveReminderTime()">${isOn?l('저장','保存','Save'):l('켜기','オンにする','Turn on')}</button></div></div></div>`;
+}
+function saveReminderTime(){
+  const input=document.getElementById('reminderTimeInput');
+  const parts=(input&&input.value?input.value:'21:00').split(':').map(Number);
+  const h=Number.isFinite(parts[0])?parts[0]:21,m=Number.isFinite(parts[1])?parts[1]:0;
+  state.settings.reminderHour=h;state.settings.reminderMinute=m;
+  state.settings.dailyReminder=true;
+  save();
+  try{N&&N.requestNotificationPermission&&N.requestNotificationPermission()}catch(e){}
+  try{N&&N.scheduleDailyReminder&&N.scheduleDailyReminder(h,m)}catch(e){}
+  closeOverlay();
+  render();
+}
+function turnOffReminder(){
+  state.settings.dailyReminder=false;save();
+  try{N&&N.cancelDailyReminder&&N.cancelDailyReminder()}catch(e){}
+  closeOverlay();
+  render();
 }
 // v0.47: complement to resetAllData() -- lets the user pull a copy of the
 // same {settings,history} payload save() already keeps in localStorage,

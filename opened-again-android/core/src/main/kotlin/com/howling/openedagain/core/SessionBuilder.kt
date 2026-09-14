@@ -11,7 +11,20 @@ class SessionBuilder(private val config: DetectionConfig = DetectionConfig()) {
         if (events.isEmpty()) return emptyList()
         val sorted = events.sortedBy { it.timestamp }
         val rawVisits = mutableListOf<AppVisit>()
-        val unlockTimes = sorted.filter { it.type == EventType.UNLOCK }.map { it.timestamp }
+        // v0.51: director feedback -- "잠금해제 카운트가 하나도 안 되는 것
+        // 같음" (unlock count never registers anything). EventType.UNLOCK
+        // comes from UsageEvents.KEYGUARD_HIDDEN (see
+        // UsageEventCollector.kt), which multiple real-device/OEM reports
+        // (Samsung especially) confirm is unreliably or never surfaced
+        // through queryEvents() at all, even though the constant exists and
+        // the mapping code is correct -- an Android-platform limitation,
+        // not a bug in this mapping. SCREEN_ON (SCREEN_INTERACTIVE) is a
+        // standard, reliably-reported event on every OEM, and a real unlock
+        // essentially always co-occurs with the screen turning on right
+        // before the user starts using an app -- so treat it as an
+        // equally-valid "session started via unlock" signal instead of
+        // depending solely on the flakier KEYGUARD_HIDDEN.
+        val unlockTimes = sorted.filter { it.type == EventType.UNLOCK || it.type == EventType.SCREEN_ON }.map { it.timestamp }
         val screenOffTimes = sorted.filter { it.type == EventType.SCREEN_OFF }.map { it.timestamp }
 
         var activePackage: String? = null

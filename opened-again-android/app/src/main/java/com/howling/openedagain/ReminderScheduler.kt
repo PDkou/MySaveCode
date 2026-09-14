@@ -31,11 +31,18 @@ object ReminderScheduler {
     private const val REQUEST_CODE = 1001
     private const val PREFS_NAME = "reminder_prefs"
     private const val KEY_ENABLED = "enabled"
+    private const val KEY_HOUR = "hour"
+    private const val KEY_MINUTE = "minute"
 
-    // 9 PM local time -- a fixed hour rather than a user-configurable time
-    // picker, kept simple for v1. Change this one constant if the director
-    // wants a different default later.
-    private const val REMINDER_HOUR = 21
+    // v0.51: director feedback -- "일일 리마인더 같은경우는 차라리 유저한테
+    // 언제 알릴지 유저가 정하는게 좋다고 생각함". The fixed 21:00 from v0.47
+    // is now only the fallback default (for a pre-v0.51 install that turned
+    // this on before a time could be chosen, or if index.html ever calls
+    // schedule() without an explicit time for some reason) -- schedule()
+    // takes an explicit hour/minute from now on and persists whatever was
+    // last chosen so rescheduleIfEnabled() (BootReceiver) keeps using it.
+    private const val DEFAULT_HOUR = 21
+    private const val DEFAULT_MINUTE = 0
 
     fun isEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getBoolean(KEY_ENABLED, false)
@@ -55,14 +62,18 @@ object ReminderScheduler {
         nm.createNotificationChannel(channel)
     }
 
-    fun schedule(context: Context) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putBoolean(KEY_ENABLED, true).apply()
+    fun schedule(context: Context, hour: Int = DEFAULT_HOUR, minute: Int = DEFAULT_MINUTE) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+            .putBoolean(KEY_ENABLED, true)
+            .putInt(KEY_HOUR, hour)
+            .putInt(KEY_MINUTE, minute)
+            .apply()
         ensureChannel(context)
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         runCatching {
             alarmManager.setInexactRepeating(
                 AlarmManager.RTC_WAKEUP,
-                nextTriggerMillis(),
+                nextTriggerMillis(hour, minute),
                 AlarmManager.INTERVAL_DAY,
                 pendingIntent(context)
             )
@@ -75,16 +86,18 @@ object ReminderScheduler {
         alarmManager.cancel(pendingIntent(context))
     }
 
-    /** Called from BootReceiver -- re-arms the alarm the OS cleared on reboot, only if the user hadn't turned this off. */
+    /** Called from BootReceiver -- re-arms the alarm the OS cleared on reboot, at whatever time the user last chose, only if they hadn't turned this off. */
     fun rescheduleIfEnabled(context: Context) {
-        if (isEnabled(context)) schedule(context)
+        if (!isEnabled(context)) return
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        schedule(context, prefs.getInt(KEY_HOUR, DEFAULT_HOUR), prefs.getInt(KEY_MINUTE, DEFAULT_MINUTE))
     }
 
-    private fun nextTriggerMillis(): Long {
+    private fun nextTriggerMillis(hour: Int, minute: Int): Long {
         val now = Calendar.getInstance()
         val trigger = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, REMINDER_HOUR)
-            set(Calendar.MINUTE, 0)
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }

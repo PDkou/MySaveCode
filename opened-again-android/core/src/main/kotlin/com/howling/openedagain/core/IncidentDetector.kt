@@ -48,8 +48,21 @@ class IncidentDetector(
             if (gaps.isNotEmpty()) {
                 val count = gaps.size
                 val avg = gaps.map { it.third }.average().toLong()
+                // v0.51: director feedback -- "레전더리 등등의 기준이 너무
+                // 낮아서 그런지 레전더리로 도배가됨". The `count >= 3 && avg
+                // <= 10_000` branch was meant as a "handful of extremely
+                // fast re-entries" alternate path to LEGENDARY, but 3 quick
+                // re-checks under a 10s average gap is completely ordinary
+                // phone behavior (glancing at a notification, checking
+                // something twice) -- nowhere near as rare as every other
+                // incident's actual LEGENDARY bar (40 quick exits, 100
+                // visits, etc.), so this path fired far more often than
+                // intended and flooded the day's report with LEGENDARY
+                // cards. Raised the bar so the "fast" path requires a
+                // genuinely unusual burst (10+ re-entries, still under a
+                // tighter 5s average), not just 3 ordinary ones.
                 val rarity = when {
-                    count >= 30 || (count >= 3 && avg <= 10_000) -> Rarity.LEGENDARY
+                    count >= 30 || (count >= 10 && avg <= 5_000) -> Rarity.LEGENDARY
                     count >= 15 -> Rarity.EPIC
                     count >= 5 -> Rarity.RARE
                     else -> Rarity.NORMAL

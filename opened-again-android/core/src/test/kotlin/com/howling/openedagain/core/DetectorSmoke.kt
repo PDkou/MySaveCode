@@ -20,7 +20,21 @@ fun main() {
     check(sessions.size == 1) { "Expected one session, got ${sessions.size}" }
     val incidents = IncidentDetector().detectDay(sessions)
     check(incidents.any { it.type == IncidentType.REENTRY })
-    check(incidents.any { it.type == IncidentType.QUICK_EXIT })
+    // v0.51: QUICK_EXIT is no longer guaranteed to survive resolve()'s
+    // top-3-ordinary-incidents cap with this synthetic data. Before v0.51,
+    // REENTRY's LEGENDARY threshold was `count >= 3 && avg <= 10_000` --
+    // this scenario's 3 quick reentries (avg exactly 10_000) qualified, so
+    // REENTRY landed in resolve()'s uncapped "special" (LEGENDARY/HIDDEN)
+    // tier, leaving all 3 "ordinary" slots free for the other incidents
+    // here. Raising that threshold (director feedback: LEGENDARY was
+    // firing far too easily and flooding daily reports) correctly drops
+    // this REENTRY to NORMAL, so it now competes for those same 3 ordinary
+    // slots alongside ESCAPE_FAILED/RETURN_TO_START/QUICK_EXIT -- 4
+    // candidates for 3 slots, and QUICK_EXIT (this scenario's weakest,
+    // only 4 short opens) is the one that correctly loses out. That's
+    // resolve()'s "top 3 most notable per day" logic working as intended,
+    // not a regression -- asserting QUICK_EXIT always survives was really
+    // asserting the old, too-low REENTRY threshold's side effect.
     check(incidents.any { it.type == IncidentType.RETURN_TO_START })
     println("PASS: ${incidents.joinToString { it.type.name + ':' + it.rarity.name }}")
 }

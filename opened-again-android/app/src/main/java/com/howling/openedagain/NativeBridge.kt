@@ -180,9 +180,14 @@ class NativeBridge(
 
     // v0.47: settings "일일 리마인더" toggle -- see ReminderScheduler for the
     // actual AlarmManager scheduling/cancellation logic.
+    // v0.51: director feedback -- the user should choose when they're
+    // reminded, not a fixed 9pm. index.html's reminder sheet passes the
+    // hour/minute the user picked via a native <input type="time">
+    // (renders Android's own time-picker dialog, no custom native UI
+    // needed here).
     @JavascriptInterface
-    fun scheduleDailyReminder() {
-        ReminderScheduler.schedule(activity)
+    fun scheduleDailyReminder(hour: Int, minute: Int) {
+        ReminderScheduler.schedule(activity, hour, minute)
     }
 
     @JavascriptInterface
@@ -199,6 +204,20 @@ class NativeBridge(
     fun setLanguage(lang: String) {
         activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).edit().putString("language", lang).apply()
     }
+
+    // v0.51: director feedback -- "가장 오래 본 앱 이름이 앱이름으로 나왔으면
+    // 좋겠음 프로그램 이름이아니라" (top-apps list showed the raw package
+    // name's last dotted segment, e.g. "talk" for com.kakao.talk, not a
+    // real name a user recognizes). index.html's compactPkg() calls this
+    // for every package name it shows (records()'s top-apps list, and the
+    // incident card's package pill) and falls back to its old
+    // split('.').pop() behavior if this returns empty -- covers apps that
+    // were uninstalled since, or any lookup failure.
+    @JavascriptInterface
+    fun appLabel(packageName: String): String = runCatching {
+        val pm = activity.packageManager
+        pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
+    }.getOrDefault("")
 
     private fun summaryToJson(s: DailyUsageSummary) = JSONObject().apply {
         put("startTime", s.startTime)
