@@ -83,7 +83,15 @@ class BillingManager(
         val params = QueryProductDetailsParams.newBuilder().setProductList(listOf(product)).build()
         client.queryProductDetailsAsync(params) { result, list ->
             if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                productDetails = list.productDetailsList.firstOrNull()
+                // v0.65 fix: billing-ktx 7.1.1's queryProductDetailsAsync lambda
+                // resolves to the classic ProductDetailsResponseListener
+                // signature (BillingResult, List<ProductDetails>) -- `list` IS
+                // the product list already, not a wrapper with its own
+                // `.productDetailsList` (that's only QueryProductDetailsResult,
+                // the *suspend*-function return type, which this lambda form
+                // isn't using). CI caught this as "Unresolved reference
+                // 'productDetailsList'" on first push.
+                productDetails = list.firstOrNull()
             }
         }
     }
