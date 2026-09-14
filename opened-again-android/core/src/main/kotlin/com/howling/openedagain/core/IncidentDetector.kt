@@ -265,11 +265,47 @@ class IncidentDetector(
         }
 
         val sorted = enriched.sortedByDescending { it.score }
-        val special = sorted.filter { it.rarity == Rarity.HIDDEN || it.rarity == Rarity.LEGENDARY }
-        val ordinary = sorted.filterNot { it in special }.take(3)
-        return (special + ordinary).distinctBy { it.type to it.primaryPackage }.sortedByDescending { it.score }
+        // v0.61: director feedback -- "아직도 레전더리랑 에픽이 잘나오네;;
+        // 역으로 노멀이랑 레어는 잘 안나오는거아니야?" (LEGENDARY/EPIC still
+        // show up constantly; NORMAL/RARE barely show up at all, don't
+        // they?). Confirmed as a real structural bug, not just threshold
+        // tuning (v0.51 only ever adjusted REENTRY's own thresholds): this
+        // used to put HIDDEN/LEGENDARY in a completely UNCAPPED "special"
+        // bucket while pooling NORMAL/RARE/EPIC together into one shared
+        // "ordinary" bucket capped at 3 by raw score -- and EPIC's own
+        // baseScore (60) so reliably beats RARE's (30) and NORMAL's (10) in
+        // that shared pool that a single EPIC incident could (and, per a
+        // synthetic verification with a JVM-only harness mirroring this
+        // exact scenario, reliably did) crowd every NORMAL and RARE
+        // incident out of the day's report entirely, on top of LEGENDARY
+        // never being capped at all. Every tier now gets its own
+        // independent cap instead, so each one gets guaranteed room in the
+        // report regardless of what else fired that same day -- a tier's
+        // presence still depends on it actually being detected that day
+        // (these caps are ceilings, not floors/guarantees), but one tier
+        // can no longer starve another out of a shared pool.
+        val hidden = sorted.filter { it.rarity == Rarity.HIDDEN }.take(HIDDEN_CAP)
+        val legendary = sorted.filter { it.rarity == Rarity.LEGENDARY }.take(LEGENDARY_CAP)
+        val epic = sorted.filter { it.rarity == Rarity.EPIC }.take(EPIC_CAP)
+        val rare = sorted.filter { it.rarity == Rarity.RARE }.take(RARE_CAP)
+        val normal = sorted.filter { it.rarity == Rarity.NORMAL }.take(NORMAL_CAP)
+        return (hidden + legendary + epic + rare + normal).distinctBy { it.type to it.primaryPackage }.sortedByDescending { it.score }
     }
 
     private fun overlaps(a: DetectedIncident, b: DetectedIncident): Boolean =
         a.startTime <= b.endTime && b.startTime <= a.endTime
+
+    private companion object {
+        // v0.61: per-rarity ceilings for resolve() -- see its own comment
+        // for why these replaced the old uncapped-HIDDEN/LEGENDARY +
+        // shared-top-3-"ordinary" split. Shaped as a pyramid (rarer tier,
+        // smaller cap) so a busy day can surface a handful of common finds
+        // alongside at most one legendary/hidden highlight, never the
+        // reverse.
+        const val HIDDEN_CAP = 1
+        const val LEGENDARY_CAP = 1
+        const val EPIC_CAP = 2
+        const val RARE_CAP = 2
+        const val NORMAL_CAP = 3
+    }
 }

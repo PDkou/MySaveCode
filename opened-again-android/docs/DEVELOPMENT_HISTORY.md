@@ -2220,3 +2220,46 @@ Playwright 테스트들을 전부 가려버렸기 때문(실서비스 동작에�
 확인. 기존 5개 등급/스크롤 없음/카드 전체 드래그/온보딩 이어붙임/
 뒤로가기 회귀 스위트 전부(`?reveal=0`로 리빌을 끄고) 재확인, 콘솔
 에러 0건.
+
+## v0.61 — 레전더리/에픽 남발, 노멀/레어 실종의 진짜 원인 발견 (resolve()의 등급별 상한 부재)
+디렉터: "근데 아직도 레전더리랑 에픽이 잘나오네;; 역으로 노멀이랑
+레어는 잘 안나오는거아니야?" -- v0.51에서 REENTRY 하나의 임계값만
+올렸던 게 근본 해결이 아니었음을 확인시켜준 피드백.
+
+`IncidentDetector.resolve()`를 다시 읽어보니 실제로 구조적 버그였음
+(단순 임계값 튜닝 문제가 아님):
+```kotlin
+val special = sorted.filter { it.rarity == HIDDEN || it.rarity == LEGENDARY }
+val ordinary = sorted.filterNot { it in special }.take(3)
+```
+HIDDEN/LEGENDARY는 **상한이 아예 없어서** 그날 감지된 모든
+LEGENDARY/HIDDEN 사건이 하나도 빠짐없이 리포트에 실렸고, NORMAL/RARE/
+EPIC은 **한 풀에 섞여서 점수 상위 3개만** 뽑혔는데 EPIC의 baseScore
+(60)가 RARE(30)/NORMAL(10)보다 훨씬 높아서 그날 EPIC 사건이 하나만
+있어도 NORMAL/RARE를 그 3자리 경쟁에서 밀어내기 충분했음 -- 정확히
+디렉터가 체감한 "레전더리/에픽만 잘 나오고 노멀/레어는 실종" 현상의
+근본 원인.
+
+JVM 전용 검증 스크립트(`core_test_harness_verify/VerifyRarityCaps.kt`,
+QUICK_EXIT의 결정적 임계값을 이용해 8개 앱에 걸쳐 LEGENDARY 1개/
+EPIC 2개/RARE 2개/NORMAL 3개가 감지되도록 구성)로 수정 전후를
+`git stash`로 직접 비교:
+- **수정 전**: LEGENDARY 2개(상한 없음, DAWN_SURVIVOR까지 우연히 겹쳐
+  둘 다 실림), EPIC 2개, RARE 1개, **NORMAL 0개(완전히 실종)**
+- **수정 후**: LEGENDARY 1개, EPIC 2개, RARE 2개, NORMAL 3개(전부 유지)
+
+**수정 내용**: `resolve()`의 "special(무제한) + ordinary(공유 3자리)"
+2분할 구조를 폐기하고, 등급마다 독립된 상한을 두는 방식으로 교체 --
+HIDDEN 1 / LEGENDARY 1 / EPIC 2 / RARE 2 / NORMAL 3 (등급이 희귀할수록
+상한이 작아지는 피라미드 구조). 이제 어느 한 등급이 다른 등급의
+자리를 잠식할 수 없음 -- 각 등급은 그날 실제로 감지된 게 있으면
+자기 상한만큼은 반드시 자리를 보장받음(상한은 "최대치"일 뿐 "보장
+출현"은 아님 -- 그 등급이 아예 감지 안 된 날은 여전히 0개).
+
+버전 61/0.61.0. JVM 하네스(core_test_harness/`runSmoke`+`runRegression`,
+core_test_harness_verify/`run3`)로 검증 -- 기존 스모크/회귀 테스트
+그대로 통과(다른 감지 로직은 손대지 않음), 새 검증 스크립트로
+수정 전(버그 재현)/후(정상) 대조 확인. 이번 건은 Android 프레임워크
+의존성이 전혀 없는 순수 Kotlin 로직이라 이 세션에서 JVM으로 실제
+동작까지 완전히 검증 가능했음(v0.55~v0.58의 NativeBridge.kt
+변경들과 달리 CI 컴파일 통과만으로 확인해야 했던 게 아님).
