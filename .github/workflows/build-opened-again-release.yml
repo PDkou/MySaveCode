@@ -11,17 +11,6 @@ name: Build Opened Again Release
 #   ANDROID_KEY_PASSWORD      key password (usually same as store password)
 on:
   workflow_dispatch:
-  # TEMPORARY (removed again right after this run): GitHub Actions only
-  # discovers a workflow_dispatch-only workflow once it's present on the
-  # repo's default branch, or has actually run at least once -- this one
-  # is neither yet, so `workflow_dispatch` alone 404s from the API. A
-  # scoped push trigger for this exact bootstrap commit gets it registered;
-  # once GitHub has seen one run, workflow_dispatch works normally without
-  # needing this again, so it comes back out in the very next commit.
-  push:
-    branches: [open-again]
-    paths:
-      - '.github/workflows/build-opened-again-release.yml'
 
 jobs:
   release:
