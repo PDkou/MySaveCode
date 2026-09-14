@@ -200,18 +200,32 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    card where v0.52 had put it; (2) this detail page's white-background/
    differently-colored-middle-layer look was "별로" (not good) -- it
    should instead feel like the share card (ShareCardRenderer.kt/
-   CardStyle.kt's dark atmospheric bordered TCG-card look), with the
-   Pocket effect layered on top of THAT. Full redesign below: the page is
-   now a full-bleed dark backdrop (the exact same
-   backgrounds/share/1080x1920/bg_<rarity>_vertical.png art the share PNG
-   uses) behind a bordered "TCG card" component that reuses the exact same
-   frame_bg/medallion webp assets and per-rarity palette CardStyle.kt
-   defines natively (see tcgPalette()/foilTitleStyle(), which mirror
-   CardStyle.kt's Kotlin tables 1:1) -- and the interactive holo canvas
-   moved onto that card's own art window (tcg-art) instead of .scene. The
-   old "force this page back to light bg regardless of rarity class"
-   override is gone on purpose -- a dark theme is now the whole point. */
-.detail-page{position:relative;min-height:100%;padding:calc(14px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto;background:transparent !important;color:#fff !important;box-shadow:none !important}
+   CardStyle.kt's bordered TCG-card look), with the Pocket effect layered
+   on top of THAT. Full redesign: a bordered "TCG card" component reusing
+   the exact same frame_bg/medallion webp assets and per-rarity palette
+   CardStyle.kt defines natively (see tcgPalette()/foilTitleStyle(), which
+   mirror CardStyle.kt's Kotlin tables 1:1), with the interactive holo
+   canvas moved onto that card's own art window (tcg-art) instead of
+   .scene. The old "force this page back to light bg regardless of rarity
+   class" override is gone -- see detailPage()'s --page-* custom
+   properties (set inline per rarity, read by .detail-case-id/.detail-sub/
+   .detail-stats below) for how text/panel colors now adapt instead.
+   v0.54: two more rounds of feedback on this v0.53 redesign itself --
+   (a) "카드 자체가 움직이지는 않네" (the card itself doesn't move) -- see
+   mountHolo()'s v0.54 comment for the added 3D tilt. (b) "배경도 검은
+   배경이네;; 그냥 저 고양이발바닥 무늬 배경으로 하지" (the backdrop's
+   dark too -- just use that paw-print background) -- detailPage() now
+   points .detail-backdrop at cardPatternBg(i), the exact same light warm
+   paw-print texture the home card's own .card-pattern already uses
+   (HIDDEN's own variant of that asset is already a moody dark scene on
+   its own, so this one swap handles both moods with no rarity branching
+   needed here). (c) "스크롤 되네? 어떻게든 한 화면에 담아주지" (it still
+   scrolls, fit it on one screen) -- this page is now a fixed-height,
+   non-scrolling flex column (see .app.detail-mode) and the card's actual
+   size is fit to whatever vertical space is left over by JS
+   (fitTcgCard(), called alongside mountHolo()) rather than a fixed
+   max-width, so it shrinks instead of overflowing on a short screen. */
+.detail-page{position:relative;height:100%;display:flex;flex-direction:column;overflow:hidden;padding:calc(10px + env(safe-area-inset-top)) 18px calc(14px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto;background:transparent !important;color:var(--page-text,var(--ink)) !important;box-shadow:none !important}
 /* v0.50: director feedback -- the incident detail page "still scrolls"
    even though its own content clearly fits on screen with room to spare.
    Root cause found by measuring actual computed heights: `.app`'s base
@@ -227,17 +241,40 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    eating into it) -- v0.48's overscroll fix addressed a real but
    different problem (the bounce/glow effect on short content) and didn't
    touch this actual height overflow at all. Zero out the inherited
-   padding specifically for detail mode. */
-.app.detail-mode{padding-bottom:0;background:#0A0A0C}
+   padding specifically for detail mode.
+   v0.54: that fix zeroed out one stacked source of overflow, but the page
+   could still end up taller than the viewport depending on content (card
+   height + stat row count) and scroll anyway -- "스크롤 되네? 어떻게든
+   한 화면에 담아주지" (it still scrolls, fit it on one screen somehow).
+   This is now a hard height:100dvh (100vh fallback for older WebView)
+   box with overflow:hidden, and .detail-page's flex children share that
+   fixed budget instead of the page just growing past it -- see
+   fitTcgCard(). */
+/* isolation:isolate: v0.53's dark #0A0A0C background on this element used
+   to mask over body's own cream background wherever .app sits, so
+   .detail-backdrop's position:fixed;z-index:-2 image always had SOME
+   equally-dark surface right behind it. Once that background was dropped
+   (v0.54 -- see .detail-backdrop's own comment) nothing masked body's
+   background anymore, and the backdrop's negative z-index, with no
+   stacking context between it and the document root, sank BELOW body's
+   own (unpositioned, so normal-flow-layer) background instead of behind
+   just .detail-page -- verified via Playwright that the backdrop image
+   loads fine but paints fully hidden under body's cream fill regardless.
+   isolation:isolate makes this element its own stacking context, so
+   .detail-backdrop's z-index is scoped locally against .detail-page (its
+   actual intent) instead of racing body's background at the document root. */
+.app.detail-mode{padding-bottom:0;height:100vh;height:100dvh;overflow:hidden;isolation:isolate}
 /* v0.53: fixed full-bleed backdrop behind the whole detail page -- a
    sibling of .detail-page rather than its background-image, so it covers
    the true viewport (including under the status bar) regardless of
-   .detail-page's own max-width/padding box. A soft top-to-bottom scrim on
-   top keeps the back/share icon buttons and card readable over whatever
-   the source art looks like at the edges. */
-.detail-backdrop{position:fixed;inset:0;z-index:-2;background-size:cover;background-position:center;background-color:#0A0A0C}
-.detail-backdrop:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,4,6,.6) 0%,rgba(4,4,6,.28) 26%,rgba(4,4,6,.5) 74%,rgba(4,4,6,.88) 100%)}
-.detail-page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+   .detail-page's own max-width/padding box.
+   v0.54: was the dark backgrounds/share/1080x1920/bg_<rarity>_vertical.png art +
+   a heavy black scrim (director: "배경도 검은 배경이네" -- the backdrop's
+   dark too) -- detailPage() now points this at cardPatternBg(i) instead
+   (see this file's other v0.54 comments), which is light/warm on its own
+   for every rarity but HIDDEN, so the scrim is gone too. */
+.detail-backdrop{position:fixed;inset:0;z-index:-2;background-color:var(--bg);background-size:cover;background-position:center}
+.detail-page-head{display:flex;align-items:center;justify-content:space-between;flex:0 0 auto}
 .icon-btn{border:1px solid var(--line);background:#fff;border-radius:var(--btn-radius);width:var(--btn-min);height:var(--btn-min);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .icon-btn img{width:19px;height:19px;object-fit:contain}
 /* v0.53: tried recoloring .icon-btn for this page's dark backdrop (a
@@ -248,16 +285,41 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    then turns both to identical white, erasing the glyph into a flat white
    dot. The plain white .icon-btn (unchanged from every other page) reads
    fine floating over a dark backdrop as-is -- no override needed. */
-.detail-case-id{font-size:12px;color:rgba(255,255,255,.62);font-weight:800;text-align:center}
-.detail-sub{font-size:13px;color:rgba(255,255,255,.82);line-height:1.5;margin-top:6px;text-align:center}
+.detail-case-id{font-size:12px;color:var(--page-muted,var(--muted));font-weight:800;text-align:center;flex:0 0 auto;margin-top:6px}
+.detail-sub{font-size:12px;color:var(--page-text,var(--ink));opacity:.85;line-height:1.4;margin-top:3px;text-align:center;flex:0 0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* v0.53: the "TCG card" component -- a bordered frame (frame_bg/<rarity>.webp,
    the same texture ShareCardRenderer.kt draws the share PNG's frame from)
    sized to the same 1024x1536 aspect ratio as CardLayout's native canvas,
    so the header/art/info/emblem rects below (CardLayout's own pixel rects
    converted from 1024x1536 to %) line up with the frame art exactly like
-   they do in the Kotlin renderer. */
-.tcg-card-wrap{max-width:360px;margin:14px auto 0;position:relative}
-.tcg-card{position:relative;width:100%;aspect-ratio:1024/1536;border-radius:26px;overflow:hidden;background-size:cover;background-position:center;box-shadow:0 22px 55px rgba(0,0,0,.55),0 0 0 2px var(--tcg-border,rgba(255,255,255,.3))}
+   they do in the Kotlin renderer.
+   v0.54: .tcg-card-wrap is now the flexible middle of the page's flex
+   column (flex:1;min-height:0) instead of a fixed max-width block --
+   fitTcgCard() measures its actual box every render and shrinks
+   .tcg-card's width to whatever keeps the aspect ratio inside it, so a
+   short screen shrinks the card instead of scrolling past it. `perspective`
+   here (not on .tcg-card itself) is what gives the card's own rotateX/
+   rotateY tilt (see mountHolo()) real depth instead of a flat skew. */
+/* flex-basis:0 (the `1` shorthand), not `auto` -- with `auto` this wrap's
+   hypothetical main size is its own content's height, which is .tcg-card's
+   aspect-ratio-driven height, which depends on .tcg-card's WIDTH, which is
+   100% of this wrap -- a circular dependency that (verified via
+   Playwright) converges to a self-consistent but badly wrong tiny size
+   instead of "however much space is actually left". flex-basis:0 makes
+   this wrap's height purely "whatever's left in .detail-page after the
+   flex:0 0 auto siblings", with no dependency on its own child's size at
+   all, which is what fitTcgCard() actually needs to measure correctly. */
+.tcg-card-wrap{flex:1;min-height:0;margin-top:10px;display:flex;align-items:center;justify-content:center;perspective:900px}
+.tcg-card{position:relative;width:100%;max-width:360px;aspect-ratio:1024/1536;border-radius:26px;overflow:hidden;background-size:cover;background-position:center;box-shadow:0 22px 55px rgba(0,0,0,.4),0 0 0 2px var(--tcg-border,rgba(255,255,255,.3));transform-style:preserve-3d;transition:transform .5s cubic-bezier(.22,1,.36,1);will-change:transform}
+/* v0.54: director feedback -- "카드 자체가 움직이지는 않네" (the card
+   itself doesn't move). Dragging the art window already fed the holo
+   canvas's light position; mountHolo() now also tilts .tcg-card itself in
+   3D (rotateX/rotateY) from that same drag position for the actual
+   "holding a physical card" Pocket motion, not just its light shifting in
+   place. .tilting drops the transition above while actively dragging so
+   the tilt tracks the finger with no lag; removing it on release lets the
+   base transition ease the card back flat. */
+.tcg-card.tilting{transition:none}
 .tcg-header{position:absolute;left:9.5%;top:13%;width:81%;height:7.1%;display:flex;align-items:center;padding:0 4%;border-radius:10px;background:var(--tcg-panel,#fff)}
 .tcg-title{font-size:clamp(13px,4.2vw,19px);font-weight:1000;letter-spacing:-.6px;color:var(--tcg-text,#2F2A27);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 /* v0.53: EPIC/LEGENDARY/HIDDEN titles get the same foil-gradient text
@@ -270,13 +332,13 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .tcg-info{position:absolute;left:9.5%;top:72.7%;width:81%;height:17.5%;border-radius:14px;background:var(--tcg-panel,#fff);color:var(--tcg-text,#2F2A27);padding:9px 12px;overflow:auto;display:flex;flex-direction:column;justify-content:center;gap:5px}
 .tcg-punch{font-size:13px;font-weight:1000;line-height:1.32}
 .tcg-chip{font-size:10px;font-weight:800;color:var(--tcg-chip,#675D56);opacity:.85}
-.detail-stats{background:rgba(20,18,22,.55);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:14px 16px;margin-top:20px;color:#fff}
-.detail-stats>b{font-size:13px;display:block;margin-bottom:8px}
-.detail-stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid rgba(255,255,255,.14)}
+.detail-stats{background:var(--page-panel,rgba(255,255,255,.78));border:1px solid var(--page-panel-line,var(--line));border-radius:16px;padding:10px 14px;margin-top:10px;color:var(--page-text,var(--ink));flex:0 0 auto;max-height:96px;overflow:auto}
+.detail-stats>b{font-size:12px;display:block;margin-bottom:4px}
+.detail-stat-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--page-stat-line,#EFE7DB)}
 .detail-stat-row:first-of-type{border-top:0}
-.detail-stat-row span{font-size:12px;color:rgba(255,255,255,.62)}
-.detail-stat-row b{font-size:14px;font-weight:900}
-.detail-share-btn{margin-top:18px}
+.detail-stat-row span{font-size:11px;color:var(--page-muted,var(--muted))}
+.detail-stat-row b{font-size:13px;font-weight:900}
+.detail-share-btn{margin-top:10px;flex:0 0 auto}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2F2926;color:white;border-radius:999px;padding:10px 15px;font-size:12px;font-weight:800;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .foot{font-size:10px;text-align:center;color:#A4978E;margin-top:28px;letter-spacing:.7px}
 @media(max-width:430px){.app{padding-left:16px;padding-right:16px}.brand h1{font-size:27px}.avatar{width:60px;height:60px}.card-body{grid-template-columns:1.22fr .78fr}.case-title{font-size:22px}.scene{min-height:118px}.scene img{width:98px;height:98px}.daily-strip{gap:6px}.mini-stat{padding:9px 4px}}
@@ -355,7 +417,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.53.0';
+const APP_VERSION='0.54.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -738,6 +800,16 @@ function mountHolo(){
     // .scene -- `scene` below is still just whatever element is this
     // canvas's parent (mountHolo() never assumed a specific class name), so
     // nothing in this block needed to change for the move.
+    // v0.54: director feedback -- "카드 자체가 움직이지는 않네" (the card
+    // itself doesn't move). Everything above only ever moved the *light*
+    // inside the art window; the card frame around it stayed flat. cardEl
+    // (found via closest() so this stays generic if .holo-canvas ever
+    // mounts somewhere without a .tcg-card ancestor again) now also gets a
+    // real 3D tilt (rotateX/rotateY) driven by the exact same drag
+    // position, so dragging reads as physically tilting the card -- the
+    // actual Pocket motion -- not just its light shifting in place.
+    const cardEl=scene.closest('.tcg-card');
+    const MAX_TILT_DEG=14;
     scene.style.touchAction='none';
     let drag=null; // {startX,startY,moved} while the pointer is down
     let manualPos=null; // {px,py} while actively tilting, else null (auto-sweep)
@@ -751,8 +823,15 @@ function mountHolo(){
     scene.addEventListener('pointerdown',e=>{drag={startX:e.clientX,startY:e.clientY,moved:false}});
     scene.addEventListener('pointermove',e=>{
       if(!drag)return;
-      if(!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>DRAG_THRESHOLD)drag.moved=true;
-      if(drag.moved){manualPos=toNormalized(e.clientX,e.clientY);e.preventDefault()}
+      if(!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>DRAG_THRESHOLD){
+        drag.moved=true;
+        if(cardEl)cardEl.classList.add('tilting'); // drop the snap-back transition while actively dragging so the tilt tracks the finger with no lag
+      }
+      if(drag.moved){
+        manualPos=toNormalized(e.clientX,e.clientY);
+        if(cardEl)cardEl.style.transform=`rotateX(${(-manualPos.py*MAX_TILT_DEG).toFixed(2)}deg) rotateY(${(manualPos.px*MAX_TILT_DEG).toFixed(2)}deg)`;
+        e.preventDefault();
+      }
     });
     function endDrag(){
       if(drag&&drag.moved){
@@ -767,6 +846,7 @@ function mountHolo(){
         const suppressClick=ev=>{ev.stopPropagation();scene.removeEventListener('click',suppressClick,true)};
         scene.addEventListener('click',suppressClick,true);
       }
+      if(cardEl){cardEl.classList.remove('tilting');cardEl.style.transform=''} // .tcg-card's own transition eases this back flat
       drag=null;manualPos=null;
     }
     scene.addEventListener('pointerup',endDrag);
@@ -1113,19 +1193,27 @@ function foilTitleStyle(rarity){switch(rarity){
 // Same HIDDEN-opal-variant logic as cardPatternBg() above, just pointed at
 // the vertical share backgrounds (backgrounds/share/1080x1920/) instead of
 // the square ones -- this is the exact art the share PNG's backdrop uses.
-function detailBgName(i){const opal=i.type==='HIDDEN_NIGHT_ACTIVITY';return i.rarity==='HIDDEN'?(opal?'hidden_01':'hidden_02'):(i.rarity||'NORMAL').toLowerCase()}
-// v0.53: full redesign -- director feedback (see this file's other v0.53
-// comments for the full story). The page is now a TCG "card view": a
-// full-bleed atmospheric backdrop (the same share-card background art)
-// behind a bordered card component (the same frame_bg/medallion webp
-// assets + tcgPalette()/foilTitleStyle() colors ShareCardRenderer.kt uses
-// for the shareable PNG), with the interactive holofoil canvas
-// (createCardHolo()/mountHolo(), moved off the home screen's featured
-// card) mounted on the card's own art window. header/art/info/emblem
-// rects below are CardLayout's own pixel rects (native 1024x1536 canvas:
-// HEADER (97,200)-(925,309), ART (103,315)-(919,935), INFO (97,1116)-
-// (925,1385), EMBLEM cx=508,cy=125,d=162) converted to % -- see the
-// matching .tcg-* CSS rules.
+// v0.53: full redesign -- director feedback (see this file's other v0.53/
+// v0.54 comments for the full story). The page is a TCG "card view": a
+// bordered card component (the same frame_bg/medallion webp assets +
+// tcgPalette()/foilTitleStyle() colors ShareCardRenderer.kt uses for the
+// shareable PNG), with the interactive holofoil canvas (createCardHolo()/
+// mountHolo(), moved off the home screen's featured card) mounted on the
+// card's own art window. header/art/info/emblem rects below are
+// CardLayout's own pixel rects (native 1024x1536 canvas: HEADER
+// (97,200)-(925,309), ART (103,315)-(919,935), INFO (97,1116)-(925,1385),
+// EMBLEM cx=508,cy=125,d=162) converted to % -- see the matching .tcg-*
+// CSS rules.
+// v0.54: --page-* custom properties (read by .detail-case-id/.detail-sub/
+// .detail-stats' CSS) carry this page's own outer text/panel colors --
+// light ink on the light paw-print backdrop every rarity but HIDDEN gets,
+// bright ink on HIDDEN's own dark moody variant of that same backdrop
+// (see cardPatternBg()/its v0.54 reuse below). Kept as inline custom
+// properties rather than leaning on the .hidden/.normal etc. classes'
+// own background+color rules (still applied via rarityClass(i) below, for
+// the rarity badge pill) -- those would win this page's cascade on class
+// specificity alone regardless of source order (.hidden.opal is 2
+// classes), not what either theme here actually needs.
 function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVisual(i.type);const art=incidentArt(artBase,i.type,i.rarity);const sceneBg=mode==='scene'?art:bg;
   const statRows=Object.entries(m).map(([k,v])=>metricRow(k,v));
   const shareArg=JSON.stringify(i).replace(/'/g,"&#39;");
@@ -1139,12 +1227,24 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
   const impact=rarity==='EPIC'||rarity==='LEGENDARY';
   const frameUrl=`visual/cards/frame_bg/${rarity.toLowerCase()}.webp`;
   const medallionUrl=`visual/cards/medallions/${rarity.toLowerCase()}.webp`;
-  const backdropUrl=`visual/backgrounds/share/1080x1920/bg_${detailBgName(i)}_vertical.png`;
+  // v0.54: director feedback -- "배경도 검은 배경이네;; 그냥 저
+  // 고양이발바닥 무늬 배경으로 하지" (the backdrop's dark too, just use
+  // that paw-print background). cardPatternBg(i) is the exact same square
+  // share-card texture the home card's own .card-pattern already draws at
+  // low opacity -- reused here directly (full strength; it's a light,
+  // low-contrast texture on its own for every rarity but HIDDEN, whose
+  // own variant of it is already a moody dark scene, so no extra rarity
+  // branching is needed for either mood).
+  const backdropUrl=cardPatternBg(i);
+  const isDarkMood=rarity==='HIDDEN';
+  const pageVars=isDarkMood
+    ?'--page-text:#E9FBFF;--page-muted:rgba(233,251,255,.68);--page-panel:rgba(255,255,255,.08);--page-panel-line:rgba(255,255,255,.18);--page-stat-line:rgba(255,255,255,.16)'
+    :'--page-text:#2F2A27;--page-muted:#6B5F54;--page-panel:rgba(255,255,255,.78);--page-panel-line:rgba(120,100,80,.14);--page-stat-line:#EFE7DB';
   const titleTxt=esc(txt(names,i.type));
   const titleStyle=foil?` style="--foil-colors:${foil.colors.join(',')};--foil-outline:${foil.outline};--foil-glow:${foil.glow}"`:'';
   const holoCanvas=impact?`<canvas class="holo-canvas" data-art="${sceneBg}"></canvas>`:'';
   return `<div class="detail-backdrop" style="background-image:url('${backdropUrl}')"></div>
-  <div class="detail-page ${rarityClass(i)}" style="--tcg-border:${pal.border}">
+  <div class="detail-page ${rarityClass(i)}" style="--tcg-border:${pal.border};${pageVars}">
     <div class="detail-page-head"><button class="icon-btn" onclick="closeDetail()"><img src="visual/ui/icons/unlabeled/icon_back.png" alt="${l('뒤로','戻る','Back')}"></button>${rarityBadge(i)}<button class="icon-btn" onclick='share(${shareArg},"square")'><img src="visual/ui/icons/unlabeled/icon_share.png" alt="${l('공유','シェア','Share')}"></button></div>
     <div class="detail-case-id">CASE #${caseNo(i)} · ${new Date().toLocaleDateString()}</div>
     <div class="detail-sub">${esc(detail(i))}</div>
@@ -1157,6 +1257,27 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
     ${statRows.length?`<div class="detail-stats"><b>${l('이 사건의 기록','この事件の記録','About this case')}</b>${statRows.map(([k,v])=>`<div class="detail-stat-row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>`:''}
     <button class="primary detail-share-btn" onclick='share(${shareArg},"square")'>${l('공유하기','シェアする','Share')}</button>
   </div>`}
+// v0.54: director feedback -- "스크롤 되네? 어떻게든 한 화면에 담아주지"
+// (it still scrolls, fit it on one screen somehow). .app.detail-mode/
+// .detail-page are now a fixed-height, non-scrolling flex column (see
+// their CSS) with .tcg-card-wrap as the flexible middle -- this measures
+// that wrap's actual laid-out box (after header/case-id/sub/stats/button
+// have all taken their own space) and shrinks .tcg-card's width to
+// whatever keeps its 1024:1536 aspect ratio inside what's left, instead
+// of the fixed 360px cap that could make the card (and so the whole page)
+// taller than a short screen. Only ever shrinks -- resets to the CSS
+// max-width first so a taller/roomier screen still gets the full-size
+// card back on the next render (e.g. after an orientation change).
+function fitTcgCard(){
+  const wrap=document.querySelector('.tcg-card-wrap');
+  const card=document.querySelector('.tcg-card');
+  if(!wrap||!card)return;
+  card.style.width='';
+  const availH=wrap.clientHeight;
+  if(!availH)return;
+  const naturalH=card.getBoundingClientRect().height;
+  if(naturalH>availH)card.style.width=Math.max(140,Math.floor(availH*1024/1536))+'px';
+}
 function openDetail(i){state.detailItem=i;window.scrollTo(0,0);render()}
 function closeDetail(){state.detailItem=null;window.scrollTo(0,0);render()}
 function toast(t){const x=document.createElement('div');x.className='toast';x.textContent=t;document.body.appendChild(x);setTimeout(()=>x.remove(),1600)}
@@ -1205,7 +1326,7 @@ function render(){
   // v0.53: mountHolo() moved here from the cases-tab branch below --
   // detailPage()'s tcg-art is where the holofoil canvas mounts now, not
   // the home screen's featured card (see this file's other v0.53 comments).
-  if(state.detailItem){root.className='app detail-mode';root.innerHTML=detailPage(state.detailItem);mountHolo();return}
+  if(state.detailItem){root.className='app detail-mode';root.innerHTML=detailPage(state.detailItem);fitTcgCard();mountHolo();return}
   root.className='app';let html=header();
   // v0.35: settings is reachable regardless of usage-access permission --
   // it's account/app-level info, not usage-derived, unlike the other 3
