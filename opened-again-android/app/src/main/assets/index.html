@@ -313,7 +313,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.51.0';
+const APP_VERSION='0.52.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -643,7 +643,8 @@ function mountHolo(){
   const canvas=document.querySelector('.holo-canvas');
   if(!canvas)return;
   if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  const rect=canvas.parentElement.getBoundingClientRect();
+  const scene=canvas.parentElement;
+  const rect=scene.getBoundingClientRect();
   const w=Math.max(1,Math.round(rect.width)),h=Math.max(1,Math.round(rect.height));
   // v0.41(2차): code review found the canvas backing store was sized to
   // plain CSS pixels while .holo-canvas{width:100%;height:100%} stretches
@@ -679,9 +680,53 @@ function mountHolo(){
     const makeCanvas=(cw,ch)=>{const c=document.createElement('canvas');c.width=cw;c.height=ch;return c};
     const effect=createCardHolo(canvas,img,makeCanvas,dpr);
     const start=performance.now();
+
+    // v0.52: director feedback -- "카드 수집요소가 우리의 강점인데
+    // Pocket처럼 카드에 애니메이션이 있었으면 좋겠음" (Pokemon TCG
+    // Pocket-style interactive card holofoil). createCardHolo()'s render()
+    // already accepted an explicit light-position override (px,py) for
+    // exactly this -- it just never had an input source feeding it besides
+    // the automatic sweep. Wire up touch/pointer drag on the art window so
+    // dragging tilts the shine toward the touch point, same interaction
+    // language as Pocket's card-tilt effect; releasing (or never touching)
+    // falls back to the existing automatic sweep. touch-action:none stops
+    // the page itself from trying to scroll/pan while actively tilting.
+    scene.style.touchAction='none';
+    let drag=null; // {startX,startY,moved} while the pointer is down
+    let manualPos=null; // {px,py} while actively tilting, else null (auto-sweep)
+    const DRAG_THRESHOLD=8; // px of movement before a press counts as a tilt, not a tap
+    function toNormalized(clientX,clientY){
+      const r=scene.getBoundingClientRect();
+      const px=((clientX-r.left)/r.width)*2-1;
+      const py=((clientY-r.top)/r.height)*2-1;
+      return {px:Math.max(-1,Math.min(1,px)),py:Math.max(-1,Math.min(1,py))};
+    }
+    scene.addEventListener('pointerdown',e=>{drag={startX:e.clientX,startY:e.clientY,moved:false}});
+    scene.addEventListener('pointermove',e=>{
+      if(!drag)return;
+      if(!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>DRAG_THRESHOLD)drag.moved=true;
+      if(drag.moved){manualPos=toNormalized(e.clientX,e.clientY);e.preventDefault()}
+    });
+    function endDrag(){
+      if(drag&&drag.moved){
+        // A real tilt gesture happened -- swallow the click that would
+        // otherwise open the detail page (same tap-vs-drag distinction
+        // Pocket itself makes: a quick tap opens the card, a drag just
+        // tilts it). One-shot capture-phase listener so it only ever
+        // blocks the single click this drag would have produced.
+        const suppressClick=ev=>{ev.stopPropagation();scene.removeEventListener('click',suppressClick,true)};
+        scene.addEventListener('click',suppressClick,true);
+      }
+      drag=null;manualPos=null;
+    }
+    scene.addEventListener('pointerup',endDrag);
+    scene.addEventListener('pointercancel',endDrag);
+    scene.addEventListener('pointerleave',endDrag);
+
     function tick(now){
       if(!document.body.contains(canvas)){holoRaf=null;return}
-      effect.render((now-start)/1000);
+      if(manualPos)effect.render((now-start)/1000,manualPos.px,manualPos.py);
+      else effect.render((now-start)/1000);
       holoRaf=requestAnimationFrame(tick);
     }
     holoRaf=requestAnimationFrame(tick);
@@ -751,7 +796,18 @@ function heroGreeting(d){
   return pool[dayIndex%pool.length];
 }
 function cases(d){const cards=d.report?.cards||[],s=d.summary||{};const [featured,...rest]=cards;const [heroTitle,heroSub]=heroGreeting(d);return `<section class="hero"><div><h2>${heroTitle}</h2><p>${heroSub}</p></div><img class="hero-moni" src="visual/character/basic/moni_phone.png"></section><div class="daily-strip"><div class="mini-stat"><b>${s.openCount||0}</b><span>${l('앱 실행','起動','opens')}</span></div><div class="mini-stat"><b>${fmtMs(s.totalUsageMs||0)}</b><span>${l('사용','使用','usage')}</span></div><div class="mini-stat"><b>${s.unlockSessions||0}</b><span>${l('잠금해제','解除','unlocks')}</span></div><div class="mini-stat"><b>${cards.length}</b><span>${l('사건','事件','cases')}</span></div></div><div class="section-title"><h2>${l('오늘의 사건','本日の事件','Today\'s cases')}</h2><span class="count">${cards.length}${l('건','件','')}</span></div>${cards.length?card(featured,true)+(rest.length?`<div class="case-list">${rest.map(compactCase).join('')}</div>`:''):`<div class="empty"><img src="visual/states/empty_state.png" alt=""><p>${l('아직 특별한 사건이 없습니다. 평소처럼 사용해 주세요.','まだ特別な事件はありません。いつも通りお使いください。','No unusual cases yet. Use your phone as usual.')}</p></div>`}`}
-function archive(d){const items=d.archive?.items||[];const found=Object.keys(state.history.discoveries).length||d.archive?.discoveredCount||0;const pct=Math.round(found/Math.max(1,items.length)*100);return `<div class="section-title"><h2>${l('사건 보관함','事件保管庫','Case archive')}</h2><span class="count">${found}/${items.length}</span></div><div class="archive-progress"><b>${l('발견 진행도','発見進捗','Discovery progress')} ${pct}%</b><div class="bar"><i style="width:${pct}%"></i></div></div><div class="archive-grid">${items.map(x=>{const rar=state.history.discoveries[x.type]||[];const foundAny=x.found||rar.length>0;const locked=x.hidden&&!foundAny;const top=bestRarity(rar);const cls=locked?'':archiveRarityClass(x.type,top||'NORMAL');const [artBase,bg,mode]=incidentVisual(x.type);const art=incidentArt(artBase,x.type,top||'NORMAL');
+function archive(d){const items=d.archive?.items||[];const found=Object.keys(state.history.discoveries).length||d.archive?.discoveredCount||0;const pct=Math.round(found/Math.max(1,items.length)*100);return `<div class="section-title"><h2>${l('사건 보관함','事件保管庫','Case archive')}</h2><span class="count">${found}/${items.length}</span></div><div class="archive-progress"><b>${l('발견 진행도','発見進捗','Discovery progress')} ${pct}%</b><div class="bar"><i style="width:${pct}%"></i></div></div><div class="archive-grid">${items.map(x=>{const rar=state.history.discoveries[x.type]||[];const foundAny=x.found||rar.length>0;
+      // v0.52: director feedback -- "발견되지 않은건 굳이 표시 안 해도
+      // 된다, 수집하지않았는데 보관함에 표시되는게 거슬림." Locking was only
+      // ever gated on `x.hidden` (the two HIDDEN-rarity types), so every
+      // NORMAL/RARE/EPIC/LEGENDARY type's real name/art rendered here even
+      // when never actually discovered (and even labeled itself "발견됨"
+      // via the `top||l('발견됨'...)` fallback below, despite `top` being
+      // undefined for something never found) -- undiscovered non-hidden
+      // types were never actually a mystery. Lock on `!foundAny` alone so
+      // every undiscovered type gets the same "???" placeholder treatment
+      // hidden types already had, and only reveals once genuinely found.
+      const locked=!foundAny;const top=bestRarity(rar);const cls=locked?'':archiveRarityClass(x.type,top||'NORMAL');const [artBase,bg,mode]=incidentVisual(x.type);const art=incidentArt(artBase,x.type,top||'NORMAL');
       // v0.29: overlay-mode illustrations are a transparent character+prop
       // cutout with a lot of empty space (see ShareCardRenderer.kt's
       // opaqueBounds() comment for the same issue elsewhere) meant to sit

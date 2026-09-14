@@ -493,3 +493,57 @@ A single vertical light streak / lens flare glint on a fully transparent backgro
 
 ### LEGENDARY (금색)
 A single vertical light streak / lens flare glint on a fully transparent background, tall narrow proportions (roughly 1:3, taller than wide). Soft realistic glass-reflection quality -- NOT a flat rectangular gradient bar. Bright feathered-white core running down the center, tapering smoothly through a warm gold glow (#FFD678-ish) on both sides, fading completely to transparent at the left and right edges and at the top and bottom ends (no hard edges anywhere). A few tiny soft sparkle points scattered near the brightest part of the streak. Photographic/realistic light quality, not a flat vector illustration. No text, no watermark, no border, no background scene -- just the glowing streak on transparent.
+
+## 설정 화면 아이콘 7종 (v0.52 요청)
+
+디렉터 피드백: "설정에 아이콘들 에셋을 차라리 뽑아서 앱느낌을 통일
+시키고 싶음". 지금 설정 화면(`settings()`)은 언어/알림 권한 두 행만
+`visual/ui/icons/unlabeled/`의 실제 아이콘 에셋(icon_language.png,
+icon_notification.png)을 쓰고, 나머지 5개 행(테마/데이터 관리/데이터
+내보내기/도움말/개인정보처리방침/일일 리마인더/앱 정보 -- 7개)은 전부
+이모지(🎨💾📤❓🔒⏰ℹ️)로 자리만 채워둔 상태라 통일감이 없음. 이 7개를
+같은 스타일의 아이콘 에셋으로 교체하려는 요청.
+
+### 사용 방법
+1. 참고 이미지로 기존 아이콘 하나(예: `visual/ui/icons/unlabeled/
+   icon_settings.png` 또는 `icon_notification.png`)를 새 대화에
+   첨부 -- 굵은 검은색 윤곽선 + 흰색 채우기 + 완전 투명 배경 + 아이콘
+   전체를 감싸는 얇은 흰색 "스티커" 테두리 스타일을 GPT가 그대로
+   따라가게 하기 위함(사건 일러스트의 캐릭터 참고 이미지 첨부와 같은
+   이유). 이 스타일은 다른 아이콘 요청 없이 이미 확립돼 있던 것이라
+   별도 스펙 문서 없이 참고 이미지 하나로 충분함.
+2. 아래 프롬프트 7개를 하나씩(같은 대화에서 이어서 생성해도 되고,
+   따로따로 해도 됨) 복붙.
+3. 결과가 너무 복잡하거나 다른 요소가 섞여 나오면 "더 단순하게, 선 하나
+   짜리 아이콘으로" 식으로 바로 수정 요청 -- 이 아이콘들은 13x13mm급
+   작은 UI 요소로 쓰이므로 디테일이 많으면 뭉개져 보임.
+4. 받은 파일을 아래 파일명으로 `visual/ui/icons/unlabeled/`에 저장,
+   투명 배경 PNG, 정사각형에 가깝게(기존 파일들도 128~145px 정사각형
+   근처).
+5. 파일이 도착하는 대로 하나씩 줘도 됨 -- 받으면
+   `settings()`의 해당 행을 `iconEmoji('...')`에서
+   `iconImg('<파일명 접두어>')`로 바꾸는 코드 작업은 이쪽에서 진행.
+
+### 공통 스타일 고정 문구 (모든 프롬프트에 포함됨, 따로 안 써도 됨)
+> A simple flat line-art UI icon sticker, bold clean black outlines (uniform stroke weight), plain white fill, on a fully transparent background, with a thin white sticker-style border outlining the whole icon shape (same visual treatment as a die-cut sticker). No gradients, no shading, no color, no text, no background scene, no drop shadow beyond the thin sticker border. Centered, roughly square composition with even padding on all sides. Simple enough to stay legible at a very small size (under 30px).
+
+### 테마 → `icon_theme.png`
+[스타일 고정 문구] A palette icon: a rounded artist's paint palette shape with a thumb hole, with a few simple round paint-dab circles on its surface (outlined only, not filled with color per the no-color rule above).
+
+### 데이터 관리 → `icon_data.png`
+[스타일 고정 문구] A stacked-disks/database icon: two or three simple ellipses stacked vertically with short connecting side lines, like a classic "database" symbol.
+
+### 데이터 내보내기 → `icon_export.png`
+[스타일 고정 문구] An export icon: a simple upward-pointing arrow rising out of an open box/tray shape (box outline at the bottom, arrow pointing up and out of it).
+
+### 도움말 → `icon_help.png`
+[스타일 고정 문구] A help icon: a single bold question mark centered inside a simple circle outline.
+
+### 개인정보처리방침 → `icon_privacy.png`
+[스타일 고정 문구] A privacy/lock icon: a simple padlock shape (rounded body with a shackle loop on top), viewed straight-on.
+
+### 일일 리마인더 → `icon_reminder.png`
+[스타일 고정 문구] An alarm clock icon: a simple round clock face with two small bell/legs bumps on top and short clock hands showing a time, classic alarm-clock silhouette.
+
+### 앱 정보 → `icon_about.png`
+[스타일 고정 문구] An info icon: a single bold lowercase "i" (a dot above a vertical bar) centered inside a simple circle outline.
