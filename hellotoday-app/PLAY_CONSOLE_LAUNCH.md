@@ -470,8 +470,32 @@ cd hellotoday-app
   이유가 "공개 검색 가능한 스토어 페이지 부재"였음. 프로덕션 전환되면
   풀릴 가능성 높음.
 - [ ] **`SCHEDULE_EXACT_ALARM` 권한 사용 목적 선언** — Play Console
-  정책 → 앱 콘텐츠 → 권한 선언에서 "알람/리마인더" 용도로 소명. 이 앱은
-  본질이 리마인더라 통과는 무난할 것으로 예상하지만 선언 자체는 필요.
+  정책 → 앱 콘텐츠 → 권한 선언(또는 심사 중 뜨는 권한 관련 알림)에서
+  "알람/리마인더" 용도로 소명. 이 앱은 본질이 리마인더라 통과는 무난할
+  것으로 예상하지만 선언 자체는 필요. 그대로 붙여넣을 수 있는 영문
+  소명 문구(2026-09-14 작성):
+
+  ```
+  Core functionality: Hello, Today is a personal reminder app whose
+  entire purpose is nudging the user to reach out to specific people
+  (e.g. family, friends) at a time the user has chosen or that the app
+  has picked for them (either a fixed interval or a random day within a
+  user-configured range).
+
+  Why exact alarms are required: the app's core value proposition is
+  that a reminder arrives at approximately the intended time -- not
+  "sometime later that day" or "whenever the OS gets around to it."
+  Without SCHEDULE_EXACT_ALARM, Android's battery-optimization behavior
+  (especially on OEM skins such as Samsung's) can defer delivery of an
+  inexact alarm by many minutes to hours, which directly undermines the
+  app's single feature.
+
+  How it's requested: the permission is requested through the standard
+  system settings screen (ACTION_REQUEST_SCHEDULE_EXACT_ALARM), not
+  silently, and it is used exclusively to schedule the user's own
+  reminders that they configured inside the app -- no other feature in
+  the app relies on exact alarms.
+  ```
 - [ ] **데이터 보안(Data safety) 양식 최신화** — 0.4.x 이후 추가된
   프로필 사진 선택, 통화 녹음 파일 연결 기능이 반영됐는지 확인 (전부
   기기 내 선택이라 "수집 안 함"으로 표기하면 되지만, 항목 자체는
