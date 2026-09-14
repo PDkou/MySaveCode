@@ -2456,3 +2456,47 @@ Play Billing으로 `remove_ads` 상품(1회성/non-consumable)을 조회 →
 직접 검토 후, `.github/workflows/build-opened-again-gradle.yml`(실제
 `gradle :core:test :app:assembleDebug`를 수행하는 유일한 곳) CI로
 최종 컴파일 검증.
+
+**v0.65 후속 수정 2건 (같은 버전, CI/감독 질문 대응)**:
+
+1. **CI 컴파일 에러 수정**: 첫 push한 CI(run 34822098028)가
+   `BillingManager.kt:86: Unresolved reference 'productDetailsList'`로
+   실패. `queryProductDetailsAsync()`의 콜백 두 번째 파라미터에
+   `.productDetailsList`로 접근하는 코드를 짰는데, 실제 의존성 버전을
+   `billing-ktx:7.1.1`로 선언해서 옛날 콜백 시그니처(파라미터가 이미
+   `List<ProductDetails>` 그 자체)가 적용된 게 원인.
+
+2. **감독 질문 "구글스토어 최신 정보를 기준으로 만들어진 앱이 맞지?"에
+   대응해 실제로 웹 검색으로 재확인** -- 1번을 그냥 옛날 API 문법으로
+   되돌려 고치는 대신, 애초에 의존성 버전 자체가 최신 정책 기준에
+   못 미쳤던 게 진짜 원인임을 확인:
+   - **Google Play Billing Library**: 2026년 8월 31일부터(연장 시
+     11월 1일까지) 신규 앱/업데이트 전부 Billing Library **8 이상
+     필수**로 정책이 바뀜(현재 최신 9.x). 원래 쓴 7.1.1은 이미 정책
+     미달 -- **8.3.0**(현재 최신 8.x)으로 올림. 다행히
+     `enablePendingPurchases(PendingPurchasesParams...)` 호출은 v8이
+     요구하는 명시적 형태로 이미 맞게 짜여 있었고(구버전의 인자 없는
+     `enablePendingPurchases()`는 v8에서 아예 제거됨), 실제 코드
+     변경은 `queryProductDetailsAsync()` 콜백 부분(원래 짰던
+     `.productDetailsList` 접근이 v8 기준으로는 오히려 맞는 코드였음)
+     하나뿐 -- 즉 1번 CI 에러는 "코드가 최신 API를 잘못 씀"이 아니라
+     "의존성 버전 선언이 최신 API를 못 따라감"이 진짜 원인.
+   - **AdMob(Google Mobile Ads SDK)**: 원래 쓴 `play-services-ads:23.6.0`
+     보다 최신인 **25.0.0**(2026년 2월)으로 올림. 다만 구글이 2026년
+     7월부터 신규 통합에는 별도의 "GMA Next-Gen SDK"를 공식
+     권장하기 시작했음을 확인 -- 기존("legacy") SDK는 2027년 6월
+     지원 종료 예고, 2028년 6월 완전 종료(sunset)로 아직 시간
+     여유가 충분하고, 발표된 지 2개월 남짓밖에 안 된 Next-Gen SDK로
+     첫 광고 통합을 바로 가는 것보다 검증된 legacy 라인의 최신
+     버전을 쓰는 게 지금 시점엔 더 안전하다고 판단해 legacy를
+     유지 -- `docs/OPEN_ISSUES_AND_NEXT.md`에 2027년 지원 종료 전
+     Next-Gen SDK 이전을 검토할 항목으로 별도 기록.
+   - `targetSdk 36`(안드로이드 16)은 2026년 8월 31일부터 신규
+     앱/업데이트에 요구되는 최소 기준과 이미 일치 -- 별도 조치 불필요.
+
+두 수정 다 버전 번호는 그대로 0.65.0 유지(원래 push가 CI를 아직 한 번도
+통과하지 못한 상태에서의 연속 수정이라 새 버전 대신 같은 버전 안에서
+반복 수정). 감독이 스스로 확인 요청을 하지 않았다면 라이브러리 버전이
+정책 기준에 못 미친 채로 나갈 뻔했던 사례 -- 이후 서드파티 SDK를
+추가할 일이 있으면 매번 "지금 시점 최신/필수 버전이 맞는지"를
+먼저 검색해서 확인하는 습관을 들일 것.

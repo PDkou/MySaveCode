@@ -183,6 +183,15 @@
   자체 콘텐츠는 아직 미정 — 별도 디자인 결정 필요. 개별/팩 단위
   코스메틱 인앱결제(옵션 3)는 감독 지시대로 "앱이 커지면" 재검토,
   지금은 보류.
+- **AdMob "GMA Next-Gen SDK" 이전 검토(2027년 6월 전)**: v0.65에서
+  광고 SDK로 `com.google.android.gms:play-services-ads`("legacy"
+  Google Mobile Ads SDK) 최신 버전(25.0.0)을 채택했음. 구글이
+  2026년 7월부터 신규 통합에는 별도의 "GMA Next-Gen SDK"를 공식
+  권장으로 지정했고, legacy SDK는 2027년 6월 지원 종료(deprecation),
+  2028년 6월 완전 종료(sunset) 예고 상태 -- 발표 시점 대비 아직
+  충분히 성숙하지 않았다고 판단해 이번엔 legacy를 선택했지만, 2027년
+  지원 종료 전에 Next-Gen SDK로의 이전(Gradle 좌표/API 모두 다름)을
+  한 번은 검토해야 함.
 
 ## 기술 부채
 - WebView JS와 Android strings.xml의 문자열 소스가 중복될 수 있음

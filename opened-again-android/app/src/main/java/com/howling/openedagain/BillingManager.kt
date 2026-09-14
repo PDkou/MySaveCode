@@ -75,23 +75,26 @@ class BillingManager(
         })
     }
 
+    // v0.65 CI history: queryProductDetailsAsync()'s callback shape is
+    // version-dependent -- Play Billing 8+ (what this app is now pinned to,
+    // see build.gradle.kts's own comment on why) passes a
+    // QueryProductDetailsResult with a `.productDetailsList` property, while
+    // the older 7.x line this was momentarily/accidentally pinned to during
+    // this same version's development instead passes the plain
+    // List<ProductDetails> directly. Got this wrong once (declared 7.1.1 in
+    // build.gradle.kts while writing 8.x-shaped code), which CI caught as
+    // "Unresolved reference 'productDetailsList'" -- fixed by bumping the
+    // dependency version to match Play's own now-mandatory minimum (8+),
+    // not by downgrading this code to the older API.
     private fun queryProductDetails() {
         val product = QueryProductDetailsParams.Product.newBuilder()
             .setProductId(PRODUCT_ID_REMOVE_ADS)
             .setProductType(BillingClient.ProductType.INAPP)
             .build()
         val params = QueryProductDetailsParams.newBuilder().setProductList(listOf(product)).build()
-        client.queryProductDetailsAsync(params) { result, list ->
+        client.queryProductDetailsAsync(params) { result, queryResult ->
             if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                // v0.65 fix: billing-ktx 7.1.1's queryProductDetailsAsync lambda
-                // resolves to the classic ProductDetailsResponseListener
-                // signature (BillingResult, List<ProductDetails>) -- `list` IS
-                // the product list already, not a wrapper with its own
-                // `.productDetailsList` (that's only QueryProductDetailsResult,
-                // the *suspend*-function return type, which this lambda form
-                // isn't using). CI caught this as "Unresolved reference
-                // 'productDetailsList'" on first push.
-                productDetails = list.firstOrNull()
+                productDetails = queryResult.productDetailsList.firstOrNull()
             }
         }
     }
