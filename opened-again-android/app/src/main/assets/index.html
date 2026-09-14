@@ -417,7 +417,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.56.0';
+const APP_VERSION='0.57.0';
 const params=new URLSearchParams(location.search);const preview=params.get('preview')==='1';
 // v0.24: `?onboarding=0` forces the onboarding gate off regardless of
 // state.settings.onboardingSeen -- an escape hatch for screenshotting/
@@ -1308,9 +1308,27 @@ function onboardNext(){state.onboardStep=2;render()}
 // button finishes onboarding the same way. Fire-and-forget: we don't wait
 // for or branch on the OS permission result, matching the screen's own
 // "나중에도 설정에서 바꿀 수 있어요" copy.
+// v0.57: director feedback -- "첫번째화면에서 눌렀는데 두번째 사진에서도
+// 또 눌러야된다는거야 그냥 통합하면되는데" (tapped the button on the
+// first screen, but still had to tap again on the next screen too -- just
+// merge them), with screenshots showing exactly this: onboarding's
+// notification-permission screen, then landing on the home tab's own
+// separate "모니가 사건을 조사하려면" usage-access gate right after.
+// Android has no single dialog that grants both notification permission
+// (a runtime dialog) and usage access (only grantable from a Settings
+// page) at once, so this can't literally become one tap -- but nothing
+// requires usage access to sit on its own separate screen the user has to
+// notice and tap again after onboarding already said it was done. If it's
+// not granted yet, continue straight into openUsageSettings() (the same
+// native flow + guidance toast the settings row's own button already
+// uses) as part of finishing onboarding, instead of stopping at the home
+// tab's gate and waiting for a second, separate tap there.
 function onboardFinish(allow){
   if(allow){try{N&&N.requestNotificationPermission&&N.requestNotificationPermission()}catch(e){}}
-  state.settings.onboardingSeen=true;save();state.onboardStep=1;render()
+  state.settings.onboardingSeen=true;save();state.onboardStep=1;
+  let hasAccess=null;try{hasAccess=N?N.hasUsageAccess():null}catch(e){}
+  if(hasAccess===false){try{N.openUsageSettings()}catch(e){}}
+  render()
 }
 function render(){
   // v0.41: every branch below replaces #app's innerHTML wholesale, which
