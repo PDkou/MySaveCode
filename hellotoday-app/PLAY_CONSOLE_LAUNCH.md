@@ -195,8 +195,69 @@ Sources: [새로운 개인 개발자 계정의 앱 테스트 요구사항](https
   "광고 제거"를 구매하면 광고도 없어지고 인원 제한도 함께 풀립니다.
   ```
 
-  (영어/일본어 스토어 등록정보도 따로 원하시면 다음에 번역해드릴 수
-  있습니다 — 지금은 기본 언어인 한국어만 작성해뒀습니다.)
+### 4-1. English store listing (2026-09-14 번역)
+
+- Short description (under 80 chars — 66 chars):
+
+  > A small, quiet reminder to reach out to the people you think of.
+
+- Full description (under 4000 chars):
+
+  ```
+  Is there someone you think of now and then?
+  Hello, Today is a small, quiet reminder app for staying in touch with them.
+
+  📮 What it does
+  - Add someone you want to reach out to, and you'll get a reminder at just the right time.
+  - After you reach out, leave a short note. Next time, it resurfaces "what you talked about last time."
+  - Choose a random schedule (once every 14–28 days) or a fixed interval.
+  - Set quiet hours, and no reminders will arrive during that time.
+
+  🔒 Privacy
+  - No sign-up, no login. Everything is stored only on this device.
+  - There's no server, so no one — not even us — can access your data.
+  - Delete all your data instantly, anytime, from Settings.
+
+  🎨 Make it yours
+  - Choose from 6 themes: Cream, Sage, Lilac, Peach, Sky, and Pistachio.
+  - Supports Korean, Japanese, and English.
+
+  💛 Free for up to 2 people
+  The free version supports up to 2 people, with the occasional ad.
+  Remove ads to also lift the people limit.
+  ```
+
+### 4-2. 日本語ストア掲載情報 (2026-09-14 翻訳)
+
+- 簡単な説明(80文字以内 — 30文字):
+
+  > たまに思い出すあの人に、そっと安否を伝えるリマインダーアプリ。
+
+- 詳細な説明(4000文字以内):
+
+  ```
+  たまに思い出す人はいますか？
+  Hello, Todayは、そんな相手のための、とても小さくて静かな安否リマインダーアプリです。
+
+  📮 こんなアプリです
+  - 連絡したい相手を登録しておくと、ちょうどいいタイミングで通知でお知らせします。
+  - 連絡した後は短いメモを残せます。次に連絡するときに「前回のメモ」として再び表示されます。
+  - 通知の間隔は、ランダム(14〜28日の間のどこか)か固定間隔から選べます。
+  - 通知を止めたい時間帯を設定しておけば、その時間には通知が届きません。
+
+  🔒 プライバシー
+  - 会員登録もログインも不要です。記録はすべてこの端末内にのみ保存されます。
+  - サーバーがないため、私たちを含め誰もこのデータにアクセスできません。
+  - 設定からいつでもすべてのデータを即座に削除できます。
+
+  🎨 好みに合わせてカスタマイズ
+  - クリーム・セージ・ライラック・ピーチ・スカイ・ピスタチオ、6種類のテーマから選べます。
+  - 韓国語・日本語・英語に対応しています。
+
+  💛 無料で2人まで
+  無料版では2人まで登録でき、たまに広告が表示されます。
+  「広告削除」を購入すると、広告がなくなり人数制限も解除されます。
+  ```
 
 - 아이콘: `art/HelloToday-icon-512.png` 업로드
 - Feature graphic, 스크린샷 업로드 (위 0번 항목에서 준비한 것)
@@ -415,9 +476,9 @@ cd hellotoday-app
   프로필 사진 선택, 통화 녹음 파일 연결 기능이 반영됐는지 확인 (전부
   기기 내 선택이라 "수집 안 함"으로 표기하면 되지만, 항목 자체는
   추가해야 함).
-- [ ] **스토어 등록정보 영어/일본어 전체 설명** — 지금 4번 섹션에는
-  한국어만 작성돼 있음. 프로덕션 공개되면 다른 언어권 사용자도 보게
-  되니 채워둘 것.
+- [x] **스토어 등록정보 영어/일본어 전체 설명** — **완료** (2026-09-14).
+  4-1/4-2 섹션에 번역 완료, Play Console의 언어별 번역 등록정보에
+  붙여넣기만 하면 됨.
 - [ ] **`remove_ads` 상품 가격/지역 정책** — 지금 ₩2,900 국내 기준.
   해외 사용자 대상으로 자동 환율 책정을 쓸지, 지역별로 따로 정할지 결정
   (일본 거주/과세 관련 논의와 연결됨).
