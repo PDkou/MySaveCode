@@ -32,12 +32,7 @@ jobs:
 
       - name: gradle :core:test :app:assembleDebug
         working-directory: opened-again-android
-        # v0.70: temporary --stacktrace while diagnosing the first-ever
-        # kapt/Room build failure -- Gradle 8.11.1's default console output
-        # was truncating kaptDebugKotlin's actual cause down to just "A
-        # failure occurred while executing ...KaptExecutionWorkAction" with
-        # no underlying exception/message at all. Revert once diagnosed.
-        run: gradle :core:test :app:assembleDebug --stacktrace
+        run: gradle :core:test :app:assembleDebug
 
       - uses: actions/upload-artifact@v4
         with:
