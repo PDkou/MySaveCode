@@ -465,7 +465,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.69.0';
+const APP_VERSION='0.70.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -497,8 +497,18 @@ const state={settings:{language:supported.includes(detected)?detected:'ko',onboa
 function l(ko,ja,en){return state.settings.language==='ko'?ko:state.settings.language==='ja'?ja:en}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function todayKey(){return new Date().toISOString().slice(0,10)}
-function save(){const payload={schemaVersion:BACKUP_SCHEMA_VERSION,settings:state.settings,history:state.history};localStorage.setItem('opened_again_state',JSON.stringify(payload));try{N&&N.saveBackupJson(JSON.stringify(payload))}catch(e){}}
-function restore(){let raw=localStorage.getItem('opened_again_state');if(!raw){try{raw=N&&N.loadBackupJson()}catch(e){}}if(raw){try{const x=JSON.parse(raw);Object.assign(state.settings,x.settings||{});state.history=x.history||state.history}catch(e){}}}
+// v0.70: director-requested storage upgrade ("저장구조는 Room DB로") --
+// history (days/discoveries/revealShownDate) no longer round-trips through
+// localStorage or a native backup-file mirror at all; it lives solely in
+// the native Room database now (see NativeBridge.kt/HistoryRepository.kt),
+// and state.history is just an in-memory read-through cache of it
+// (populated by loadHistoryFromNative(), see refresh()). save()/restore()
+// shrink to just `settings` -- the one thing still genuinely only ever
+// lived in the WebView. schemaVersion is kept for the same forward-
+// compatibility reason it was added in v0.63, now scoped to settings' own
+// shape instead of {settings,history} together.
+function save(){const payload={schemaVersion:BACKUP_SCHEMA_VERSION,settings:state.settings};localStorage.setItem('opened_again_state',JSON.stringify(payload))}
+function restore(){const raw=localStorage.getItem('opened_again_state');if(raw){try{const x=JSON.parse(raw);Object.assign(state.settings,x.settings||{})}catch(e){}}}
 const RARITY_RANK={NORMAL:0,RARE:1,EPIC:2,LEGENDARY:3,HIDDEN:4};
 function bestRarity(list){return list.slice().sort((a,b)=>(RARITY_RANK[b]??0)-(RARITY_RANK[a]??0))[0]}
 const names={QUICK_EXIT:['5초컷','5秒撤退','5-second exit'],REENTRY:['재입장 사건','出戻り事件','Re-entry'],REGULAR:['단골손님','常連客','Regular'],RETURN_TO_START:['원점 회귀','振り出しに戻る','Back to start'],PATROL:['목적불명 순찰','目的地不明','Aimless patrol'],ESCAPE_FAILED:['탈출 실패','脱出失敗','Escape failed'],FIRST_CONTACT:['오늘의 첫 상대','本日の第一声','First contact'],NIGHT_PATROL:['심야 순찰','深夜巡回','Night patrol'],APP_WANDERING:['앱 방황','アプリ徘徊','App wandering'],HUNDRED_VISITS:['100회 방문','100回訪問','100 visits'],DIGITAL_LOST:['디지털 미아','デジタル迷子','Digital lost'],DAWN_SURVIVOR:['새벽 생존자','夜明けの生存者','Dawn survivor'],HIDDEN_LOOP:['무한루프','無限ループ','Infinite loop'],HIDDEN_NIGHT_ACTIVITY:['미확인 야간 활동','未確認夜間活動','Unidentified night activity']};
@@ -594,7 +604,23 @@ function detail(i){
 }
 function demo(){return {permission:true,summary:{totalUsageMs:8580000,openCount:37,switchCount:84,uniqueApps:9,unlockSessions:24,nightUsageMs:2100000,topPackages:[{packageName:'com.instagram.android',durationMs:3180000},{packageName:'com.google.android.youtube',durationMs:2220000},{packageName:'com.kakao.talk',durationMs:1080000}]},report:{totalIncidents:5,hiddenCount:1,legendaryCount:1,cards:[{type:'HIDDEN_LOOP',rarity:'HIDDEN',score:220,primaryPackage:'com.instagram.android',secondaryPackage:'com.google.android.youtube',metrics:{switches:8}},{type:'NIGHT_PATROL',rarity:'EPIC',score:80,topPackage:'com.kakao.talk',metrics:{uniqueApps:8,durationMs:2100000}},{type:'RETURN_TO_START',rarity:'RARE',score:44,primaryPackage:'com.instagram.android',metrics:{visits:6,uniqueApps:4}},{type:'QUICK_EXIT',rarity:'NORMAL',score:18,primaryPackage:'com.kakao.talk',metrics:{count:5}},{type:'HUNDRED_VISITS',rarity:'LEGENDARY',score:112,primaryPackage:'com.google.android.youtube',metrics:{opens:104}}]},archive:{discoveredCount:8,items:Object.keys(names).map((type,i)=>({type,hidden:type.startsWith('HIDDEN'),found:i<8||type==='HIDDEN_LOOP'}))}}}
 function read(){if(preview||!N)return demo();try{return JSON.parse(N.analyzeToday())}catch(e){return demo()}}
-function persistSnapshot(d){if(!d||!d.permission)return;const key=todayKey();state.history.days[key]={summary:d.summary,report:{totalIncidents:d.report?.totalIncidents||0,hiddenCount:d.report?.hiddenCount||0,legendaryCount:d.report?.legendaryCount||0}};(d.report?.cards||[]).forEach(i=>{const arr=state.history.discoveries[i.type]||[];if(!arr.includes(i.rarity))arr.push(i.rarity);state.history.discoveries[i.type]=arr});save()}
+// v0.70: NativeBridge.analyzeToday() now records today's day-history row
+// and any newly-discovered cards straight into Room itself (see its own
+// v0.70 comment) -- this function used to do that job here in JS, storing
+// the result in state.history and calling save() (localStorage). Real
+// devices (N present) just re-read the freshly-updated truth back with
+// loadHistoryFromNative() instead of keeping a second copy in sync by
+// hand. Preview/demo mode has no native store to record into at all, so
+// it keeps doing the old in-memory-only bookkeeping below (never
+// persisted anywhere -- there's nothing to persist it TO in preview) so a
+// fresh preview session still shows a populated "today" bar in
+// weekRecap() the same way it always has.
+function persistSnapshotForPreview(d){if(!d||!d.permission)return;const key=todayKey();state.history.days[key]={summary:d.summary,report:{totalIncidents:d.report?.totalIncidents||0,hiddenCount:d.report?.hiddenCount||0,legendaryCount:d.report?.legendaryCount||0}};(d.report?.cards||[]).forEach(i=>{const arr=state.history.discoveries[i.type]||[];if(!arr.includes(i.rarity))arr.push(i.rarity);state.history.discoveries[i.type]=arr})}
+function loadHistoryFromNative(){
+  if(!N)return;
+  try{const h=JSON.parse(N.getHistory());state.history.days=h.days||{};state.history.discoveries=h.discoveries||{}}catch(e){}
+  try{state.history.revealShownDate=N.getRevealShownDate()||null}catch(e){}
+}
 // v0.38: director feedback -- switching tabs after scrolling down on one
 // (e.g. Home) kept the OLD scroll offset once the new tab's shorter content
 // replaced it, so the page could open mid-scroll showing blank space below
@@ -621,9 +647,10 @@ function shouldShowReveal(d){
   const cards=d.report?.cards||[];
   return cards.length>0&&state.history.revealShownDate!==todayKey();
 }
-function dismissReveal(){state.history.revealShownDate=todayKey();save();state.revealItem=null;render()}
+function dismissReveal(){state.history.revealShownDate=todayKey();try{N&&N.setRevealShownDate&&N.setRevealShownDate(todayKey())}catch(e){}state.revealItem=null;render()}
 function refresh(){
-  state.data=read();persistSnapshot(state.data);
+  state.data=read();
+  if(N)loadHistoryFromNative();else persistSnapshotForPreview(state.data);
   if(shouldShowReveal(state.data))state.revealItem=state.data.report.cards[0];
   render()
 }
@@ -1274,7 +1301,7 @@ function settings(){
   let adsRemoved=false;try{adsRemoved=N&&N.isAdsRemoved?N.isAdsRemoved():false}catch(e){}
   const adsRow=adsRemoved
     ? row(iconEmoji('🚫'),l('광고 제거','広告を削除','Remove ads'),l('구매 완료 · 광고가 표시되지 않습니다','購入済み · 広告は表示されません','Purchased -- ads are hidden'),null,false)
-    : row(iconEmoji('🚫'),l('광고 제거','広告を削除','Remove ads'),l('탭해서 구매하기 (배너·전면 광고 제거)','タップして購入(バナー・全画面広告を削除)','Tap to buy (removes banner & interstitial ads)'),'purchaseRemoveAds()');
+    : row(iconEmoji('🚫'),l('광고 제거','広告を削除','Remove ads'),l('탭해서 구매하기 (배너 광고 제거)','タップして購入(バナー広告を削除)','Tap to buy (removes the banner ad)'),'purchaseRemoveAds()');
   return `<div class="section-title"><h2>${l('설정','設定','Settings')}</h2></div><div class="settings-list">
 ${row(iconImg('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','cycleLang()')}
 ${row(iconImg('notification'),l('알림 권한','通知許可','Notifications'),l('탭해서 허용하기','タップして許可','Tap to allow'),'N&&N.requestNotificationPermission()')}
@@ -1314,15 +1341,15 @@ function restorePurchases(){
 function openResetConfirm(){
   document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('데이터 초기화','データの初期化','Reset data')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0">${l('오늘까지 모은 모든 기록과 보관함 카드가 이 기기에서 완전히 삭제됩니다. 이 작업은 되돌릴 수 없습니다.','これまでに集めた記録と保管庫のカードがこの端末から完全に削除されます。この操作は元に戻せません。','All records and archived cards collected so far will be permanently deleted from this device. This cannot be undone.')}</p></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="danger" onclick="resetAllData()">${l('초기화','初期化','Reset')}</button></div></div></div>`;
 }
-// Clears all three copies of "what has this device found so far" (see
-// NativeBridge.kt's resetAllData()/DiscoveryRepository.reset() for the
-// native-side half) and re-runs today's analysis fresh, same as a normal
-// refresh() -- any usage from today gets naturally rediscovered rather than
-// being left in a half-reset state.
+// v0.70: clears the native Room history (NativeBridge.kt's resetAllData()/
+// HistoryRepository.reset()) plus this in-memory cache, then re-runs
+// today's analysis fresh, same as a normal refresh() -- any usage from
+// today gets naturally rediscovered rather than being left in a
+// half-reset state.
 function resetAllData(){
   localStorage.removeItem('opened_again_state');
   try{N&&N.resetAllData&&N.resetAllData()}catch(e){}
-  state.history={days:{},discoveries:{}};
+  state.history={days:{},discoveries:{},revealShownDate:null};
   state.data=null;
   closeOverlay();
   toast(l('초기화되었습니다','初期化されました','Data has been reset'));

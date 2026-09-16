@@ -2727,3 +2727,100 @@ computed transform을 샘플링해서 수정 전/후 모두 매끄럽게 재생�
 스키마/메트릭 라벨/광고 배너) 전부 재확인, CSS 룰 개수 불변(213개),
 콘솔 에러 0건. Kotlin 쪽(`AdManager`/`NativeBridge`)은 중괄호/괄호
 균형 확인 + 코드 리뷰로 검토, 최종 컴파일은 CI로 확인.
+
+## v0.70 — 저장구조를 Room DB로 전면 교체 (감독 지시, "큰 범위로 가자")
+"다른거 부터 해결좀 하자 뭐 만들어야되지?"라는 질문에 코스메틱
+보너스/저장구조 업그레이드/스토어 문구 정리/HIDDEN 발견 전후
+상태 전환 네 가지를 제시했고, 감독이 "저장구조는 업그레이드하고
+코스메틱 보너스는 나중에"로 저장구조 업그레이드를 선택. "서버를
+팔 필요는 없는 거라는거네?"(100% 기기 내부, 서버 불필요 맞음)와
+"왜 큰 범위로 가는지"(작게 가면 발견 여부만 옮기고 하루 기록은
+그대로 남아 두 저장소로 쪼개진 어중간한 상태가 되고, 앞으로
+날짜 범위 조회/통계 화면을 만들 때 Room 쪽 쿼리 능력을 못 쓰게
+되며, 아직 정식 출시 전이라 지금이 데이터 마이그레이션 리스크
+없이 저장 구조를 바꿀 수 있는 마지막 타이밍이라는 설명)를 확인한
+뒤 "큰 범위로 가자"로 최종 확정 — 발견 여부(`discoveries`)와
+하루 요약 기록(`state.history.days`) 둘 다 Room으로 옮기는
+전면 교체.
+
+기존에는 두 군데에 따로 저장되고 있었음: (1) 발견 여부는
+`DiscoveryRepository`가 SharedPreferences `Set<String>`에
+"TYPE|RARITY" 문자열로, (2) 하루 기록은 `index.html`의
+`state.history`가 WebView `localStorage`에만(네이티브
+백업파일로 미러링만 됨) 저장. 둘 다 지우고 `HistoryRepository`
+하나로 통합 — Room 테이블 `day_history`(날짜별 사용량/오픈수/
+사건수 요약, `DayHistoryEntity.kt`)와 `discovery`(타입+등급,
+`DiscoveryEntity.kt`) 신규 작성, `HistoryDao.kt`가 두 테이블의
+쿼리를 전부 담당. JS 브릿지 호출은 이 코드베이스에서 이미
+메인 스레드 밖에서 도는 것으로 확인돼 있어(`@JavascriptInterface`
+메서드들이 UI를 건드리는 부분만 선택적으로
+`activity.runOnUiThread{}`로 감싸는 기존 패턴 자체가 그 증거)
+Room DAO는 코루틴/Flow 없이 평범한 블로킹 호출로 작성. 어노테이션
+프로세서는 KSP 대신 kapt 선택 — 이 프로젝트에 이미 고정돼 있는
+Kotlin Gradle 플러그인 버전(2.1.21)과 같은 그룹에 번들로
+딸려오는 쪽이라 별도로 KSP-Kotlin 버전 궁합을 인터넷 없이
+찾아야 하는 수고를 피할 수 있음.
+
+`NativeBridge.kt`: 생성자의 `discovery` 파라미터를 `history`로
+교체, `analyzeToday()`가 오늘 판정 결과를 `history.recordDay()`로
+바로 Room에 적재하도록 변경, 신규 `getHistory()`/
+`getRevealShownDate()`/`setRevealShownDate()` 3개
+`@JavascriptInterface` 메서드 추가. `getHistory()`가 반환하는
+JSON은 기존 `state.history` 객체와 완전히 같은 모양
+(`{"days":{...},"discoveries":{...}}`)으로 맞춰서 `index.html`의
+`weekRecap()`/보관함 화면 소비 코드는 손댈 필요가 없었음. 날짜
+키는 UTC 기준 "YYYY-MM-DD"로 통일 — `index.html`의 `todayKey()`가
+`toISOString()`(UTC) 기반인 것과 맞추기 위해 신규
+`utcDateKey()`(`Instant.now().toString()`의 앞 10글자) 헬퍼를
+추가. 기존에 리빌/백업 복원력을 위해 쓰던
+`saveBackupJson()`/`loadBackupJson()`과 그 백업 파일은 완전히
+삭제 — 이제 Room 자체가 신뢰 가능한 저장소라 별도 JSON 미러가
+필요 없음. `resetAllData()`는 `history.reset()`(두 테이블 모두
+비움) + 리빌 표시 날짜 플래그 삭제로 재작성.
+
+`index.html`: `save()`/`restore()`를 설정값만 다루도록 축소
+(`history` 필드를 더 이상 로컬스토리지에 쓰지도 읽지도 않음).
+기존 `persistSnapshot()`을 없애고, 네이티브 브릿지가 있을 때는
+`loadHistoryFromNative()`로 `N.getHistory()`를 그대로 캐시에
+반영하고, 브릿지가 없는 미리보기 모드에서만
+`persistSnapshotForPreview()`로 예전처럼 메모리에만 쌓는 방식으로
+분기. `refresh()`가 매번 `loadHistoryFromNative()`를 호출해
+캐시를 최신 상태로 유지하므로 `state.history`는 이제 Room의
+읽기 전용 캐시일 뿐, 독립적으로 영속화되는 두 번째 저장소가
+아님 — 예전에 있었던 두 저장소 간 드리프트 위험이 구조적으로
+사라짐. `dismissReveal()`은 `N.setRevealShownDate()`도 함께
+호출. `exportBackupData()`는 코드 변경 없음 — `state.history`
+캐시가 매 `refresh()`마다 최신으로 유지되니 내보내기 시점에
+추가 네이티브 호출이 필요 없었음.
+
+기존 앱 미출시 상태(정식 출시 전)라는 점을 확인하고, 기존
+테스터의 v0.70 이전 localStorage/백업파일 데이터를 Room으로
+옮기는 마이그레이션 코드는 만들지 않기로 결정 — 곧 사라질
+데이터 형식을 위한 일회성 이관 코드를 짜는 비용이 이득보다
+크다고 판단.
+
+이번 작업 중 관련 없는 버그 하나를 우연히 발견해 같이 고침:
+설정 화면 "광고 제거" 항목의 미구매 상태 안내 문구가 여전히
+"배너·전면 광고 제거"라고 돼 있었음 — v0.69에서 전면광고 자체를
+완전히 없앴는데 그 문구만 안 고쳐진 채 남아 있었던 것. "배너
+광고 제거"로 정정.
+
+버전 70/0.70.0. 검증: (1) 신규 Playwright 테스트로
+`N.getHistory()`/`getRevealShownDate()`/`setRevealShownDate()`/
+`resetAllData()`/`analyzeToday()`를 스텁으로 재현한 전체 네이티브
+브릿지 계약을 시뮬레이션 — 이전 하루 기록/발견 목록이 네이티브에서
+로드됨, `analyzeToday()` 호출 후 재조회로 오늘 기록이 캐시에
+반영됨, 기록 탭 "최근 7일" 요약과 보관함 진행도가 렌더링됨,
+`dismissReveal()`/`resetAllData()`가 각각 올바른 네이티브 메서드를
+호출함, 내보내기 페이로드가 `{settings, history}` 모양을 유지함 —
+전부 통과. (2) 기존 회귀 스위트 전체(뒤로가기/메트릭 라벨/온보딩
+체인/리빌/카드 3종/드래그/백업 스키마/광고 배너/CSS 룰 개수)
+재실행 — 전부 통과, 콘솔 에러 0건, CSS 룰 개수 불변(213개).
+(3) Kotlin 쪽은 주석을 제외하고 중괄호/괄호 균형을 다시 세는
+개선된 스크립트로 신규/수정 파일 전체 확인(첫 번째 단순 버전이
+주석 안의 JSON 예시/괄호 때문에 오탐 2건을 냈던 것을 원인
+분석 후 재확인) + 직접 코드 리뷰로 검토했지만, kapt로 Room
+어노테이션 프로세서를 돌리는 것은 이 프로젝트에서 처음이라
+로컬에서 전혀 컴파일해볼 수 없었던 새로운 위험 영역 — 실제
+컴파일 성공 여부는 CI(`build-opened-again-gradle.yml`)로만
+확인 가능.

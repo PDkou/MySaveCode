@@ -12,7 +12,7 @@ import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.window.OnBackInvokedDispatcher
-import com.howling.openedagain.data.DiscoveryRepository
+import com.howling.openedagain.data.HistoryRepository
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
@@ -84,7 +84,7 @@ class MainActivity : Activity() {
             webViewClient = WebViewClient()
             webChromeClient = WebChromeClient()
             addJavascriptInterface(
-                NativeBridge(this@MainActivity, DiscoveryRepository(this@MainActivity), adManager, billingManager),
+                NativeBridge(this@MainActivity, HistoryRepository(this@MainActivity), adManager, billingManager),
                 "OpenedAgainNative"
             )
             // v0.48: director feedback -- the screen kept scrolling/bouncing

@@ -8,12 +8,13 @@ import android.provider.Settings
 import android.webkit.JavascriptInterface
 import androidx.core.content.FileProvider
 import com.howling.openedagain.core.*
-import com.howling.openedagain.data.DiscoveryRepository
+import com.howling.openedagain.data.HistoryRepository
 import com.howling.openedagain.data.UsageEventCollector
 import com.howling.openedagain.ui.ShareCardRenderer
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -23,11 +24,23 @@ import java.time.ZoneId
  */
 class NativeBridge(
     private val activity: Activity,
-    private val discovery: DiscoveryRepository,
+    private val history: HistoryRepository,
     private val adManager: AdManager,
     private val billingManager: BillingManager
 ) {
-    private val backupFile = File(activity.filesDir, "opened_again_backup.json")
+    // v0.70: the "app_prefs" SharedPreferences file setLanguage() already
+    // writes to -- reused here for revealShownDate too (see
+    // getRevealShownDate()/setRevealShownDate()) since it's a single small
+    // flag, not "history" data structured enough to warrant its own Room
+    // table the way days/discoveries now do (see HistoryRepository.kt).
+    private val prefs get() = activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+
+    // "YYYY-MM-DD" in UTC -- MUST match index.html's todayKey() exactly
+    // (`new Date().toISOString().slice(0,10)`, also UTC) so a given
+    // calendar day's analyzeToday() call and the JS side's own idea of
+    // "today" (used for weekRecap()'s day labels, shouldShowReveal()'s
+    // once-per-day gate, etc.) always agree on which row is "today".
+    private fun utcDateKey(): String = Instant.now().toString().substring(0, 10)
 
     @JavascriptInterface
     fun hasUsageAccess(): Boolean {
@@ -127,13 +140,24 @@ class NativeBridge(
         val raw = UsageEventCollector(activity).collect(start, end)
         val sessions = SessionBuilder().build(raw, nowMs = end)
         val incidents = IncidentDetector(zoneId = zone).detectDay(sessions)
-        discovery.record(incidents)
+        history.record(incidents)
         val report = DailyReportEngine().build(incidents)
         val summary = DailySummaryEngine(zone).build(sessions)
+        val summaryJson = summaryToJson(summary)
+        // v0.70: this used to be index.html's own job -- persistSnapshot()
+        // wrote state.history.days[todayKey()] from this same data on every
+        // refresh() (cold start + every app resume) and saved it to
+        // localStorage. Recording it here instead, right where it's
+        // already computed, means the day gets recorded exactly once per
+        // analyzeToday() call regardless of how many times the WebView
+        // itself re-renders around it, and JS no longer needs to manage
+        // (or persist) any of its own copy of this history at all -- see
+        // getHistory() below and index.html's own v0.70 comments.
+        history.recordDay(utcDateKey(), summaryJson, report.totalIncidents, report.hiddenCount, report.legendaryCount)
 
         return JSONObject().apply {
             put("permission", true)
-            put("summary", summaryToJson(summary))
+            put("summary", summaryJson)
             put("report", JSONObject().apply {
                 put("totalIncidents", report.totalIncidents)
                 put("hiddenCount", report.hiddenCount)
@@ -142,16 +166,40 @@ class NativeBridge(
                 put("cards", JSONArray(report.cards.map(::incidentToJson)))
             })
             put("archive", JSONObject().apply {
-                put("discoveredCount", discovery.count())
+                put("discoveredCount", history.count())
                 put("items", JSONArray(IncidentCatalog.all.map { def ->
                     JSONObject().apply {
                         put("type", def.type.name)
                         put("hidden", def.hidden)
-                        put("found", discovery.isDiscovered(def.type))
+                        put("found", history.isDiscovered(def.type))
                     }
                 }))
             })
         }.toString()
+    }
+
+    // v0.70: index.html's render() calls this once on startup (and after
+    // resetAllData()) to populate its in-memory state.history cache --
+    // replaces reading a `history` field out of its own localStorage-saved
+    // state, since Room (via HistoryRepository) is now the sole
+    // authoritative store for this data. Shape matches what state.history
+    // used to hold exactly (see HistoryRepository.toHistoryJson()'s own
+    // comment) so weekRecap()/archive() needed no changes beyond where
+    // they get this object from.
+    @JavascriptInterface
+    fun getHistory(): String = history.toHistoryJson().toString()
+
+    // v0.70: index.html's shouldShowReveal()/dismissReveal() used to read/
+    // write state.history.revealShownDate, persisted via the same
+    // localStorage blob as everything else in state.history -- now its own
+    // tiny SharedPreferences flag (see this class's own `prefs` comment),
+    // read once into the in-memory cache at startup alongside getHistory().
+    @JavascriptInterface
+    fun getRevealShownDate(): String = prefs.getString("reveal_shown_date", "") ?: ""
+
+    @JavascriptInterface
+    fun setRevealShownDate(date: String) {
+        prefs.edit().putString("reveal_shown_date", date).apply()
     }
 
     @JavascriptInterface
@@ -173,26 +221,19 @@ class NativeBridge(
         }
     }
 
-    @JavascriptInterface
-    fun saveBackupJson(json: String) {
-        runCatching { backupFile.writeText(json, Charsets.UTF_8) }
-    }
-
-    @JavascriptInterface
-    fun loadBackupJson(): String = runCatching {
-        if (backupFile.exists()) backupFile.readText(Charsets.UTF_8) else ""
-    }.getOrDefault("")
-
     // v0.43: director feedback -- there was no data-reset feature anywhere.
-    // Clears both native-side persistence layers (the backup file and
-    // DiscoveryRepository's SharedPreferences); index.html's resetAllData()
-    // calls this and clears its own localStorage/in-memory state alongside
-    // it, so all three copies of "what has this device found so far" are
-    // wiped together instead of drifting out of sync.
+    // v0.70: used to also delete a native "backup file" JS mirrored its own
+    // localStorage into via saveBackupJson() (removed -- Room is now the
+    // sole authoritative store, nothing left to mirror); now clears the
+    // history database and the reveal-shown-date flag instead.
+    // index.html's resetAllData() calls this and clears its own in-memory
+    // state.history cache alongside it, so both copies of "what has this
+    // device found so far" are wiped together instead of drifting out of
+    // sync.
     @JavascriptInterface
     fun resetAllData() {
-        runCatching { backupFile.delete() }
-        discovery.reset()
+        history.reset()
+        prefs.edit().remove("reveal_shown_date").apply()
     }
 
     // v0.44: director feedback -- the home-tab back press should confirm
@@ -240,13 +281,18 @@ class NativeBridge(
     }
 
     // v0.47: complement to resetAllData() -- lets the user pull their own
-    // copy of the same backup payload index.html already keeps in
-    // localStorage/the native backup file, in case they want it before
-    // resetting or switching devices. Written to its own cache subfolder
-    // (separate from ShareCardRenderer's "shares") and shared the same way
-    // saveAndShare() shares a card image: a cache-only file handed to the
-    // OS share sheet via FileProvider, nothing written to the public
-    // filesystem unless the user explicitly picks a save target there.
+    // copy of their data before resetting or switching devices. Written to
+    // its own cache subfolder (separate from ShareCardRenderer's "shares")
+    // and shared the same way saveAndShare() shares a card image: a
+    // cache-only file handed to the OS share sheet via FileProvider,
+    // nothing written to the public filesystem unless the user explicitly
+    // picks a save target there.
+    // v0.70: `json` is now assembled by index.html's exportBackupData()
+    // from its own settings PLUS a fresh N.getHistory() call (history
+    // itself no longer lives in JS at all -- see this class's own v0.70
+    // comments) rather than from a `history` field index.html used to keep
+    // in its own state; this method's own job (write it to a shareable
+    // file) is unchanged.
     @JavascriptInterface
     fun exportBackup(json: String) {
         activity.runOnUiThread {

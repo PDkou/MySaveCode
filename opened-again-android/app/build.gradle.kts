@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     kotlin("android")
+    kotlin("kapt")
 }
 
 // NOTE: use the imported `Properties` name here, not `java.util.Properties` --
@@ -34,8 +35,8 @@ android {
         applicationId = "com.howling.openedagain"
         minSdk = 29
         targetSdk = 36
-        versionCode = 69
-        versionName = "0.69.0"
+        versionCode = 70
+        versionName = "0.70.0"
     }
 
     buildTypes {
@@ -67,11 +68,11 @@ dependencies {
     // dependencies (bare android.app.Activity, no AppCompat); this is the
     // one narrow addition needed for that fix.
     implementation("androidx.core:core:1.13.1")
-    // v0.65: director-approved monetization -- banner/interstitial ads
-    // (AdManager.kt) and the one-time "remove ads" purchase (BillingManager.kt).
-    // play-services-ads pulls in its own network stack (needs the new
-    // INTERNET/ACCESS_NETWORK_STATE manifest permissions -- see
-    // AndroidManifest.xml's v0.65 comment).
+    // v0.65: director-approved monetization -- a banner ad (AdManager.kt,
+    // interstitial support removed again in v0.69) and the one-time "remove
+    // ads" purchase (BillingManager.kt). play-services-ads pulls in its own
+    // network stack (needs the new INTERNET/ACCESS_NETWORK_STATE manifest
+    // permissions -- see AndroidManifest.xml's v0.65 comment).
     //
     // 25.0.0 is the latest release of the "legacy" Google Mobile Ads SDK
     // (Feb 2026) -- Google named a separate, newer "GMA Next-Gen SDK" the
@@ -92,4 +93,16 @@ dependencies {
     // removed in v8), so the only other v8-specific change needed was
     // queryProductDetailsAsync()'s callback shape -- see BillingManager.kt.
     implementation("com.android.billingclient:billing-ktx:8.3.0")
+    // v0.70: director-requested storage upgrade ("저장구조는 Room DB로") --
+    // replaces the old SharedPreferences Set<String> discovery tracking
+    // (DiscoveryRepository) AND index.html's own localStorage-held
+    // state.history.days/discoveries with a real on-device SQLite database
+    // (see data/AppDatabase.kt/HistoryRepository.kt). Still 100% on-device,
+    // no server -- same privacy story as before, just a sturdier file
+    // format for it. 2.6.1 is a long-stable release; kapt (not KSP) for the
+    // annotation processor since it doesn't need its own separate
+    // Kotlin-version-matched plugin coordinate (see this file's kapt
+    // comment above).
+    implementation("androidx.room:room-runtime:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
 }

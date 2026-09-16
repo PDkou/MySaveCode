@@ -39,13 +39,22 @@
   안 봄.
 
 ## 우선순위 B — 데이터 영속화
-- SharedPreferences 발견 여부만 저장하는 현재 구조를 Room 기반 사건 히스토리로 확장
+- ~~SharedPreferences 발견 여부만 저장하는 현재 구조를 Room 기반 사건 히스토리로 확장~~ —
+  v0.70에서 해결. "큰 범위로 가자"는 감독 지시에 따라 발견 여부
+  (`DiscoveryRepository`의 SharedPreferences)와 하루 요약 기록
+  (`index.html`의 `state.history`, WebView localStorage 전용) 둘 다
+  `HistoryRepository` 하나의 Room DB(`day_history`/`discovery` 테이블)로
+  통합. `state.history`는 이제 Room의 읽기 전용 캐시일 뿐이라 두 저장소
+  드리프트 위험이 구조적으로 사라짐. 기존 테스터의 v0.70 이전 데이터는
+  정식 출시 전이라는 판단하에 마이그레이션하지 않기로 결정(자세한 내용은
+  `docs/DEVELOPMENT_HISTORY.md`의 v0.70 항목). kapt/Room 어노테이션
+  프로세서는 이 프로젝트에서 처음 써봐서 로컬에서 컴파일 확인이 안 되는
+  새 위험 영역 — CI 결과로 최종 확인 필요.
 - ~~하루 요약/상위 앱/카드 발생 횟수 저장~~ — 저장 자체는 v0.35부터
   `state.history.days`(JS `persistSnapshot()`)로 이미 하고 있었는데
   아무 화면도 이걸 읽어서 보여주지 않고 있었음(순수하게 쓰기 전용). v0.47에서
-  기록 탭에 "최근 7일" 막대 요약을 추가해서 실제로 화면에 노출. 저장 방식 자체
-  (SharedPreferences/localStorage)는 안 바뀌었으니, 위 Room 이전 항목은 여전히
-  남아있음 — 지금은 그 위에 얹은 소비 화면만 생김.
+  기록 탭에 "최근 7일" 막대 요약을 추가해서 실제로 화면에 노출. v0.70에서
+  저장 방식 자체가 Room으로 바뀌면서 위 항목과 통합됨.
 - ~~백업 스키마 버전 지정~~ — v0.63에서 해결. `save()`(로컬스토리지/네이티브
   백업)와 `exportBackupData()`(설정 → 데이터 내보내기) 둘 다 페이로드에
   `schemaVersion:1`을 추가. `restore()`는 여전히 `settings`/`history`만
