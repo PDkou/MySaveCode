@@ -362,7 +362,21 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    opening" motion Pocket uses -- then the page's own base .tcg-card
    transition (still present, unaffected) takes back over for any drag
    tilt once this one-shot animation finishes. */
-.tcg-card.reveal-anim{animation:revealCardIn .8s cubic-bezier(.22,1,.36,1) .25s both}
+/* v0.68: director feedback (real device) -- "오늘의 사건 나올때 그
+   카드는 안 움직이던데" (the card doesn't move during the daily reveal).
+   Sampling .tcg-card's computed transform frame-by-frame in headless
+   Chromium shows revealCardIn playing correctly there (a smooth
+   scale+rotateY sweep from the 0% keyframe to identity), so this isn't a
+   broken keyframe/JS wiring issue -- the likely real-device cause is the
+   base .tcg-card rule's own `transition:transform .5s` (line above)
+   fighting the `animation` on the same property, the exact class of bug
+   `.tcg-card.tilting{transition:none}` already works around for drag
+   tilting. `.reveal-anim` never got that same override even though it
+   also animates transform on this element -- added `transition:none`
+   here too as the matching fix. Whether this fully explains what was
+   seen on the real device still needs a re-check there, same as other
+   real-device-only rendering reports this project has hit before. */
+.tcg-card.reveal-anim{animation:revealCardIn .8s cubic-bezier(.22,1,.36,1) .25s both;transition:none}
 @keyframes revealCardIn{0%{transform:scale(.4) rotateY(180deg);opacity:0}55%{opacity:1}75%{transform:scale(1.06) rotateY(0deg)}100%{transform:scale(1) rotateY(0deg);opacity:1}}
 .reveal-continue{margin-top:14px;flex:0 0 auto;opacity:0;animation:revealFadeIn .5s ease-out .9s both}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2F2926;color:white;border-radius:999px;padding:10px 15px;font-size:12px;font-weight:800;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.2)}
@@ -451,7 +465,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.67.0';
+const APP_VERSION='0.68.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
