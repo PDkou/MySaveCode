@@ -201,21 +201,20 @@ class NativeBridge(
     // that decision entirely (window.onNativeBackPressed() always returns
     // true, see its own comment) -- this is the one path that still
     // actually finishes the Activity once the user has confirmed.
-    // v0.65: director-approved monetization -- an interstitial ad is shown
-    // once here, right as the user confirms "종료", before the Activity
-    // actually finishes (skipped entirely if ads are removed, or none is
-    // loaded yet -- see AdManager.showExitInterstitialThenFinish()).
+    // v0.65 briefly routed this through an interstitial ad first ; v0.69
+    // reverted that (director correction -- the ask was a banner INSIDE the
+    // exit-confirm modal, not an ad triggered BY exiting, see AdManager.kt's
+    // own v0.69 comment), so this is back to finishing immediately.
     @JavascriptInterface
     fun exitApp() {
-        activity.runOnUiThread {
-            adManager.showExitInterstitialThenFinish { activity.finish() }
-        }
+        activity.runOnUiThread { activity.finish() }
     }
 
     // v0.65: director-approved monetization -- index.html's render() calls
     // this (via its syncBannerVisibility() helper) on every render so the
-    // native banner only shows on the Records/Archive tabs, and never while
-    // the detail page, the daily reveal, or onboarding is covering them.
+    // native banner only shows on the Records/Archive tabs and the
+    // exit-confirmation sheet (v0.69), and never while the detail page, the
+    // daily reveal, or onboarding is covering them.
     @JavascriptInterface
     fun setBannerVisible(visible: Boolean) {
         adManager.setBannerVisible(visible)

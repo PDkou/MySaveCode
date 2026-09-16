@@ -3,30 +3,35 @@ package com.howling.openedagain
 import android.app.Activity
 import android.view.View
 import android.widget.FrameLayout
-import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 
 // v0.65: director-approved monetization ; wraps the Google Mobile Ads
-// (AdMob) SDK for the two ad surfaces asked for: a banner shown only on
-// the Records/Archive tabs (index.html's render() calls
-// N.setBannerVisible() via its syncBannerVisibility() helper on every
-// render; see NativeBridge.kt), and an interstitial shown once when the
-// user taps "종료" (exit) on the back-button exit-confirm sheet (see
-// NativeBridge.exitApp()).
+// (AdMob) SDK for the app's one ad surface: a banner shown only on the
+// Records/Archive tabs and on the exit-confirmation sheet (index.html's
+// render() calls N.setBannerVisible() via its syncBannerVisibility()
+// helper on every render; see NativeBridge.kt).
 //
-// TEST IDS ONLY below ; Google's own official sample ad-unit IDs (paired
-// with the matching test APPLICATION_ID meta-data in AndroidManifest.xml),
-// safe to ship while developing since they always render real ad creative
-// in a clearly-labeled test mode, never a real ad and never real revenue.
-// Every ID here MUST be swapped for the director's own real AdMob
-// account's App ID / ad-unit IDs (create the app + ad units at
+// v0.69: director correction -- v0.65 also built a full-screen interstitial
+// shown when the user tapped "종료" on the exit-confirm sheet, but that
+// wasn't the actual ask: "종료할때 광고 띄어달라는게 아니라 종료 메시지
+// 모달에 탭 광고를 놔두면 좋겠다" (not an ad shown ON exit, but a banner ad
+// living IN the exit-confirmation modal itself) -- also flagged that a
+// hardware-back-triggered interstitial could visually collide with the
+// phone's own physical back button/gesture area. Removed the interstitial
+// entirely (InterstitialAd load/show, NativeBridge.exitApp()'s call into
+// it) rather than leaving it as unused dead code with no remaining caller;
+// index.html's syncBannerVisibility() now covers the exit-confirm sheet
+// through the same banner this class already had.
+//
+// TEST ID ONLY below ; Google's own official sample banner ad-unit ID
+// (paired with the matching test APPLICATION_ID meta-data in
+// AndroidManifest.xml), safe to ship while developing since it always
+// renders real ad creative in a clearly-labeled test mode, never a real ad
+// and never real revenue. MUST be swapped for the director's own real
+// AdMob account's App ID / banner ad-unit ID (create the app + ad unit at
 // admob.google.com first) before this can generate real revenue.
 class AdManager(
     private val activity: Activity,
@@ -34,19 +39,16 @@ class AdManager(
 ) {
     companion object {
         private const val BANNER_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
-        private const val INTERSTITIAL_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
     }
 
     private var bannerContainer: FrameLayout? = null
     private var bannerView: AdView? = null
-    private var interstitial: InterstitialAd? = null
     private var initialized = false
 
     fun init() {
         if (initialized) return
         initialized = true
         MobileAds.initialize(activity) {}
-        loadInterstitial()
     }
 
     // Called once from MainActivity.onCreate() with the FrameLayout it built
@@ -57,10 +59,10 @@ class AdManager(
     }
 
     // index.html's render() drives this via its syncBannerVisibility()
-    // helper on every render, passing true only while the current tab is
-    // Records/Archive and no full-screen overlay (detail/reveal/onboarding)
-    // is covering it ; never true for home/detail/reveal/settings, per the
-    // director's explicit scoping.
+    // helper on every render: true while the current tab is Records/Archive
+    // or the exit-confirmation sheet is open, and no full-screen overlay
+    // (detail/reveal/onboarding) is covering it ; never true for
+    // home/detail/reveal/settings otherwise, per the director's scoping.
     fun setBannerVisible(visible: Boolean) {
         val container = bannerContainer ?: return
         activity.runOnUiThread {
@@ -81,52 +83,13 @@ class AdManager(
     }
 
     // Called once the "remove ads" purchase is confirmed (BillingManager) ;
-    // tears down the banner immediately and stops trying to load any more
-    // interstitials so a bought device never sees an ad again this session.
+    // tears down the banner immediately so a bought device never sees an ad
+    // again this session.
     fun onAdsRemoved() {
         activity.runOnUiThread {
             bannerContainer?.visibility = View.GONE
             bannerView?.destroy()
             bannerView = null
         }
-        interstitial = null
-    }
-
-    private fun loadInterstitial() {
-        if (isAdsRemoved()) return
-        InterstitialAd.load(
-            activity, INTERSTITIAL_UNIT_ID, AdRequest.Builder().build(),
-            object : InterstitialAdLoadCallback() {
-                override fun onAdLoaded(ad: InterstitialAd) {
-                    interstitial = ad
-                }
-                override fun onAdFailedToLoad(error: LoadAdError) {
-                    interstitial = null
-                }
-            }
-        )
-    }
-
-    // NativeBridge.exitApp() calls this instead of finishing right away ;
-    // shows the loaded interstitial if one's ready (skipped entirely when
-    // ads are removed, or none loaded yet -- e.g. offline, or the very
-    // first exit before load finishes), then always calls onDone() exactly
-    // once so the Activity still finishes either way.
-    fun showExitInterstitialThenFinish(onDone: () -> Unit) {
-        if (isAdsRemoved()) { onDone(); return }
-        val ad = interstitial
-        if (ad == null) { onDone(); return }
-        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-            override fun onAdDismissedFullScreenContent() {
-                interstitial = null
-                loadInterstitial()
-                onDone()
-            }
-            override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                interstitial = null
-                onDone()
-            }
-        }
-        ad.show(activity)
     }
 }
