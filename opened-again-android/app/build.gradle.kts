@@ -99,10 +99,19 @@ dependencies {
     // state.history.days/discoveries with a real on-device SQLite database
     // (see data/AppDatabase.kt/HistoryRepository.kt). Still 100% on-device,
     // no server -- same privacy story as before, just a sturdier file
-    // format for it. 2.6.1 is a long-stable release; kapt (not KSP) for the
-    // annotation processor since it doesn't need its own separate
-    // Kotlin-version-matched plugin coordinate (see this file's kapt
-    // comment above).
-    implementation("androidx.room:room-runtime:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
+    // format for it. kapt (not KSP) for the annotation processor since it
+    // doesn't need its own separate Kotlin-version-matched plugin
+    // coordinate (see this file's kapt comment above).
+    //
+    // Originally pinned to 2.6.1 ("a long-stable release"), but that failed
+    // CI's first-ever kapt build with: "Provided Metadata instance has
+    // version 2.1.0, while maximum supported version is 2.0.0. To support
+    // newer versions, update the kotlinx-metadata-jvm library." -- Room
+    // 2.6.1's own bundled kotlinx-metadata-jvm can't parse the Kotlin
+    // metadata format this project's Kotlin 2.1.21 compiler emits (format
+    // version 2.1.0). Bumped to 2.8.4 (current stable at the time of this
+    // fix), which bundles a kotlinx-metadata-jvm new enough to read it;
+    // still on kapt, not Room 3.0's KSP-only compiler.
+    implementation("androidx.room:room-runtime:2.8.4")
+    kapt("androidx.room:room-compiler:2.8.4")
 }
