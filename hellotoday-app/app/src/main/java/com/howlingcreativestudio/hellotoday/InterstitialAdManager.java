@@ -98,9 +98,7 @@ final class InterstitialAdManager {
         SharedPreferences prefs = prefs();
         int count = prefs.getInt(KEY_ACTION_COUNT, 0) + 1;
         boolean owed = prefs.getBoolean(KEY_AD_OWED, false);
-        SharedPreferences.Editor editor = prefs.edit().putInt(KEY_ACTION_COUNT, count);
-        if (owed) editor.putBoolean(KEY_AD_OWED, false);
-        editor.apply();
+        prefs.edit().putInt(KEY_ACTION_COUNT, count).apply();
         if (!owed && count % SHOW_EVERY_N_ACTIONS != 0) return;
 
         InterstitialAd ad = loadedAd;
@@ -110,10 +108,13 @@ final class InterstitialAdManager {
             // onAdFailedToLoad used to leave loadedAd null forever with no
             // way back). Kick off a fresh attempt so at least the *next*
             // trigger has a shot, instead of silently going dark for the
-            // rest of the session.
+            // rest of the session. Leave KEY_AD_OWED untouched here -- clearing
+            // it before an ad actually shows would let a background-earned
+            // impression expire unseen just because none was loaded yet.
             loadNext();
             return;
         }
+        if (owed) prefs.edit().putBoolean(KEY_AD_OWED, false).apply();
         loadedAd = null;
         ad.setFullScreenContentCallback(new FullScreenContentCallback() {
             @Override public void onAdDismissedFullScreenContent() { loadNext(); }
