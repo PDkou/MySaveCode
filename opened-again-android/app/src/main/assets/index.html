@@ -465,7 +465,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.75.0';
+const APP_VERSION='0.76.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -704,16 +704,34 @@ window.onNativeBackPressed=function(){
 // the phone's own physical back button/gesture area. Dropped the
 // interstitial entirely (see AdManager.kt/NativeBridge.kt's own v0.69
 // comments) and instead extended the existing native banner (the same one
-// Records/Archive already show) to also show while this sheet is open --
-// state.exitConfirmOpen is the flag syncBannerVisibility() reads for that;
-// set/cleared here and in closeOverlay() since this sheet (like every
-// other #overlay sheet) is opened/closed outside the normal render()
-// pipeline and so needs an explicit sync call rather than relying on
-// render()'s own automatic one.
+// Records/Archive already show) to also show while this sheet is open.
+// v0.76: director sent a reference screenshot (another app's exit dialog
+// showing an AdMob Native Ad rendered as an icon+title+description+CTA
+// card actually embedded in the sheet, not a banner strip below it) --
+// "이런 느낌으로 하고싶다는거임 종료할때는". A real Native Ad can't be drawn
+// as HTML (AdMob policy requires its own NativeAdView for click/impression
+// tracking), so #exitAdSlot below is an empty placeholder div purely for
+// layout/positioning -- syncExitAd() reads its screen rect via
+// getBoundingClientRect() and hands it to AdManager, which lays a real
+// native NativeAdView on top of that exact rect (see AdManager.kt's own
+// v0.76 comment). This replaces the v0.69 banner-extension for this one
+// screen (state.exitConfirmOpen no longer feeds syncBannerVisibility()) --
+// the embedded card is now this screen's only ad surface. rAF-deferred
+// since getBoundingClientRect() right after an innerHTML write can still
+// read pre-layout (zero) bounds in a WebView.
 function openExitConfirm(){
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('앱 종료','アプリを終了','Exit app')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0;text-align:center">${l('정말 종료하시겠습니까?','本当に終了しますか？','Are you sure you want to exit?')}</p></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="N&&N.exitApp&&N.exitApp()">${l('종료','終了','Exit')}</button></div></div></div>`;
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('앱 종료','アプリを終了','Exit app')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0;text-align:center">${l('정말 종료하시겠습니까?','本当に終了しますか？','Are you sure you want to exit?')}</p><div id="exitAdSlot" style="width:100%;height:64px;margin-top:14px;border-radius:16px;background:rgba(0,0,0,.03)"></div></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="N&&N.exitApp&&N.exitApp()">${l('종료','終了','Exit')}</button></div></div></div>`;
   state.exitConfirmOpen=true;
-  syncBannerVisibility();
+  requestAnimationFrame(syncExitAd);
+}
+function syncExitAd(){
+  let adsRemoved=false;try{adsRemoved=N&&N.isAdsRemoved?N.isAdsRemoved():false}catch(e){}
+  if(adsRemoved)return;
+  const slot=document.getElementById('exitAdSlot');
+  if(!slot)return;
+  const r=slot.getBoundingClientRect();
+  if(r.width<=0||r.height<=0)return;
+  try{N&&N.showExitAd&&N.showExitAd(r.left,r.top,r.width,r.height)}catch(e){}
 }
 function share(i,format){if(preview||!N){toast(l('미리보기에서는 공유가 실행되지 않습니다.','プレビューでは共有は実行されません。','Sharing is disabled in preview.'));return}try{N.shareIncident(JSON.stringify(i),txt(names,i.type),txt(punch,i.type),detail(i),format,state.settings.language)}catch(e){}}
 function rarityClass(i){if(i.rarity!=='HIDDEN')return i.rarity.toLowerCase();return i.type==='HIDDEN_NIGHT_ACTIVITY'?'hidden opal':'hidden'}
@@ -1339,6 +1357,13 @@ function records(d){const s=d.summary||{};const rows=[[l('사용 시간','使用
 function settings(){
   let hasAccess=null;try{hasAccess=N?N.hasUsageAccess():null}catch(e){}
   const accessLabel=hasAccess===true?l('허용됨','許可済み','Allowed'):hasAccess===false?l('허용 필요 · 탭해서 이동','許可が必要 · タップで移動','Needs permission -- tap to open'):l('탭해서 확인','タップして確認','Tap to check');
+  // v0.76: director feedback -- this row used to hardcode "탭해서 허용하기"
+  // (tap to allow) unconditionally, so it still said "not allowed" even
+  // right after the user granted it during onboarding -- same fallback
+  // style as accessLabel above, now reading the real status via the new
+  // N.hasNotificationPermission() bridge instead.
+  let hasNotifAccess=null;try{hasNotifAccess=N&&N.hasNotificationPermission?N.hasNotificationPermission():null}catch(e){}
+  const notifLabel=hasNotifAccess===true?l('허용됨','許可済み','Allowed'):hasNotifAccess===false?l('허용 필요 · 탭해서 허용','許可が必要 · タップで許可','Needs permission -- tap to allow'):l('탭해서 확인','タップして確認','Tap to check');
   const row=(icon,title,sub,onclick,clickable=true)=>`<div class="settings-row${clickable?'':' static'}"${onclick?` onclick="${onclick}"`:''}>${icon}<div class="settings-row-text"><b>${title}</b><span>${sub}</span></div>${clickable?'<span class="settings-chevron">›</span>':''}</div>`;
   const iconImg=name=>`<img src="visual/ui/icons/unlabeled/icon_${name}.png" alt="">`;
   const iconEmoji=e=>`<span class="settings-emoji">${e}</span>`;
@@ -1355,7 +1380,7 @@ function settings(){
     : row(iconEmoji('🚫'),l('광고 제거','広告を削除','Remove ads'),l('탭해서 구매하기 (배너 광고 제거)','タップして購入(バナー広告を削除)','Tap to buy (removes the banner ad)'),'purchaseRemoveAds()');
   return `<div class="section-title"><h2>${l('설정','設定','Settings')}</h2></div><div class="settings-list">
 ${row(iconImg('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','cycleLang()')}
-${row(iconImg('notification'),l('알림 권한','通知許可','Notifications'),l('탭해서 허용하기','タップして許可','Tap to allow'),'N&&N.requestNotificationPermission()')}
+${row(iconImg('notification'),l('알림 권한','通知許可','Notifications'),notifLabel,'N&&N.requestNotificationPermission()')}
 ${row(iconEmoji('⏰'),l('일일 리마인더','デイリーリマインダー','Daily reminder'),state.settings.dailyReminder?l(`매일 ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}에 알림 · 탭해서 변경`,`毎日${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}に通知 · タップで変更`,`Notifies daily at ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')} -- tap to change`):l('꺼짐 · 탭해서 켜기','オフ · タップでオン','Off -- tap to turn on'),'openReminderSheet()')}
 ${row(iconEmoji('📊'),l('사용정보 접근','使用状況へのアクセス','Usage access'),accessLabel,'N&&N.openUsageSettings()')}
 ${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),"toast(l('다른 테마는 준비 중입니다','他のテーマは準備中です','More themes are coming soon'))")}
@@ -1496,7 +1521,7 @@ function openPrivacySheet(){
   );
   document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('개인정보처리방침','プライバシーポリシー','Privacy policy')}</div><p style="font-size:13px;line-height:1.7;color:var(--ink);margin:4px 0 0">${body}</p></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
 }
-function closeOverlay(){document.getElementById('overlay').innerHTML='';state.exitConfirmOpen=false;syncBannerVisibility()}
+function closeOverlay(){const wasExit=state.exitConfirmOpen;document.getElementById('overlay').innerHTML='';state.exitConfirmOpen=false;if(wasExit){try{N&&N.hideExitAd&&N.hideExitAd()}catch(e){}}syncBannerVisibility()}
 // v0.35: incident card detail is now a full-screen page (back arrow +
 // centered rarity pill + share icon header, stats box, single share
 // button) instead of a bottom-sheet modal, matching art/reference/
@@ -1792,12 +1817,13 @@ function onboardFinish(allow){
 // those. AdManager.setBannerVisible() also independently forces this off
 // entirely once ads are removed, so this never needs to check that itself.
 function syncBannerVisibility(){
-  // v0.69: also shows on the exit-confirmation sheet now (see
-  // openExitConfirm()'s own comment) -- true regardless of which tab sits
-  // underneath it, same as detailItem/revealItem override the tab-based
-  // check the other way (hiding the banner even ON records/archive while
-  // those are open).
-  const show=(!skipOnboarding&&!state.settings.onboardingSeen)?false:!!(state.exitConfirmOpen||(!state.revealItem&&!state.detailItem&&(state.tab==='records'||state.tab==='archive')));
+  // v0.69 had also shown this banner on the exit-confirmation sheet;
+  // v0.76 replaced that with a real embedded Native Ad card instead (see
+  // openExitConfirm()/syncExitAd()), so exitConfirmOpen no longer feeds
+  // this check -- detailItem/revealItem still override the tab-based check
+  // the other way (hiding the banner even ON records/archive while those
+  // are open).
+  const show=(!skipOnboarding&&!state.settings.onboardingSeen)?false:!!(!state.revealItem&&!state.detailItem&&(state.tab==='records'||state.tab==='archive'));
   try{N&&N.setBannerVisible&&N.setBannerVisible(show)}catch(e){}
 }
 function render(){

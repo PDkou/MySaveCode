@@ -86,6 +86,17 @@
   리빌 카드 드래그 미동작 쪽은 Playwright로 실제 원인(재현 전:
   computed transform 고정 / 재현 후: 정상 반영)까지 확인해서 v0.68
   항목과 함께 해결 완료로 표시함(위 참고).
+- v0.76 — 두 항목 모두 실기기 확인 필요. (1) 종료 확인 모달의
+  네이티브 광고 카드: `NativeAdView`의 실제 렌더링/포지셔닝(HTML
+  자리표시자 `#exitAdSlot`의 위치와 정확히 겹치는지, 특히 다른 화면
+  비율/폰트 크기 설정 기기에서)과 CTA 버튼 클릭이 실제로 광고
+  클릭으로 집계되는지는 실제 안드로이드 런타임에서만 확인
+  가능(이 샌드박스는 Playwright로 WebView 쪽 좌표 계산과 브릿지
+  호출 순서까지만 검증함) — 아직 구글 공식 테스트 광고 단위 ID라
+  실제 수익은 발생하지 않음. (2) 알림 권한 설정 라벨:
+  `NotificationManagerCompat.areNotificationsEnabled()` 기반 새
+  상태 표시가 실기기에서 온보딩 허용/거부/시스템 설정에서 나중에
+  끄기 세 가지 경로 전부에서 정확히 반영되는지 확인 필요.
 
 ## 우선순위 B — 데이터 영속화
 - ~~SharedPreferences 발견 여부만 저장하는 현재 구조를 Room 기반 사건 히스토리로 확장~~ —
@@ -243,17 +254,21 @@
   리마인더, `ReminderScheduler`/`DailyReminderReceiver`)이 생겨서 이 권한을
   실제로 사용하기 시작함. 자세한 내용은 `docs/DEVELOPMENT_HISTORY.md` v0.47 참고.
 - release signing / AAB / closed test
-- **수익화 1단계(v0.65, v0.69에서 광고 형태 정정) — director 준비
-  필요**: 배너 광고(AdMob, 기록/보관함 탭 + 종료 확인 모달)와 "광고
-  제거" 1회성 인앱결제(Google Play Billing) 코드는 완성됐지만, 전부
-  구글 공식 테스트 ID로만 동작함(`ca-app-pub-3940256099942544~...`
-  등, 실제 광고/수익 발생 없음). (v0.65에서는 종료 시 전면광고도
-  같이 만들었으나 감독 지시대로 v0.69에서 제거 — 물리 뒤로가기
-  버튼과 겹치는 문제 + 애초에 원한 건 종료 모달 안의 배너였음. 지금은
-  배너 광고 하나만 존재.) 스토어 출시 전 director가 직접 해야 할
-  것: (1) admob.google.com에서 실제 앱 등록 후 진짜 App ID + 배너
-  광고 단위 ID 발급 → `AndroidManifest.xml`의 메타데이터와
-  `AdManager.kt`의 배너 ID 상수를 교체, (2) Play Console → 수익 창출
+- **수익화 1단계(v0.65, v0.69에서 광고 형태 정정, v0.76에서 종료
+  모달 광고를 네이티브 카드로 재구현) — director 준비 필요**: 배너
+  광고(AdMob, 기록/보관함 탭)와 네이티브 광고 카드(종료 확인 모달
+  전용, v0.76), "광고 제거" 1회성 인앱결제(Google Play Billing)
+  코드는 완성됐지만, 전부 구글 공식 테스트 ID로만 동작함
+  (`ca-app-pub-3940256099942544~...` 등, 실제 광고/수익 발생 없음).
+  (v0.65에서는 종료 시 전면광고도 같이 만들었으나 감독 지시대로
+  v0.69에서 제거 — 물리 뒤로가기 버튼과 겹치는 문제 + 애초에 원한 건
+  종료 모달 안의 배너였음. v0.76에서 그 배너 자체도 감독이 보내준
+  참고 스크린샷에 맞춰 진짜 네이티브 광고 카드로 교체됨 — 자세한
+  내용은 `docs/DEVELOPMENT_HISTORY.md` v0.76 참고.) 스토어 출시 전
+  director가 직접 해야 할 것: (1) admob.google.com에서 실제 앱 등록
+  후 진짜 App ID + 배너 광고 단위 ID + 네이티브 광고 단위 ID 발급 →
+  `AndroidManifest.xml`의 메타데이터와 `AdManager.kt`의
+  `BANNER_UNIT_ID`/`NATIVE_UNIT_ID` 상수를 교체, (2) Play Console → 수익 창출
   → 제품 → 인앱 상품에서 `remove_ads`라는 이름의
   1회성(non-consumable) 상품을 실제로 생성(안 하면 구매 버튼이
   "상품 없음" 오류로 항상 실패). 코스메틱 보너스(감독이 "1번" 옵션에서

@@ -61,8 +61,9 @@
              real-money/policy risk). MUST be swapped for the director's own
              real AdMob App ID (from admob.google.com, after creating the app
              there) before this can show real ads / earn real revenue ; see
-             AdManager.kt's own header comment for the matching ad-unit-ID
-             placeholders that need the same swap. -->
+             AdManager.kt's own header comment (banner) and its v0.76
+             comment (native ad, exit-confirm sheet) for the matching
+             ad-unit-ID placeholders that need the same swap. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />

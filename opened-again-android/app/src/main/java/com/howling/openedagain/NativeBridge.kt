@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.webkit.JavascriptInterface
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.FileProvider
 import com.howling.openedagain.core.*
 import com.howling.openedagain.data.HistoryRepository
@@ -98,6 +99,23 @@ class NativeBridge(
             activity.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
     }
+
+    // v0.76: director feedback -- "처음에 알림에 동의하는데 왜 설정에
+    // 들어가서 또 알림 권한을 탭해야되는걸까" (I already agree during
+    // onboarding, so why does Settings make me tap it again?). Root cause:
+    // the settings "알림 권한" row (index.html's settings()) had no real
+    // status check at all -- it hardcoded "탭해서 허용하기" (tap to allow)
+    // unconditionally, unlike the "사용정보 접근" row right below it, which
+    // already reads a real hasUsageAccess() check. So the row looked
+    // identically "not granted yet" whether or not the user had actually
+    // allowed it during onboarding. NotificationManagerCompat's check
+    // (rather than a raw POST_NOTIFICATIONS permission check) is
+    // deliberate: it also correctly reads false pre-33 if the user later
+    // disables notifications for this app from system Settings, where a
+    // bare permission-grant check would wrongly stay "true" forever (that
+    // permission doesn't even exist pre-33).
+    @JavascriptInterface
+    fun hasNotificationPermission(): Boolean = NotificationManagerCompat.from(activity).areNotificationsEnabled()
 
     // v0.24: called from the onboarding screen's "알림 허용" button
     // (index.html's onboardFinish(true)). POST_NOTIFICATIONS is only a
@@ -234,9 +252,12 @@ class NativeBridge(
 
     // v0.65: director-approved monetization -- index.html's render() calls
     // this (via its syncBannerVisibility() helper) on every render so the
-    // native banner only shows on the Records/Archive tabs and the
-    // exit-confirmation sheet (v0.69), and never while the detail page, the
-    // daily reveal, or onboarding is covering them.
+    // native banner only shows on the Records/Archive tabs, and never while
+    // the detail page, the daily reveal, or onboarding is covering them.
+    // v0.69 had also extended this to the exit-confirmation sheet; v0.76
+    // replaced that with a dedicated embedded Native Ad card instead (see
+    // showExitAd()/hideExitAd() below), so this banner no longer covers
+    // that sheet.
     @JavascriptInterface
     fun setBannerVisible(visible: Boolean) {
         adManager.setBannerVisible(visible)
@@ -246,6 +267,22 @@ class NativeBridge(
     // "구매하기" or "구매 완료" state.
     @JavascriptInterface
     fun isAdsRemoved(): Boolean = billingManager.isAdsRemoved()
+
+    // v0.76: index.html's openExitConfirm() calls this with its #exitAdSlot
+    // placeholder's getBoundingClientRect() so AdManager can lay a real
+    // native ad card over that exact rect -- see AdManager.showExitAd()'s
+    // own comment for the full story. @JavascriptInterface methods can't
+    // take Float directly from JS numbers, so these arrive as Double and
+    // get narrowed here.
+    @JavascriptInterface
+    fun showExitAd(x: Double, y: Double, width: Double, height: Double) {
+        adManager.showExitAd(x.toFloat(), y.toFloat(), width.toFloat(), height.toFloat())
+    }
+
+    @JavascriptInterface
+    fun hideExitAd() {
+        adManager.hideExitAd()
+    }
 
     // index.html's settings "광고 제거" row's tap handler when not yet purchased.
     @JavascriptInterface

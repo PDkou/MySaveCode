@@ -114,9 +114,23 @@ class MainActivity : Activity() {
             )
             visibility = View.GONE
         }
+        // v0.76: hosts the exit-confirm modal's native ad card (see
+        // AdManager.showExitAd()) -- stacked ON TOP of the WebView (added
+        // after it, in the same FrameLayout) rather than below it like
+        // bannerContainer, since this card needs to visually sit inside the
+        // HTML modal's own layout, positioned via absolute margins that
+        // mirror an HTML placeholder div's getBoundingClientRect(). Empty
+        // and non-clickable outside of the one moment a card is added to
+        // it, so touches pass through to the WebView underneath everywhere
+        // else on screen.
+        val nativeAdOverlay = FrameLayout(this)
+        val webViewFrame = FrameLayout(this).apply {
+            addView(webView, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+            addView(nativeAdOverlay, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        }
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            addView(webView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+            addView(webViewFrame, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
             addView(bannerContainer)
         }
         // v0.73: director feedback (real device) -- the Records/Archive
@@ -160,6 +174,7 @@ class MainActivity : Activity() {
         setContentView(root)
         adManager.attachBannerContainer(bannerContainer)
         adManager.attachWebView(webView)
+        adManager.attachNativeAdOverlay(nativeAdOverlay)
         adManager.init()
         billingManager.start()
 

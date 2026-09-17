@@ -1,19 +1,33 @@
 package com.howling.openedagain
 
 import android.app.Activity
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.text.TextUtils
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.webkit.WebView
+import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.nativead.NativeAd
+import com.google.android.gms.ads.nativead.NativeAdView
+import com.google.android.gms.ads.AdLoader
 
 // v0.65: director-approved monetization ; wraps the Google Mobile Ads
-// (AdMob) SDK for the app's one ad surface: a banner shown only on the
-// Records/Archive tabs and on the exit-confirmation sheet (index.html's
-// render() calls N.setBannerVisible() via its syncBannerVisibility()
-// helper on every render; see NativeBridge.kt).
+// (AdMob) SDK for this app's ad surfaces: a banner shown on the Records/
+// Archive tabs (index.html's render() calls N.setBannerVisible() via its
+// syncBannerVisibility() helper on every render; see NativeBridge.kt), and
+// (v0.76) a Native Ad card embedded in the exit-confirmation sheet
+// specifically -- see showExitAd()'s own comment.
 //
 // v0.69: director correction -- v0.65 also built a full-screen interstitial
 // shown when the user tapped "종료" on the exit-confirm sheet, but that
@@ -40,12 +54,33 @@ class AdManager(
 ) {
     companion object {
         private const val BANNER_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
+
+        // v0.76: TEST ID ONLY, same story as BANNER_UNIT_ID above -- Google's
+        // own official sample "Native Advanced" ad-unit ID (image/headline/
+        // body/CTA assets; NOT ca-app-pub-3940256099942544/1044960115, which
+        // is the separate "Native Video" test unit -- this feature never
+        // renders a video asset). MUST be swapped for the director's own real
+        // AdMob native ad-unit ID before this can earn real revenue.
+        private const val NATIVE_UNIT_ID = "ca-app-pub-3940256099942544/2247696110"
     }
 
     private var bannerContainer: FrameLayout? = null
     private var webView: WebView? = null
     private var bannerView: AdView? = null
     private var initialized = false
+
+    // v0.76: see this class's own comment on showExitAd() below for the
+    // full story -- overlay sits on top of the WebView (not below it, like
+    // bannerContainer) so the native ad card can be positioned to exactly
+    // align with a placeholder <div> inside the HTML exit-confirm modal.
+    private var nativeAdOverlay: FrameLayout? = null
+    private var nativeAd: NativeAd? = null
+    private var nativeAdView: NativeAdView? = null
+    private var nativeAdLoader: AdLoader? = null
+    // Guards the async forNativeAd() callback: if hideExitAd() runs before a
+    // load finishes (sheet closed quickly), the eventual ad must be
+    // destroyed immediately instead of popping onto screen after the fact.
+    private var exitAdWanted = false
 
     fun init() {
         if (initialized) return
@@ -78,11 +113,22 @@ class AdManager(
         webView = view
     }
 
+    // Called once from MainActivity.onCreate() with the FrameLayout it built
+    // stacked on top of the WebView (a sibling inside the same FrameLayout,
+    // added after the WebView so it draws above it) -- see showExitAd()'s
+    // own comment for why this needs to sit ON the WebView rather than
+    // below it like bannerContainer.
+    fun attachNativeAdOverlay(overlay: FrameLayout) {
+        nativeAdOverlay = overlay
+    }
+
     // index.html's render() drives this via its syncBannerVisibility()
     // helper on every render: true while the current tab is Records/Archive
-    // or the exit-confirmation sheet is open, and no full-screen overlay
-    // (detail/reveal/onboarding) is covering it ; never true for
-    // home/detail/reveal/settings otherwise, per the director's scoping.
+    // and no full-screen overlay (detail/reveal/onboarding) is covering it ;
+    // never true for home/detail/reveal/settings otherwise, per the
+    // director's scoping. v0.76: no longer also true for the exit-
+    // confirmation sheet -- that screen now gets its own embedded Native Ad
+    // card instead (showExitAd() below), not this banner.
     fun setBannerVisible(visible: Boolean) {
         val container = bannerContainer ?: return
         activity.runOnUiThread {
@@ -113,6 +159,172 @@ class AdManager(
             bannerView?.destroy()
             bannerView = null
             webView?.requestLayout()
+            exitAdWanted = false
+            teardownNativeAd()
         }
+    }
+
+    // v0.76: director sent a reference screenshot of another app's exit
+    // dialog where the ad isn't a banner strip but a real ad CARD (icon +
+    // headline + body + CTA button) sitting inside the dialog itself --
+    // "이런 느낌으로 하고싶다는거임 종료할때는". A NativeAd can't be faked with
+    // plain HTML/CSS in the WebView -- AdMob policy requires its click/
+    // impression tracking to go through a real NativeAdView, so the actual
+    // ad content has to be a native Android View. index.html's
+    // openExitConfirm() lays out an empty placeholder <div id="exitAdSlot">
+    // purely to reserve the right amount of space in the HTML layout, then
+    // calls N.showExitAd() with that div's getBoundingClientRect() (CSS px,
+    // which on this app's WebView equals dp -- viewport is device-width,
+    // initial-scale=1) so this method can position a real NativeAdView at
+    // the exact same screen rect, layered on top of the WebView via
+    // nativeAdOverlay (see attachNativeAdOverlay()). Reloads a fresh ad
+    // every time the sheet opens (simpler and more correct for impression
+    // counting than trying to cache/reuse one across opens) -- an
+    // acceptable cost given how rarely a user opens this sheet twice in a
+    // row.
+    fun showExitAd(xDp: Float, yDp: Float, widthDp: Float, heightDp: Float) {
+        if (isAdsRemoved()) return
+        val overlay = nativeAdOverlay ?: return
+        if (widthDp <= 0f || heightDp <= 0f) return
+        activity.runOnUiThread {
+            exitAdWanted = true
+            teardownNativeAd()
+            val density = activity.resources.displayMetrics.density
+            val lp = FrameLayout.LayoutParams(
+                (widthDp * density).toInt(),
+                (heightDp * density).toInt()
+            ).apply {
+                leftMargin = (xDp * density).toInt()
+                topMargin = (yDp * density).toInt()
+            }
+            val loader = AdLoader.Builder(activity, NATIVE_UNIT_ID)
+                .forNativeAd { ad ->
+                    // The sheet may already have closed by the time this
+                    // async callback fires -- don't let a stale ad appear.
+                    if (!exitAdWanted) {
+                        ad.destroy()
+                        return@forNativeAd
+                    }
+                    nativeAd = ad
+                    val view = buildNativeAdView(ad)
+                    nativeAdView = view
+                    overlay.addView(view, lp)
+                }
+                .build()
+            nativeAdLoader = loader
+            loader.loadAd(AdRequest.Builder().build())
+        }
+    }
+
+    // Called from index.html's closeOverlay() when the exit-confirm sheet
+    // (the only screen showExitAd() is used for) closes.
+    fun hideExitAd() {
+        activity.runOnUiThread {
+            exitAdWanted = false
+            teardownNativeAd()
+        }
+    }
+
+    private fun teardownNativeAd() {
+        nativeAdOverlay?.removeAllViews()
+        nativeAdView = null
+        nativeAd?.destroy()
+        nativeAd = null
+    }
+
+    // Built entirely in code, matching this app's own convention of never
+    // hand-authoring layout XML for this Activity (see MainActivity.kt) --
+    // colors/radii below are pulled from index.html's own CSS variables
+    // (--ink #2F2A27, --muted #6B5F54, --line #E7DED2, the sheet "confirm"
+    // button's #6758F5) so the native card doesn't look like a foreign
+    // object dropped into the HTML sheet around it.
+    private fun buildNativeAdView(ad: NativeAd): NativeAdView {
+        val density = activity.resources.displayMetrics.density
+        fun dp(v: Int) = (v * density).toInt()
+
+        val card = NativeAdView(activity).apply {
+            background = GradientDrawable().apply {
+                setColor(Color.WHITE)
+                cornerRadius = dp(16).toFloat()
+                setStroke(dp(1), Color.parseColor("#E7DED2"))
+            }
+            setPadding(dp(10), dp(8), dp(10), dp(8))
+        }
+
+        val icon = ImageView(activity).apply {
+            layoutParams = LinearLayout.LayoutParams(dp(40), dp(40))
+            scaleType = ImageView.ScaleType.CENTER_CROP
+        }
+        val adLabel = TextView(activity).apply {
+            text = "Ad"
+            setTextColor(Color.parseColor("#6B5F54"))
+            textSize = 9f
+            setPadding(dp(4), dp(1), dp(4), dp(1))
+            background = GradientDrawable().apply {
+                setColor(Color.parseColor("#F0E8DB"))
+                cornerRadius = dp(4).toFloat()
+            }
+        }
+        val headline = TextView(activity).apply {
+            setTextColor(Color.parseColor("#2F2A27"))
+            textSize = 13f
+            setTypeface(typeface, Typeface.BOLD)
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+        }
+        val body = TextView(activity).apply {
+            setTextColor(Color.parseColor("#6B5F54"))
+            textSize = 11f
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+        }
+        val cta = Button(activity).apply {
+            textSize = 11f
+            setTextColor(Color.WHITE)
+            isAllCaps = false
+            background = GradientDrawable().apply {
+                setColor(Color.parseColor("#6758F5"))
+                cornerRadius = dp(10).toFloat()
+            }
+            setPadding(dp(10), 0, dp(10), 0)
+        }
+
+        val textCol = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginStart = dp(10)
+                marginEnd = dp(8)
+            }
+            addView(adLabel)
+            addView(headline, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(2) })
+            addView(body)
+        }
+        val row = LinearLayout(activity).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            addView(icon)
+            addView(textCol)
+            addView(cta, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(30)))
+        }
+        card.addView(row, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+
+        headline.text = ad.headline
+        body.text = ad.body
+        cta.text = ad.callToAction
+        val iconDrawable = ad.icon?.drawable
+        if (iconDrawable != null) {
+            icon.setImageDrawable(iconDrawable)
+            icon.visibility = View.VISIBLE
+        } else {
+            icon.visibility = View.GONE
+        }
+
+        card.headlineView = headline
+        card.bodyView = body
+        card.callToActionView = cta
+        card.iconView = icon
+        card.setNativeAd(ad)
+
+        return card
     }
 }
