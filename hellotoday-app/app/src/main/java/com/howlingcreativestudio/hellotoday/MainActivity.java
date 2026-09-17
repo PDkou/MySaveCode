@@ -23,6 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.json.JSONObject;
 
 public class MainActivity extends Activity {
@@ -30,6 +32,11 @@ public class MainActivity extends Activity {
     private FrameLayout safeRoot;
     private PremiumBilling premiumBilling;
     private InterstitialAdManager adManager;
+    // Single background thread so rapid-fire silentBackup() calls (every
+    // JS-side save()) write in the order they were queued -- a plain
+    // "new Thread(...).start()" per call would let writes race and let an
+    // older state clobber a newer one if threads finish out of order.
+    private final ExecutorService backupWriter = Executors.newSingleThreadExecutor();
     private static final String INTERNAL_BACKUP = "hello_today_backup.json";
     private static final int REQUEST_PICK_CONTACT = 501;
     private static final int REQUEST_PICK_PHOTO = 502;
@@ -327,7 +334,7 @@ public class MainActivity extends Activity {
         // reinstall/device change. Silent: no JS callback, no toast --
         // firing one on every keystroke-adjacent save() would be noisy.
         @JavascriptInterface public void silentBackup(String json) {
-            writeInternalBackup(json);
+            backupWriter.execute(() -> writeInternalBackup(json));
         }
         private boolean writeInternalBackup(String json) {
             try (FileOutputStream out = openFileOutput(INTERNAL_BACKUP, MODE_PRIVATE)) {
