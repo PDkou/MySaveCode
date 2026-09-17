@@ -169,6 +169,13 @@ class MainActivity : Activity() {
             // explicitly whenever insets are (re)delivered, e.g. on
             // rotation or a 3-button/gesture nav mode switch.
             webView.requestLayout()
+            // v0.77: this same system-bar bottom inset also reaches the
+            // WebView directly (WindowInsets dispatch doesn't shrink by
+            // however much bannerContainer already consumes at the bottom),
+            // which is what was causing the blank gap the director kept
+            // seeing above the ad -- see AdManager.onSystemBarsBottomChanged()'s
+            // own comment for the full story.
+            adManager.onSystemBarsBottomChanged(bars.bottom)
             insets
         }
         setContentView(root)

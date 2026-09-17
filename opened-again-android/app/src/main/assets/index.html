@@ -37,7 +37,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    토스(~20px)/당근마켓(16px) actually use -- bumped both toward that
    range rather than picking an outlier. See the matching @media block
    below for the narrow-screen side. */
-.app{max-width:720px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 20px calc(90px + env(safe-area-inset-bottom))}
+.app{max-width:720px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 20px calc(90px + var(--native-nav-bottom, env(safe-area-inset-bottom)))}
 /* v0.24: onboarding (see onboardScreen()/render() below). The two
    onboarding images are full-screen 941x1672 compositions with their own
    baked-in buttons -- per design's own handoff note, these are visual
@@ -73,7 +73,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    REQUEST.md item 5, delivered 2026-09-09, never wired up before now) plus
    a live text label so active/inactive styling and language switching both
    work without needing per-language image variants. */
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,251,246,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:7px 6px calc(7px + env(safe-area-inset-bottom))}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,251,246,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:7px 6px calc(7px + var(--native-nav-bottom, env(safe-area-inset-bottom)))}
 .tabbtn{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:var(--btn-radius);color:#9A8E83;min-height:var(--btn-min)}
 .tabbtn img{width:23px;height:23px;object-fit:contain;opacity:.5}
 .tabbtn span{font-size:11px;font-weight:800}
@@ -175,7 +175,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .settings-row-text b{display:block;font-size:14px}
 .settings-row-text span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .settings-chevron{color:var(--muted);font-size:20px}
-.modal{position:fixed;inset:0;background:rgba(32,25,21,.55);display:flex;align-items:flex-end;justify-content:center;padding:18px 18px calc(18px + env(safe-area-inset-bottom));z-index:30}
+.modal{position:fixed;inset:0;background:rgba(32,25,21,.55);display:flex;align-items:flex-end;justify-content:center;padding:18px 18px calc(18px + var(--native-nav-bottom, env(safe-area-inset-bottom)));z-index:30}
 /* v0.38: director feedback -- opening a modal didn't reliably fit on one
    screen; when its content overflowed, `overflow:auto` scrolled the WHOLE
    sheet (handle, title AND the close button together), so a long enough
@@ -225,7 +225,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    size is fit to whatever vertical space is left over by JS
    (fitTcgCard(), called alongside mountHolo()) rather than a fixed
    max-width, so it shrinks instead of overflowing on a short screen. */
-.detail-page{position:relative;height:100%;display:flex;flex-direction:column;overflow:hidden;padding:calc(10px + env(safe-area-inset-top)) 18px calc(14px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto;background:transparent !important;color:var(--page-text,var(--ink)) !important;box-shadow:none !important}
+.detail-page{position:relative;height:100%;display:flex;flex-direction:column;overflow:hidden;padding:calc(10px + env(safe-area-inset-top)) 18px calc(14px + var(--native-nav-bottom, env(safe-area-inset-bottom)));max-width:720px;margin:0 auto;background:transparent !important;color:var(--page-text,var(--ink)) !important;box-shadow:none !important}
 /* v0.50: director feedback -- the incident detail page "still scrolls"
    even though its own content clearly fits on screen with room to spare.
    Root cause found by measuring actual computed heights: `.app`'s base
@@ -379,7 +379,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .tcg-card.reveal-anim{animation:revealCardIn .8s cubic-bezier(.22,1,.36,1) .25s both;transition:none}
 @keyframes revealCardIn{0%{transform:scale(.4) rotateY(180deg);opacity:0}55%{opacity:1}75%{transform:scale(1.06) rotateY(0deg)}100%{transform:scale(1) rotateY(0deg);opacity:1}}
 .reveal-continue{margin-top:14px;flex:0 0 auto;opacity:0;animation:revealFadeIn .5s ease-out .9s both}
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2F2926;color:white;border-radius:999px;padding:10px 15px;font-size:12px;font-weight:800;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast{position:fixed;left:50%;bottom:calc(24px + var(--native-nav-bottom, env(safe-area-inset-bottom)));transform:translateX(-50%);background:#2F2926;color:white;border-radius:999px;padding:10px 15px;font-size:12px;font-weight:800;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .foot{font-size:10px;text-align:center;color:#A4978E;margin-top:28px;letter-spacing:.7px}
 @media(max-width:430px){.app{padding-left:16px;padding-right:16px}.brand h1{font-size:27px}.avatar{width:60px;height:60px}.card-body{grid-template-columns:1.22fr .78fr}.case-title{font-size:22px}.scene{min-height:118px}.scene img{width:98px;height:98px}.daily-strip{gap:6px}.mini-stat{padding:9px 4px}}
 
@@ -465,7 +465,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.76.0';
+const APP_VERSION='0.77.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -655,6 +655,22 @@ function refresh(){
   render()
 }
 window.onNativeResume=refresh;
+// v0.77: director kept reporting a blank gap above the ad even after v0.73
+// (nav-bar overlap) and v0.75 (WebView reflow timing) -- neither of those
+// was the actual cause. Real cause: `.app`/`.tabbar`/etc below reserve
+// `env(safe-area-inset-bottom)` unconditionally, but Android's WindowInsets
+// dispatch doesn't shrink that value just because the native banner (a
+// sibling OUTSIDE this WebView entirely) already occupies the same space at
+// the bottom of the screen -- so while the banner shows, this WebView was
+// reserving nav-bar-height blank space a second time, directly above the
+// real banner. AdManager.kt now computes the one correct value (0 while the
+// banner is visible, the real inset while it's hidden) and pushes it here
+// via this native->JS setter rather than fighting Android's WindowInsets
+// consumption on the WebView itself; the CSS below reads
+// var(--native-nav-bottom, env(safe-area-inset-bottom)) so it still falls
+// back to the raw value before the first native push arrives, or in a
+// plain browser preview with no native side at all.
+window.setNativeNavInset=function(px){try{document.documentElement.style.setProperty('--native-nav-bottom',px+'px')}catch(e){}};
 // v0.43: director feedback -- the hardware back button always exited the
 // app (see MainActivity.kt's onBackPressed() comment for the root cause).
 // MainActivity now calls this before deciding whether to exit: returning

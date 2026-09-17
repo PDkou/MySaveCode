@@ -82,6 +82,12 @@ class AdManager(
     // destroyed immediately instead of popping onto screen after the fact.
     private var exitAdWanted = false
 
+    // v0.77: see syncWebViewNavInset()'s own comment -- the raw system-bar
+    // bottom inset in px, cached here so it can be recombined with the
+    // banner's current visibility (which changes independently, via
+    // setBannerVisible()) any time either one changes.
+    private var systemBarsBottomPx = 0
+
     fun init() {
         if (initialized) return
         initialized = true
@@ -113,6 +119,45 @@ class AdManager(
         webView = view
     }
 
+    // v0.77: director kept reporting a blank gap (the app's own background
+    // color) above the ad after both v0.73 (nav-bar-overlap padding on
+    // bannerContainer) and v0.75 (webView.requestLayout() for the sibling-
+    // resize reflow quirk) -- both of those fixed real, separate bugs, but
+    // neither was the actual cause of THIS gap. The real cause: index.html's
+    // `.app`/`.tabbar`/etc CSS reserve `env(safe-area-inset-bottom)`
+    // unconditionally, and Android's WindowInsets dispatch does NOT shrink
+    // by however much a sibling view already consumes at the bottom of the
+    // screen -- MainActivity's own root-level insets listener applies the
+    // system-bar bottom inset as padding on bannerContainer, but the exact
+    // same inset value still separately reaches the WebView, whether or not
+    // the banner is actually visible. So while the banner shows, the WebView
+    // reserves nav-bar-height blank space for `env(safe-area-inset-bottom)`
+    // a SECOND time, directly above the real banner -- while the banner is
+    // hidden, that same reservation is correct and needed (WebView then
+    // genuinely reaches the screen's bottom edge). Rather than fighting
+    // Android's WindowInsets consumption/re-dispatch machinery on a WebView
+    // specifically (finicky and hard to verify without a device), this
+    // pushes one authoritative, banner-visibility-aware value into JS via a
+    // tiny native->JS bridge call, and index.html's CSS reads that instead
+    // of the raw env() value (falling back to env() if this is never
+    // called, e.g. very first frames before the initial insets dispatch, or
+    // a plain browser preview with no native side at all).
+    fun onSystemBarsBottomChanged(px: Int) {
+        systemBarsBottomPx = px
+        syncWebViewNavInset()
+    }
+
+    private fun syncWebViewNavInset() {
+        val view = webView ?: return
+        val bannerShowing = bannerContainer?.visibility == View.VISIBLE
+        val reservePx = if (bannerShowing) 0 else systemBarsBottomPx
+        val density = activity.resources.displayMetrics.density
+        val reserveDp = if (density > 0f) reservePx / density else reservePx.toFloat()
+        activity.runOnUiThread {
+            view.evaluateJavascript("window.setNativeNavInset&&window.setNativeNavInset(${reserveDp})", null)
+        }
+    }
+
     // Called once from MainActivity.onCreate() with the FrameLayout it built
     // stacked on top of the WebView (a sibling inside the same FrameLayout,
     // added after the WebView so it draws above it) -- see showExitAd()'s
@@ -135,6 +180,7 @@ class AdManager(
             if (isAdsRemoved() || !visible) {
                 container.visibility = View.GONE
                 webView?.requestLayout()
+                syncWebViewNavInset()
                 return@runOnUiThread
             }
             container.visibility = View.VISIBLE
@@ -147,6 +193,7 @@ class AdManager(
                 bannerView = ad
             }
             webView?.requestLayout()
+            syncWebViewNavInset()
         }
     }
 
@@ -159,6 +206,7 @@ class AdManager(
             bannerView?.destroy()
             bannerView = null
             webView?.requestLayout()
+            syncWebViewNavInset()
             exitAdWanted = false
             teardownNativeAd()
         }
