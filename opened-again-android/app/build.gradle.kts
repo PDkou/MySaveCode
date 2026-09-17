@@ -40,8 +40,8 @@ android {
         applicationId = "com.howling.openedagain"
         minSdk = 29
         targetSdk = 36
-        versionCode = 73
-        versionName = "0.73.0"
+        versionCode = 74
+        versionName = "0.74.0"
     }
 
     buildTypes {
