@@ -28,6 +28,28 @@ async function captureLocale(browser, locale) {
   await page.evaluate((lang) => { state.settings.language = lang; render(); }, locale);
   await page.waitForTimeout(100);
 
+  // Director feedback: don't feature HIDDEN-rarity cases in store
+  // screenshots (they're meant to stay a surprise for real players, not
+  // be spoiled in marketing material). demo()'s cards[0] is a HIDDEN case
+  // by default, which cases()/archive() would otherwise show as the home
+  // tab's featured card and as a "discovered" archive entry -- drop it
+  // from both state.data (home/detail) and state.history.discoveries
+  // (archive's own found-tracking, populated separately by
+  // persistSnapshotForPreview() at load time).
+  await page.evaluate(() => {
+    state.data.report.cards = state.data.report.cards.filter(c => c.rarity !== 'HIDDEN');
+    state.data.report.hiddenCount = 0;
+    state.data.report.totalIncidents = state.data.report.cards.length;
+    if (state.data.archive) {
+      state.data.archive.items = state.data.archive.items.map(it => it.hidden ? { ...it, found: false } : it);
+      state.data.archive.discoveredCount = state.data.archive.items.filter(it => it.found).length;
+    }
+    for (const type of Object.keys(state.history.discoveries)) {
+      if (type.startsWith('HIDDEN')) delete state.history.discoveries[type];
+    }
+    render();
+  });
+
   // 1. Hero shot: force the LEGENDARY card into the daily reveal screen
   // (demo()'s cards[0] is HIDDEN by default -- LEGENDARY is the more
   // striking first impression for the store listing).
