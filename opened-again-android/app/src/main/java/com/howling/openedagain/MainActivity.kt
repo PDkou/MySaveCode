@@ -12,6 +12,8 @@ import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.window.OnBackInvokedDispatcher
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.howling.openedagain.data.HistoryRepository
 
 class MainActivity : Activity() {
@@ -116,6 +118,37 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             addView(webView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
             addView(bannerContainer)
+        }
+        // v0.73: director feedback (real device) -- the Records/Archive
+        // banner (and, since v0.69, the same banner shown during the exit-
+        // confirmation sheet) overlaps the phone's physical/gesture nav
+        // buttons. Root cause: on API 35+ (this app's targetSdk),
+        // setDecorFitsSystemWindows(false) above makes the WHOLE window
+        // draw edge-to-edge, including bannerContainer sitting at the very
+        // bottom of `root` -- unlike index.html's own `.app` CSS (which
+        // reserves env(safe-area-inset-bottom) for the WebView's OWN
+        // content), nothing was padding this native, non-WebView View away
+        // from the bottom system bar, so the AdView inside it could render
+        // partly or fully behind the nav bar/gesture handle. Applying the
+        // system bars' bottom inset as padding on bannerContainer is the
+        // standard fix for exactly this edge-to-edge scenario; harmless
+        // pre-35 too, where the system already reserves nav-bar space
+        // outside the app's drawable area, so the dispatched inset there is
+        // just 0.
+        //
+        // Listens on `root`, not bannerContainer itself: bannerContainer
+        // starts GONE (only shown later via AdManager.setBannerVisible()),
+        // and a GONE view can miss the one-time initial insets dispatch on
+        // some Android versions -- `root` is always visible/attached, so
+        // this is guaranteed to fire and can just apply the padding to
+        // bannerContainer from here instead.
+        ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            bannerContainer.setPadding(
+                bannerContainer.paddingLeft, bannerContainer.paddingTop,
+                bannerContainer.paddingRight, bars.bottom
+            )
+            insets
         }
         setContentView(root)
         adManager.attachBannerContainer(bannerContainer)
