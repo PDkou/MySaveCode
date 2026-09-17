@@ -67,10 +67,14 @@ repository secrets instead of a committed file:
 
 | Secret | Value |
 |---|---|
-| `ANDROID_KEYSTORE_B64` | `base64 -w0 opened_again_release.jks` (or `base64 -i ...` on macOS) |
-| `ANDROID_STORE_PASSWORD` | the store password chosen above |
-| `ANDROID_KEY_ALIAS` | `opened_again_upload` (or whatever alias was chosen) |
-| `ANDROID_KEY_PASSWORD` | the key password chosen above |
+| `OPENEDAGAIN_KEYSTORE_B64` | `base64 -w0 opened_again_release.jks` (or `base64 -i ...` on macOS) |
+| `OPENEDAGAIN_STORE_PASSWORD` | the store password chosen above |
+| `OPENEDAGAIN_KEY_ALIAS` | `opened_again_upload` (or whatever alias was chosen) |
+| `OPENEDAGAIN_KEY_PASSWORD` | the key password chosen above |
+
+(Renamed from a generic `ANDROID_*` prefix to `OPENEDAGAIN_*` -- this is a
+monorepo with another Android app's own signing secrets living in the same
+repo Settings, and the generic prefix didn't say which app it belonged to.)
 
 Add these under the repo's Settings -> Secrets and variables -> Actions
 before running that workflow -- it fails fast with a clear error naming the

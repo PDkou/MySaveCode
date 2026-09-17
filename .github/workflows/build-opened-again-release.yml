@@ -5,10 +5,15 @@ name: Build Opened Again Release
 # manually whenever a signed AAB is needed for a Play Console upload.
 #
 # Required repository secrets (Settings -> Secrets and variables -> Actions):
-#   ANDROID_KEYSTORE_B64      base64 of the upload keystore (.jks) file
-#   ANDROID_STORE_PASSWORD    store password
-#   ANDROID_KEY_ALIAS         key alias inside the keystore
-#   ANDROID_KEY_PASSWORD      key password (usually same as store password)
+#   OPENEDAGAIN_KEYSTORE_B64      base64 of the upload keystore (.jks) file
+#   OPENEDAGAIN_STORE_PASSWORD    store password
+#   OPENEDAGAIN_KEY_ALIAS         key alias inside the keystore
+#   OPENEDAGAIN_KEY_PASSWORD      key password (usually same as store password)
+#
+# Renamed from the generic ANDROID_* prefix -- director flagged that this
+# is a monorepo with another Android app ("Hello, Today") also needing its
+# own signing secrets in the same repo's Settings, and a bare "ANDROID_"
+# prefix reads as if it could apply to either app.
 on:
   workflow_dispatch:
 
@@ -30,13 +35,13 @@ jobs:
       - name: Restore signing key
         working-directory: opened-again-android
         env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
-          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_B64: ${{ secrets.OPENEDAGAIN_KEYSTORE_B64 }}
+          STORE_PASSWORD: ${{ secrets.OPENEDAGAIN_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.OPENEDAGAIN_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.OPENEDAGAIN_KEY_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE_B64" ]; then
-            echo "::error::ANDROID_KEYSTORE_B64 secret is not set. Add it under Settings > Secrets and variables > Actions before running this workflow." >&2
+            echo "::error::OPENEDAGAIN_KEYSTORE_B64 secret is not set. Add it under Settings > Secrets and variables > Actions before running this workflow." >&2
             exit 1
           fi
           echo "$KEYSTORE_B64" | base64 -d > release-keystore.jks
