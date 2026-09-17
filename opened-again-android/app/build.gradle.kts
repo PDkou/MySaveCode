@@ -37,11 +37,22 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.howling.openedagain"
+        // v0.78: director feedback -- Hello Today's own applicationId is
+        // "com.howlingcreativestudio.hellotoday" (a different company
+        // segment than this app's "com.howling"); unified for brand
+        // consistency across the studio's apps before this app's first
+        // Play Console registration, since applicationId can never change
+        // after that. `namespace` above (and every Kotlin file's own
+        // `package com.howling.openedagain...` declaration) deliberately
+        // stays as-is -- AGP treats applicationId (the Play Store/install
+        // identity) and namespace (the R/BuildConfig class package, which
+        // source files organize under) as independent by design, so this
+        // rename needed no source-file/directory changes at all.
+        applicationId = "com.howlingcreativestudio.openedagain"
         minSdk = 29
         targetSdk = 36
-        versionCode = 77
-        versionName = "0.77.0"
+        versionCode = 78
+        versionName = "0.78.0"
     }
 
     buildTypes {

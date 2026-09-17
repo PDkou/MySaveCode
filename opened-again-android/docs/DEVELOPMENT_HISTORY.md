@@ -3297,3 +3297,38 @@ JS에 그대로 넘겨주는 방식을 택함. `AdManager.kt`에
 있음. 만약 이번에도 여백이 남아있다면, 다음엔 여백의 정확한 크기(px)와
 어느 화면(기록/보관함/종료 모달)에서 나타나는지 스크린샷과 함께
 알려주시면 훨씬 빠르게 좁혀갈 수 있음.
+
+## v0.78 — applicationId를 Hello Today와 통일 (Play Console 최초 등록 직전, 감독 지적)
+
+Play Console에 앱을 처음 만드는 중 패키지명 입력란을 보고 감독이
+"Hello, Today랑 역도메인이 좀 다른데? 중간이?"라고 확인 — 실제로
+Hello Today는 `com.howlingcreativestudio.hellotoday`인데 이 앱은
+`com.howling.openedagain`으로 회사명 부분(`howlingcreativestudio` vs
+`howling`)이 서로 다르게 시작됐던 것. `applicationId`는 Play Console에
+한 번 등록하면 앱 수명 내내 절대 바꿀 수 없는 값이라, 이 시점(아직
+등록 전)이 통일할 수 있는 마지막 기회였음 — 감독에게 "지금 그대로"와
+"Hello Today와 통일" 중 선택하게 하여 후자로 결정.
+
+`app/build.gradle.kts`의 `applicationId`만
+`com.howlingcreativestudio.openedagain`으로 변경. `namespace`(R/BuildConfig
+클래스가 생성되는 패키지)와 모든 Kotlin 파일의 실제 `package
+com.howling.openedagain...` 선언은 그대로 유지 — AGP(Android Gradle
+Plugin)는 애초에 `applicationId`(Play 스토어/설치 식별자)와
+`namespace`(소스 코드 조직 패키지)를 서로 독립된 개념으로 취급하도록
+설계돼 있어서, 이 방식이 공식적으로 지원되는 정상 패턴이고 소스
+파일/디렉터리를 하나도 옮기거나 고칠 필요가 없었음. 리포지토리 전체를
+`com.howling.openedagain` 문자열로 재검색해서 이 값을 실제로 참조하는
+곳이 `app/build.gradle.kts`의 `namespace`와 Kotlin 소스 파일들의
+`package`/`import` 선언, `scripts/test-core.sh`(별개인 `core` 모듈의
+네임스페이스 `com.howling.openedagain.core`를 참조 — 이것도 무관하게
+그대로 둠)뿐임을 확인 — 다른 하드코딩된 참조는 없었음.
+
+방금 v0.76에서 발행한 개인정보처리방침 Artifact 페이지(Play Console
+"개인정보처리방침" URL로 쓸 예정)에도 앱 패키지명이 한/일/영 3곳에
+그대로 적혀 있었던 걸 발견해서 새 값으로 갱신 후 같은 URL로 재발행함
+(URL 자체는 안 바뀜).
+
+버전 78/0.78.0. 실제 서명된 릴리즈 AAB는 이전 버전(v0.77 기준, 옛
+applicationId로 빌드됨)이 이미 한 번 만들어졌었지만 패키지명이 달라져서
+그 파일은 이제 못 쓰게 됨 — 이 버전 기준으로 다시 빌드해서 director가
+Play Console에 새 패키지명으로 앱을 만든 뒤 그쪽에 업로드할 예정.
