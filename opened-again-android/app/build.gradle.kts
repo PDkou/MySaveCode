@@ -11,6 +11,11 @@ plugins {
 // Kotlin-DSL accessor named `java` (the JavaPluginExtension accessor), which
 // shadows the `java.*` package prefix in this script and breaks the
 // fully-qualified form ("Unresolved reference: util").
+//
+// keystore.properties itself is gitignored and never committed -- see
+// README.md's "Signing & Play Console" section for what this file must
+// contain, how it's generated, and how it maps to the
+// build-opened-again-release.yml CI secrets.
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) keystorePropertiesFile.inputStream().use { load(it) }

@@ -27,6 +27,58 @@ Android build validation must run on a network-enabled runner. See `BUILD_STATUS
 `../.github/workflows/build-opened-again-*.yml` (this app lives inside the `MySaveCode`
 monorepo, so its CI workflows are at the repo root, not under this folder).
 
+## Signing & Play Console
+
+This app is not yet signed for release -- `keystore.properties` doesn't exist
+in this repo (it's gitignored, alongside `*.jks`/`*.keystore`), and
+`app/build.gradle.kts`'s `release` signing config only registers itself when
+that file is present.
+
+**Generating the upload keystore** (one-time). This is the app's permanent
+publishing identity -- losing it (without Play App Signing enrollment) can
+permanently block future updates, and it must never be reused from another
+app's keystore, since Play Console binds an upload key to one specific app
+listing:
+
+```bash
+keytool -genkeypair -v \
+  -keystore opened-again-release.jks \
+  -alias opened_again_upload \
+  -keyalg RSA -keysize 2048 -validity 10957 \
+  -storetype PKCS12
+```
+(`-validity 10957` is 30 years -- an upload key needs to outlive the app by a
+wide margin. `keytool` prompts for the store password, key password, and the
+certificate's distinguished-name fields; none of the DN fields affect Play
+Store review, so placeholder values are fine.)
+
+**Local builds** -- create `opened-again-android/keystore.properties`
+(gitignored) next to this README:
+```properties
+storeFile=/absolute/or/relative/path/to/opened_again_release.jks
+storePassword=...
+keyAlias=opened_again_upload
+keyPassword=...
+```
+
+**CI signed release builds** (`.github/workflows/build-opened-again-release.yml`,
+manual `workflow_dispatch`) read the same four values from GitHub Actions
+repository secrets instead of a committed file:
+
+| Secret | Value |
+|---|---|
+| `ANDROID_KEYSTORE_B64` | `base64 -w0 opened_again_release.jks` (or `base64 -i ...` on macOS) |
+| `ANDROID_STORE_PASSWORD` | the store password chosen above |
+| `ANDROID_KEY_ALIAS` | `opened_again_upload` (or whatever alias was chosen) |
+| `ANDROID_KEY_PASSWORD` | the key password chosen above |
+
+Add these under the repo's Settings -> Secrets and variables -> Actions
+before running that workflow -- it fails fast with a clear error naming the
+missing secret otherwise. The workflow decodes the keystore to a temp file,
+writes a throwaway `keystore.properties`, builds the AAB, then deletes both
+regardless of build outcome (`if: always()`), so the key material never
+persists on the runner past that one job.
+
 ## Design/product docs
 
 - `docs/PRODUCT_SPEC.md` — product rules, user flow, incident catalog, tone
