@@ -465,7 +465,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.71.0';
+const APP_VERSION='0.72.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1426,7 +1426,7 @@ function openReminderSheet(){
   const leftBtn=isOn
     ?`<button class="cancel" onclick="turnOffReminder()">${l('끄기','オフにする','Turn off')}</button>`
     :`<button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button>`;
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('일일 리마인더','デイリーリマインダー','Daily reminder')}</div><div style="display:flex;flex-direction:column;gap:14px;align-items:center;padding:6px 0"><input type="time" id="reminderTimeInput" value="${hh}:${mm}" style="font-size:22px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)"><p style="font-size:12px;color:var(--muted);text-align:center;margin:0">${l('이 시간에 오늘의 사건을 확인하라고 알려드려요.','この時間に今日の事件を確認するようお知らせします。','We\'ll remind you to check today\'s cases at this time.')}</p></div></div><div class="sheet-actions">${leftBtn}<button class="confirm" onclick="saveReminderTime()">${isOn?l('저장','保存','Save'):l('켜기','オンにする','Turn on')}</button></div></div></div>`;
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('일일 리마인더','デイリーリマインダー','Daily reminder')}</div><div style="display:flex;flex-direction:column;gap:14px;align-items:center;padding:6px 0"><input type="time" id="reminderTimeInput" value="${hh}:${mm}" style="font-size:22px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)"><p style="font-size:12px;color:var(--muted);text-align:center;margin:0">${l('이 시간에 오늘의 사건을 알려드리고, 하루 중 사건이 여러 건 쌓이면 따로도 알려드려요.','この時間に今日の事件をお知らせし、一日の中で複数の事件が発生した場合も別途お知らせします。','We\'ll tell you about today\'s cases at this time, and separately if several incidents pile up during the day.')}</p></div></div><div class="sheet-actions">${leftBtn}<button class="confirm" onclick="saveReminderTime()">${isOn?l('저장','保存','Save'):l('켜기','オンにする','Turn on')}</button></div></div></div>`;
 }
 function saveReminderTime(){
   const input=document.getElementById('reminderTimeInput');

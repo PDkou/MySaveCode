@@ -35,8 +35,8 @@ android {
         applicationId = "com.howling.openedagain"
         minSdk = 29
         targetSdk = 36
-        versionCode = 71
-        versionName = "0.71.0"
+        versionCode = 72
+        versionName = "0.72.0"
     }
 
     buildTypes {
@@ -114,4 +114,18 @@ dependencies {
     // still on kapt, not Room 3.0's KSP-only compiler.
     implementation("androidx.room:room-runtime:2.8.4")
     kapt("androidx.room:room-compiler:2.8.4")
+    // v0.72: director-requested engagement notifications ("알림으로 오늘의
+    // 카드를 알려주기" / "알림으로 여러 사건 발생한것을 알려주기") --
+    // requires this app's first-ever background analysis (everywhere else,
+    // usage data is deliberately only ever read when the app is actually
+    // open, see NativeBridge.analyzeToday()'s callers). WorkManager (not
+    // another plain AlarmManager repeat like the existing daily reminder)
+    // because periodic background CPU/battery-costing work is exactly what
+    // it exists to schedule correctly across Doze/App Standby -- see
+    // IncidentCheckScheduler's own comment for the full reasoning. Only
+    // the plain (non-coroutine) `Worker` API is used, so nothing here
+    // depends on kotlinx-coroutines-android's own version despite pulling
+    // in the -ktx artifact for its nicer Kotlin builders
+    // (PeriodicWorkRequestBuilder, workDataOf).
+    implementation("androidx.work:work-runtime-ktx:2.11.2")
 }

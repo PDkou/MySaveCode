@@ -1,7 +1,6 @@
 package com.howling.openedagain
 
 import android.app.Activity
-import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
@@ -9,14 +8,11 @@ import android.webkit.JavascriptInterface
 import androidx.core.content.FileProvider
 import com.howling.openedagain.core.*
 import com.howling.openedagain.data.HistoryRepository
-import com.howling.openedagain.data.UsageEventCollector
+import com.howling.openedagain.data.IncidentAnalyzer
 import com.howling.openedagain.ui.ShareCardRenderer
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 
 /**
  * Single JS bridge for the WebView shell. Keep adding native-only capabilities here
@@ -35,23 +31,14 @@ class NativeBridge(
     // table the way days/discoveries now do (see HistoryRepository.kt).
     private val prefs get() = activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
-    // "YYYY-MM-DD" in UTC -- MUST match index.html's todayKey() exactly
-    // (`new Date().toISOString().slice(0,10)`, also UTC) so a given
-    // calendar day's analyzeToday() call and the JS side's own idea of
-    // "today" (used for weekRecap()'s day labels, shouldShowReveal()'s
-    // once-per-day gate, etc.) always agree on which row is "today".
-    private fun utcDateKey(): String = Instant.now().toString().substring(0, 10)
+    // v0.72: the actual analysis pipeline moved to IncidentAnalyzer (see its
+    // own header comment) so the new background IncidentCheckWorker can run
+    // the exact same steps -- this class keeps only the JS-facing JSON
+    // shape below.
+    private val analyzer = IncidentAnalyzer(activity, history)
 
     @JavascriptInterface
-    fun hasUsageAccess(): Boolean {
-        val appOps = activity.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = appOps.unsafeCheckOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            android.os.Process.myUid(),
-            activity.packageName
-        )
-        return mode == AppOpsManager.MODE_ALLOWED
-    }
+    fun hasUsageAccess(): Boolean = IncidentAnalyzer.hasUsageAccess(activity)
 
     // v0.55: director feedback -- "알림 허용 하는거 누를때 이 앱이
     // 어디에 있는지 표시하는 기능도 있었으면" -- turned out (confirmed
@@ -134,16 +121,6 @@ class NativeBridge(
     fun analyzeToday(): String {
         if (!hasUsageAccess()) return JSONObject().put("permission", false).toString()
 
-        val zone = ZoneId.systemDefault()
-        val start = LocalDate.now().atStartOfDay(zone).toInstant().toEpochMilli()
-        val end = System.currentTimeMillis()
-        val raw = UsageEventCollector(activity).collect(start, end)
-        val sessions = SessionBuilder().build(raw, nowMs = end)
-        val incidents = IncidentDetector(zoneId = zone).detectDay(sessions)
-        history.record(incidents)
-        val report = DailyReportEngine().build(incidents)
-        val summary = DailySummaryEngine(zone).build(sessions)
-        val summaryJson = summaryToJson(summary)
         // v0.70: this used to be index.html's own job -- persistSnapshot()
         // wrote state.history.days[todayKey()] from this same data on every
         // refresh() (cold start + every app resume) and saved it to
@@ -153,7 +130,11 @@ class NativeBridge(
         // itself re-renders around it, and JS no longer needs to manage
         // (or persist) any of its own copy of this history at all -- see
         // getHistory() below and index.html's own v0.70 comments.
-        history.recordDay(utcDateKey(), summaryJson, report.totalIncidents, report.hiddenCount, report.legendaryCount)
+        // v0.72: the actual pipeline (collect events -> sessions ->
+        // incidents -> record -> report/summary -> recordDay) now lives in
+        // IncidentAnalyzer, shared with the new background
+        // IncidentCheckWorker -- see its own header comment.
+        val (report, _, summaryJson) = analyzer.analyzeToday()
 
         return JSONObject().apply {
             put("permission", true)
@@ -318,14 +299,23 @@ class NativeBridge(
     // hour/minute the user picked via a native <input type="time">
     // (renders Android's own time-picker dialog, no custom native UI
     // needed here).
+    // v0.72: this single toggle now also arms/disarms the new periodic
+    // background "여러 사건 발생" check (IncidentCheckScheduler) -- director
+    // asked for both notification types together, and a second standalone
+    // settings row for "should we also occasionally check in the
+    // background" would be a confusing amount of new surface for what is,
+    // from the user's point of view, one decision ("do I want notifications
+    // from this app or not").
     @JavascriptInterface
     fun scheduleDailyReminder(hour: Int, minute: Int) {
         ReminderScheduler.schedule(activity, hour, minute)
+        IncidentCheckScheduler.schedule(activity)
     }
 
     @JavascriptInterface
     fun cancelDailyReminder() {
         ReminderScheduler.cancel(activity)
+        IncidentCheckScheduler.cancel(activity)
     }
 
     // v0.47: mirrors index.html's state.settings.language into a small
@@ -351,20 +341,6 @@ class NativeBridge(
         val pm = activity.packageManager
         pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
     }.getOrDefault("")
-
-    private fun summaryToJson(s: DailyUsageSummary) = JSONObject().apply {
-        put("startTime", s.startTime)
-        put("endTime", s.endTime)
-        put("totalUsageMs", s.totalUsageMs)
-        put("openCount", s.openCount)
-        put("switchCount", s.switchCount)
-        put("uniqueApps", s.uniqueApps)
-        put("unlockSessions", s.unlockSessions)
-        put("nightUsageMs", s.nightUsageMs)
-        put("topPackages", JSONArray(s.topPackages.map { (pkg, ms) ->
-            JSONObject().put("packageName", pkg).put("durationMs", ms)
-        }))
-    }
 
     private fun incidentToJson(i: DetectedIncident) = JSONObject().apply {
         put("type", i.type.name)
