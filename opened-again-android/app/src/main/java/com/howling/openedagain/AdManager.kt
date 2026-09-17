@@ -2,6 +2,7 @@ package com.howling.openedagain
 
 import android.app.Activity
 import android.view.View
+import android.webkit.WebView
 import android.widget.FrameLayout
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -42,6 +43,7 @@ class AdManager(
     }
 
     private var bannerContainer: FrameLayout? = null
+    private var webView: WebView? = null
     private var bannerView: AdView? = null
     private var initialized = false
 
@@ -58,6 +60,24 @@ class AdManager(
         container.visibility = View.GONE
     }
 
+    // v0.75: director feedback (real device, screenshot) -- a visible blank
+    // gap of the app's own background color appeared between the WebView's
+    // own content (its bottom tab bar) and the banner whenever the banner
+    // toggled between hidden/shown. Root cause: this WebView sits in a
+    // LinearLayout with layout_height=0dp+weight=1 next to bannerContainer
+    // (see MainActivity.kt) -- a well-known WebView quirk is that it does
+    // NOT reliably reflow its own rendered content when a *sibling* view's
+    // visibility/size changes the space actually available to it, even
+    // though the LinearLayout itself does correctly recompute the WebView's
+    // new bounds. The Android-side layout is correct; the WebView's own
+    // internal compositor just doesn't always notice on its own. Kept here
+    // (not MainActivity) since this class is the one place that already
+    // knows every moment bannerContainer's effective size/visibility
+    // changes; attachWebView() below wires this class up to force the fix.
+    fun attachWebView(view: WebView) {
+        webView = view
+    }
+
     // index.html's render() drives this via its syncBannerVisibility()
     // helper on every render: true while the current tab is Records/Archive
     // or the exit-confirmation sheet is open, and no full-screen overlay
@@ -68,6 +88,7 @@ class AdManager(
         activity.runOnUiThread {
             if (isAdsRemoved() || !visible) {
                 container.visibility = View.GONE
+                webView?.requestLayout()
                 return@runOnUiThread
             }
             container.visibility = View.VISIBLE
@@ -79,6 +100,7 @@ class AdManager(
                 ad.loadAd(AdRequest.Builder().build())
                 bannerView = ad
             }
+            webView?.requestLayout()
         }
     }
 
@@ -90,6 +112,7 @@ class AdManager(
             bannerContainer?.visibility = View.GONE
             bannerView?.destroy()
             bannerView = null
+            webView?.requestLayout()
         }
     }
 }

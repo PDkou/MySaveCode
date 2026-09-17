@@ -148,10 +148,18 @@ class MainActivity : Activity() {
                 bannerContainer.paddingLeft, bannerContainer.paddingTop,
                 bannerContainer.paddingRight, bars.bottom
             )
+            // v0.75: this padding change alone doesn't reliably make the
+            // WebView notice its own effective space changed (see
+            // AdManager.attachWebView()'s own comment for the full "WebView
+            // doesn't reflow when a sibling resizes" story) -- nudge it
+            // explicitly whenever insets are (re)delivered, e.g. on
+            // rotation or a 3-button/gesture nav mode switch.
+            webView.requestLayout()
             insets
         }
         setContentView(root)
         adManager.attachBannerContainer(bannerContainer)
+        adManager.attachWebView(webView)
         adManager.init()
         billingManager.start()
 

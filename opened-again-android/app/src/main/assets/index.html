@@ -465,7 +465,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.74.0';
+const APP_VERSION='0.75.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1814,7 +1814,29 @@ function render(){
   // branch right below (reuses the same fixed-height "app detail-mode"
   // flex column and fitTcgCard()/mountHolo() wiring) -- checked first so
   // it takes priority the moment it's armed.
-  if(state.revealItem){root.className='app detail-mode';root.innerHTML=revealScreen(state.revealItem);fitTcgCard();mountHolo();return}
+  if(state.revealItem){
+    root.className='app detail-mode';root.innerHTML=revealScreen(state.revealItem);fitTcgCard();mountHolo();
+    // v0.75: director feedback (real device) -- an EPIC+ reveal card never
+    // responded to drag-tilt at all, even long after the spin-in finished
+    // (confirmed: mountHolo()'s pointer handlers ran and set the inline
+    // style.transform correctly, but the element's actual COMPUTED
+    // transform stayed frozen at identity). Root cause: `.tcg-card.reveal-
+    // anim{animation:revealCardIn ... both}` -- the `both` fill mode keeps
+    // this animation associated with the element (and so keeps winning the
+    // cascade for `transform`, over any inline style) forever, not just
+    // while it's actually playing, because the `.reveal-anim` class itself
+    // was never removed once the one-shot entrance finished. The detail
+    // page's card never carries this class, which is why drag-tilt there
+    // was never affected and this got missed until now. Drop the class the
+    // moment the entrance animation actually ends so `transform` reverts to
+    // ordinary cascade rules (base `.tcg-card` transition + whatever
+    // mountHolo()'s drag handlers set) -- same visual rest state either
+    // way, since revealCardIn's own end keyframe is already scale(1)
+    // rotateY(0), so nothing jumps when the class comes off.
+    const revealCard=document.querySelector('.tcg-card.reveal-anim');
+    if(revealCard)revealCard.addEventListener('animationend',()=>revealCard.classList.remove('reveal-anim'),{once:true});
+    return;
+  }
   // v0.35: full-screen detail page takes over completely (its own compact
   // header, no brand header/bottom tab bar) -- checked before header()
   // even runs, matching the mockup's dedicated "사건 카드 상세" screen.
