@@ -22,21 +22,29 @@ export async function checkNativePushPermission(): Promise<PermissionState> {
 // later via the 'registration'/'registrationError' events, so this wraps
 // that in a promise for callers that just want "give me the token or
 // throw". Listeners are attached before calling register() to avoid a race
-// where the native side fires the event before anything is listening.
+// where the native side fires the event before anything is listening, and
+// removed again once settled -- subscribeToNativePush/unsubscribeFromNative
+// Push both call this on every toggle, and the plugin's addListener has no
+// implicit cleanup, so leaving them attached leaks one pair of closures per
+// call for the lifetime of the app.
 async function registerAndGetFcmToken(): Promise<string> {
   return new Promise((resolve, reject) => {
     let settled = false;
     const settle = (fn: () => void) => {
       if (settled) return;
       settled = true;
+      void Promise.all([registrationHandle, registrationErrorHandle]).then((handles) => {
+        handles.forEach((handle) => void handle.remove());
+      });
       fn();
     };
-    void Promise.all([
-      PushNotifications.addListener('registration', (token) => settle(() => resolve(token.value))),
-      PushNotifications.addListener('registrationError', (err) =>
-        settle(() => reject(new Error(err.error || 'push_registration_failed'))),
-      ),
-    ]).then(() => {
+    const registrationHandle = PushNotifications.addListener('registration', (token) =>
+      settle(() => resolve(token.value)),
+    );
+    const registrationErrorHandle = PushNotifications.addListener('registrationError', (err) =>
+      settle(() => reject(new Error(err.error || 'push_registration_failed'))),
+    );
+    void Promise.all([registrationHandle, registrationErrorHandle]).then(() => {
       void PushNotifications.register();
     });
   });

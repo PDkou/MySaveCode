@@ -74,7 +74,8 @@
     "networkError": "通信状態を確認してください。",
     "unknownError": "エラーが発生しました。",
     "undo": "元に戻す",
-    "deletedToast": "{{count}}件削除しました"
+    "deletedToast": "{{count}}件削除しました",
+    "deleteFailedToast": "削除できませんでした。もう一度お試しください。"
   },
   "auth": {
     "loginTab": "ログイン",
