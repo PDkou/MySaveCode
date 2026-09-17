@@ -2968,6 +2968,10 @@ textarea {
   flex-shrink: 0;
 }
 
+.undo-snackbar-error {
+  background: var(--error);
+}
+
 /* ---------- Completion celebration ---------- */
 
 .confetti-burst {

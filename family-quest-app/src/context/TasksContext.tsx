@@ -40,6 +40,8 @@ interface TasksContextValue {
   requestDelete: (taskIds: string[]) => void;
   pendingDeleteCount: number;
   undoPendingDelete: () => void;
+  deleteFailed: boolean;
+  dismissDeleteFailed: () => void;
   refresh: () => Promise<void>;
 }
 
@@ -52,6 +54,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const [assigneesByTaskId, setAssigneesByTaskId] = useState<Map<string, string[]>>(new Map());
   const [loading, setLoading] = useState(true);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[] | null>(null);
+  const [deleteFailed, setDeleteFailed] = useState(false);
   const pendingTimerRef = useRef<number | null>(null);
 
   // Guards against overlapping load() calls landing out of order -- this is
@@ -203,10 +206,14 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.from('tasks').delete().in('id', ids);
     if (error) {
       // The tasks were only optimistically hidden, never actually removed
-      // from the server; refreshing brings them back into view so a failed
-      // delete doesn't silently disappear.
+      // from the server; refreshing brings them back into view, and
+      // deleteFailed drives UndoSnackbar's error toast so the user knows
+      // *why* they reappeared. commitPendingDelete is always invoked
+      // fire-and-forget (below), so throwing here would just become an
+      // unhandled promise rejection -- nothing is ever awaiting this call.
+      setDeleteFailed(true);
       await refresh();
-      throw error;
+      return;
     }
     await refresh();
   }, [refresh]);
@@ -220,10 +227,13 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     if (pendingTimerRef.current !== null) {
       window.clearTimeout(pendingTimerRef.current);
       pendingTimerRef.current = null;
-      setPendingDeleteIds((prev) => {
-        if (prev) void commitPendingDelete(prev);
-        return null;
-      });
+      // Read via the updater's `prev` only to swap state; the commit call
+      // itself must stay outside the updater -- setState updaters must be
+      // pure, and this runs under <StrictMode> (main.tsx), which
+      // double-invokes updaters in dev specifically to catch side effects
+      // like a network call placed here.
+      if (pendingDeleteIds) void commitPendingDelete(pendingDeleteIds);
+      setPendingDeleteIds(null);
     }
 
     setPendingDeleteIds(taskIds);
@@ -231,7 +241,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       pendingTimerRef.current = null;
       void commitPendingDelete(taskIds);
     }, UNDO_WINDOW_MS);
-  }, [commitPendingDelete]);
+  }, [commitPendingDelete, pendingDeleteIds]);
 
   const undoPendingDelete = useCallback(() => {
     if (pendingTimerRef.current !== null) {
@@ -239,6 +249,10 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       pendingTimerRef.current = null;
     }
     setPendingDeleteIds(null);
+  }, []);
+
+  const dismissDeleteFailed = useCallback(() => {
+    setDeleteFailed(false);
   }, []);
 
   useEffect(() => {
@@ -279,8 +293,10 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     requestDelete,
     pendingDeleteCount: pendingDeleteIds?.length ?? 0,
     undoPendingDelete,
+    deleteFailed,
+    dismissDeleteFailed,
     refresh,
-  }), [tasks, assigneesByTaskId, loading, createTask, completeTasks, togglePin, requestDelete, pendingDeleteIds, undoPendingDelete, refresh]);
+  }), [tasks, assigneesByTaskId, loading, createTask, completeTasks, togglePin, requestDelete, pendingDeleteIds, undoPendingDelete, deleteFailed, dismissDeleteFailed, refresh]);
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
 }

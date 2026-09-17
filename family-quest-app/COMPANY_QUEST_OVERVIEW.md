@@ -104,10 +104,59 @@
     (병합해온 쪽 부모와 비교하면 우리 쪽 실제 변경이 드러남), `open-again`처럼 병합 없이
     이어지는 일반 커밋은 그 직전 커밋 하나와 비교하는 것만으로 충분합니다. 브랜치의 첫 배포
     여부나 다른 원격 브랜치의 fetch 여부에 의존하지 않고 항상 로컬에 있는 직계 부모 커밋만
-    사용하므로, Vercel의 얕은 클론 환경에서도 안정적입니다 (실제 저장소 히스토리 4개 커밋으로
-    직접 로컬 재현해서 기대한 대로 동작함을 확인).
-
-## 5. 수익화 (B2B 구독) — 요약
+    사용하므로 안정적이라 판단했습니다. **다만 이때 검증은 일반 `git checkout`/`git stash`로
+    로컬 전체 히스토리가 다 있는 상태에서만 했고, Vercel이 실제로 쓰는 얕은 클론(shallow
+    clone) 환경으로는 검증하지 않았습니다 -- 이게 바로 아래 네 번째 재발의 원인입니다.**
+  - **`vercel.json`은 프로젝트 전체가 아니라 빌드 대상 브랜치/커밋의 git 트리에서 읽힌다는
+    점을 놓쳐서 한 번 더 재발했습니다.** 위 수정을 production에 merge해도, 그 이전에 이미
+    갈라져 나가 있던 다른 무관한 브랜치(`open-again` 등)는 자기 브랜치에 박제된 **구버전**
+    `vercel.json`을 계속 씁니다 -- production과 다시 합쳐지기 전까지는 새 로직을 전혀 못
+    받습니다. 이 때문에 `open-again`에서 같은 오탐(무관한 변경인데 빌드 시도 → 실패 메일)이
+    한 번 더 발생.
+    - 처음엔 **Vercel 대시보드의 Ignored Build Step에도 동일한 커맨드를 (Custom으로)
+      등록**하면 해결될 거라 생각했지만, 이건 **틀렸습니다** -- Vercel 공식 문서상
+      `vercel.json`의 `ignoreCommand`가 있으면 그게 대시보드 설정보다 항상 우선합니다.
+      즉 이미 (낡은) `vercel.json`을 갖고 있는 브랜치엔 대시보드 설정이 전혀 안 먹힙니다.
+      대시보드 설정은 **애초에 `business-quest-app/vercel.json`이 없는 브랜치**(예:
+      `HelloToday`, `claude/category-data-management-app-jo6f6i`)에만 안전망으로
+      작동합니다.
+    - 이미 낡은 `vercel.json`을 갖고 있던 `open-again`, `claude/travel-photo-map-app-c6p5p6`
+      두 브랜치는 **그 파일 자체를 삭제**하는 것으로 해결했습니다(두 프로젝트 다
+      business-quest-app을 전혀 안 쓰므로 파일이 있을 이유가 없음). 파일이 없어지면
+      비로소 대시보드 설정으로 정상 폴백됩니다.
+    - 결론: **`vercel.json`은 갈라진 브랜치에 소급 적용이 안 되는 게 근본 한계**이며,
+      대시보드 설정은 그 브랜치에 자기만의 `vercel.json`이 없을 때만 유효합니다. 이미
+      갈라진 브랜치가 business-quest-app을 정말 안 쓴다면 그 브랜치의 stale
+      `vercel.json`을 지우는 것이 유일한 실제 해결책입니다.
+  - **네 번째 재발: "부모 전부와 비교" 로직 자체가 Vercel의 실제 얕은 클론 환경에서
+    아예 작동을 안 했습니다.** PR #281(우리 브랜치 자체의 정상적인 일반 커밋)이
+    `family-quest-app/src`를 명백히 건드렸는데도 business-quest-app이 또 "Skipped -
+    Not affected"로 나온 걸 보고 재조사. `git rev-parse HEAD^@`는 그 커밋의 부모
+    SHA를 커밋 오브젝트 헤더에서 읽어오는데, `--depth=1` 얕은 클론(Vercel이 실제로
+    쓰는 방식)에서는 **shallow 경계 커밋의 부모 목록이 아예 빈 값으로 잘립니다**
+    (git이 `.git/shallow`에 그 커밋을 기록하고 부모가 없는 것처럼 취급). 그러니 for
+    루프가 한 번도 안 돌고 바로 `exit 0`(스킵)으로 떨어졌던 것 -- 머지 커밋이든 일반
+    커밋이든 상관없이, **얕은 클론에서 만들어진 모든 빌드가 무조건 스킵됐다는 뜻**입니다.
+    실제 원격(`file:///...` 로컬 경로가 아니라 `git fetch --depth=1`로 만든 진짜 얕은
+    클론) 3가지 케이스(일반 커밋/머지 커밋/무관한 변경)로 재현·검증. 고친 방법:
+    `git rev-parse --is-shallow-repository`가 참이면 `git fetch --deepen=1 origin
+    "$(git rev-parse HEAD)"`로 딱 한 세대만 더 받아온 뒤 그 다음에 부모 목록을 구함
+    (detached HEAD에서 `git fetch --deepen=1 origin`처럼 대상 커밋 SHA 없이 부르면
+    실패하는 것도 확인 -- 반드시 SHA를 명시해야 함). 그래도 부모를 못 구하면(네트워크
+    등으로 fetch 자체가 실패) 조용히 스킵하는 대신 **안전하게 빌드 쪽으로 fallback**
+    (`exit 1`)하도록 함 -- "혹시 몰라서 빌드함"이 "몰라서 조용히 스킵함"보다 훨씬 안전.
+  - **다섯 번째 재발: 그 수정본 자체가 Vercel에 아예 반영이 안 됐습니다.** PR #281에
+    올린 뒤 이번엔 "Skipped"가 아니라 **`Error`**로 배포 자체가 실패. Vercel 인증 정보가
+    없어서 로그를 못 보다가, 사용자가 대시보드에서 직접 확인해서 알려준 실제 원인:
+    **`vercel.json`의 `ignoreCommand`는 256자 제한이 있는데, 네 번째 수정본이 420자라
+    스키마 검증 단계에서 통째로 거부됐던 것**입니다 (`ignoreCommand` should NOT be
+    longer than 256 characters). 즉 그 배포는 우리 로직이 틀려서가 아니라 파일 자체가
+    아예 안 읽혀서 실패한 것. `cd "$(git rev-parse --show-toplevel)"`로 저장소 루트로
+    이동하는 대신, Vercel의 Ignored Build Step이 애초에 **프로젝트 Root Directory
+    (`business-quest-app`)를 작업 디렉터리로 실행**한다는 점을 이용해 상대경로
+    (`.`/`../family-quest-app/src`/`../package-lock.json`)로 바꾸고 `is-shallow-
+    repository` 조건문 등 군더더기를 걷어내 **220자**로 줄였습니다 (동일한 3가지
+    케이스로 로컬 재검증 완료). 교훈: `vercel.json` 값을 늘릴 때마다 글자 수를 확인할 것.
 
 전체 근거는 `MONETIZATION_DESIGN.md` 2번. **현재 방향만 정해짐, 코드 착수 전(📋)**:
 
