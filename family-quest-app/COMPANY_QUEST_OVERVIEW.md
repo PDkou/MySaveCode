@@ -145,8 +145,18 @@
     실패하는 것도 확인 -- 반드시 SHA를 명시해야 함). 그래도 부모를 못 구하면(네트워크
     등으로 fetch 자체가 실패) 조용히 스킵하는 대신 **안전하게 빌드 쪽으로 fallback**
     (`exit 1`)하도록 함 -- "혹시 몰라서 빌드함"이 "몰라서 조용히 스킵함"보다 훨씬 안전.
-
-## 5. 수익화 (B2B 구독) — 요약
+  - **다섯 번째 재발: 그 수정본 자체가 Vercel에 아예 반영이 안 됐습니다.** PR #281에
+    올린 뒤 이번엔 "Skipped"가 아니라 **`Error`**로 배포 자체가 실패. Vercel 인증 정보가
+    없어서 로그를 못 보다가, 사용자가 대시보드에서 직접 확인해서 알려준 실제 원인:
+    **`vercel.json`의 `ignoreCommand`는 256자 제한이 있는데, 네 번째 수정본이 420자라
+    스키마 검증 단계에서 통째로 거부됐던 것**입니다 (`ignoreCommand` should NOT be
+    longer than 256 characters). 즉 그 배포는 우리 로직이 틀려서가 아니라 파일 자체가
+    아예 안 읽혀서 실패한 것. `cd "$(git rev-parse --show-toplevel)"`로 저장소 루트로
+    이동하는 대신, Vercel의 Ignored Build Step이 애초에 **프로젝트 Root Directory
+    (`business-quest-app`)를 작업 디렉터리로 실행**한다는 점을 이용해 상대경로
+    (`.`/`../family-quest-app/src`/`../package-lock.json`)로 바꾸고 `is-shallow-
+    repository` 조건문 등 군더더기를 걷어내 **220자**로 줄였습니다 (동일한 3가지
+    케이스로 로컬 재검증 완료). 교훈: `vercel.json` 값을 늘릴 때마다 글자 수를 확인할 것.
 
 전체 근거는 `MONETIZATION_DESIGN.md` 2번. **현재 방향만 정해짐, 코드 착수 전(📋)**:
 
