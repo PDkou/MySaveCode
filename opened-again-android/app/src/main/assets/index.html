@@ -465,7 +465,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.70.0';
+const APP_VERSION='0.71.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -923,8 +923,29 @@ function createCardHolo(canvas,makeCanvas,dpr=1,spectrumColors){
   // source image's origin, so this file makes zero getImageData/
   // putImageData calls anywhere (moot now anyway, v0.59, since this
   // function no longer draws any image at all -- see top-of-file comment).
+  // v0.71: director feedback (real device) -- dragging the card sometimes
+  // lags/freezes ("카드 움직일때 렉걸려서 가끔 안움직일때가 있는데").
+  // Root cause: this whole function redraws two full-card canvases (clear +
+  // 2 gradient fills + this flake loop + a rim stroke) from scratch on
+  // every single animation frame while dragging. flakeCount below scaled
+  // with W*H, and W/H are sized off the real device's devicePixelRatio
+  // (mountHolo()) -- on a modern ~2.5-3x-dpr phone that was ~2,400-4,500
+  // flakes recomputed 60x/second, comfortably blowing the 16ms frame
+  // budget on anything but a fast/cool device (confirmed by porting this
+  // exact code into a standalone benchmark page: ~10-11ms/frame at the old
+  // density on a modest desktop browser, well past budget once a real
+  // phone's slower CPU or thermal throttling is factored in -- matches the
+  // "가끔"/device-dependent nature of the report). Director explicitly
+  // chose the middle path over either leaving this untouched or flattening
+  // it to a static-texture-and-transform-only redesign (which measured
+  // dramatically cheaper but looked "밋밋"/flat by comparison): keep this
+  // exact algorithm and visual character, just shrink its per-frame cost --
+  // see mountHolo()'s v0.71 comments for the other two levers (resolution
+  // cap, drag-only rendering with frame-skip). Halving flake density here
+  // is the third lever, purely a raw density cut with no other behavior
+  // change.
   let seed=27;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
-  const flakeCount=Math.max(24,Math.round(W*H/380));
+  const flakeCount=Math.max(24,Math.round(W*H/650));
   const flakes=Array.from({length:flakeCount},()=>({x:random()*W,y:random()*H,nx:random()*2-1,ny:random()*2-1,r:(.3+random()*.65)*dpr}));
   const fallSigma=Math.max(W,H)*.55;
   function render(t,px,py,effects=true){
@@ -1004,7 +1025,17 @@ function mountHolo(){
   // pixel constants (border radius, stroke widths, flake size) to match --
   // everything else in there is already a fraction of W/H, so it scales
   // for free.
-  const dpr=window.devicePixelRatio||1;
+  // v0.71: capped at 2 (was the raw, uncapped devicePixelRatio) -- the
+  // second of three levers against the drag-lag report (see
+  // createCardHolo()'s v0.71 comment for the full story). A real phone's
+  // dpr of 2.5-3 was squaring into a canvas with 1.5-2x the pixels a dpr-2
+  // cap produces, and every full-canvas clear/gradient-fill/flake-loop
+  // pass in render() costs roughly proportional to pixel count -- capping
+  // this alone cuts that part of the per-frame cost by roughly half on the
+  // highest-dpr devices, with no visible sharpness loss for a soft
+  // shimmer/sparkle layer (unlike the crisp card art this same reasoning
+  // was applied to in v0.41, this canvas has no fine detail or text to lose).
+  const dpr=Math.min(2,window.devicePixelRatio||1);
   canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
   // v0.50: director feedback -- the featured card's art occasionally
   // renders as scrambled/torn horizontal color bands instead of the real
@@ -1073,7 +1104,7 @@ function mountHolo(){
   const MAX_TILT_DEG=14;
   scene.style.touchAction='none';
   let drag=null; // {startX,startY,moved} while the pointer is down
-  let manualPos=null; // {px,py} while actively tilting, else null (auto-sweep)
+  let manualPos=null; // {px,py} while actively tilting, else null (not dragging)
   const DRAG_THRESHOLD=8; // px of movement before a press counts as a tilt, not a tap
   function toNormalized(clientX,clientY){
     const r=scene.getBoundingClientRect();
@@ -1081,12 +1112,38 @@ function mountHolo(){
     const py=((clientY-r.top)/r.height)*2-1;
     return {px:Math.max(-1,Math.min(1,px)),py:Math.max(-1,Math.min(1,py))};
   }
+  // v0.71: third lever against the drag-lag report, and also director
+  // feedback from comparing a live before/after demo -- "만지지 않았는데도
+  // 빛이 돌아가는 느낌"(the light drifting on its own even when nothing is
+  // touching it) was called out as an unwanted side effect of the old
+  // automatic idle sweep, independent of the performance question. Fixed
+  // together: render() (and the rAF loop driving it) now only ever run
+  // while a drag is actually in progress -- the shimmer sits at one frozen,
+  // neutral-pose render(0,0,0) the rest of the time (below and in
+  // endDrag()), instead of continuously animating via the old
+  // render((now-start)/1000) auto-sweep branch. This alone removes ALL
+  // per-frame cost outside of active drags, which is most of the time a
+  // card is on screen. tick() also now only redraws every other frame
+  // (frameTick%2) while dragging -- a card being tilted by a finger reads
+  // just as smoothly at ~30fps as 60fps, and this halves the remaining
+  // drag-time cost on top of createCardHolo()'s flake-density cut and
+  // mountHolo()'s own dpr cap above.
+  effect.render(0,0,0);
+  let frameTick=0;
+  function tick(now){
+    if(!document.body.contains(canvas)){holoRaf=null;return}
+    if(!manualPos){holoRaf=null;return} // drag ended elsewhere (endDrag() already renders the neutral pose)
+    frameTick++;
+    if(frameTick%2===0)effect.render((now-start)/1000,manualPos.px,manualPos.py);
+    holoRaf=requestAnimationFrame(tick);
+  }
   scene.addEventListener('pointerdown',e=>{drag={startX:e.clientX,startY:e.clientY,moved:false}});
   scene.addEventListener('pointermove',e=>{
     if(!drag)return;
     if(!drag.moved&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>DRAG_THRESHOLD){
       drag.moved=true;
       if(cardEl)cardEl.classList.add('tilting'); // drop the snap-back transition while actively dragging so the tilt tracks the finger with no lag
+      if(!holoRaf)holoRaf=requestAnimationFrame(tick); // shimmer redraw loop only runs while actually dragging
     }
     if(drag.moved){
       manualPos=toNormalized(e.clientX,e.clientY);
@@ -1109,18 +1166,12 @@ function mountHolo(){
     }
     if(cardEl){cardEl.classList.remove('tilting');cardEl.style.transform=''} // .tcg-card's own transition eases this back flat
     drag=null;manualPos=null;
+    if(holoRaf){cancelAnimationFrame(holoRaf);holoRaf=null}
+    effect.render(0,0,0); // freeze the shimmer back to its neutral pose -- no auto-sweep
   }
   scene.addEventListener('pointerup',endDrag);
   scene.addEventListener('pointercancel',endDrag);
   scene.addEventListener('pointerleave',endDrag);
-
-  function tick(now){
-    if(!document.body.contains(canvas)){holoRaf=null;return}
-    if(manualPos)effect.render((now-start)/1000,manualPos.px,manualPos.py);
-    else effect.render((now-start)/1000);
-    holoRaf=requestAnimationFrame(tick);
-  }
-  holoRaf=requestAnimationFrame(tick);
 }
 // v0.46: director feedback -- language switching lived in two places (this
 // header badge and the settings language row), doing the exact same thing
