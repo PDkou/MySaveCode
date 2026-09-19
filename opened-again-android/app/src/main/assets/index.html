@@ -465,7 +465,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.78.0';
+const APP_VERSION='0.79.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1499,7 +1499,7 @@ function openHelpSheet(){
   document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('도움말','ヘルプ','Help')}</div><p style="font-size:13px;line-height:1.7;color:var(--ink);margin:4px 0 0">${l('모니는 스마트폰의 사용 기록을 매일 조사해 특이한 습관을 사건 카드로 정리해 드려요. 홈 탭에서 오늘의 사건을, 기록 탭에서 오늘 하루의 숫자를, 보관함 탭에서 지금까지 모은 카드를 확인할 수 있어요. 모든 기록은 이 기기 안에만 저장되고 서버로 전송되지 않아요.','MONIはスマホの利用記録を毎日調べて、気になる習慣を事件カードにまとめます。ホームで今日の事件を、記録で本日の数字を、保管庫でこれまで集めたカードを確認できます。すべての記録はこの端末内にのみ保存され、サーバーへは送信されません。','MONI investigates your phone usage every day and turns odd habits into incident cards. Check today\'s case on Home, today\'s numbers on Records, and everything you\'ve collected on Archive. Every record stays on this device only and is never sent to a server.')}</p></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
 }
 function openAboutSheet(){
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('앱 정보','アプリ情報','About')}</div><div style="text-align:center;padding:6px 0 2px"><b style="font-size:16px">${l('또 열었네?','また開いた？','Opened Again?')}</b><div style="font-size:12px;color:var(--muted);margin-top:4px">v${APP_VERSION} · Howling</div></div></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('앱 정보','アプリ情報','About')}</div><div style="text-align:center;padding:6px 0 2px"><b style="font-size:16px">${l('또 열었네?','また開いた？','Opened Again?')}</b><div style="font-size:12px;color:var(--muted);margin-top:4px">v${APP_VERSION} · Howling Creative Studio</div></div></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
 }
 // v0.47: director-approved feature add -- an in-app privacy notice draft
 // (PACKAGE_USAGE_STATS-based apps generally need one before store review,

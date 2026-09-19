@@ -3332,3 +3332,17 @@ Plugin)는 애초에 `applicationId`(Play 스토어/설치 식별자)와
 applicationId로 빌드됨)이 이미 한 번 만들어졌었지만 패키지명이 달라져서
 그 파일은 이제 못 쓰게 됨 — 이 버전 기준으로 다시 빌드해서 director가
 Play Console에 새 패키지명으로 앱을 만든 뒤 그쪽에 업로드할 예정.
+
+## v0.79 — 새 릴리즈 AAB용 버전 코드 증가 + "Howling" 브랜드명 표기 마저 수정
+
+**배경**: v0.78 AAB를 이미 Play Console 내부 테스트에 한 번 업로드함 —
+Play Console은 같은 versionCode의 AAB를 두 번 못 올리게 막아서, director가
+"새로운버전으로 aab 생성" 요청. 기능 변경은 없고 순수하게 다음 업로드를
+위한 versionCode/versionName 증가.
+
+겸사겸사, 감독이 스토어 애셋 작업 중 지적했던 "Howling Creative Studio"
+브랜드명 표기 문제(줄여서 "Howling"만 쓰면 안 됨)가 앱 정보 시트
+(`openAboutSheet()`)에도 그대로 남아있던 걸 발견해서 같이 수정 —
+`v${APP_VERSION} · Howling` -> `v${APP_VERSION} · Howling Creative Studio`.
+
+버전 79/0.79.0.
