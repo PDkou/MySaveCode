@@ -30,8 +30,8 @@ android {
         applicationId = "com.howlingcreativestudio.hellotoday"
         minSdk = 26
         targetSdk = 36
-        versionCode = 51
-        versionName = "0.5.15"
+        versionCode = 52
+        versionName = "0.5.16"
     }
 
     compileOptions {
@@ -98,4 +98,12 @@ dependencies {
     // white flash on cold start). Backports the Android 12 SplashScreen API
     // down to minSdk 26 via a compat theme -- see Theme.App.Starting.
     implementation("androidx.core:core-splashscreen:1.0.1")
+
+    // Google Play's in-app review dialog (see MainActivity.requestReview()) --
+    // lets a user rate the app without leaving it. Google controls the
+    // dialog's own content and throttles how often it can actually appear;
+    // the app can't detect whether a review was really submitted (by design,
+    // to prevent gaming it), which is why index.html only ever offers this
+    // once per install rather than trying to track real submissions.
+    implementation("com.google.android.play:review:2.0.1")
 }

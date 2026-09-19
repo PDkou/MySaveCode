@@ -18,6 +18,9 @@ import android.view.*;
 import android.webkit.*;
 import android.widget.FrameLayout;
 import android.util.Base64;
+import com.google.android.play.core.review.ReviewInfo;
+import com.google.android.play.core.review.ReviewManager;
+import com.google.android.play.core.review.ReviewManagerFactory;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -381,6 +384,23 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void maybeShowInterstitial() {
             // InterstitialAd.show() requires the main thread.
             runOnUiThread(() -> { if (adManager != null) adManager.maybeShow(); });
+        }
+        // index.html offers this once per install (see maybeOfferReview()) and
+        // never asks again regardless of what happens here, because Play's
+        // review flow deliberately never tells the app whether the user
+        // actually submitted a review -- launchReviewFlow()'s task always
+        // completes "successfully" either way. If requestReviewFlow() itself
+        // fails (no Play Store account, etc.), there's nothing to fall back
+        // to; it just silently doesn't show anything.
+        @JavascriptInterface public void requestReview() {
+            runOnUiThread(() -> {
+                ReviewManager manager = ReviewManagerFactory.create(MainActivity.this);
+                manager.requestReviewFlow().addOnCompleteListener(request -> {
+                    if (!request.isSuccessful()) return;
+                    ReviewInfo reviewInfo = request.getResult();
+                    manager.launchReviewFlow(MainActivity.this, reviewInfo);
+                });
+            });
         }
         @JavascriptInterface public void pickContact() {
             try {
