@@ -266,7 +266,19 @@
   기능이 없어서 fire-and-forget~~ — v0.47에서 마침내 실제 알림 기능(일일
   리마인더, `ReminderScheduler`/`DailyReminderReceiver`)이 생겨서 이 권한을
   실제로 사용하기 시작함. 자세한 내용은 `docs/DEVELOPMENT_HISTORY.md` v0.47 참고.
-- release signing / AAB / closed test
+- ~~release signing / AAB / closed test~~ — **완료** (2026-09-19). 키스토어
+  생성(로컬 세션), `OPENEDAGAIN_*` GitHub Secrets 등록, applicationId를
+  `com.howlingcreativestudio.openedagain`로 Hello Today와 통일(v0.78),
+  서명된 릴리즈 AAB 빌드(v0.79/versionCode 79) 성공, Play Console 앱
+  콘텐츠 선언(개인정보처리방침/광고/앱 접근 권한/콘텐츠 등급/타겟층/
+  데이터 보안/AI 애셋 선언) 전부 완료, 스토어 등록정보(한/일 아이콘·
+  스크린샷 5장·피처 그래픽·설명, `store-assets/`에 보관)까지 마치고
+  director가 직접 AAB 업로드 → 출시 노트 작성 → 테스터 등록 → 버전
+  출시 → 국가/지역 한국·일본 제한 → **비공개 테스트로 확장**까지 전부
+  완료함. 비공개 테스트는 구글 정책 심사 대기 중(내부 테스트는 심사
+  없이 이미 라이브). 일회성 제품 `remove_ads`(구입 유형, 제품 ID
+  `remove_ads`)도 등록/활성화 진행. 남은 건 구글 심사 결과 대기와
+  실제 AdMob 계정/광고 단위 ID 교체(여전히 테스트 ID, 아래 항목 참고)뿐.
 - **수익화 1단계(v0.65, v0.69에서 광고 형태 정정, v0.76에서 종료
   모달 광고를 네이티브 카드로 재구현) — director 준비 필요**: 배너
   광고(AdMob, 기록/보관함 탭)와 네이티브 광고 카드(종료 확인 모달
