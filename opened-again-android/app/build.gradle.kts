@@ -51,8 +51,8 @@ android {
         applicationId = "com.howlingcreativestudio.openedagain"
         minSdk = 29
         targetSdk = 36
-        versionCode = 79
-        versionName = "0.79.0"
+        versionCode = 80
+        versionName = "0.80.0"
     }
 
     buildTypes {
@@ -100,6 +100,14 @@ dependencies {
     // integration; flagged in docs/OPEN_ISSUES_AND_NEXT.md as a future
     // migration to revisit well before the 2027 deprecation date.
     implementation("com.google.android.gms:play-services-ads:25.0.0")
+    // v0.80: Play Console pre-launch report flagged androidx.fragment
+    // pulled in transitively (by play-services-ads, which uses a Fragment
+    // internally for full-screen ad/consent content) at 1.1.0 -- a stale
+    // 2019-era release. Gradle resolves multi-declared versions of the
+    // same artifact to the highest one requested, so declaring a current
+    // stable version directly here is enough to override the old
+    // transitive pin without touching anything else.
+    implementation("androidx.fragment:fragment:1.8.5")
     // 8.3.0 is the latest Play Billing Library release; critically, Google
     // Play now REQUIRES version 8+ for any new app or app update (deadline
     // Aug 31, 2026, extendable to Nov 1, 2026) -- the originally-used 7.1.1

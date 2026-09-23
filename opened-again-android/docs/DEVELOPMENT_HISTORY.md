@@ -3346,3 +3346,20 @@ Play Console은 같은 versionCode의 AAB를 두 번 못 올리게 막아서, di
 `v${APP_VERSION} · Howling` -> `v${APP_VERSION} · Howling Creative Studio`.
 
 버전 79/0.79.0.
+
+## v0.80 — Play Console 사전 출시 보고서 경고: androidx.fragment 오래된 버전
+
+Play Console이 v0.79 업로드 후 "사용 중인 SDK 버전이 오래됨" 경고:
+"androidx.fragment:fragment님이 fragment:1.1.0을(를) 오래된 버전으로
+신고했습니다." 이 앱은 `androidx.fragment`를 직접 선언한 적이 없음 —
+`play-services-ads`(AdMob SDK, 전면 광고/동의 화면 등에서 내부적으로
+Fragment를 씀)가 전이 의존성으로 끌어온 2019년대 버전이 그대로 잡힌 것.
+
+`app/build.gradle.kts`에 `androidx.fragment:fragment:1.8.5`를 명시적으로
+추가 -- Gradle은 같은 아티팩트가 여러 경로로 선언되면 그중 가장 높은
+버전으로 해석하므로, 직접 최신 안정 버전을 선언해두면 전이 의존성 쪽의
+오래된 버전을 그냥 덮어씀 (다른 파일 변경 불필요).
+
+버전 80/0.80.0. 검증: Gradle 의존성 해석 자체는 이 샌드박스에서 로컬
+빌드로 확인할 수 없어 CI 빌드 통과로 확인 -- 이 경고가 실제로 사라지는지는
+다음 Play Console 업로드 후 사전 출시 보고서를 다시 확인해야 함.
