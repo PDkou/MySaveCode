@@ -34,14 +34,6 @@ jobs:
         working-directory: opened-again-android
         run: gradle :core:test :app:assembleDebug
 
-      # TEMPORARY diagnostic step -- auditing for other stale transitive
-      # dependencies after the androidx.fragment 1.1.0 Play Console
-      # pre-launch warning (v0.80). Remove once done, same as v0.70's
-      # temporary --stacktrace addition.
-      - name: gradle :app:dependencies (diagnostic)
-        working-directory: opened-again-android
-        run: gradle :app:dependencies --configuration releaseRuntimeClasspath
-
       - uses: actions/upload-artifact@v4
         with:
           name: opened-again-debug-apk
