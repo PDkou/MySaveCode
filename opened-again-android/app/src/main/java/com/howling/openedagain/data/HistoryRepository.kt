@@ -52,6 +52,22 @@ class HistoryRepository(context: Context) {
 
     fun count(): Int = dao.discoveryCount()
 
+    // v0.83: director idea list -- "주간 하이라이트 카드" (weekly highlight
+    // share card). DiscoveryEntity.firstSeenAt only ever records a
+    // type+rarity combo's FIRST-ever discovery (insertDiscoveryIfNew()
+    // ignores re-discoveries on conflict), so this answers "what did this
+    // device discover for the first time in the last N ms" -- not "what's
+    // the best incident that happened this week," which would need every
+    // day's full incident list persisted (recordDay() only ever stores
+    // aggregate counts per day, see its own comment). A veteran player who
+    // hasn't found anything NEW this week correctly gets no highlight at
+    // all rather than a misleading repeat of an old find. Ties (same
+    // rarity) go to whichever was discovered most recently, since
+    // discoveriesSince() is already ordered newest-first and maxByOrNull
+    // keeps the first max it sees.
+    fun weeklyHighlight(sinceMs: Long): DiscoveryEntity? =
+        dao.discoveriesSince(sinceMs).maxByOrNull { Rarity.valueOf(it.rarity).ordinal }
+
     // v0.43's reset feature now clears both tables instead of one
     // SharedPreferences flag -- NativeBridge.resetAllData() calls this
     // alongside clearing the reveal-shown-date flag it owns separately.

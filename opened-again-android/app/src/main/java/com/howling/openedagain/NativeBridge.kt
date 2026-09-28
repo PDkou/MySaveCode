@@ -201,6 +201,21 @@ class NativeBridge(
         prefs.edit().putString("reveal_shown_date", date).apply()
     }
 
+    // v0.83: director idea list -- "주간 하이라이트 카드" (weekly highlight
+    // share card). Deliberately a rolling 7*24h window from "now," not a
+    // calendar-day window like index.html's own weekRecap() (which walks 7
+    // local-date keys) -- a rolling window needs no timezone reconciliation
+    // between this native call and JS's date-key math, and "roughly the
+    // last week" is all this feature needs. Returns "{}" (falsy `.type` on
+    // the JS side) when nothing new was discovered in that window, rather
+    // than a real one.
+    @JavascriptInterface
+    fun getWeeklyHighlight(): String {
+        val sinceMs = System.currentTimeMillis() - 7L * 24 * 60 * 60 * 1000
+        val hit = history.weeklyHighlight(sinceMs) ?: return "{}"
+        return JSONObject().put("type", hit.type).put("rarity", hit.rarity).toString()
+    }
+
     @JavascriptInterface
     fun shareIncident(incidentJson: String, title: String, punchline: String, detail: String, format: String, lang: String) {
         val obj = JSONObject(incidentJson)

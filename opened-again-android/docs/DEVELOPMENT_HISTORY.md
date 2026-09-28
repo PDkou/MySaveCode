@@ -3402,3 +3402,65 @@ Fragment를 씀)가 전이 의존성으로 끌어온 2019년대 버전이 그대
 막대바가 사라지고 배너로 교체, 카운트도 "14/14"로 정상 표시 (3) 카탈로그
 자체가 비어있는 극단적 케이스에서 배너가 잘못 뜨지 않는 것까지 확인.
 기존 회귀 스위트(탭 4개 전환, 콘솔 에러 0건) 재실행 — 전부 통과.
+
+## v0.83 — 주간 하이라이트 카드 추가
+
+브레인스토밍 목록에서 "주간 하이라이트 카드 기능 만들어줘"로 선택. 원래
+구상은 "이번 주 발생한 사건 중 가장 좋은 카드를 공유"였는데, 실제 저장
+구조를 확인해보니 `HistoryRepository.recordDay()`가 날짜별로 남기는 건
+집계 수치(총 사건 수/HIDDEN 수/LEGENDARY 수)뿐이고 그날 실제로 어떤
+사건들이 있었는지(개별 DetectedIncident)는 저장되지 않음 -- 오늘 하루치만
+`report.cards`로 살아있고, 앱을 껐다 켜면 사라짐. 대신 `DiscoveryEntity`가
+type+rarity 조합별 `firstSeenAt`(최초 발견 시각)을 v0.70부터 이미 갖고
+있었지만("isn't surfaced anywhere yet"이라는 그 당시 주석 그대로) 어디서도
+쓰이지 않고 있었음.
+
+그래서 범위를 정직하게 좁힘: "이번 주 하이라이트" = 최근 약 7일 안에
+**새로** 발견한(=난생처음 발견한) type+rarity 조합 중 가장 희귀한 것.
+`insertDiscoveryIfNew()`가 재발견 시 덮어쓰지 않으므로, 이미 예전에
+발견한 사건을 이번 주에 또 만나도 하이라이트로 잡히지 않음 -- 신규
+발견이 하나도 없으면 섹션 자체를 아예 숨김(억지로 예전 걸 재활용해서
+보여주지 않음).
+
+**네이티브 추가(최소)**: `HistoryDao.discoveriesSince(sinceMs)`
+(firstSeenAt 기준 최신순 조회) → `HistoryRepository.weeklyHighlight(sinceMs)`
+(등급(rarity) 최고값, 동률이면 최신순 -- 리스트가 이미 최신순 정렬이라
+`maxByOrNull`이 자연히 그렇게 동작) → `NativeBridge.getWeeklyHighlight()`
+(현재 시각 기준 롤링 7*24시간 창, `{type, rarity}` JSON 또는 빈 객체 반환).
+`weekRecap()`처럼 로컬 날짜 키를 순회하는 대신 그냥 "지금부터 7일 전"
+롤링 윈도우로 계산 -- JS의 UTC 날짜 키 계산과 타임존을 맞출 필요가 없어
+훨씬 단순함.
+
+**공유 파이프라인은 정말로 손 안 댐**: `ShareCardRenderer.render()`가
+실제로 그리는 데는 `incident.type`/`incident.rarity`만 쓰고
+score/startTime/endTime/primaryPackage는 전혀 참조하지 않는다는 걸
+코드로 확인 -- 그래서 index.html이 `{type, rarity}`만 채운 최소한의
+가짜 incident 객체를 만들어 기존 `share(i, format)` -> `N.shareIncident()`
+경로에 그대로 흘려보내면 끝. `detail(i)`도 `i.primaryPackage`가 없을 때
+쓰는 "이름 없이" 대체 문장이 모든 타입에 이미 있어서(v0.66) 에러 없이
+자연스러운 카드가 나옴. `ShareCardRenderer.kt`/`shareIncident()` 양쪽 다
+단 한 줄도 안 건드림.
+
+**JS 쪽**: `state.weeklyHighlight`(신규 필드, `{type,rarity}` 또는 null)를
+`loadHistoryFromNative()`에서 `N.getWeeklyHighlight()`로 채움; 프리뷰(네이티브
+브리지 없음)에서는 오늘의 카드 중 최고 등급으로 대체 표시
+(`persistSnapshotForPreview()`). 새 `weeklyHighlightBlock()`은
+`compactCase()`가 쓰던 것과 완전히 같은 마크업(`case-row`/`case-row-icon`/
+`case-row-text` + `rarityBadge()`)을 재사용하고, 탭하면 기존 `openDetail()`로
+바로 진입 -- `detailPage()`가 원래부터 `{type,rarity}`만 있는 최소
+객체를 견디도록 되어 있어서(모든 필드가 `||{}`/optional chaining으로
+안전) 진짜 사건 상세 페이지와 완전히 같은 화면(공유 버튼 포함)이 그대로
+열림. `records()` 화면의 `weekRecap()` 바로 아래에 배치. `resetAllData()`도
+`state.weeklyHighlight`를 함께 초기화.
+
+버전 83/0.83.0. 검증: Playwright로 (1) 프리뷰에서 "이번 주 하이라이트"
+섹션이 뜨고 그 항목(이번 데모 데이터에서는 HIDDEN 등급 -- primaryPackage/
+secondaryPackage가 둘 다 없는 최소 객체로 detail()의 폴백 문장까지
+실제로 확인된 가장 까다로운 케이스)을 탭하면 정상적으로 사건 상세
+페이지로 진입하고 공유 버튼도 존재 (2) 그 공유 버튼을 눌렀을 때 프리뷰
+모드 특유의 "미리보기에서는 공유가 실행되지 않습니다" 토스트만 뜨고
+콘솔 에러 없음 (3) `state.weeklyHighlight=null`로 직접 바꾸면 하이라이트
+섹션이 완전히 사라짐(다른 섹션은 그대로) (4) 사건/보관함/설정 탭을
+연달아 전환해도 콘솔 에러 없음. 새 Kotlin 파일들은 주석 제거 후
+중괄호/괄호 개수 균형 확인; 실제 컴파일 성공 여부는 다른 Room/kapt
+변경들과 마찬가지로 CI(`build-opened-again-gradle.yml`)로만 확인됨.

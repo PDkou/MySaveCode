@@ -41,6 +41,13 @@ interface HistoryDao {
     @Query("SELECT * FROM discovery")
     fun allDiscoveries(): List<DiscoveryEntity>
 
+    // v0.83: "주간 하이라이트 카드" -- see HistoryRepository.weeklyHighlight()
+    // for why this queries firstSeenAt (a combo's first-ever discovery time)
+    // rather than something tracking every occurrence. DESC order lets the
+    // caller break rarity ties by picking whichever match it sees first.
+    @Query("SELECT * FROM discovery WHERE firstSeenAt >= :sinceMs ORDER BY firstSeenAt DESC")
+    fun discoveriesSince(sinceMs: Long): List<DiscoveryEntity>
+
     @Query("DELETE FROM discovery")
     fun clearDiscoveries()
 }
