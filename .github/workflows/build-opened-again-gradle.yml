@@ -34,10 +34,6 @@ jobs:
         working-directory: opened-again-android
         run: gradle :core:test :app:assembleDebug
 
-      - name: gradle :app:dependencies (diagnostic)
-        working-directory: opened-again-android
-        run: gradle :app:dependencies --configuration releaseRuntimeClasspath
-
       - uses: actions/upload-artifact@v4
         with:
           name: opened-again-debug-apk

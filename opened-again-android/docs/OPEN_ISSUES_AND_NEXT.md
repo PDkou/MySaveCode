@@ -326,6 +326,28 @@
   한 번은 검토해야 함.
 
 ## 기술 부채
+- ~~androidx 오래된 전이 의존성 5개 (interpolator/loader/viewpager/
+  customview/concurrent-futures) 선제 고정 여부~~ — **점검 완료,
+  손대지 않기로 결정** (2026-09-28). v0.80에서 `androidx.fragment`
+  1.1.0을 Play Console이 실제로 지적해 1.8.5로 고정한 뒤, 같은
+  전이 트리에서 눈에 띈 5개가 문서화 안 된 채 남아있던 것 — 이번에
+  CI에 `gradle :app:dependencies` 진단 스텝을 다시 붙여서 실제
+  해석된 버전을 직접 확인함: `interpolator:1.0.0`, `loader:1.0.0`,
+  `viewpager:1.0.0`, `customview:1.0.0`, `concurrent-futures:1.1.0`
+  (`1.0.0 -> 1.1.0`으로 이미 자동 해석됨). `fragment`도 모든 경로에서
+  `1.8.5`로 정확히 고정돼 있는 것 재확인.
+
+  이 5개를 그대로 두기로 한 이유: (1) 전부 2018~2019년에 나온 뒤
+  사실상 개발이 멈춘("완성됐다"고 취급되는) 라이브러리라, `fragment`
+  처럼 활발히 버전이 올라가는 라이브러리와는 성격이 다름 —
+  Play Console의 "오래된 SDK" 경고가 실제로 지켜보는 목록에 이
+  5개가 포함되는지 확인할 방법이 없고, 지금까지 한 번도 지적받은
+  적 없음. (2) Claude(이 세션)의 학습 데이터가 2026년 1월까지라
+  이 라이브러리들의 "진짜 최신 안정 버전"이 무엇인지 확신을 갖고
+  말할 수 없음 — 확신 없이 버전 숫자를 임의로 넣는 건 실제 문제
+  해결이 아니라 오히려 근거 없는 변경이라고 판단해 하지 않음.
+  Play Console 사전 출시 보고서가 이 중 하나라도 실제로 지적하면
+  그때 정확한 대상과 요구 버전이 나오니 그때 대응하는 게 맞음.
 - WebView JS와 Android strings.xml의 문자열 소스가 중복될 수 있음
 - SharedPreferences의 discovery count는 `type|rarity` 조합 개수이지 사건 종류 고유 개수와 다를 수 있음
 - `analyzeToday()`가 호출될 때마다 당일 전체를 다시 분석하므로 데이터량/기기별 비용 확인 필요
