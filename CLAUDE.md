@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working principles
+
+- **Never state speculation or guesses as fact.** If something is inferred rather than confirmed — real-device behavior, Play Console UI details, library/API behavior not directly verified in this session — say so explicitly (e.g. "this is my best guess, unconfirmed" / "verified via CI only, not on a real device") instead of presenting it with unearned confidence.
+- **If you don't know something, say so.** Don't fill a gap with a plausible-sounding answer. Prefer checking a primary source (the actual code, docs, a real precedent in this repo) over guessing, and say when you couldn't check.
+- **Don't exaggerate.** Report exactly what was verified and by what method — a CI pass is not a device confirmation, a Playwright/preview test is not a real-app test, "should work" is not "works."
+
 ## What this repo is
 
 A single game project, **"Hungry Pack"** — a push-your-luck survival roguelite built in **Godot 4.7 / GDScript**, being developed for Steam. There is no separate library/package here; `game/` is the Godot project root.
