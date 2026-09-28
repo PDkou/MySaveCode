@@ -147,7 +147,13 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .featured{transform:translateZ(0)}.featured .card-body{grid-template-columns:1fr 1fr}.featured .scene{min-height:155px}.featured .scene img{width:135px;height:135px}
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.stat{background:white;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 5px 14px rgba(70,50,35,.04)}.stat b{display:block;font-size:23px}.stat span{font-size:11px;color:var(--muted)}
 .archive-progress{background:white;border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}.archive-progress.archive-complete{background:linear-gradient(135deg,#FFF7E0,#FFEFC2);border-color:var(--legend);text-align:center}.archive-complete b{font-size:16px;color:#8A6300}.archive-complete p{margin:6px 0 0;font-size:12px;color:#8A6300}.bar{height:9px;background:#EEE6DC;border-radius:99px;overflow:hidden;margin-top:10px}.bar>i{display:block;height:100%;background:linear-gradient(90deg,#7ABEFF,#A56CFF,#FFD166);border-radius:99px}.archive-item{background:white;border:1px solid var(--line);border-radius:18px;padding:14px 15px;margin:8px 0}.archive-top{display:flex;justify-content:space-between;align-items:center}.archive-name{font-weight:900}.rarity-dots{display:flex;gap:5px;margin-top:9px}.dot{width:25px;height:8px;border-radius:10px;background:#ECE5DD}.dot.on.n{background:var(--normal)}.dot.on.r{background:var(--rare)}.dot.on.e{background:var(--epic)}.dot.on.l{background:var(--legend)}.locked{opacity:.48}.hidden-line{background:linear-gradient(90deg,#071C29,#143D51);color:#E9FBFF;border-color:#19536C}.hidden-line .dot{background:#235164}
-.record-list{margin-top:12px}.record-app{display:flex;align-items:center;justify-content:space-between;padding:12px 2px;border-bottom:1px solid #E8DED3}.record-app b{font-size:13px}.record-app span{font-size:12px;color:var(--muted)}
+.record-list{margin-top:12px}.record-app{display:flex;align-items:center;justify-content:space-between;padding:12px 2px;border-bottom:1px solid #E8DED3;cursor:pointer}.record-app b{font-size:13px}.record-app span{font-size:12px;color:var(--muted)}
+/* v0.84: records-tab app filter -- tapping a .record-app row (see
+   records()'s own comment) highlights it and narrows the case list below
+   to that app; .filter-clear is the small "필터 해제" affordance that
+   shows up in a .section-title once a filter is active. */
+.record-app.active{background:#F6F0E6;border-radius:12px;padding:12px 10px;margin:0 -10px;border-bottom-color:transparent}.record-app.active b{color:var(--ink)}
+.filter-clear{font-size:12px;color:var(--muted);cursor:pointer;text-decoration:underline;white-space:nowrap}
 /* v0.47: "최근 7일" recap bars (records()/weekRecap()) -- a single-hue
    sparkline reusing .primary's own purple, not a new palette. .empty
    (no stored entry for that day) is greyed to `--line` so a genuinely
@@ -466,7 +472,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.83.0';
+const APP_VERSION='0.84.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -494,7 +500,7 @@ const skipReveal=params.get('reveal')==='0';
 // English strings exist throughout via l(ko, ja, en) but are not exposed yet —
 // flip `supported` back to include 'en' when English becomes a real target.
 const supported=['ko','ja'];const detected=(navigator.language||'ko').slice(0,2);
-const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false,dailyReminder:false,reminderHour:21,reminderMinute:0},onboardStep:1,tab:params.get('tab')||'cases',data:null,detailItem:null,revealItem:null,exitConfirmOpen:false,history:{days:{},discoveries:{},revealShownDate:null},weeklyHighlight:null};
+const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false,dailyReminder:false,reminderHour:21,reminderMinute:0},onboardStep:1,tab:params.get('tab')||'cases',data:null,detailItem:null,revealItem:null,exitConfirmOpen:false,history:{days:{},discoveries:{},revealShownDate:null},weeklyHighlight:null,recordsFilter:null};
 function l(ko,ja,en){return state.settings.language==='ko'?ko:state.settings.language==='ja'?ja:en}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function todayKey(){return new Date().toISOString().slice(0,10)}
@@ -649,7 +655,11 @@ function loadHistoryFromNative(){
 // single #app innerHTML swap (not real navigation), the browser has no
 // reason to reset scroll on its own -- do it explicitly on every place
 // content changes.
-function setTab(t){state.tab=t;window.scrollTo(0,0);render()}
+// v0.84: the records-tab app filter (state.recordsFilter, see records()'s
+// own comment) is transient per-visit UI state, not something that should
+// survive a trip to another tab and back -- reset it on every tab switch
+// so re-entering records always starts unfiltered.
+function setTab(t){state.tab=t;state.recordsFilter=null;window.scrollTo(0,0);render()}
 // v0.60: director feedback -- "저녁9시?에 통계로 알려줄때 앱을 열때
 // 가장 많이 접근된 카드를 뙇하고 보여주면 더 좋을꺼같아 어떤어떤
 // 사건 발견됨! 하면서 카드가 휘리릭 돌아가면서" (when opening the app
@@ -1407,7 +1417,28 @@ function weeklyHighlightBlock(){
   const arg=JSON.stringify(i).replace(/'/g,"&#39;");
   return `<div class="section-title"><h2>${l('이번 주 하이라이트','今週のハイライト','This week\'s highlight')}</h2></div><div class="case-row ${rarityClass(i)}" onclick='openDetail(${arg})'><span class="case-row-icon">${iconFor(i)}</span><div class="case-row-text"><b>${esc(txt(names,i.type))}</b><span>${l('이번 주에 새롭게 발견했어요','今週新しく発見しました','Newly discovered this week')}</span></div>${rarityBadge(i)}</div>`;
 }
-function records(d){const s=d.summary||{};const rows=[[l('사용 시간','使用時間','Usage'),fmtMs(s.totalUsageMs||0)],[l('앱 실행','アプリ起動','Opens'),s.openCount||0],[l('앱 전환','アプリ切替','Switches'),s.switchCount||0],[l('잠금 해제 세션','ロック解除セッション','Unlock sessions'),s.unlockSessions||0],[l('사용 앱','利用アプリ','Unique apps'),s.uniqueApps||0],[l('심야 사용','深夜利用','Night usage'),fmtMs(s.nightUsageMs||0)]];const top=(s.topPackages||[]);return `<div class="section-title"><h2>${l('오늘의 기록','本日の記録','Today\'s record')}</h2></div><div class="record-decor"><img src="visual/character/basic/moni_read_file.webp"><div><b>${l('오늘의 수사 보고서','本日の捜査報告','Today\'s investigation report')}</b><p>${l('숫자도 모니가 차분히 정리했습니다.','数字もMONIが静かにまとめました。','MONI filed the numbers too.')}</p></div></div><div class="stats">${rows.map(([a,b])=>`<div class="stat"><b>${esc(b)}</b><span>${esc(a)}</span></div>`).join('')}</div>${weekRecap()}${weeklyHighlightBlock()}<div class="section-title"><h2>${l('가장 오래 본 앱','最も長く見たアプリ','Top apps')}</h2></div><div class="record-list">${top.length?top.map((x,i)=>`<div class="record-app"><b>${i+1}. ${esc(compactPkg(x.packageName))}</b><span>${fmtMs(x.durationMs)}</span></div>`).join(''):`<div class="empty">${l('기록이 없습니다.','記録がありません。','No records.')}</div>`}</div>`}
+// v0.84: director idea list -- "기록 탭 필터" (records-tab app filter).
+// Scoped to today only, same limitation as the weekly highlight card:
+// per-day storage keeps aggregate counts for past days, not each day's
+// individual incidents, so a real per-app filter is only possible against
+// today's live `d.report.cards`. Tapping a row in "가장 오래 본 앱" (an
+// app that ALREADY has no onclick at all before this version) sets
+// `state.recordsFilter` to that packageName and narrows a new "오늘의
+// 사건" case list further down the same tab to incidents connected to it;
+// tapping the same app again (or the "필터 해제" chip) clears it. A
+// multi-app incident (PATROL/DIGITAL_LOST/etc.) is "connected to" an app
+// via topPackage, and HIDDEN_LOOP via either of its two apps
+// (primaryPackage/secondaryPackage) -- see matchesRecordsFilter().
+function matchesRecordsFilter(i,pkg){return i.primaryPackage===pkg||i.topPackage===pkg||i.secondaryPackage===pkg}
+function toggleRecordsFilter(pkg){state.recordsFilter=state.recordsFilter===pkg?null:pkg;render()}
+function records(d){const s=d.summary||{};const rows=[[l('사용 시간','使用時間','Usage'),fmtMs(s.totalUsageMs||0)],[l('앱 실행','アプリ起動','Opens'),s.openCount||0],[l('앱 전환','アプリ切替','Switches'),s.switchCount||0],[l('잠금 해제 세션','ロック解除セッション','Unlock sessions'),s.unlockSessions||0],[l('사용 앱','利用アプリ','Unique apps'),s.uniqueApps||0],[l('심야 사용','深夜利用','Night usage'),fmtMs(s.nightUsageMs||0)]];
+  const top=(s.topPackages||[]);
+  const cards=d.report?.cards||[];
+  const filterPkg=state.recordsFilter;
+  const filtered=filterPkg?cards.filter(i=>matchesRecordsFilter(i,filterPkg)):cards;
+  const topAppsBlock=`<div class="section-title"><h2>${l('가장 오래 본 앱','最も長く見たアプリ','Top apps')}</h2>${filterPkg?`<span class="filter-clear" onclick="toggleRecordsFilter(null)">${l('필터 해제','フィルター解除','Clear filter')} ×</span>`:''}</div><div class="record-list">${top.length?top.map((x,i)=>`<div class="record-app${filterPkg===x.packageName?' active':''}" onclick='toggleRecordsFilter(${JSON.stringify(x.packageName)})'><b>${i+1}. ${esc(compactPkg(x.packageName))}</b><span>${fmtMs(x.durationMs)}</span></div>`).join(''):`<div class="empty">${l('기록이 없습니다.','記録がありません。','No records.')}</div>`}</div>`;
+  const casesBlock=cards.length?`<div class="section-title"><h2>${filterPkg?l(`'${compactPkg(filterPkg)}' 관련 사건`,`「${compactPkg(filterPkg)}」関連の事件`,`Cases involving ${compactPkg(filterPkg)}`):l('오늘의 사건','本日の事件',"Today's cases")}</h2><span class="count">${filtered.length}${l('건','件','')}</span></div>${filtered.length?`<div class="case-list">${filtered.map(compactCase).join('')}</div>`:`<div class="empty">${l('이 앱과 관련된 사건이 없습니다.','このアプリに関連する事件はありません。','No cases involve this app.')}</div>`}`:'';
+  return `<div class="section-title"><h2>${l('오늘의 기록','本日の記録','Today\'s record')}</h2></div><div class="record-decor"><img src="visual/character/basic/moni_read_file.webp"><div><b>${l('오늘의 수사 보고서','本日の捜査報告','Today\'s investigation report')}</b><p>${l('숫자도 모니가 차분히 정리했습니다.','数字もMONIが静かにまとめました。','MONI filed the numbers too.')}</p></div></div><div class="stats">${rows.map(([a,b])=>`<div class="stat"><b>${esc(b)}</b><span>${esc(a)}</span></div>`).join('')}</div>${weekRecap()}${weeklyHighlightBlock()}${topAppsBlock}${casesBlock}`}
 // v0.35: settings tab (docs/UI_VISUAL_DIRECTION_REQUEST.md item 5's 4th
 // bottom-nav destination -- the app previously had no settings screen at
 // all). Reachable regardless of usage-access permission state (unlike the
@@ -1498,6 +1529,7 @@ function resetAllData(){
   try{N&&N.resetAllData&&N.resetAllData()}catch(e){}
   state.history={days:{},discoveries:{},revealShownDate:null};
   state.weeklyHighlight=null;
+  state.recordsFilter=null;
   state.data=null;
   closeOverlay();
   toast(l('초기화되었습니다','初期化されました','Data has been reset'));
