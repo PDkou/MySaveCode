@@ -3501,3 +3501,31 @@ HIDDEN_LOOP은 두 앱 중 아무 쪽(`primaryPackage`/`secondaryPackage`)으로
 사건이 없습니다" 빈 상태가 뜨고 에러 없음 (7) 오늘 사건이 아예 0건이면
 "오늘의 사건" 섹션 자체가 안 뜸. 전체 탭(사건/보관함/설정/기록) 스윕도
 콘솔 에러 0건.
+
+## v0.85 — 실제 AdMob App ID / 광고 단위 ID로 교체
+
+director가 admob.google.com에서 실제 앱("또 열었네?")을 등록하고
+배너/네이티브 광고 단위를 각각 만들어 발급받은 진짜 ID를 전달 —
+Hello Today 앱과 같은 AdMob 계정/publisher ID(`4220607528679200`),
+다른 app suffix. `AndroidManifest.xml`의 `com.google.android.gms.ads.APPLICATION_ID`
+메타데이터(`ca-app-pub-4220607528679200~7720965469`), `AdManager.kt`의
+`BANNER_UNIT_ID`(`.../3954120009`)/`NATIVE_UNIT_ID`(`.../3267724295`)를
+v0.65/v0.76부터 쓰던 구글 공식 테스트 ID에서 교체. 이제 실제 광고가
+노출되고 수익이 발생할 수 있음(테스트 기기 등록 전까지는 director
+본인 폰에서 반복 확인 시 계정 정지 위험이 있어 별도 안내함).
+
+교체하면서 두 가지를 같이 확인/기록:
+1. `AndroidManifest.xml`의 새 주석에 실수로 `--`(더블 하이픈)이
+   들어가서 XML 주석이 중간에 끊기는, 이 프로젝트가 v0.26/v0.72에서
+   이미 겪었던 것과 같은 종류의 버그를 작성 직후 `ET.parse()`로
+   바로 잡아서 커밋 전에 수정함.
+2. 코드 전체를 grep해서 확인한 결과 이 앱에는 UMP(동의 양식/GDPR)
+   처리 로직이 전혀 없음 — Hello Today는 `ConsentManager.java`로
+   따로 구현했는데 여긴 없음. 지금 당장 뭘 막는 건 아니지만
+   `docs/OPEN_ISSUES_AND_NEXT.md`에 남은 일로 기록.
+
+버전 85/0.85.0. 검증: 변경한 Kotlin 파일 주석 제거 후 중괄호/괄호
+개수 균형 확인, `AndroidManifest.xml`은 `ET.parse()`로 유효성 확인
+(위 1번 버그를 여기서 잡음). 실제 광고 노출/수익 발생 여부, 테스트
+기기 등록 여부는 director가 AdMob 콘솔/실기기에서 직접 확인해야
+하는 부분이라 이 세션에서는 확인 불가.

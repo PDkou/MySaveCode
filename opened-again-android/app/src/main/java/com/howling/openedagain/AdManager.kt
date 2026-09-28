@@ -41,27 +41,22 @@ import com.google.android.gms.ads.AdLoader
 // index.html's syncBannerVisibility() now covers the exit-confirm sheet
 // through the same banner this class already had.
 //
-// TEST ID ONLY below ; Google's own official sample banner ad-unit ID
-// (paired with the matching test APPLICATION_ID meta-data in
-// AndroidManifest.xml), safe to ship while developing since it always
-// renders real ad creative in a clearly-labeled test mode, never a real ad
-// and never real revenue. MUST be swapped for the director's own real
-// AdMob account's App ID / banner ad-unit ID (create the app + ad unit at
-// admob.google.com first) before this can generate real revenue.
 class AdManager(
     private val activity: Activity,
     private val isAdsRemoved: () -> Boolean
 ) {
     companion object {
-        private const val BANNER_UNIT_ID = "ca-app-pub-3940256099942544/6300978111"
+        // v0.85: real AdMob banner ad-unit ID (registered 2026-09-28,
+        // director's real account -- same publisher ID as AndroidManifest.xml's
+        // now-real APPLICATION_ID). Swapped in from Google's official test
+        // banner ad-unit ID that shipped here through v0.84.
+        private const val BANNER_UNIT_ID = "ca-app-pub-4220607528679200/3954120009"
 
-        // v0.76: TEST ID ONLY, same story as BANNER_UNIT_ID above -- Google's
-        // own official sample "Native Advanced" ad-unit ID (image/headline/
-        // body/CTA assets; NOT ca-app-pub-3940256099942544/1044960115, which
-        // is the separate "Native Video" test unit -- this feature never
-        // renders a video asset). MUST be swapped for the director's own real
-        // AdMob native ad-unit ID before this can earn real revenue.
-        private const val NATIVE_UNIT_ID = "ca-app-pub-3940256099942544/2247696110"
+        // v0.85: real AdMob native ad-unit ID (registered 2026-09-28,
+        // same account/app as BANNER_UNIT_ID above). Swapped in from
+        // Google's official "Native Advanced" test ad-unit ID that shipped
+        // here through v0.84.
+        private const val NATIVE_UNIT_ID = "ca-app-pub-4220607528679200/3267724295"
     }
 
     private var bannerContainer: FrameLayout? = null
