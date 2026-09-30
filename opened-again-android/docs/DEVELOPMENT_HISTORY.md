@@ -3529,3 +3529,49 @@ v0.65/v0.76부터 쓰던 구글 공식 테스트 ID에서 교체. 이제 실제 
 (위 1번 버그를 여기서 잡음). 실제 광고 노출/수익 발생 여부, 테스트
 기기 등록 여부는 director가 AdMob 콘솔/실기기에서 직접 확인해야
 하는 부분이라 이 세션에서는 확인 불가.
+
+## v0.86 — HIDDEN 카드 실기기 확인용 디버그 도구 추가
+
+director가 실제 폰에서 카카오톡↔라인을 10번 넘게 번갈아가며 직접
+HIDDEN_LOOP을 만들어보려 했으나 계속 실패 — `IncidentDetector.kt`의
+실제 조건(`detectHiddenLoop`)을 다시 확인해보니 "5분 이내 정확히
+두 앱만 오가며 7번 이상 열기(switches>=6, switches=방문수-1이라
+6번이면 7번 열어야 함), 그 사이에 다른 앱 완전히 0개"로 의도적으로
+꽤 까다롭게 설계돼 있었음 — 일부러 만들려고 해도 실수하기 쉬운
+수준. 감지 임계값을 낮추는 건 밸런스 결정이라 이 작업 범위가
+아니라고 판단, 대신 실제 감지 로직은 전혀 안 건드리고 "가짜 HIDDEN
+사건을 강제로 띄워서 카드/홀로 효과/네이티브 공유 내보내기만
+확인"하는 디버그 전용 도구를 추가.
+
+**네이티브**: AGP 8+는 `BuildConfig` 생성이 기본 비활성이라
+`app/build.gradle.kts`에 `buildFeatures{buildConfig=true}` 추가.
+`NativeBridge.isDebugBuild(): Boolean = BuildConfig.DEBUG` 신설 --
+이 값은 `assembleDebug`(이 프로젝트 CI 산출물)에서만 true, 실제
+`bundleRelease`(Play 스토어용) 빌드에서는 항상 false라 이 도구가
+실제 테스터나 스토어에 노출될 일이 구조적으로 없음.
+
+**JS**: `state.debugBuild`를 `loadHistoryFromNative()`에서
+`N.isDebugBuild()`로 채움(프리뷰 등 브리지 없는 환경은 항상 false).
+설정 화면 맨 아래에 `state.debugBuild`일 때만 보이는 "Debug" 섹션을
+추가 -- "HIDDEN_LOOP 미리보기"/"HIDDEN_NIGHT_ACTIVITY 미리보기" 두
+행. 새 `debugPreviewHidden(type)`이 `{type,rarity:'HIDDEN',...}` 최소
+객체를 만들어 기존 `openDetail(i)`에 그대로 흘려보내므로,
+`detailPage()`/TCG 카드/홀로 캔버스/"공유하기" 버튼까지 실제
+사건과 완전히 동일한 경로 그대로 탐(탐지 로직·저장 데이터는
+전혀 건드리지 않음).
+
+작성 중 실수를 하나 찾아 바로 고침: `row()` 헬퍼가 onclick 값을
+항상 큰따옴표로 감싸는데, 처음 작성한 `'debugPreviewHidden("HIDDEN_LOOP")'`
+문자열 안에 큰따옴표를 또 써서 HTML이 깨지는(`onclick="debugPreviewHidden("...`)
+바람에 "Unexpected end of input" 콘솔 에러가 났음 -- Playwright로
+바로 재현/확인 후 작은따옴표로 바꿔서 해결.
+
+버전 86/0.86.0. 검증: Playwright로 (1) `debugBuild=false`(프리뷰
+기본값)일 때 Debug 섹션 자체가 안 보임 (2) `debugBuild=true`로
+바꾸면 두 행이 나타나고 (3) HIDDEN_LOOP 행 클릭 시 상세 페이지로
+정상 진입, 등급 배지 "HIDDEN 01", 공유 버튼 존재 (4) 공유 버튼
+클릭 시 프리뷰 모드 특유의 토스트만 뜨고 에러 없음 (5)
+HIDDEN_NIGHT_ACTIVITY 행도 동일하게 "HIDDEN 02" 배지로 정상 진입.
+전부 콘솔 에러 0건 (수정 전 재현했던 구문 오류 포함). 새
+`buildFeatures`/`BuildConfig` 사용은 이 프로젝트 첫 사례라 실제
+컴파일 성공은 CI로만 확인됨.

@@ -472,7 +472,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.85.0';
+const APP_VERSION='0.86.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -500,7 +500,7 @@ const skipReveal=params.get('reveal')==='0';
 // English strings exist throughout via l(ko, ja, en) but are not exposed yet —
 // flip `supported` back to include 'en' when English becomes a real target.
 const supported=['ko','ja'];const detected=(navigator.language||'ko').slice(0,2);
-const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false,dailyReminder:false,reminderHour:21,reminderMinute:0},onboardStep:1,tab:params.get('tab')||'cases',data:null,detailItem:null,revealItem:null,exitConfirmOpen:false,history:{days:{},discoveries:{},revealShownDate:null},weeklyHighlight:null,recordsFilter:null};
+const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false,dailyReminder:false,reminderHour:21,reminderMinute:0},onboardStep:1,tab:params.get('tab')||'cases',data:null,detailItem:null,revealItem:null,exitConfirmOpen:false,history:{days:{},discoveries:{},revealShownDate:null},weeklyHighlight:null,recordsFilter:null,debugBuild:false};
 function l(ko,ja,en){return state.settings.language==='ko'?ko:state.settings.language==='ja'?ja:en}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function todayKey(){return new Date().toISOString().slice(0,10)}
@@ -647,6 +647,7 @@ function loadHistoryFromNative(){
   try{const h=JSON.parse(N.getHistory());state.history.days=h.days||{};state.history.discoveries=h.discoveries||{}}catch(e){}
   try{state.history.revealShownDate=N.getRevealShownDate()||null}catch(e){}
   try{const w=JSON.parse(N.getWeeklyHighlight()||'{}');state.weeklyHighlight=w.type?w:null}catch(e){}
+  try{state.debugBuild=!!(N.isDebugBuild&&N.isDebugBuild())}catch(e){}
 }
 // v0.38: director feedback -- switching tabs after scrolling down on one
 // (e.g. Home) kept the OLD scroll offset once the new tab's shorter content
@@ -1493,7 +1494,10 @@ ${row(iconEmoji('📤'),l('데이터 내보내기','データのエクスポー�
 ${row(iconEmoji('❓'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),'openHelpSheet()')}
 ${row(iconEmoji('🔒'),l('개인정보처리방침','プライバシーポリシー','Privacy policy'),l('어떤 정보를 어떻게 다루는지','どんな情報をどう扱うか','What data is handled and how'),'openPrivacySheet()')}
 ${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v'+APP_VERSION,'openAboutSheet()')}
-</div>`
+</div>${state.debugBuild?`<div class="section-title"><h2>Debug</h2></div><div class="settings-list">
+${row(iconEmoji('🐛'),'HIDDEN_LOOP 미리보기','실기기 카드/공유 확인용 (디버그 빌드 전용)',"debugPreviewHidden('HIDDEN_LOOP')")}
+${row(iconEmoji('🐛'),'HIDDEN_NIGHT_ACTIVITY 미리보기','실기기 카드/공유 확인용 (디버그 빌드 전용)',"debugPreviewHidden('HIDDEN_NIGHT_ACTIVITY')")}
+</div>`:''}`
 }
 // v0.65: director-approved monetization -- settings' "광고 제거" row tap
 // handler. The actual purchase result comes back asynchronously to the
@@ -1816,6 +1820,22 @@ function fitTcgCard(){
 // would silently keep showing the reveal instead. Cheap insurance against
 // that, not a currently-reachable bug.
 function openDetail(i){state.revealItem=null;state.detailItem=i;window.scrollTo(0,0);render()}
+// v0.86: debug-only tool (state.debugBuild, see NativeBridge.isDebugBuild()'s
+// own comment for why it's needed) -- opens a synthetic HIDDEN incident
+// through the exact same openDetail()/detailPage()/share() pipeline a real
+// one uses, so the TCG card, holo effect, and native share export can be
+// checked on a real device without needing to actually satisfy
+// detectHiddenLoop()/detectHiddenNightActivity()'s strict real-usage
+// thresholds (7+ alternating switches between exactly 2 apps within 5
+// minutes, or 5+ short 2-5am unlocks). Package names are just realistic
+// placeholders for compactPkg() to render -- this never touches real
+// detection/history data.
+function debugPreviewHidden(type){
+  const i=type==='HIDDEN_LOOP'
+    ?{type:'HIDDEN_LOOP',rarity:'HIDDEN',primaryPackage:'com.kakao.talk',secondaryPackage:'jp.naver.line.android',metrics:{switches:8}}
+    :{type:'HIDDEN_NIGHT_ACTIVITY',rarity:'HIDDEN',topPackage:'com.kakao.talk',metrics:{unlockSessions:6,totalUsageMs:600000}};
+  openDetail(i);
+}
 function closeDetail(){state.detailItem=null;window.scrollTo(0,0);render()}
 // v0.60: director feedback -- "저녁9시?에 통계로 알려줄때 앱을 열때
 // 가장 많이 접근된 카드를 뙇하고 보여주면 더 좋을꺼같아 어떤어떤

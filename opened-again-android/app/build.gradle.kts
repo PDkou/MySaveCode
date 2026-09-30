@@ -51,8 +51,8 @@ android {
         applicationId = "com.howlingcreativestudio.openedagain"
         minSdk = 29
         targetSdk = 36
-        versionCode = 85
-        versionName = "0.85.0"
+        versionCode = 86
+        versionName = "0.86.0"
     }
 
     buildTypes {
@@ -60,6 +60,15 @@ android {
             if (keystorePropertiesFile.exists()) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
         }
+    }
+
+    // v0.86: AGP 8+ stopped generating BuildConfig by default -- needed
+    // now so NativeBridge.isDebugBuild() can read BuildConfig.DEBUG (true
+    // for `assembleDebug`/this project's CI artifact, false for the real
+    // `bundleRelease` Play Store build) to gate a debug-only "HIDDEN 카드
+    // 미리보기" tool in Settings. See NativeBridge.kt's own comment.
+    buildFeatures {
+        buildConfig = true
     }
 
     // Without this, AGP defaults compileDebugJavaWithJavac to 1.8 while the

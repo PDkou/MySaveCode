@@ -117,6 +117,24 @@ class NativeBridge(
     @JavascriptInterface
     fun hasNotificationPermission(): Boolean = NotificationManagerCompat.from(activity).areNotificationsEnabled()
 
+    // v0.86: director feedback -- deliberately alternating two apps to
+    // trigger a real HIDDEN_LOOP incident (7+ switches within 5 minutes,
+    // exactly 2 apps, zero interruptions -- see IncidentDetector.kt's
+    // detectHiddenLoop logic) turned out too strict to reliably hit even
+    // on purpose, and this is the app's only rarity whose TCG card/holo
+    // effect/native share export has never been confirmed on a real
+    // device. Rather than loosen the actual detection thresholds (a
+    // balance decision, not this bug fix's job), settings() gates a
+    // "HIDDEN 카드 미리보기" debug tool behind this flag so a synthetic
+    // HIDDEN incident can be opened/shared through the exact same
+    // detailPage()/shareIncident() pipeline as a real one, with zero
+    // effect on detection logic or real user-facing behavior.
+    // BuildConfig.DEBUG is true only for `assembleDebug` (this project's
+    // CI artifact) and false for the real `bundleRelease` Play Store
+    // build, so this tool can never reach a real tester or the store.
+    @JavascriptInterface
+    fun isDebugBuild(): Boolean = BuildConfig.DEBUG
+
     // v0.24: called from the onboarding screen's "알림 허용" button
     // (index.html's onboardFinish(true)). POST_NOTIFICATIONS is only a
     // runtime-requestable permission from API 33 -- pre-33 it's implicitly
