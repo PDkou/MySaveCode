@@ -135,6 +135,33 @@ class NativeBridge(
     @JavascriptInterface
     fun isDebugBuild(): Boolean = BuildConfig.DEBUG
 
+    // v0.86: director report -- couldn't trigger a real HIDDEN_LOOP no
+    // matter how the two-app alternation was done, with no clear
+    // explanation from re-reading the detection code alone. Exposes
+    // IncidentAnalyzer.debugSessionsToday()'s raw session breakdown so
+    // the debug-only Settings tool (gated by isDebugBuild() above, same
+    // as the HIDDEN card preview) can show real switches/uniqueApps/
+    // duration numbers for today's actual sessions -- turns "why didn't
+    // this fire" from blind guessing in this sandbox into something
+    // visible on the device itself. Read-only: does not record anything
+    // or affect detection/history in any way.
+    @JavascriptInterface
+    fun debugSessionsToday(): String {
+        val sessions = analyzer.debugSessionsToday()
+        return JSONArray(sessions.map { s ->
+            JSONObject().apply {
+                put("startTime", s.startTime)
+                put("endTime", s.endTime)
+                put("durationMs", s.durationMs)
+                put("switches", s.switches)
+                put("uniqueApps", s.uniqueApps)
+                put("visits", JSONArray(s.visits.map { v ->
+                    JSONObject().put("packageName", v.packageName).put("durationMs", v.durationMs)
+                }))
+            }
+        }).toString()
+    }
+
     // v0.24: called from the onboarding screen's "알림 허용" button
     // (index.html's onboardFinish(true)). POST_NOTIFICATIONS is only a
     // runtime-requestable permission from API 33 -- pre-33 it's implicitly

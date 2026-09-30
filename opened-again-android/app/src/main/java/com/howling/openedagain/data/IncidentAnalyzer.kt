@@ -8,6 +8,7 @@ import com.howling.openedagain.core.DailyUsageSummary
 import com.howling.openedagain.core.DailyReport
 import com.howling.openedagain.core.IncidentDetector
 import com.howling.openedagain.core.SessionBuilder
+import com.howling.openedagain.core.UsageSession
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
@@ -48,6 +49,26 @@ class IncidentAnalyzer(private val context: Context, private val history: Histor
         history.recordDay(utcDateKey(), summaryJson, report.totalIncidents, report.hiddenCount, report.legendaryCount)
         rememberTodaysCard(report)
         return Result(report, summary, summaryJson)
+    }
+
+    // v0.86: director report -- deliberately repeating an alternating-two-app
+    // pattern (meant to trigger HIDDEN_LOOP) never fired, even past 15
+    // repetitions and multiple different switching techniques, with no
+    // obvious explanation from re-reading detectHiddenLoop()'s logic alone.
+    // Rather than keep guessing blind at what a real device's actual
+    // UsageEvents produced, this exposes the exact same session breakdown
+    // detectDay() works from, so NativeBridge.debugSessionsToday() can let
+    // the director SEE which of HIDDEN_LOOP's three conditions (exactly 2
+    // apps, switches>=6, duration<=5min) actually failed for their test,
+    // instead of everyone re-guessing from this sandbox with no device
+    // access. Same collection window as analyzeToday() but stops short of
+    // running detection/recording anything -- purely read-only.
+    fun debugSessionsToday(): List<UsageSession> {
+        val zone = ZoneId.systemDefault()
+        val start = LocalDate.now().atStartOfDay(zone).toInstant().toEpochMilli()
+        val end = System.currentTimeMillis()
+        val raw = UsageEventCollector(context).collect(start, end)
+        return SessionBuilder().build(raw, nowMs = end)
     }
 
     // v0.72: index.html's own home-screen incident names only exist as JS
