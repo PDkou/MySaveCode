@@ -194,12 +194,24 @@ class IncidentDetector(
                 topPackage = mostVisitedPackage(s.visits))
         }
 
-        // Hidden loop: strict two-app alternation.
+        // Hidden loop: heavy back-and-forth switching in a short window.
+        // v0.89: originally required the WHOLE session to contain exactly 2
+        // unique packages -- director confirmed via the v0.87/v0.88 debug
+        // tools that this is nearly unreachable on a real device even when
+        // deliberately attempted: any other app touched within the same
+        // 2-minute session-merge window (installing this app's own debug
+        // build, checking a notification, anything) permanently disqualifies
+        // the whole session, with no way for a real user to isolate a
+        // perfectly clean 2-app-only session by accident. Switched to
+        // picking whichever two apps were actually switched between the
+        // most in the window, tolerating other apps passing through --
+        // matches the incident's own flavor text ("두 앱 사이를 오갔다")
+        // just as well, and the switches>=6/5-min-window floor still keeps
+        // this rare.
         if (duration <= config.hiddenLoopWindowMs && s.switches >= config.hiddenLoopSwitches) {
-            val uniq = pkgs.distinct()
-            if (uniq.size == 2 && pkgs.zipWithNext().all { it.first != it.second }) {
-                out += incident(IncidentType.HIDDEN_LOOP, Rarity.HIDDEN, s.startTime, s.endTime, uniq[0],
-                    mapOf("switches" to s.switches.toLong()), secondaryPackage = uniq[1])
+            topTwoVisitedPackages(s.visits)?.let { (first, second) ->
+                out += incident(IncidentType.HIDDEN_LOOP, Rarity.HIDDEN, s.startTime, s.endTime, first,
+                    mapOf("switches" to s.switches.toLong()), secondaryPackage = second)
             }
         }
     }
@@ -254,6 +266,19 @@ class IncidentDetector(
     // dedup/grouping key, see DetectedIncident's own comment on why.
     private fun mostVisitedPackage(visits: List<AppVisit>): String? =
         visits.groupingBy { it.packageName }.eachCount().maxByOrNull { it.value }?.key
+
+    // v0.89: HIDDEN_LOOP's own top-2 pick (see its call site's comment) --
+    // by visit count, same metric mostVisitedPackage() above already uses.
+    // Only null when fewer than 2 distinct packages appear in the window,
+    // which switches>=1 already rules out in practice (SessionBuilder never
+    // leaves two adjacent visits on the same package to begin with, see its
+    // mergeAdjacentSameApp()), but kept as an explicit guard rather than an
+    // unchecked !! for a session this function has no other reason to trust.
+    private fun topTwoVisitedPackages(visits: List<AppVisit>): Pair<String, String>? {
+        val ranked = visits.groupingBy { it.packageName }.eachCount().entries.sortedByDescending { it.value }
+        if (ranked.size < 2) return null
+        return ranked[0].key to ranked[1].key
+    }
 
     private fun baseScore(r: Rarity) = when (r) {
         Rarity.NORMAL -> 10
