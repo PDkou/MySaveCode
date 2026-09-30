@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 
 import './styles/global.css';
+import './styles/home-refresh.css';
 import App from './App.tsx';
 
 // registerType: 'autoUpdate' in vite.config.ts does nothing on its own
