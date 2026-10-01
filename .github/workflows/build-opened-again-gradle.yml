@@ -1,25 +1,31 @@
 name: Build Opened Again Debug
 
 # Debug-build validation for opened-again-android/ (core Kotlin tests +
-# debug APK). This is the "does it actually compile" check — the sandbox
+# debug AAB). This is the "does it actually compile" check — the sandbox
 # this app was developed in has no Android SDK/Gradle dependency access,
 # so this workflow is the only place a real build has run.
+#
+# v0.90: switched from auto-triggering on every push (producing a debug
+# APK) to manual-only, matching the sibling Hello Today app's own
+# build-hellotoday-gradle.yml convention (workflow_dispatch + optional
+# ref input) at director's request -- director no longer wants APK
+# artifacts at all, only ever an AAB (debug here, signed release from
+# build-opened-again-release.yml for anything actually installed/tested).
 on:
   workflow_dispatch:
-  push:
-    branches: [ open-again, main ]
-    paths:
-      - 'opened-again-android/app/**'
-      - 'opened-again-android/core/**'
-      - 'opened-again-android/*.gradle.kts'
-      - 'opened-again-android/gradle.properties'
-      - '.github/workflows/build-opened-again-gradle.yml'
+    inputs:
+      ref:
+        description: "Branch/tag/SHA to build (defaults to the ref the workflow runs from)"
+        required: false
+        type: string
 
 jobs:
   debug:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - uses: actions/setup-java@v4
         with:
@@ -30,11 +36,11 @@ jobs:
         with:
           gradle-version: "8.11.1"
 
-      - name: gradle :core:test :app:assembleDebug
+      - name: gradle :core:test :app:bundleDebug
         working-directory: opened-again-android
-        run: gradle :core:test :app:assembleDebug
+        run: gradle :core:test :app:bundleDebug
 
       - uses: actions/upload-artifact@v4
         with:
-          name: opened-again-debug-apk
-          path: opened-again-android/app/build/outputs/apk/debug/*.apk
+          name: opened-again-debug-aab
+          path: opened-again-android/app/build/outputs/bundle/debug/*.aab
