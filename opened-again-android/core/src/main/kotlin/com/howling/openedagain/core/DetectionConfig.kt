@@ -10,7 +10,7 @@ data class DetectionConfig(
     val wanderingRareSwitches: Int = 8,
     val wanderingEpicSwitches: Int = 12,
     val hiddenLoopWindowMs: Long = 300_000,
-    val hiddenLoopSwitches: Int = 6,
+    val hiddenLoopSwitches: Int = 12,
     val sessionGapMs: Long = 120_000,
     val unlockAssociationMs: Long = 10_000,
     /** Adjacent visits to the same package closer than this are merged. Handles activity-to-activity transitions. */

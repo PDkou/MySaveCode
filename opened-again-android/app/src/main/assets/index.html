@@ -472,7 +472,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.89.0';
+const APP_VERSION='0.90.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1590,10 +1590,13 @@ function exportBackupData(){
 }
 // v0.86: debug-only diagnostic (see NativeBridge.debugSessionsToday()'s own
 // comment) -- dumps today's actual detected sessions with a live pass/fail
-// check against HIDDEN_LOOP's real conditions (switches>=6, duration<=5min
+// check against HIDDEN_LOOP's real conditions (switches>=12, duration<=5min
 // -- see IncidentDetector.kt's detectHiddenLoop()), so a session that
 // didn't trigger it shows exactly which condition it missed instead of
 // more guessing. Read-only, no effect on detection/history.
+// v0.90: threshold raised from 6 to 12 switches (see that file's own v0.90
+// comment) -- kept in sync here so this debug view never judges against a
+// stale number.
 // v0.89: the "정확히 2개 필요" (exactly 2 apps) condition shown here used
 // to mirror a real detection requirement that director confirmed (via this
 // same tool) was nearly unreachable on a real device -- IncidentDetector.kt
@@ -1602,7 +1605,7 @@ function exportBackupData(){
 // debug view to match: drops the uniqueApps check entirely and shows
 // which two apps the real logic would actually pick.
 function debugHiddenLoopCheck(s){
-  return {okDuration:s.durationMs<=300000, okSwitches:s.switches>=6};
+  return {okDuration:s.durationMs<=300000, okSwitches:s.switches>=12};
 }
 function debugTopTwo(visits){
   const counts={};
@@ -1621,12 +1624,12 @@ function openDebugSessionsSheet(){
     const pkgs=s.visits.map(v=>compactPkg(v.packageName)).join(' → ');
     return `<div style="border-bottom:1px solid var(--line);padding:10px 0;font-size:12px">
       <b>${new Date(s.startTime).toLocaleTimeString()} ~ ${new Date(s.endTime).toLocaleTimeString()}</b> (${fmtMs(s.durationMs)})<br>
-      switches=${s.switches} ${c.okSwitches?'✅':'❌(6+ 필요)'} · ${c.okDuration?'✅ 5분 이내':'❌ 5분 초과'}<br>
+      switches=${s.switches} ${c.okSwitches?'✅':'❌(12+ 필요)'} · ${c.okDuration?'✅ 5분 이내':'❌ 5분 초과'}<br>
       <span style="color:var(--muted);word-break:break-all">${esc(pkgs)}</span>
       ${pass?`<div style="color:#2e7d32;font-weight:700;margin-top:2px">HIDDEN_LOOP 조건 충족! (${esc(compactPkg(top2[0]))} ↔ ${esc(compactPkg(top2[1]))})</div>`:''}
     </div>`;
   }).join('')||`<div class="empty">${l('오늘 기록된 세션이 없습니다.','本日のセッションがありません。','No sessions recorded today.')}</div>`;
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">오늘 세션 로그 (Debug)</div><p style="font-size:12px;color:var(--muted);margin:4px 0 12px">HIDDEN_LOOP 조건: 전환 6회 이상, 전체 5분 이내 (가장 많이 오간 두 앱이 자동으로 대표 앱이 됨)</p>${rows}</div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">오늘 세션 로그 (Debug)</div><p style="font-size:12px;color:var(--muted);margin:4px 0 12px">HIDDEN_LOOP 조건: 전환 12회 이상, 전체 5분 이내 (가장 많이 오간 두 앱이 자동으로 대표 앱이 됨)</p>${rows}</div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
 }
 function openHelpSheet(){
   document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('도움말','ヘルプ','Help')}</div><p style="font-size:13px;line-height:1.7;color:var(--ink);margin:4px 0 0">${l('모니는 스마트폰의 사용 기록을 매일 조사해 특이한 습관을 사건 카드로 정리해 드려요. 홈 탭에서 오늘의 사건을, 기록 탭에서 오늘 하루의 숫자를, 보관함 탭에서 지금까지 모은 카드를 확인할 수 있어요. 모든 기록은 이 기기 안에만 저장되고 서버로 전송되지 않아요.','MONIはスマホの利用記録を毎日調べて、気になる習慣を事件カードにまとめます。ホームで今日の事件を、記録で本日の数字を、保管庫でこれまで集めたカードを確認できます。すべての記録はこの端末内にのみ保存され、サーバーへは送信されません。','MONI investigates your phone usage every day and turns odd habits into incident cards. Check today\'s case on Home, today\'s numbers on Records, and everything you\'ve collected on Archive. Every record stays on this device only and is never sent to a server.')}</p></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;

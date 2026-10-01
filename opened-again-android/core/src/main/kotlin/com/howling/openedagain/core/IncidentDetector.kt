@@ -206,8 +206,13 @@ class IncidentDetector(
         // picking whichever two apps were actually switched between the
         // most in the window, tolerating other apps passing through --
         // matches the incident's own flavor text ("두 앱 사이를 오갔다")
-        // just as well, and the switches>=6/5-min-window floor still keeps
+        // just as well, and the switches>=12/5-min-window floor still keeps
         // this rare.
+        // v0.90: director confirmed via a real (non-deliberate) session that
+        // the v0.89 floor of 6 switches fires from completely ordinary
+        // multi-app checking (no intent to "loop" at all) -- raised to 12 so
+        // this still feels like a genuine, somewhat rare find rather than
+        // something that falls out of five minutes of normal phone use.
         if (duration <= config.hiddenLoopWindowMs && s.switches >= config.hiddenLoopSwitches) {
             topTwoVisitedPackages(s.visits)?.let { (first, second) ->
                 out += incident(IncidentType.HIDDEN_LOOP, Rarity.HIDDEN, s.startTime, s.endTime, first,
