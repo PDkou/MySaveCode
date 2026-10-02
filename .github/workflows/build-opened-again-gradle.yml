@@ -36,6 +36,10 @@ jobs:
         with:
           gradle-version: "8.11.1"
 
+      - name: TEMP diagnostic -- guava/listenablefuture resolution
+        working-directory: opened-again-android
+        run: gradle :app:dependencies --configuration debugCompileClasspath | grep -i -E "guava|listenablefuture" || true
+
       - name: gradle :core:test :app:bundleDebug
         working-directory: opened-again-android
         run: gradle :core:test :app:bundleDebug
