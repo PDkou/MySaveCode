@@ -53,7 +53,20 @@
          keeps working unchanged, since without a registered
          OnBackInvokedCallback the platform's compatibility path still
          calls it, so this is a behavior-preserving opt-in, not a rewrite. -->
-    <application android:theme="@style/AppTheme" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="true" android:enableOnBackInvokedCallback="true">
+    <!-- v0.91: director's hands-on test pass flagged that allowBackup=true
+         with no dataExtractionRules/fullBackupContent means Android's Auto
+         Backup silently copies this app's entire private storage, the
+         Room usage-history DB included, to the user's Google account.
+         That contradicts the privacy policy's "모든 기록은 기기 안에만
+         저장되고 외부로 전송되지 않습니다" claim (the policy's wording
+         covers this app's own network behavior, which is correct since no
+         server exists, but doesn't carve out the OS's own backup
+         pipeline, so the actual behavior didn't match the plain reading of
+         the promise). Director chose to disable backup entirely rather
+         than write extraction-rule exclusions, since on-device-only is
+         this app's whole premise and there's no settings/preference data
+         here worth preserving across a reinstall anyway. -->
+    <application android:theme="@style/AppTheme" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="false" android:enableOnBackInvokedCallback="true">
         <!-- v0.85: REQUIRED by the Google Mobile Ads SDK ; it refuses to
              initialize without this meta-data and crashes at MobileAds.initialize().
              This is the director's real AdMob App ID (registered

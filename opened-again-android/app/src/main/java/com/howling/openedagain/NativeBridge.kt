@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.webkit.JavascriptInterface
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.FileProvider
 import com.howling.openedagain.core.*
@@ -163,20 +164,57 @@ class NativeBridge(
     }
 
     // v0.24: called from the onboarding screen's "알림 허용" button
-    // (index.html's onboardFinish(true)). POST_NOTIFICATIONS is only a
-    // runtime-requestable permission from API 33 -- pre-33 it's implicitly
-    // granted, so there's nothing to prompt for. Fire-and-forget: no
-    // onRequestPermissionsResult callback wired up, and nothing in the app
-    // branches on grant vs. deny, because there's no notification feature
-    // built yet to gate behind the result -- this only requests the OS
-    // permission proactively (matching what the onboarding art promises)
-    // so a future notification feature doesn't need its own separate
-    // permission-request UI.
+    // (index.html's onboardFinish(true)) and from settings()'s "알림 권한"
+    // row. POST_NOTIFICATIONS is only a runtime-requestable permission from
+    // API 33 -- pre-33 it's implicitly granted, so there's nothing to
+    // prompt for.
+    //
+    // v0.91: director report -- allowing during onboarding worked, but
+    // tapping the same settings row again later to change a denial did
+    // nothing (no dialog ever appeared). This is standard Android platform
+    // behavior, not a bug introduced here: once the user has already been
+    // shown the POST_NOTIFICATIONS system dialog and denied it a second
+    // time, any further Activity.requestPermissions() call for that same
+    // permission is silently a no-op -- the OS refuses to show the dialog
+    // again at all, UNLESS shouldShowRequestPermissionRationale() says one
+    // more prompt is still allowed (true after exactly one denial, false
+    // once permanently closed off). That flag alone can't tell "never asked
+    // yet" apart from "permanently denied" -- both read false while the
+    // permission is still not granted -- so this now also tracks whether
+    // it has EVER asked before (own SharedPreferences flag). A genuinely
+    // first-ever call, or a still-allowed retry after exactly one denial,
+    // still shows the real system dialog; once Android has fully closed
+    // off further prompts, this instead deep-links to the app's own system
+    // notification settings page -- the only place left the user can
+    // actually change it.
     @JavascriptInterface
     fun requestNotificationPermission() {
         if (android.os.Build.VERSION.SDK_INT < 33) return
+        if (NotificationManagerCompat.from(activity).areNotificationsEnabled()) return
+        val alreadyAsked = prefs.getBoolean("notif_permission_requested", false)
+        val canStillPrompt = !alreadyAsked ||
+            ActivityCompat.shouldShowRequestPermissionRationale(activity, android.Manifest.permission.POST_NOTIFICATIONS)
+        if (!canStillPrompt) {
+            openNotificationSettings()
+            return
+        }
+        prefs.edit().putBoolean("notif_permission_requested", true).apply()
         activity.runOnUiThread {
             activity.requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
+        }
+    }
+
+    // v0.91: see requestNotificationPermission()'s own comment -- the only
+    // way left for the user to flip a permanently-denied POST_NOTIFICATIONS
+    // back on, the same system-settings-deep-link pattern openUsageSettings()
+    // above already uses for the separate usage-access permission.
+    @JavascriptInterface
+    fun openNotificationSettings() {
+        activity.runOnUiThread {
+            val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName)
+            }
+            activity.startActivity(intent)
         }
     }
 
