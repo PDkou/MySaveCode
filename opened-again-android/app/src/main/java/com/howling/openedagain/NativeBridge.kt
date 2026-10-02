@@ -11,6 +11,8 @@ import androidx.core.content.FileProvider
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.howling.openedagain.core.*
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import com.howling.openedagain.data.HistoryRepository
 import com.howling.openedagain.data.IncidentAnalyzer
 import com.howling.openedagain.ui.ShareCardRenderer
@@ -208,8 +210,26 @@ class NativeBridge(
     @JavascriptInterface
     fun debugIncidentCheckStatus(): String {
         val debugPrefs = activity.getSharedPreferences(IncidentCheckWorker.PREFS_NAME, Context.MODE_PRIVATE)
+        // v0.92 fix: the non-KTX getWorkInfosForUniqueWork(name).get() returns
+        // com.google.common.util.concurrent.ListenableFuture -- CI failed to
+        // compile that with "Cannot access class 'ListenableFuture'". Real
+        // cause (confirmed via a temporary `gradle :app:dependencies` CI
+        // diagnostic, not guessed): Gradle resolved this project's only
+        // listenablefuture reference to Guava's own
+        // "9999.0-empty-to-avoid-conflict-with-guava" placeholder artifact --
+        // a substitution Guava's module metadata applies automatically, safe
+        // only when real `com.google.guava:guava` is ALSO present elsewhere
+        // on the classpath to supply the actual class. This project has no
+        // such dependency, so the placeholder left the class entirely
+        // missing. Rather than add a new Guava version dependency just to
+        // satisfy that substitution, use work-runtime-ktx's coroutine Flow
+        // extension instead (kotlinx-coroutines-core already comes in
+        // transitively via that artifact), which never references
+        // ListenableFuture at all.
         val workInfos = runCatching {
-            WorkManager.getInstance(activity).getWorkInfosForUniqueWork(IncidentCheckScheduler.UNIQUE_WORK_NAME).get()
+            runBlocking {
+                WorkManager.getInstance(activity).getWorkInfosForUniqueWorkFlow(IncidentCheckScheduler.UNIQUE_WORK_NAME).first()
+            }
         }.getOrDefault(emptyList<WorkInfo>())
         val channelState = if (android.os.Build.VERSION.SDK_INT < 26) {
             "unsupported_pre_O"

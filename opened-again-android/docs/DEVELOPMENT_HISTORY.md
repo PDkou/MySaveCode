@@ -3831,3 +3831,37 @@ Debug 섹션에 "백그라운드 체크 상태 보기" 행 추가, 탭하면
 성공은 CI로만 확인 가능하며, 이 진단 도구 자체가 보여줄 실제 원인은
 아직 알 수 없음 -- director가 디버그 빌드에서 이 화면을 확인해야
 다음 단계(원인 확정)로 넘어갈 수 있음.
+
+**첫 CI 빌드 실패 및 수정**: 위 검증은 로컬에서 할 수 있는 선에서는
+전부 통과했지만, 실제 CI(`compileDebugKotlin`)는 실패함 -- `e: Cannot
+access class 'ListenableFuture'. Check your module classpath for
+missing or conflicting dependencies.` 브레이스/괄호 균형 체크나
+`node --check`로는애초에 잡을 수 없는 종류의 실패(타입 자체가 이
+프로젝트 클래스패스에서 안 보이는 문제)였음 -- 이 프로젝트가 처음으로
+`WorkManager`의 `ListenableFuture` 반환 API(`getWorkInfosForUniqueWork().get()`)를
+쓰면서 드러난, 이전엔 한 번도 노출된 적 없던 의존성 문제.
+
+추측으로 수정하지 않고 CI에 `gradle :app:dependencies --configuration
+debugCompileClasspath | grep -i guava` 임시 진단 스텝을 추가해 실제
+의존성 해석 결과를 직접 확인 (androidx 버전 감사 때 썼던 것과 같은
+방법). 결과: `com.google.guava:listenablefuture:1.0 ->
+9999.0-empty-to-avoid-conflict-with-guava` -- Guava가 자체 모듈
+메타데이터로 강제하는 "listenablefuture 스텁을 빈 깡통 아티팩트로
+치환" 규칙이 적용된 것. 이 치환은 원래 진짜 `com.google.guava:guava`가
+클래스패스 어딘가에 같이 있어서 실제 `ListenableFuture` 클래스를
+제공해줄 때만 안전한데, 이 프로젝트는 Guava 의존성이 전혀 없어서
+치환 후 그 클래스를 제공하는 아티팩트가 아예 없어진 것이 근본 원인.
+
+Guava를 새로 추가하는 대신(버전 하나를 더 관리해야 하고, "최신
+버전"을 추측해서 박아넣는 것도 피하고 싶었음), 이미 의존성에 있는
+`work-runtime-ktx`의 코루틴 Flow 확장 함수
+(`getWorkInfosForUniqueWorkFlow()`)로 교체 -- `ListenableFuture`를
+전혀 참조하지 않는 경로라 이 문제 자체를 우회함.
+`kotlinx.coroutines.runBlocking { ... .first() }`로 감싸 기존과
+동일하게 동기 호출 형태 유지. `work-runtime-ktx`가 이미
+`kotlinx-coroutines-android`를 (이 확장 함수의 반환 타입을 위해) api
+의존성으로 가져오고 있어서 새 라이브러리 추가는 전혀 없음. 진단용으로
+추가했던 CI 스텝은 확인 후 제거.
+
+재검증: 중괄호/괄호 균형 재확인 (53/53, 213/213) 후 CI 재트리거 --
+결과는 이 커밋 이후 별도로 확인.
