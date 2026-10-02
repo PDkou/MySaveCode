@@ -472,7 +472,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.91.0';
+const APP_VERSION='0.92.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1498,6 +1498,7 @@ ${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v'+APP_VERS
 ${row(iconEmoji('🐛'),'HIDDEN_LOOP 미리보기','실기기 카드/공유 확인용 (디버그 빌드 전용)',"debugPreviewHidden('HIDDEN_LOOP')")}
 ${row(iconEmoji('🐛'),'HIDDEN_NIGHT_ACTIVITY 미리보기','실기기 카드/공유 확인용 (디버그 빌드 전용)',"debugPreviewHidden('HIDDEN_NIGHT_ACTIVITY')")}
 ${row(iconEmoji('🔍'),'오늘 세션 로그 보기','HIDDEN_LOOP이 왜 안 뜨는지 실제 데이터로 확인','openDebugSessionsSheet()')}
+${row(iconEmoji('📡'),'백그라운드 체크 상태 보기','여러 사건 발생 알림이 왜 안 왔는지 확인','openDebugIncidentCheckSheet()')}
 </div>`:''}`
 }
 // v0.65: director-approved monetization -- settings' "광고 제거" row tap
@@ -1630,6 +1631,35 @@ function openDebugSessionsSheet(){
     </div>`;
   }).join('')||`<div class="empty">${l('오늘 기록된 세션이 없습니다.','本日のセッションがありません。','No sessions recorded today.')}</div>`;
   document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">오늘 세션 로그 (Debug)</div><p style="font-size:12px;color:var(--muted);margin:4px 0 12px">HIDDEN_LOOP 조건: 전환 12회 이상, 전체 5분 이내 (가장 많이 오간 두 앱이 자동으로 대표 앱이 됨)</p>${rows}</div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+}
+// v0.92: director report -- the "여러 사건 발생" background notification
+// (IncidentCheckWorker, every ~4h) never arrived even with the daily
+// reminder toggle on and 2+ incidents confirmed that day. Shows
+// NativeBridge.debugIncidentCheckStatus()'s raw state so "the job never
+// actually runs" (workState stuck at ENQUEUED with lastRunAt never
+// updating) can be told apart from "it runs but the notification itself
+// is suppressed" (channelState=='blocked', a per-channel system setting
+// independent of the overall app notification permission). Read-only.
+function openDebugIncidentCheckSheet(){
+  if(preview||!N){toast(l('미리보기에서는 실행되지 않습니다.','プレビューでは実行されません。','Not available in preview.'));return}
+  let s={};
+  try{s=JSON.parse(N.debugIncidentCheckStatus()||'{}')}catch(e){}
+  const fmtTs=t=>(t&&t>0)?new Date(t).toLocaleString():'기록 없음 (아직 한 번도 실행 안 됨)';
+  const channelLabel={enabled:'✅ 정상 (알림 켜짐)',blocked:'❌ 차단됨 (시스템 설정에서 이 채널을 꺼둠)',not_created:'⚠️ 채널이 아직 생성 안 됨',unsupported_pre_O:'해당 없음 (Android 8 미만)'}[s.channelState]||s.channelState||'알 수 없음';
+  const body=`
+    <div style="font-size:13px;line-height:2">
+      <b>WorkManager 작업 상태</b>: ${esc(s.workState||'알 수 없음')}${s.workState==='NOT_SCHEDULED'?' (❌ 예약 자체가 안 되어있음 -- 일일 리마인더 토글 확인 필요)':''}<br>
+      <b>마지막으로 실제 실행된 시각</b>: ${esc(fmtTs(s.lastRunAt))}<br>
+      <b>그때 감지된 사건 수</b>: ${s.lastRunIncidentCount>=0?s.lastRunIncidentCount:'-'}<br>
+      <hr style="border:none;border-top:1px solid var(--line);margin:8px 0">
+      <b>사용정보 접근 권한</b>: ${s.hasUsageAccess?'✅ 허용됨':'❌ 꺼져있음'}<br>
+      <b>앱 알림 권한(전체)</b>: ${s.notificationsEnabled?'✅ 허용됨':'❌ 꺼져있음'}<br>
+      <b>알림 채널 상태</b>: ${channelLabel}<br>
+      <hr style="border:none;border-top:1px solid var(--line);margin:8px 0">
+      <b>마지막으로 실제 알림을 보낸 날짜</b>: ${esc(s.lastNotifiedDate||'없음')}<br>
+      <b>그때 알린 사건 수</b>: ${s.lastNotifiedCount>=0?s.lastNotifiedCount:'-'}
+    </div>`;
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">백그라운드 체크 상태 (Debug)</div><p style="font-size:12px;color:var(--muted);margin:4px 0 12px">4시간마다 백그라운드에서 돌아야 하는 작업의 실제 상태입니다. "마지막 실행 시각"이 계속 갱신 안 되면 작업 자체가 안 돌고 있는 것, 채널이 "차단됨"이면 작업은 도는데 알림만 막힌 것입니다.</p>${body}</div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
 }
 function openHelpSheet(){
   document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('도움말','ヘルプ','Help')}</div><p style="font-size:13px;line-height:1.7;color:var(--ink);margin:4px 0 0">${l('모니는 스마트폰의 사용 기록을 매일 조사해 특이한 습관을 사건 카드로 정리해 드려요. 홈 탭에서 오늘의 사건을, 기록 탭에서 오늘 하루의 숫자를, 보관함 탭에서 지금까지 모은 카드를 확인할 수 있어요. 모든 기록은 이 기기 안에만 저장되고 서버로 전송되지 않아요.','MONIはスマホの利用記録を毎日調べて、気になる習慣を事件カードにまとめます。ホームで今日の事件を、記録で本日の数字を、保管庫でこれまで集めたカードを確認できます。すべての記録はこの端末内にのみ保存され、サーバーへは送信されません。','MONI investigates your phone usage every day and turns odd habits into incident cards. Check today\'s case on Home, today\'s numbers on Records, and everything you\'ve collected on Archive. Every record stays on this device only and is never sent to a server.')}</p></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;

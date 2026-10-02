@@ -24,6 +24,20 @@ import java.time.Instant
 class IncidentCheckWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
     override fun doWork(): Result {
         val context = applicationContext
+        // v0.92: director report -- this background notification never
+        // arrived despite the daily-reminder toggle being on, 2+ incidents
+        // confirmed to have actually occurred, and no battery-optimization
+        // restriction on the app. None of that rules out the OS simply
+        // never invoking this worker (Doze deferral, WorkManager's own
+        // periodic-work scheduling) versus it running but the notification
+        // itself being suppressed (e.g. this channel specifically blocked
+        // in system settings, independent of the app-level notifications
+        // toggle). Recording an unconditional "last woken at" timestamp
+        // here -- before either early-return check below -- lets the new
+        // debugIncidentCheckStatus() tool (NativeBridge.kt) tell those two
+        // cases apart from real device data instead of guessing further.
+        val debugPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        debugPrefs.edit().putLong(KEY_LAST_RUN_AT, System.currentTimeMillis()).apply()
         // Permission revoked (or never granted) since this was scheduled --
         // nothing to analyze, and not a failure worth WorkManager retrying.
         if (!IncidentAnalyzer.hasUsageAccess(context)) return Result.success()
@@ -34,6 +48,7 @@ class IncidentCheckWorker(context: Context, params: WorkerParameters) : Worker(c
         val analysis = IncidentAnalyzer(context, history).analyzeToday()
 
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        debugPrefs.edit().putInt(KEY_LAST_RUN_COUNT, analysis.report.totalIncidents).apply()
         val today = todayKey()
         // Only re-notify once the count has actually grown past what this
         // worker already told the user about today -- otherwise every
@@ -84,10 +99,15 @@ class IncidentCheckWorker(context: Context, params: WorkerParameters) : Worker(c
         runCatching { NotificationManagerCompat.from(context).notify(MULTI_NOTIFICATION_ID, notification) }
     }
 
-    private companion object {
+    // v0.92: not `private` anymore -- NativeBridge.debugIncidentCheckStatus()
+    // reads PREFS_NAME/KEY_DATE/KEY_COUNT/KEY_LAST_RUN_AT/KEY_LAST_RUN_COUNT
+    // directly rather than duplicating these string/int keys a second time.
+    companion object {
         const val PREFS_NAME = "incident_check_prefs"
         const val KEY_DATE = "last_notified_date"
         const val KEY_COUNT = "last_notified_count"
+        const val KEY_LAST_RUN_AT = "debug_last_run_at"
+        const val KEY_LAST_RUN_COUNT = "debug_last_run_count"
         const val MULTI_THRESHOLD = 2
         const val MULTI_NOTIFICATION_ID = 2002
     }

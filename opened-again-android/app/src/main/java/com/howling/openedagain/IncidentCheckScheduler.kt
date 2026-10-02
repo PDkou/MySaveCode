@@ -26,7 +26,10 @@ import java.util.concurrent.TimeUnit
  * so -- unlike ReminderScheduler -- this needs no BootReceiver involvement.
  */
 object IncidentCheckScheduler {
-    private const val UNIQUE_WORK_NAME = "incident_check"
+    // v0.92: not `private` anymore -- NativeBridge.debugIncidentCheckStatus()
+    // queries WorkManager for this exact unique work name to show its
+    // current state in a debug-only diagnostic tool.
+    const val UNIQUE_WORK_NAME = "incident_check"
     private const val INTERVAL_HOURS = 4L
 
     fun schedule(context: Context) {

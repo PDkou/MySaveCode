@@ -3775,3 +3775,59 @@ director가 1번(완전 비활성화)으로 결정 -- 이 앱은 애초에 "100%
 실기기에서의 실제 동작은 아직 director의 다음 테스트로만 최종 확인
 가능 (현재는 추측이 아니라 코드 로직과 표준 OS 문서상 동작을 근거로 한
 수정임을 명확히 함).
+
+## v0.92 — 백그라운드 "여러 사건 발생" 알림 진단 도구 추가
+
+v0.91 업로드 전, director의 테스트 체크리스트 중 #2 "백그라운드 알림
+안옴"을 조사. `IncidentCheckWorker`/`IncidentCheckScheduler` 코드를
+다시 읽어봐도 뚜렷한 버그는 안 보여서, 가장 유력한 세 가지 원인을
+director에게 직접 확인 요청: (1) "일일 리마인더" 토글이 켜져 있었는지
+→ 켜져 있었음, (2) 그 날 실제로 사건이 2건 이상 발생했는지 (코드상
+`currentCount>=2` 조건이 있어 2건 미만이면 알림이 안 뜨는 게 정상
+동작) → 2건 이상 확실함, (3) 기기 자체 배터리 최적화가 이 앱을
+제한하고 있는지 (Samsung One UI 등 일부 제조사가 WorkManager 백그라운드
+작업을 강하게 제한하는 경우가 흔함) → 제한 없음 확인함. 세 가지 모두
+배제되어 코드만 다시 읽어서는 더 이상 확실한 원인을 좁힐 수 없었음.
+
+HIDDEN_LOOP 때(v0.87)와 같은 접근 -- 추측 대신 실기기 데이터를 직접
+보는 디버그 도구를 추가하기로 director와 합의.
+
+**구현**: `IncidentCheckWorker.doWork()`가 이제 실행될 때마다 (권한/
+알림 체크로 조기 리턴하기 전에) `debug_last_run_at` 타임스탬프를
+무조건 기록 -- "OS가 이 작업을 아예 깨우지 않는지" vs "깨우긴 하는데
+뭔가 다른 이유로 조용히 끝나는지"를 구분하기 위함. 실제 분석까지
+실행되면 그때 본 사건 수(`debug_last_run_count`)도 별도 기록. 두 상수
+모두 기존 `last_notified_date`/`last_notified_count`와 같은
+SharedPreferences 파일(`incident_check_prefs`)에 저장 -- 이 알림
+notify 임계값(2건)을 못 넘긴 날에도 "작업 자체는 돌았다"는 신호를
+남기기 위한 순수 진단용 필드로, 실제 알림 발송 로직에는 전혀 관여하지
+않음. `IncidentCheckWorker`/`IncidentCheckScheduler`의 `companion
+object`/`UNIQUE_WORK_NAME`을 `private`에서 풀어 `NativeBridge`가 직접
+참조하도록 함 (키 문자열을 두 번 중복 정의하지 않기 위함).
+
+새 `NativeBridge.debugIncidentCheckStatus(): String`이 다음을 한번에
+JSON으로 반환: `WorkManager.getWorkInfosForUniqueWork()`로 조회한 실제
+작업 상태(예약됨/실행중/없음), 마지막 실행 시각과 그때 본 사건 수,
+사용정보 접근 권한, 앱 알림 권한(전체), 그리고 -- 지금까지 조사에서
+빠져 있던 한 가지 -- **알림 채널 자체의 차단 여부**
+(`NotificationManagerCompat.getNotificationChannelCompat()`로 조회,
+`IMPORTANCE_NONE`이면 "차단됨"). 이 채널 상태는 앱 전체 알림 권한과는
+별개의 시스템 설정이라, 기존에 확인했던 것들과 달리 아직 director가
+직접 확인해본 적 없는 경로임 -- 이번 조사에서 새로 식별한, 코드만
+읽어서는 알 수 없었던 유력 후보.
+
+v0.86부터 이어진 패턴대로 `state.debugBuild` 게이트 아래 Settings의
+Debug 섹션에 "백그라운드 체크 상태 보기" 행 추가, 탭하면
+`openDebugIncidentCheckSheet()`가 위 JSON을 사람이 읽기 쉬운 형태로
+보여주는 시트를 띄움 (작업 상태/마지막 실행 시각/채널 상태 등을 한
+화면에 표/✅❌ 로 정리).
+
+버전 92/0.92.0. 검증: (1) 변경된 Kotlin 3개 파일 모두 주석 제거 후
+중괄호/괄호 개수 균형 확인 (`NativeBridge.kt` 52/52, 213/213 ;
+`IncidentCheckWorker.kt` 9/9, 54/54 ; `IncidentCheckScheduler.kt` 3/3,
+12/12) (2) 새로 추가한 JS를 `node --check`로 구문 검증 -- 통과. 이
+샌드박스는 네트워크 제한으로 로컬 Gradle 빌드가 안 되는 기존 제약이라
+`WorkManager`/`NotificationManagerCompat` API 실제 동작과 컴파일
+성공은 CI로만 확인 가능하며, 이 진단 도구 자체가 보여줄 실제 원인은
+아직 알 수 없음 -- director가 디버그 빌드에서 이 화면을 확인해야
+다음 단계(원인 확정)로 넘어갈 수 있음.

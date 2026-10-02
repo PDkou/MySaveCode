@@ -8,6 +8,8 @@ import android.webkit.JavascriptInterface
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.FileProvider
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.howling.openedagain.core.*
 import com.howling.openedagain.data.HistoryRepository
 import com.howling.openedagain.data.IncidentAnalyzer
@@ -187,6 +189,52 @@ class NativeBridge(
     // off further prompts, this instead deep-links to the app's own system
     // notification settings page -- the only place left the user can
     // actually change it.
+    // v0.92: director report -- the "여러 사건 발생" background notification
+    // (IncidentCheckWorker, fires every ~4h via IncidentCheckScheduler)
+    // never arrived even with the daily-reminder toggle on, 2+ incidents
+    // confirmed that day, and no battery-optimization restriction on the
+    // app -- ruling out the three most likely causes re-read from the code.
+    // Rather than guess further, this surfaces the real on-device state so
+    // a failure to fire can be told apart from a notification that fired
+    // but got silently suppressed: whether WorkManager even has the
+    // periodic job scheduled/running at all, whether it has ever actually
+    // executed (debug_last_run_at, written unconditionally by the worker
+    // itself -- see its own v0.92 comment), what incident count it last
+    // saw, and separately whether this app's notification channel for it
+    // is specifically blocked in system settings (a different, per-channel
+    // setting from the overall app notification permission
+    // hasNotificationPermission() above already checks). Read-only, same
+    // debug-tool pattern as debugSessionsToday() above.
+    @JavascriptInterface
+    fun debugIncidentCheckStatus(): String {
+        val debugPrefs = activity.getSharedPreferences(IncidentCheckWorker.PREFS_NAME, Context.MODE_PRIVATE)
+        val workInfos = runCatching {
+            WorkManager.getInstance(activity).getWorkInfosForUniqueWork(IncidentCheckScheduler.UNIQUE_WORK_NAME).get()
+        }.getOrDefault(emptyList<WorkInfo>())
+        val channelState = if (android.os.Build.VERSION.SDK_INT < 26) {
+            "unsupported_pre_O"
+        } else {
+            val channel = NotificationManagerCompat.from(activity).getNotificationChannelCompat(ReminderScheduler.CHANNEL_ID)
+            when {
+                channel == null -> "not_created"
+                channel.importance == NotificationManagerCompat.IMPORTANCE_NONE -> "blocked"
+                else -> "enabled"
+            }
+        }
+        val lastRunAt = debugPrefs.getLong(IncidentCheckWorker.KEY_LAST_RUN_AT, -1L)
+        val lastNotifiedCount = debugPrefs.getInt(IncidentCheckWorker.KEY_COUNT, -1)
+        return JSONObject()
+            .put("hasUsageAccess", hasUsageAccess())
+            .put("notificationsEnabled", NotificationManagerCompat.from(activity).areNotificationsEnabled())
+            .put("channelState", channelState)
+            .put("workState", workInfos.firstOrNull()?.state?.name ?: "NOT_SCHEDULED")
+            .put("lastRunAt", lastRunAt)
+            .put("lastRunIncidentCount", debugPrefs.getInt(IncidentCheckWorker.KEY_LAST_RUN_COUNT, -1))
+            .put("lastNotifiedDate", debugPrefs.getString(IncidentCheckWorker.KEY_DATE, null))
+            .put("lastNotifiedCount", lastNotifiedCount)
+            .toString()
+    }
+
     @JavascriptInterface
     fun requestNotificationPermission() {
         if (android.os.Build.VERSION.SDK_INT < 33) return
