@@ -88,7 +88,14 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .tabbtn span{font-size:11px;font-weight:800}
 .tabbtn.active{background:#F3EBDE;color:#332C28}
 .tabbtn.active img{opacity:1}
-.hero{margin-top:17px;background:linear-gradient(135deg,#FFF9F0 0%,#EFE1CE 100%);border:1px solid #EADAC5;border-radius:27px;padding:17px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;min-height:124px;position:relative}.hero:after{content:"";position:absolute;right:120px;bottom:-32px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.42)}.hero img{width:132px;height:96px;object-fit:cover;object-position:50% 10%;border-radius:19px;position:relative;z-index:1}.hero h2{margin:0;font-size:21px;letter-spacing:-.8px}.hero p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.55;max-width:310px}
+.hero{margin-top:17px;background:linear-gradient(135deg,#FFF9F0 0%,#EFE1CE 100%);border:1px solid #EADAC5;border-radius:27px;padding:17px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;min-height:124px;position:relative}.hero:after{content:"";position:absolute;right:120px;bottom:-32px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.42)}.hero img{width:132px;height:96px;object-fit:cover;object-position:50% 10%;border-radius:19px;position:relative;z-index:1}/* v0.101: director feedback -- the hero title wraps mid-word ("찾았\n어요"
+   instead of breaking at an actual word boundary) because the text column
+   is narrow (hero-moni image + padding leave it little room) and the
+   browser default for CJK text breaks between any two syllables rather
+   than at spaces. word-break:keep-all is the standard fix for Korean/
+   Japanese text specifically -- breaks only where there's an actual word
+   boundary (spaces), never splitting a word like 찾았어요 apart. */
+.hero h2{margin:0;font-size:21px;letter-spacing:-.8px;word-break:keep-all}.hero p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.55;max-width:310px;word-break:keep-all}
 /* v0.49: director feedback -- "홈화면에 사용한 시간의 비율이 이상함."
    4 equal-width columns worked for opens/unlocks/cases (1-2 digit
    numbers) but the usage-time cell's actual content (`fmtMs()`, e.g.
@@ -561,7 +568,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.100.0';
+const APP_VERSION='0.101.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
