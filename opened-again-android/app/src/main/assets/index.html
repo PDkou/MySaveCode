@@ -576,7 +576,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.102.0';
+const APP_VERSION='0.103.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1440,9 +1440,18 @@ function heroBgClass(){
   return 'hero-night';
 }
 const HERO_POSES=['moni_phone','moni_default','moni_read_file'];
+// v0.103: director feedback -- v0.102's day-based pose rotation only
+// changes once every 24h, which doesn't feel noticeable enough; wanted
+// it to change every time the app is opened instead. Picked once here,
+// at script-evaluation time (i.e. once per fresh app/WebView load, not
+// per re-render -- cases() re-renders on lots of unrelated state changes
+// while the app stays open, and re-rolling on every one of those would
+// look like the character randomly twitching rather than a deliberate
+// "today's pose"). Switching tabs and back within the same open app
+// session keeps the same pose; relaunching the app rolls a new one.
+const HERO_POSE_SESSION=HERO_POSES[Math.floor(Math.random()*HERO_POSES.length)];
 function heroPose(){
-  const dayIndex=Math.floor(Date.now()/86400000);
-  return `visual/character/basic/${HERO_POSES[dayIndex%HERO_POSES.length]}.webp`;
+  return `visual/character/basic/${HERO_POSE_SESSION}.webp`;
 }
 // v0.102: director-requested hero interaction -- tapping MONI shows one
 // more random line from the same HERO_QUIP_POOL the banner itself draws
