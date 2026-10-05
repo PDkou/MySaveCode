@@ -17,6 +17,8 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import android.net.Uri
 import androidx.core.content.FileProvider
+import androidx.core.content.res.ResourcesCompat
+import com.howling.openedagain.R
 import com.howling.openedagain.core.DetectedIncident
 import com.howling.openedagain.core.IncidentType
 import com.howling.openedagain.core.Rarity
@@ -175,9 +177,20 @@ class ShareCardRenderer(private val context: Context) {
         val ecy = sy(CardLayout.EMBLEM_CY)
         val ed = s(CardLayout.EMBLEM_D)
 
-        val titleTypeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
-        val sansBoldTypeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
-        val statTypeface = Typeface.create(Typeface.SERIF, Typeface.NORMAL)
+        // v0.112: director picked "메이플스토리체" (Maplestory) as the app's
+        // cute display font, applied in index.html's web views via
+        // @font-face. This renderer is a separate Canvas text pipeline that
+        // never reads CSS, so it needs its own font load to keep the shared
+        // card PNG visually consistent with the in-app card -- res/font/
+        // only has 2 static weights (bold/light), so both of the old bold
+        // system faces (serif bold for titles, sans-serif bold for case/
+        // chip labels) now point at the same maplestory_bold resource, and
+        // the old serif-normal stat label face maps to maplestory_light.
+        // Falls back to the previous system typefaces if the font resource
+        // somehow fails to load rather than crashing card generation.
+        val titleTypeface = ResourcesCompat.getFont(context, R.font.maplestory_bold) ?: Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        val sansBoldTypeface = ResourcesCompat.getFont(context, R.font.maplestory_bold) ?: Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+        val statTypeface = ResourcesCompat.getFont(context, R.font.maplestory_light) ?: Typeface.create(Typeface.SERIF, Typeface.NORMAL)
 
         // 1. Frame background -- pure atmospheric art + border, native
         // aspect already matches `rect`'s (both 1024:1536), so a plain

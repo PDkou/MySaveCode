@@ -4511,3 +4511,53 @@ Maven 저장소에 네트워크 접근이 막혀 있어(`gradle :app:compileDebu
 APP_VERSION 숫자만 갱신. director standing 지시에 따라 커밋/푸시만
 하고 CI 빌드는 트리거하지 않음 -- 따라서 이 변경의 실제 컴파일 검증은
 미완료 상태로 남아있고, 다음 CI 실행 시 반드시 확인 필요.
+
+## v0.112 — 앱 전체 폰트를 메이플스토리체로 교체 (웹 + 네이티브 공유카드)
+
+director: "폰트좀 귀여운폰트로 교체해주면 안될까?" -- v0.98 때 확립된
+"브랜드/콘텐츠 비주얼 요소는 임의로 정하지 않고 먼저 묻는다" 원칙에
+따라 바로 고르지 않고 한/일 한글 다 지원되는 무료 상업용 폰트 후보
+4개(메이플스토리체/배민 주아체/카페24 써라운드체/개구체)를 실제 앱
+문구로 렌더링한 미리보기를 만들어 공유, director가 "A가 제일
+나은거같은데"로 메이플스토리체 선택.
+
+**폰트 소싱**: 넥슨이 무료 상업용으로 공식 배포하는 폰트(noonnu.cc
+확인), `fonts-archive/Maplestory` GitHub 미러에서 Light/Bold 두
+웨이트를 받음 -- 웹용 woff2와 네이티브용 ttf 둘 다 받아둠.
+
+**웹 적용**: `fonts/Maplestory-{Light,Bold}.woff2`를 에셋으로 번들
+(런타임에 구글 폰트 CDN을 불러오는 방식이 아님 -- 이 앱은 오프라인
+우선으로 `file://`에서 index.html을 로드하므로, 네트워크로 폰트를
+받아오면 네트워크 없을 때 첫 렌더링이 깨지거나 느려짐). `@font-face`
+2개 선언 후 `html,body`의 `font-family`를 `'Maplestory'` 우선으로
+교체, 기존 Noto Sans KR/JP는 폴백으로 유지 -- 메이플스토리체가
+한글/라틴 위주라 일본어 글리프가 없는데, 폰트 폴백은 글리프 단위로
+자동 적용되므로 일본어 로케일 텍스트는 자동으로 Noto Sans JP로
+그려져 별도 분기 코드 없이 정상 동작. 앱 곳곳의 `font-weight:800/900/
+1000` 선언은 그대로 둠 -- 메이플스토리체가 정적 웨이트 2개(400/700)뿐이라
+전부 다시 쓰는 대신 가장 가까운 실제 얼굴(Bold)에 매핑되도록 둠.
+카드 상세/리빌 화면(`.tcg-title`/`.tcg-punch`/`.tcg-chip`)은 별도
+font-family 지정이 없어 body 상속만으로 자동 적용 확인.
+
+**네이티브 공유카드도 함께 적용**: director가 "공유카드도 다
+적용되는거지?"라고 재확인 -- 실제 공유되는 PNG는 `ShareCardRenderer.kt`
+가 Canvas로 직접 그리는 완전히 별도 파이프라인이라 CSS를 전혀 읽지
+않음을 설명하고 바로 맞춤. `app/src/main/res/font/maplestory_{bold,
+light}.ttf`로 ttf 버전을 추가하고, 기존 `Typeface.create(Typeface.
+SERIF/SANS_SERIF, ...)` 3곳을 `ResourcesCompat.getFont(context, R.font.
+maplestory_bold/light)`로 교체(폰트 로드 실패 시에만 기존 시스템
+폰트로 안전하게 폴백). 광고(`AdManager.kt`)의 `Typeface.BOLD` 설정은
+서드파티 광고 콘텐츠 영역이라 건드리지 않음.
+
+**검증의 한계(투명하게 기록, v0.111과 동일한 사유)**: 네이티브 Kotlin
+변경(`ResourcesCompat`/`R.font` 참조)은 이 샌드박스에 Android SDK
+접근이 없어 로컬 컴파일 확인이 불가능 -- 리소스 파일명 규칙(소문자+
+언더스코어)과 import 경로를 육안으로 재확인했지만, 실제 컴파일
+성공은 다음 CI 빌드에서 확정 필요.
+
+버전 112/0.112.0. 검증: (1) `node --check`로 웹 스크립트 구문 검증
+통과 (2) Playwright로 홈/설정 화면 재스크린샷, 메이플스토리체가
+타이틀/본문 전반에 제대로 적용되고 레이아웃 깨짐이나 글자 잘림 없는
+것을 확인, 콘솔 에러 0건 (3) 네이티브 쪽은 위 "검증의 한계" 항목대로
+컴파일 미확인 상태. director standing 지시에 따라 커밋/푸시만 하고
+CI 빌드는 트리거하지 않음.

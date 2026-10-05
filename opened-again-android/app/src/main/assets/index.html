@@ -37,7 +37,23 @@
    sometimes not fading until a later interaction. That's WebView's default
    `-webkit-tap-highlight-color`; disabling it app-wide (every element still
    gets its own `:active` feedback where one is defined, e.g. `.share:active`) */
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Noto Sans JP",sans-serif;overscroll-behavior:none}
+/* v0.112: director picked "메이플스토리체" (Maplestory, Nexon's free
+   commercial-use display font) from 4 candidates (Maplestory/BM Jua/
+   Cafe24 Ssurround/Gaegu) previewed side-by-side with real app copy.
+   Bundled as local assets (fonts/Maplestory-{Light,Bold}.woff2, not a
+   runtime Google Fonts/CDN fetch) since this app is offline-first and
+   loads index.html from file:// -- a network font fetch would delay or
+   break first paint with no connection. Only 2 static weights exist
+   (400/700); the app's many font-weight:800/900/1000 declarations are
+   left as-is and just resolve to the closest face (Bold) rather than
+   rewriting every weight value, same tradeoff any 2-weight display font
+   means. Falls back to the previous Noto Sans KR/JP stack for any glyph
+   Maplestory doesn't cover (it's Korean/Latin-focused, no kana/kanji) --
+   per-glyph fallback is automatic, so Japanese-locale text still renders
+   correctly via Noto Sans JP without any lang-specific branching. */
+@font-face{font-family:'Maplestory';src:url('fonts/Maplestory-Light.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Maplestory';src:url('fonts/Maplestory-Bold.woff2') format('woff2');font-weight:700;font-display:swap}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Maplestory',-apple-system,BlinkMacSystemFont,"Noto Sans KR","Noto Sans JP",sans-serif;overscroll-behavior:none}
 body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),var(--bg)}button{font:inherit}
 /* v0.49: director feedback -- "여백이 이상함(좌우 여백, 카드/버튼 사이
    간격)", referencing well-known Korean apps' proportions. 18px/14px side
@@ -657,7 +673,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.111.0';
+const APP_VERSION='0.112.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
