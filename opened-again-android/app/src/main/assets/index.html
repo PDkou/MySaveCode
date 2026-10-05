@@ -176,7 +176,25 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    already had this fix (`.share:active` above); extend the same instant
    press feedback to every other primary tap target. */
 .settings-row:active,.case-row:active,.archive-card:active,.card:active,.icon-btn:active,.primary:active,.tabbtn:active,.sheet-close:active,.sheet-actions button:active{transform:scale(.97)}
-.settings-row img{width:26px;height:26px;object-fit:contain;flex-shrink:0}
+/* v0.93: director feedback -- "설정화면 전체적으로 손봐야될 필요가
+   있어" -> narrowed to the icon treatment specifically. The row used a
+   raw PNG for 2 rows (icon_language/icon_notification) and a bare OS
+   emoji for the other 9 -- not just visually mismatched but genuinely
+   inconsistent across real devices, since emoji glyphs render
+   differently per OEM/Android version (flat here, skeuomorphic there).
+   Can't generate new matching PNG art in this sandbox, so instead of
+   trying to mimic the tab bar's bolder standalone icon style, this
+   reuses the soft-bordered "paper card" language already established by
+   .settings-row/.case-row itself (1px var(--line) border, var(--paper)
+   fill) as a 40px icon chip -- one consistent frame regardless of
+   whether the glyph inside is the existing brand PNG or a new hand-built
+   line icon (see ICONS below), so every row reads as the same system. */
+.settings-icon{width:40px;height:40px;border-radius:13px;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.settings-icon svg{width:21px;height:21px}
+.settings-icon img{width:22px;height:22px;object-fit:contain}
+/* v0.93: kept only for the debug-only Settings rows (dbgIcon in settings()),
+   which deliberately stay plain emoji rather than the .settings-icon chip
+   -- see that section's own comment. */
 .settings-emoji{font-size:22px;width:26px;text-align:center;flex-shrink:0}
 .settings-row-text{flex:1;min-width:0}
 .settings-row-text b{display:block;font-size:14px}
@@ -472,7 +490,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.92.0';
+const APP_VERSION='0.93.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1468,8 +1486,25 @@ function settings(){
   let hasNotifAccess=null;try{hasNotifAccess=N&&N.hasNotificationPermission?N.hasNotificationPermission():null}catch(e){}
   const notifLabel=hasNotifAccess===true?l('허용됨','許可済み','Allowed'):hasNotifAccess===false?l('허용 필요 · 탭해서 허용','許可が必要 · タップで許可','Needs permission -- tap to allow'):l('탭해서 확인','タップして確認','Tap to check');
   const row=(icon,title,sub,onclick,clickable=true)=>`<div class="settings-row${clickable?'':' static'}"${onclick?` onclick="${onclick}"`:''}>${icon}<div class="settings-row-text"><b>${title}</b><span>${sub}</span></div>${clickable?'<span class="settings-chevron">›</span>':''}</div>`;
-  const iconImg=name=>`<img src="visual/ui/icons/unlabeled/icon_${name}.png" alt="">`;
-  const iconEmoji=e=>`<span class="settings-emoji">${e}</span>`;
+  // v0.93: unified icon chip -- see .settings-icon's own CSS comment.
+  // imgIcon reuses the two existing brand PNGs (language/notification);
+  // svgIcon covers every row that used to be a bare OS emoji, as simple
+  // hand-built line icons in the same stroke/color so they read as one
+  // set rather than nine different platforms' emoji fonts.
+  const imgIcon=name=>`<span class="settings-icon"><img src="visual/ui/icons/unlabeled/icon_${name}.png" alt=""></span>`;
+  const ICONS={
+    reminder:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M5 3 3 5"/><path d="M19 3l2 2"/>',
+    usage:'<path d="M6 20V12"/><path d="M12 20V7"/><path d="M18 20V4"/>',
+    theme:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5"/><path d="M12 19.5V22"/><path d="M2 12h2.5"/><path d="M19.5 12H22"/>',
+    removeAds:'<rect x="4" y="8" width="16" height="8" rx="1.6"/><path d="M4 20 20 4"/>',
+    restore:'<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/>',
+    data:'<path d="M3 4h18v4H3z"/><path d="M5 8v12h14V8"/><path d="M10 12h4"/>',
+    export:'<path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M4 16v4h16v-4"/>',
+    help:'<circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-2.9 2-2.9 4"/><path d="M12 17.01v.01"/>',
+    privacy:'<rect x="6" y="11" width="12" height="9" rx="2"/><path d="M9 11V7a3 3 0 0 1 6 0v4"/>',
+    about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.01"/>'
+  };
+  const svgIcon=key=>`<span class="settings-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]}</svg></span>`;
   // v0.65: director-approved monetization -- one-time "remove ads" purchase
   // (option 1 of the discussed plan). Reads fresh on every render so it
   // reflects BillingManager's persisted flag as soon as a purchase/restore
@@ -1479,27 +1514,33 @@ function settings(){
   // contexts, same fallback style as hasAccess above.
   let adsRemoved=false;try{adsRemoved=N&&N.isAdsRemoved?N.isAdsRemoved():false}catch(e){}
   const adsRow=adsRemoved
-    ? row(iconEmoji('🚫'),l('광고 제거','広告を削除','Remove ads'),l('구매 완료 · 광고가 표시되지 않습니다','購入済み · 広告は表示されません','Purchased -- ads are hidden'),null,false)
-    : row(iconEmoji('🚫'),l('광고 제거','広告を削除','Remove ads'),l('탭해서 구매하기 (배너 광고 제거)','タップして購入(バナー広告を削除)','Tap to buy (removes the banner ad)'),'purchaseRemoveAds()');
+    ? row(svgIcon('removeAds'),l('광고 제거','広告を削除','Remove ads'),l('구매 완료 · 광고가 표시되지 않습니다','購入済み · 広告は表示されません','Purchased -- ads are hidden'),null,false)
+    : row(svgIcon('removeAds'),l('광고 제거','広告を削除','Remove ads'),l('탭해서 구매하기 (배너 광고 제거)','タップして購入(バナー広告を削除)','Tap to buy (removes the banner ad)'),'purchaseRemoveAds()');
   return `<div class="section-title"><h2>${l('설정','設定','Settings')}</h2></div><div class="settings-list">
-${row(iconImg('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','cycleLang()')}
-${row(iconImg('notification'),l('알림 권한','通知許可','Notifications'),notifLabel,'N&&N.requestNotificationPermission()')}
-${row(iconEmoji('⏰'),l('일일 리마인더','デイリーリマインダー','Daily reminder'),state.settings.dailyReminder?l(`매일 ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}에 알림 · 탭해서 변경`,`毎日${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}に通知 · タップで変更`,`Notifies daily at ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')} -- tap to change`):l('꺼짐 · 탭해서 켜기','オフ · タップでオン','Off -- tap to turn on'),'openReminderSheet()')}
-${row(iconEmoji('📊'),l('사용정보 접근','使用状況へのアクセス','Usage access'),accessLabel,'N&&N.openUsageSettings()')}
-${row(iconEmoji('🎨'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),"toast(l('다른 테마는 준비 중입니다','他のテーマは準備中です','More themes are coming soon'))")}
+${row(imgIcon('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','cycleLang()')}
+${row(imgIcon('notification'),l('알림 권한','通知許可','Notifications'),notifLabel,'N&&N.requestNotificationPermission()')}
+${row(svgIcon('reminder'),l('일일 리마인더','デイリーリマインダー','Daily reminder'),state.settings.dailyReminder?l(`매일 ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}에 알림 · 탭해서 변경`,`毎日${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}に通知 · タップで変更`,`Notifies daily at ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')} -- tap to change`):l('꺼짐 · 탭해서 켜기','オフ · タップでオン','Off -- tap to turn on'),'openReminderSheet()')}
+${row(svgIcon('usage'),l('사용정보 접근','使用状況へのアクセス','Usage access'),accessLabel,'N&&N.openUsageSettings()')}
+${row(svgIcon('theme'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),"toast(l('다른 테마는 준비 중입니다','他のテーマは準備中です','More themes are coming soon'))")}
 ${adsRow}
-${adsRemoved?'':row(iconEmoji('♻️'),l('구매 복원','購入の復元','Restore purchase'),l('다른 기기/재설치 시 여기서 복원하세요','別端末・再インストール時はここで復元','Restore a purchase after reinstalling or on a new device'),'restorePurchases()')}
-${row(iconEmoji('💾'),l('데이터 관리','データ管理','Data'),l('탭해서 초기화하기','タップして初期化','Tap to reset'),'openResetConfirm()')}
-${row(iconEmoji('📤'),l('데이터 내보내기','データのエクスポート','Export data'),l('백업 파일로 저장/공유하기','バックアップファイルとして保存・共有','Save or share as a backup file'),'exportBackupData()')}
-${row(iconEmoji('❓'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),'openHelpSheet()')}
-${row(iconEmoji('🔒'),l('개인정보처리방침','プライバシーポリシー','Privacy policy'),l('어떤 정보를 어떻게 다루는지','どんな情報をどう扱うか','What data is handled and how'),'openPrivacySheet()')}
-${row(iconEmoji('ℹ️'),l('앱 정보','アプリ情報','About'),'v'+APP_VERSION,'openAboutSheet()')}
-</div>${state.debugBuild?`<div class="section-title"><h2>Debug</h2></div><div class="settings-list">
-${row(iconEmoji('🐛'),'HIDDEN_LOOP 미리보기','실기기 카드/공유 확인용 (디버그 빌드 전용)',"debugPreviewHidden('HIDDEN_LOOP')")}
-${row(iconEmoji('🐛'),'HIDDEN_NIGHT_ACTIVITY 미리보기','실기기 카드/공유 확인용 (디버그 빌드 전용)',"debugPreviewHidden('HIDDEN_NIGHT_ACTIVITY')")}
-${row(iconEmoji('🔍'),'오늘 세션 로그 보기','HIDDEN_LOOP이 왜 안 뜨는지 실제 데이터로 확인','openDebugSessionsSheet()')}
-${row(iconEmoji('📡'),'백그라운드 체크 상태 보기','여러 사건 발생 알림이 왜 안 왔는지 확인','openDebugIncidentCheckSheet()')}
-</div>`:''}`
+${adsRemoved?'':row(svgIcon('restore'),l('구매 복원','購入の復元','Restore purchase'),l('다른 기기/재설치 시 여기서 복원하세요','別端末・再インストール時はここで復元','Restore a purchase after reinstalling or on a new device'),'restorePurchases()')}
+${row(svgIcon('data'),l('데이터 관리','データ管理','Data'),l('탭해서 초기화하기','タップして初期化','Tap to reset'),'openResetConfirm()')}
+${row(svgIcon('export'),l('데이터 내보내기','データのエクスポート','Export data'),l('백업 파일로 저장/공유하기','バックアップファイルとして保存・共有','Save or share as a backup file'),'exportBackupData()')}
+${row(svgIcon('help'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),'openHelpSheet()')}
+${row(svgIcon('privacy'),l('개인정보처리방침','プライバシーポリシー','Privacy policy'),l('어떤 정보를 어떻게 다루는지','どんな情報をどう扱うか','What data is handled and how'),'openPrivacySheet()')}
+${row(svgIcon('about'),l('앱 정보','アプリ情報','About'),'v'+APP_VERSION,'openAboutSheet()')}
+</div>${state.debugBuild?(()=>{
+  // v0.93: debug-only rows kept as plain emoji (not the new icon chip) --
+  // dev-facing tool, never reaches a real build (see isDebugBuild()'s own
+  // comment), so it's not part of what the director asked to unify.
+  const dbgIcon=e=>`<span class="settings-emoji">${e}</span>`;
+  return `<div class="section-title"><h2>Debug</h2></div><div class="settings-list">
+${row(dbgIcon('🐛'),'HIDDEN_LOOP 미리보기','실기기 카드/공유 확인용 (디버그 빌드 전용)',"debugPreviewHidden('HIDDEN_LOOP')")}
+${row(dbgIcon('🐛'),'HIDDEN_NIGHT_ACTIVITY 미리보기','실기기 카드/공유 확인용 (디버그 빌드 전용)',"debugPreviewHidden('HIDDEN_NIGHT_ACTIVITY')")}
+${row(dbgIcon('🔍'),'오늘 세션 로그 보기','HIDDEN_LOOP이 왜 안 뜨는지 실제 데이터로 확인','openDebugSessionsSheet()')}
+${row(dbgIcon('📡'),'백그라운드 체크 상태 보기','여러 사건 발생 알림이 왜 안 왔는지 확인','openDebugIncidentCheckSheet()')}
+</div>`
+})():''}`
 }
 // v0.65: director-approved monetization -- settings' "광고 제거" row tap
 // handler. The actual purchase result comes back asynchronously to the
