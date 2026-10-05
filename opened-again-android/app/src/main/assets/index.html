@@ -89,6 +89,13 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .brand-main{flex:1}.brand h1{font-size:30px;margin:0;letter-spacing:-1.8px;line-height:1}.brand .sub{font-size:13px;color:var(--muted);margin-top:7px}.date{font-size:12px;color:var(--muted);margin:12px 2px 0}
 .streak-badge{display:inline-block;background:#FDEFD9;color:#9C6B1F;font-weight:800;border-radius:999px;padding:2px 9px;margin-left:6px;font-size:11px}
 .permission,.empty{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-top:22px;box-shadow:var(--shadow)}.permission h2{margin:0 0 8px}.permission p{font-size:14px;line-height:1.6;color:var(--muted)}
+/* v0.114: director felt the usage-access permission gate was too empty --
+   nothing below the card but bare page background. Reused the exact same
+   🐾/✨ float-decoration pattern v0.113 added to the reveal screen
+   (.reveal-deco/revealDecoFloat), just restyled for this screen's light
+   cream background instead of the reveal screen's dark one -- no new art,
+   same motif, same animation shape. */
+.permission-deco{position:fixed;pointer-events:none;z-index:0;font-size:22px;opacity:.3;animation:revealDecoFloat 4.5s ease-in-out infinite}
 .primary{border:0;border-radius:var(--btn-radius);min-height:calc(var(--btn-min) + 4px);padding:0 18px;background:#6758F5;color:white;font-weight:900;width:100%;margin-top:14px;box-shadow:0 8px 18px rgba(103,88,245,.2);display:flex;align-items:center;justify-content:center}
 /* v0.35: tab bar moved to the bottom of the screen (icon+label, 4 items)
    to match art/reference/target-visual-direction's mockups -- it had been
@@ -677,7 +684,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.113.0';
+const APP_VERSION='0.114.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -2439,6 +2446,6 @@ function render(){
   // below so a user who hasn't granted access yet still has somewhere to
   // go via the bottom tab bar instead of being fully stuck.
   if(state.tab==='settings'){html+=settings();html+=tabs();root.innerHTML=html;return}
-  const d=state.data||read();state.data=d;if(!d.permission){html+=`<div class="permission"><h2>${l('모니가 사건을 조사하려면','MONIが事件を調べるには','To let MONI investigate')}</h2><p>${l('앱 사용 기록을 기기 안에서 분석하기 위한 사용정보 접근 권한이 필요합니다. 기록 내용은 서버로 보내지 않습니다.','端末内でアプリ利用記録を分析するため、使用状況へのアクセスが必要です。記録内容はサーバーへ送信しません。','Usage access is required to analyze app activity on-device. Your records are not sent to a server.')}</p><button class="primary" onclick="N&&N.openUsageSettings()">${l('사용정보 접근 허용','使用状況へのアクセスを許可','Allow usage access')}</button></div>`;html+=tabs();root.innerHTML=html;return}html+=state.tab==='cases'?cases(d):state.tab==='archive'?archive(d):records(d);html+=`<div class="foot">MONI · SMALL HABITS, BIG STORIES.</div>`;html+=tabs();root.innerHTML=html}
+  const d=state.data||read();state.data=d;if(!d.permission){const permDeco=`<span class="permission-deco" style="left:10%;top:38%;animation-delay:0s">🐾</span><span class="permission-deco" style="right:12%;top:46%;animation-delay:.6s;font-size:16px">✨</span><span class="permission-deco" style="left:20%;top:55%;animation-delay:1.2s;font-size:18px">✨</span><span class="permission-deco" style="right:16%;top:62%;animation-delay:.3s">🐾</span><span class="permission-deco" style="left:12%;top:70%;animation-delay:.9s;font-size:16px">✨</span><span class="permission-deco" style="right:10%;top:77%;animation-delay:1.5s">🐾</span><span class="permission-deco" style="left:48%;top:84%;animation-delay:.4s;font-size:16px">✨</span>`;html+=permDeco+`<div class="permission"><h2>${l('모니가 사건을 조사하려면','MONIが事件を調べるには','To let MONI investigate')}</h2><p>${l('앱 사용 기록을 기기 안에서 분석하기 위한 사용정보 접근 권한이 필요합니다. 기록 내용은 서버로 보내지 않습니다.','端末内でアプリ利用記録を分析するため、使用状況へのアクセスが必要です。記録内容はサーバーへ送信しません。','Usage access is required to analyze app activity on-device. Your records are not sent to a server.')}</p><button class="primary" onclick="N&&N.openUsageSettings()">${l('사용정보 접근 허용','使用状況へのアクセスを許可','Allow usage access')}</button></div>`;html+=tabs();root.innerHTML=html;return}html+=state.tab==='cases'?cases(d):state.tab==='archive'?archive(d):records(d);html+=`<div class="foot">MONI · SMALL HABITS, BIG STORIES.</div>`;html+=tabs();root.innerHTML=html}
 restore();syncLanguageToNative();refresh();
 </script></body></html>
