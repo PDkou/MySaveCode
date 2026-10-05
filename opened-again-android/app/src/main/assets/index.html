@@ -582,7 +582,21 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    중앙(대부분 캐릭터가 있는 자리) 기준으로 crop -- 여백이 크게 줄고
    캐릭터가 타일을 훨씬 더 채우게 됨. 잠금 카드(`locked_card.png`)는
    카드 전체가 유의미한 그림이라 그대로 `contain` 유지. */
-.archive-visual .overlay-fill{object-fit:cover}.archive-card b{font-size:13px;display:block;margin-top:7px}.archive-card span{font-size:11px;color:var(--muted)}.archive-card.locked .archive-visual{filter:grayscale(1) brightness(.7);opacity:.7}.archive-card.locked:after{content:'???';position:absolute;inset:0;display:grid;place-items:center;font-size:26px;font-weight:1000;color:white;background:rgba(8,22,31,.15)}.archive-card:not(.locked){cursor:pointer}
+.archive-visual .overlay-fill{object-fit:cover}.archive-card b{font-size:13px;display:block;margin-top:7px}.archive-card span{font-size:11px;color:var(--muted)}.archive-card.locked .archive-visual{filter:grayscale(1) brightness(.7);opacity:.7}.archive-card.locked:after{content:'???';position:absolute;inset:0;display:grid;place-items:center;font-size:26px;font-weight:1000;color:white;background:linear-gradient(120deg,rgba(8,22,31,.15) 0%,rgba(8,22,31,.15) 38%,rgba(255,255,255,.22) 50%,rgba(8,22,31,.15) 62%,rgba(8,22,31,.15) 100%);background-size:260% 260%;animation:lockShimmer 3.6s ease-in-out infinite}.archive-card:not(.locked){cursor:pointer}
+/* v0.107: director felt the locked "???" archive cards and the plain
+   progress bar both looked flat ("뭔가 뭔가인데"). For locked cards:
+   lockShimmer above sweeps a soft diagonal highlight across the existing
+   dark ??? overlay (no new art, just an animated gradient sweep) and
+   .lock-paw adds the same 🐾 glyph already used on stat cards/mini-stats,
+   so even the "nothing to show yet" state still feels like part of the
+   app rather than a bare gray box. Two-class selector (.archive-card
+   .lock-paw, specificity 0,2,0) rather than a bare .lock-paw, same guard
+   as .mini-stat .mini-paw/.stat .stat-paw -- .archive-card span's
+   descendant rule (0,1,1) would otherwise win and flatten it back to
+   11px/--muted like the caption text. */
+@keyframes lockShimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.archive-card .lock-paw{position:absolute;top:10px;right:12px;font-size:14px;opacity:.4;z-index:2;animation:lockPawPulse 2.4s ease-in-out infinite}
+@keyframes lockPawPulse{0%,100%{opacity:.3;transform:scale(1) rotate(8deg)}50%{opacity:.6;transform:scale(1.18) rotate(8deg)}}
 /* v0.33: archive card detail modal (openArchiveDetail()) -- a 2x2 grid of
    per-rarity thumbnails for regular types, or a single hero image for
    HIDDEN types (they have no rarity breakdown to show). */
@@ -609,7 +623,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.106.0';
+const APP_VERSION='0.107.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1534,7 +1548,7 @@ function archive(d){const items=d.archive?.items||[];const found=Object.keys(sta
       // every rarity found for that type so far (openArchiveDetail()) --
       // locked (never-found) cards stay inert.
       const clickAttr=locked?'':` onclick="openArchiveDetail('${x.type}')"`;
-      return `<div class="archive-card ${cls} ${locked?'locked':''}"${clickAttr}><div class="archive-visual"${visualStyle}>${visualImg}</div><b>${locked?'???':esc(txt(names,x.type))}</b><span>${locked?l('아직 발견되지 않음','未発見','Undiscovered'):(top||l('발견됨','発見済み','Found'))}</span></div>`}).join('')}</div>`}
+      return `<div class="archive-card ${cls} ${locked?'locked':''}"${clickAttr}>${locked?'<span class="lock-paw">🐾</span>':''}<div class="archive-visual"${visualStyle}>${visualImg}</div><b>${locked?'???':esc(txt(names,x.type))}</b><span>${locked?l('아직 발견되지 않음','未発見','Undiscovered'):(top||l('발견됨','発見済み','Found'))}</span></div>`}).join('')}</div>`}
 // v0.33: archive card detail modal -- shows every rarity tier discovered so
 // far for a type (state.history.discoveries[type], an array of rarity
 // strings appended in persistSnapshot()). Non-HIDDEN types get a 4-cell
