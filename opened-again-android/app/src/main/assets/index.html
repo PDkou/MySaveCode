@@ -202,7 +202,15 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    guard as .mini-stat .mini-paw above: .stat>span's child-combinator
    rule would otherwise win and force this to font-size:11px/--muted. */
 .stat .stat-paw{position:absolute;right:6px;top:4px;font-size:15px;opacity:.35;transform:rotate(12deg)}
-.archive-progress{background:white;border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}.archive-progress.archive-complete{background:linear-gradient(135deg,#FFF7E0,#FFEFC2);border-color:var(--legend);text-align:center}.archive-complete b{font-size:16px;color:#8A6300}.archive-complete p{margin:6px 0 0;font-size:12px;color:#8A6300}.bar{height:9px;background:#EEE6DC;border-radius:99px;overflow:hidden;margin-top:10px}.bar>i{display:block;height:100%;background:linear-gradient(90deg,#7ABEFF,#A56CFF,#FFD166);border-radius:99px}.archive-item{background:white;border:1px solid var(--line);border-radius:18px;padding:14px 15px;margin:8px 0}.archive-top{display:flex;justify-content:space-between;align-items:center}.archive-name{font-weight:900}.rarity-dots{display:flex;gap:5px;margin-top:9px}.dot{width:25px;height:8px;border-radius:10px;background:#ECE5DD}.dot.on.n{background:var(--normal)}.dot.on.r{background:var(--rare)}.dot.on.e{background:var(--epic)}.dot.on.l{background:var(--legend)}.locked{opacity:.48}.hidden-line{background:linear-gradient(90deg,#071C29,#143D51);color:#E9FBFF;border-color:#19536C}.hidden-line .dot{background:#235164}
+.archive-progress{background:white;border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}.archive-progress.archive-complete{background:linear-gradient(135deg,#FFF7E0,#FFEFC2);border-color:var(--legend);text-align:center}.archive-complete b{font-size:16px;color:#8A6300}.archive-complete p{margin:6px 0 0;font-size:12px;color:#8A6300}.bar{height:9px;background:#EEE6DC;border-radius:99px;overflow:hidden;margin-top:10px}.bar>i{display:block;height:100%;background:linear-gradient(90deg,#7ABEFF,#A56CFF,#FFD166);border-radius:99px;position:relative;overflow:hidden}
+/* v0.108: director picked the "gold sheen" option over a full rainbow
+   recolor for the archive discovery-progress bar -- keeps the existing
+   blue-purple-gold gradient as-is (still the bar's identity) and just
+   adds a moving diagonal highlight pass, a lighter touch than v0.106's
+   record-bar rainbow and a better fit since the bar already ends in the
+   same gold (#FFD166) the 100%-complete banner (--legend) celebrates. */
+.bar>i:after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 0%,transparent 40%,rgba(255,255,255,.75) 50%,transparent 60%,transparent 100%);background-size:250% 100%;animation:barSheen 2.6s ease-in-out infinite}
+@keyframes barSheen{0%{background-position:200% 0}100%{background-position:-50% 0}}.archive-item{background:white;border:1px solid var(--line);border-radius:18px;padding:14px 15px;margin:8px 0}.archive-top{display:flex;justify-content:space-between;align-items:center}.archive-name{font-weight:900}.rarity-dots{display:flex;gap:5px;margin-top:9px}.dot{width:25px;height:8px;border-radius:10px;background:#ECE5DD}.dot.on.n{background:var(--normal)}.dot.on.r{background:var(--rare)}.dot.on.e{background:var(--epic)}.dot.on.l{background:var(--legend)}.locked{opacity:.48}.hidden-line{background:linear-gradient(90deg,#071C29,#143D51);color:#E9FBFF;border-color:#19536C}.hidden-line .dot{background:#235164}
 .record-list{margin-top:12px}.record-app{position:relative;display:flex;align-items:center;justify-content:space-between;padding:12px 2px;border-bottom:1px solid #E8DED3;cursor:pointer;overflow:hidden}.record-app b{font-size:13px;position:relative;z-index:1}.record-app>span{font-size:12px;color:var(--muted);position:relative;z-index:1}
 /* v0.105: director feedback -- "가장 오래 본 앱" was a bare text list,
    no icon/color/decoration at all. Asked to add a relative bar graph +
@@ -623,7 +631,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.107.0';
+const APP_VERSION='0.108.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
