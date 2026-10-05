@@ -127,7 +127,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    크기(기기별로 다름)에 맞춰 쓰므로 그 부분은 일러스트 내용 기반(밝기)
    판정으로 일반화 -- createCardHolo() 자체 주석 참고. */
 .epic{box-shadow:0 0 0 3px rgba(168,108,255,.55),0 16px 34px rgba(140,80,230,.4),var(--shadow)}
-.legendary{box-shadow:0 0 0 3px rgba(224,164,40,.6),0 16px 34px rgba(224,164,40,.42),var(--shadow)}.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 9px}.rarity{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:999px;background:var(--border);color:var(--badgeText,#fff);font-size:11px;font-weight:1000;letter-spacing:.6px}.rarity-symbol{width:14px;height:14px;object-fit:contain;display:block}.case-id{font-size:11px;color:var(--muted);font-weight:800}.card-body{display:grid;grid-template-columns:1.25fr .85fr;gap:10px;padding:4px 14px 14px;align-items:center}.case-title{font-size:25px;font-weight:1000;letter-spacing:-1.2px;line-height:1.05}.detail{font-size:13px;line-height:1.55;color:#655B54;margin-top:7px}.punch{font-size:16px;font-weight:1000;margin:12px 0 0;line-height:1.4}.scene{min-height:132px;border-radius:21px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative;background:var(--scene);color:var(--iconInk,var(--ink))}.scene img{width:112px;height:112px;object-fit:cover;border-radius:22px;margin-bottom:7px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.12))}.scene-mark{position:absolute;right:8px;top:8px}.scene-mark svg{width:22px;height:22px;display:block}.meta-strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 12px}.pill{background:rgba(255,255,255,.72);border:1px solid rgba(130,110,95,.16);border-radius:999px;padding:6px 9px;font-size:11px;font-weight:800;color:#675D56}.share-row{display:flex;gap:8px;padding:0 14px 14px}.share{flex:1;border:1px solid rgba(120,100,80,.22);background:rgba(255,255,255,.78);border-radius:var(--btn-radius);min-height:var(--btn-min);padding:0 10px;font-weight:900;color:#5B5048;display:flex;align-items:center;justify-content:center}.share:active{transform:scale(.98)}
+.legendary{box-shadow:0 0 0 3px rgba(224,164,40,.6),0 16px 34px rgba(224,164,40,.42),var(--shadow)}.card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 9px}.rarity{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:999px;background:var(--border);color:var(--badgeText,#fff);font-size:11px;font-weight:1000;letter-spacing:.6px}.rarity-symbol{width:14px;height:14px;object-fit:contain;display:block}.case-id{font-size:11px;color:var(--muted);font-weight:800}.card-body{display:grid;grid-template-columns:1.25fr .85fr;gap:10px;padding:4px 14px 14px;align-items:center}.case-title{font-size:25px;font-weight:1000;letter-spacing:-1.2px;line-height:1.05}.detail{font-size:13px;line-height:1.55;color:#655B54;margin-top:7px}.punch{font-size:16px;font-weight:1000;margin:12px 0 0;line-height:1.4}.scene{min-height:132px;border-radius:21px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative;background:var(--scene)}.scene img{width:112px;height:112px;object-fit:cover;border-radius:22px;margin-bottom:7px;filter:drop-shadow(0 7px 10px rgba(40,30,20,.12))}.scene-mark{position:absolute;right:8px;top:8px;font-size:22px}.meta-strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 14px 12px}.pill{background:rgba(255,255,255,.72);border:1px solid rgba(130,110,95,.16);border-radius:999px;padding:6px 9px;font-size:11px;font-weight:800;color:#675D56}.share-row{display:flex;gap:8px;padding:0 14px 14px}.share{flex:1;border:1px solid rgba(120,100,80,.22);background:rgba(255,255,255,.78);border-radius:var(--btn-radius);min-height:var(--btn-min);padding:0 10px;font-weight:900;color:#5B5048;display:flex;align-items:center;justify-content:center}.share:active{transform:scale(.98)}
 /* v0.35: compact one-line case rows below the featured card (home screen
    mockup match) -- --scene/--border are set per rarity class the same way
    .card's rarity classes already do (see :root/.normal/.rare/etc above). */
@@ -137,14 +137,13 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    items (roughly 8-12px) than the tighter 8px this had across the board. */
 .case-list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
 .case-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--border,var(--line));border-radius:16px;padding:11px 13px;cursor:pointer}
-.case-row-icon{width:36px;height:36px;border-radius:12px;background:var(--scene,#F6F0E6);color:var(--iconInk,var(--ink));display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.case-row-icon svg{width:19px;height:19px}
+.case-row-icon{font-size:20px;width:36px;height:36px;border-radius:12px;background:var(--scene,#F6F0E6);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .case-row-text{flex:1;min-width:0}
 .case-row-text b{display:block;font-size:14px}
 .case-row-text span{display:block;font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .case-row .rarity{flex-shrink:0}
-.normal{--border:var(--normal);--badgeText:#393939;--glow:linear-gradient(120deg,#fff,#ececec);--scene:linear-gradient(160deg,#f9f9f9,#ececec)}.rare{--border:var(--rare);--glow:linear-gradient(120deg,#C9EAFF,#F7FBFF);--scene:linear-gradient(160deg,#E8F6FF,#CDEAFF)}.epic{--border:var(--epic);--glow:linear-gradient(120deg,#E6D1FF,#FFDCFB);--scene:linear-gradient(160deg,#302557,#6C478F);--iconInk:#fff}.legendary{--border:var(--legend);--badgeText:#5E4300;--glow:linear-gradient(120deg,#FFE697,#FFF6C7);--scene:radial-gradient(circle at 50% 28%,#FFF9C6,#F2C43E 65%,#B47913)}
-.hidden{--border:#0AB6D4;--glow:linear-gradient(135deg,#031923,#0A4C67);--scene:radial-gradient(circle at 50% 30%,#104F68,#061A26 75%);--iconInk:#fff;background:#071C29;color:#E9FBFF;box-shadow:0 16px 38px rgba(0,31,45,.28)}.hidden.opal{--border:#DDE8FF;--badgeText:#342D46;--glow:linear-gradient(135deg,#FFE9F7,#DFF8FF,#EEE0FF,#FFF6C6);--scene:linear-gradient(145deg,#271E57,#453A84 45%,#B963B6);background:#FBF8FF;color:#342D46}.hidden .detail,.hidden .case-id{color:#B9DFE8}.hidden.opal .detail,.hidden.opal .case-id{color:#675E7E}.hidden .share{color:#E9FBFF;border-color:#23647A;background:#0A2938}.hidden.opal .share{color:#4B4161;background:rgba(255,255,255,.76);border-color:#D8CDE8}
+.normal{--border:var(--normal);--badgeText:#393939;--glow:linear-gradient(120deg,#fff,#ececec);--scene:linear-gradient(160deg,#f9f9f9,#ececec)}.rare{--border:var(--rare);--glow:linear-gradient(120deg,#C9EAFF,#F7FBFF);--scene:linear-gradient(160deg,#E8F6FF,#CDEAFF)}.epic{--border:var(--epic);--glow:linear-gradient(120deg,#E6D1FF,#FFDCFB);--scene:linear-gradient(160deg,#302557,#6C478F)}.legendary{--border:var(--legend);--badgeText:#5E4300;--glow:linear-gradient(120deg,#FFE697,#FFF6C7);--scene:radial-gradient(circle at 50% 28%,#FFF9C6,#F2C43E 65%,#B47913)}
+.hidden{--border:#0AB6D4;--glow:linear-gradient(135deg,#031923,#0A4C67);--scene:radial-gradient(circle at 50% 30%,#104F68,#061A26 75%);background:#071C29;color:#E9FBFF;box-shadow:0 16px 38px rgba(0,31,45,.28)}.hidden.opal{--border:#DDE8FF;--badgeText:#342D46;--glow:linear-gradient(135deg,#FFE9F7,#DFF8FF,#EEE0FF,#FFF6C6);--scene:linear-gradient(145deg,#271E57,#453A84 45%,#B963B6);background:#FBF8FF;color:#342D46}.hidden .detail,.hidden .case-id{color:#B9DFE8}.hidden.opal .detail,.hidden.opal .case-id{color:#675E7E}.hidden .share{color:#E9FBFF;border-color:#23647A;background:#0A2938}.hidden.opal .share{color:#4B4161;background:rgba(255,255,255,.76);border-color:#D8CDE8}
 .featured{transform:translateZ(0)}.featured .card-body{grid-template-columns:1fr 1fr}.featured .scene{min-height:155px}.featured .scene img{width:135px;height:135px}
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.stat{background:white;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 5px 14px rgba(70,50,35,.04)}.stat b{display:block;font-size:23px}.stat span{font-size:11px;color:var(--muted)}
 .archive-progress{background:white;border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}.archive-progress.archive-complete{background:linear-gradient(135deg,#FFF7E0,#FFEFC2);border-color:var(--legend);text-align:center}.archive-complete b{font-size:16px;color:#8A6300}.archive-complete p{margin:6px 0 0;font-size:12px;color:#8A6300}.bar{height:9px;background:#EEE6DC;border-radius:99px;overflow:hidden;margin-top:10px}.bar>i{display:block;height:100%;background:linear-gradient(90deg,#7ABEFF,#A56CFF,#FFD166);border-radius:99px}.archive-item{background:white;border:1px solid var(--line);border-radius:18px;padding:14px 15px;margin:8px 0}.archive-top{display:flex;justify-content:space-between;align-items:center}.archive-name{font-weight:900}.rarity-dots{display:flex;gap:5px;margin-top:9px}.dot{width:25px;height:8px;border-radius:10px;background:#ECE5DD}.dot.on.n{background:var(--normal)}.dot.on.r{background:var(--rare)}.dot.on.e{background:var(--epic)}.dot.on.l{background:var(--legend)}.locked{opacity:.48}.hidden-line{background:linear-gradient(90deg,#071C29,#143D51);color:#E9FBFF;border-color:#19536C}.hidden-line .dot{background:#235164}
@@ -530,7 +529,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.98.0';
+const APP_VERSION='0.97.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -948,46 +947,7 @@ function incidentArt(basePath, type, rarity){
 // uses instead: MONI's pose (incidentVisual) on the rarity's own tint
 // (the --scene custom property already defined per .normal/.rare/...).
 function archiveRarityClass(type,rarity){if(rarity!=='HIDDEN')return (rarity||'normal').toLowerCase();return type==='HIDDEN_NIGHT_ACTIVITY'?'hidden opal':'hidden'}
-// v0.98: director feedback (screen-by-screen GUI pass, starting with
-// Home) -- this used to return raw OS emoji, and only 6 of the 14
-// incident types (see `names` above) had one at all; the other 8 all
-// fell back to the same 🐾, so in `.case-row-icon` (the compact list
-// row's ONLY visual identifier for a case -- no art there, unlike the
-// big card) most of today's cases were visually indistinguishable from
-// each other. Same emoji-cross-device-inconsistency problem as
-// Settings' old icons (v0.93) on top of that. Replaced with a full set
-// of 14 hand-built line icons (same 2px-stroke style as Settings),
-// one per type, plus a paw-print fallback (echoes the app's own paw-
-// print background motif rather than a generic default). Used in 5
-// places: compact case rows (Home + Records' weekly highlight), the
-// big card's corner scene-mark, and the detail/reveal TCG art.
-const INCIDENT_ICONS={
-  QUICK_EXIT:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 1.5"/><path d="M10 2h4"/>',
-  REENTRY:'<path d="M15 3h4v18h-4"/><path d="M9 12h9"/><path d="M13 8l4 4-4 4"/>',
-  REGULAR:'<circle cx="12" cy="8" r="3"/><path d="M6 20c0-4 3-6 6-6s6 2 6 6"/>',
-  RETURN_TO_START:'<path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v8h8"/>',
-  PATROL:'<circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6z"/>',
-  ESCAPE_FAILED:'<path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9"/><path d="M10 12h10"/><path d="M17 9l3 3-3 3"/><path d="M4 4l16 16"/>',
-  FIRST_CONTACT:'<path d="M4 5h16v11H9l-4 4V5z"/><path d="M15 9l.7 1.6 1.6.4-1.6.4L15 13l-.7-1.6-1.6-.4 1.6-.4z"/>',
-  NIGHT_PATROL:'<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/>',
-  APP_WANDERING:'<path d="M4 7h4l4 10h4"/><path d="M16 4l4 3-4 3"/><path d="M4 17h4l4-10h4"/><path d="M16 14l4 3-4 3"/>',
-  HUNDRED_VISITS:'<path d="M3 17l2-8 4 4 3-6 3 6 4-4 2 8z"/><path d="M3 17h18"/>',
-  DIGITAL_LOST:'<path d="M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.3"/>',
-  DAWN_SURVIVOR:'<path d="M3 18h18"/><path d="M6 18a6 6 0 0 1 12 0"/><path d="M12 8v3"/><path d="M5 11l1.5 1.5"/><path d="M19 11l-1.5 1.5"/>',
-  HIDDEN_LOOP:'<path d="M18.5 12c0 1.7-1.3 3-3 3-2 0-3-1.3-4-3-1-1.7-2-3-4-3-1.7 0-3 1.3-3 3s1.3 3 3 3c2 0 3-1.3 4-3 1-1.7 2-3 4-3 1.7 0 3 1.3 3 3z"/>',
-  HIDDEN_NIGHT_ACTIVITY:'<path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="M5.9 5.9l2.1 2.1"/><path d="M16 16l2.1 2.1"/><path d="M18.1 5.9L16 8"/><path d="M8 16l-2.1 2.1"/>'
-};
-const PAW_ICON='<circle cx="7" cy="9" r="1.6"/><circle cx="12" cy="6.6" r="1.6"/><circle cx="17" cy="9" r="1.6"/><ellipse cx="12" cy="15" rx="5" ry="4"/>';
-// v0.98: stroke="currentColor" (not a fixed var(--ink)) -- the chip this
-// sits in (.case-row-icon / .scene-mark) is tinted with the SAME
-// --scene gradient the rarity class defines, and that ranges from
-// near-white (normal/rare) to dark navy/purple (epic/hidden). A fixed
-// dark stroke was briefly tried and was nearly invisible against the
-// HIDDEN chip -- caught via a real Playwright zoom, not assumed. Each
-// rarity class now sets --iconInk to whichever of var(--ink)/white
-// actually reads clearly against its own --scene (see .epic/.hidden's
-// own comment).
-function iconFor(i){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${INCIDENT_ICONS[i.type]||PAW_ICON}</svg>`}
+function iconFor(i){return i.type==='NIGHT_PATROL'?'🌙':i.type==='HUNDRED_VISITS'?'👑':i.type==='RETURN_TO_START'?'↩️':i.type==='QUICK_EXIT'?'⏱️':i.type==='HIDDEN_LOOP'?'♾️':i.type==='HIDDEN_NIGHT_ACTIVITY'?'✨':'🐾'}
 function caseNo(i){return String(Math.abs((i.type||'CASE').split('').reduce((a,c)=>a+c.charCodeAt(0),0)*17)%10000).padStart(4,'0')}
 function card(i,featured=false){
   // v0.27: EPIC/LEGENDARY-only "impact" layer -- a big faint rarity symbol
