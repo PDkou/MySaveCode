@@ -165,8 +165,33 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .week-bar.today{opacity:1}
 .week-bar.empty{background:var(--line);opacity:1}
 .settings-list{display:flex;flex-direction:column;gap:10px;margin-top:4px}
-.settings-row{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px 14px;cursor:pointer}
+/* v0.94: 13px 14px -> 14px 16px -- a touch more breathing room now that
+   rows are visually grouped into smaller clusters instead of one long
+   11-row list, part of the same pass that added .settings-group-label. */
+.settings-row{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 16px;cursor:pointer}
 .settings-row.static{cursor:default}
+/* v0.94: director feedback, same round as .settings-group-label below --
+   grouped-list section header, deliberately much lighter than
+   .section-title's page-level <h2> (24px/700, used once per screen for
+   "설정" itself) since this repeats 5x on one screen; small-caps-style
+   muted label matches the grouped-settings convention most OS settings
+   screens use (iOS/Android "GENERAL", "NOTIFICATIONS", ...). */
+.settings-group-label{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.3px;margin:22px 4px 8px}
+/* v0.94: non-clickable "coming soon" marker -- for the 테마 row, which
+   has nothing to switch to yet (see that row's own v0.94 comment) and
+   used to be a tappable row that just toasted "준비 중입니다" on tap,
+   reading as broken rather than honestly not-yet-built. */
+.soon-badge{display:inline-block;background:var(--bg);color:var(--muted);font-size:10px;font-weight:800;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:middle}
+/* v0.94: language row used to switch instantly on tap (cycleLang()) --
+   director feedback: a setting that actually changes behavior (not just
+   opens a native settings screen) should ask first, not apply on tap.
+   Radio inputs do the selection bookkeeping themselves (same reasoning
+   as reusing a native <input type="time"> for the reminder sheet above)
+   -- no custom JS selection state needed, applyLangSelection() just
+   reads whichever one is :checked when "적용" is tapped. */
+.lang-option{display:flex;align-items:center;gap:10px;padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.lang-option input{width:18px;height:18px;accent-color:var(--brown)}
+.lang-option span{font-size:14px;font-weight:700;color:var(--ink)}
 /* v0.43: director feedback -- "many buttons in settings don't respond when
    tapped." Root cause is app-wide, not settings-specific: `*` disables
    `-webkit-tap-highlight-color` globally (see that rule's own comment above)
@@ -197,8 +222,17 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    -- see that section's own comment. */
 .settings-emoji{font-size:22px;width:26px;text-align:center;flex-shrink:0}
 .settings-row-text{flex:1;min-width:0}
-.settings-row-text b{display:block;font-size:14px}
-.settings-row-text span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+/* v0.94: 14px -> 15px title / tightened subtitle line-height -- part of
+   the same grouped-list pass, a small readability bump now that rows sit
+   in smaller clusters rather than one long undifferentiated list. */
+.settings-row-text b{display:block;font-size:15px}
+/* v0.94: child combinator (not descendant) -- this must only style the
+   subtitle span that's a direct sibling of <b>, not the .soon-badge span
+   nested inside <b> (see 테마's row) -- descendant selector originally
+   caught both and forced the badge to this rule's display:block/full
+   width/muted color, rendering as a near-full-width gray bar instead of
+   a small inline pill. Caught via a real Playwright render, not a guess. */
+.settings-row-text>span{display:block;font-size:12.5px;line-height:1.4;color:var(--muted);margin-top:3px}
 .settings-chevron{color:var(--muted);font-size:20px}
 .modal{position:fixed;inset:0;background:rgba(32,25,21,.55);display:flex;align-items:flex-end;justify-content:center;padding:18px 18px calc(18px + var(--native-nav-bottom, env(safe-area-inset-bottom)));z-index:30}
 /* v0.38: director feedback -- opening a modal didn't reliably fit on one
@@ -490,7 +524,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.93.0';
+const APP_VERSION='0.94.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1261,7 +1295,9 @@ function mountHolo(){
 // header badge and the settings language row), doing the exact same thing
 // -- redundant, and every extra place a setting can be changed is another
 // place to keep in sync/explain. Dropped the header badge; the settings row
-// (cycleLang() is still used there) is the one real place to change it now.
+// is the one real place to change it now (v0.94: openLanguageSheet(), see
+// that function's own comment -- replaced the original instant-cycle
+// cycleLang() this comment used to mention).
 function header(){const logo=state.settings.language==='ja'?'visual/logo/logo_jp.webp':'visual/logo/logo_ko.webp';const streak=computeStreak();const streakBadge=streak>=2?`<span class="streak-badge">🔥 ${l(`${streak}일 연속`,`${streak}日連続`,`${streak}-day streak`)}</span>`:'';return `<div class="brand"><img class="avatar" src="visual/app-icon/legacy/app_icon_phone.webp"><div class="brand-main"><img class="brand-logo" src="${logo}" alt="Opened Again"><div class="sub">${l('내 폰이 오늘도 보고 있었다.','スマホは今日も見ていました。','Your phone was watching again.')}</div></div></div><div class="date">${new Date().toLocaleDateString()}${streakBadge}</div>`}
 // v0.47: mirrors the current language into NativeBridge.setLanguage() so
 // DailyReminderReceiver (native code, no access to this WebView's own
@@ -1270,7 +1306,24 @@ function header(){const logo=state.settings.language==='ja'?'visual/logo/logo_jp
 // startup, in case a reminder ever fires before the user touches the
 // language row again.
 function syncLanguageToNative(){try{N&&N.setLanguage&&N.setLanguage(state.settings.language)}catch(e){}}
-function cycleLang(){const i=supported.indexOf(state.settings.language);state.settings.language=supported[(i+1)%supported.length];save();syncLanguageToNative();render()}
+// v0.94: replaces the old cycleLang() (instant switch on tap) -- director
+// feedback that a setting actually changing behavior should be pick-then-
+// apply, not applied the instant you touch the row. Native radio inputs
+// hold the selection themselves (same reasoning as the reminder sheet's
+// <input type="time"> above): applyLangSelection() just reads whichever
+// one is :checked when "적용" is tapped, no custom JS selection state.
+function openLanguageSheet(){
+  const cur=state.settings.language;
+  const opt=(code,label)=>`<label class="lang-option"><input type="radio" name="langPick" value="${code}"${cur===code?' checked':''}><span>${label}</span></label>`;
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('언어 선택','言語選択','Select language')}</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">${opt('ko','한국어')}${opt('ja','日本語')}</div></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="applyLangSelection()">${l('적용','適用','Apply')}</button></div></div></div>`;
+}
+function applyLangSelection(){
+  const picked=document.querySelector('input[name="langPick"]:checked');
+  const code=picked?picked.value:state.settings.language;
+  if(code!==state.settings.language){state.settings.language=code;save();syncLanguageToNative()}
+  closeOverlay();
+  render();
+}
 function tabs(){const items=[
   {id:'cases',icon:'home',label:l('홈','ホーム','Home')},
   {id:'records',icon:'records',label:l('기록','記録','Records')},
@@ -1516,20 +1569,48 @@ function settings(){
   const adsRow=adsRemoved
     ? row(svgIcon('removeAds'),l('광고 제거','広告を削除','Remove ads'),l('구매 완료 · 광고가 표시되지 않습니다','購入済み · 広告は表示されません','Purchased -- ads are hidden'),null,false)
     : row(svgIcon('removeAds'),l('광고 제거','広告を削除','Remove ads'),l('탭해서 구매하기 (배너 광고 제거)','タップして購入(バナー広告を削除)','Tap to buy (removes the banner ad)'),'purchaseRemoveAds()');
-  return `<div class="section-title"><h2>${l('설정','設定','Settings')}</h2></div><div class="settings-list">
-${row(imgIcon('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','cycleLang()')}
-${row(imgIcon('notification'),l('알림 권한','通知許可','Notifications'),notifLabel,'N&&N.requestNotificationPermission()')}
-${row(svgIcon('reminder'),l('일일 리마인더','デイリーリマインダー','Daily reminder'),state.settings.dailyReminder?l(`매일 ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}에 알림 · 탭해서 변경`,`毎日${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}に通知 · タップで変更`,`Notifies daily at ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')} -- tap to change`):l('꺼짐 · 탭해서 켜기','オフ · タップでオン','Off -- tap to turn on'),'openReminderSheet()')}
-${row(svgIcon('usage'),l('사용정보 접근','使用状況へのアクセス','Usage access'),accessLabel,'N&&N.openUsageSettings()')}
-${row(svgIcon('theme'),l('테마','テーマ','Theme'),l('라이트 모드','ライトモード','Light mode'),"toast(l('다른 테마는 준비 중입니다','他のテーマは準備中です','More themes are coming soon'))")}
-${adsRow}
-${adsRemoved?'':row(svgIcon('restore'),l('구매 복원','購入の復元','Restore purchase'),l('다른 기기/재설치 시 여기서 복원하세요','別端末・再インストール時はここで復元','Restore a purchase after reinstalling or on a new device'),'restorePurchases()')}
-${row(svgIcon('data'),l('데이터 관리','データ管理','Data'),l('탭해서 초기화하기','タップして初期化','Tap to reset'),'openResetConfirm()')}
-${row(svgIcon('export'),l('데이터 내보내기','データのエクスポート','Export data'),l('백업 파일로 저장/공유하기','バックアップファイルとして保存・共有','Save or share as a backup file'),'exportBackupData()')}
-${row(svgIcon('help'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),'openHelpSheet()')}
-${row(svgIcon('privacy'),l('개인정보처리방침','プライバシーポリシー','Privacy policy'),l('어떤 정보를 어떻게 다루는지','どんな情報をどう扱うか','What data is handled and how'),'openPrivacySheet()')}
-${row(svgIcon('about'),l('앱 정보','アプリ情報','About'),'v'+APP_VERSION,'openAboutSheet()')}
-</div>${state.debugBuild?(()=>{
+  // v0.94: director feedback -- "설정화면 전체적으로 손봐야될 필요가
+  // 있어" follow-up, this time picking: (1) group related rows instead
+  // of one flat 11-row list, (2) the non-functional "테마" row should
+  // stop pretending to be tappable, (3) 언어 should open a pick-then-
+  // apply sheet instead of instantly cycling on tap, (4) spacing/type.
+  // group()/groupLabel() just wrap the existing row()/list markup --
+  // `.settings-group-label` is new, small-caps-style muted text matching
+  // the grouped-list convention most OS settings screens use (iOS/
+  // Android), rather than reusing `.section-title`'s page-level `<h2>`
+  // weight for what's now a much smaller, more frequent heading.
+  const groupLabel=t=>`<div class="settings-group-label">${t}</div>`;
+  const group=(...rows)=>`<div class="settings-list">${rows.join('')}</div>`;
+  const soon=l('준비 중','準備中','Coming soon');
+  return `<div class="section-title"><h2>${l('설정','設定','Settings')}</h2></div>
+${groupLabel(l('일반','一般','General'))}
+${group(
+  row(imgIcon('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','openLanguageSheet()'),
+  row(svgIcon('theme'),l('테마','テーマ','Theme')+`<span class="soon-badge">${soon}</span>`,l('라이트 모드 · 다른 테마는 준비 중입니다','ライトモード · 他のテーマは準備中です','Light mode -- more themes are coming soon'),null,false),
+  row(svgIcon('usage'),l('사용정보 접근','使用状況へのアクセス','Usage access'),accessLabel,'N&&N.openUsageSettings()')
+)}
+${groupLabel(l('알림','通知','Notifications'))}
+${group(
+  row(imgIcon('notification'),l('알림 권한','通知許可','Notifications'),notifLabel,'N&&N.requestNotificationPermission()'),
+  row(svgIcon('reminder'),l('일일 리마인더','デイリーリマインダー','Daily reminder'),state.settings.dailyReminder?l(`매일 ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}에 알림 · 탭해서 변경`,`毎日${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}に通知 · タップで変更`,`Notifies daily at ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')} -- tap to change`):l('꺼짐 · 탭해서 켜기','オフ · タップでオン','Off -- tap to turn on'),'openReminderSheet()')
+)}
+${groupLabel(l('구매','購入','Purchase'))}
+${group(
+  adsRow,
+  adsRemoved?'':row(svgIcon('restore'),l('구매 복원','購入の復元','Restore purchase'),l('다른 기기/재설치 시 여기서 복원하세요','別端末・再インストール時はここで復元','Restore a purchase after reinstalling or on a new device'),'restorePurchases()')
+)}
+${groupLabel(l('데이터','データ','Data'))}
+${group(
+  row(svgIcon('data'),l('데이터 관리','データ管理','Data'),l('탭해서 초기화하기','タップして初期化','Tap to reset'),'openResetConfirm()'),
+  row(svgIcon('export'),l('데이터 내보내기','データのエクスポート','Export data'),l('백업 파일로 저장/공유하기','バックアップファイルとして保存・共有','Save or share as a backup file'),'exportBackupData()')
+)}
+${groupLabel(l('정보','情報','Info'))}
+${group(
+  row(svgIcon('help'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),'openHelpSheet()'),
+  row(svgIcon('privacy'),l('개인정보처리방침','プライバシーポリシー','Privacy policy'),l('어떤 정보를 어떻게 다루는지','どんな情報をどう扱うか','What data is handled and how'),'openPrivacySheet()'),
+  row(svgIcon('about'),l('앱 정보','アプリ情報','About'),'v'+APP_VERSION,'openAboutSheet()')
+)}
+${state.debugBuild?(()=>{
   // v0.93: debug-only rows kept as plain emoji (not the new icon chip) --
   // dev-facing tool, never reaches a real build (see isDebugBuild()'s own
   // comment), so it's not part of what the director asked to unify.
