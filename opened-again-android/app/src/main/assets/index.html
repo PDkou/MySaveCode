@@ -206,14 +206,20 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .record-list{margin-top:12px}.record-app{position:relative;display:flex;align-items:center;justify-content:space-between;padding:12px 2px;border-bottom:1px solid #E8DED3;cursor:pointer;overflow:hidden}.record-app b{font-size:13px;position:relative;z-index:1}.record-app>span{font-size:12px;color:var(--muted);position:relative;z-index:1}
 /* v0.105: director feedback -- "가장 오래 본 앱" was a bare text list,
    no icon/color/decoration at all. Asked to add a relative bar graph +
-   medals for the top 3, with color NOT necessarily matching the stat
-   cards' rarity tints -- "앱의 분위기와는 맞게" (fit the app's own warm
-   mood instead). Reused --brown (the app's own core accent, already in
-   :root, not a new color) as a soft translucent bar instead of
-   introducing a new hue. .record-app-bar is an absolutely-positioned
+   medals for the top 3. .record-app-bar is an absolutely-positioned
    child sized to each app's share of the top app's duration -- behind
-   the text (z-index:0 vs text's z-index:1) so labels stay readable. */
-.record-app-bar{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(156,122,93,.22),rgba(156,122,93,.03));z-index:0;border-radius:4px}
+   the text (z-index:0 vs text's z-index:1) so labels stay readable.
+   v0.106: director tried the first (muted brown) version and wanted
+   something "더 화려하게" (flashier, more effect) instead. Rather than
+   invent a new color scheme, reused the exact 7-color spectrum
+   holoSpectrum()'s default case already defines for the app's own
+   holofoil card shimmer (detailPage()'s .holo-canvas/createCardHolo())
+   -- the same rainbow already part of this app's visual language, just
+   applied here as a plain animated CSS gradient instead of the heavier
+   interactive Canvas effect (which is tilt/drag-driven and built for
+   the big TCG card view, not a proportionate fit for a small list bar). */
+.record-app-bar{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#7542DD,#48B4ED,#89E6D7,#D78CE4,#9770E8,#5BD2DF,#7542DD);background-size:300% 100%;opacity:.5;z-index:0;border-radius:4px;animation:recordBarShine 5s linear infinite}
+@keyframes recordBarShine{0%{background-position:0% 0%}100%{background-position:300% 0%}}
 /* v0.84: records-tab app filter -- tapping a .record-app row (see
    records()'s own comment) highlights it and narrows the case list below
    to that app; .filter-clear is the small "필터 해제" affordance that
@@ -603,7 +609,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.105.0';
+const APP_VERSION='0.106.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
