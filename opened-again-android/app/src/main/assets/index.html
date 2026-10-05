@@ -192,6 +192,13 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .lang-option{display:flex;align-items:center;gap:10px;padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
 .lang-option input{width:18px;height:18px;accent-color:var(--brown)}
 .lang-option span{font-size:14px;font-weight:700;color:var(--ink)}
+/* v0.95: the reminder sheet's time input used an inline background:#fff
+   that quietly overrode the browser's own default disabled-state dimming
+   -- toggling "알림 끄기" visually looked no different from "켜기" at all
+   even though the field really was disabled (confirmed via Playwright:
+   .disabled was true). Caught by actually looking at the before/after
+   screenshots, not guessed. */
+.reminder-time-input:disabled{opacity:.45}
 /* v0.43: director feedback -- "many buttons in settings don't respond when
    tapped." Root cause is app-wide, not settings-specific: `*` disables
    `-webkit-tap-highlight-color` globally (see that rule's own comment above)
@@ -524,7 +531,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.94.0';
+const APP_VERSION='0.95.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1548,8 +1555,15 @@ function settings(){
   const ICONS={
     reminder:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M5 3 3 5"/><path d="M19 3l2 2"/>',
     usage:'<path d="M6 20V12"/><path d="M12 20V7"/><path d="M18 20V4"/>',
-    theme:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5"/><path d="M12 19.5V22"/><path d="M2 12h2.5"/><path d="M19.5 12H22"/>',
-    removeAds:'<rect x="4" y="8" width="16" height="8" rx="1.6"/><path d="M4 20 20 4"/>',
+    // v0.95: director feedback -- both of these read as unclear blobs at
+    // the actual 21px render size (theme's old 4-ray version looked like a
+    // target/plus, removeAds' slashed-rectangle looked like "no video").
+    // Standard 8-ray sun (classic/unambiguous "appearance" glyph) and a
+    // shield+checkmark (the common "protected/cleaned up" pairing most
+    // ad-blocker icons already use, reads clearly as "ads: handled" even
+    // small) replace them.
+    theme:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2.2"/><path d="M12 19.8V22"/><path d="M2 12h2.2"/><path d="M19.8 12H22"/><path d="M4.9 4.9l1.6 1.6"/><path d="M17.5 17.5l1.6 1.6"/><path d="M19.1 4.9l-1.6 1.6"/><path d="M6.5 17.5l-1.6 1.6"/>',
+    removeAds:'<path d="M12 3l7 3v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
     restore:'<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/>',
     data:'<path d="M3 4h18v4H3z"/><path d="M5 8v12h14V8"/><path d="M10 12h4"/>',
     export:'<path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M4 16v4h16v-4"/>',
@@ -1602,7 +1616,7 @@ ${group(
 ${groupLabel(l('데이터','データ','Data'))}
 ${group(
   row(svgIcon('data'),l('데이터 관리','データ管理','Data'),l('탭해서 초기화하기','タップして初期化','Tap to reset'),'openResetConfirm()'),
-  row(svgIcon('export'),l('데이터 내보내기','データのエクスポート','Export data'),l('백업 파일로 저장/공유하기','バックアップファイルとして保存・共有','Save or share as a backup file'),'exportBackupData()')
+  row(svgIcon('export'),l('데이터 내보내기','データのエクスポート','Export data'),l('백업 파일로 저장/공유하기','バックアップファイルとして保存・共有','Save or share as a backup file'),'openExportConfirm()')
 )}
 ${groupLabel(l('정보','情報','Info'))}
 ${group(
@@ -1676,40 +1690,62 @@ function resetAllData(){
 // since scheduling an alarm alone doesn't grant one -- the actual gating
 // happens in DailyReminderReceiver via
 // NotificationManagerCompat.areNotificationsEnabled() when it fires.
+// v0.95: director feedback -- the previous on/off state lived only in
+// which label the single bottom-right button showed ("켜기"/"저장") plus
+// a conditional "끄기" button swapped in on the left; questioned whether
+// that was actually clear that OFF really, physically cancels the
+// scheduled notifications (it does -- see applyReminderSettings() below)
+// and asked for an explicit radio on/off choice instead, same visual
+// pattern as openLanguageSheet()'s radio options. Picking "끄기" now also
+// disables the time input (nothing to pick a time for once it's off)
+// rather than just leaving it inert alongside an unrelated button label.
 function openReminderSheet(){
   const hh=String(state.settings.reminderHour).padStart(2,'0');
   const mm=String(state.settings.reminderMinute).padStart(2,'0');
   const isOn=state.settings.dailyReminder;
-  const leftBtn=isOn
-    ?`<button class="cancel" onclick="turnOffReminder()">${l('끄기','オフにする','Turn off')}</button>`
-    :`<button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button>`;
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('일일 리마인더','デイリーリマインダー','Daily reminder')}</div><div style="display:flex;flex-direction:column;gap:14px;align-items:center;padding:6px 0"><input type="time" id="reminderTimeInput" value="${hh}:${mm}" style="font-size:22px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)"><p style="font-size:12px;color:var(--muted);text-align:center;margin:0">${l('이 시간에 오늘의 사건을 알려드리고, 하루 중 사건이 여러 건 쌓이면 따로도 알려드려요.','この時間に今日の事件をお知らせし、一日の中で複数の事件が発生した場合も別途お知らせします。','We\'ll tell you about today\'s cases at this time, and separately if several incidents pile up during the day.')}</p></div></div><div class="sheet-actions">${leftBtn}<button class="confirm" onclick="saveReminderTime()">${isOn?l('저장','保存','Save'):l('켜기','オンにする','Turn on')}</button></div></div></div>`;
+  const opt=(val,label,checked)=>`<label class="lang-option"><input type="radio" name="reminderOn" value="${val}"${checked?' checked':''} onchange="toggleReminderTimeEnabled()"><span>${label}</span></label>`;
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('일일 리마인더','デイリーリマインダー','Daily reminder')}</div><div style="display:flex;flex-direction:column;gap:8px;margin:4px 0 14px">${opt('on',l('알림 켜기','通知をオンにする','Turn notifications on'),isOn)}${opt('off',l('알림 끄기','通知をオフにする','Turn notifications off'),!isOn)}</div><div style="display:flex;flex-direction:column;gap:14px;align-items:center;padding:6px 0"><input type="time" id="reminderTimeInput" class="reminder-time-input" value="${hh}:${mm}"${isOn?'':' disabled'} style="font-size:22px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)"><p style="font-size:12px;color:var(--muted);text-align:center;margin:0">${l('이 시간에 오늘의 사건을 알려드리고, 하루 중 사건이 여러 건 쌓이면 따로도 알려드려요. 꺼두면 이 앱이 예약한 알림이 모두 취소돼요.','この時間に今日の事件をお知らせし、一日の中で複数の事件が発生した場合も別途お知らせします。オフにすると、このアプリが予約した通知はすべてキャンセルされます。','We\'ll tell you about today\'s cases at this time, and separately if several incidents pile up during the day. Turning it off cancels every notification this app has scheduled.')}</p></div></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="applyReminderSettings()">${l('적용','適用','Apply')}</button></div></div></div>`;
 }
-function saveReminderTime(){
+function toggleReminderTimeEnabled(){
+  const picked=document.querySelector('input[name="reminderOn"]:checked');
   const input=document.getElementById('reminderTimeInput');
-  const parts=(input&&input.value?input.value:'21:00').split(':').map(Number);
-  const h=Number.isFinite(parts[0])?parts[0]:21,m=Number.isFinite(parts[1])?parts[1]:0;
-  state.settings.reminderHour=h;state.settings.reminderMinute=m;
-  state.settings.dailyReminder=true;
-  save();
-  try{N&&N.requestNotificationPermission&&N.requestNotificationPermission()}catch(e){}
-  try{N&&N.scheduleDailyReminder&&N.scheduleDailyReminder(h,m)}catch(e){}
-  closeOverlay();
-  render();
+  if(input)input.disabled=!picked||picked.value!=='on';
 }
-function turnOffReminder(){
-  state.settings.dailyReminder=false;save();
-  try{N&&N.cancelDailyReminder&&N.cancelDailyReminder()}catch(e){}
+function applyReminderSettings(){
+  const picked=document.querySelector('input[name="reminderOn"]:checked');
+  const on=picked?picked.value==='on':state.settings.dailyReminder;
+  if(on){
+    const input=document.getElementById('reminderTimeInput');
+    const parts=(input&&input.value?input.value:'21:00').split(':').map(Number);
+    const h=Number.isFinite(parts[0])?parts[0]:21,m=Number.isFinite(parts[1])?parts[1]:0;
+    state.settings.reminderHour=h;state.settings.reminderMinute=m;
+    state.settings.dailyReminder=true;
+    save();
+    try{N&&N.requestNotificationPermission&&N.requestNotificationPermission()}catch(e){}
+    try{N&&N.scheduleDailyReminder&&N.scheduleDailyReminder(h,m)}catch(e){}
+  }else{
+    state.settings.dailyReminder=false;save();
+    try{N&&N.cancelDailyReminder&&N.cancelDailyReminder()}catch(e){}
+  }
   closeOverlay();
   render();
 }
 // v0.47: complement to resetAllData() -- lets the user pull a copy of the
 // same {settings,history} payload save() already keeps in localStorage,
 // via NativeBridge.exportBackup() (writes it to a cache file and hands it
-// to the OS share sheet). Non-destructive, so unlike reset this fires
-// straight from the settings row with no confirmation step.
+// to the OS share sheet).
+// v0.95: director feedback -- "왠만하면 다 모달이 뜨도록" (show a
+// confirm step before most tap-to-run actions), this row specifically
+// named. Non-destructive (unlike resetAllData()), so the confirm sheet
+// here is informational rather than a danger warning -- same
+// .sheet/.sheet-actions shell as openResetConfirm() above, just a
+// "confirm" button instead of "danger".
+function openExportConfirm(){
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('데이터 내보내기','データのエクスポート','Export data')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0">${l('지금까지 모은 기록과 보관함 카드를 백업 파일로 만들어 공유 메뉴로 저장/전송할 수 있어요.','これまでに集めた記録と保管庫のカードをバックアップファイルとして作成し、共有メニューで保存・送信できます。','Your records and archived cards so far are packaged as a backup file you can save or send via the share menu.')}</p></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="exportBackupData()">${l('내보내기','エクスポート','Export')}</button></div></div></div>`;
+}
 function exportBackupData(){
   try{N&&N.exportBackup&&N.exportBackup(JSON.stringify({schemaVersion:BACKUP_SCHEMA_VERSION,settings:state.settings,history:state.history}))}catch(e){}
+  closeOverlay();
 }
 // v0.86: debug-only diagnostic (see NativeBridge.debugSessionsToday()'s own
 // comment) -- dumps today's actual detected sessions with a live pass/fail
