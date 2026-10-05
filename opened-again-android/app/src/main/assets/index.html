@@ -184,7 +184,24 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .normal{--border:var(--normal);--badgeText:#393939;--glow:linear-gradient(120deg,#fff,#ececec);--scene:linear-gradient(160deg,#f9f9f9,#ececec)}.rare{--border:var(--rare);--glow:linear-gradient(120deg,#C9EAFF,#F7FBFF);--scene:linear-gradient(160deg,#E8F6FF,#CDEAFF)}.epic{--border:var(--epic);--glow:linear-gradient(120deg,#E6D1FF,#FFDCFB);--scene:linear-gradient(160deg,#302557,#6C478F)}.legendary{--border:var(--legend);--badgeText:#5E4300;--glow:linear-gradient(120deg,#FFE697,#FFF6C7);--scene:radial-gradient(circle at 50% 28%,#FFF9C6,#F2C43E 65%,#B47913)}
 .hidden{--border:#0AB6D4;--glow:linear-gradient(135deg,#031923,#0A4C67);--scene:radial-gradient(circle at 50% 30%,#104F68,#061A26 75%);background:#071C29;color:#E9FBFF;box-shadow:0 16px 38px rgba(0,31,45,.28)}.hidden.opal{--border:#DDE8FF;--badgeText:#342D46;--glow:linear-gradient(135deg,#FFE9F7,#DFF8FF,#EEE0FF,#FFF6C6);--scene:linear-gradient(145deg,#271E57,#453A84 45%,#B963B6);background:#FBF8FF;color:#342D46}.hidden .detail,.hidden .case-id{color:#B9DFE8}.hidden.opal .detail,.hidden.opal .case-id{color:#675E7E}.hidden .share{color:#E9FBFF;border-color:#23647A;background:#0A2938}.hidden.opal .share{color:#4B4161;background:rgba(255,255,255,.76);border-color:#D8CDE8}
 .featured{transform:translateZ(0)}.featured .card-body{grid-template-columns:1fr 1fr}.featured .scene{min-height:155px}.featured .scene img{width:135px;height:135px}
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.stat{background:white;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 5px 14px rgba(70,50,35,.04)}.stat b{display:block;font-size:23px}.stat span{font-size:11px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.stat{position:relative;background:white;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 5px 14px rgba(70,50,35,.04);overflow:hidden}
+.stat b{display:block;font-size:23px}
+.stat>span{font-size:11px;color:var(--muted)}
+/* v0.104: director feedback -- Records' 6 stat cards stayed plain white
+   right after Home's 4 (v0.100) got the rarity-glow tint + paw treatment,
+   reading as inconsistent between two screens showing the same kind of
+   content. Same reused colors, same reused 🐾, applied here too --
+   cycles through the same 4 existing tones (6 cards, 4 colors) rather
+   than inventing a 5th/6th. */
+.stat.stat-1{background:var(--glow-normal)}
+.stat.stat-2{background:var(--glow-rare)}
+.stat.stat-3{background:var(--glow-epic)}
+.stat.stat-4{background:var(--glow-legend)}
+/* .stat .stat-paw (two classes), not just .stat-paw -- same specificity
+   guard as .mini-stat .mini-paw above: .stat>span's child-combinator
+   rule would otherwise win and force this to font-size:11px/--muted. */
+.stat .stat-paw{position:absolute;right:6px;top:4px;font-size:15px;opacity:.35;transform:rotate(12deg)}
 .archive-progress{background:white;border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}.archive-progress.archive-complete{background:linear-gradient(135deg,#FFF7E0,#FFEFC2);border-color:var(--legend);text-align:center}.archive-complete b{font-size:16px;color:#8A6300}.archive-complete p{margin:6px 0 0;font-size:12px;color:#8A6300}.bar{height:9px;background:#EEE6DC;border-radius:99px;overflow:hidden;margin-top:10px}.bar>i{display:block;height:100%;background:linear-gradient(90deg,#7ABEFF,#A56CFF,#FFD166);border-radius:99px}.archive-item{background:white;border:1px solid var(--line);border-radius:18px;padding:14px 15px;margin:8px 0}.archive-top{display:flex;justify-content:space-between;align-items:center}.archive-name{font-weight:900}.rarity-dots{display:flex;gap:5px;margin-top:9px}.dot{width:25px;height:8px;border-radius:10px;background:#ECE5DD}.dot.on.n{background:var(--normal)}.dot.on.r{background:var(--rare)}.dot.on.e{background:var(--epic)}.dot.on.l{background:var(--legend)}.locked{opacity:.48}.hidden-line{background:linear-gradient(90deg,#071C29,#143D51);color:#E9FBFF;border-color:#19536C}.hidden-line .dot{background:#235164}
 .record-list{margin-top:12px}.record-app{display:flex;align-items:center;justify-content:space-between;padding:12px 2px;border-bottom:1px solid #E8DED3;cursor:pointer}.record-app b{font-size:13px}.record-app span{font-size:12px;color:var(--muted)}
 /* v0.84: records-tab app filter -- tapping a .record-app row (see
@@ -576,7 +593,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.103.0';
+const APP_VERSION='0.104.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1599,7 +1616,7 @@ function records(d){const s=d.summary||{};const rows=[[l('사용 시간','使用
   const filtered=filterPkg?cards.filter(i=>matchesRecordsFilter(i,filterPkg)):cards;
   const topAppsBlock=`<div class="section-title"><h2>${l('가장 오래 본 앱','最も長く見たアプリ','Top apps')}</h2>${filterPkg?`<span class="filter-clear" onclick="toggleRecordsFilter(null)">${l('필터 해제','フィルター解除','Clear filter')} ×</span>`:''}</div><div class="record-list">${top.length?top.map((x,i)=>`<div class="record-app${filterPkg===x.packageName?' active':''}" onclick='toggleRecordsFilter(${JSON.stringify(x.packageName)})'><b>${i+1}. ${esc(compactPkg(x.packageName))}</b><span>${fmtMs(x.durationMs)}</span></div>`).join(''):`<div class="empty">${l('기록이 없습니다.','記録がありません。','No records.')}</div>`}</div>`;
   const casesBlock=cards.length?`<div class="section-title"><h2>${filterPkg?l(`'${compactPkg(filterPkg)}' 관련 사건`,`「${compactPkg(filterPkg)}」関連の事件`,`Cases involving ${compactPkg(filterPkg)}`):l('오늘의 사건','本日の事件',"Today's cases")}</h2><span class="count">${filtered.length}${l('건','件','')}</span></div>${filtered.length?`<div class="case-list">${filtered.map(compactCase).join('')}</div>`:`<div class="empty">${l('이 앱과 관련된 사건이 없습니다.','このアプリに関連する事件はありません。','No cases involve this app.')}</div>`}`:'';
-  return `<div class="section-title"><h2>${l('오늘의 기록','本日の記録','Today\'s record')}</h2></div><div class="record-decor"><img src="visual/character/basic/moni_read_file.webp"><div><b>${l('오늘의 수사 보고서','本日の捜査報告','Today\'s investigation report')}</b><p>${l('숫자도 모니가 차분히 정리했습니다.','数字もMONIが静かにまとめました。','MONI filed the numbers too.')}</p></div></div><div class="stats">${rows.map(([a,b])=>`<div class="stat"><b>${esc(b)}</b><span>${esc(a)}</span></div>`).join('')}</div>${weekRecap()}${weeklyHighlightBlock()}${topAppsBlock}${casesBlock}`}
+  return `<div class="section-title"><h2>${l('오늘의 기록','本日の記録','Today\'s record')}</h2></div><div class="record-decor"><img src="visual/character/basic/moni_read_file.webp"><div><b>${l('오늘의 수사 보고서','本日の捜査報告','Today\'s investigation report')}</b><p>${l('숫자도 모니가 차분히 정리했습니다.','数字もMONIが静かにまとめました。','MONI filed the numbers too.')}</p></div></div><div class="stats">${rows.map(([a,b],i)=>`<div class="stat stat-${(i%4)+1}"><span class="stat-paw">🐾</span><b>${esc(b)}</b><span>${esc(a)}</span></div>`).join('')}</div>${weekRecap()}${weeklyHighlightBlock()}${topAppsBlock}${casesBlock}`}
 // v0.35: settings tab (docs/UI_VISUAL_DIRECTION_REQUEST.md item 5's 4th
 // bottom-nav destination -- the app previously had no settings screen at
 // all). Reachable regardless of usage-access permission state (unlike the
