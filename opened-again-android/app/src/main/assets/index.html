@@ -529,7 +529,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.96.0';
+const APP_VERSION='0.97.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1545,12 +1545,23 @@ function settings(){
   const notifLabel=hasNotifAccess===true?l('허용됨','許可済み','Allowed'):hasNotifAccess===false?l('허용 필요 · 탭해서 허용','許可が必要 · タップで許可','Needs permission -- tap to allow'):l('탭해서 확인','タップして確認','Tap to check');
   const row=(icon,title,sub,onclick,clickable=true)=>`<div class="settings-row${clickable?'':' static'}"${onclick?` onclick="${onclick}"`:''}>${icon}<div class="settings-row-text"><b>${title}</b><span>${sub}</span></div>${clickable?'<span class="settings-chevron">›</span>':''}</div>`;
   // v0.93: unified icon chip -- see .settings-icon's own CSS comment.
-  // imgIcon reuses the two existing brand PNGs (language/notification);
-  // svgIcon covers every row that used to be a bare OS emoji, as simple
-  // hand-built line icons in the same stroke/color so they read as one
-  // set rather than nine different platforms' emoji fonts.
-  const imgIcon=name=>`<span class="settings-icon"><img src="visual/ui/icons/unlabeled/icon_${name}.png" alt=""></span>`;
+  // svgIcon covers every row, as simple hand-built line icons in the same
+  // stroke/color so they all read as one set.
+  // v0.97: director feedback, final settings polish pass -- language/
+  // notification were still the original brand PNGs (icon_language.png/
+  // icon_notification.png), and a zoomed-in Playwright render showed why
+  // that still looked slightly off: those PNGs carry their own bold
+  // outline circle and thicker strokes, visibly heavier than the other 8
+  // thin-stroke line icons now that they're the only two PNGs left in an
+  // otherwise all-SVG row. Redrawn as the same stroke style so there's no
+  // longer any visual split between "the two original icons" and
+  // "everything added since v0.93" -- the PNG files themselves
+  // (icon_language.png/icon_notification.png) are untouched and still
+  // real brand assets, this just stops settings() from referencing them
+  // (the old imgIcon() helper that did so is removed, now unused).
   const ICONS={
+    language:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><ellipse cx="12" cy="12" rx="4" ry="9"/>',
+    notification:'<path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
     reminder:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M5 3 3 5"/><path d="M19 3l2 2"/>',
     usage:'<path d="M6 20V12"/><path d="M12 20V7"/><path d="M18 20V4"/>',
     // v0.95: director feedback -- the old slashed-rectangle removeAds icon
@@ -1593,12 +1604,12 @@ function settings(){
   return `<div class="section-title"><h2>${l('설정','設定','Settings')}</h2></div>
 ${groupLabel(l('일반','一般','General'))}
 ${group(
-  row(imgIcon('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','openLanguageSheet()'),
+  row(svgIcon('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','openLanguageSheet()'),
   row(svgIcon('usage'),l('사용정보 접근','使用状況へのアクセス','Usage access'),accessLabel,'N&&N.openUsageSettings()')
 )}
 ${groupLabel(l('알림','通知','Notifications'))}
 ${group(
-  row(imgIcon('notification'),l('알림 권한','通知許可','Notifications'),notifLabel,'N&&N.requestNotificationPermission()'),
+  row(svgIcon('notification'),l('알림 권한','通知許可','Notifications'),notifLabel,'N&&N.requestNotificationPermission()'),
   row(svgIcon('reminder'),l('일일 리마인더','デイリーリマインダー','Daily reminder'),state.settings.dailyReminder?l(`매일 ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}에 알림 · 탭해서 변경`,`毎日${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}に通知 · タップで変更`,`Notifies daily at ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')} -- tap to change`):l('꺼짐 · 탭해서 켜기','オフ · タップでオン','Off -- tap to turn on'),'openReminderSheet()')
 )}
 ${groupLabel(l('구매','購入','Purchase'))}
