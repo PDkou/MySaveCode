@@ -64,7 +64,16 @@ class ShareCardRenderer(private val context: Context) {
         const val W = 1024f
         const val H = 1536f
         val HEADER = RectF(97f, 200f, 925f, 309f)
-        val ART = RectF(103f, 315f, 919f, 935f)
+        // v0.111: director felt the gap between the art window and the info
+        // panel was too empty ("그림과 텍스트박스에 여백이 안생기게"). Ported
+        // from index.html's own v0.110 fix -- grew ART's bottom from 935 to
+        // 1075 (left/top/right unchanged), leaving INFO untouched, matching
+        // the same web CSS change: .tcg-art height 40.4%->49.5% (bottom
+        // 60.9%->70% of the 1536-tall card = 1075px), shrinking the dead gap
+        // before INFO from ~11.8% to ~2.7%. Keeps the in-app detail view and
+        // this shared card PNG back in sync after v0.110 deliberately left
+        // this file alone to apply the web fix first.
+        val ART = RectF(103f, 315f, 919f, 1075f)
         val INFO = RectF(97f, 1116f, 925f, 1385f)
         const val EMBLEM_CX = 508f
         const val EMBLEM_CY = 125f
