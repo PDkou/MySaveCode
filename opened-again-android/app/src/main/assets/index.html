@@ -663,12 +663,19 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    HIDDEN types (they have no rarity breakdown to show). */
 .archive-detail-head{display:flex;justify-content:space-between;align-items:baseline;padding:2px 2px 12px}.archive-detail-head b{font-size:17px}.archive-detail-head span{font-size:11px;color:var(--muted)}
 .rarity-cell-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.rarity-cell{border:2px solid var(--line);border-radius:16px;padding:8px;text-align:center;background:#fff}
+.rarity-cell{position:relative;border:2px solid var(--line);border-radius:16px;padding:8px;text-align:center;background:#fff}
 .rarity-cell.normal{border-color:var(--normal)}.rarity-cell.rare{border-color:var(--rare)}.rarity-cell.epic{border-color:var(--epic)}.rarity-cell.legendary{border-color:var(--legend)}
 .rarity-cell.locked{border-color:var(--line);opacity:.55}
 .rarity-cell-visual{width:100%;height:120px;border-radius:12px;background:#F3EEE6 center/cover no-repeat;display:flex;align-items:center;justify-content:center;margin-bottom:6px}
 .rarity-cell-visual span{font-size:26px;color:var(--muted);font-weight:1000}
 .rarity-cell>span{font-size:11px;font-weight:900;display:block}
+/* v0.115: director asked to unify this modal's locked "???" cells with
+   the main archive grid's locked cards (same lock-paw/lockShimmer from
+   v0.107) -- reuses both exactly, just re-scoped to .rarity-cell's own
+   ancestor so the two-class specificity guard still beats .rarity-cell
+   >span's child-combinator rule. */
+.rarity-cell .lock-paw{position:absolute;top:6px;right:8px;font-size:13px;opacity:.4;z-index:2;animation:lockPawPulse 2.4s ease-in-out infinite}
+.rarity-cell.locked .rarity-cell-visual{background:linear-gradient(120deg,#F3EEE6 0%,#F3EEE6 38%,#fff 50%,#F3EEE6 62%,#F3EEE6 100%);background-size:260% 260%;animation:lockShimmer 3.6s ease-in-out infinite}
 .archive-detail-hero{text-align:center;padding:2px}
 .archive-detail-hero img{width:100%;border-radius:16px;margin-bottom:10px}
 .archive-detail-hero b{font-size:16px;display:block}
@@ -684,7 +691,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.114.0';
+const APP_VERSION='0.115.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1634,7 +1641,7 @@ function openArchiveDetail(type){
   const cells=rarities.map(r=>{
     const got=found.includes(r);
     const style=got?` style="background-image:url('${incidentArt(artBase,type,r)}')"`:'';
-    return `<div class="rarity-cell ${got?r.toLowerCase():'locked'}"><div class="rarity-cell-visual"${style}>${got?'':'<span>?</span>'}</div><span>${got?r:'???'}</span></div>`;
+    return `<div class="rarity-cell ${got?r.toLowerCase():'locked'}">${got?'':'<span class="lock-paw">🐾</span>'}<div class="rarity-cell-visual"${style}>${got?'':'<span>?</span>'}</div><span>${got?r:'???'}</span></div>`;
   }).join('');
   document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('등급별 수집 현황','等級別コレクション','Collection by rarity')}</div><div class="archive-detail-head"><b>${esc(txt(names,type))}</b><span>${found.length}/4 ${l('등급 수집','等級収集','rarities')}</span></div><div class="rarity-cell-grid">${cells}</div></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
 }

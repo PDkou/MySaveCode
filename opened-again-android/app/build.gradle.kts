@@ -51,8 +51,8 @@ android {
         applicationId = "com.howlingcreativestudio.openedagain"
         minSdk = 29
         targetSdk = 36
-        versionCode = 114
-        versionName = "0.114.0"
+        versionCode = 115
+        versionName = "0.115.0"
     }
 
     buildTypes {
