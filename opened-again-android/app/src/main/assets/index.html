@@ -471,7 +471,21 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    + outline + soft glow) -- foilTitleStyle() below supplies the 3 CSS
    custom properties this reads. */
 .tcg-title.foil{background-image:linear-gradient(180deg,var(--foil-colors));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.4px var(--foil-outline,transparent);filter:drop-shadow(0 0 5px var(--foil-glow,transparent))}
-.tcg-art{position:absolute;left:10%;top:20.5%;width:80%;height:40.4%;border-radius:16px;overflow:hidden;background-size:cover;background-position:center}
+/* v0.110: director felt the gap between the art window and the info
+   panel below it was too empty ("그림과 텍스트박스에 여백이 안생기게").
+   .tcg-art/.tcg-info's original percentages (20.5%/40.4% and 72.7%/17.5%)
+   are pixel-exact matches of ShareCardRenderer.kt's native CardLayout.ART/
+   INFO rects (315-935 / 1116-1385 of a 1536-tall card) -- that ~11.8%
+   gap is the confirmed official card design, not a web-only mistake like
+   v0.109's chip color was. Director chose to adjust the web (in-app)
+   view only for now and handle the native share-card PNG as a separate
+   follow-up, accepting that the in-app card and the shared image will
+   look slightly different in the meantime -- so CardLayout.ART/INFO in
+   ShareCardRenderer.kt is deliberately NOT touched here. Grew .tcg-art's
+   height to swallow most of the old gap (60.9% bottom -> 70%), leaving
+   .tcg-info's own position/size untouched and just a small 2.7%
+   breathing gap before it instead of the old ~11.8%. */
+.tcg-art{position:absolute;left:10%;top:20.5%;width:80%;height:49.5%;border-radius:16px;overflow:hidden;background-size:cover;background-position:center}
 .tcg-emblem{position:absolute;left:50%;top:8.1%;width:15.8%;aspect-ratio:1/1;transform:translate(-50%,-50%);background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));pointer-events:none}
 .tcg-info{position:absolute;left:9.5%;top:72.7%;width:81%;height:17.5%;border-radius:14px;background:var(--tcg-panel,#fff);color:var(--tcg-text,#2F2A27);padding:9px 12px;overflow:auto;display:flex;flex-direction:column;justify-content:center;gap:5px}
 .tcg-punch{font-size:13px;font-weight:1000;line-height:1.32}
@@ -643,7 +657,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.109.0';
+const APP_VERSION='0.110.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
