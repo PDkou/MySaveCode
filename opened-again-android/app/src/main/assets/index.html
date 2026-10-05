@@ -475,7 +475,19 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .tcg-emblem{position:absolute;left:50%;top:8.1%;width:15.8%;aspect-ratio:1/1;transform:translate(-50%,-50%);background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));pointer-events:none}
 .tcg-info{position:absolute;left:9.5%;top:72.7%;width:81%;height:17.5%;border-radius:14px;background:var(--tcg-panel,#fff);color:var(--tcg-text,#2F2A27);padding:9px 12px;overflow:auto;display:flex;flex-direction:column;justify-content:center;gap:5px}
 .tcg-punch{font-size:13px;font-weight:1000;line-height:1.32}
-.tcg-chip{font-size:10px;font-weight:800;color:var(--tcg-chip,#675D56);opacity:.85}
+/* v0.109: director spotted the "CASE #" tag was unreadable on EPIC (white
+   text on a near-white lavender panel) and missing entirely on HIDDEN
+   (near-black text on a dark navy panel). Root cause: this tag used
+   pal.chip as its text color, but ShareCardRenderer.kt's native renderer
+   (the design source of truth here) only ever uses pal.chip as the TEXT
+   color drawn on top of a filled rarity-colored pill -- never as text
+   sitting directly on the info panel. Its actual "CASE #" tag (same
+   ShareCardRenderer.kt, the caseBox block) uses pal.text (always chosen
+   to contrast its own panel) with a pal.glow outline, no fill. Matched
+   that here: color now inherits --tcg-text (already set on the parent
+   .tcg-info), and --tcg-chip is repurposed from a text color into the
+   outline color (now fed pal.glow, not pal.chip, from detailPage()). */
+.tcg-chip{font-size:10px;font-weight:800;color:var(--tcg-text,#2F2A27);opacity:.9;display:inline-block;width:fit-content;align-self:flex-start;padding:4px 10px;border-radius:9px;border:1.5px solid var(--tcg-chip,#675D56)}
 .detail-stats{background:var(--page-panel,rgba(255,255,255,.78));border:1px solid var(--page-panel-line,var(--line));border-radius:16px;padding:10px 14px;margin-top:10px;color:var(--page-text,var(--ink));flex:0 0 auto;max-height:96px;overflow:auto}
 .detail-stats>b{font-size:12px;display:block;margin-bottom:4px}
 .detail-stat-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--page-stat-line,#EFE7DB)}
@@ -631,7 +643,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.108.0';
+const APP_VERSION='0.109.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -2159,7 +2171,7 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
       <div class="tcg-header" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-title${foil?' foil':''}"${titleStyle}>${titleTxt}</div></div>
       <div class="tcg-art" style="background-image:url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span></div>
       <div class="tcg-emblem" style="background-image:url('${medallionUrl}')"></div>
-      <div class="tcg-info" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-punch">“${esc(txt(punch,i.type))}”</div><div class="tcg-chip" style="--tcg-chip:${pal.chip}">CASE #${caseNo(i)}</div></div>
+      <div class="tcg-info" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-punch">“${esc(txt(punch,i.type))}”</div><div class="tcg-chip" style="--tcg-chip:${pal.glow}">CASE #${caseNo(i)}</div></div>
       ${holoCanvas}
     </div></div>
     ${statRows.length?`<div class="detail-stats"><b>${l('이 사건의 기록','この事件の記録','About this case')}</b>${statRows.map(([k,v])=>`<div class="detail-stat-row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>`:''}

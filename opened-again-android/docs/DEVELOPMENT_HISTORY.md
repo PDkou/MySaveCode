@@ -4406,3 +4406,47 @@ Playwright로 애니메이션 중 서로 다른 두 프레임을 스크린샷해
 실제로 움직이는지 확인, 콘솔 에러 0건. 순수 JS/CSS 변경이라 네이티브
 빌드와 무관. director standing 지시에 따라 커밋/푸시만 하고 CI
 빌드는 트리거하지 않음. 이것으로 보관함 화면 점검 완료.
+
+## v0.109 — 화면별 GUI 점검 4차: 카드 상세 화면 "CASE #" 태그 대비 버그 수정
+
+director: "카드 상세 화면도 점검해보자". HIDDEN/EPIC/NORMAL 세 등급
+스크린샷을 먼저 공유 -- 이 화면은 이미 등급별 프레임/메달리온/홀로
+캔버스/foil 타이틀까지 다 갖춰진 가장 완성도 높은 화면이라 판단해
+director에게 "특별히 거슬리는 곳 있냐"고 확인. director가 정확히
+짚은 버그: "case가 히든은 없고 에픽은 하얀색이고 등등?" -- EPIC/
+HIDDEN 카드의 "CASE #xxxx" 태그가 거의 안 보임.
+
+**원인 분석**: `.tcg-info`(카드 하단 정보 패널) 안의 "CASE #" 텍스트가
+`--tcg-chip:${pal.chip}`를 글자색으로 쓰고 있었음. 그런데
+`pal.chip`(`tcgPalette()`)은 원래 이 디자인의 소스 오브 트루스인
+네이티브 `ShareCardRenderer.kt`에서 "등급 배지 알약(필 배경)" 위에만
+올라가는 전용 텍스트색으로 설계된 값 -- 예를 들어 EPIC의
+`chipTextColor`는 흰색인데, 이건 EPIC 전용의 보라색 필 배경(`pal.glow`)
+위에 올라갈 때만 읽히는 색임. 웹 버전은 그 배경 필 없이 `pal.chip`
+색만 그대로 `.tcg-info` 패널(연보라) 위에 얹어서 썼기 때문에 흰 글자가
+거의 안 보였고, HIDDEN은 `chip`값(#061C22, 거의 검정)이 HIDDEN 패널
+자체(#0A1E30, 짙은 남색)와 명도가 거의 같아 사실상 안 보였음.
+
+정작 `ShareCardRenderer.kt`의 진짜 "CASE #" 태그(`caseBox` 블록,
+line 308-329)는 전혀 다른 색 조합을 씀: 배경 없는 외곽선 박스(테두리색
+= `pal.glow`), 글자색 = `pal.text`(각 패널과 항상 대비되도록 설계된
+값). 웹 버전이 이 설계를 따르지 않고 엉뚱한 변수(`pal.chip`)를 가져다
+쓴 게 버그의 본질.
+
+**수정**: `.tcg-chip`을 네이티브와 동일하게 맞춤 -- 글자색은 이미
+`.tcg-info`에 내려오고 있는 `--tcg-text`(=`pal.text`)를 그대로
+상속받게 하고, `--tcg-chip` 변수는 텍스트색에서 테두리색으로 역할을
+바꿔 `pal.glow`를 흘려보냄. CSS에 `border:1.5px solid var(--tcg-chip)`
++ `padding`/`border-radius`를 추가해 외곽선 알약 모양으로 변경(기존엔
+테두리도 배경도 없는 맨 텍스트였음). `align-self:flex-start`/
+`width:fit-content`로 flex 부모(`.tcg-info`) 안에서 전체 폭으로
+늘어나지 않고 원래 알약 크기만큼만 차지하도록 함.
+
+버전 109/0.109.0. 검증: (1) `node --check`로 구문 검증 통과 (2)
+Playwright로 NORMAL/RARE/EPIC/LEGENDARY/HIDDEN 5개 등급 전부
+`.tcg-info` 영역만 스크린샷해 모든 등급에서 "CASE #" 태그가 패널과
+대비되는 테두리 알약으로 또렷이 보이는지 확인, 콘솔 에러 0건. 순수
+JS/CSS 변경이라 네이티브 빌드와 무관 -- 네이티브 `ShareCardRenderer.kt`
+자체는 원래부터 버그가 없었으므로 Kotlin 코드는 건드리지 않음.
+director standing 지시에 따라 커밋/푸시만 하고 CI 빌드는 트리거하지
+않음.
