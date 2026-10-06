@@ -93,7 +93,7 @@ export function BackupSheet({ data, onImport, onMerge, onClose }: BackupSheetPro
         const next = parseImportedData(String(reader.result));
         setPendingData(next);
       } catch {
-        setError('올바른 백업 파일이 아니에요. 이 앱에서 내보낸 JSON 파일을 선택해 주세요.');
+        setError(t('backup.invalidFile'));
       }
     };
     reader.onerror = () => setError(t('csv.fileReadFailed'));
