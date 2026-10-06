@@ -1,0 +1,131 @@
+{
+  "common": {
+    "back": "戻る",
+    "close": "閉じる",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "add": "追加",
+    "next": "次へ",
+    "previous": "戻る",
+    "done": "完了"
+  },
+  "nav": {
+    "home": "ホーム",
+    "search": "検索",
+    "stats": "統計",
+    "settings": "設定"
+  },
+  "home": {
+    "title": "Drawary",
+    "tagline": "大切なものを、もっと特別に",
+    "myDrawers": "わたしの引き出し",
+    "drawerCount": "引き出し {{count}}個",
+    "itemCount": "収納品 {{count}}個",
+    "edit": "編集",
+    "createDrawer": "新しい引き出しを作る",
+    "emptyTitle": "まだ引き出しがありません。",
+    "emptyBody": "整理したいものからひとつ作ってみましょう。",
+    "firstDrawer": "最初の引き出しを作る"
+  },
+  "drawer": {
+    "create": "新しい引き出しを作る",
+    "createQuestion": "何を整理したいですか？",
+    "name": "引き出し名",
+    "icon": "アイコン",
+    "color": "カラー",
+    "fields": "引き出しの中を決める",
+    "fieldsGuide": "この引き出しに入れる内容を決めてみましょう。",
+    "addField": "項目を追加",
+    "fieldName": "項目名",
+    "contentType": "内容の種類",
+    "required": "必須入力",
+    "requiredGuide": "引き出しを埋めるときに必ず入力します",
+    "created": "{{name}} の引き出しを作りました。",
+    "fillPrompt": "引き出しを埋めてみますか？",
+    "fill": "引き出しを埋める",
+    "put": "入れる",
+    "putSuccess": "引き出しに入りました",
+    "items": "収納品一覧",
+    "searchItems": "収納品を検索",
+    "itemDetail": "収納品の詳細",
+    "editItem": "収納品を編集",
+    "deleteItem": "収納品を削除",
+    "deleteItemConfirm": "この収納品を削除しますか？",
+    "emptyItems": "まだ収納品がありません",
+    "table": "表で見る",
+    "manage": "引き出し管理",
+    "deleteDrawer": "引き出しを削除",
+    "repeatQuestion": "同じ内容を繰り返し追加しますか？"
+  },
+  "table": {
+    "search": "検索",
+    "sort": "並べ替え",
+    "filter": "絞り込み",
+    "exportCsv": "CSVで書き出す",
+    "exportPdf": "PDFで書き出す"
+  },
+  "reminder": {
+    "title": "通知設定",
+    "whichDate": "どの日付をお知らせしますか？",
+    "when": "いつお知らせしますか？",
+    "days30": "30日前",
+    "days7": "7日前",
+    "day1": "1日前",
+    "sameDay": "当日",
+    "saved": "通知を設定しました！"
+  },
+  "recurrence": {
+    "title": "繰り返し管理",
+    "weekly": "毎週",
+    "monthly": "毎月",
+    "yearly": "毎年"
+  },
+  "settings": {
+    "title": "設定",
+    "theme": "テーマ",
+    "security": "セキュリティ",
+    "data": "データ管理",
+    "language": "言語設定",
+    "help": "ヘルプ",
+    "info": "情報",
+    "feedback": "フィードバック"
+  },
+  "language": {
+    "title": "言語設定",
+    "subtitle": "アプリで使用する言語を選んでください。",
+    "ko": "한국어",
+    "ja": "日本語",
+    "en": "English",
+    "koDesc": "앱 전체를 한국어로",
+    "jaDesc": "アプリ全体を日本語に",
+    "enDesc": "Use English throughout the app",
+    "applied": "選択した言語はアプリ全体にすぐ反映されます。"
+  },
+  "security": {
+    "appLock": "アプリロック",
+    "appLockDesc": "アプリを開くときに認証を使います",
+    "biometric": "生体認証",
+    "biometricDesc": "指紋または顔認証を使います",
+    "autoLock": "自動ロック",
+    "autoLockDesc": "アプリを離れると再びロックします"
+  },
+  "data": {
+    "backup": "バックアップ",
+    "backupDesc": "収納品と設定をバックアップファイルに保存します",
+    "restore": "復元",
+    "restoreDesc": "既存のバックアップファイルから復元します",
+    "reset": "データを初期化",
+    "resetDesc": "この端末のDrawaryデータをすべて削除します",
+    "device": "この端末に保存",
+    "googleDrive": "Google Drive",
+    "backupComplete": "バックアップが完了しました！",
+    "restoreComplete": "復元が完了しました！"
+  },
+  "photo": {
+    "notFound": "写真が見つかりません。",
+    "reconnect": "再接続"
+  }
+}
