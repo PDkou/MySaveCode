@@ -113,7 +113,10 @@
     "koDesc": "앱 전체를 한국어로",
     "jaDesc": "アプリ全体を日本語に",
     "enDesc": "Use English throughout the app",
-    "applied": "Your selected language is applied throughout the app."
+    "applied": "Your selected language is applied throughout the app.",
+    "koArtNote": "Hanbok character",
+    "jaArtNote": "Kimono character",
+    "enArtNote": "Global · travel character"
   },
   "security": {
     "appLock": "App Lock",
