@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
-import { CATEGORY_TEMPLATES } from '../lib/templates';
+import { getCategoryTemplates } from '../lib/templates';
 import { CATEGORY_COLOR_CHOICES, CATEGORY_EMOJI_CHOICES } from '../lib/palette';
 import { CategoryBadgeEmoji, CategoryTemplateEmoji } from './categoryIcons';
 import type { FieldDef } from '../types';
@@ -15,6 +15,7 @@ type Step = 'template' | 'details';
 
 export function AddCategoryModal({ onCreate, onClose }: AddCategoryModalProps) {
   const { t } = useI18n();
+  const categoryTemplates = getCategoryTemplates(t);
   const [step, setStep] = useState<Step>('template');
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState(CATEGORY_EMOJI_CHOICES[0]);
@@ -30,7 +31,7 @@ export function AddCategoryModal({ onCreate, onClose }: AddCategoryModalProps) {
       setStep('details');
       return;
     }
-    const tpl = CATEGORY_TEMPLATES.find((t) => t.id === templateId);
+    const tpl = categoryTemplates.find((template) => template.id === templateId);
     if (!tpl) return;
     setName(tpl.name);
     setEmoji(tpl.emoji);
@@ -51,7 +52,7 @@ export function AddCategoryModal({ onCreate, onClose }: AddCategoryModalProps) {
       <Modal title={t('addDrawer.title')} onClose={onClose}>
         <p className="modal-hint">{t('addDrawer.hint')}</p>
         <div className="template-grid">
-          {CATEGORY_TEMPLATES.map((tpl) => (
+          {categoryTemplates.map((tpl) => (
             <button key={tpl.id} type="button" className="template-card" onClick={() => pickTemplate(tpl.id)}>
               <span className="template-emoji">
                 <CategoryTemplateEmoji value={tpl.emoji} size={34} />
