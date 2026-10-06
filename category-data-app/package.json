@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "build:preview": "tsc -b && DISABLE_SW=1 vite build --outDir dist-preview",
+    "build": "npm run i18n:check && tsc -b && vite build",
+    "build:preview": "npm run i18n:check && tsc -b && DISABLE_SW=1 vite build --outDir dist-preview",
     "preview:artifact": "npm run build:preview && node scripts/build-preview-artifact.cjs",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "i18n:check": "node scripts/validate-locales.mjs"
   },
   "dependencies": {
     "react": "^19.2.7",
