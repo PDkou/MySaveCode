@@ -357,5 +357,21 @@
     "lunch": "Lunch",
     "allowance": "Allowance",
     "monthlyAllowance": "This month's allowance"
+  },
+  "helpScreen": {
+    "title": "Help",
+    "guideTitle": "Quick guide",
+    "guideBody": "Drawary lets you create the drawers you need, choose what each drawer stores, and add your items one by one.",
+    "guideStep1": "Create a drawer — choose what you want to organize.",
+    "guideStep2": "Set up sections — add the dates, amounts, text, or other details you need.",
+    "guideStep3": "Fill the drawer — add and manage your stored items.",
+    "faqTitle": "Frequently asked questions",
+    "faqStorageQ": "Where is my data stored?",
+    "faqStorageA": "Drawary stores its data on this device. It is not uploaded to a Drawary account or server.",
+    "faqBackupQ": "How do I move my data to another device?",
+    "faqBackupA": "Use Backup in Settings to save a file, then import it on the other device.",
+    "contactTitle": "Contact",
+    "contactBody": "If you have a question or run into a problem, send us an email.",
+    "contactAction": "Send email"
   }
 }
