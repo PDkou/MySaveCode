@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import ko from './locales/ko.json';
 import ja from './locales/ja.json';
 import en from './locales/en.json';
@@ -50,11 +50,14 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
 
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
   const value = useMemo<I18nContextValue>(() => ({
     locale,
     setLocale(nextLocale) {
       localStorage.setItem(STORAGE_KEY, nextLocale);
-      document.documentElement.lang = nextLocale === 'ja' ? 'ja' : nextLocale === 'ko' ? 'ko' : 'en';
       setLocaleState(nextLocale);
     },
     t(key, variables) {
