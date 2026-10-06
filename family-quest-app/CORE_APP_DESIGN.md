@@ -344,4 +344,9 @@ UI 비활성, 위 표 참고) 관련: `apply_cleaner_taps`, `buy_cleaner_tool`, 
   발송. `notification_prefs.notify_chat`으로 수신자별 옵트아웃 가능(기본 on). 알림벨
   (`NotificationBell`/`useNotifications.ts`)에는 여전히 안 뜸 -- task_activities/
   task_comments만 보는 별개 경로라, 채팅은 기기 푸시로만 알려지고 앱 내 배지/목록에는
-  반영 안 됨.
+  반영 안 됨. 알림 클릭 시 채팅방으로 바로 딥링크됨(`/?chat=1`,
+  `DashboardPage.tsx`가 마운트 시 한 번 읽고 지움 -- `sw.ts`의 `kind: 'chat'` 푸시
+  payload 필드로 판별, `FamilyOnboardingForms.tsx`의 `joinCode` 쿼리 파라미터 패턴과
+  동일). 네이티브(FCM) 쪽도 `data.kind`로 같은 값을 보내긴 하지만, 이 저장소엔 네이티브
+  알림 탭 자체를 처리하는 리스너가 아직 없어서(`task_id` 딥링크도 마찬가지) 현재는
+  웹/PWA 채널에서만 실제로 동작함.

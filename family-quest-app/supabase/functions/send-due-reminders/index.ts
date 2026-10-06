@@ -92,7 +92,7 @@ function getGoogleAuth(): GoogleAuth {
 // sendToNativeTokens below).
 async function sendFcmMessage(
   token: string,
-  payload: { title: string; body: string; taskId: string },
+  payload: { title: string; body: string; taskId: string; kind?: string },
 ): Promise<{ ok: boolean; tokenIsDead: boolean }> {
   if (!FCM_SERVICE_ACCOUNT_JSON || !FCM_PROJECT_ID) {
     return { ok: false, tokenIsDead: false };
@@ -113,7 +113,7 @@ async function sendFcmMessage(
         message: {
           token,
           notification: { title: payload.title, body: payload.body },
-          data: { taskId: payload.taskId },
+          data: { taskId: payload.taskId, kind: payload.kind ?? '' },
         },
       }),
     });
@@ -143,7 +143,7 @@ interface NativePushTokenRow {
 async function sendToNativeTokens(
   supabase: SupabaseClient,
   tokens: NativePushTokenRow[],
-  payload: { title: string; body: string; taskId: string },
+  payload: { title: string; body: string; taskId: string; kind?: string },
 ): Promise<number> {
   let sentCount = 0;
   for (const row of tokens) {
@@ -216,7 +216,7 @@ function groupByLang<T extends { user_id: string }>(rows: T[], langById: Map<str
 async function sendToSubscriptions(
   supabase: SupabaseClient,
   subscriptions: PushSubscriptionRow[],
-  payload: { title: string; body: string; taskId: string },
+  payload: { title: string; body: string; taskId: string; kind?: string },
 ): Promise<number> {
   let sentCount = 0;
   const body = JSON.stringify(payload);
@@ -820,16 +820,18 @@ async function handleChatEvent(supabase: SupabaseClient, payload: ChatEventPaylo
   const subsByLang = groupByLang((subscriptions ?? []) as PushSubscriptionRow[], langById);
   const tokensByLang = groupByLang((nativeTokens ?? []) as NativePushTokenRow[], langById);
 
-  // No task to deep-link to -- taskId: '' makes sw.ts's push handler fall
-  // back to '/' (home), same as the weekly summary push above.
+  // No task to deep-link to, so taskId stays '' -- but unlike the weekly
+  // summary push (which really does mean "just open the app"), this one
+  // has a real destination: kind: 'chat' tells sw.ts's push handler to
+  // route to the chat modal instead of falling all the way back to '/'.
   let sentCount = 0;
   for (const [lang, subs] of subsByLang) {
     const body = buildChatBody(lang, payload.message_body ?? '', !!payload.has_attachment);
-    sentCount += await sendToSubscriptions(supabase, subs, { title: actorName, body, taskId: '' });
+    sentCount += await sendToSubscriptions(supabase, subs, { title: actorName, body, taskId: '', kind: 'chat' });
   }
   for (const [lang, tokens] of tokensByLang) {
     const body = buildChatBody(lang, payload.message_body ?? '', !!payload.has_attachment);
-    sentCount += await sendToNativeTokens(supabase, tokens, { title: actorName, body, taskId: '' });
+    sentCount += await sendToNativeTokens(supabase, tokens, { title: actorName, body, taskId: '', kind: 'chat' });
   }
 
   return new Response(JSON.stringify({ notificationsSent: sentCount }), {
