@@ -598,12 +598,26 @@ cd hellotoday-app
 
 ## 11. 1.0.0 프로덕션 심사 결과 이후 체크리스트 (2026-10-06 작성)
 
-2026-10-06 제출, 현재 "검토 중". 결과 나오면 아래대로 움직일 것.
+2026-10-06 제출 → **승인됨, 스토어 페이지 공개 확인 완료.**
 
 ### 11-1. 승인된 경우
 
-- [ ] **Play 스토어 공개 확인**: 실제 검색/설치 페이지가 뜨는지 직접
-  확인 (`https://play.google.com/store/apps/details?id=com.howlingcreativestudio.hellotoday`)
+- [x] **Play 스토어 공개 확인**: 완료 (2026-10-06). 직접 접속해서 확인함
+  (`https://play.google.com/store/apps/details?id=com.howlingcreativestudio.hellotoday`)
+- [x] **AdMob app-ads.txt / 앱 인증 문제 해결** (2026-10-06). 스토어 공개
+  직후 AdMob 콘솔에 "Hello, Today(Android)을(를) 확인할 수 없습니다" —
+  app-ads.txt 인증 실패 경고 발견. 원인: 회사 웹사이트 자체가 없어서
+  app-ads.txt를 올려둘 도메인이 없었음. 해결: GitHub organization
+  `Howling-Creative-Studio` 신설 → 무료 GitHub Pages 저장소
+  `Howling-Creative-Studio.github.io` 생성 → `app-ads.txt`(AdMob 발급
+  코드: `google.com, pub-4220607528679200, DIRECT, f08c47fec0942fa0`) +
+  브랜드 톤에 맞춘 간단한 소개 페이지(`index.html`, Hello, Today Play
+  스토어 링크 포함) 커밋/푸시 → Play Console 스토어 등록정보 연락처
+  세부정보의 "웹사이트" 필드에 `https://howling-creative-studio.github.io`
+  등록 → AdMob에서 "업데이트 확인" 요청함(크롤링에 몇 분~몇 시간 소요,
+  결과 확인 필요). 이제 Howling Creative Studio의 공식 웹사이트 역할도
+  겸하게 됨 — 앞으로 Play Console 등 다른 곳에 "웹사이트" 입력란이
+  필요하면 이 주소를 쓰면 됨.
 - [ ] **Android 바이탈 모니터링 시작** (품질 → Android 바이탈):
   크래시율/ANR률을 출시 후 최소 며칠간 매일 확인. 임계치 넘으면 즉시
   원인 파악 — 심각하면 버그 수정 버전(1.0.1)을 바로 준비
