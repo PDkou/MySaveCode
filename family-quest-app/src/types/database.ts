@@ -334,6 +334,7 @@ export type NotificationPrefsRow = {
   notify_comment: boolean;
   notify_overdue: boolean;
   notify_weekly_summary: boolean;
+  notify_chat: boolean;
   updated_at: string;
 };
 

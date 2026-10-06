@@ -17,7 +17,7 @@ import {
 import type { NotificationEventType, PushState } from '../lib/pushNotifications';
 import { useBackDismiss } from '../lib/backNav';
 
-const EVENT_TYPES: NotificationEventType[] = ['due', 'created', 'completed', 'reopened', 'comment', 'overdue', 'weeklySummary'];
+const EVENT_TYPES: NotificationEventType[] = ['due', 'created', 'completed', 'reopened', 'comment', 'overdue', 'weeklySummary', 'chat'];
 
 export function NotificationBell() {
   const { t, i18n } = useTranslation();

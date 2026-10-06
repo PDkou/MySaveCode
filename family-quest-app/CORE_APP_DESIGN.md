@@ -339,3 +339,9 @@ UI 비활성, 위 표 참고) 관련: `apply_cleaner_taps`, `buy_cleaner_tool`, 
 - 삭제는 작성자만 가능(메시지 행 기준). 첨부파일 오브젝트 자체는 다른 멤버도 스토리지
   정책상 지울 수 있음(`task_photos`와 동일한 관대함 -- `schema.sql` 섹션 42 주석 참고).
 - 방별로 완전히 분리 (RLS `is_family_member` 체크).
+- **푸시 알림** (2026-10 추가): 메시지 insert 시 `schema.sql` 섹션 47 트리거가
+  `send-due-reminders` Edge Function을 호출, 보낸 사람 본인을 뺀 나머지 모든 방 멤버에게
+  발송. `notification_prefs.notify_chat`으로 수신자별 옵트아웃 가능(기본 on). 알림벨
+  (`NotificationBell`/`useNotifications.ts`)에는 여전히 안 뜸 -- task_activities/
+  task_comments만 보는 별개 경로라, 채팅은 기기 푸시로만 알려지고 앱 내 배지/목록에는
+  반영 안 됨.

@@ -9895,3 +9895,67 @@ where si.key = v.key;
 -- =============================================================================
 -- End section 46.
 -- =============================================================================
+
+-- =============================================================================
+-- Section 47: Family chat push notifications
+--
+-- Section 41 deliberately left this out of the chat feature's first pass,
+-- noting that task_comments' own trigger (section 15) "could be adapted"
+-- -- this is that adaptation. Mirrors notify_task_comment_event() exactly:
+-- same Edge Function URL/secret, same try/exception-swallowing wrapper
+-- (same reason as section 15's own comment -- a notification hiccup must
+-- never roll back the chat message insert itself), fired AFTER INSERT on
+-- family_chat_messages instead of task_comments.
+--
+-- Recipients differ from every other event type, though: there's no task
+-- creator/assignee to anchor "relevant" on here -- a family chat message
+-- is relevant to every *other* member of the room, full stop. Rather than
+-- have this trigger look up family_members itself (recipients can change
+-- between the insert and the Edge Function call anyway, e.g. a member
+-- leaving mid-flight), it just passes family_id + actor_id and lets
+-- handleChatEvent on the Edge Function side do that fan-out.
+--
+-- notify_chat reuses notification_prefs (section 16) rather than a new
+-- table -- same per-(user, family) opt-out shape as every other event
+-- type, just one more boolean column.
+-- =============================================================================
+
+alter table public.notification_prefs add column if not exists notify_chat boolean not null default true;
+
+create or replace function public.notify_family_chat_event()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  begin
+    perform net.http_post(
+      url := 'https://jmzucjmwgryblrpjfbzm.supabase.co/functions/v1/rapid-service',
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'Authorization', 'Bearer sb_publishable_xOWGuou_lDiiVGuVFkPC3Q_gAW4-U1P'
+      ),
+      body := jsonb_build_object(
+        'family_id', new.family_id,
+        'event', 'chat',
+        'actor_id', new.author_id,
+        'message_body', new.body,
+        'has_attachment', new.attachment_path is not null
+      )
+    );
+  exception when others then
+    null;
+  end;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_notify_family_chat on public.family_chat_messages;
+create trigger trg_notify_family_chat
+after insert on public.family_chat_messages
+for each row execute function public.notify_family_chat_event();
+
+-- =============================================================================
+-- End section 47.
+-- =============================================================================

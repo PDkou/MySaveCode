@@ -11,6 +11,14 @@
 //      job -- same URL, same secrets, same "Verify JWT" setting already
 //      configured for this function, so no new deploy steps beyond pasting
 //      this updated code.
+//   2b. Family chat message pushes: invoked with { family_id, event: 'chat',
+//      actor_id, message_body?, has_attachment? } by the AFTER INSERT
+//      trigger on family_chat_messages set up in schema.sql section 47,
+//      same pg_net mechanism as 2 above. Unlike every task-based event,
+//      there's no creator/assignee to anchor "relevant" on -- every other
+//      member of the family is a recipient, so this is the one path that
+//      looks up its own recipient list (family_members) instead of being
+//      handed one.
 //   3. Weekly per-family completion digest: invoked with
 //      { weekly_summary: true } by its own cron job (schema.sql section 17).
 //   4. Account deletion sweep: invoked with { process_account_deletions:
@@ -164,7 +172,8 @@ type NotifyColumn =
   | 'notify_reopened'
   | 'notify_comment'
   | 'notify_overdue'
-  | 'notify_weekly_summary';
+  | 'notify_weekly_summary'
+  | 'notify_chat';
 
 // A missing notification_prefs row means "everything on" (most users never
 // touch these toggles), so this only ever *removes* ids whose row explicitly
@@ -744,6 +753,91 @@ async function handleTaskEvent(supabase: SupabaseClient, payload: TaskEventPaylo
   });
 }
 
+// ---------------------------------------------------------------------------
+// Path 2b: family chat message pushes -- fired immediately by a DB trigger,
+// same as path 2, but fanned out to every *other* family member rather
+// than a task's creator/assignees (there is no task here to anchor
+// relevance on -- see schema.sql section 47's own comment).
+// ---------------------------------------------------------------------------
+
+interface ChatEventPayload {
+  family_id: string;
+  event: 'chat';
+  actor_id: string;
+  message_body?: string;
+  has_attachment?: boolean;
+}
+
+function isChatEventPayload(value: unknown): value is ChatEventPayload {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.family_id === 'string' && v.event === 'chat' && typeof v.actor_id === 'string';
+}
+
+// A photo-only message (no text body) still needs *some* preview text --
+// same ko/ja-keyed shape as every other *_BODY_TEXT table in this file.
+const CHAT_ATTACHMENT_BODY_TEXT: Record<string, string> = {
+  ko: '사진을 보냈어요',
+  ja: '写真を送信しました',
+};
+
+function buildChatBody(lang: string, messageBody: string, hasAttachment: boolean): string {
+  const trimmed = messageBody.trim();
+  if (trimmed) return trimmed.slice(0, 80);
+  return hasAttachment ? CHAT_ATTACHMENT_BODY_TEXT[lang] : '';
+}
+
+async function handleChatEvent(supabase: SupabaseClient, payload: ChatEventPayload): Promise<Response> {
+  const { data: memberRows } = await supabase
+    .from('family_members')
+    .select('user_id')
+    .eq('family_id', payload.family_id);
+  const relevantIds = (memberRows ?? [])
+    .map((m) => m.user_id as string)
+    .filter((id) => id !== payload.actor_id);
+  const recipientIds = await filterByNotificationPref(supabase, payload.family_id, relevantIds, 'notify_chat');
+
+  if (recipientIds.length === 0) {
+    return new Response(JSON.stringify({ notificationsSent: 0 }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const [{ data: actorMember }, { data: actorProfile }, { data: profiles }, { data: subscriptions }, { data: nativeTokens }] =
+    await Promise.all([
+      supabase.from('family_members').select('display_name').eq('family_id', payload.family_id).eq('user_id', payload.actor_id).maybeSingle(),
+      supabase.from('profiles').select('display_name').eq('id', payload.actor_id).maybeSingle(),
+      supabase.from('profiles').select('id, preferred_language').in('id', recipientIds),
+      supabase.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth_key').in('user_id', recipientIds),
+      supabase.from('native_push_tokens').select('id, user_id, fcm_token').in('user_id', recipientIds),
+    ]);
+
+  // Room-scoped display_name wins over the account-wide profile name, same
+  // precedence as handleTaskEvent's actorName above.
+  const actorName = (actorMember?.display_name as string | null)?.trim() || (actorProfile?.display_name as string | undefined) || '';
+  const langById = new Map((profiles ?? []).map((p) => [p.id as string, p.preferred_language as string]));
+  const subsByLang = groupByLang((subscriptions ?? []) as PushSubscriptionRow[], langById);
+  const tokensByLang = groupByLang((nativeTokens ?? []) as NativePushTokenRow[], langById);
+
+  // No task to deep-link to -- taskId: '' makes sw.ts's push handler fall
+  // back to '/' (home), same as the weekly summary push above.
+  let sentCount = 0;
+  for (const [lang, subs] of subsByLang) {
+    const body = buildChatBody(lang, payload.message_body ?? '', !!payload.has_attachment);
+    sentCount += await sendToSubscriptions(supabase, subs, { title: actorName, body, taskId: '' });
+  }
+  for (const [lang, tokens] of tokensByLang) {
+    const body = buildChatBody(lang, payload.message_body ?? '', !!payload.has_attachment);
+    sentCount += await sendToNativeTokens(supabase, tokens, { title: actorName, body, taskId: '' });
+  }
+
+  return new Response(JSON.stringify({ notificationsSent: sentCount }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 Deno.serve(async (req: Request) => {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
@@ -756,6 +850,10 @@ Deno.serve(async (req: Request) => {
 
   if (isTaskEventPayload(body)) {
     return handleTaskEvent(supabase, body);
+  }
+
+  if (isChatEventPayload(body)) {
+    return handleChatEvent(supabase, body);
   }
 
   if (body && typeof body === 'object' && (body as Record<string, unknown>).weekly_summary === true) {
