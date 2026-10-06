@@ -5,6 +5,7 @@ import { registerSW } from 'virtual:pwa-register';
 import './styles/global.css';
 import './styles/home-refresh.css';
 import App from './App.tsx';
+import { I18nProvider } from './i18n';
 
 // registerType: 'autoUpdate' in vite.config.ts does nothing on its own
 // without an actual registerSW() call driving it (mirrors the sibling
@@ -20,6 +21,8 @@ if (!__DISABLE_SW__) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <I18nProvider>
+      <App />
+    </I18nProvider>
   </StrictMode>,
 );
