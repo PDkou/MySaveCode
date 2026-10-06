@@ -715,7 +715,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.118.0';
+const APP_VERSION='0.119.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1895,12 +1895,12 @@ ${row(dbgIcon('📡'),'백그라운드 체크 상태 보기','여러 사건 발�
 // kicks the flow off and gives immediate feedback that the tap registered;
 // the row itself flips to "구매 완료" the next time settings() renders
 // (onNativeResume already re-renders on returning from that purchase sheet).
-// v0.117: director-requested in-app review prompt, third/manual trigger
-// point -- the Settings row above. Unlike the other two (exit confirm,
-// legendary/hidden reveal), this one bypasses ReviewPromptManager's cooldown
-// entirely (see its own comment) since a user who tapped this specific row
-// should always get the flow, not be silently skipped by a timer they can't
-// see.
+// v0.117: director-requested in-app review prompt, manual trigger -- the
+// Settings row above (and v0.118's exit-modal button). Unlike the automatic
+// legendary/hidden-reveal trigger, which fires at most once ever (v0.119
+// safeguard, see ReviewPromptManager.kt), this one always runs -- a user who
+// tapped one of these specific buttons should always get the flow, not be
+// silently skipped by a flag they can't see.
 function requestReviewManual(){
   if(preview||!N){toast(l('미리보기에서는 실행되지 않습니다.','プレビューでは実行されません。','Not available in preview.'));return}
   try{N.requestReviewManual&&N.requestReviewManual()}catch(e){}

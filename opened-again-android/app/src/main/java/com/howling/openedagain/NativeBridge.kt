@@ -531,22 +531,24 @@ class NativeBridge(
         IncidentCheckScheduler.cancel(activity)
     }
 
-    // v0.117: director-requested in-app review prompt, second of its 3
-    // trigger points -- index.html's dismissReveal() calls this right after
-    // the daily reveal card is dismissed, but only when that card's rarity
-    // was LEGENDARY/HIDDEN (the "positive moment" the director picked).
-    // Cooldown-gated the same way exitApp()'s trigger is (see
-    // ReviewPromptManager.kt) -- fire-and-forget, nothing in the UI needs to
-    // wait on this one.
+    // v0.117: director-requested in-app review prompt, the automatic trigger
+    // -- index.html's dismissReveal() calls this right after the daily
+    // reveal card is dismissed, but only when that card's rarity was
+    // LEGENDARY/HIDDEN (the "positive moment" the director picked).
+    // v0.119: fires at most once ever per the director's safeguard request
+    // ("앱평가 한사람을 위해 다음부터 표시하지 않기") -- see
+    // ReviewPromptManager.kt's hasAutoPrompted. Fire-and-forget, nothing in
+    // the UI needs to wait on this one.
     @JavascriptInterface
     fun requestReviewIfLegendary() {
         activity.runOnUiThread { reviewPromptManager.maybeRequestReview {} }
     }
 
-    // v0.117: third trigger point -- a manual "리뷰 남기기" row in Settings.
-    // Bypasses the cooldown entirely (see ReviewPromptManager.kt) since a
-    // user who went looking for this button should always be able to use
-    // it.
+    // v0.117/v0.118: manual trigger, called from both the "리뷰 남기기" row
+    // in Settings and the exit-confirm modal's "⭐ 앱 평가하기" button.
+    // Always runs regardless of whether the automatic trigger above has
+    // already fired once (see ReviewPromptManager.kt) -- a user who went
+    // looking for either of these should always be able to use them.
     @JavascriptInterface
     fun requestReviewManual() {
         activity.runOnUiThread { reviewPromptManager.requestReviewNow {} }

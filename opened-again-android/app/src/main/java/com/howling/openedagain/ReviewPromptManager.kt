@@ -12,40 +12,46 @@ import com.google.android.play.core.review.ReviewManagerFactory
  * requests anyway, so "requesting" a review here never guarantees one is
  * shown.
  *
- * Director picked three trigger points (see NativeBridge.kt's call sites):
- * the exit-confirm flow, right after discovering a LEGENDARY/HIDDEN card,
- * and a manual button in Settings. The first two are automatic "positive
- * moment" prompts Google's own guidelines ask you not to overuse, so they
- * share a 30-day cooldown persisted in the same "app_prefs"
- * SharedPreferences file NativeBridge already uses for other small flags
- * (reveal date, language). The manual Settings button bypasses that cooldown
- * entirely -- a user who goes looking for it should always be able to use
- * it, cooldown or not.
+ * Director picked two trigger shapes (see NativeBridge.kt's call sites):
+ * an automatic one right after discovering a LEGENDARY/HIDDEN card, and
+ * manual buttons (Settings row, exit-modal "⭐ 앱 평가하기" button -- v0.118
+ * reverted an earlier, mistaken attempt to also fire the automatic one off
+ * the exit button itself, see exitApp()'s own comment).
+ *
+ * v0.119: director asked for a safeguard on the automatic trigger -- "앱평가
+ * 한사람을 위해 다음부터 표시하지 않기" (for someone who's already rated,
+ * don't show it to them again). Once the automatic flow has actually run to
+ * completion a single time, [hasAutoPrompted] flips permanently (persisted
+ * in the same "app_prefs" SharedPreferences file NativeBridge already uses
+ * for other small flags) and every later LEGENDARY/HIDDEN discovery skips
+ * the automatic prompt for good -- not a time-based cooldown that would
+ * eventually start bothering that same person again. The manual buttons are
+ * a completely separate path and always work regardless of this flag --
+ * someone who wants to rate again later, or who dismissed the automatic one
+ * once, can still always reach it themselves.
  */
 class ReviewPromptManager(private val activity: Activity) {
     private val prefs get() = activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
     private val reviewManager = ReviewManagerFactory.create(activity)
 
-    companion object {
-        private const val COOLDOWN_MS = 30L * 24 * 60 * 60 * 1000
-    }
+    private val hasAutoPrompted: Boolean
+        get() = prefs.getBoolean("review_auto_prompted", false)
 
-    /** Automatic trigger (exit confirm, legendary/hidden discovery) -- cooldown-gated. */
+    /** Automatic trigger (legendary/hidden discovery) -- fires at most once, ever. */
     fun maybeRequestReview(onDone: () -> Unit) {
-        val lastRequestedAt = prefs.getLong("review_last_requested_at", 0L)
-        if (System.currentTimeMillis() - lastRequestedAt < COOLDOWN_MS) {
+        if (hasAutoPrompted) {
             onDone()
             return
         }
-        launchFlow(markCooldown = true, onDone)
+        launchFlow(markAutoPrompted = true, onDone)
     }
 
-    /** Manual trigger (Settings row) -- always runs, no cooldown. */
+    /** Manual trigger (Settings row, exit-modal button) -- always runs, no gating. */
     fun requestReviewNow(onDone: () -> Unit) {
-        launchFlow(markCooldown = false, onDone)
+        launchFlow(markAutoPrompted = false, onDone)
     }
 
-    private fun launchFlow(markCooldown: Boolean, onDone: () -> Unit) {
+    private fun launchFlow(markAutoPrompted: Boolean, onDone: () -> Unit) {
         val request = reviewManager.requestReviewFlow()
         request.addOnCompleteListener { requestTask ->
             if (!requestTask.isSuccessful) {
@@ -57,7 +63,7 @@ class ReviewPromptManager(private val activity: Activity) {
             flow.addOnCompleteListener {
                 // Completes once the flow is dismissed either way -- Play
                 // Core never reports whether the user actually left a rating.
-                if (markCooldown) prefs.edit().putLong("review_last_requested_at", System.currentTimeMillis()).apply()
+                if (markAutoPrompted) prefs.edit().putBoolean("review_auto_prompted", true).apply()
                 onDone()
             }
         }
