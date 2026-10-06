@@ -576,3 +576,22 @@ cd hellotoday-app
     등 조정
   - 폴더블/대화면 에뮬레이터(또는 실기기)로 실제 검증 필요
   - 우선순위: 정식 출시 이후, 급하지 않음
+
+- [ ] **R8/ProGuard 코드 축소(minification) 활성화** (2026-10-06 메모).
+  1.0.0 프로덕션 출시 심사 중 Play Console "확인 필요" 탭에 "DEX 코드
+  최적화가 기준점 미만입니다"(난독화 비율 1%, 기준 25%) 경고 발견.
+  해결 기한 **2027년 2월**로 여유 있어 1.0.0 출시는 그대로 진행하고,
+  이건 **다음 업데이트(1.0.1)로 분리**하기로 결정함.
+  - `app/build.gradle.kts`의 `buildTypes.release.isMinifyEnabled`를
+    `true`로 변경 + `proguardFiles` 설정 필요
+  - ⚠️ 이 앱은 WebView의 `@JavascriptInterface`(`HelloNative` 브릿지,
+    `MainActivity.java`)로 JS↔Java를 리플렉션으로 연결하고 있어서,
+    keep 규칙 없이 R8을 켜면 그 메서드들이 날아가 알림 저장/구매/
+    리뷰 요청이 조용히 깨질 수 있음 — `proguard-rules.pro`에
+    `@JavascriptInterface` 붙은 클래스/메서드 전체를 명시적으로 keep
+    해야 함. Billing Library, AdMob/UMP, Play In-App Review 라이브러리도
+    각자 자체 consumer-rules를 갖고 있긴 하지만 확인 필요.
+  - 이 저장소 샌드박스엔 실기기/에뮬레이터가 없어 R8 켠 빌드를 직접
+    검증할 수 없음 — **반드시 실기기에 설치해서 전체 기능(브릿지 호출,
+    결제, 광고, 리뷰 요청) 수동 검증 후 배포**할 것
+  - 우선순위: 1.0.1 업데이트 때, 급하지 않음(기한 2027-02)
