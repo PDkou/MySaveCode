@@ -280,5 +280,70 @@
     "invalidCells": " 숫자/금액 칸 중 {{count}}칸은 값을 알아볼 수 없어 비워둘게요.",
     "continue": " 계속할까요?",
     "import": "가져오기"
+  },
+  "brand": {
+    "splashName": "나만의 서랍장"
+  },
+  "addDrawer": {
+    "title": "새 서랍 만들기",
+    "hint": "템플릿으로 빠르게 시작하거나, 빈 서랍에서 직접 서랍 칸을 만들 수 있어요.",
+    "blank": "빈 서랍으로 시작",
+    "blankDesc": "서랍 칸을 직접 설계해요",
+    "info": "서랍 정보",
+    "namePlaceholder": "예: 가계부",
+    "includedFields": "포함된 서랍 칸 ({{count}}개)",
+    "fieldsEditable": "서랍 칸은 만든 후에도 자유롭게 추가·수정할 수 있어요."
+  },
+  "editDrawer": {
+    "title": "서랍 편집"
+  },
+  "filters": {
+    "all": "전체",
+    "checked": "체크됨",
+    "unchecked": "체크 안됨"
+  },
+  "pin": {
+    "backspace": "지우기"
+  },
+  "templates": {
+    "ledger": {
+      "name": "가계부",
+      "desc": "날짜별 수입과 지출 정리",
+      "date": "날짜",
+      "kind": "구분",
+      "income": "수입",
+      "expense": "지출",
+      "item": "항목",
+      "amount": "금액",
+      "memo": "메모"
+    },
+    "wardrobe": {
+      "name": "옷장",
+      "desc": "옷 종류, 구매일, 가격 정리",
+      "purchaseDate": "구매일",
+      "type": "종류",
+      "top": "상의",
+      "bottom": "하의",
+      "outer": "아우터",
+      "shoes": "신발",
+      "other": "기타",
+      "brand": "브랜드",
+      "color": "색상",
+      "price": "가격"
+    },
+    "cosmetics": {
+      "name": "화장품",
+      "desc": "제품별 구매일과 개봉일 정리",
+      "product": "제품명",
+      "type": "종류",
+      "skincare": "스킨케어",
+      "makeup": "메이크업",
+      "hair": "헤어",
+      "body": "바디",
+      "other": "기타",
+      "purchaseDate": "구매일",
+      "openDate": "개봉일",
+      "price": "가격"
+    }
   }
 }
