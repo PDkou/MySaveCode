@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal } from './Modal';
 import { PinPad } from './PinPad';
 import { setPin } from '../lib/lock';
+import { useI18n } from '../i18n';
 
 interface SetPinModalProps {
   onDone: () => void;
@@ -11,6 +12,7 @@ interface SetPinModalProps {
 const PIN_LENGTH = 4;
 
 export function SetPinModal({ onDone, onClose }: SetPinModalProps) {
+  const { t } = useI18n();
   const [stage, setStage] = useState<'enter' | 'confirm'>('enter');
   const [firstPin, setFirstPin] = useState('');
   const [pin, setPinValue] = useState('');
@@ -31,7 +33,7 @@ export function SetPinModal({ onDone, onClose }: SetPinModalProps) {
     if (next === firstPin) {
       setPin(next).then(onDone);
     } else {
-      setError('PIN이 일치하지 않아요. 처음부터 다시 입력해 주세요.');
+      setError(t('lock.pinMismatch'));
       setFirstPin('');
       setPinValue('');
       setStage('enter');
@@ -39,8 +41,8 @@ export function SetPinModal({ onDone, onClose }: SetPinModalProps) {
   };
 
   return (
-    <Modal title="앱 잠금 설정" onClose={onClose}>
-      <p className="modal-hint">{stage === 'enter' ? '사용할 4자리 PIN을 입력하세요.' : '확인을 위해 다시 한 번 입력하세요.'}</p>
+    <Modal title={t('lock.setup')} onClose={onClose}>
+      <p className="modal-hint">{stage === 'enter' ? t('lock.enterPin') : t('lock.confirmPin')}</p>
       {error && <p className="error-hint">{error}</p>}
       <PinPad length={PIN_LENGTH} value={pin} onDigit={handleDigit} onBackspace={() => setPinValue((p) => p.slice(0, -1))} />
     </Modal>
