@@ -31,7 +31,8 @@ interface GroupResult {
 // rather than its own App.tsx view, since it never needs anything beyond
 // what Home already has (data + onOpenCategory).
 export function GlobalSearch({ data, onOpenCategory, onClose, bottomNav }: GlobalSearchProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const localeCode = locale === 'ja' ? 'ja-JP' : locale === 'ko' ? 'ko-KR' : 'en-US';
   const [query, setQuery] = useState('');
 
   const groups = useMemo<GroupResult[]>(() => {
@@ -58,14 +59,14 @@ export function GlobalSearch({ data, onOpenCategory, onClose, bottomNav }: Globa
       if (group.preview.length < 3) {
         const summary = category.fields
           .slice(0, 3)
-          .map((f) => formatFieldValue(f, entry.values[f.id]))
+          .map((f) => formatFieldValue(f, entry.values[f.id], localeCode))
           .filter(Boolean)
           .join(' · ');
         group.preview.push(summary || t('search.emptyValue'));
       }
     }
     return Array.from(byCategory.values()).sort((a, b) => b.count - a.count);
-  }, [data, query, t]);
+  }, [data, query, t, localeCode]);
 
   return (
     <div className="screen search-screen">
