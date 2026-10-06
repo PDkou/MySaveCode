@@ -20,7 +20,8 @@
     "icon": "アイコン",
     "color": "カラー",
     "name": "名前",
-    "create": "作成"
+    "create": "作成",
+    "view": "表示"
   },
   "nav": {
     "home": "ホーム",
@@ -259,7 +260,9 @@
     "unlockMessage": "今後はPINなしでアプリを開けます。続けますか？",
     "deleteAllMessage": "引き出し{{drawers}}個、収納品{{items}}件をすべて削除します。この操作は元に戻せません。続けますか？",
     "deleteAllConfirm": "すべて削除",
-    "version": "Drawary · {{version}}"
+    "version": "Drawary · {{version}}",
+    "commerceDesc": "アプリ内決済に関する表示事項",
+    "commerceIntro": "Drawaryのアプリ内決済に関する表示事項です。"
   },
   "tableExtra": {
     "title": "{{name}} · 表",
