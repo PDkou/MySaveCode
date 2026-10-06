@@ -2029,6 +2029,51 @@ select {
   margin-top: 12px;
 }
 
+.settings-about-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-about-row {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.86rem;
+}
+
+.settings-about-row span {
+  color: var(--text-muted);
+}
+
+.settings-feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.settings-feedback-textarea {
+  min-height: 150px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.settings-feedback-form .btn {
+  align-self: stretch;
+}
+
+.settings-detail-note {
+  margin: 0 2px;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
 /* 特定商取引法 disclosure -- a plain definition list rather than a form,
    styled off the same field-label look as the rest of this app's forms
    (see .field-label) so it doesn't look like a foreign component bolted
