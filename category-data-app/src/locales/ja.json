@@ -357,5 +357,21 @@
     "lunch": "昼食",
     "allowance": "おこづかい",
     "monthlyAllowance": "今月のおこづかい"
+  },
+  "helpScreen": {
+    "title": "ヘルプ",
+    "guideTitle": "使い方ガイド",
+    "guideBody": "Drawaryは、必要な引き出しを作り、項目を決めて、ひとつずつ収納していくアプリです。",
+    "guideStep1": "引き出しを作る — 整理したいテーマを決めます。",
+    "guideStep2": "項目を決める — 日付、金額、テキストなど必要な内容を設定します。",
+    "guideStep3": "引き出しに入れる — 収納品をひとつずつ追加して管理します。",
+    "faqTitle": "よくある質問",
+    "faqStorageQ": "データはどこに保存されますか？",
+    "faqStorageA": "Drawaryのデータはこの端末に保存されます。専用アカウントやDrawaryのサーバーへはアップロードしません。",
+    "faqBackupQ": "別の端末へデータを移すには？",
+    "faqBackupA": "設定のバックアップ機能でファイルに保存し、別の端末で読み込めます。",
+    "contactTitle": "お問い合わせ",
+    "contactBody": "使い方でわからないことや不具合がある場合は、メールでお知らせください。",
+    "contactAction": "メールを送る"
   }
 }
