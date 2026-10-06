@@ -380,5 +380,15 @@
     "version": "Version",
     "storageTitle": "How your data is stored",
     "storageBody": "Drawary stores its data on this device without a separate account or Drawary server."
+  },
+  "feedbackScreen": {
+    "title": "Feedback",
+    "promptTitle": "Send feedback",
+    "promptBody": "Tell us what felt inconvenient or what you would like to see improved in Drawary.",
+    "messageLabel": "Message",
+    "placeholder": "Write your feedback here.",
+    "send": "Send by email",
+    "subject": "Drawary feedback",
+    "emailNote": "The send button opens your default email app. Recipient: {{email}}"
   }
 }
