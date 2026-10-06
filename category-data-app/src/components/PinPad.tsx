@@ -1,3 +1,5 @@
+import { useI18n } from '../i18n';
+
 interface PinPadProps {
   length: number;
   value: string;
@@ -12,6 +14,7 @@ const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
 // SetPinModal.tsx (choosing/confirming a new PIN) -- same widget, two
 // different call sites for what happens once `length` digits are in.
 export function PinPad({ length, value, error, onDigit, onBackspace }: PinPadProps) {
+  const { t } = useI18n();
   return (
     <>
       <div className={`lock-dots ${error ? 'error' : ''}`}>
@@ -29,7 +32,7 @@ export function PinPad({ length, value, error, onDigit, onBackspace }: PinPadPro
               type="button"
               className="lock-key"
               onClick={() => (k === '⌫' ? onBackspace() : onDigit(k))}
-              aria-label={k === '⌫' ? '지우기' : k}
+              aria-label={k === '⌫' ? t('pin.backspace') : k}
             >
               {k}
             </button>
