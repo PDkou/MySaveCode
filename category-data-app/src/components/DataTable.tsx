@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Entry, FieldDef } from '../types';
 import { formatFieldValue, sumField } from '../lib/format';
+import { useI18n } from '../i18n';
 
 interface DataTableProps {
   fields: FieldDef[];
@@ -11,6 +12,8 @@ interface DataTableProps {
 type SortState = { fieldId: string; dir: 1 | -1 } | null;
 
 export function DataTable({ fields, entries, onRowClick }: DataTableProps) {
+  const { t, locale } = useI18n();
+  const localeCode = locale === 'ja' ? 'ja-JP' : locale === 'ko' ? 'ko-KR' : 'en-US';
   const [sort, setSort] = useState<SortState>(null);
 
   const sorted = useMemo(() => {
@@ -25,11 +28,11 @@ export function DataTable({ fields, entries, onRowClick }: DataTableProps) {
       if (isNumeric) {
         cmp = (Number(av) || 0) - (Number(bv) || 0);
       } else {
-        cmp = av.localeCompare(bv, 'ko');
+        cmp = av.localeCompare(bv, localeCode);
       }
       return cmp * sort.dir;
     });
-  }, [entries, fields, sort]);
+  }, [entries, fields, sort, localeCode]);
 
   const toggleSort = (fieldId: string) => {
     setSort((prev) => {
@@ -40,11 +43,11 @@ export function DataTable({ fields, entries, onRowClick }: DataTableProps) {
   };
 
   if (fields.length === 0) {
-    return <p className="empty-hint">먼저 "필드 관리"에서 이 카테고리의 항목을 설정해 주세요.</p>;
+    return <p className="empty-hint">{t('item.emptyFields')}</p>;
   }
 
   if (entries.length === 0) {
-    return <p className="empty-hint">아직 입력된 데이터가 없어요. 오른쪽 아래 + 버튼으로 데이터를 추가해 보세요.</p>;
+    return <p className="empty-hint">{t('item.emptyItems')}</p>;
   }
 
   const sums = fields.map((f) => sumField(f, sorted.map((e) => e.values[f.id])));
@@ -83,7 +86,7 @@ export function DataTable({ fields, entries, onRowClick }: DataTableProps) {
           <tfoot>
             <tr>
               {fields.map((f, idx) => (
-                <td key={f.id}>{sums[idx] !== null ? <strong>합계 {sums[idx]!.toLocaleString('ko-KR')}</strong> : ''}</td>
+                <td key={f.id}>{sums[idx] !== null ? <strong>{t('tableExtra.sum', { value: sums[idx]!.toLocaleString(localeCode) })}</strong> : ''}</td>
               ))}
             </tr>
           </tfoot>
