@@ -77,7 +77,7 @@ export function DataTable({ fields, entries, onRowClick }: DataTableProps) {
           {sorted.map((entry) => (
             <tr key={entry.id} className="data-row" onClick={() => onRowClick(entry)}>
               {fields.map((f) => (
-                <td key={f.id}>{formatFieldValue(f, entry.values[f.id]) || '—'}</td>
+                <td key={f.id}>{formatFieldValue(f, entry.values[f.id], localeCode) || '—'}</td>
               ))}
             </tr>
           ))}
