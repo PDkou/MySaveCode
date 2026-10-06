@@ -3,6 +3,7 @@ import type { AppData, Category, Entry, EntryRecurrence, FieldDef, FieldType } f
 import { loadData, saveData } from '../lib/storage';
 import { newId } from '../lib/id';
 import { generateDueRecurrences } from '../lib/recurrence';
+import { useI18n } from '../i18n';
 
 export interface UseAppData {
   data: AppData;
@@ -49,7 +50,8 @@ export interface UseAppData {
 }
 
 export function useAppData(): UseAppData {
-  const [data, setData] = useState<AppData>(() => loadData());
+  const { t } = useI18n();
+  const [data, setData] = useState<AppData>(() => loadData(t));
   const [saveError, setSaveError] = useState<string | null>(null);
   // Skip the very first effect run -- loadData() already reflects what's
   // on disk, no need to immediately write it straight back out.
@@ -61,10 +63,10 @@ export function useAppData(): UseAppData {
       return;
     }
     try {
-      saveData(data);
+      saveData(data, t);
       setSaveError(null);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : '저장에 실패했어요.');
+      setSaveError(err instanceof Error ? err.message : t('storage.saveFailed'));
     }
   }, [data]);
 
