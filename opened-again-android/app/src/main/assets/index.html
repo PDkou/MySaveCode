@@ -715,7 +715,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.117.0';
+const APP_VERSION='0.118.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1016,7 +1016,16 @@ window.onNativeBackPressed=function(){
 // since getBoundingClientRect() right after an innerHTML write can still
 // read pre-layout (zero) bounds in a WebView.
 function openExitConfirm(){
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('앱 종료','アプリを終了','Exit app')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0;text-align:center">${l('정말 종료하시겠습니까?','本当に終了しますか？','Are you sure you want to exit?')}</p><div id="exitAdSlot" style="width:100%;height:64px;margin-top:14px;border-radius:16px;background:rgba(0,0,0,.03)"></div></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="N&&N.exitApp&&N.exitApp()">${l('종료','終了','Exit')}</button></div></div></div>`;
+  // v0.117: director wanted a review-request BUTTON inside this modal, not
+  // the exit confirmation itself auto-triggering one (see NativeBridge.kt's
+  // exitApp() comment for the correction) -- same "share" outline-button
+  // style the home card's 1:1공유/스토리 buttons already use, so it reads
+  // as one more optional action rather than competing with 취소/종료 for
+  // visual weight. Calls the same requestReviewManual() the Settings row
+  // uses (no cooldown -- an explicit tap here should always go through),
+  // and doesn't touch exitConfirmOpen/closeOverlay() -- tapping it doesn't
+  // close this sheet, so 취소/종료 are still both right there afterward.
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('앱 종료','アプリを終了','Exit app')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0;text-align:center">${l('정말 종료하시겠습니까?','本当に終了しますか？','Are you sure you want to exit?')}</p><div id="exitAdSlot" style="width:100%;height:64px;margin-top:14px;border-radius:16px;background:rgba(0,0,0,.03)"></div><button class="share" style="width:100%;margin-top:10px" onclick="requestReviewManual()">⭐ ${l('앱 평가하기','アプリを評価する','Rate this app')}</button></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="N&&N.exitApp&&N.exitApp()">${l('종료','終了','Exit')}</button></div></div></div>`;
   state.exitConfirmOpen=true;
   requestAnimationFrame(syncExitAd);
 }

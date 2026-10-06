@@ -412,17 +412,18 @@ class NativeBridge(
     // reverted that (director correction -- the ask was a banner INSIDE the
     // exit-confirm modal, not an ad triggered BY exiting, see AdManager.kt's
     // own v0.69 comment), so this is back to finishing immediately.
-    // v0.117: director-requested in-app review prompt (one of its 3 trigger
-    // points, see ReviewPromptManager.kt) -- runs the (cooldown-gated) Play
-    // In-App Review flow first and only finishes the Activity once that
-    // flow is actually done, so the review popup (if Google's quota decides
-    // to show one at all) isn't cut off mid-animation by the Activity
-    // disappearing underneath it.
+    // v0.117 briefly routed this through maybeRequestReview() first (one of
+    // 3 planned in-app-review trigger points) on the theory that "앱 종료
+    // 모달" meant firing automatically off the exit confirmation itself --
+    // same category of misread as v0.69's ad placement above, and the
+    // director corrected it the same way: the actual ask was a review
+    // BUTTON inside the exit-confirm modal (see index.html's
+    // openExitConfirm()), not a popup triggered BY exiting. Reverted to
+    // finishing immediately; requestReviewManual() below is what that
+    // button (and the Settings row) actually calls.
     @JavascriptInterface
     fun exitApp() {
-        activity.runOnUiThread {
-            reviewPromptManager.maybeRequestReview { activity.finish() }
-        }
+        activity.runOnUiThread { activity.finish() }
     }
 
     // v0.65: director-approved monetization -- index.html's render() calls
