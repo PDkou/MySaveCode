@@ -9,6 +9,7 @@ import { BackIcon, EditIcon, TrashIcon, TableIcon } from './icons';
 import { CategoryEmoji } from './categoryIcons';
 import { matchesSearch } from '../lib/search';
 import { Toast } from './Toast';
+import { useI18n } from '../i18n';
 
 interface CategoryDetailProps {
   data: AppData;
@@ -53,6 +54,7 @@ export function CategoryDetail({
   onDeleteEntry,
   onRestoreEntry,
 }: CategoryDetailProps) {
+  const { t } = useI18n();
   const category = data.categories.find((c) => c.id === categoryId);
   const [search, setSearch] = useState('');
   const [showAddEntry, setShowAddEntry] = useState(false);
@@ -74,9 +76,9 @@ export function CategoryDetail({
   if (!category) {
     return (
       <div className="screen">
-        <p className="empty-hint">카테고리를 찾을 수 없어요.</p>
+        <p className="empty-hint">{t('app.categoryNotFound')}</p>
         <button type="button" className="btn btn-secondary" onClick={onBack}>
-          홈으로
+          {t('app.goHome')}
         </button>
       </div>
     );
@@ -85,21 +87,21 @@ export function CategoryDetail({
   return (
     <div className="screen category-screen">
       <header className="app-header">
-        <button type="button" className="icon-btn" onClick={onBack} aria-label="뒤로">
+        <button type="button" className="icon-btn" onClick={onBack} aria-label={t('common.back')}>
           <BackIcon />
         </button>
         <h1 className="category-title">
           <CategoryEmoji value={category.emoji} size={20} />
           {category.name}
         </h1>
-        <button type="button" className="icon-btn" onClick={() => setShowEditCategory(true)} aria-label="카테고리 편집">
+        <button type="button" className="icon-btn" onClick={() => setShowEditCategory(true)} aria-label={t('category.edit')}>
           <EditIcon size={18} />
         </button>
         <button
           type="button"
           className="icon-btn danger"
           onClick={() => setConfirmDeleteCategory(true)}
-          aria-label="카테고리 삭제"
+          aria-label={t('category.delete')}
         >
           <TrashIcon size={18} />
         </button>
@@ -117,13 +119,13 @@ export function CategoryDetail({
         <div className="table-toolbar">
           <input
             className="text-input search-input"
-            placeholder="검색"
+            placeholder={t('category.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <button type="button" className="btn btn-secondary" onClick={onOpenTable} disabled={category.fields.length === 0}>
             <TableIcon size={16} />
-            표로 보기
+            {t('drawer.table')}
           </button>
         </div>
 
@@ -134,7 +136,7 @@ export function CategoryDetail({
         type="button"
         className="fab"
         onClick={() => setShowAddEntry(true)}
-        aria-label="데이터 추가"
+        aria-label={t('category.dataAdd')}
         disabled={category.fields.length === 0}
       >
         +
@@ -177,8 +179,8 @@ export function CategoryDetail({
 
       {undoEntry && (
         <Toast
-          message="삭제됨"
-          actionLabel="되돌리기"
+          message={t('category.deleted')}
+          actionLabel={t('common.undo')}
           onAction={() => {
             onRestoreEntry(undoEntry);
             setUndoEntry(null);
@@ -200,9 +202,9 @@ export function CategoryDetail({
 
       {confirmDeleteCategory && (
         <ConfirmDialog
-          title="카테고리 삭제"
-          message={`"${category.name}" 카테고리와 그 안의 데이터 ${categoryEntries.length}건이 모두 삭제돼요. 계속할까요?`}
-          confirmLabel="삭제"
+          title={t('category.delete')}
+          message={t('category.deleteConfirm', { name: category.name, count: categoryEntries.length })}
+          confirmLabel={t('common.delete')}
           danger
           onConfirm={() => {
             onDeleteCategory();
