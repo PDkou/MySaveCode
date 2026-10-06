@@ -41,7 +41,7 @@ export function PrintView({ category, entries }: PrintViewProps) {
           {entries.map((entry) => (
             <tr key={entry.id}>
               {category.fields.map((f) => (
-                <td key={f.id}>{formatFieldValue(f, entry.values[f.id]) || '—'}</td>
+                <td key={f.id}>{formatFieldValue(f, entry.values[f.id], localeCode) || '—'}</td>
               ))}
             </tr>
           ))}
