@@ -127,10 +127,10 @@ export function Settings({ data, onImport, onMerge, onBack, bottomNav }: Setting
           <div className="settings-row">
             <div className="settings-row-text">
               <b>特定商取引法に基づく表示</b>
-              <span>앱 내 결제 관련 표시 사항</span>
+              <span>{t('settingsExtra.commerceDesc')}</span>
             </div>
             <button type="button" className="settings-row-btn" onClick={() => setShowTokushoho(true)}>
-              보기
+              {t('common.view')}
             </button>
           </div>
         )}
@@ -183,7 +183,7 @@ export function Settings({ data, onImport, onMerge, onBack, bottomNav }: Setting
 
       {showTokushoho && (
         <Modal title="特定商取引法に基づく表示" onClose={() => setShowTokushoho(false)}>
-          <p className="modal-hint">나만의 서랍장 앱 내 결제 관련 표시 사항입니다.</p>
+          <p className="modal-hint">{t('settingsExtra.commerceIntro')}</p>
           <dl className="tokusho-list">
             <div className="tokusho-row">
               <dt>販売業者</dt>
