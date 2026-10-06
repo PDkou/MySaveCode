@@ -7,6 +7,7 @@ import { BottomNav, type BottomNavTab } from './BottomNav';
 import { SortIcon, StarIcon, BellIcon } from './icons';
 import { CategoryBadgeEmoji } from './categoryIcons';
 import { getUpcomingReminders } from '../lib/reminders';
+import { useI18n } from '../i18n';
 
 interface HomeProps {
   data: AppData;
@@ -18,13 +19,14 @@ interface HomeProps {
   onMoveCategory: (id: string, direction: -1 | 1) => void;
 }
 
-function reminderBadge(diffDays: number): string {
-  if (diffDays === 0) return '오늘';
+function reminderBadge(diffDays: number, t: (key: string, variables?: Record<string, string | number>) => string): string {
+  if (diffDays === 0) return t('homeExtra.today');
   if (diffDays > 0) return `D-${diffDays}`;
-  return `${-diffDays}일 지남`;
+  return t('homeExtra.daysPast', { count: -diffDays });
 }
 
 export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, onTogglePinCategory, onMoveCategory }: HomeProps) {
+  const { t } = useI18n();
   const [showAdd, setShowAdd] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -86,15 +88,15 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, o
       <header className="app-header home-header">
         <img className="home-logo" src="./icons/icon-splash.png" alt="" aria-hidden="true" />
         <div className="home-header-text">
-          <h1>나만의 서랍장</h1>
-          <p className="home-header-tagline">카테고리를 만들고, 표로 정리해요</p>
+          <h1>{t('home.title')}</h1>
+          <p className="home-header-tagline">{t('home.tagline')}</p>
         </div>
         {data.categories.length > 1 && (
           <button
             type="button"
             className={`icon-btn ${reorderMode ? 'active' : ''}`}
             onClick={() => setReorderMode((v) => !v)}
-            aria-label={reorderMode ? '정렬 완료' : '카테고리 순서 바꾸기'}
+            aria-label={reorderMode ? t('category.reorderDone') : t('category.reorder')}
             aria-pressed={reorderMode}
           >
             <SortIcon />
@@ -106,10 +108,8 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, o
         {data.categories.length > 0 && (
           <div className="home-hero-card">
             <span className="home-hero-number">{weeklyCount}</span>
-            <span className="home-hero-label">이번 주 기록</span>
-            <span className="home-hero-sub">
-              전체 {data.entries.length}건 · 카테고리 {data.categories.length}개
-            </span>
+            <span className="home-hero-label">{t('homeExtra.drawerSection')}</span>
+            <span className="home-hero-sub">{t('home.drawerCount', { count: data.categories.length })} · {t('home.itemCount', { count: data.entries.length })}</span>
           </div>
         )}
 
@@ -117,7 +117,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, o
           <section className="upcoming-panel">
             <h2 className="upcoming-panel-title">
               <BellIcon size={16} />
-              다가오는 일정
+              {t('homeExtra.upcoming')}
             </h2>
             <ul className="upcoming-list">
               {upcomingReminders.map((r) => (
@@ -133,7 +133,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, o
                       <span className="upcoming-row-date">{r.dateValue}</span>
                     </span>
                     <span className={`upcoming-row-badge-days ${r.diffDays < 0 ? 'overdue' : ''}`}>
-                      {reminderBadge(r.diffDays)}
+                      {reminderBadge(r.diffDays, t)}
                     </span>
                   </button>
                 </li>
@@ -144,12 +144,12 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, o
 
         {data.categories.length === 0 ? (
           <div className="empty-state">
-            <p>아직 카테고리가 없어요.</p>
-            <p className="empty-hint">가계부, 옷장, 화장품처럼 원하는 카테고리를 만들어 기록을 시작해 보세요.</p>
+            <p>{t('home.emptyTitle')}</p>
+            <p className="empty-hint">{t('home.emptyBody')}</p>
           </div>
         ) : (
           <>
-            <h2 className="section-label">카테고리</h2>
+            <h2 className="section-label">{t('homeExtra.drawerSection')}</h2>
             <div className="category-grid">
             {displayCategories.map((c, i) => {
               const isPinned = !!c.pinned;
@@ -174,7 +174,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, o
                       <CategoryBadgeEmoji value={c.emoji} size={36} />
                     </span>
                     <span className="category-card-name">{c.name}</span>
-                    <span className="category-card-count">{entryCount(c.id)}건</span>
+                    <span className="category-card-count">{t('home.itemCount', { count: entryCount(c.id) })}</span>
                   </button>
                 );
               }
@@ -185,7 +185,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, o
                     type="button"
                     className={`category-pin-toggle ${isPinned ? 'pinned' : ''}`}
                     onClick={() => onTogglePinCategory(c.id)}
-                    aria-label={isPinned ? '즐겨찾기 해제' : '즐겨찾기 고정'}
+                    aria-label={isPinned ? t('category.unpin') : t('category.pin')}
                     aria-pressed={isPinned}
                   >
                     <StarIcon size={16} filled={isPinned} />
@@ -200,7 +200,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, o
                       className="icon-btn small"
                       disabled={isFirst}
                       onClick={() => onMoveCategory(c.id, -1)}
-                      aria-label="위로 이동"
+                      aria-label={t('common.moveUp')}
                     >
                       ↑
                     </button>
@@ -209,7 +209,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, o
                       className="icon-btn small"
                       disabled={isLast}
                       onClick={() => onMoveCategory(c.id, 1)}
-                      aria-label="아래로 이동"
+                      aria-label={t('common.moveDown')}
                     >
                       ↓
                     </button>
@@ -222,7 +222,7 @@ export function Home({ data, onOpenCategory, onAddCategory, onImport, onMerge, o
         )}
       </div>
 
-      <button type="button" className="fab" onClick={() => setShowAdd(true)} aria-label="카테고리 추가">
+      <button type="button" className="fab" onClick={() => setShowAdd(true)} aria-label={t('drawer.create')}>
         +
       </button>
 
