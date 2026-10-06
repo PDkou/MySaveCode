@@ -380,5 +380,15 @@
     "version": "バージョン",
     "storageTitle": "データの保存について",
     "storageBody": "Drawaryは専用アカウントやサーバーを使わず、この端末にデータを保存します。"
+  },
+  "feedbackScreen": {
+    "title": "フィードバック",
+    "promptTitle": "ご意見を送る",
+    "promptBody": "Drawaryを使っていて気になった点や、改善してほしいことをお聞かせください。",
+    "messageLabel": "内容",
+    "placeholder": "ご意見を入力してください。",
+    "send": "メールで送る",
+    "subject": "Drawary フィードバック",
+    "emailNote": "送信ボタンを押すと標準のメールアプリが開きます。宛先：{{email}}"
   }
 }
