@@ -1,3 +1,5 @@
+import { useI18n } from '../i18n';
+
 // Purely a branding beat, not a loading gate -- app init (localStorage
 // read) is already synchronous/instant, so there's nothing real to wait
 // on. Shown on cold start (App.tsx controls the timing budget), then
@@ -25,6 +27,7 @@
 // earlier splash-tuner prototype onto CSS offset-path only matters for a
 // live-editable tool, not a fire-once splash.
 export function SplashScreen({ fadingOut }: { fadingOut: boolean }) {
+  const { t } = useI18n();
   return (
     <div className={`splash-screen ${fadingOut ? 'fading' : ''}`}>
       <div className="splash-stage" aria-hidden="true">
@@ -125,7 +128,7 @@ export function SplashScreen({ fadingOut }: { fadingOut: boolean }) {
           </div>
         </div>
       </div>
-      <p className="splash-title">나만의 서랍장</p>
+      <p className="splash-title">{t('brand.splashName')}</p>
       <p className="splash-tagline">Drawary</p>
     </div>
   );
