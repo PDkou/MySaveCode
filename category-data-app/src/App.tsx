@@ -7,6 +7,7 @@ import { TableScreen } from './components/TableScreen';
 import { SplashScreen } from './components/SplashScreen';
 import { LockScreen } from './components/LockScreen';
 import { isLockEnabled } from './lib/lock';
+import { useI18n } from './i18n';
 
 type View = { screen: 'home' } | { screen: 'category'; categoryId: string } | { screen: 'table'; categoryId: string };
 
@@ -17,6 +18,7 @@ const SPLASH_VISIBLE_MS = 2000;
 const SPLASH_FADE_MS = 300;
 
 function App() {
+  const { t } = useI18n();
   const app = useAppData();
   useReminderSync(app.data);
   const [view, setView] = useState<View>({ screen: 'home' });
@@ -118,9 +120,9 @@ function App() {
           // navigates home first, but guard against it rather than
           // setState-during-render.
           <div className="screen">
-            <p className="empty-hint">카테고리를 찾을 수 없어요.</p>
+            <p className="empty-hint">{t('app.categoryNotFound')}</p>
             <button type="button" className="btn btn-secondary" onClick={() => setView({ screen: 'home' })}>
-              홈으로
+              {t('app.goHome')}
             </button>
           </div>
         ))}
