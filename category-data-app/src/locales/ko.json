@@ -260,5 +260,25 @@
     "deleteAllMessage": "서랍 {{drawers}}개, 보관품 {{items}}개가 모두 삭제돼요. 이 작업은 되돌릴 수 없어요. 계속할까요?",
     "deleteAllConfirm": "전체 삭제",
     "version": "Drawary · {{version}}"
+  },
+  "tableExtra": {
+    "title": "{{name}} · 표",
+    "csvImport": "CSV 가져오기",
+    "sum": "합계 {{value}}",
+    "created": "생성일: {{date}} · 총 {{count}}개"
+  },
+  "csv": {
+    "title": "CSV 가져오기",
+    "emptyRows": "가져올 수 있는 행이 없어요. 첫 줄이 서랍 칸 이름과 같은 CSV인지 확인해 주세요.",
+    "readFailed": "CSV 파일을 읽지 못했어요.",
+    "importFailed": "파일을 가져오지 못했어요.",
+    "fileReadFailed": "파일을 읽는 데 실패했어요.",
+    "guide": "첫 줄이 이 서랍의 칸 이름과 같은 CSV 파일을 선택하면, 이름이 일치하는 열의 값으로 보관품을 새로 추가해요. 일치하지 않는 열은 무시돼요.",
+    "selectFile": "파일 선택",
+    "importData": "데이터 가져오기",
+    "preview": "서랍 칸 {{matched}}/{{total}}개가 일치했고, 보관품 {{items}}개를 새로 추가해요.",
+    "invalidCells": " 숫자/금액 칸 중 {{count}}칸은 값을 알아볼 수 없어 비워둘게요.",
+    "continue": " 계속할까요?",
+    "import": "가져오기"
   }
 }
