@@ -51,8 +51,8 @@ android {
         applicationId = "com.howlingcreativestudio.openedagain"
         minSdk = 29
         targetSdk = 36
-        versionCode = 116
-        versionName = "0.116.0"
+        versionCode = 117
+        versionName = "0.117.0"
     }
 
     buildTypes {
@@ -161,4 +161,14 @@ dependencies {
     // in the -ktx artifact for its nicer Kotlin builders
     // (PeriodicWorkRequestBuilder, workDataOf).
     implementation("androidx.work:work-runtime-ktx:2.11.2")
+    // v0.117: director-requested in-app review prompt ("리뷰는 어떻게
+    // 남기지?" -> wants a built-in review-request flow) -- see
+    // ReviewPromptManager.kt. Google Play's official In-App Review API;
+    // only ever shows Google's own fixed popup design, and Google's own
+    // quota decides whether a given request actually displays anything.
+    // 2.0.2 is a known-stable release as of this integration, but this
+    // sandbox has no network access to Google's Maven repo (dl.google.com)
+    // to confirm it's still the current latest at build time -- worth a
+    // quick check against the latest release before shipping.
+    implementation("com.google.android.play:review-ktx:2.0.2")
 }

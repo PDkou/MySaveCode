@@ -4694,3 +4694,44 @@ Playwright로 일본어 홈 화면 전체 재스크린샷(실제 번들 파일�
 실사용 문자 전수 커버리지 확인. 네이티브 변경은 이 샌드박스에 Android
 SDK 접근이 없어 로컬 컴파일 확인 불가 -- 육안 검토만 완료, 실제
 컴파일은 CI에서 확정 필요. 커밋/푸시 후 CI 빌드도 함께 트리거.
+
+## v0.117 — 인앱 리뷰 요청 기능 추가 (구글 플레이 In-App Review API)
+
+director: "리뷰는 어떻게 남기지?" -- 처음엔 (화면 점검 도중 나온 질문
+이라) 의미가 모호해 확인 질문으로 의도를 좁힘 -- "앱에 리뷰 요청
+기능을 넣고 싶음"으로 확정. 구글 플레이 공식 In-App Review API를
+설명(구글 고정 디자인 팝업만 가능, 커스터마이징 불가, 구글 내부
+쿼터로 실제 노출 빈도는 보장 안 됨)한 뒤 트리거 시점을 물어 director가
+3가지 전부 선택: 앱 종료 모달 / LEGENDARY·HIDDEN 카드 발견 직후 /
+설정 수동 버튼.
+
+**구현**:
+- `app/build.gradle.kts`에 `com.google.android.play:review-ktx:2.0.2`
+  추가 (샌드박스에 Google Maven 저장소 접근이 없어 이게 최신 버전인지는
+  확인 못함 -- 출시 전 재확인 필요하다고 코드 주석에 명시).
+- `ReviewPromptManager.kt` 신규 -- `maybeRequestReview()`(자동 트리거
+  2곳용, "app_prefs" SharedPreferences에 마지막 요청 시각을 저장해
+  30일 쿨다운 적용)와 `requestReviewNow()`(수동 버튼용, 쿨다운 없이
+  항상 실행) 두 메서드. `AdManager`/`BillingManager`와 동일하게
+  `MainActivity`에서 생성해 `NativeBridge`로 주입.
+- `NativeBridge.kt`: 기존 `exitApp()`을 수정해 `activity.finish()`
+  전에 `maybeRequestReview()`를 먼저 실행하고 그 콜백 안에서 finish
+  하도록 변경(리뷰 팝업이 뜨는 도중 Activity가 사라지며 잘리는 것
+  방지). 신규 `requestReviewIfLegendary()`(자동, fire-and-forget),
+  `requestReviewManual()`(수동, 쿨다운 무시) 2개 추가.
+- `index.html`: `dismissReveal()`에서 리빌 카드를 지우기 직전에
+  `state.revealItem.rarity`가 LEGENDARY/HIDDEN이면
+  `N.requestReviewIfLegendary()` 호출. 설정 "정보" 그룹 맨 위에
+  "리뷰 남기기" 행 추가(별 모양 아웃라인 아이콘, 기존 v0.93/v0.97
+  라인아이콘 스타일 그대로 재사용), `requestReviewManual()` JS 래퍼는
+  다른 네이티브 전용 액션들과 동일하게 미리보기 모드 토스트 가드 포함.
+
+버전 117/0.117.0. 검증: (1) `node --check`로 구문 검증 통과 (2)
+Playwright로 설정 화면에 새 "리뷰 남기기" 행이 올바르게 렌더링되는
+것과, 미리보기 모드에서 탭했을 때 "미리보기에서는 실행되지 않습니다"
+토스트가 정상적으로 뜨는 것(= 가드 로직이 실제로 동작)을 확인, 콘솔
+에러 0건 (3) 네이티브 Kotlin 변경(새 파일 1개 + 기존 2개 파일 수정)은
+이 샌드박스에 Android SDK 접근이 없어 로컬 컴파일 확인 불가 -- 육안
+검토만 완료, 실제 컴파일/실기기에서 리뷰 팝업이 실제로 뜨는지는 CI
+빌드 및 추후 실기기 테스트에서 확정 필요. 커밋/푸시 후 CI 빌드도
+함께 트리거.

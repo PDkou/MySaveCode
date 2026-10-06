@@ -28,6 +28,8 @@ class MainActivity : Activity() {
         private set
     lateinit var billingManager: BillingManager
         private set
+    lateinit var reviewPromptManager: ReviewPromptManager
+        private set
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +69,7 @@ class MainActivity : Activity() {
         // restorePurchases() check on cold start.
         billingManager = BillingManager(this) { removed -> if (removed) adManager.onAdsRemoved() }
         adManager = AdManager(this) { billingManager.isAdsRemoved() }
+        reviewPromptManager = ReviewPromptManager(this)
 
         webView = WebView(this).apply {
             setBackgroundColor(Color.rgb(250, 246, 237))
@@ -86,7 +89,7 @@ class MainActivity : Activity() {
             webViewClient = WebViewClient()
             webChromeClient = WebChromeClient()
             addJavascriptInterface(
-                NativeBridge(this@MainActivity, HistoryRepository(this@MainActivity), adManager, billingManager),
+                NativeBridge(this@MainActivity, HistoryRepository(this@MainActivity), adManager, billingManager, reviewPromptManager),
                 "OpenedAgainNative"
             )
             // v0.48: director feedback -- the screen kept scrolling/bouncing

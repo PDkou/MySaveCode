@@ -715,7 +715,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.116.0';
+const APP_VERSION='0.117.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -922,7 +922,12 @@ function shouldShowReveal(d){
   const cards=d.report?.cards||[];
   return cards.length>0&&state.history.revealShownDate!==todayKey();
 }
-function dismissReveal(){state.history.revealShownDate=todayKey();try{N&&N.setRevealShownDate&&N.setRevealShownDate(todayKey())}catch(e){}state.revealItem=null;render()}
+// v0.117: director-requested in-app review prompt -- first of its 3 trigger
+// points (see NativeBridge.kt's requestReviewIfLegendary()/ReviewPromptManager.kt)
+// is right here: the moment the daily reveal card is dismissed, if that
+// card happened to be LEGENDARY/HIDDEN. Checked before state.revealItem is
+// cleared below, since that's the only place this function still has it.
+function dismissReveal(){const wasTopRarity=state.revealItem&&(state.revealItem.rarity==='LEGENDARY'||state.revealItem.rarity==='HIDDEN');state.history.revealShownDate=todayKey();try{N&&N.setRevealShownDate&&N.setRevealShownDate(todayKey())}catch(e){}state.revealItem=null;render();if(wasTopRarity){try{N&&N.requestReviewIfLegendary&&N.requestReviewIfLegendary()}catch(e){}}}
 function refresh(){
   state.data=read();
   if(N)loadHistoryFromNative();else persistSnapshotForPreview(state.data);
@@ -1803,7 +1808,11 @@ function settings(){
     export:'<path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M4 16v4h16v-4"/>',
     help:'<circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-2.9 2-2.9 4"/><path d="M12 17.01v.01"/>',
     privacy:'<rect x="6" y="11" width="12" height="9" rx="2"/><path d="M9 11V7a3 3 0 0 1 6 0v4"/>',
-    about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.01"/>'
+    about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.01"/>',
+    // v0.117: director-requested review-prompt row -- same thin-stroke line
+    // style as every other icon here (v0.93/v0.97), a plain 5-point star
+    // outline rather than a filled/branded rating glyph.
+    review:'<path d="M12 4l2.4 5.1 5.6.6-4.2 3.8 1.2 5.5L12 16.2 6.9 19l1.2-5.5-4.2-3.8 5.6-.6z"/>'
   };
   const svgIcon=key=>`<span class="settings-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]}</svg></span>`;
   // v0.65: director-approved monetization -- one-time "remove ads" purchase
@@ -1852,6 +1861,7 @@ ${group(
 )}
 ${groupLabel(l('정보','情報','Info'))}
 ${group(
+  row(svgIcon('review'),l('리뷰 남기기','レビューを書く','Leave a review'),l('스토어에 평가를 남겨주세요','ストアで評価をお願いします','Rate the app on the store'),'requestReviewManual()'),
   row(svgIcon('help'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),'openHelpSheet()'),
   row(svgIcon('privacy'),l('개인정보처리방침','プライバシーポリシー','Privacy policy'),l('어떤 정보를 어떻게 다루는지','どんな情報をどう扱うか','What data is handled and how'),'openPrivacySheet()'),
   row(svgIcon('about'),l('앱 정보','アプリ情報','About'),'v'+APP_VERSION,'openAboutSheet()')
@@ -1876,6 +1886,16 @@ ${row(dbgIcon('📡'),'백그라운드 체크 상태 보기','여러 사건 발�
 // kicks the flow off and gives immediate feedback that the tap registered;
 // the row itself flips to "구매 완료" the next time settings() renders
 // (onNativeResume already re-renders on returning from that purchase sheet).
+// v0.117: director-requested in-app review prompt, third/manual trigger
+// point -- the Settings row above. Unlike the other two (exit confirm,
+// legendary/hidden reveal), this one bypasses ReviewPromptManager's cooldown
+// entirely (see its own comment) since a user who tapped this specific row
+// should always get the flow, not be silently skipped by a timer they can't
+// see.
+function requestReviewManual(){
+  if(preview||!N){toast(l('미리보기에서는 실행되지 않습니다.','プレビューでは実行されません。','Not available in preview.'));return}
+  try{N.requestReviewManual&&N.requestReviewManual()}catch(e){}
+}
 function purchaseRemoveAds(){
   if(preview||!N){toast(l('미리보기에서는 구매를 진행할 수 없습니다.','プレビューでは購入できません。','Purchases are disabled in preview.'));return}
   try{N.purchaseRemoveAds&&N.purchaseRemoveAds()}catch(e){}

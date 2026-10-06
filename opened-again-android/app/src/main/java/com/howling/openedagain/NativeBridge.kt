@@ -28,7 +28,8 @@ class NativeBridge(
     private val activity: Activity,
     private val history: HistoryRepository,
     private val adManager: AdManager,
-    private val billingManager: BillingManager
+    private val billingManager: BillingManager,
+    private val reviewPromptManager: ReviewPromptManager
 ) {
     // v0.70: the "app_prefs" SharedPreferences file setLanguage() already
     // writes to -- reused here for revealShownDate too (see
@@ -411,9 +412,17 @@ class NativeBridge(
     // reverted that (director correction -- the ask was a banner INSIDE the
     // exit-confirm modal, not an ad triggered BY exiting, see AdManager.kt's
     // own v0.69 comment), so this is back to finishing immediately.
+    // v0.117: director-requested in-app review prompt (one of its 3 trigger
+    // points, see ReviewPromptManager.kt) -- runs the (cooldown-gated) Play
+    // In-App Review flow first and only finishes the Activity once that
+    // flow is actually done, so the review popup (if Google's quota decides
+    // to show one at all) isn't cut off mid-animation by the Activity
+    // disappearing underneath it.
     @JavascriptInterface
     fun exitApp() {
-        activity.runOnUiThread { activity.finish() }
+        activity.runOnUiThread {
+            reviewPromptManager.maybeRequestReview { activity.finish() }
+        }
     }
 
     // v0.65: director-approved monetization -- index.html's render() calls
@@ -519,6 +528,27 @@ class NativeBridge(
     fun cancelDailyReminder() {
         ReminderScheduler.cancel(activity)
         IncidentCheckScheduler.cancel(activity)
+    }
+
+    // v0.117: director-requested in-app review prompt, second of its 3
+    // trigger points -- index.html's dismissReveal() calls this right after
+    // the daily reveal card is dismissed, but only when that card's rarity
+    // was LEGENDARY/HIDDEN (the "positive moment" the director picked).
+    // Cooldown-gated the same way exitApp()'s trigger is (see
+    // ReviewPromptManager.kt) -- fire-and-forget, nothing in the UI needs to
+    // wait on this one.
+    @JavascriptInterface
+    fun requestReviewIfLegendary() {
+        activity.runOnUiThread { reviewPromptManager.maybeRequestReview {} }
+    }
+
+    // v0.117: third trigger point -- a manual "리뷰 남기기" row in Settings.
+    // Bypasses the cooldown entirely (see ReviewPromptManager.kt) since a
+    // user who went looking for this button should always be able to use
+    // it.
+    @JavascriptInterface
+    fun requestReviewManual() {
+        activity.runOnUiThread { reviewPromptManager.requestReviewNow {} }
     }
 
     // v0.47: mirrors index.html's state.settings.language into a small
