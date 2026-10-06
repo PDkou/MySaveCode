@@ -373,5 +373,12 @@
     "contactTitle": "문의하기",
     "contactBody": "사용 중 궁금한 점이나 문제가 있다면 이메일로 알려주세요.",
     "contactAction": "이메일 보내기"
+  },
+  "infoScreen": {
+    "title": "정보",
+    "tagline": "나만의 서랍을 만들고, 필요한 내용을 하나씩 담아 관리하는 개인 데이터 앱",
+    "version": "버전",
+    "storageTitle": "데이터 저장 방식",
+    "storageBody": "Drawary는 별도 계정이나 서버 없이 이 기기에 데이터를 저장합니다."
   }
 }
