@@ -348,5 +348,14 @@
       "openDate": "開封日",
       "price": "価格"
     }
+  },
+  "storage": {
+    "saveFailed": "保存容量が不足しているか、データを保存できませんでした。バックアップ後、不要なデータを整理してください。"
+  },
+  "seed": {
+    "example": "サンプル",
+    "lunch": "昼食",
+    "allowance": "おこづかい",
+    "monthlyAllowance": "今月のおこづかい"
   }
 }
