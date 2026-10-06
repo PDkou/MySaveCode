@@ -7,6 +7,7 @@ import { BackIcon } from './icons';
 import { getNativeBridge } from '../lib/native';
 import { isLockEnabled, removeLock } from '../lib/lock';
 import type { AppData } from '../types';
+import { useI18n, type Locale } from '../i18n';
 
 interface SettingsProps {
   data: AppData;
@@ -40,6 +41,7 @@ function appVersion(): string {
 // same way GlobalSearch is, as Home-local state rather than its own
 // App.tsx view, since it only ever needs what Home already has.
 export function Settings({ data, onImport, onMerge, onBack, bottomNav }: SettingsProps) {
+  const { t, locale, setLocale } = useI18n();
   const [showBackup, setShowBackup] = useState(false);
   const [showTokushoho, setShowTokushoho] = useState(false);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
@@ -50,55 +52,75 @@ export function Settings({ data, onImport, onMerge, onBack, bottomNav }: Setting
   return (
     <div className="screen settings-screen">
       <header className="app-header">
-        <button type="button" className="icon-btn" onClick={onBack} aria-label="뒤로">
+        <button type="button" className="icon-btn" onClick={onBack} aria-label={t('common.back')}>
           <BackIcon />
         </button>
-        <h1>설정</h1>
+        <h1>{t('settings.title')}</h1>
       </header>
 
       <div className={`screen-content ${bottomNav ? 'with-bottom-nav' : ''}`}>
         <div className="settings-row">
           <div className="settings-row-text">
-            <b>백업</b>
-            <span>카테고리와 데이터를 파일로 저장하거나 불러와요</span>
+            <b>{t('settingsExtra.backup')}</b>
+            <span>{t('settingsExtra.backupDesc')}</span>
           </div>
           <button type="button" className="settings-row-btn" onClick={() => setShowBackup(true)}>
-            관리
+            {t('settingsExtra.manage')}
           </button>
         </div>
 
         <div className="settings-row">
           <div className="settings-row-text">
-            <b>앱 잠금</b>
-            <span>{lockEnabled ? 'PIN으로 잠겨 있어요' : '사용 안 함'}</span>
+            <b>{t('settingsExtra.appLock')}</b>
+            <span>{lockEnabled ? t('settingsExtra.locked') : t('settingsExtra.off')}</span>
           </div>
           <button
             type="button"
             className={`settings-row-btn ${lockEnabled ? 'danger' : ''}`}
             onClick={() => (lockEnabled ? setConfirmRemoveLock(true) : setShowSetPin(true))}
           >
-            {lockEnabled ? '해제' : '설정'}
+            {lockEnabled ? t('settingsExtra.disable') : t('settingsExtra.enable')}
           </button>
         </div>
 
         <div className="settings-row">
           <div className="settings-row-text">
-            <b>모든 데이터 삭제</b>
-            <span>카테고리와 기록을 모두 지워요</span>
+            <b>{t('settingsExtra.deleteAll')}</b>
+            <span>{t('settingsExtra.deleteAllDesc')}</span>
           </div>
           <button type="button" className="settings-row-btn danger" onClick={() => setConfirmDeleteAll(true)}>
-            삭제
+            {t('common.delete')}
           </button>
         </div>
 
         <div className="settings-row">
           <div className="settings-row-text">
-            <b>문의하기</b>
+            <b>{t('settingsExtra.contact')}</b>
             <span>{CONTACT_EMAIL}</span>
           </div>
           <a className="settings-row-btn" href={`mailto:${CONTACT_EMAIL}`}>
-            이메일
+            {t('settingsExtra.email')}
           </a>
+        </div>
+
+        <div className="settings-row settings-language-row">
+          <div className="settings-row-text">
+            <b>{t('settings.language')}</b>
+            <span>{t('language.subtitle')}</span>
+          </div>
+          <div className="settings-language-actions" role="group" aria-label={t('settings.language')}>
+            {(['ko', 'ja', 'en'] as Locale[]).map((code) => (
+              <button
+                key={code}
+                type="button"
+                className={`settings-row-btn ${locale === code ? 'active' : ''}`}
+                onClick={() => setLocale(code)}
+                aria-pressed={locale === code}
+              >
+                {t(`language.${code}`)}
+              </button>
+            ))}
+          </div>
         </div>
 
         {SHOW_TOKUSHOHO && (
@@ -113,7 +135,7 @@ export function Settings({ data, onImport, onMerge, onBack, bottomNav }: Setting
           </div>
         )}
 
-        <p className="settings-version">나만의 서랍장 · {appVersion()}</p>
+        <p className="settings-version">{t('settingsExtra.version', { version: appVersion() })}</p>
       </div>
 
       {showBackup && (
@@ -132,9 +154,9 @@ export function Settings({ data, onImport, onMerge, onBack, bottomNav }: Setting
 
       {confirmRemoveLock && (
         <ConfirmDialog
-          title="앱 잠금 해제"
-          message="이제부터 PIN 없이 앱이 열려요. 계속할까요?"
-          confirmLabel="해제"
+          title={t('settingsExtra.unlockTitle')}
+          message={t('settingsExtra.unlockMessage')}
+          confirmLabel={t('settingsExtra.disable')}
           danger
           onConfirm={() => {
             removeLock();
@@ -147,9 +169,9 @@ export function Settings({ data, onImport, onMerge, onBack, bottomNav }: Setting
 
       {confirmDeleteAll && (
         <ConfirmDialog
-          title="모든 데이터 삭제"
-          message={`카테고리 ${data.categories.length}개, 데이터 ${data.entries.length}건이 모두 삭제돼요. 이 작업은 되돌릴 수 없어요. 계속할까요?`}
-          confirmLabel="전체 삭제"
+          title={t('settingsExtra.deleteAll')}
+          message={t('settingsExtra.deleteAllMessage', { drawers: data.categories.length, items: data.entries.length })}
+          confirmLabel={t('settingsExtra.deleteAllConfirm')}
           danger
           onConfirm={() => {
             onImport({ version: 1, categories: [], entries: [] });
