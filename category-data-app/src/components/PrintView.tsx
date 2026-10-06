@@ -1,6 +1,7 @@
 import type { Category, Entry } from '../types';
 import { formatFieldValue, sumField } from '../lib/format';
 import { CategoryEmoji } from './categoryIcons';
+import { useI18n } from '../i18n';
 
 interface PrintViewProps {
   category: Category;
@@ -16,6 +17,8 @@ interface PrintViewProps {
 // matches how "save as PDF" already works from a phone's share sheet /
 // print menu.
 export function PrintView({ category, entries }: PrintViewProps) {
+  const { t, locale } = useI18n();
+  const localeCode = locale === 'ja' ? 'ja-JP' : locale === 'ko' ? 'ko-KR' : 'en-US';
   const sums = category.fields.map((f) => sumField(f, entries.map((e) => e.values[f.id])));
   const hasSums = sums.some((s) => s !== null);
 
@@ -25,9 +28,7 @@ export function PrintView({ category, entries }: PrintViewProps) {
         <CategoryEmoji value={category.emoji} size={22} />
         {category.name}
       </h1>
-      <p className="print-meta">
-        생성일: {new Date().toLocaleDateString('ko-KR')} · 총 {entries.length}건
-      </p>
+      <p className="print-meta">{t('tableExtra.created', { date: new Date().toLocaleDateString(localeCode), count: entries.length })}</p>
       <table>
         <thead>
           <tr>
@@ -49,7 +50,7 @@ export function PrintView({ category, entries }: PrintViewProps) {
           <tfoot>
             <tr>
               {category.fields.map((f, idx) => (
-                <td key={f.id}>{sums[idx] !== null ? `합계 ${sums[idx]!.toLocaleString('ko-KR')}` : ''}</td>
+                <td key={f.id}>{sums[idx] !== null ? t('tableExtra.sum', { value: sums[idx]!.toLocaleString(localeCode) }) : ''}</td>
               ))}
             </tr>
           </tfoot>
