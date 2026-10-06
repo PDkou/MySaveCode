@@ -380,5 +380,15 @@
     "version": "버전",
     "storageTitle": "데이터 저장 방식",
     "storageBody": "Drawary는 별도 계정이나 서버 없이 이 기기에 데이터를 저장합니다."
+  },
+  "feedbackScreen": {
+    "title": "피드백",
+    "promptTitle": "의견 보내기",
+    "promptBody": "Drawary를 사용하면서 불편했던 점이나 바라는 점을 알려주세요.",
+    "messageLabel": "내용",
+    "placeholder": "의견을 입력해주세요.",
+    "send": "이메일로 보내기",
+    "subject": "Drawary 피드백",
+    "emailNote": "전송 버튼을 누르면 기본 메일 앱이 열립니다. 받는 주소: {{email}}"
   }
 }
