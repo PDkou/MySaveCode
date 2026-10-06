@@ -348,5 +348,14 @@
       "openDate": "Opened date",
       "price": "Price"
     }
+  },
+  "storage": {
+    "saveFailed": "Storage may be full, so your changes couldn't be saved. Back up your data, then remove anything you no longer need."
+  },
+  "seed": {
+    "example": "Sample",
+    "lunch": "Lunch",
+    "allowance": "Allowance",
+    "monthlyAllowance": "This month's allowance"
   }
 }
