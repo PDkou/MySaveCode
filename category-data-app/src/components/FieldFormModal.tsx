@@ -1,16 +1,7 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
 import type { FieldDef, FieldType } from '../types';
-
-const TYPE_LABELS: Record<FieldType, string> = {
-  text: '텍스트',
-  number: '숫자',
-  currency: '금액',
-  date: '날짜',
-  select: '선택 목록',
-  checkbox: '체크박스',
-  rating: '별점',
-};
+import { useI18n } from '../i18n';
 
 interface FieldFormModalProps {
   initial?: FieldDef;
@@ -25,6 +16,16 @@ interface FieldFormModalProps {
 }
 
 export function FieldFormModal({ initial, existingNames, onSave, onDelete, onClose }: FieldFormModalProps) {
+  const { t } = useI18n();
+  const typeLabels: Record<FieldType, string> = {
+    text: t('fields.text'),
+    number: t('fields.number'),
+    currency: t('fields.currency'),
+    date: t('fields.date'),
+    select: t('fields.select'),
+    checkbox: t('fields.checkbox'),
+    rating: t('fields.rating'),
+  };
   const [name, setName] = useState(initial?.name ?? '');
   const [type, setType] = useState<FieldType>(initial?.type ?? 'text');
   const [optionsText, setOptionsText] = useState((initial?.options ?? []).join(', '));
@@ -48,44 +49,44 @@ export function FieldFormModal({ initial, existingNames, onSave, onDelete, onClo
 
   return (
     <Modal
-      title={initial ? '항목 수정' : '항목 추가'}
+      title={initial ? t('fields.edit') : t('fields.add').replace(/^\+\s*/, '')}
       onClose={onClose}
       footer={
         <>
           {initial && onDelete && (
             <button type="button" className="btn btn-danger" onClick={onDelete}>
-              삭제
+              {t('common.delete')}
             </button>
           )}
           <button type="button" className="btn btn-primary" onClick={submit} disabled={!canSubmit}>
-            저장
+            {t('common.save')}
           </button>
         </>
       }
     >
       <label className="field-label" htmlFor="field-name">
-        항목 이름
+        {t('fields.name')}
       </label>
       <input
         id="field-name"
         className={`text-input ${isDuplicateName ? 'invalid' : ''}`}
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="예: 지출 항목"
+        placeholder={t('fields.nameExample')}
         autoFocus
       />
-      {isDuplicateName && <p className="error-hint">이미 같은 이름의 항목이 있어요. 다른 이름을 써주세요.</p>}
+      {isDuplicateName && <p className="error-hint">{t('fields.duplicateName')}</p>}
 
-      <span className="field-label">유형</span>
+      <span className="field-label">{t('fields.type')}</span>
       <div className="choice-row wrap">
-        {(Object.keys(TYPE_LABELS) as FieldType[]).map((t) => (
+        {(Object.keys(typeLabels) as FieldType[]).map((t) => (
           <button
             key={t}
             type="button"
             className={`type-choice ${type === t ? 'selected' : ''}`}
             onClick={() => setType(t)}
           >
-            {TYPE_LABELS[t]}
+            {typeLabels[t]}
           </button>
         ))}
       </div>
@@ -93,21 +94,21 @@ export function FieldFormModal({ initial, existingNames, onSave, onDelete, onClo
       {type === 'select' && (
         <>
           <label className="field-label" htmlFor="field-options">
-            선택지 (쉼표로 구분)
+            {t('fields.options')}
           </label>
           <input
             id="field-options"
             className="text-input"
             value={optionsText}
             onChange={(e) => setOptionsText(e.target.value)}
-            placeholder="예: 수입, 지출"
+            placeholder={t('fields.optionsExample')}
           />
         </>
       )}
 
       <label className="checkbox-row">
         <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} />
-        <span>필수 입력 항목으로 지정</span>
+        <span>{t('fields.required')}</span>
       </label>
     </Modal>
   );
