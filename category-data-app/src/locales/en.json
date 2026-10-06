@@ -373,5 +373,12 @@
     "contactTitle": "Contact",
     "contactBody": "If you have a question or run into a problem, send us an email.",
     "contactAction": "Send email"
+  },
+  "infoScreen": {
+    "title": "About",
+    "tagline": "A personal data app for creating your own drawers and organizing what matters to you",
+    "version": "Version",
+    "storageTitle": "How your data is stored",
+    "storageBody": "Drawary stores its data on this device without a separate account or Drawary server."
   }
 }
