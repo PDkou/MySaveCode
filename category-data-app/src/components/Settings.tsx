@@ -4,6 +4,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { BackupSheet } from './BackupSheet';
 import { SetPinModal } from './SetPinModal';
 import { HelpScreen } from './HelpScreen';
+import { InfoScreen } from './InfoScreen';
 import { BackIcon } from './icons';
 import { getNativeBridge } from '../lib/native';
 import { isLockEnabled, removeLock } from '../lib/lock';
@@ -49,10 +50,14 @@ export function Settings({ data, onImport, onMerge, onBack, bottomNav }: Setting
   const [lockEnabled, setLockEnabled] = useState(() => isLockEnabled());
   const [showSetPin, setShowSetPin] = useState(false);
   const [confirmRemoveLock, setConfirmRemoveLock] = useState(false);
-  const [settingsView, setSettingsView] = useState<'main' | 'help'>('main');
+  const [settingsView, setSettingsView] = useState<'main' | 'help' | 'info'>('main');
 
   if (settingsView === 'help') {
     return <HelpScreen onBack={() => setSettingsView('main')} contactEmail={CONTACT_EMAIL} />;
+  }
+
+  if (settingsView === 'info') {
+    return <InfoScreen onBack={() => setSettingsView('main')} version={appVersion()} />;
   }
 
   return (
@@ -115,6 +120,16 @@ export function Settings({ data, onImport, onMerge, onBack, bottomNav }: Setting
             <span>{t('helpScreen.guideTitle')}</span>
           </div>
           <button type="button" className="settings-row-btn" onClick={() => setSettingsView('help')}>
+            {t('common.view')}
+          </button>
+        </div>
+
+        <div className="settings-row">
+          <div className="settings-row-text">
+            <b>{t('settings.info')}</b>
+            <span>{t('infoScreen.tagline')}</span>
+          </div>
+          <button type="button" className="settings-row-btn" onClick={() => setSettingsView('info')}>
             {t('common.view')}
           </button>
         </div>
