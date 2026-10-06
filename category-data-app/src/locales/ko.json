@@ -1,0 +1,131 @@
+{
+  "common": {
+    "back": "뒤로",
+    "close": "닫기",
+    "cancel": "취소",
+    "confirm": "확인",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "수정",
+    "add": "추가",
+    "next": "다음",
+    "previous": "이전",
+    "done": "완료"
+  },
+  "nav": {
+    "home": "홈",
+    "search": "검색",
+    "stats": "통계",
+    "settings": "설정"
+  },
+  "home": {
+    "title": "Drawary",
+    "tagline": "나만의 소중한 것들을, 더 특별하게",
+    "myDrawers": "내 서랍",
+    "drawerCount": "내 서랍 {{count}}개",
+    "itemCount": "보관품 {{count}}개",
+    "edit": "편집",
+    "createDrawer": "새 서랍 만들기",
+    "emptyTitle": "아직 만든 서랍이 없어요.",
+    "emptyBody": "정리하고 싶은 것부터 하나 만들어보세요.",
+    "firstDrawer": "첫 서랍 만들기"
+  },
+  "drawer": {
+    "create": "새 서랍 만들기",
+    "createQuestion": "어떤 걸 정리하고 싶나요?",
+    "name": "서랍 이름",
+    "icon": "아이콘",
+    "color": "색상",
+    "fields": "서랍 칸 정하기",
+    "fieldsGuide": "이 서랍에 어떤 내용을 담을지 정해보세요.",
+    "addField": "서랍 칸 추가",
+    "fieldName": "칸 이름",
+    "contentType": "내용 종류",
+    "required": "필수로 입력",
+    "requiredGuide": "서랍을 채울 때 꼭 입력해야 해요",
+    "created": "{{name}} 서랍을 만들었어요.",
+    "fillPrompt": "이제 서랍을 채워볼까요?",
+    "fill": "서랍 채우기",
+    "put": "담기",
+    "putSuccess": "서랍에 잘 담겼어요",
+    "items": "보관품 목록",
+    "searchItems": "보관품 검색하기",
+    "itemDetail": "보관품 상세",
+    "editItem": "보관품 수정",
+    "deleteItem": "보관품 삭제",
+    "deleteItemConfirm": "이 보관품을 삭제할까요?",
+    "emptyItems": "아직 보관품이 없어요",
+    "table": "표로 보기",
+    "manage": "서랍 관리",
+    "deleteDrawer": "서랍 삭제",
+    "repeatQuestion": "같은 내용을 반복해서 채울까요?"
+  },
+  "table": {
+    "search": "검색",
+    "sort": "정렬",
+    "filter": "필터",
+    "exportCsv": "CSV로 내보내기",
+    "exportPdf": "PDF로 내보내기"
+  },
+  "reminder": {
+    "title": "알림 설정",
+    "whichDate": "어떤 날짜를 알려드릴까요?",
+    "when": "언제 알려드릴까요?",
+    "days30": "30일 전",
+    "days7": "7일 전",
+    "day1": "하루 전",
+    "sameDay": "당일",
+    "saved": "알림이 설정됐어요!"
+  },
+  "recurrence": {
+    "title": "반복 관리",
+    "weekly": "매주",
+    "monthly": "매달",
+    "yearly": "매년"
+  },
+  "settings": {
+    "title": "설정",
+    "theme": "테마",
+    "security": "보안 설정",
+    "data": "데이터 관리",
+    "language": "언어 설정",
+    "help": "도움말",
+    "info": "정보",
+    "feedback": "피드백"
+  },
+  "language": {
+    "title": "언어 설정",
+    "subtitle": "앱에서 사용할 언어를 선택해주세요.",
+    "ko": "한국어",
+    "ja": "日本語",
+    "en": "English",
+    "koDesc": "앱 전체를 한국어로",
+    "jaDesc": "アプリ全体を日本語に",
+    "enDesc": "Use English throughout the app",
+    "applied": "선택한 언어가 앱 전체에 바로 적용돼요."
+  },
+  "security": {
+    "appLock": "앱 잠금",
+    "appLockDesc": "앱을 열 때 인증을 사용해요",
+    "biometric": "생체 인증",
+    "biometricDesc": "지문 또는 얼굴 인식을 사용해요",
+    "autoLock": "자동 잠금",
+    "autoLockDesc": "앱을 벗어나면 다시 잠가요"
+  },
+  "data": {
+    "backup": "백업하기",
+    "backupDesc": "보관품과 설정을 백업 파일로 저장해요",
+    "restore": "복원하기",
+    "restoreDesc": "기존 백업 파일을 불러와 복원해요",
+    "reset": "데이터 초기화",
+    "resetDesc": "이 기기의 Drawary 데이터를 모두 지워요",
+    "device": "이 기기에 저장",
+    "googleDrive": "Google Drive",
+    "backupComplete": "백업이 완료됐어요!",
+    "restoreComplete": "복원이 완료됐어요!"
+  },
+  "photo": {
+    "notFound": "사진을 찾을 수 없어요.",
+    "reconnect": "다시 연결"
+  }
+}
