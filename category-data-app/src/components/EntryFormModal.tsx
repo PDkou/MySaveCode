@@ -193,7 +193,7 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
             >
               {t('common.none')}
             </button>
-            {(Object.keys(RECURRENCE_LABELS) as RecurrenceUnit[]).map((u) => (
+            {(Object.keys(recurrenceLabels) as RecurrenceUnit[]).map((u) => (
               <button
                 key={u}
                 type="button"
