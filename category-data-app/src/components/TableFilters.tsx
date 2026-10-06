@@ -1,5 +1,6 @@
 import type { FieldDef } from '../types';
 import { UNCHECKED_FILTER_VALUE, type FieldFilters } from '../lib/filter';
+import { useI18n } from '../i18n';
 
 interface TableFiltersProps {
   fields: FieldDef[];
@@ -12,6 +13,7 @@ interface TableFiltersProps {
 // independent (AND'd together in matchesFieldFilters), "전체" clears just
 // that field's filter.
 export function TableFilters({ fields, filters, onChange }: TableFiltersProps) {
+  const { t } = useI18n();
   if (fields.length === 0) return null;
 
   return (
@@ -20,8 +22,8 @@ export function TableFilters({ fields, filters, onChange }: TableFiltersProps) {
         const options =
           f.type === 'checkbox'
             ? [
-                { value: 'true', label: '체크됨' },
-                { value: UNCHECKED_FILTER_VALUE, label: '체크 안됨' },
+                { value: 'true', label: t('filters.checked') },
+                { value: UNCHECKED_FILTER_VALUE, label: t('filters.unchecked') },
               ]
             : (f.options ?? []).map((o) => ({ value: o, label: o }));
         const active = filters[f.id] ?? '';
@@ -31,7 +33,7 @@ export function TableFilters({ fields, filters, onChange }: TableFiltersProps) {
             <span className="table-filter-label">{f.name}</span>
             <div className="choice-row">
               <button type="button" className={`filter-chip ${!active ? 'selected' : ''}`} onClick={() => onChange(f.id, '')}>
-                전체
+                {t('filters.all')}
               </button>
               {options.map((o) => (
                 <button
