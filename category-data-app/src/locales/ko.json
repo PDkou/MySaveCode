@@ -348,5 +348,14 @@
       "openDate": "개봉일",
       "price": "가격"
     }
+  },
+  "storage": {
+    "saveFailed": "저장 공간이 부족하거나 저장에 실패했어요. 백업 후 오래된 데이터를 정리해 주세요."
+  },
+  "seed": {
+    "example": "예시",
+    "lunch": "점심 식사",
+    "allowance": "용돈",
+    "monthlyAllowance": "이번 달 용돈"
   }
 }
