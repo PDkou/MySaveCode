@@ -3,6 +3,7 @@ import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { StarIcon, CopyIcon, BellIcon, RepeatIcon } from './icons';
 import type { Category, Entry, EntryRecurrence, RecurrenceUnit } from '../types';
+import { useI18n } from '../i18n';
 
 interface EntryFormModalProps {
   category: Category;
@@ -13,13 +14,13 @@ interface EntryFormModalProps {
   onClose: () => void;
 }
 
-const RECURRENCE_LABELS: Record<RecurrenceUnit, string> = {
-  weekly: '매주',
-  monthly: '매월',
-  yearly: '매년',
-};
-
 export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicate, onClose }: EntryFormModalProps) {
+  const { t } = useI18n();
+  const recurrenceLabels: Record<RecurrenceUnit, string> = {
+    weekly: t('recurrence.weekly'),
+    monthly: t('recurrence.monthly'),
+    yearly: t('recurrence.yearly'),
+  };
   const [values, setValues] = useState<Record<string, string>>(() => {
     const base: Record<string, string> = {};
     for (const f of category.fields) {
@@ -66,29 +67,29 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
 
   return (
     <Modal
-      title={initial ? '데이터 수정' : `${category.name} 데이터 입력`}
+      title={initial ? t('item.edit') : t('item.input', { name: category.name })}
       onClose={onClose}
       footer={
         <>
           {initial && onDuplicate && (
-            <button type="button" className="btn btn-secondary" onClick={onDuplicate} aria-label="복제">
+            <button type="button" className="btn btn-secondary" onClick={onDuplicate} aria-label={t('common.duplicate')}>
               <CopyIcon size={16} />
-              복제
+              {t('common.duplicate')}
             </button>
           )}
           {initial && onDelete && (
             <button type="button" className="btn btn-danger" onClick={() => setConfirmDelete(true)}>
-              삭제
+              {t('common.delete')}
             </button>
           )}
           <button type="button" className="btn btn-primary" onClick={submit}>
-            저장
+            {t('drawer.put')}
           </button>
         </>
       }
     >
       {category.fields.length === 0 && (
-        <p className="empty-hint">이 카테고리에는 아직 항목이 없어요. 먼저 "필드 관리"에서 항목을 추가해 주세요.</p>
+        <p className="empty-hint">{t('item.emptyFields')}</p>
       )}
       {category.fields.map((f) => {
         const invalid = attemptedSubmit && f.required && !values[f.id]?.trim();
@@ -105,7 +106,7 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
                 value={values[f.id] ?? ''}
                 onChange={(e) => setValue(f.id, e.target.value)}
               >
-                <option value="">선택 안 함</option>
+                <option value="">{t('common.notSelected')}</option>
                 {(f.options ?? []).map((o) => (
                   <option key={o} value={o}>
                     {o}
@@ -129,7 +130,7 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
                       onChange={(e) => setReminder(f.id, e.target.checked)}
                     />
                     <BellIcon size={14} />
-                    <span>홈 화면의 "다가오는 일정"에 표시</span>
+                    <span>{t('item.reminderShow')}</span>
                   </label>
                 )}
               </>
@@ -141,7 +142,7 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
                 className={`text-input ${invalid ? 'invalid' : ''}`}
                 value={values[f.id] ?? ''}
                 onChange={(e) => setValue(f.id, e.target.value)}
-                placeholder={f.type === 'currency' ? '금액 입력 (원)' : '숫자 입력'}
+                placeholder={f.type === 'currency' ? t('item.currencyPlaceholder') : t('item.numberPlaceholder')}
               />
             ) : f.type === 'checkbox' ? (
               <input
@@ -159,7 +160,7 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
                     type="button"
                     className="rating-star-btn"
                     onClick={() => setValue(f.id, values[f.id] === String(n) ? '' : String(n))}
-                    aria-label={`${n}점`}
+                    aria-label={t('item.rating', { count: n })}
                     aria-pressed={Number(values[f.id]) >= n}
                   >
                     <StarIcon size={24} filled={Number(values[f.id]) >= n} />
@@ -182,7 +183,7 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
       {recurrenceField && (
         <div className="entry-field">
           <span className="field-label">
-            <RepeatIcon size={13} /> 반복 ({recurrenceField.name} 기준)
+            <RepeatIcon size={13} /> {t('item.repeatLabel', { name: recurrenceField.name })}
           </span>
           <div className="choice-row wrap">
             <button
@@ -190,7 +191,7 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
               className={`type-choice ${recurrenceUnit === '' ? 'selected' : ''}`}
               onClick={() => setRecurrenceUnit('')}
             >
-              없음
+              {t('common.none')}
             </button>
             {(Object.keys(RECURRENCE_LABELS) as RecurrenceUnit[]).map((u) => (
               <button
@@ -199,23 +200,21 @@ export function EntryFormModal({ category, initial, onSave, onDelete, onDuplicat
                 className={`type-choice ${recurrenceUnit === u ? 'selected' : ''}`}
                 onClick={() => setRecurrenceUnit(u)}
               >
-                {RECURRENCE_LABELS[u]}
+                {recurrenceLabels[u]}
               </button>
             ))}
           </div>
           {recurrenceUnit && (
-            <p className="modal-hint">
-              {recurrenceField.name}이 지나면 같은 내용으로 다음 항목을 자동으로 만들어요. 앱을 열 때마다 확인해요.
-            </p>
+            <p className="modal-hint">{t('item.repeatHint', { name: recurrenceField.name })}</p>
           )}
         </div>
       )}
 
       {confirmDelete && onDelete && (
         <ConfirmDialog
-          title="데이터 삭제"
-          message="이 데이터를 삭제할까요? 삭제하면 되돌릴 수 없어요."
-          confirmLabel="삭제"
+          title={t('item.delete')}
+          message={t('item.deleteConfirm')}
+          confirmLabel={t('common.delete')}
           danger
           onConfirm={onDelete}
           onCancel={() => setConfirmDelete(false)}
