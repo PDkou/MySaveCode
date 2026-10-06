@@ -29,3 +29,26 @@ jobs:
       - name: Validate locales and build
         working-directory: category-data-app
         run: npm run build
+
+      - name: Install Playwright Chromium
+        working-directory: category-data-app
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Start production preview
+        working-directory: category-data-app
+        run: |
+          nohup npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/drawary-preview.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173 >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/drawary-preview.log
+          exit 1
+
+      - name: Verify runtime i18n in Chromium
+        working-directory: category-data-app
+        run: node scripts/verify-i18n-runtime.mjs
