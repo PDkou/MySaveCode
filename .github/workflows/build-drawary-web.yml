@@ -1,0 +1,31 @@
+name: build-drawary-web
+
+on:
+  push:
+    branches:
+      - claude/category-data-management-app-jo6f6i
+    paths:
+      - "category-data-app/**"
+      - ".github/workflows/build-drawary-web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        working-directory: category-data-app
+        run: npm install
+
+      - name: Validate locales and build
+        working-directory: category-data-app
+        run: npm run build
