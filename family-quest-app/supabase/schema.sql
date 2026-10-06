@@ -1494,6 +1494,20 @@ revoke execute on function public.spawn_next_recurrence(public.tasks) from anon,
 -- timestamp (task.completed_at), not "now" -- a requester confirming hours
 -- later shouldn't make a 3am completion look like it happened at noon for
 -- the time-of-day badges, or shift someone's streak day.
+-- Drops the pre-2026-08-02 single-argument overload before redefining the
+-- function below -- `create or replace function` only replaces an EXACT
+-- signature match, so a database that still carries the old
+-- finalize_task_completion(uuid) from before p_mark_seen_for existed ends
+-- up with BOTH overloads once this file (re-)runs, and any 1-argument
+-- call (confirm_task_completion's own `finalize_task_completion(p_task_id)`)
+-- becomes ambiguous -- postgres error 42725 "function ... is not unique",
+-- which aborts the whole call and surfaces to the user as "처리 중 문제가
+-- 발생했습니다" on the confirm button (found live, 2026-10-06: a database
+-- that had never re-run schema.sql since the signature changed hit this
+-- the first time it finally did). Safe to re-run -- a no-op once the old
+-- overload is gone.
+drop function if exists public.finalize_task_completion(uuid);
+
 create or replace function public.finalize_task_completion(p_task_id uuid, p_mark_seen_for uuid default null)
 returns public.tasks
 language plpgsql
