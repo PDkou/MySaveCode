@@ -280,5 +280,70 @@
     "invalidCells": " {{count}} number/amount cells couldn't be read and will be left blank.",
     "continue": " Continue?",
     "import": "Import"
+  },
+  "brand": {
+    "splashName": "Drawary"
+  },
+  "addDrawer": {
+    "title": "Create a New Drawer",
+    "hint": "Start quickly with a template, or build your own sections from an empty drawer.",
+    "blank": "Start with an empty drawer",
+    "blankDesc": "Design your own drawer sections",
+    "info": "Drawer Details",
+    "namePlaceholder": "e.g. Budget",
+    "includedFields": "Included sections ({{count}})",
+    "fieldsEditable": "You can add or edit drawer sections anytime after creating the drawer."
+  },
+  "editDrawer": {
+    "title": "Edit Drawer"
+  },
+  "filters": {
+    "all": "All",
+    "checked": "Checked",
+    "unchecked": "Unchecked"
+  },
+  "pin": {
+    "backspace": "Delete"
+  },
+  "templates": {
+    "ledger": {
+      "name": "Budget",
+      "desc": "Track income and expenses by date",
+      "date": "Date",
+      "kind": "Type",
+      "income": "Income",
+      "expense": "Expense",
+      "item": "Item",
+      "amount": "Amount",
+      "memo": "Notes"
+    },
+    "wardrobe": {
+      "name": "Wardrobe",
+      "desc": "Track clothing type, purchase date, and price",
+      "purchaseDate": "Purchase date",
+      "type": "Type",
+      "top": "Tops",
+      "bottom": "Bottoms",
+      "outer": "Outerwear",
+      "shoes": "Shoes",
+      "other": "Other",
+      "brand": "Brand",
+      "color": "Color",
+      "price": "Price"
+    },
+    "cosmetics": {
+      "name": "Cosmetics",
+      "desc": "Track purchase and opening dates by product",
+      "product": "Product name",
+      "type": "Type",
+      "skincare": "Skincare",
+      "makeup": "Makeup",
+      "hair": "Hair",
+      "body": "Body",
+      "other": "Other",
+      "purchaseDate": "Purchase date",
+      "openDate": "Opened date",
+      "price": "Price"
+    }
   }
 }
