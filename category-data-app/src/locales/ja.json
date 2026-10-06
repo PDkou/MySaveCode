@@ -373,5 +373,12 @@
     "contactTitle": "お問い合わせ",
     "contactBody": "使い方でわからないことや不具合がある場合は、メールでお知らせください。",
     "contactAction": "メールを送る"
+  },
+  "infoScreen": {
+    "title": "情報",
+    "tagline": "自分だけの引き出しを作り、必要な情報をひとつずつ収納して管理する個人データアプリ",
+    "version": "バージョン",
+    "storageTitle": "データの保存について",
+    "storageBody": "Drawaryは専用アカウントやサーバーを使わず、この端末にデータを保存します。"
   }
 }
