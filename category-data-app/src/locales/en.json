@@ -20,7 +20,8 @@
     "icon": "Icon",
     "color": "Color",
     "name": "Name",
-    "create": "Create"
+    "create": "Create",
+    "view": "View"
   },
   "nav": {
     "home": "Home",
@@ -259,7 +260,9 @@
     "unlockMessage": "The app will open without a PIN from now on. Continue?",
     "deleteAllMessage": "Delete {{drawers}} drawers and {{items}} stored items? This cannot be undone.",
     "deleteAllConfirm": "Delete All",
-    "version": "Drawary · {{version}}"
+    "version": "Drawary · {{version}}",
+    "commerceDesc": "Information about in-app purchases",
+    "commerceIntro": "Information about in-app purchases in Drawary."
   },
   "tableExtra": {
     "title": "{{name}} · Table",
