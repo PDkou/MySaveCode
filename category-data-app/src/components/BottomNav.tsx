@@ -1,4 +1,5 @@
 import { HomeIcon, SearchIcon, SettingsIcon } from './icons';
+import { useI18n } from '../i18n';
 
 export type BottomNavTab = 'home' | 'search' | 'settings';
 
@@ -7,10 +8,10 @@ interface BottomNavProps {
   onNavigate: (tab: BottomNavTab) => void;
 }
 
-const TABS: { id: BottomNavTab; label: string; Icon: typeof HomeIcon }[] = [
-  { id: 'home', label: '홈', Icon: HomeIcon },
-  { id: 'search', label: '검색', Icon: SearchIcon },
-  { id: 'settings', label: '설정', Icon: SettingsIcon },
+const TABS: { id: BottomNavTab; labelKey: string; Icon: typeof HomeIcon }[] = [
+  { id: 'home', labelKey: 'nav.home', Icon: HomeIcon },
+  { id: 'search', labelKey: 'nav.search', Icon: SearchIcon },
+  { id: 'settings', labelKey: 'nav.settings', Icon: SettingsIcon },
 ];
 
 // Only present on Home's own top-level screens (Home itself, plus its
@@ -20,9 +21,10 @@ const TABS: { id: BottomNavTab; label: string; Icon: typeof HomeIcon }[] = [
 // tabbed apps follow (a tab bar for top-level sections, not every screen
 // under them).
 export function BottomNav({ active, onNavigate }: BottomNavProps) {
+  const { t } = useI18n();
   return (
     <nav className="bottom-nav">
-      {TABS.map(({ id, label, Icon }) => (
+      {TABS.map(({ id, labelKey, Icon }) => (
         <button
           key={id}
           type="button"
@@ -31,7 +33,7 @@ export function BottomNav({ active, onNavigate }: BottomNavProps) {
           aria-current={active === id ? 'page' : undefined}
         >
           <Icon size={22} />
-          <span>{label}</span>
+          <span>{t(labelKey)}</span>
         </button>
       ))}
     </nav>
