@@ -20,7 +20,8 @@
     "icon": "아이콘",
     "color": "색상",
     "name": "이름",
-    "create": "만들기"
+    "create": "만들기",
+    "view": "보기"
   },
   "nav": {
     "home": "홈",
@@ -259,7 +260,9 @@
     "unlockMessage": "이제부터 PIN 없이 앱이 열려요. 계속할까요?",
     "deleteAllMessage": "서랍 {{drawers}}개, 보관품 {{items}}개가 모두 삭제돼요. 이 작업은 되돌릴 수 없어요. 계속할까요?",
     "deleteAllConfirm": "전체 삭제",
-    "version": "Drawary · {{version}}"
+    "version": "Drawary · {{version}}",
+    "commerceDesc": "앱 내 결제 관련 표시 사항",
+    "commerceIntro": "Drawary 앱 내 결제 관련 표시 사항입니다."
   },
   "tableExtra": {
     "title": "{{name}} · 표",
