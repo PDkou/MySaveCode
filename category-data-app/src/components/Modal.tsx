@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect } from 'react';
+import { useI18n } from '../i18n';
 
 interface ModalProps {
   title: string;
@@ -11,6 +12,7 @@ interface ModalProps {
 // app's primary target), a centered dialog on anything wider. See
 // global.css's .modal-sheet media query for the breakpoint.
 export function Modal({ title, onClose, children, footer }: ModalProps) {
+  const { t } = useI18n();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -31,7 +33,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
         <div className="modal-sheet-handle" />
         <div className="modal-header">
           <h2>{title}</h2>
-          <button type="button" className="icon-btn" onClick={onClose} aria-label="닫기">
+          <button type="button" className="icon-btn" onClick={onClose} aria-label={t('common.close')}>
             ✕
           </button>
         </div>
