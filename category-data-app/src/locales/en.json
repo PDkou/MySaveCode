@@ -260,5 +260,25 @@
     "deleteAllMessage": "Delete {{drawers}} drawers and {{items}} stored items? This cannot be undone.",
     "deleteAllConfirm": "Delete All",
     "version": "Drawary · {{version}}"
+  },
+  "tableExtra": {
+    "title": "{{name}} · Table",
+    "csvImport": "Import CSV",
+    "sum": "Total {{value}}",
+    "created": "Created: {{date}} · {{count}} items"
+  },
+  "csv": {
+    "title": "Import CSV",
+    "emptyRows": "No rows can be imported. Check that the first row matches your drawer section names.",
+    "readFailed": "Couldn't read the CSV file.",
+    "importFailed": "Couldn't import the file.",
+    "fileReadFailed": "Couldn't read the file.",
+    "guide": "Choose a CSV whose first row matches this drawer's section names. Matching columns will be added as new stored items; unmatched columns are ignored.",
+    "selectFile": "Choose file",
+    "importData": "Import Data",
+    "preview": "{{matched}} of {{total}} sections matched. {{items}} stored items will be added.",
+    "invalidCells": " {{count}} number/amount cells couldn't be read and will be left blank.",
+    "continue": " Continue?",
+    "import": "Import"
   }
 }
