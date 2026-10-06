@@ -4,6 +4,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { parseCsvForCategory, type CsvImportResult } from '../lib/csv';
 import { getNativeBridge } from '../lib/native';
 import type { Category } from '../types';
+import { useI18n } from '../i18n';
 
 interface CsvImportModalProps {
   category: Category;
@@ -12,6 +13,7 @@ interface CsvImportModalProps {
 }
 
 export function CsvImportModal({ category, onImport, onClose }: CsvImportModalProps) {
+  const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<CsvImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -21,13 +23,13 @@ export function CsvImportModal({ category, onImport, onClose }: CsvImportModalPr
     try {
       const result = parseCsvForCategory(category, content);
       if (result.entries.length === 0) {
-        setError('가져올 수 있는 행이 없어요. 첫 줄이 항목 이름과 같은 CSV인지 확인해 주세요.');
+        setError(t('csv.emptyRows'));
         return;
       }
       setPreview(result);
       setError(null);
     } catch {
-      setError('CSV 파일을 읽지 못했어요.');
+      setError(t('csv.readFailed'));
     }
   };
 
@@ -38,7 +40,7 @@ export function CsvImportModal({ category, onImport, onClose }: CsvImportModalPr
   useEffect(() => {
     if (!native) return;
     window.onDrawaryFileImported = handleContent;
-    window.onDrawaryFileImportFailed = () => setError('파일을 가져오지 못했어요.');
+    window.onDrawaryFileImportFailed = () => setError(t('csv.importFailed'));
     return () => {
       window.onDrawaryFileImported = undefined;
       window.onDrawaryFileImportFailed = undefined;
@@ -49,19 +51,16 @@ export function CsvImportModal({ category, onImport, onClose }: CsvImportModalPr
     setError(null);
     const reader = new FileReader();
     reader.onload = () => handleContent(String(reader.result));
-    reader.onerror = () => setError('파일을 읽는 데 실패했어요.');
+    reader.onerror = () => setError(t('csv.fileReadFailed'));
     reader.readAsText(file);
   };
 
   return (
-    <Modal title="CSV 가져오기" onClose={onClose}>
-      <p className="modal-hint">
-        첫 줄이 이 카테고리의 항목 이름과 같은 CSV 파일을 선택하면, 이름이 일치하는 열의 값으로 데이터를 새로 추가해요.
-        일치하지 않는 열은 무시돼요.
-      </p>
+    <Modal title={t('csv.title')} onClose={onClose}>
+      <p className="modal-hint">{t('csv.guide')}</p>
       {native ? (
         <button type="button" className="btn btn-secondary btn-block" onClick={() => native.importFile('text/csv')}>
-          파일 선택
+          {t('csv.selectFile')}
         </button>
       ) : (
         <input
@@ -80,13 +79,17 @@ export function CsvImportModal({ category, onImport, onClose }: CsvImportModalPr
 
       {preview && (
         <ConfirmDialog
-          title="데이터 가져오기"
-          message={`항목 ${preview.matchedColumns}/${preview.totalColumns}개가 일치했고, ${preview.entries.length}건을 새로 추가해요.${
-            preview.invalidCells > 0
-              ? ` 숫자/금액 항목 중 ${preview.invalidCells}칸은 값을 알아볼 수 없어 비워둘게요.`
-              : ''
-          } 계속할까요?`}
-          confirmLabel="가져오기"
+          title={t('csv.importData')}
+          message={
+            t('csv.preview', {
+              matched: preview.matchedColumns,
+              total: preview.totalColumns,
+              items: preview.entries.length,
+            }) +
+            (preview.invalidCells > 0 ? t('csv.invalidCells', { count: preview.invalidCells }) : '') +
+            t('csv.continue')
+          }
+          confirmLabel={t('csv.import')}
           onConfirm={() => {
             onImport(preview.entries);
             setPreview(null);
