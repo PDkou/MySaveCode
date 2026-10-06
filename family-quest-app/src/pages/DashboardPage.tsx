@@ -61,6 +61,21 @@ export function DashboardPage() {
   const [showChat, setShowChat] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
+  // Lets a chat push notification deep-link straight into the chat modal
+  // instead of just landing on the dashboard -- sw.ts routes a chat
+  // notification's click to `/?chat=1` (see its own PushPayload comment).
+  // One-time read+clear of the flag on mount, same pattern as
+  // FamilyOnboardingForms.tsx's joinCode param.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('chat') === '1') {
+      setShowChat(true);
+      params.delete('chat');
+      const newSearch = params.toString();
+      window.history.replaceState(null, '', window.location.pathname + (newSearch ? `?${newSearch}` : ''));
+    }
+  }, []);
+
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkCompleting, setBulkCompleting] = useState(false);

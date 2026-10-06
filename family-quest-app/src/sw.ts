@@ -23,6 +23,14 @@ interface PushPayload {
   title?: string;
   body?: string;
   taskId?: string;
+  // Set for push kinds that have a real destination but no taskId to build
+  // a /task/:id URL from -- 'chat' is the only one today (see
+  // send-due-reminders/index.ts's handleChatEvent), routed to the
+  // dashboard with a one-shot query flag that DashboardPage reads on
+  // mount to open FamilyChatModal (same pattern as its joinCode param in
+  // FamilyOnboardingForms.tsx). Anything else with no taskId (e.g. the
+  // weekly summary push) falls through to plain '/'.
+  kind?: string;
 }
 
 self.addEventListener('push', (event: PushEvent) => {
@@ -33,7 +41,7 @@ self.addEventListener('push', (event: PushEvent) => {
     payload = { title: APP_NAME, body: event.data?.text() };
   }
 
-  const url = payload.taskId ? `/task/${payload.taskId}` : '/';
+  const url = payload.taskId ? `/task/${payload.taskId}` : payload.kind === 'chat' ? '/?chat=1' : '/';
 
   event.waitUntil(
     self.registration.showNotification(payload.title ?? APP_NAME, {
