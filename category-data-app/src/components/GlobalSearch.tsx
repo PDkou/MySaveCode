@@ -4,6 +4,7 @@ import { matchesSearch } from '../lib/search';
 import { formatFieldValue } from '../lib/format';
 import { BackIcon } from './icons';
 import { CategoryBadgeEmoji } from './categoryIcons';
+import { useI18n } from '../i18n';
 
 interface GlobalSearchProps {
   data: AppData;
@@ -30,6 +31,7 @@ interface GroupResult {
 // rather than its own App.tsx view, since it never needs anything beyond
 // what Home already has (data + onOpenCategory).
 export function GlobalSearch({ data, onOpenCategory, onClose, bottomNav }: GlobalSearchProps) {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
 
   const groups = useMemo<GroupResult[]>(() => {
@@ -59,21 +61,21 @@ export function GlobalSearch({ data, onOpenCategory, onClose, bottomNav }: Globa
           .map((f) => formatFieldValue(f, entry.values[f.id]))
           .filter(Boolean)
           .join(' · ');
-        group.preview.push(summary || '(빈 데이터)');
+        group.preview.push(summary || t('search.emptyValue'));
       }
     }
     return Array.from(byCategory.values()).sort((a, b) => b.count - a.count);
-  }, [data, query]);
+  }, [data, query, t]);
 
   return (
     <div className="screen search-screen">
       <header className="app-header">
-        <button type="button" className="icon-btn" onClick={onClose} aria-label="닫기">
+        <button type="button" className="icon-btn" onClick={onClose} aria-label={t('common.close')}>
           <BackIcon />
         </button>
         <input
           className="text-input search-input"
-          placeholder="모든 카테고리에서 검색"
+          placeholder={t('search.placeholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
@@ -81,8 +83,8 @@ export function GlobalSearch({ data, onOpenCategory, onClose, bottomNav }: Globa
       </header>
 
       <div className={`screen-content ${bottomNav ? 'with-bottom-nav' : ''}`}>
-        {!query.trim() && <p className="empty-hint">카테고리를 넘나들며 데이터를 한 번에 찾아요.</p>}
-        {query.trim() && groups.length === 0 && <p className="empty-hint">검색 결과가 없어요.</p>}
+        {!query.trim() && <p className="empty-hint">{t('search.hint')}</p>}
+        {query.trim() && groups.length === 0 && <p className="empty-hint">{t('search.empty')}</p>}
         {groups.length > 0 && (
           <ul className="search-result-list">
             {groups.map((g) => (
@@ -93,7 +95,7 @@ export function GlobalSearch({ data, onOpenCategory, onClose, bottomNav }: Globa
                   </span>
                   <span className="search-result-body">
                     <span className="search-result-title">
-                      {g.categoryName} <span className="search-result-count">{g.count}건</span>
+                      {g.categoryName} <span className="search-result-count">{t('search.count', { count: g.count })}</span>
                     </span>
                     <span className="search-result-preview">{g.preview.join(' · ')}</span>
                   </span>
