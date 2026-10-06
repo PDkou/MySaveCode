@@ -60,7 +60,7 @@ family-quest-app/
   supabase/
     schema.sql                 # 테이블/함수/트리거/RLS 전체 (한 번에 실행, 재실행해도 안전)
     functions/
-      send-due-reminders/      # 기기 푸시 알림 Edge Function (마감/배정/완료/댓글/에스컬레이션/주간요약)
+      send-due-reminders/      # 기기 푸시 알림 Edge Function (마감/배정/완료/댓글/에스컬레이션/주간요약/채팅)
   src/
     main.tsx
     App.tsx                    # 라우팅 + Provider 조립
