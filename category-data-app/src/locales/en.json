@@ -1,0 +1,131 @@
+{
+  "common": {
+    "back": "Back",
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "next": "Next",
+    "previous": "Previous",
+    "done": "Done"
+  },
+  "nav": {
+    "home": "Home",
+    "search": "Search",
+    "stats": "Stats",
+    "settings": "Settings"
+  },
+  "home": {
+    "title": "Drawary",
+    "tagline": "Make the things you treasure even more special",
+    "myDrawers": "My Drawers",
+    "drawerCount": "{{count}} drawers",
+    "itemCount": "{{count}} stored items",
+    "edit": "Edit",
+    "createDrawer": "Create a new drawer",
+    "emptyTitle": "You haven't made a drawer yet.",
+    "emptyBody": "Start with something you'd like to organize.",
+    "firstDrawer": "Create your first drawer"
+  },
+  "drawer": {
+    "create": "Create a new drawer",
+    "createQuestion": "What would you like to organize?",
+    "name": "Drawer name",
+    "icon": "Icon",
+    "color": "Color",
+    "fields": "Set up drawer sections",
+    "fieldsGuide": "Choose what kind of information this drawer will hold.",
+    "addField": "Add a section",
+    "fieldName": "Section name",
+    "contentType": "Content type",
+    "required": "Required",
+    "requiredGuide": "This is required when filling the drawer",
+    "created": "{{name}} drawer is ready.",
+    "fillPrompt": "Ready to fill your drawer?",
+    "fill": "Fill drawer",
+    "put": "Add",
+    "putSuccess": "Added to the drawer",
+    "items": "Stored Items",
+    "searchItems": "Search stored items",
+    "itemDetail": "Stored Item Details",
+    "editItem": "Edit stored item",
+    "deleteItem": "Delete stored item",
+    "deleteItemConfirm": "Delete this stored item?",
+    "emptyItems": "There are no stored items yet",
+    "table": "View as table",
+    "manage": "Manage drawer",
+    "deleteDrawer": "Delete drawer",
+    "repeatQuestion": "Fill the same details again on a schedule?"
+  },
+  "table": {
+    "search": "Search",
+    "sort": "Sort",
+    "filter": "Filter",
+    "exportCsv": "Export as CSV",
+    "exportPdf": "Export as PDF"
+  },
+  "reminder": {
+    "title": "Reminder Settings",
+    "whichDate": "Which date should we remind you about?",
+    "when": "When should we remind you?",
+    "days30": "30 days before",
+    "days7": "7 days before",
+    "day1": "1 day before",
+    "sameDay": "On the day",
+    "saved": "Reminder set!"
+  },
+  "recurrence": {
+    "title": "Repeat",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "yearly": "Yearly"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "security": "Security",
+    "data": "Data Management",
+    "language": "Language",
+    "help": "Help",
+    "info": "About",
+    "feedback": "Feedback"
+  },
+  "language": {
+    "title": "Language",
+    "subtitle": "Choose the language you want to use in the app.",
+    "ko": "한국어",
+    "ja": "日本語",
+    "en": "English",
+    "koDesc": "앱 전체를 한국어로",
+    "jaDesc": "アプリ全体を日本語に",
+    "enDesc": "Use English throughout the app",
+    "applied": "Your selected language is applied throughout the app."
+  },
+  "security": {
+    "appLock": "App Lock",
+    "appLockDesc": "Require authentication when opening the app",
+    "biometric": "Biometric Authentication",
+    "biometricDesc": "Use fingerprint or face authentication",
+    "autoLock": "Auto Lock",
+    "autoLockDesc": "Lock again when you leave the app"
+  },
+  "data": {
+    "backup": "Back Up",
+    "backupDesc": "Save your stored items and settings to a backup file",
+    "restore": "Restore",
+    "restoreDesc": "Restore from an existing backup file",
+    "reset": "Reset Data",
+    "resetDesc": "Delete all Drawary data on this device",
+    "device": "Save to this device",
+    "googleDrive": "Google Drive",
+    "backupComplete": "Backup complete!",
+    "restoreComplete": "Restore complete!"
+  },
+  "photo": {
+    "notFound": "Photo not found.",
+    "reconnect": "Reconnect"
+  }
+}
