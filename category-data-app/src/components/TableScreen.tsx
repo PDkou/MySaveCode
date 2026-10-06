@@ -12,6 +12,7 @@ import { BackIcon, PdfIcon, DownloadIcon, UploadIcon } from './icons';
 import { CategoryEmoji } from './categoryIcons';
 import { matchesSearch } from '../lib/search';
 import { filterableFields, matchesFieldFilters, type FieldFilters } from '../lib/filter';
+import { useI18n } from '../i18n';
 
 interface TableScreenProps {
   category: Category;
@@ -43,6 +44,7 @@ export function TableScreen({
   onDeleteEntry,
   onRestoreEntry,
 }: TableScreenProps) {
+  const { t } = useI18n();
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<FieldFilters>({});
   const [showAddEntry, setShowAddEntry] = useState(false);
@@ -60,18 +62,18 @@ export function TableScreen({
   return (
     <div className="screen table-screen">
       <header className="app-header">
-        <button type="button" className="icon-btn" onClick={onBack} aria-label="뒤로">
+        <button type="button" className="icon-btn" onClick={onBack} aria-label={t('common.back')}>
           <BackIcon />
         </button>
         <h1 className="category-title">
           <CategoryEmoji value={category.emoji} size={20} />
-          {category.name} · 표
+          {t('tableExtra.title', { name: category.name })}
         </h1>
         <button
           type="button"
           className="icon-btn"
           onClick={() => downloadCsv(buildCsv(category, filteredEntries), csvFilename(category.name))}
-          aria-label="CSV로 내보내기"
+          aria-label={t('table.exportCsv')}
           disabled={filteredEntries.length === 0}
         >
           <DownloadIcon size={18} />
@@ -87,7 +89,7 @@ export function TableScreen({
             if (native) native.printPage();
             else window.print();
           }}
-          aria-label="PDF로 내보내기"
+          aria-label={t('table.exportPdf')}
           disabled={filteredEntries.length === 0}
         >
           <PdfIcon size={18} />
@@ -98,7 +100,7 @@ export function TableScreen({
         <div className="table-toolbar">
           <input
             className="text-input search-input"
-            placeholder="검색"
+            placeholder={t('table.search')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -106,7 +108,7 @@ export function TableScreen({
             type="button"
             className="icon-btn"
             onClick={() => setShowCsvImport(true)}
-            aria-label="CSV 가져오기"
+            aria-label={t('tableExtra.csvImport')}
             disabled={category.fields.length === 0}
           >
             <UploadIcon size={18} />
@@ -126,7 +128,7 @@ export function TableScreen({
         type="button"
         className="fab"
         onClick={() => setShowAddEntry(true)}
-        aria-label="데이터 추가"
+        aria-label={t('category.dataAdd')}
         disabled={category.fields.length === 0}
       >
         +
@@ -172,8 +174,8 @@ export function TableScreen({
 
       {undoEntry && (
         <Toast
-          message="삭제됨"
-          actionLabel="되돌리기"
+          message={t('category.deleted')}
+          actionLabel={t('common.undo')}
           onAction={() => {
             onRestoreEntry(undoEntry);
             setUndoEntry(null);
