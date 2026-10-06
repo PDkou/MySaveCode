@@ -4642,3 +4642,55 @@ director: "보관함 발견 진행도 바도 다시 한번 보자" -- v0.108에�
 Playwright로 "5초컷" 모달을 열어 미발견 3칸 모두에 발자국+반짝임이
 렌더링되는지 확대 크롭으로 확인, 콘솔 에러 0건. 순수 JS/CSS 변경이라
 네이티브 빌드와 무관. 커밋/푸시 후 CI 빌드도 함께 트리거.
+
+## v0.116 — 일본어 전용 귀여운 폰트(Zen Maru Gothic) 추가 (웹 + 네이티브)
+
+director: "왜이렇게 한자랑 히라가나랑 글시굵기가 틀릴까" 로 시작된
+긴 조사 끝에 확정된 작업. 경위:
+
+1. director가 "지금 일본어는 어떤 폰트야?"라고 물어 테스트한 결과,
+   메이플스토리체엔 가나/한자 글리프가 전혀 없어서 일본어는 그냥
+   Noto Sans JP 폴백으로 렌더링되고 있었음을 확인.
+2. "귀여운 일본어 폰트 10개 제안해봐" + "미리보기도 더불어서" ->
+   구글 폰트 등에서 무료 상업용 후보 10개(Mochiy Pop One, Hachi Maru
+   Pop, Yusei Magic, M PLUS Rounded 1c, Zen Maru Gothic, Kiwi Maru,
+   RocknRoll One, Stick, Kaisei Decol, Kosugi Maru)를 받아 실제 앱
+   문구로 미리보기 제작.
+3. "뭐가 제일 잘 어울리는거같아?" -> Mochiy Pop One 추천 -> "너무
+   글씨가 굵어" 반려 -> 가벼운 굵기 위주로 좁혀 M PLUS Rounded 1c
+   (Medium)/Zen Maru Gothic(Medium)/Kosugi Maru 3개로 압축, 실제 홈
+   화면에 적용해서 비교.
+4. 비교 중 director가 날카롭게 포착: "存在し て라고 되어있지않아?" /
+   "し랑 て랑 스페이스가 들어간거같지" -- 조사해보니 1차 조사 원인은
+   내 실수: 미리보기 폰트 파일을 구글 폰트 `text=` 서브셋 파라미터로
+   짧은 샘플 문구 글자만 받아놔서, 실제 앱의 다른 한자/가나(深夜巡回,
+   記録, 設定 등)는 폰트에 아예 없어 Noto Sans JP로 조용히 폴백되며
+   굵기가 섞여 보였던 것 -- fontTools로 cmap 전수 확인 후 전체 글리프
+   포함 버전으로 재발급해 수정. 이어진 "스페이스" 의혹은 fontTools로
+   glyf 테이블의 실제 윤곽선 바운딩박스를 까봐서 해소 -- し라는
+   글자가 이 계열(동글동글한) 폰트들에서 공통적으로 칸 안에 작게/
+   왼쪽으로 치우쳐 그려지는 디자인 특성 때문이었고 세 후보 모두
+   동일 현상이 있음을 확인. 직접 코드포인트를 한 글자씩 출력해
+   공백 문자가 전혀 없음을 최종 확인.
+5. director가 Zen Maru Gothic(Medium)을 스크린샷으로 지목, 확정.
+
+**웹 구현**: `fonts/ZenMaruGothic-Medium.woff2`(전체 글리프 포함,
+7864 glyphs -- fontTools로 직접 ttf를 woff2로 압축)를 에셋 번들,
+`html,body`의 font-family를 `'Maplestory','ZenMaruGothic',...`로
+확장 -- 한국어는 메이플스토리체 그대로, 일본어만 자동으로 Zen Maru
+Gothic으로 폴백(글리프 단위 자동 전환, 언어 분기 코드 불필요).
+
+**네이티브 공유카드도 동기화**: v0.112에서 확립한 패턴 그대로
+`ShareCardRenderer.kt`의 `drawTcgCard()`에 이미 있던 `lang` 파라미터를
+활용 -- `lang=="ja"`일 때 title/sansBold/stat 세 타이프페이스 전부
+`R.font.zen_maru_gothic_medium`을 쓰도록 분기. `res/font/
+zen_maru_gothic_medium.ttf` 추가.
+
+버전 116/0.116.0. 검증: (1) `node --check`로 구문 검증 통과 (2)
+Playwright로 일본어 홈 화면 전체 재스크린샷(실제 번들 파일로, 테스트용
+서브셋 아님) -- 모든 한자/가나가 균일한 굵기로 렌더링되는 것을 확인,
+한국어 화면도 별도로 재스크린샷해 메이플스토리체가 그대로 유지되는지
+확인, 콘솔 에러 0건 (3) fontTools로 두 ttf(웹 소스/네이티브) 모두
+실사용 문자 전수 커버리지 확인. 네이티브 변경은 이 샌드박스에 Android
+SDK 접근이 없어 로컬 컴파일 확인 불가 -- 육안 검토만 완료, 실제
+컴파일은 CI에서 확정 필요. 커밋/푸시 후 CI 빌드도 함께 트리거.

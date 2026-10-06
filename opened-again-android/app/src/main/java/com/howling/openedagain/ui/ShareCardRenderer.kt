@@ -188,9 +188,20 @@ class ShareCardRenderer(private val context: Context) {
         // the old serif-normal stat label face maps to maplestory_light.
         // Falls back to the previous system typefaces if the font resource
         // somehow fails to load rather than crashing card generation.
-        val titleTypeface = ResourcesCompat.getFont(context, R.font.maplestory_bold) ?: Typeface.create(Typeface.SERIF, Typeface.BOLD)
-        val sansBoldTypeface = ResourcesCompat.getFont(context, R.font.maplestory_bold) ?: Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
-        val statTypeface = ResourcesCompat.getFont(context, R.font.maplestory_light) ?: Typeface.create(Typeface.SERIF, Typeface.NORMAL)
+        //
+        // v0.116: Maplestory has zero Japanese glyphs (confirmed when the
+        // director asked what JP text was actually rendering in -- it was
+        // silently falling back to the system's default CJK font). Director
+        // picked Zen Maru Gothic (Medium) as the JP equivalent after a
+        // side-by-side candidate review, applied in index.html via its own
+        // @font-face. Mirrored here the same way v0.112 synced Maplestory:
+        // when lang=="ja", all three roles load zen_maru_gothic_medium
+        // instead of Maplestory (it's a single-weight font, same tradeoff
+        // Maplestory's two weights already make across these three roles).
+        val jaTypeface = if (lang == "ja") ResourcesCompat.getFont(context, R.font.zen_maru_gothic_medium) else null
+        val titleTypeface = jaTypeface ?: ResourcesCompat.getFont(context, R.font.maplestory_bold) ?: Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        val sansBoldTypeface = jaTypeface ?: ResourcesCompat.getFont(context, R.font.maplestory_bold) ?: Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+        val statTypeface = jaTypeface ?: ResourcesCompat.getFont(context, R.font.maplestory_light) ?: Typeface.create(Typeface.SERIF, Typeface.NORMAL)
 
         // 1. Frame background -- pure atmospheric art + border, native
         // aspect already matches `rect`'s (both 1024:1536), so a plain

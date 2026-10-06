@@ -53,7 +53,31 @@
    correctly via Noto Sans JP without any lang-specific branching. */
 @font-face{font-family:'Maplestory';src:url('fonts/Maplestory-Light.woff2') format('woff2');font-weight:400;font-display:swap}
 @font-face{font-family:'Maplestory';src:url('fonts/Maplestory-Bold.woff2') format('woff2');font-weight:700;font-display:swap}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Maplestory',-apple-system,BlinkMacSystemFont,"Noto Sans KR","Noto Sans JP",sans-serif;overscroll-behavior:none}
+/* v0.116: director asked which cute Japanese font the app actually used --
+   turned out to be plain Noto Sans JP fallback (Maplestory has zero kana/
+   kanji glyphs). Previewed 10 candidates with real app copy, narrowed to 3
+   at director's request after rejecting the first pick (Mochiy Pop One)
+   as "too bold", then caught a real bug in my own first batch of in-app
+   screenshots: several kanji/hiragana looked a different weight than the
+   rest. Root cause was mine, not the font's -- I'd built those preview
+   files with Google's `text=` subsetting param scoped to the one sample
+   sentence, so most of the app's actual Japanese UI text (記録/設定/深夜
+   巡回 etc.) wasn't in the file at all and silently fell back to Noto Sans
+   JP mid-sentence. Refetched all 3 finalists with FULL glyph coverage
+   (verified via fontTools cmap inspection, zero missing characters) and
+   re-ran the in-app comparison before the director picked. One further
+   question from the director ("し랑 て 사이에 스페이스 있는거아니야?") led to
+   inspecting the font's actual glyph outlines (fontTools glyf table) --
+   confirmed no space character anywhere in the source string; the visual
+   gap is し's own glyph design (very large left+right side-bearing in
+   every rounded JP candidate tested, not just this one) sitting in a
+   visually-empty bounding box, not a layout bug. Director picked Zen Maru
+   Gothic (Medium/500) as the best balance. Bundled as
+   fonts/ZenMaruGothic-Medium.woff2 (local asset, same offline-first
+   reasoning as Maplestory above) with full glyph coverage (7864 glyphs,
+   not a sentence-scoped subset this time). */
+@font-face{font-family:'ZenMaruGothic';src:url('fonts/ZenMaruGothic-Medium.woff2') format('woff2');font-weight:500;font-display:swap}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Maplestory','ZenMaruGothic',-apple-system,BlinkMacSystemFont,"Noto Sans KR","Noto Sans JP",sans-serif;overscroll-behavior:none}
 body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),var(--bg)}button{font:inherit}
 /* v0.49: director feedback -- "여백이 이상함(좌우 여백, 카드/버튼 사이
    간격)", referencing well-known Korean apps' proportions. 18px/14px side
@@ -691,7 +715,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.115.0';
+const APP_VERSION='0.116.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
