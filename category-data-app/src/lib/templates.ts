@@ -1,6 +1,8 @@
 import type { FieldDef } from '../types';
 import { newId } from './id';
 
+type Translate = (key: string, variables?: Record<string, string | number>) => string;
+
 export interface CategoryTemplate {
   id: string;
   name: string;
@@ -10,51 +12,79 @@ export interface CategoryTemplate {
   buildFields: () => FieldDef[];
 }
 
-// Starter templates for the examples the app was originally scoped around
-// (household ledger / wardrobe / cosmetics). Each buildFields() call mints
-// fresh field IDs so picking the same template twice for two different
-// categories never lets them accidentally share a field id.
-export const CATEGORY_TEMPLATES: CategoryTemplate[] = [
-  {
-    id: 'ledger',
-    name: '가계부',
-    emoji: '💰',
-    color: '#6F5499',
-    description: '날짜별 수입/지출 기록',
-    buildFields: () => [
-      { id: newId(), name: '날짜', type: 'date', required: true },
-      { id: newId(), name: '구분', type: 'select', options: ['수입', '지출'], required: true },
-      { id: newId(), name: '항목', type: 'text', required: true },
-      { id: newId(), name: '금액', type: 'currency', required: true },
-      { id: newId(), name: '메모', type: 'text', required: false },
-    ],
-  },
-  {
-    id: 'wardrobe',
-    name: '옷장',
-    emoji: '👕',
-    color: '#D98BA0',
-    description: '옷 종류, 구매일, 가격 관리',
-    buildFields: () => [
-      { id: newId(), name: '구매일', type: 'date', required: false },
-      { id: newId(), name: '종류', type: 'select', options: ['상의', '하의', '아우터', '신발', '기타'], required: true },
-      { id: newId(), name: '브랜드', type: 'text', required: false },
-      { id: newId(), name: '색상', type: 'text', required: false },
-      { id: newId(), name: '가격', type: 'currency', required: false },
-    ],
-  },
-  {
-    id: 'cosmetics',
-    name: '화장품',
-    emoji: '💄',
-    color: '#E0A93E',
-    description: '제품별 구매일, 개봉일 관리',
-    buildFields: () => [
-      { id: newId(), name: '제품명', type: 'text', required: true },
-      { id: newId(), name: '종류', type: 'select', options: ['스킨케어', '메이크업', '헤어', '바디', '기타'], required: true },
-      { id: newId(), name: '구매일', type: 'date', required: false },
-      { id: newId(), name: '개봉일', type: 'date', required: false },
-      { id: newId(), name: '가격', type: 'currency', required: false },
-    ],
-  },
-];
+export function getCategoryTemplates(t: Translate): CategoryTemplate[] {
+  return [
+    {
+      id: 'ledger',
+      name: t('templates.ledger.name'),
+      emoji: '💰',
+      color: '#6F5499',
+      description: t('templates.ledger.desc'),
+      buildFields: () => [
+        { id: newId(), name: t('templates.ledger.date'), type: 'date', required: true },
+        {
+          id: newId(),
+          name: t('templates.ledger.kind'),
+          type: 'select',
+          options: [t('templates.ledger.income'), t('templates.ledger.expense')],
+          required: true,
+        },
+        { id: newId(), name: t('templates.ledger.item'), type: 'text', required: true },
+        { id: newId(), name: t('templates.ledger.amount'), type: 'currency', required: true },
+        { id: newId(), name: t('templates.ledger.memo'), type: 'text', required: false },
+      ],
+    },
+    {
+      id: 'wardrobe',
+      name: t('templates.wardrobe.name'),
+      emoji: '👕',
+      color: '#D98BA0',
+      description: t('templates.wardrobe.desc'),
+      buildFields: () => [
+        { id: newId(), name: t('templates.wardrobe.purchaseDate'), type: 'date', required: false },
+        {
+          id: newId(),
+          name: t('templates.wardrobe.type'),
+          type: 'select',
+          options: [
+            t('templates.wardrobe.top'),
+            t('templates.wardrobe.bottom'),
+            t('templates.wardrobe.outer'),
+            t('templates.wardrobe.shoes'),
+            t('templates.wardrobe.other'),
+          ],
+          required: true,
+        },
+        { id: newId(), name: t('templates.wardrobe.brand'), type: 'text', required: false },
+        { id: newId(), name: t('templates.wardrobe.color'), type: 'text', required: false },
+        { id: newId(), name: t('templates.wardrobe.price'), type: 'currency', required: false },
+      ],
+    },
+    {
+      id: 'cosmetics',
+      name: t('templates.cosmetics.name'),
+      emoji: '💄',
+      color: '#E0A93E',
+      description: t('templates.cosmetics.desc'),
+      buildFields: () => [
+        { id: newId(), name: t('templates.cosmetics.product'), type: 'text', required: true },
+        {
+          id: newId(),
+          name: t('templates.cosmetics.type'),
+          type: 'select',
+          options: [
+            t('templates.cosmetics.skincare'),
+            t('templates.cosmetics.makeup'),
+            t('templates.cosmetics.hair'),
+            t('templates.cosmetics.body'),
+            t('templates.cosmetics.other'),
+          ],
+          required: true,
+        },
+        { id: newId(), name: t('templates.cosmetics.purchaseDate'), type: 'date', required: false },
+        { id: newId(), name: t('templates.cosmetics.openDate'), type: 'date', required: false },
+        { id: newId(), name: t('templates.cosmetics.price'), type: 'currency', required: false },
+      ],
+    },
+  ];
+}
