@@ -12,16 +12,17 @@ interface EntryListProps {
 // management screen instead of the full multi-column table (that lives on
 // its own screen now, see TableScreen.tsx) so this screen never needs
 // horizontal scrolling on a phone.
-function summarize(fields: FieldDef[], entry: Entry, emptyLabel: string): string {
+function summarize(fields: FieldDef[], entry: Entry, emptyLabel: string, localeCode: string): string {
   const parts = fields
     .slice(0, 3)
-    .map((f) => formatFieldValue(f, entry.values[f.id]))
+    .map((f) => formatFieldValue(f, entry.values[f.id], localeCode))
     .filter(Boolean);
   return parts.length > 0 ? parts.join(' · ') : emptyLabel;
 }
 
 export function EntryList({ fields, entries, onRowClick }: EntryListProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const localeCode = locale === 'ja' ? 'ja-JP' : locale === 'ko' ? 'ko-KR' : 'en-US';
   if (fields.length === 0) {
     return <p className="empty-hint">{t('item.emptyFields')}</p>;
   }
@@ -33,7 +34,7 @@ export function EntryList({ fields, entries, onRowClick }: EntryListProps) {
       {entries.map((entry) => (
         <li key={entry.id}>
           <button type="button" className="entry-list-row" onClick={() => onRowClick(entry)}>
-            <span className="entry-list-summary">{summarize(fields, entry, t('item.empty'))}</span>
+            <span className="entry-list-summary">{summarize(fields, entry, t('item.empty'), localeCode)}</span>
             <span className="entry-list-chevron">›</span>
           </button>
         </li>
