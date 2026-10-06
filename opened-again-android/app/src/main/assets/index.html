@@ -715,7 +715,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.119.0';
+const APP_VERSION='0.120.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -922,12 +922,38 @@ function shouldShowReveal(d){
   const cards=d.report?.cards||[];
   return cards.length>0&&state.history.revealShownDate!==todayKey();
 }
-// v0.117: director-requested in-app review prompt -- first of its 3 trigger
-// points (see NativeBridge.kt's requestReviewIfLegendary()/ReviewPromptManager.kt)
+// v0.117: director-requested in-app review prompt -- the automatic trigger
 // is right here: the moment the daily reveal card is dismissed, if that
 // card happened to be LEGENDARY/HIDDEN. Checked before state.revealItem is
 // cleared below, since that's the only place this function still has it.
-function dismissReveal(){const wasTopRarity=state.revealItem&&(state.revealItem.rarity==='LEGENDARY'||state.revealItem.rarity==='HIDDEN');state.history.revealShownDate=todayKey();try{N&&N.setRevealShownDate&&N.setRevealShownDate(todayKey())}catch(e){}state.revealItem=null;render();if(wasTopRarity){try{N&&N.requestReviewIfLegendary&&N.requestReviewIfLegendary()}catch(e){}}}
+// v0.120: director clarified this should show the app's OWN confirm sheet
+// first (openAutoReviewPrompt(), with its "다음부터 표시하지 않기"
+// checkbox) rather than silently calling into Play's review API in the
+// background -- N.shouldShowAutoReviewPrompt() is a sync read (see
+// NativeBridge.kt) of whether that checkbox has ever been ticked before.
+function dismissReveal(){const wasTopRarity=state.revealItem&&(state.revealItem.rarity==='LEGENDARY'||state.revealItem.rarity==='HIDDEN');state.history.revealShownDate=todayKey();try{N&&N.setRevealShownDate&&N.setRevealShownDate(todayKey())}catch(e){}state.revealItem=null;render();if(wasTopRarity){let shouldAsk=false;try{shouldAsk=N&&N.shouldShowAutoReviewPrompt?N.shouldShowAutoReviewPrompt():false}catch(e){}if(shouldAsk)openAutoReviewPrompt()}}
+// v0.120: the review sheet dismissReveal() opens above for LEGENDARY/HIDDEN
+// discoveries. Plain HTML checkbox (#reviewOptOutCheck) has no app-state
+// binding of its own -- its checked value is only ever read at close time
+// (closeAutoReviewPrompt()/confirmAutoReviewPrompt() below), same one-shot
+// read pattern the reminder-time radio options use elsewhere (see
+// toggleReminderTimeEnabled()). Reuses .lang-option's existing checkbox/
+// radio row styling rather than writing new CSS.
+function openAutoReviewPrompt(){
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeAutoReviewPrompt()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('리뷰를 남겨주실래요?','レビューを書いていただけますか？','Would you like to leave a review?')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 14px;text-align:center">${l('앱이 마음에 드셨다면 스토어에 평가를 남겨주세요.','アプリが気に入ったら、ストアで評価をお願いします。','If you\'re enjoying the app, please rate it on the store.')}</p><label class="lang-option"><input type="checkbox" id="reviewOptOutCheck"><span>${l('다음부터 표시하지 않기','次回から表示しない','Don\'t show this again')}</span></label></div><div class="sheet-actions"><button class="cancel" onclick="closeAutoReviewPrompt()">${l('나중에','あとで','Later')}</button><button class="confirm" onclick="confirmAutoReviewPrompt()">⭐ ${l('리뷰 남기기','レビューを書く','Leave a review')}</button></div></div></div>`;
+}
+function closeAutoReviewPrompt(){
+  const optOut=document.getElementById('reviewOptOutCheck')?.checked;
+  if(optOut){try{N&&N.dismissAutoReviewPromptForever&&N.dismissAutoReviewPromptForever()}catch(e){}}
+  closeOverlay();
+}
+// Actually going through with the review is itself a reason to stop
+// offering this sheet again, regardless of whether the checkbox was ticked.
+function confirmAutoReviewPrompt(){
+  try{N&&N.dismissAutoReviewPromptForever&&N.dismissAutoReviewPromptForever()}catch(e){}
+  closeOverlay();
+  requestReviewManual();
+}
 function refresh(){
   state.data=read();
   if(N)loadHistoryFromNative();else persistSnapshotForPreview(state.data);
@@ -1896,11 +1922,11 @@ ${row(dbgIcon('📡'),'백그라운드 체크 상태 보기','여러 사건 발�
 // the row itself flips to "구매 완료" the next time settings() renders
 // (onNativeResume already re-renders on returning from that purchase sheet).
 // v0.117: director-requested in-app review prompt, manual trigger -- the
-// Settings row above (and v0.118's exit-modal button). Unlike the automatic
-// legendary/hidden-reveal trigger, which fires at most once ever (v0.119
-// safeguard, see ReviewPromptManager.kt), this one always runs -- a user who
-// tapped one of these specific buttons should always get the flow, not be
-// silently skipped by a flag they can't see.
+// Settings row above, v0.118's exit-modal button, and (v0.120)
+// confirmAutoReviewPrompt()'s own confirm button all call this. Always
+// runs when tapped -- the automatic trigger's gating lives entirely in
+// whether openAutoReviewPrompt() gets shown in the first place
+// (dismissReveal()), not here.
 function requestReviewManual(){
   if(preview||!N){toast(l('미리보기에서는 실행되지 않습니다.','プレビューでは実行されません。','Not available in preview.'));return}
   try{N.requestReviewManual&&N.requestReviewManual()}catch(e){}

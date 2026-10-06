@@ -535,20 +535,30 @@ class NativeBridge(
     // -- index.html's dismissReveal() calls this right after the daily
     // reveal card is dismissed, but only when that card's rarity was
     // LEGENDARY/HIDDEN (the "positive moment" the director picked).
-    // v0.119: fires at most once ever per the director's safeguard request
-    // ("앱평가 한사람을 위해 다음부터 표시하지 않기") -- see
-    // ReviewPromptManager.kt's hasAutoPrompted. Fire-and-forget, nothing in
-    // the UI needs to wait on this one.
+    // v0.120: director clarified this should ask via the app's OWN sheet
+    // first ("리뷰 남기시겠습니까" with a "다음부터 표시하지 않기" checkbox
+    // -- openAutoReviewPrompt() in index.html), not silently call Play's API
+    // in the background (what v0.117-v0.119 did). This bridge method is now
+    // just a sync read so dismissReveal() can decide whether to show that
+    // sheet at all -- it never launches the review flow itself.
     @JavascriptInterface
-    fun requestReviewIfLegendary() {
-        activity.runOnUiThread { reviewPromptManager.maybeRequestReview {} }
+    fun shouldShowAutoReviewPrompt(): Boolean = reviewPromptManager.shouldShowAutoPrompt()
+
+    // v0.120: the auto-prompt sheet's own "다음부터 표시하지 않기" checkbox
+    // (and its confirm button, which also opts out -- see that sheet's own
+    // comment) -- permanently stops offering the sheet on future
+    // LEGENDARY/HIDDEN discoveries. Does not affect the manual buttons
+    // below, which always work regardless of this flag.
+    @JavascriptInterface
+    fun dismissAutoReviewPromptForever() {
+        reviewPromptManager.setAutoPromptOptedOut()
     }
 
-    // v0.117/v0.118: manual trigger, called from both the "리뷰 남기기" row
-    // in Settings and the exit-confirm modal's "⭐ 앱 평가하기" button.
-    // Always runs regardless of whether the automatic trigger above has
-    // already fired once (see ReviewPromptManager.kt) -- a user who went
-    // looking for either of these should always be able to use them.
+    // v0.117/v0.118: manual trigger that actually launches Play's review
+    // flow -- called from the auto-prompt sheet's own confirm button, the
+    // "리뷰 남기기" row in Settings, and the exit-confirm modal's "⭐ 앱
+    // 평가하기" button alike. Always runs when tapped; none of those three
+    // call sites gate it any further themselves.
     @JavascriptInterface
     fun requestReviewManual() {
         activity.runOnUiThread { reviewPromptManager.requestReviewNow {} }

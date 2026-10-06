@@ -9,49 +9,43 @@ import com.google.android.play.core.review.ReviewManagerFactory
  * 남기지?" -> wants an in-app review prompt). This API only ever shows
  * Google's own fixed-design popup -- no custom UI, no way to know whether the
  * user actually rated anything, and Google's own quota silently skips most
- * requests anyway, so "requesting" a review here never guarantees one is
- * shown.
+ * requests anyway, so actually launching the flow never guarantees a popup
+ * is shown.
  *
- * Director picked two trigger shapes (see NativeBridge.kt's call sites):
- * an automatic one right after discovering a LEGENDARY/HIDDEN card, and
- * manual buttons (Settings row, exit-modal "⭐ 앱 평가하기" button -- v0.118
- * reverted an earlier, mistaken attempt to also fire the automatic one off
- * the exit button itself, see exitApp()'s own comment).
+ * v0.120: director clarified the automatic LEGENDARY/HIDDEN trigger should
+ * NOT silently call Play's API in the background at all -- it should first
+ * show the app's own "리뷰 남기시겠습니까?" sheet (index.html's
+ * openAutoReviewPrompt()) with a "다음부터 표시하지 않기" checkbox, and only
+ * call into Play's real API if the user actually taps through. This class
+ * now only tracks whether that app-level sheet should still be offered at
+ * all ([shouldShowAutoPrompt]/[setAutoPromptOptedOut], persisted in the same
+ * "app_prefs" SharedPreferences file NativeBridge already uses for other
+ * small flags) -- it earlier (v0.117-v0.119) tried gating the real Play API
+ * call directly (first a 30-day cooldown, then a permanent once-ever flag),
+ * which was the wrong layer to put the safeguard in once it became clear an
+ * app-level confirmation sheet was wanted.
  *
- * v0.119: director asked for a safeguard on the automatic trigger -- "앱평가
- * 한사람을 위해 다음부터 표시하지 않기" (for someone who's already rated,
- * don't show it to them again). Once the automatic flow has actually run to
- * completion a single time, [hasAutoPrompted] flips permanently (persisted
- * in the same "app_prefs" SharedPreferences file NativeBridge already uses
- * for other small flags) and every later LEGENDARY/HIDDEN discovery skips
- * the automatic prompt for good -- not a time-based cooldown that would
- * eventually start bothering that same person again. The manual buttons are
- * a completely separate path and always work regardless of this flag --
- * someone who wants to rate again later, or who dismissed the automatic one
- * once, can still always reach it themselves.
+ * [requestReviewNow] is the one path that actually calls Play's API -- used
+ * by the auto-prompt sheet's own confirm button, the Settings "리뷰 남기기"
+ * row, and the exit-modal "⭐ 앱 평가하기" button alike. None of those three
+ * need any further gating of their own: the auto-prompt sheet already only
+ * appears when [shouldShowAutoPrompt] is true, and the two manual buttons
+ * are meant to always work whenever tapped.
  */
 class ReviewPromptManager(private val activity: Activity) {
     private val prefs get() = activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
     private val reviewManager = ReviewManagerFactory.create(activity)
 
-    private val hasAutoPrompted: Boolean
-        get() = prefs.getBoolean("review_auto_prompted", false)
+    /** Whether index.html's auto-prompt sheet should still be offered after a LEGENDARY/HIDDEN discovery. */
+    fun shouldShowAutoPrompt(): Boolean = !prefs.getBoolean("review_prompt_opted_out", false)
 
-    /** Automatic trigger (legendary/hidden discovery) -- fires at most once, ever. */
-    fun maybeRequestReview(onDone: () -> Unit) {
-        if (hasAutoPrompted) {
-            onDone()
-            return
-        }
-        launchFlow(markAutoPrompted = true, onDone)
+    /** Permanently stops offering the auto-prompt sheet -- the sheet's own "다음부터 표시하지 않기" checkbox. */
+    fun setAutoPromptOptedOut() {
+        prefs.edit().putBoolean("review_prompt_opted_out", true).apply()
     }
 
-    /** Manual trigger (Settings row, exit-modal button) -- always runs, no gating. */
+    /** Actually launches Play's review flow. Fire-and-forget from the caller's perspective. */
     fun requestReviewNow(onDone: () -> Unit) {
-        launchFlow(markAutoPrompted = false, onDone)
-    }
-
-    private fun launchFlow(markAutoPrompted: Boolean, onDone: () -> Unit) {
         val request = reviewManager.requestReviewFlow()
         request.addOnCompleteListener { requestTask ->
             if (!requestTask.isSuccessful) {
@@ -63,7 +57,6 @@ class ReviewPromptManager(private val activity: Activity) {
             flow.addOnCompleteListener {
                 // Completes once the flow is dismissed either way -- Play
                 // Core never reports whether the user actually left a rating.
-                if (markAutoPrompted) prefs.edit().putBoolean("review_auto_prompted", true).apply()
                 onDone()
             }
         }
