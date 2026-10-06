@@ -260,5 +260,25 @@
     "deleteAllMessage": "引き出し{{drawers}}個、収納品{{items}}件をすべて削除します。この操作は元に戻せません。続けますか？",
     "deleteAllConfirm": "すべて削除",
     "version": "Drawary · {{version}}"
+  },
+  "tableExtra": {
+    "title": "{{name}} · 表",
+    "csvImport": "CSVを読み込む",
+    "sum": "合計 {{value}}",
+    "created": "作成日：{{date}} · 全{{count}}件"
+  },
+  "csv": {
+    "title": "CSVを読み込む",
+    "emptyRows": "読み込める行がありません。1行目が引き出しの項目名と一致するCSVか確認してください。",
+    "readFailed": "CSVファイルを読み込めませんでした。",
+    "importFailed": "ファイルを読み込めませんでした。",
+    "fileReadFailed": "ファイルの読み込みに失敗しました。",
+    "guide": "1行目がこの引き出しの項目名と一致するCSVを選ぶと、名前が一致する列から収納品を追加します。一致しない列は無視されます。",
+    "selectFile": "ファイルを選択",
+    "importData": "データを読み込む",
+    "preview": "項目{{matched}}/{{total}}件が一致し、収納品{{items}}件を追加します。",
+    "invalidCells": " 数値・金額の項目で{{count}}件の値を読み取れなかったため空欄にします。",
+    "continue": " 続けますか？",
+    "import": "読み込む"
   }
 }
