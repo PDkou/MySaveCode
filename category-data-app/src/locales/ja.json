@@ -280,5 +280,70 @@
     "invalidCells": " 数値・金額の項目で{{count}}件の値を読み取れなかったため空欄にします。",
     "continue": " 続けますか？",
     "import": "読み込む"
+  },
+  "brand": {
+    "splashName": "ひきだし帳"
+  },
+  "addDrawer": {
+    "title": "新しい引き出しを作る",
+    "hint": "テンプレートですぐ始めるか、空の引き出しから項目を自由に作れます。",
+    "blank": "空の引き出しから始める",
+    "blankDesc": "項目を自由に設計します",
+    "info": "引き出し情報",
+    "namePlaceholder": "例：家計簿",
+    "includedFields": "含まれる項目（{{count}}件）",
+    "fieldsEditable": "項目は引き出しを作った後でも自由に追加・編集できます。"
+  },
+  "editDrawer": {
+    "title": "引き出しを編集"
+  },
+  "filters": {
+    "all": "すべて",
+    "checked": "チェックあり",
+    "unchecked": "チェックなし"
+  },
+  "pin": {
+    "backspace": "削除"
+  },
+  "templates": {
+    "ledger": {
+      "name": "家計簿",
+      "desc": "日付ごとの収入・支出を整理",
+      "date": "日付",
+      "kind": "区分",
+      "income": "収入",
+      "expense": "支出",
+      "item": "項目",
+      "amount": "金額",
+      "memo": "メモ"
+    },
+    "wardrobe": {
+      "name": "クローゼット",
+      "desc": "服の種類・購入日・価格を整理",
+      "purchaseDate": "購入日",
+      "type": "種類",
+      "top": "トップス",
+      "bottom": "ボトムス",
+      "outer": "アウター",
+      "shoes": "靴",
+      "other": "その他",
+      "brand": "ブランド",
+      "color": "カラー",
+      "price": "価格"
+    },
+    "cosmetics": {
+      "name": "コスメ",
+      "desc": "商品ごとの購入日・開封日を整理",
+      "product": "商品名",
+      "type": "種類",
+      "skincare": "スキンケア",
+      "makeup": "メイク",
+      "hair": "ヘア",
+      "body": "ボディ",
+      "other": "その他",
+      "purchaseDate": "購入日",
+      "openDate": "開封日",
+      "price": "価格"
+    }
   }
 }
