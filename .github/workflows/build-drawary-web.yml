@@ -52,3 +52,13 @@ jobs:
       - name: Verify runtime i18n in Chromium
         working-directory: category-data-app
         run: node scripts/verify-i18n-runtime.mjs
+
+      - name: Capture review screenshots
+        working-directory: category-data-app
+        run: node scripts/capture-review-screens.mjs
+
+      - name: Upload review screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawary-review-screens
+          path: category-data-app/review-screens/*.png
