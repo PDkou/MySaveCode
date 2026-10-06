@@ -3,6 +3,7 @@ import type { Category, FieldDef, FieldType } from '../types';
 import { FieldFormModal } from './FieldFormModal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { TextTypeIcon, HashIcon, CalendarIcon, ListIcon, CheckSquareIcon, StarIcon } from './icons';
+import { useI18n } from '../i18n';
 
 // currency doesn't get a drawn icon -- the won sign reads instantly to
 // this app's audience and a generic coin/dollar glyph would say less
@@ -26,6 +27,7 @@ interface FieldEditorProps {
 }
 
 export function FieldEditor({ category, onAddField, onUpdateField, onRemoveField, onMoveField }: FieldEditorProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [editingField, setEditingField] = useState<FieldDef | null>(null);
   const [addingField, setAddingField] = useState(false);
@@ -34,13 +36,13 @@ export function FieldEditor({ category, onAddField, onUpdateField, onRemoveField
   return (
     <section className="field-editor">
       <button type="button" className="section-toggle" onClick={() => setOpen((v) => !v)}>
-        <span>필드 관리 ({category.fields.length}개)</span>
+        <span>{t('fields.manage', { count: category.fields.length })}</span>
         <span className={`chevron ${open ? 'open' : ''}`}>⌄</span>
       </button>
 
       {open && (
         <div className="field-list">
-          {category.fields.length === 0 && <p className="empty-hint">아직 항목이 없어요. 항목을 추가해 데이터 입력 양식을 만들어 보세요.</p>}
+          {category.fields.length === 0 && <p className="empty-hint">{t('fields.empty')}</p>}
           {category.fields.map((f, idx) => (
             <div key={f.id} className="field-row">
               <span className="field-row-icon">{TYPE_ICONS[f.type]}</span>
@@ -57,7 +59,7 @@ export function FieldEditor({ category, onAddField, onUpdateField, onRemoveField
                   className="icon-btn small"
                   disabled={idx === 0}
                   onClick={() => onMoveField(f.id, -1)}
-                  aria-label="위로 이동"
+                  aria-label={t('common.moveUp')}
                 >
                   ↑
                 </button>
@@ -66,7 +68,7 @@ export function FieldEditor({ category, onAddField, onUpdateField, onRemoveField
                   className="icon-btn small"
                   disabled={idx === category.fields.length - 1}
                   onClick={() => onMoveField(f.id, 1)}
-                  aria-label="아래로 이동"
+                  aria-label={t('common.moveDown')}
                 >
                   ↓
                 </button>
@@ -74,7 +76,7 @@ export function FieldEditor({ category, onAddField, onUpdateField, onRemoveField
             </div>
           ))}
           <button type="button" className="btn btn-secondary btn-block" onClick={() => setAddingField(true)}>
-            + 항목 추가
+            {t('fields.add')}
           </button>
         </div>
       )}
@@ -108,9 +110,9 @@ export function FieldEditor({ category, onAddField, onUpdateField, onRemoveField
 
       {confirmDeleteId && (
         <ConfirmDialog
-          title="항목 삭제"
-          message="이 항목을 삭제하면 표에서 해당 열이 사라져요. 기존에 입력된 값은 다른 항목에 영향을 주지 않아요. 계속할까요?"
-          confirmLabel="삭제"
+          title={t('fields.delete')}
+          message={t('fields.deleteConfirm')}
+          confirmLabel={t('common.delete')}
           danger
           onConfirm={() => {
             onRemoveField(confirmDeleteId);
