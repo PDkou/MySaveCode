@@ -3,6 +3,7 @@ import { Modal } from './Modal';
 import type { AppData } from '../types';
 import { parseImportedData } from '../lib/storage';
 import { getNativeBridge } from '../lib/native';
+import { useI18n } from '../i18n';
 
 interface BackupSheetProps {
   data: AppData;
@@ -11,13 +12,14 @@ interface BackupSheetProps {
   onClose: () => void;
 }
 
-function backupFilename(): string {
+function backupFilename(prefix: string): string {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `서랍장-백업-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.json`;
+  return `${prefix}-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}.json`;
 }
 
 export function BackupSheet({ data, onImport, onMerge, onClose }: BackupSheetProps) {
+  const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [imported, setImported] = useState(false);
   const [pendingData, setPendingData] = useState<AppData | null>(null);
@@ -34,16 +36,16 @@ export function BackupSheet({ data, onImport, onMerge, onClose }: BackupSheetPro
   useEffect(() => {
     if (!native) return;
     window.onDrawaryBackupExported = () => setError(null);
-    window.onDrawaryBackupExportFailed = () => setError('백업 파일을 저장하지 못했어요.');
+    window.onDrawaryBackupExportFailed = () => setError(t('backup.saveFailed'));
     window.onDrawaryBackupImported = (json: string) => {
       try {
         setPendingData(parseImportedData(json));
         setError(null);
       } catch {
-        setError('올바른 백업 파일이 아니에요. 이 앱에서 내보낸 JSON 파일을 선택해 주세요.');
+        setError(t('backup.invalidFile'));
       }
     };
-    window.onDrawaryBackupImportFailed = () => setError('백업 파일을 읽지 못했어요.');
+    window.onDrawaryBackupImportFailed = () => setError(t('backup.readFailed'));
     return () => {
       window.onDrawaryBackupExported = undefined;
       window.onDrawaryBackupExportFailed = undefined;
@@ -62,7 +64,7 @@ export function BackupSheet({ data, onImport, onMerge, onClose }: BackupSheetPro
     const url = URL.createObjectURL(buildBlob());
     const a = document.createElement('a');
     a.href = url;
-    a.download = backupFilename();
+    a.download = backupFilename(t('backup.filenamePrefix'));
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -71,10 +73,10 @@ export function BackupSheet({ data, onImport, onMerge, onClose }: BackupSheetPro
 
   const shareBackup = async () => {
     try {
-      const file = new File([buildBlob()], backupFilename(), { type: 'application/json' });
+      const file = new File([buildBlob()], backupFilename(t('backup.filenamePrefix')), { type: 'application/json' });
       const nav = navigator as Navigator & { canShare?: (data: { files: File[] }) => boolean };
       if (nav.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: '나만의 서랍장 백업' });
+        await navigator.share({ files: [file], title: t('backup.shareTitle') });
       } else {
         downloadBackup();
       }
@@ -94,33 +96,33 @@ export function BackupSheet({ data, onImport, onMerge, onClose }: BackupSheetPro
         setError('올바른 백업 파일이 아니에요. 이 앱에서 내보낸 JSON 파일을 선택해 주세요.');
       }
     };
-    reader.onerror = () => setError('파일을 읽는 데 실패했어요.');
+    reader.onerror = () => setError(t('csv.fileReadFailed'));
     reader.readAsText(file);
   };
 
   return (
-    <Modal title="백업 / 복원" onClose={onClose}>
+    <Modal title={t('backup.title')} onClose={onClose}>
       <section className="backup-section">
-        <h3>내보내기</h3>
-        <p className="modal-hint">모든 카테고리와 데이터를 하나의 파일로 저장해요. 다른 기기로 옮길 때 사용하세요.</p>
+        <h3>{t('backup.exportTitle')}</h3>
+        <p className="modal-hint">{t('backup.exportDesc')}</p>
         <div className="backup-actions">
           <button type="button" className="btn btn-primary" onClick={downloadBackup}>
-            파일로 저장
+            {t('backup.saveFile')}
           </button>
           {!native && canShareFiles && (
             <button type="button" className="btn btn-secondary" onClick={shareBackup}>
-              공유하기
+              {t('backup.share')}
             </button>
           )}
         </div>
       </section>
 
       <section className="backup-section">
-        <h3>가져오기</h3>
-        <p className="modal-hint">백업 파일을 선택하면 <strong>병합</strong>(추가)하거나 <strong>전체 교체</strong>할 수 있어요.</p>
+        <h3>{t('backup.importTitle')}</h3>
+        <p className="modal-hint">{t('backup.importDesc')}</p>
         {native ? (
           <button type="button" className="btn btn-secondary" onClick={() => native.importBackup()}>
-            파일 선택
+            {t('backup.selectFile')}
           </button>
         ) : (
           <input
@@ -135,17 +137,16 @@ export function BackupSheet({ data, onImport, onMerge, onClose }: BackupSheetPro
             }}
           />
         )}
-        {imported && <p className="success-hint">가져오기가 완료됐어요.</p>}
+        {imported && <p className="success-hint">{t('backup.importComplete')}</p>}
         {error && <p className="error-hint">{error}</p>}
       </section>
 
       {pendingData && (
-        <Modal title="데이터 가져오기" onClose={() => setPendingData(null)}>
+        <Modal title={t('backup.importDialog')} onClose={() => setPendingData(null)}>
           <p className="confirm-message">
-            가져온 백업: 카테고리 {pendingData.categories.length}개, 데이터 {pendingData.entries.length}건.
+            {t('backup.importSummary', { drawers: pendingData.categories.length, items: pendingData.entries.length })}
             <br />
-            <strong>병합</strong>은 지금 있는 데이터에 이어서 추가하고, <strong>전체 교체</strong>는 지금 있는 데이터를 지우고
-            백업 내용으로 바꿔요.
+            {t('backup.mergeDesc')}
           </p>
           <div className="confirm-actions">
             <button
@@ -157,7 +158,7 @@ export function BackupSheet({ data, onImport, onMerge, onClose }: BackupSheetPro
                 setImported(true);
               }}
             >
-              병합
+              {t('backup.merge')}
             </button>
             <button
               type="button"
@@ -168,7 +169,7 @@ export function BackupSheet({ data, onImport, onMerge, onClose }: BackupSheetPro
                 setImported(true);
               }}
             >
-              전체 교체
+              {t('backup.replace')}
             </button>
           </div>
         </Modal>
