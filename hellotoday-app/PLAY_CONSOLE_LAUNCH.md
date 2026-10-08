@@ -604,23 +604,22 @@ cd hellotoday-app
 
 - [x] **Play 스토어 공개 확인**: 완료 (2026-10-06). 직접 접속해서 확인함
   (`https://play.google.com/store/apps/details?id=com.howlingcreativestudio.hellotoday`)
-- [~] **AdMob app-ads.txt / 앱 인증 문제 — 설정 완료, 구글 쪽 전파 대기 중**
-  (2026-10-06 ~ 진행 중). 스토어 공개 직후 AdMob 콘솔에 "Hello,
-  Today(Android)을(를) 확인할 수 없습니다" — app-ads.txt 인증 실패
-  경고 발견. 원인: 회사 웹사이트 자체가 없어서 app-ads.txt를 올려둘
-  도메인이 없었음. 조치: GitHub organization `Howling-Creative-Studio`
-  신설 → 무료 GitHub Pages 저장소 `Howling-Creative-Studio.github.io`
-  생성 → `app-ads.txt`(AdMob 발급 코드:
+- [x] **AdMob app-ads.txt / 앱 인증 문제 — 해결 완료** (2026-10-06 ~
+  2026-10-08). 스토어 공개 직후 AdMob 콘솔에 "Hello, Today(Android)을
+  (를) 확인할 수 없습니다" — app-ads.txt 인증 실패 경고 발견. 원인:
+  회사 웹사이트 자체가 없어서 app-ads.txt를 올려둘 도메인이 없었음.
+  조치: GitHub organization `Howling-Creative-Studio` 신설 → 무료
+  GitHub Pages 저장소 `Howling-Creative-Studio.github.io` 생성 →
+  `app-ads.txt`(AdMob 발급 코드:
   `google.com, pub-4220607528679200, DIRECT, f08c47fec0942fa0`) +
   브랜드 톤에 맞춘 간단한 소개 페이지(`index.html`, Hello, Today Play
   스토어 링크 포함) 커밋/푸시 → Play Console 스토어 등록정보 연락처
   세부정보의 "웹사이트" 필드에 `https://howling-creative-studio.github.io`
-  등록. **2026-10-07 재확인: 페이지/app-ads.txt 둘 다 정상 응답, Play
-  Console "웹사이트" 필드도 저장 확인됨 — 우리 쪽 설정은 전부 정상.**
-  다만 Play 스토어 공개 페이지(앱 정보 섹션)에는 아직 웹사이트 링크가
-  안 보이고, AdMob도 여전히 "확인 안됨" — 구글 쪽 전파/크롤링 지연으로
-  판단, 추가 조치 없이 대기 중. 며칠 더 지나도 안 풀리면 AdMob 고객센터
-  문의 고려. 이제 Howling Creative Studio의 공식 웹사이트 역할도 겸하게
+  등록 → 이후에도 "확인 안됨"이 지속돼 `robots.txt`(`User-agent:
+  Google-adstxt` / `Disallow:` 명시 허용)까지 추가 → **2026-10-08,
+  AdMob "앱 인증" 상태가 "확인됨"으로 전환 확인.** "승인 상태"는 아직
+  "준비 중"이지만 이는 정상적인 다음 단계(실사용자 트래픽 누적 대기)로,
+  에러 아님. 이제 Howling Creative Studio의 공식 웹사이트 역할도 겸하게
   됨 — 앞으로 Play Console 등 다른 곳에 "웹사이트" 입력란이 필요하면
   이 주소를 쓰면 됨.
 - [ ] **Android 바이탈 모니터링 시작** (품질 → Android 바이탈):
