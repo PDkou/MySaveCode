@@ -652,6 +652,12 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    the decorative emoji corner mark is hidden there to avoid cluttering a
    finished illustration; 'overlay' mode keeps it, same as before. */
 .scene.scene-illustrated .scene-mark{display:none}
+/* v0.128: .scene-mark now holds an <img> (illustrated icon) instead of a
+   bare emoji character -- the old font-size:22px rule (see .scene-mark's
+   own definition) sized the glyph as text, which doesn't apply to an
+   img, so size/shadow it here. drop-shadow keeps it legible against
+   whatever color the card art underneath happens to be. */
+.scene-mark img{width:84px;height:84px;object-fit:contain;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
 .empty{display:flex;align-items:center;gap:14px;text-align:left}
 .empty img{width:74px;height:74px;object-fit:contain;flex:none}
 .empty p{margin:0;font-size:13px;line-height:1.6;color:var(--muted)}
@@ -725,7 +731,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.127.0';
+const APP_VERSION='0.128.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1184,6 +1190,14 @@ function incidentArt(basePath, type, rarity){
 // (the --scene custom property already defined per .normal/.rare/...).
 function archiveRarityClass(type,rarity){if(rarity!=='HIDDEN')return (rarity||'normal').toLowerCase();return type==='HIDDEN_NIGHT_ACTIVITY'?'hidden opal':'hidden'}
 function iconFor(i){return i.type==='NIGHT_PATROL'?'🌙':i.type==='HUNDRED_VISITS'?'👑':i.type==='RETURN_TO_START'?'↩️':i.type==='QUICK_EXIT'?'⏱️':i.type==='HIDDEN_LOOP'?'♾️':i.type==='HIDDEN_NIGHT_ACTIVITY'?'✨':'🐾'}
+// v0.128: director -- "두번째 빨간색 동그라미의 달은 아마 그냥
+// 이모지잖아?" -- confirmed .scene-mark was a bare OS emoji (same
+// per-OEM rendering inconsistency as the old settings icons, v0.93).
+// Replaced with illustrated art matching the rest of the icon set, same
+// visual/ui/icons/unlabeled/ folder. Scoped to .scene-mark only --
+// iconFor() above still backs .case-row-icon (the small home-list rows),
+// which wasn't part of this request and stays emoji for now.
+function sceneMarkUrl(i){const key=i.type==='NIGHT_PATROL'?'night_patrol':i.type==='HUNDRED_VISITS'?'hundred_visits':i.type==='RETURN_TO_START'?'return_to_start':i.type==='QUICK_EXIT'?'quick_exit':i.type==='HIDDEN_LOOP'?'hidden_loop':i.type==='HIDDEN_NIGHT_ACTIVITY'?'hidden_night_activity':'default';return `visual/ui/icons/unlabeled/icon_scene_${key}.webp`}
 function caseNo(i){return String(Math.abs((i.type||'CASE').split('').reduce((a,c)=>a+c.charCodeAt(0),0)*17)%10000).padStart(4,'0')}
 function card(i,featured=false){
   // v0.27: EPIC/LEGENDARY-only "impact" layer -- a big faint rarity symbol
@@ -2280,7 +2294,7 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
     <div class="detail-sub">${esc(detail(i))}</div>
     <div class="tcg-card-wrap"><div class="tcg-card" style="background-image:url('${frameUrl}')">
       <div class="tcg-header" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-title${foil?' foil':''}"${titleStyle}>${titleTxt}</div></div>
-      <div class="tcg-art" style="background-image:url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span></div>
+      <div class="tcg-art" style="background-image:url('${sceneBg}')"><span class="scene-mark"><img src="${sceneMarkUrl(i)}" alt=""></span></div>
       <div class="tcg-emblem" style="background-image:url('${medallionUrl}')"><div class="tcg-emblem-symbol" style="background-image:url('${symbolUrl}')"></div></div>
       <div class="tcg-info" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-punch">“${esc(txt(punch,i.type))}”</div><div class="tcg-chip" style="--tcg-chip:${pal.glow}">CASE #${caseNo(i)}</div></div>
       ${holoCanvas}
@@ -2389,7 +2403,7 @@ function revealScreen(i){
     <div class="reveal-title">${esc(l('오늘의 사건 발견!','本日の事件を発見！','Case discovered!'))}</div>
     <div class="tcg-card-wrap"><div class="tcg-card reveal-anim" style="background-image:url('${frameUrl}')">
       <div class="tcg-header" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-title${foil?' foil':''}"${titleStyle}>${titleTxt}</div></div>
-      <div class="tcg-art" style="background-image:url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span></div>
+      <div class="tcg-art" style="background-image:url('${sceneBg}')"><span class="scene-mark"><img src="${sceneMarkUrl(i)}" alt=""></span></div>
       <div class="tcg-emblem" style="background-image:url('${medallionUrl}')"><div class="tcg-emblem-symbol" style="background-image:url('${symbolUrl}')"></div></div>
       <div class="tcg-info" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-punch">“${esc(txt(punch,i.type))}”</div></div>
       ${holoCanvas}
