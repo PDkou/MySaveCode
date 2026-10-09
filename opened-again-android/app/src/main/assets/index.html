@@ -131,7 +131,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    work without needing per-language image variants. */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,251,246,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:7px 6px calc(7px + var(--native-nav-bottom, env(safe-area-inset-bottom)))}
 .tabbtn{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:var(--btn-radius);color:#9A8E83;min-height:var(--btn-min)}
-.tabbtn img{width:58px;height:58px;object-fit:contain;opacity:.5}
+.tabbtn img{width:80px;height:80px;object-fit:contain;opacity:.5}
 .tabbtn span{font-size:11px;font-weight:800}
 .tabbtn.active{background:#F3EBDE;color:#332C28}
 .tabbtn.active img{opacity:1}
@@ -343,11 +343,11 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    fill) as a 40px icon chip -- one consistent frame regardless of
    whether the glyph inside is the existing brand PNG or a new hand-built
    line icon (see ICONS below), so every row reads as the same system. */
-.settings-icon{width:56px;height:56px;border-radius:16px;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.settings-icon{width:98px;height:98px;border-radius:24px;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 /* v0.121: the chip only ever holds an <img> now (illustrated art
    replaced the v0.93/v0.97 inline-SVG line icons) -- the old
    .settings-icon svg rule is dropped, now unused. */
-.settings-icon img{width:52px;height:52px;object-fit:contain}
+.settings-icon img{width:90px;height:90px;object-fit:contain}
 /* v0.93: kept only for the debug-only Settings rows (dbgIcon in settings()),
    which deliberately stay plain emoji rather than the .settings-icon chip
    -- see that section's own comment. */
@@ -468,8 +468,8 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    for every rarity but HIDDEN, so the scrim is gone too. */
 .detail-backdrop{position:fixed;inset:0;z-index:-2;background-color:var(--bg);background-size:cover;background-position:center}
 .detail-page-head{display:flex;align-items:center;justify-content:space-between;flex:0 0 auto}
-.icon-btn{border:1px solid var(--line);background:#fff;border-radius:var(--btn-radius);width:54px;height:54px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.icon-btn img{width:50px;height:50px;object-fit:contain}
+.icon-btn{border:1px solid var(--line);background:#fff;border-radius:var(--btn-radius);width:92px;height:92px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn img{width:84px;height:84px;object-fit:contain}
 /* v0.53: tried recoloring .icon-btn for this page's dark backdrop (a
    translucent dark chip + brightness(0) invert(1) on the glyph) but
    icon_back.png/icon_share.png were two-tone assets (a near-white circle
@@ -720,7 +720,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.123.0';
+const APP_VERSION='0.124.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
