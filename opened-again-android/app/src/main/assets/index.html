@@ -131,7 +131,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    work without needing per-language image variants. */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,251,246,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:7px 6px calc(7px + var(--native-nav-bottom, env(safe-area-inset-bottom)))}
 .tabbtn{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:var(--btn-radius);color:#9A8E83;min-height:var(--btn-min)}
-.tabbtn img{width:23px;height:23px;object-fit:contain;opacity:.5}
+.tabbtn img{width:40px;height:40px;object-fit:contain;opacity:.5}
 .tabbtn span{font-size:11px;font-weight:800}
 .tabbtn.active{background:#F3EBDE;color:#332C28}
 .tabbtn.active img{opacity:1}
@@ -343,9 +343,11 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    fill) as a 40px icon chip -- one consistent frame regardless of
    whether the glyph inside is the existing brand PNG or a new hand-built
    line icon (see ICONS below), so every row reads as the same system. */
-.settings-icon{width:40px;height:40px;border-radius:13px;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.settings-icon svg{width:21px;height:21px}
-.settings-icon img{width:22px;height:22px;object-fit:contain}
+.settings-icon{width:64px;height:64px;border-radius:18px;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+/* v0.121: the chip only ever holds an <img> now (illustrated art
+   replaced the v0.93/v0.97 inline-SVG line icons) -- the old
+   .settings-icon svg rule is dropped, now unused. */
+.settings-icon img{width:48px;height:48px;object-fit:contain}
 /* v0.93: kept only for the debug-only Settings rows (dbgIcon in settings()),
    which deliberately stay plain emoji rather than the .settings-icon chip
    -- see that section's own comment. */
@@ -466,16 +468,19 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    for every rarity but HIDDEN, so the scrim is gone too. */
 .detail-backdrop{position:fixed;inset:0;z-index:-2;background-color:var(--bg);background-size:cover;background-position:center}
 .detail-page-head{display:flex;align-items:center;justify-content:space-between;flex:0 0 auto}
-.icon-btn{border:1px solid var(--line);background:#fff;border-radius:var(--btn-radius);width:var(--btn-min);height:var(--btn-min);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.icon-btn img{width:19px;height:19px;object-fit:contain}
+.icon-btn{border:1px solid var(--line);background:#fff;border-radius:var(--btn-radius);width:58px;height:58px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn img{width:42px;height:42px;object-fit:contain}
 /* v0.53: tried recoloring .icon-btn for this page's dark backdrop (a
    translucent dark chip + brightness(0) invert(1) on the glyph) but
-   icon_back.png/icon_share.png are two-tone assets (a near-white circle
+   icon_back.png/icon_share.png were two-tone assets (a near-white circle
    fill with a black glyph cut into it, not a single-color glyph on
    transparent) -- brightness(0) crushes both tones to black and invert(1)
    then turns both to identical white, erasing the glyph into a flat white
    dot. The plain white .icon-btn (unchanged from every other page) reads
-   fine floating over a dark backdrop as-is -- no override needed. */
+   fine floating over a dark backdrop as-is -- no override needed.
+   v0.121: icons are now full illustrated art (icon_back.webp/
+   icon_share.webp), even less of a single-tone glyph than before -- same
+   conclusion holds, no recolor override. */
 .detail-case-id{font-size:12px;color:var(--page-muted,var(--muted));font-weight:800;text-align:center;flex:0 0 auto;margin-top:6px}
 .detail-sub{font-size:12px;color:var(--page-text,var(--ink));opacity:.85;line-height:1.4;margin-top:3px;text-align:center;flex:0 0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* v0.53: the "TCG card" component -- a bordered frame (frame_bg/<rarity>.webp,
@@ -715,7 +720,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.120.0';
+const APP_VERSION='0.121.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1561,7 +1566,7 @@ function tabs(){const items=[
   {id:'archive',icon:'collection',label:l('보관함','保管庫','Archive')},
   {id:'settings',icon:'settings',label:l('설정','設定','Settings')},
 ];
-  return `<div class="tabbar">${items.map(it=>`<button class="tabbtn ${state.tab===it.id?'active':''}" onclick="setTab('${it.id}')"><img src="visual/ui/icons/unlabeled/icon_${it.icon}.png" alt=""><span>${it.label}</span></button>`).join('')}</div>`}
+  return `<div class="tabbar">${items.map(it=>`<button class="tabbtn ${state.tab===it.id?'active':''}" onclick="setTab('${it.id}')"><img src="visual/ui/icons/unlabeled/icon_${it.icon}.webp" alt=""><span>${it.label}</span></button>`).join('')}</div>`}
 // v0.35: one featured full card + the rest as a compact one-line-per-case
 // list, matching art/reference/target-visual-direction's home screen
 // mockup (it showed every other case as a small icon+title+rarity row, not
@@ -1812,44 +1817,17 @@ function settings(){
   let hasNotifAccess=null;try{hasNotifAccess=N&&N.hasNotificationPermission?N.hasNotificationPermission():null}catch(e){}
   const notifLabel=hasNotifAccess===true?l('허용됨','許可済み','Allowed'):hasNotifAccess===false?l('허용 필요 · 탭해서 허용','許可が必要 · タップで許可','Needs permission -- tap to allow'):l('탭해서 확인','タップして確認','Tap to check');
   const row=(icon,title,sub,onclick,clickable=true)=>`<div class="settings-row${clickable?'':' static'}"${onclick?` onclick="${onclick}"`:''}>${icon}<div class="settings-row-text"><b>${title}</b><span>${sub}</span></div>${clickable?'<span class="settings-chevron">›</span>':''}</div>`;
-  // v0.93: unified icon chip -- see .settings-icon's own CSS comment.
-  // svgIcon covers every row, as simple hand-built line icons in the same
-  // stroke/color so they all read as one set.
-  // v0.97: director feedback, final settings polish pass -- language/
-  // notification were still the original brand PNGs (icon_language.png/
-  // icon_notification.png), and a zoomed-in Playwright render showed why
-  // that still looked slightly off: those PNGs carry their own bold
-  // outline circle and thicker strokes, visibly heavier than the other 8
-  // thin-stroke line icons now that they're the only two PNGs left in an
-  // otherwise all-SVG row. Redrawn as the same stroke style so there's no
-  // longer any visual split between "the two original icons" and
-  // "everything added since v0.93" -- the PNG files themselves
-  // (icon_language.png/icon_notification.png) are untouched and still
-  // real brand assets, this just stops settings() from referencing them
-  // (the old imgIcon() helper that did so is removed, now unused).
-  const ICONS={
-    language:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><ellipse cx="12" cy="12" rx="4" ry="9"/>',
-    notification:'<path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
-    reminder:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M5 3 3 5"/><path d="M19 3l2 2"/>',
-    usage:'<path d="M6 20V12"/><path d="M12 20V7"/><path d="M18 20V4"/>',
-    // v0.95: director feedback -- the old slashed-rectangle removeAds icon
-    // read as "no video" rather than "ads" at the actual 21px render size.
-    // Shield+checkmark (the common "protected/cleaned up" pairing most
-    // ad-blocker icons already use) reads clearly as "ads: handled" even
-    // small.
-    removeAds:'<path d="M12 3l7 3v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
-    restore:'<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/>',
-    data:'<path d="M3 4h18v4H3z"/><path d="M5 8v12h14V8"/><path d="M10 12h4"/>',
-    export:'<path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M4 16v4h16v-4"/>',
-    help:'<circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-2.9 2-2.9 4"/><path d="M12 17.01v.01"/>',
-    privacy:'<rect x="6" y="11" width="12" height="9" rx="2"/><path d="M9 11V7a3 3 0 0 1 6 0v4"/>',
-    about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.5v.01"/>',
-    // v0.117: director-requested review-prompt row -- same thin-stroke line
-    // style as every other icon here (v0.93/v0.97), a plain 5-point star
-    // outline rather than a filled/branded rating glyph.
-    review:'<path d="M12 4l2.4 5.1 5.6.6-4.2 3.8 1.2 5.5L12 16.2 6.9 19l1.2-5.5-4.2-3.8 5.6-.6z"/>'
-  };
-  const svgIcon=key=>`<span class="settings-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]}</svg></span>`;
+  // v0.121: director feedback -- the whole UI icon set ("앱 아이콘이나
+  // 카드안에 아이콘들이 너무 짜쳐") read as generic flat stock icons next
+  // to the app's actual illustrated brand art (launcher icon, rarity
+  // symbols, character). Commissioned full illustrated replacements for
+  // all 18 UI icons (tab bar/card-detail PNGs below + these 12 settings
+  // rows) in the same navy/gold/cream detective-cat line+fill style as
+  // brand/rarity_symbols. Replaces the v0.93/v0.97 inline-SVG line-icon
+  // set entirely (ICONS/svgIcon removed, now unused) with real art
+  // files, same 40px .settings-icon chip, same
+  // visual/ui/icons/unlabeled/ folder as the tab bar/card-detail icons.
+  const imgIcon=key=>`<span class="settings-icon"><img src="visual/ui/icons/unlabeled/icon_${key}.webp" alt=""></span>`;
   // v0.65: director-approved monetization -- one-time "remove ads" purchase
   // (option 1 of the discussed plan). Reads fresh on every render so it
   // reflects BillingManager's persisted flag as soon as a purchase/restore
@@ -1859,8 +1837,8 @@ function settings(){
   // contexts, same fallback style as hasAccess above.
   let adsRemoved=false;try{adsRemoved=N&&N.isAdsRemoved?N.isAdsRemoved():false}catch(e){}
   const adsRow=adsRemoved
-    ? row(svgIcon('removeAds'),l('광고 제거','広告を削除','Remove ads'),l('구매 완료 · 광고가 표시되지 않습니다','購入済み · 広告は表示されません','Purchased -- ads are hidden'),null,false)
-    : row(svgIcon('removeAds'),l('광고 제거','広告を削除','Remove ads'),l('탭해서 구매하기 (배너 광고 제거)','タップして購入(バナー広告を削除)','Tap to buy (removes the banner ad)'),'purchaseRemoveAds()');
+    ? row(imgIcon('removeAds'),l('광고 제거','広告を削除','Remove ads'),l('구매 완료 · 광고가 표시되지 않습니다','購入済み · 広告は表示されません','Purchased -- ads are hidden'),null,false)
+    : row(imgIcon('removeAds'),l('광고 제거','広告を削除','Remove ads'),l('탭해서 구매하기 (배너 광고 제거)','タップして購入(バナー広告を削除)','Tap to buy (removes the banner ad)'),'purchaseRemoveAds()');
   // v0.94: director feedback -- "설정화면 전체적으로 손봐야될 필요가
   // 있어" follow-up, this time picking: (1) group related rows instead
   // of one flat 11-row list, (2) the non-functional "테마" row should
@@ -1876,30 +1854,30 @@ function settings(){
   return `<div class="section-title"><h2>${l('설정','設定','Settings')}</h2></div>
 ${groupLabel(l('일반','一般','General'))}
 ${group(
-  row(svgIcon('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','openLanguageSheet()'),
-  row(svgIcon('usage'),l('사용정보 접근','使用状況へのアクセス','Usage access'),accessLabel,'N&&N.openUsageSettings()')
+  row(imgIcon('language'),l('언어','言語','Language'),state.settings.language==='ko'?'한국어':'日本語','openLanguageSheet()'),
+  row(imgIcon('usage'),l('사용정보 접근','使用状況へのアクセス','Usage access'),accessLabel,'N&&N.openUsageSettings()')
 )}
 ${groupLabel(l('알림','通知','Notifications'))}
 ${group(
-  row(svgIcon('notification'),l('알림 권한','通知許可','Notifications'),notifLabel,'N&&N.requestNotificationPermission()'),
-  row(svgIcon('reminder'),l('일일 리마인더','デイリーリマインダー','Daily reminder'),state.settings.dailyReminder?l(`매일 ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}에 알림 · 탭해서 변경`,`毎日${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}に通知 · タップで変更`,`Notifies daily at ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')} -- tap to change`):l('꺼짐 · 탭해서 켜기','オフ · タップでオン','Off -- tap to turn on'),'openReminderSheet()')
+  row(imgIcon('notification'),l('알림 권한','通知許可','Notifications'),notifLabel,'N&&N.requestNotificationPermission()'),
+  row(imgIcon('reminder'),l('일일 리마인더','デイリーリマインダー','Daily reminder'),state.settings.dailyReminder?l(`매일 ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}에 알림 · 탭해서 변경`,`毎日${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')}に通知 · タップで変更`,`Notifies daily at ${String(state.settings.reminderHour).padStart(2,'0')}:${String(state.settings.reminderMinute).padStart(2,'0')} -- tap to change`):l('꺼짐 · 탭해서 켜기','オフ · タップでオン','Off -- tap to turn on'),'openReminderSheet()')
 )}
 ${groupLabel(l('구매','購入','Purchase'))}
 ${group(
   adsRow,
-  adsRemoved?'':row(svgIcon('restore'),l('구매 복원','購入の復元','Restore purchase'),l('다른 기기/재설치 시 여기서 복원하세요','別端末・再インストール時はここで復元','Restore a purchase after reinstalling or on a new device'),'restorePurchases()')
+  adsRemoved?'':row(imgIcon('restore'),l('구매 복원','購入の復元','Restore purchase'),l('다른 기기/재설치 시 여기서 복원하세요','別端末・再インストール時はここで復元','Restore a purchase after reinstalling or on a new device'),'restorePurchases()')
 )}
 ${groupLabel(l('데이터','データ','Data'))}
 ${group(
-  row(svgIcon('data'),l('데이터 관리','データ管理','Data'),l('탭해서 초기화하기','タップして初期化','Tap to reset'),'openResetConfirm()'),
-  row(svgIcon('export'),l('데이터 내보내기','データのエクスポート','Export data'),l('백업 파일로 저장/공유하기','バックアップファイルとして保存・共有','Save or share as a backup file'),'openExportConfirm()')
+  row(imgIcon('data'),l('데이터 관리','データ管理','Data'),l('탭해서 초기화하기','タップして初期化','Tap to reset'),'openResetConfirm()'),
+  row(imgIcon('export'),l('데이터 내보내기','データのエクスポート','Export data'),l('백업 파일로 저장/공유하기','バックアップファイルとして保存・共有','Save or share as a backup file'),'openExportConfirm()')
 )}
 ${groupLabel(l('정보','情報','Info'))}
 ${group(
-  row(svgIcon('review'),l('리뷰 남기기','レビューを書く','Leave a review'),l('스토어에 평가를 남겨주세요','ストアで評価をお願いします','Rate the app on the store'),'requestReviewManual()'),
-  row(svgIcon('help'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),'openHelpSheet()'),
-  row(svgIcon('privacy'),l('개인정보처리방침','プライバシーポリシー','Privacy policy'),l('어떤 정보를 어떻게 다루는지','どんな情報をどう扱うか','What data is handled and how'),'openPrivacySheet()'),
-  row(svgIcon('about'),l('앱 정보','アプリ情報','About'),'v'+APP_VERSION,'openAboutSheet()')
+  row(imgIcon('review'),l('리뷰 남기기','レビューを書く','Leave a review'),l('스토어에 평가를 남겨주세요','ストアで評価をお願いします','Rate the app on the store'),'requestReviewManual()'),
+  row(imgIcon('help'),l('도움말','ヘルプ','Help'),l('모니가 앱 사용 습관을 사건 카드로 정리해줘요','MONIがアプリの使用習慣を事件カードにまとめます','MONI turns your app habits into incident cards'),'openHelpSheet()'),
+  row(imgIcon('privacy'),l('개인정보처리방침','プライバシーポリシー','Privacy policy'),l('어떤 정보를 어떻게 다루는지','どんな情報をどう扱うか','What data is handled and how'),'openPrivacySheet()'),
+  row(imgIcon('about'),l('앱 정보','アプリ情報','About'),'v'+APP_VERSION,'openAboutSheet()')
 )}
 ${state.debugBuild?(()=>{
   // v0.93: debug-only rows kept as plain emoji (not the new icon chip) --
@@ -2291,7 +2269,7 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
   const holoCanvas=impact?`<canvas class="holo-canvas" data-spectrum="${holoSpectrum(rarity).join(',')}"></canvas>`:'';
   return `<div class="detail-backdrop" style="background-image:url('${backdropUrl}')"></div>
   <div class="detail-page ${rarityClass(i)}" style="--tcg-border:${pal.border};${pageVars}">
-    <div class="detail-page-head"><button class="icon-btn" onclick="closeDetail()"><img src="visual/ui/icons/unlabeled/icon_back.png" alt="${l('뒤로','戻る','Back')}"></button>${rarityBadge(i)}<button class="icon-btn" onclick='share(${shareArg},"square")'><img src="visual/ui/icons/unlabeled/icon_share.png" alt="${l('공유','シェア','Share')}"></button></div>
+    <div class="detail-page-head"><button class="icon-btn" onclick="closeDetail()"><img src="visual/ui/icons/unlabeled/icon_back.webp" alt="${l('뒤로','戻る','Back')}"></button>${rarityBadge(i)}<button class="icon-btn" onclick='share(${shareArg},"square")'><img src="visual/ui/icons/unlabeled/icon_share.webp" alt="${l('공유','シェア','Share')}"></button></div>
     <div class="detail-case-id">CASE #${caseNo(i)} · ${new Date().toLocaleDateString()}</div>
     <div class="detail-sub">${esc(detail(i))}</div>
     <div class="tcg-card-wrap"><div class="tcg-card" style="background-image:url('${frameUrl}')">
