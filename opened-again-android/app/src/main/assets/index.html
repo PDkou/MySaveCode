@@ -663,10 +663,12 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    director corrected that reading -- "카드 일러스트에 우측 상단에
    위치하게 해달라구" (I'm asking for it at the top-right of the card
    illustration) -- so the inward move was wrong; dropped the position
-   override entirely and let `.tcg-art .scene-mark` fall back to the
-   base `.scene-mark{right:8px;top:8px}` corner rule, keeping only the
-   size override (the home-list `.scene .scene-mark` is untouched
-   either way, out of scope for this request). */
+   override entirely, falling back to the base `.scene-mark{right:8px;
+   top:8px}` corner rule. v0.131: still not high enough -- "아니야
+   좀더 상단의 우측이야" (no, more toward the top of the right side) --
+   nudged further up with a dedicated top override (the home-list
+   `.scene .scene-mark` is untouched either way, out of scope). */
+.tcg-art .scene-mark{top:0}
 .tcg-art .scene-mark img{width:60px;height:60px}
 .empty{display:flex;align-items:center;gap:14px;text-align:left}
 .empty img{width:74px;height:74px;object-fit:contain;flex:none}
@@ -741,7 +743,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.130.0';
+const APP_VERSION='0.131.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
