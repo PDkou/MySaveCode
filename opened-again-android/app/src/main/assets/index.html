@@ -535,6 +535,15 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    breathing gap before it instead of the old ~11.8%. */
 .tcg-art{position:absolute;left:10%;top:20.5%;width:80%;height:49.5%;border-radius:16px;overflow:hidden;background-size:cover;background-position:center}
 .tcg-emblem{position:absolute;left:50%;top:8.1%;width:15.8%;aspect-ratio:1/1;transform:translate(-50%,-50%);background-size:contain;background-repeat:no-repeat;background-position:center;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));pointer-events:none}
+/* v0.127: director -- "카드에 위 쪽에 빨간색에 뭔가 채워넣고싶음...
+   좀 뭔가 심심해보이잖아" (the medallion's center circle looks empty/
+   boring). ShareCardRenderer.kt's drawTcgCard() already composites the
+   matching brand/rarity_symbols/ glyph on top of the medallion for the
+   native share card (see its own "9. Emblem" comment) -- the web card
+   never did, so this was a native/web drift, not a from-scratch design
+   decision. Sized at 62% of the emblem box so it sits inside the
+   medallion's inner ring rather than overlapping its decorative points. */
+.tcg-emblem-symbol{position:absolute;inset:0;margin:auto;width:62%;height:62%;background-size:contain;background-repeat:no-repeat;background-position:center}
 .tcg-info{position:absolute;left:9.5%;top:72.7%;width:81%;height:17.5%;border-radius:14px;background:var(--tcg-panel,#fff);color:var(--tcg-text,#2F2A27);padding:9px 12px;overflow:auto;display:flex;flex-direction:column;justify-content:center;gap:5px}
 .tcg-punch{font-size:13px;font-weight:1000;line-height:1.32}
 /* v0.109: director spotted the "CASE #" tag was unreadable on EPIC (white
@@ -716,7 +725,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.126.0';
+const APP_VERSION='0.127.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -2242,6 +2251,7 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
   const impact=rarity==='EPIC'||rarity==='LEGENDARY'||rarity==='HIDDEN';
   const frameUrl=`visual/cards/frame_bg/${rarity.toLowerCase()}.webp`;
   const medallionUrl=`visual/cards/medallions/${rarity.toLowerCase()}.webp`;
+  const symbolUrl=rarity==='HIDDEN'?'visual/brand/rarity_symbols/rarity_hidden_01.webp':`visual/brand/rarity_symbols/rarity_${rarity.toLowerCase()}.webp`;
   // v0.54: director feedback -- "배경도 검은 배경이네;; 그냥 저
   // 고양이발바닥 무늬 배경으로 하지" (the backdrop's dark too, just use
   // that paw-print background). cardPatternBg(i) is the exact same square
@@ -2271,7 +2281,7 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
     <div class="tcg-card-wrap"><div class="tcg-card" style="background-image:url('${frameUrl}')">
       <div class="tcg-header" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-title${foil?' foil':''}"${titleStyle}>${titleTxt}</div></div>
       <div class="tcg-art" style="background-image:url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span></div>
-      <div class="tcg-emblem" style="background-image:url('${medallionUrl}')"></div>
+      <div class="tcg-emblem" style="background-image:url('${medallionUrl}')"><div class="tcg-emblem-symbol" style="background-image:url('${symbolUrl}')"></div></div>
       <div class="tcg-info" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-punch">“${esc(txt(punch,i.type))}”</div><div class="tcg-chip" style="--tcg-chip:${pal.glow}">CASE #${caseNo(i)}</div></div>
       ${holoCanvas}
     </div></div>
@@ -2352,6 +2362,7 @@ function revealScreen(i){
   const [artBase,bg,mode]=incidentVisual(i.type);const art=incidentArt(artBase,i.type,i.rarity);const sceneBg=mode==='scene'?art:bg;
   const frameUrl=`visual/cards/frame_bg/${rarity.toLowerCase()}.webp`;
   const medallionUrl=`visual/cards/medallions/${rarity.toLowerCase()}.webp`;
+  const symbolUrl=rarity==='HIDDEN'?'visual/brand/rarity_symbols/rarity_hidden_01.webp':`visual/brand/rarity_symbols/rarity_${rarity.toLowerCase()}.webp`;
   const backdropUrl=cardPatternBg(i);
   const isDarkMood=rarity==='HIDDEN';
   const pageVars=isDarkMood
@@ -2379,7 +2390,7 @@ function revealScreen(i){
     <div class="tcg-card-wrap"><div class="tcg-card reveal-anim" style="background-image:url('${frameUrl}')">
       <div class="tcg-header" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-title${foil?' foil':''}"${titleStyle}>${titleTxt}</div></div>
       <div class="tcg-art" style="background-image:url('${sceneBg}')"><span class="scene-mark">${iconFor(i)}</span></div>
-      <div class="tcg-emblem" style="background-image:url('${medallionUrl}')"></div>
+      <div class="tcg-emblem" style="background-image:url('${medallionUrl}')"><div class="tcg-emblem-symbol" style="background-image:url('${symbolUrl}')"></div></div>
       <div class="tcg-info" style="--tcg-panel:${pal.panel};--tcg-text:${pal.text}"><div class="tcg-punch">“${esc(txt(punch,i.type))}”</div></div>
       ${holoCanvas}
     </div></div>
