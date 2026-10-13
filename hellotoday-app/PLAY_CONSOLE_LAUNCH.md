@@ -577,11 +577,13 @@ cd hellotoday-app
   - 폴더블/대화면 에뮬레이터(또는 실기기)로 실제 검증 필요
   - 우선순위: 정식 출시 이후, 급하지 않음
 
-- [ ] **R8/ProGuard 코드 축소(minification) 활성화** (2026-10-06 메모).
-  1.0.0 프로덕션 출시 심사 중 Play Console "확인 필요" 탭에 "DEX 코드
-  최적화가 기준점 미만입니다"(난독화 비율 1%, 기준 25%) 경고 발견.
-  해결 기한 **2027년 2월**로 여유 있어 1.0.0 출시는 그대로 진행하고,
-  이건 **다음 업데이트(1.0.1)로 분리**하기로 결정함.
+- [ ] **R8/ProGuard 코드 축소(minification) 활성화** (2026-10-06 메모,
+  2026-10-13 버전 번호 갱신). 1.0.0 프로덕션 출시 심사 중 Play Console
+  "확인 필요" 탭에 "DEX 코드 최적화가 기준점 미만입니다"(난독화 비율
+  1%, 기준 25%) 경고 발견. 해결 기한 **2027년 2월**로 여유 있어 1.0.0
+  출시는 그대로 진행하고, 이건 다음 업데이트로 분리하기로 결정함.
+  ⚠️ 1.0.1은 할로윈 아이콘 전용 버전으로 써버렸으니(아래 12번 참고),
+  **1.0.2 이후**로 다시 미룸.
   - `app/build.gradle.kts`의 `buildTypes.release.isMinifyEnabled`를
     `true`로 변경 + `proguardFiles` 설정 필요
   - ⚠️ 이 앱은 WebView의 `@JavascriptInterface`(`HelloNative` 브릿지,
@@ -594,7 +596,7 @@ cd hellotoday-app
   - 이 저장소 샌드박스엔 실기기/에뮬레이터가 없어 R8 켠 빌드를 직접
     검증할 수 없음 — **반드시 실기기에 설치해서 전체 기능(브릿지 호출,
     결제, 광고, 리뷰 요청) 수동 검증 후 배포**할 것
-  - 우선순위: 1.0.1 업데이트 때, 급하지 않음(기한 2027-02)
+  - 우선순위: 1.0.2 이후 업데이트 때, 급하지 않음(기한 2027-02)
 
 ## 11. 1.0.0 프로덕션 심사 결과 이후 체크리스트 (2026-10-06 작성)
 
@@ -655,3 +657,44 @@ cd hellotoday-app
 - [ ] 사유가 불분명하거나 일반 템플릿이면: 지금까지처럼 추가로 점검할
   만한 부분(권한 사용 목적, 데이터 보안 양식, 콘텐츠 등급 등) 다시
   훑어보고 재제출 전략 같이 논의
+
+## 12. 할로윈 시즌 아이콘 (2026-10-13, 1.0.1 / versionCode 55)
+
+할로윈 시즌 한정으로 런처 아이콘 + 스플래시 화면을 할로윈 테마로 교체.
+앱 내 테마(크림/세이지 등 6종)는 건드리지 않음 — 아이콘/스플래시만 대상.
+
+**적용한 것:**
+- 기존 브랜드 캐릭터(전화 거는 말풍선 캐릭터)는 그대로 유지하고, 위에
+  마녀 모자를 씌우고, 하트를 호박(잭오랜턴)으로 교체, 배경 빈 공간에
+  작은 박쥐 실루엣 2개를 추가하는 방식으로 "리스킨"함 — 캐릭터 자체를
+  새로 그리지 않아서 브랜드 일관성 유지하면서도 분명히 할로윈처럼 보임.
+- 대상 파일: `drawable-nodpi/ic_launcher_art.png` (런처 아이콘 원본),
+  `drawable-nodpi/splash_icon.png` (스플래시, 캐릭터 영역만 교체하고
+  하단 "Hello, Today" 워드마크는 그대로 둠), `mipmap-*/ic_launcher.png`
+  및 `ic_launcher_round.png` 전체 밀도(mdpi~xxxhdpi) — minSdk 26라
+  실제로는 `mipmap-anydpi-v26`의 어댑티브 아이콘이 항상 쓰이지만,
+  일관성을 위해 레거시 PNG들도 전부 같은 아트로 재생성함.
+- 생성은 Pillow로 기존 PNG 위에 모자/호박/박쥐를 절차적으로 그려
+  합성하는 방식 사용 (좌표는 원본 이미지에서 직접 픽셀 분석해서 추출).
+
+**원본 백업 위치:** `hellotoday-app/app/halloween-2026/original-backup/`
+— 할로윈 적용 전 원본 아이콘/스플래시 전체(위에 나열한 파일 전부)가
+그대로 보관돼 있음.
+
+### 할로윈 끝난 뒤 되돌리는 방법 (11월 초)
+
+1. 백업된 파일들을 원래 경로로 복사해서 덮어쓰기:
+   ```bash
+   cd hellotoday-app/app
+   cp halloween-2026/original-backup/ic_launcher_art.png src/main/res/drawable-nodpi/
+   cp halloween-2026/original-backup/splash_icon.png src/main/res/drawable-nodpi/
+   for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+     cp halloween-2026/original-backup/mipmap-$d/ic_launcher.png src/main/res/mipmap-$d/
+     cp halloween-2026/original-backup/mipmap-$d/ic_launcher_round.png src/main/res/mipmap-$d/
+   done
+   ```
+2. `build.gradle.kts`의 versionCode/versionName을 다음 번호로 올리기
+   (예: 56 / 1.0.2)
+3. 빌드 → 프로덕션에 업로드
+4. 되돌린 뒤 `halloween-2026/` 폴더는 그대로 둬도 되고(내년 할로윈에
+   재사용 가능), 지워도 무방함
