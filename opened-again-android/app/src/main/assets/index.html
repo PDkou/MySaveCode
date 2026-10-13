@@ -131,9 +131,17 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    work without needing per-language image variants. */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(255,251,246,.97);backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:2px 6px calc(2px + var(--native-nav-bottom, env(safe-area-inset-bottom)))}
 .tabbtn{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:1px;padding:2px 2px;border-radius:var(--btn-radius);color:#9A8E83;min-height:var(--btn-min)}
-.tabbtn img{width:52px;height:52px;object-fit:contain;opacity:.5}
-.tabbtn span{font-size:11px;font-weight:800}
-.tabbtn.active{background:#F3EBDE;color:#332C28}
+/* v0.136: director -- "활성 탭 배경은 정사각형에 모서리 둥글기
+   16px로 수정" -- the active highlight used to just color the whole
+   .tabbtn box (icon+label+padding, so a wide rectangle). Moved the
+   background onto a new .tabbtn-icon wrapper sized as an actual
+   square around the icon only, so the highlight reads as a proper
+   rounded square badge instead of a wide pill behind icon+label. */
+.tabbtn-icon{width:66px;height:66px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.tabbtn img{width:60px;height:60px;object-fit:contain;opacity:.5}
+.tabbtn span{font-size:18px;font-weight:800}
+.tabbtn.active{color:#332C28}
+.tabbtn.active .tabbtn-icon{background:#F3EBDE}
 .tabbtn.active img{opacity:1}
 .hero{margin-top:17px;background:linear-gradient(135deg,#FFF9F0 0%,#EFE1CE 100%);border:1px solid #EADAC5;border-radius:27px;padding:17px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;min-height:124px;position:relative}.hero:after{content:"";position:absolute;right:120px;bottom:-32px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.42)}.hero img{width:132px;height:96px;object-fit:cover;object-position:50% 10%;border-radius:19px;position:relative;z-index:1}/* v0.101: director feedback -- the hero title wraps mid-word ("찾았\n어요"
    instead of breaking at an actual word boundary) because the text column
@@ -750,7 +758,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.135.0';
+const APP_VERSION='0.136.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -1604,7 +1612,7 @@ function tabs(){const items=[
   {id:'archive',icon:'collection',label:l('보관함','保管庫','Archive')},
   {id:'settings',icon:'settings',label:l('설정','設定','Settings')},
 ];
-  return `<div class="tabbar">${items.map(it=>`<button class="tabbtn ${state.tab===it.id?'active':''}" onclick="setTab('${it.id}')"><img src="visual/ui/icons/unlabeled/icon_${it.icon}.webp" alt=""><span>${it.label}</span></button>`).join('')}</div>`}
+  return `<div class="tabbar">${items.map(it=>`<button class="tabbtn ${state.tab===it.id?'active':''}" onclick="setTab('${it.id}')"><span class="tabbtn-icon"><img src="visual/ui/icons/unlabeled/icon_${it.icon}.webp" alt=""></span><span>${it.label}</span></button>`).join('')}</div>`}
 // v0.35: one featured full card + the rest as a compact one-line-per-case
 // list, matching art/reference/target-visual-direction's home screen
 // mockup (it showed every other case as a small icon+title+rarity row, not
