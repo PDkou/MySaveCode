@@ -351,11 +351,11 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    fill) as a 40px icon chip -- one consistent frame regardless of
    whether the glyph inside is the existing brand PNG or a new hand-built
    line icon (see ICONS below), so every row reads as the same system. */
-.settings-icon{width:42px;height:42px;border-radius:12px;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.settings-icon{width:52px;height:52px;border-radius:12px;background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 /* v0.121: the chip only ever holds an <img> now (illustrated art
    replaced the v0.93/v0.97 inline-SVG line icons) -- the old
    .settings-icon svg rule is dropped, now unused. */
-.settings-icon img{width:38px;height:38px;object-fit:contain}
+.settings-icon img{width:48px;height:48px;object-fit:contain}
 /* v0.93: kept only for the debug-only Settings rows (dbgIcon in settings()),
    which deliberately stay plain emoji rather than the .settings-icon chip
    -- see that section's own comment. */
@@ -758,7 +758,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.136.0';
+const APP_VERSION='0.137.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
