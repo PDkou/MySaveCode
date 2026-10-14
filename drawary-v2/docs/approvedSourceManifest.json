@@ -1,0 +1,57 @@
+{
+  "stagePackage": "Drawary_V2_SOURCE_STAGE_2026-10-14.zip",
+  "note": "Local staging package only. Binary images and HTML originals have not been uploaded to GitHub.",
+  "verifiedDate": "2026-10-14",
+  "screenCount": 59,
+  "designApprovedCount": 59,
+  "reactIntegratedCount": 0,
+  "approvedFinalHtml": {
+    "57": {
+      "file": "approved_57_59/57/index.html",
+      "sha256": "41d2e0c175de2dada3e1646bed1304b66756b25555570ec4d6ce7c829143b7ba",
+      "requiredAssets": [
+        "guide_step2_focus.webp",
+        "guide_step3_focus.webp",
+        "guide_step4_focus.webp",
+        "mascot_lean_on_drawer.webp",
+        "ui_add.webp"
+      ]
+    },
+    "58": {
+      "file": "approved_57_59/58/index.html",
+      "sha256": "ccc081c61a589959da7459a826db5be1d4912a445000ac84fcc9835b54db30b3",
+      "requiredAssets": [
+        "brand_symbol_flower_small.webp"
+      ]
+    },
+    "59": {
+      "file": "approved_57_59/59/index.html",
+      "sha256": "481c8d9ecf680b3c4c84b2f0295e1401216742a5ec3fab1a27c3611905f484df",
+      "requiredAssets": [
+        "decor_flower_01.webp",
+        "decor_sprout_01.webp",
+        "feedback_error_from_approved.png",
+        "feedback_other_from_approved.png",
+        "mascot_lean_on_drawer.webp"
+      ],
+      "revision": "refined, final user approved, NOT old 10_feedback_final"
+    }
+  },
+  "archives": {
+    "02A_DRAWARY_ASSETS_FINAL_STRUCTURED.zip": {
+      "sha256": "5af682379b673eabc2847acd85e58cd15f3d17b69645c036049002a9386a1ae4",
+      "entries": 314
+    },
+    "Drawary_ALL_CONFIRMED_SCREENS_2026-10-08.zip": {
+      "sha256": "5a866f4833c25a8d52f8af356e8a2c44e6a60fef007d1b01e8c185e8fc1491d5",
+      "note": "older visual boards, not a substitute for final 57/59"
+    }
+  },
+  "specialCases": {
+    "screen46": "Use selected merged design, not earlier 11-3 alternative.",
+    "screen47": "Approved visual only; final standalone code and integration QA pending."
+  },
+  "priorScreenCandidateZipCount": 16,
+  "priorCandidateRange": "39–56 except 46, 47",
+  "needsVisualCrosscheckBeforeCodeIntegration": true
+}
