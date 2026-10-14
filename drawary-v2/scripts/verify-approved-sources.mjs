@@ -18,7 +18,7 @@ for (const [id, screen] of Object.entries(manifest.approvedFinalHtml)) {
   }
   if (sha256(target) !== screen.sha256) errors.push('Screen ' + id + ': HTML SHA-256 mismatch');
   const html = readFileSync(target, 'utf8');
-  const embeddedAssets = [...html.matchAll(/\\bsrc="(assets\\/[^"]+)"/g)].map(match => match[1]);
+  const embeddedAssets = [...html.matchAll(new RegExp('src="(assets/[^"]+)"', 'g'))].map(match => match[1]);
   const expected = screen.requiredAssets.map(name => 'assets/' + name);
   for (const file of expected) {
     if (!embeddedAssets.includes(file)) errors.push('Screen ' + id + ': expected asset not referenced ' + file);
@@ -37,8 +37,8 @@ for (const [name, bundle] of Object.entries(manifest.archives)) {
 }
 
 if (errors.length) {
-  for (const problem of errors) process.stderr.write('FAIL ' + problem + '\\n');
+  for (const problem of errors) process.stderr.write('FAIL ' + problem + String.fromCharCode(10));
   process.exitCode = 1;
 } else {
-  process.stdout.write('PASS: final screen 57–59 HTML, referenced assets and master archive checksums verified.\\n');
+  process.stdout.write('PASS: final screen 57-59 HTML, referenced assets and master archive checksums verified.' + String.fromCharCode(10));
 }
