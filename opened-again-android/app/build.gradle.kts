@@ -51,14 +51,24 @@ android {
         applicationId = "com.howlingcreativestudio.openedagain"
         minSdk = 29
         targetSdk = 36
-        versionCode = 137
-        versionName = "0.137.0"
+        versionCode = 138
+        versionName = "0.138.0"
     }
 
     buildTypes {
         getByName("release") {
             if (keystorePropertiesFile.exists()) signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
+            // v0.138: director asked about DEX/code-size optimization --
+            // turned R8 on (was off since this app's first release) to
+            // strip unused code/resources and resolve Play Console's
+            // "missing deobfuscation file" warning. The one app-specific
+            // risk (NativeBridge's JS-interface methods getting
+            // renamed/stripped, silently breaking the WebView<->Kotlin
+            // bridge) is covered by proguard-rules.pro's explicit keep
+            // rule -- see that file's own comment.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 

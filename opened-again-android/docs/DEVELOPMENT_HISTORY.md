@@ -5324,3 +5324,50 @@ director가 설정 화면 스크린샷을 보고 "여기 아이콘이미지 크�
 없음, 콘솔 에러 0건. 전부 웹 에셋(CSS) 교체라 네이티브 Kotlin
 변경은 없음 -- 별도 CI 컴파일 확인 불필요. 커밋/푸시 후 CI 빌드도
 함께 트리거.
+
+## v0.138 — R8 코드 축소 활성화 (DEX 최적화)
+
+director: "DEX코드 최적화를 해야될꺼같은데 방안있음?" -- 앱 크기
+경고에 이어 코드 쪽도 줄일 수 있는지 질문. `isMinifyEnabled = false`
+상태였고(출시 이후 계속 꺼져있었음) `proguard-rules.pro` 자체가
+없었음.
+
+**리스크 먼저 공유**: 이 앱은 `index.html`의 JS가 `N.메서드이름()`
+형태로 `NativeBridge.kt`의 `@JavascriptInterface` 메서드(31개)를
+이름으로 직접 호출하는 구조라, R8을 규칙 없이 그냥 켜면 그 메서드들이
+난독화로 이름이 바뀌거나 제거될 수 있음 -- 크래시가 아니라
+`try{N.xxx()}catch(e){}`로 감싸진 호출부가 조용히 아무 일도 안
+일어나는 형태로 고장나서 발견하기 어려움. director가 "WebView
+런타임을 너에게 제공해서 검증할 수 있는 방법은 있어?"라고 물어서,
+이 샌드박스엔 Android SDK/에뮬레이터가 없고 `@JavascriptInterface`는
+Playwright의 일반 Chromium으로는 애초에 재현 불가능한 안드로이드
+전용 메커니즘이라 실제 런타임 검증은 불가능함을 솔직히 밝힘 -- 대신
+R8이 빌드 시 생성하는 `mapping.txt`(이름 변경 기록)로 31개 메서드가
+keep 규칙대로 살아남았는지 정적으로 확인하는 방법을 제안, 승인받고
+진행.
+
+**구현**: `app/proguard-rules.pro` 신규 생성 --
+`-keepclassmembers class com.howling.openedagain.NativeBridge {
+@android.webkit.JavascriptInterface <methods>; }`로 JS 노출 메서드를
+보호하고, `-keep class ... NativeBridge`로 클래스 자체도 추가 보호.
+Room/Play Services Ads/Billing/WorkManager/Play Review는 전부 자체
+consumer proguard 규칙을 AAR에 번들해서 제공하므로 별도 규칙 불필요
+-- `NativeBridge.kt`에서 `org.json.JSONObject`/`JSONArray`만 수동
+사용(리플렉션 기반 직렬화 없음)하는 것도 확인해 추가 리스크 없음을
+검증. `build.gradle.kts` release 빌드타입에 `isMinifyEnabled = true`,
+`isShrinkResources = true`, `proguardFiles(...)` 추가.
+`build-opened-again-release.yml`에 `mapping.txt`를
+`opened-again-release-mapping` 아티팩트로 업로드하는 스텝 추가 --
+다음 릴리즈 빌드 후 이 파일로 keep 규칙이 실제로 적용됐는지 확인
+예정.
+
+버전 138/0.138.0. 검증: 이 변경은 네이티브 빌드 설정 자체라
+`node --check`/Playwright로는 검증 불가 -- CI(debug+release) 양쪽
+실제 컴파일 성공 여부, 그리고 release 빌드의 `mapping.txt`에서 31개
+`@JavascriptInterface` 메서드 이름이 그대로 남아있는지가 핵심 검증
+단계. 이 샌드박스는 Android SDK/WebView 런타임이 전혀 없어 로컬
+컴파일도, 실제 기능 동작 확인도 불가능 -- director에게 이미 명시적
+으로 공유한 한계이며, mapping.txt 정적 확인 이후에도 실기기에서의
+최종 기능 테스트(설정 화면 버튼들, 카드 공유, 리뷰 요청 등)는
+director 쪽에서 필요. 커밋/푸시 후 CI 빌드(debug+release) 함께
+트리거.
