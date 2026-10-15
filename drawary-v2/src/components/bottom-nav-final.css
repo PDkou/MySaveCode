@@ -1,0 +1,99 @@
+.drawary-dynamic-bottom-nav {
+  position: relative;
+  width: 390px;
+  height: 94px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.drawary-dynamic-bottom-nav__base {
+  position: absolute;
+  inset: 0;
+  width: 390px;
+  height: 94px;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.drawary-dynamic-bottom-nav__active-pill {
+  position: absolute;
+  top: 12px;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: rgba(118, 87, 232, 0.105);
+  border: 1px solid rgba(118, 87, 232, 0.075);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Preserve the approved icon artwork but clip away the old raster label. */
+.drawary-dynamic-bottom-nav__icon-clip {
+  position: absolute;
+  top: 18px;
+  height: 36px;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+}
+
+.drawary-dynamic-bottom-nav__neutral-cluster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 58px;
+  object-fit: contain;
+  object-position: top center;
+  display: block;
+}
+
+/* Every tab uses one identical text rule. */
+.drawary-dynamic-bottom-nav__label {
+  position: absolute;
+  top: 58px;
+  width: 72px;
+  height: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-family: "Noto Sans CJK KR", "Noto Sans KR", system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: rgb(112, 118, 135);
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+  z-index: 3;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+.drawary-dynamic-bottom-nav__label.is-active {
+  color: rgb(105, 75, 225);
+}
+
+.drawary-dynamic-bottom-nav__hotspot {
+  position: absolute;
+  top: 0;
+  height: 94px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 4;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.drawary-dynamic-bottom-nav__hotspot--add {
+  top: 0;
+  height: 94px;
+}

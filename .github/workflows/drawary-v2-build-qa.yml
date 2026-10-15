@@ -1,0 +1,26 @@
+name: Drawary V2 build QA
+on:
+  push:
+    paths:
+      - 'drawary-v2/**'
+      - '.github/workflows/drawary-v2-build-qa.yml'
+  pull_request:
+    paths:
+      - 'drawary-v2/**'
+      - '.github/workflows/drawary-v2-build-qa.yml'
+jobs:
+  typecheck-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install V2 dependencies
+        working-directory: drawary-v2
+        run: npm install --no-audit --no-fund
+      - name: Check TypeScript and build web app
+        working-directory: drawary-v2
+        run: npm run build
+      - name: Guard approved screen 47
+        run: node drawary-v2/scripts/check-design-locks.mjs

@@ -1,27 +1,60 @@
-import { screenManifest } from './screenManifest';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ResponsiveBottomNav } from './components/ResponsiveBottomNav';
+import type { BottomNavTab } from './components/BottomNav_FINAL_CONFIRMED';
 
-/** Developer audit dashboard only. Not the approved Drawary home screen. */
+type Route = BottomNavTab | 'create-drawer';
+const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
+const NAMES: Record<Route, string> = {
+  home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
+};
+const parseRoute = (): Route => {
+  const route = window.location.hash.replace(/^#\/?/, '');
+  return route === 'create-drawer' || TABS.some(tab => tab === route) ? route as Route : 'home';
+};
+
+/** V2-08 developer-only routing harness. Product screens are deliberately NOT fabricated here. */
 export default function App() {
+  const [route, setRoute] = useState<Route>(parseRoute);
+  const lastTabRef = useRef<BottomNavTab>('home');
+
+  useEffect(() => {
+    const update = () => setRoute(parseRoute());
+    window.addEventListener('hashchange', update);
+    return () => window.removeEventListener('hashchange', update);
+  }, []);
+
+  const navigate = useCallback((to: Route) => {
+    if (TABS.some(tab => tab === to)) lastTabRef.current = to as BottomNavTab;
+    const next = `#/${to}`;
+    if (window.location.hash === next) { setRoute(to); return; }
+    window.location.hash = next;
+    setRoute(to);
+  }, []);
+  const returnToTab = useCallback(() => navigate(lastTabRef.current), [navigate]);
+  const tabRoute = route !== 'create-drawer';
   return (
-    <main className="audit">
-      <header className="audit-header">
-        <h1>Drawary V2</h1>
-        <p>실제 앱 통합 전 개발용 점검 화면입니다. 출시용 UI가 아닙니다.</p>
-      </header>
-      <section className="progress" aria-label="통합 현황">
-        <div><strong>59/59</strong><span>화면 디자인 확정</span></div>
-        <div><strong>0/59</strong><span>V2 앱에 통합 완료</span></div>
+    <main className="drawary-app-shell" data-route={route}>
+      <section className="drawary-route-panel" aria-labelledby="drawary-dev-screen-title">
+        {tabRoute ? (
+          <div className="drawary-dev-only">
+            <div className="drawary-dev-flag">개발 검수용 · 확정 화면 아님</div>
+            <h1 id="drawary-dev-screen-title">{NAMES[route]}</h1>
+            <p>V2-08 공통 하단바·화면 이동 동작 확인</p>
+            <p className="drawary-dev-detail">이 영역의 실제 확정 화면은 후속 구현 단계에서 연결합니다.</p>
+          </div>
+        ) : (
+          <div className="drawary-dev-only">
+            <div className="drawary-dev-flag">개발 검수용 · 확정 화면 아님</div>
+            <h1 id="drawary-dev-screen-title">새 서랍 만들기</h1>
+            <p>중앙 + 버튼으로 하위 흐름 이동 확인</p>
+            <p className="drawary-dev-detail">하위 흐름에는 공통 하단바를 표시하지 않습니다.</p>
+            <button type="button" className="drawary-dev-return" onClick={returnToTab}>이전 탭으로 돌아가기</button>
+          </div>
+        )}
       </section>
-      <section aria-labelledby="screen-list-title">
-        <h2 id="screen-list-title">확정 화면 목록</h2>
-        <ol className="screen-list">{screenManifest.map((screen) => (
-          <li key={screen.id}>
-            <span className="screen-id">{String(screen.id).padStart(2, '0')}</span>
-            <span className="screen-name">{screen.name}</span>
-            <span className="screen-status">통합 대기</span>
-          </li>
-        ))}</ol>
-      </section>
+      {tabRoute && <footer className="drawary-shell-footer">
+        <ResponsiveBottomNav active={route} onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />
+      </footer>}
     </main>
   );
 }
