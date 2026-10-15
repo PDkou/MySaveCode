@@ -1,5 +1,11 @@
 # V2 implementation checklist
 
+## V2 milestone progress (2026-10-15)
+- [x] V2-06: 294 approved WebP assets imported and exact original tree verified.
+- [x] V2-07: screen 47 standalone HTML/CSS and Chromium render explicitly confirmed by user (global font harmonization deferred). React integration pending.
+- [x] V2-08: approved V4 shared navbar, responsive shell, and tab/subflow routing scaffold committed. GitHub Actions TypeScript/Vite build **success**; Chromium fixture passed four viewports. Actual locked screen bodies still pending.
+- [ ] V2-09: integrate screens 01–28 using exact approved design/source files, with real React renders.
+
 ## Baseline & safety
 - [x] New branch `drawary/59-design-rebuild-20261014` created.
 - [x] Preserve `category-data-app/`, `drawary-app/` and other projects.
@@ -27,7 +33,7 @@
 - [ ] User-choice merge/replace backup semantics and clear warnings
 - [ ] OS notification scheduling & recurrence item-creation semantics
 - [ ] PIN/biometrics security
-- [ ] App navigation and responsive orientation/foldable handling
+- [ ] Full application navigation and responsive orientation/foldable handling (V2-08 foundation done; deep routes and device QA pending)
 - [ ] KR/JP/EN text and common typography
 - [ ] Feedback delivery and accurate send/cancel status
 - [ ] Accessibility, state recovery, empty/error states

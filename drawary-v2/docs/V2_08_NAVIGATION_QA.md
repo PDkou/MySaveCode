@@ -1,6 +1,6 @@
 # V2-08 common shell / footer / routing
 
-2026-10-15. **Implementation staged in GitHub; final React production build not yet independently verified.**
+2026-10-15. **V2-08 complete for common nav/router foundation: GitHub Actions TypeScript + Vite build success; standalone CSS/interaction browser QA success. Compiled React browser QA and real screen integration still pending.**
 
 ## Approval basis (NOT old GitHub code)
 - Exact user-confirmed archive: `Drawary_CONFIRMED_SHARED_BOTTOM_NAV_V4_DYNAMIC_2026-10-13.zip`, `CONFIRMED.md`.
@@ -23,10 +23,11 @@
 - 844×390: 390px footer inside centered app shell; same route checks passed.
 - Browser JS runtime errors: **zero** in fixture.
 - Global TypeScript `transpileModule` TSX *syntax* diagnostics: **zero** for 4 modules.
-- **Limitations:** npm install/build unavailable locally due DNS `EAI_AGAIN` to npm registry; fixture is a DOM/CSS routing preflight, not compiled React code. Formal `npm run build` and Android testing remain pending.
+- **GitHub Actions verified:** workflow `Drawary V2 build QA`, run [38666893643](https://github.com/PDkou/MySaveCode/actions/runs/38666893643), concluded **success** on commit `823c128e1d86c8c81b65c16ca3e24a6134ec99ba`. Steps `Install V2 dependencies`, `Check TypeScript and build web app`, and `Guard approved screen 47` all succeeded. Design-lock workflow [38666893590](https://github.com/PDkou/MySaveCode/actions/runs/38666893590) also succeeded. Local npm build could not run due DNS `EAI_AGAIN`, but cloud build did run and pass.
+- **Remaining limitations:** Chromium test is a faithful DOM/CSS/navigation preflight built from original approved assets, not the compiled React app. Actual user-approved tab screen bodies, device/browser runtime integration, and Android build QA are separate follow-up tasks.
 
 ## Scope
 - Components implemented: `src/components/BottomNav_FINAL_CONFIRMED.tsx`, `bottom-nav-final.css`, `ResponsiveBottomNav.tsx`; shared host routing in `src/App.tsx` and `src/styles.css`.
 - Actual approved #3 home, #5 search, #7 statistics, #38 settings screens still await real React screen implementation (V2-09 / V2-11).
 - Preserve accepted 47 backup progress implementation and design locks; the new shell does not touch them.
-- Avoid marking V2-08 as production verified before a successful build and direct React/browser QA.
+- **V2-08 checked off as a common navigation engineering milestone** after successful cloud build and four-viewport browser preflight. Not considered full product/UI acceptance; completed 59-screen React integrations still 0.
