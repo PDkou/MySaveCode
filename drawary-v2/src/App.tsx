@@ -19,15 +19,16 @@ import { StatsScreen } from './screens/StatsScreen';
 import { NewDrawerScreen } from './screens/NewDrawerScreen';
 import { DrawerDetailScreen, DEFAULT_RECORDS } from './screens/DrawerDetailScreen';
 import { RecordDetailScreen } from './screens/RecordDetailScreen';
+import { RecordEditScreen } from './screens/RecordEditScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail';
+type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail' | 'record-detail'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail' | 'record-detail' | 'record-edit'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -70,6 +71,11 @@ export default function App() {
   const lastTabRef = useRef<BottomNavTab>('home');
   const [drawerDetailName, setDrawerDetailName] = useState('화장품');
   const [recordDetailId, setRecordDetailId] = useState('lip');
+  // '' means "no photo" -- RecordEditScreen's photoUri prop defaults to
+  // the fixture only when passed `undefined`, so removal must use ''
+  // rather than undefined or the default parameter would silently put
+  // the photo right back (a real bug caught during this screen's QA).
+  const [editPhotoUri, setEditPhotoUri] = useState('/fixtures/sample_edit_photo.webp');
 
   useEffect(() => {
     const update = () => setRoute(parseRoute());
@@ -202,8 +208,27 @@ export default function App() {
           title={record.subtitle ?? record.title}
           photoUri={photoUri}
           onBack={() => navigate('drawer-detail')}
-          onEdit={() => {}}
+          onEdit={() => navigate('record-edit')}
           onDelete={() => {}}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'record-edit') {
+    // #17 보관품 수정, reachable from #16's "수정하기" (previously a
+    // no-op). Per CONFIRMED.md, "수정 완료" returns to #16 (보관품 상세),
+    // not somewhere new. Photo remove/re-add is real local state here
+    // (not yet written back into #16's own displayed photo -- no shared
+    // record data model exists until V2-12).
+    return <main className="drawary-app-shell" data-route="record-edit">
+      <FixedCanvas height={844}>
+        <RecordEditScreen
+          drawerName={drawerDetailName}
+          photoUri={editPhotoUri}
+          onBack={() => navigate('record-detail')}
+          onPickPhoto={() => setEditPhotoUri('/fixtures/sample_edit_photo.webp')}
+          onRemovePhoto={() => setEditPhotoUri('')}
+          onSave={() => navigate('record-detail')}
         />
       </FixedCanvas>
     </main>;

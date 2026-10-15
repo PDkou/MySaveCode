@@ -1,0 +1,73 @@
+/* Byte-identical to the confirmed archive's record-edit.css. */
+:root{
+  --re-bg:#fffaf0;
+  --re-navy:#123f96;
+  --re-purple:#7d58e8;
+  --re-border:#e3d9cd;
+  --re-card:#fffdfa;
+}
+*{box-sizing:border-box}
+button,input,textarea{font:inherit}
+.re-screen{
+  width:390px;height:844px;overflow:hidden;background:var(--re-bg);color:var(--re-navy);
+  font-family:"Noto Sans CJK KR","Noto Sans KR","Apple SD Gothic Neo",sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;
+}
+.re-header{
+  position:relative;height:94px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;
+}
+.re-back{
+  position:absolute;left:18px;bottom:10px;width:40px;height:40px;border:0;background:transparent;
+  color:#2357ad;font:300 40px/34px Arial;padding:0;
+}
+.re-title{text-align:center}
+.re-title h1{margin:0;font-size:21px;line-height:27px;font-weight:800;letter-spacing:-.65px}
+.re-title span{display:block;margin-top:2px;color:#7a83a6;font-size:11px;font-weight:650}
+.re-content{padding:0 22px 25px}
+.re-photo-card{
+  position:relative;width:100%;height:188px;border:1px solid #ead9d0;border-radius:15px;
+  background:#f8dfe4;overflow:hidden;box-shadow:0 2px 7px rgba(66,47,29,.04);
+}
+.re-photo{width:100%;height:100%;display:block;object-fit:cover}
+.re-photo-remove{
+  position:absolute;right:10px;top:10px;width:30px;height:30px;border:0;border-radius:50%;
+  background:rgba(82,75,81,.72);color:#fff;font:500 22px/28px Arial;padding:0;
+}
+.re-photo-empty{
+  width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:#9290a0;font-size:12px;font-weight:650;
+}
+.re-photo-empty img{width:56px;height:56px;object-fit:contain;margin-bottom:8px}
+.re-photo-change{
+  width:100%;height:48px;margin-top:9px;border:1px solid #ded4c8;border-radius:13px;background:#fffdfa;
+  color:#7755df;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;font-weight:800;
+}
+.re-photo-change img{width:25px;height:25px;object-fit:contain}
+.re-fields{margin-top:11px}
+.re-field{margin-top:12px}
+.re-field:first-child{margin-top:0}
+.re-field label{
+  display:block;margin:0 0 6px;color:#214c9d;font-size:13.5px;line-height:18px;font-weight:800;letter-spacing:-.25px;
+}
+.re-field label em{color:#ef6271;font-style:normal;margin-left:2px}
+.re-input,.re-input-icon,.re-textarea-wrap{
+  width:100%;border:1px solid var(--re-border);border-radius:13px;background:var(--re-card);
+}
+.re-input{height:46px;padding:0 13px;color:#2f4c84;outline:none;font-size:13px;font-weight:600}
+.re-input-icon{height:46px;display:grid;grid-template-columns:41px 1fr;align-items:center;overflow:hidden}
+.re-input-icon img{width:24px;height:24px;object-fit:contain;justify-self:center}
+.re-input-icon input{
+  width:100%;height:100%;border:0;background:transparent;outline:none;padding:0 12px 0 0;
+  color:#2f4c84;font-size:13px;font-weight:600;
+}
+.re-textarea-wrap{position:relative;height:74px;overflow:hidden}
+.re-textarea-wrap textarea{
+  width:100%;height:100%;resize:none;border:0;background:transparent;outline:none;
+  padding:11px 13px 24px;color:#2f4c84;font-size:12.5px;line-height:18px;font-weight:500;
+}
+.re-textarea-wrap small{position:absolute;right:10px;bottom:7px;color:#9098ad;font-size:9px;font-weight:600}
+.re-save{
+  width:100%;height:54px;margin-top:17px;border:0;border-radius:27px;
+  background:linear-gradient(90deg,#7853e8,#845fe9);color:#fff;font-size:16px;font-weight:800;
+  letter-spacing:-.4px;box-shadow:0 8px 14px rgba(112,75,218,.18);
+}

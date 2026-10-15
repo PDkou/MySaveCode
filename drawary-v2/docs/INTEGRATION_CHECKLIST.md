@@ -18,6 +18,7 @@
 - [x] V2-09-14: #14 사진 선택/등록 상태 — not a separate screen: per its own CONFIRMED.md, it's #13's registered-photo state. Merged into the existing `FillDrawerScreen` as a conditional branch (photo card/remove/count/thumbnails) rather than a parallel duplicate. `onAddPhoto` now adds a copied QA fixture photo to local state so the registered state is reachable without a real Android Photo Picker. Pixel-diffed against its own confirmed render (mean 4.07 / 89.2% identical / 5.8% diff>30). See `docs/V2_09_14_PHOTO_STATE_QA.md`.
 - [x] V2-09-15: #15 서랍 상세/보관품 목록 — React-integrated AND compiled-browser-QA-verified, wired as `#/drawer-detail` reachable from #03's 5 drawer-card hotspots (previously all no-ops). Found+fixed a real clipping bug (missing `FixedCanvas` wrapper broke it at 320px). Pixel-diffed against both confirmed renders (main: mean 2.63/94.7%/3.3%; menu-open: mean 2.84/94.4%/3.6% -- among the closest matches this session). See `docs/V2_09_15_DRAWER_DETAIL_QA.md`.
 - [x] V2-09-16: #16 보관품 상세 — React-integrated AND compiled-browser-QA-verified, wired as `#/record-detail` reachable from #15's record rows (previously a no-op). Found+fixed a mislabeled archive fixture (a screenshot-crop artifact, not a clean photo) and substituted #14's correct matching photo instead. Pixel-diff elevated only in the photo region (same photo, slightly different crop/zoom than the reference's source); everything else (text/icons/layout) is normal AA-noise range. See `docs/V2_09_16_RECORD_DETAIL_QA.md`.
+- [x] V2-09-17: #17 보관품 수정 — React-integrated AND compiled-browser-QA-verified, wired as `#/record-edit` reachable from #16's "수정하기" (previously a no-op), "수정 완료" returns to #16 per CONFIRMED.md. Found+fixed a real bug: representing "removed photo" as `undefined` silently re-triggered the component's default-parameter fixture, making the empty-photo state unreachable; fixed by using `''` instead. Pixel-diffed against its confirmed render (mean 2.05 / 97.1% identical / 2.5% diff>30 -- one of the closest matches this session). See `docs/V2_09_17_RECORD_EDIT_QA.md`.
 - [x] V2-07/09-47: #47 backup progress — the long-standing `ASSET_BLOCKED` on the approved mascot binary is resolved: the user pushed `mascot_backup_progress.webp` directly to GitHub (commit `7f5574e`, verified via `git fetch`/`git log`, merged into this branch with no conflicts). React-integrated as `BackupProgressScreen` at `#/backup-progress`, compiled-browser-QA-verified at 3 viewports, pixel-diffed against the confirmed comparison package's `code_render_390x844.png` (mean diff 6.86 / 85.3% identical / 9.6% diff>30 — normal AA-noise range). See updated `docs/V2_07_SCREEN47_QA.md`.
 - [ ] V2-09: screens 14–28 remaining.
 
@@ -44,7 +45,8 @@
 - [x] 14 사진 선택/등록 상태 — merged into #13's FillDrawerScreen as its registered-photo state (not a separate screen), QA-verified
 - [x] 15 서랍 상세/보관품 목록 — React-integrated, QA-verified, live from #03's drawer-card hotspots
 - [x] 16 보관품 상세 — React-integrated, QA-verified, live from #15's record rows
-- [ ] 17–19 Item edit, delete confirm and related
+- [x] 17 보관품 수정 — React-integrated, QA-verified, live from #16's "수정하기"
+- [ ] 18–19 Delete confirm and related
 - [ ] 20–28 Table, sorting, filtering and drawer management
 - [ ] 29–37 Notifications and recurrence
 - [ ] 38–44 Settings, security, lock, theme, data hub
