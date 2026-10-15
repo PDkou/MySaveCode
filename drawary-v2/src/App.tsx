@@ -197,8 +197,12 @@ export default function App() {
     // available (the same 롬앤 틴트 fixture #14 uses) -- #15's other 3
     // rows only have small 92x98 list thumbnails, so this honestly
     // reuses those (upscaled/soft) rather than inventing a higher-res
-    // photo that was never provided. "수정하기"(#17)/"보관품 삭제"(#18)
-    // have no destination screens yet -- intentional no-ops.
+    // photo that was never provided. "수정하기" -> #17. "보관품 삭제"
+    // opens #18's confirm sheet (handled locally inside
+    // RecordDetailScreen); confirming it there calls this onDelete,
+    // which per #18's CONFIRMED.md returns to #15 (서랍 상세) -- there's
+    // no real deletion from a data model yet (V2-12), so this is
+    // navigation-only, same caveat as #09-#13's local demo state.
     const record = DEFAULT_RECORDS.find((r) => r.id === recordDetailId) ?? DEFAULT_RECORDS[0];
     const photoUri = record.id === 'lip' ? '/fixtures/sample_selected_photo.webp' : record.thumbnailUri;
     return <main className="drawary-app-shell" data-route="record-detail">
@@ -209,7 +213,7 @@ export default function App() {
           photoUri={photoUri}
           onBack={() => navigate('drawer-detail')}
           onEdit={() => navigate('record-edit')}
-          onDelete={() => {}}
+          onDelete={() => navigate('drawer-detail')}
         />
       </FixedCanvas>
     </main>;

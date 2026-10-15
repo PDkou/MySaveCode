@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './RecordDetailScreen.css';
+import { RecordDeleteConfirmScreen } from './RecordDeleteConfirmScreen';
 
 export type RecordFieldType =
   | 'text'
@@ -66,6 +67,12 @@ interface RecordDetailScreenProps {
  * -- confirmed by comparing it against `16_CONFIRMED_MAIN.png`, which
  * shows a clean zoomed photo with no UI chrome. Not production data,
  * since there's no real item data model yet (V2-12).
+ *
+ * #18 보관품 삭제 확인 is rendered here as a local overlay (triggered by
+ * the "•••" menu's "보관품 삭제"), matching the established
+ * component-local-modal convention already used for #11's delete
+ * confirm. The `onDelete` prop only fires once the user actually
+ * confirms in that sheet, not just from opening the menu.
  */
 export function RecordDetailScreen({
   drawerName = '화장품',
@@ -77,6 +84,7 @@ export function RecordDetailScreen({
   onDelete,
 }: RecordDetailScreenProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   return (
     <main className="rd-screen">
@@ -93,7 +101,7 @@ export function RecordDetailScreen({
 
         {menuOpen && (
           <div className="rd-menu-popover" role="menu">
-            <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onDelete?.(); }}>
+            <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setDeleteConfirmOpen(true); }}>
               <img src="/assets/ui-icons/icon_delete.webp" alt="" />
               <span>보관품 삭제</span>
             </button>
@@ -135,6 +143,14 @@ export function RecordDetailScreen({
           <span>수정하기</span>
         </button>
       </section>
+
+      {deleteConfirmOpen && (
+        <RecordDeleteConfirmScreen
+          recordTitle={title}
+          onCancel={() => setDeleteConfirmOpen(false)}
+          onDelete={() => { setDeleteConfirmOpen(false); onDelete?.(); }}
+        />
+      )}
     </main>
   );
 }

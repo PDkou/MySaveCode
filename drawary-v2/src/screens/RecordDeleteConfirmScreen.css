@@ -1,0 +1,83 @@
+/* Byte-identical to the confirmed archive's record-delete-confirm.css
+   (same bottom-sheet pattern as #11's delete confirm). */
+.rdc-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(44,38,56,.28);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  z-index:50;
+}
+.rdc-sheet{
+  width:100%;
+  background:#fffaf3;
+  border-radius:24px 24px 0 0;
+  padding:10px 22px 28px;
+  box-shadow:0 -10px 34px rgba(55,45,70,.18);
+}
+.rdc-handle{
+  width:42px;
+  height:4px;
+  border-radius:99px;
+  background:#d8d1ca;
+  margin:0 auto 18px;
+}
+.rdc-icon{
+  width:54px;
+  height:54px;
+  border-radius:17px;
+  background:#fff0f1;
+  margin:0 auto 12px;
+  display:grid;
+  place-items:center;
+}
+.rdc-icon img{
+  width:32px;
+  height:32px;
+  object-fit:contain;
+}
+.rdc-sheet h2{
+  margin:0;
+  text-align:center;
+  color:#304e8e;
+  font-size:19px;
+  letter-spacing:-.4px;
+}
+.rdc-sheet p{
+  margin:8px 0 18px;
+  text-align:center;
+  color:#7d7c8c;
+  font-size:12.5px;
+  line-height:19px;
+}
+.rdc-sheet p strong{
+  color:#655f78;
+  font-weight:800;
+}
+.rdc-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.rdc-actions button{
+  height:49px;
+  border-radius:24px;
+  font-size:14px;
+  font-weight:700;
+}
+.rdc-cancel{
+  border:1px solid #e5ded3;
+  background:#fffdfa;
+  color:#596a8b;
+}
+.rdc-delete{
+  border:0;
+  background:#e97882;
+  color:#fff;
+}
+
+.rdc-warning{
+  display:block;
+  margin-top:6px;
+}
