@@ -8,9 +8,10 @@ import { HomeEmptyScreen } from './screens/HomeEmptyScreen';
 import { GlobalSearchScreen } from './screens/GlobalSearchScreen';
 import { MOCK_SEARCH_RECORDS } from './mockData';
 import { SettingsHomeScreen } from './screens/SettingsHomeScreen';
-import { DrawerFieldsScreen } from './screens/DrawerFieldsScreen';
+import { DrawerFieldsScreen, DEFAULT_DRAWER_FIELDS } from './screens/DrawerFieldsScreen';
 import { NewFieldScreen } from './screens/NewFieldScreen';
 import { DrawerFieldEditScreen } from './screens/DrawerFieldEditScreen';
+import { NameIconChangeScreen } from './screens/NameIconChangeScreen';
 import { CreationCompleteScreen } from './screens/CreationCompleteScreen';
 import { FillDrawerScreen } from './screens/FillDrawerScreen';
 import { BackupProgressScreen } from './screens/BackupProgressScreen';
@@ -25,13 +26,13 @@ import { TableViewScreen } from './screens/TableViewScreen';
 import { DrawerManageScreen } from './screens/DrawerManageScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage';
+type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -73,6 +74,11 @@ export default function App() {
   const [route, setRoute] = useState<Route>(parseRoute);
   const lastTabRef = useRef<BottomNavTab>('home');
   const [drawerDetailName, setDrawerDetailName] = useState('화장품');
+  // #25 서랍 이름 / 아이콘 변경 writes both of these back on save, and #24
+  // reads them straight back out -- the "상단 정보 즉시 갱신" CONFIRMED.md
+  // asks for, done via shared App-level state rather than local state in
+  // either screen.
+  const [drawerIconId, setDrawerIconId] = useState('cosmetics');
   const [recordDetailId, setRecordDetailId] = useState('lip');
   // '' means "no photo" -- RecordEditScreen's photoUri prop defaults to
   // the fixture only when passed `undefined`, so removal must use ''
@@ -151,9 +157,11 @@ export default function App() {
   if (route === 'field-edit') {
     // #11 QA route, reachable from #09's "서랍 칸 수정". Same caveat as
     // #10: its own internal field list/edit state is independent of #09's,
-    // not yet unified.
+    // not yet unified. Back now actually returns to #09 -- the archive's
+    // own back button had no onClick at all (found while adding the
+    // #26 reuse's field-edit-manage route, which needed the same prop).
     return <main className="drawary-app-shell" data-route="field-edit">
-      <FixedCanvas height={844}><DrawerFieldEditScreen /></FixedCanvas>
+      <FixedCanvas height={844}><DrawerFieldEditScreen onBack={() => navigate('drawer-fields')} /></FixedCanvas>
     </main>;
   }
   if (route === 'creation-complete') {
@@ -212,24 +220,87 @@ export default function App() {
   }
   if (route === 'drawer-manage') {
     // #24 서랍 관리 메인, reachable from #15's "•••" menu's "서랍 관리"
-    // (previously a no-op). Every row's destination (#25/#26/#27/#29/#33/
-    // #28, plus the existing backup/export flow) is not built yet, so
-    // all are intentional no-ops for now, same reasoning as other
-    // not-yet-built destinations.
+    // (previously a no-op). 이름/아이콘 변경 -> #25, 서랍칸 편집 -> #26
+    // (both real routes below). 정렬/필터 설정(#27) and 서랍 삭제(#28) are
+    // handled as local overlays inside DrawerManageScreen itself now --
+    // deleting calls this onDeleteDrawer, which per #28's CONFIRMED.md
+    // ("삭제 후 홈 복귀") returns all the way to the home tab. 알림 설정
+    // (#29)/반복 관리(#33)/백업·내보내기 have no destination screen yet,
+    // so those three stay intentional no-ops.
     return <main className="drawary-app-shell" data-route="drawer-manage">
       <FixedCanvas height={844}>
         <DrawerManageScreen
           drawerName={drawerDetailName}
+          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
           onBack={() => navigate('drawer-detail')}
-          onRenameDrawer={() => {}}
-          onEditFields={() => {}}
-          onSortFilterSettings={() => {}}
+          onRenameDrawer={() => navigate('name-icon-change')}
+          onEditFields={() => navigate('drawer-fields-manage')}
           onNotificationSettings={() => {}}
           onRecurrenceManage={() => {}}
           onBackupExport={() => {}}
-          onDeleteDrawer={() => {}}
+          onDeleteDrawer={() => navigate('home')}
         />
       </FixedCanvas>
+    </main>;
+  }
+  if (route === 'name-icon-change') {
+    // #25 서랍 이름 / 아이콘 변경, reachable from #24's "서랍 이름 / 아이콘
+    // 변경" row. Saving updates the shared drawerDetailName/drawerIconId
+    // state and returns to #24, whose header re-renders from that same
+    // state -- the "상단 정보 즉시 갱신" CONFIRMED.md asks for.
+    return <main className="drawary-app-shell" data-route="name-icon-change">
+      <FixedCanvas height={844}>
+        <NameIconChangeScreen
+          initialName={drawerDetailName}
+          initialIconId={drawerIconId}
+          onBack={() => navigate('drawer-manage')}
+          onSave={({ name, iconId }) => {
+            setDrawerDetailName(name);
+            setDrawerIconId(iconId);
+            navigate('drawer-manage');
+          }}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'drawer-fields-manage') {
+    // #26 서랍칸 편집. Per REUSE_MAPPING.md this is NOT a new screen --
+    // it reuses #09's DrawerFieldsScreen verbatim, only swapping the
+    // creation-flow's own title/copy/destination for an edit-mode
+    // context (진입점: #24, 완료/뒤로가기: #24로 복귀, 신규 생성 플로우용
+    // 문구 미사용) via the title/completeLabel/contextLabel props added
+    // for this reuse. contextLabel renders the REUSE_MAPPING's own
+    // approved visual refinement: drawer name + field count on one
+    // baseline, centered as a group.
+    return <main className="drawary-app-shell" data-route="drawer-fields-manage">
+      <FixedCanvas height={844}>
+        <DrawerFieldsScreen
+          title="서랍칸 편집"
+          completeLabel="완료"
+          contextLabel={{ name: drawerDetailName, detail: `${DEFAULT_DRAWER_FIELDS.length}개 서랍칸` }}
+          onBack={() => navigate('drawer-manage')}
+          onAddField={() => navigate('new-field-manage')}
+          onEditField={() => navigate('field-edit-manage')}
+          onComplete={() => navigate('drawer-manage')}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'new-field-manage') {
+    // #26's reuse of #10 (NewFieldScreen), entered only from
+    // drawer-fields-manage -- back/add both return there instead of the
+    // creation-flow's drawer-fields route.
+    return <main className="drawary-app-shell" data-route="new-field-manage">
+      <FixedCanvas height={844}><NewFieldScreen onBack={() => navigate('drawer-fields-manage')} onAdd={() => navigate('drawer-fields-manage')} /></FixedCanvas>
+    </main>;
+  }
+  if (route === 'field-edit-manage') {
+    // #26's reuse of #11 (DrawerFieldEditScreen), entered only from
+    // drawer-fields-manage. Added a real onBack prop to DrawerFieldEditScreen
+    // itself for this (its own archive never wired the back button at
+    // all), reused here and by the existing field-edit route below.
+    return <main className="drawary-app-shell" data-route="field-edit-manage">
+      <FixedCanvas height={844}><DrawerFieldEditScreen onBack={() => navigate('drawer-fields-manage')} /></FixedCanvas>
     </main>;
   }
   if (route === 'record-detail') {

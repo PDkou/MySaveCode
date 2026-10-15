@@ -34,7 +34,15 @@ const FIELDS = [
   { id: 'memo', name: '메모', type: '긴 글', icon: '/assets/field-types/field_edit_note.webp' },
 ];
 
-export function DrawerFieldEditScreen() {
+export interface DrawerFieldEditScreenProps {
+  // The archive's own TSX never wires this back button at all (see the
+  // reconstruction note above) -- added so this screen can actually
+  // return to whichever list screen reached it (#09's own `drawer-fields`
+  // route, or #26's reuse of the same screen via `drawer-fields-manage`).
+  onBack?: () => void;
+}
+
+export function DrawerFieldEditScreen({ onBack }: DrawerFieldEditScreenProps) {
   const [mode, setMode] = useState<'list' | 'edit'>('list');
   const [name, setName] = useState('카테고리');
   const [required, setRequired] = useState(false);
@@ -45,7 +53,7 @@ export function DrawerFieldEditScreen() {
     return (
       <main className="df-screen">
         <header className="df-header">
-          <button className="df-back" aria-label="뒤로가기">‹</button>
+          <button className="df-back" aria-label="뒤로가기" onClick={onBack}>‹</button>
           <h1>서랍칸 정하기</h1>
         </header>
         <section className="df-content">

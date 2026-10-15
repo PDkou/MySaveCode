@@ -1,0 +1,13 @@
+/* Byte-identical to the confirmed archive's drawer-delete-confirm.css. */
+button{font:inherit}
+.ddc-backdrop{position:absolute;inset:0;z-index:90;background:rgba(44,38,56,.30);display:flex;align-items:flex-end;justify-content:center}
+.ddc-sheet{width:100%;background:#fffaf3;border-radius:24px 24px 0 0;padding:10px 22px 28px;box-shadow:0 -10px 34px rgba(55,45,70,.18)}
+.ddc-handle{width:42px;height:4px;border-radius:99px;background:#d8d1ca;margin:0 auto 18px}
+.ddc-icon{width:54px;height:54px;border-radius:17px;background:#fff0f1;margin:0 auto 12px;display:grid;place-items:center}
+.ddc-icon img{width:32px;height:32px;object-fit:contain}
+.ddc-sheet h2{margin:0;text-align:center;color:#304e8e;font-size:19px;font-weight:900;letter-spacing:-.4px}
+.ddc-sheet p{margin:8px 0 18px;text-align:center;color:#7d7c8c;font-size:12.5px;line-height:19px}
+.ddc-sheet p strong{color:#655f78;font-weight:850}
+.ddc-detail{display:block;margin-top:5px}.ddc-warning{display:block;margin-top:7px;color:#e05f69;font-weight:800}
+.ddc-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ddc-actions button{height:49px;border-radius:24px;font-size:14px;font-weight:800}
+.ddc-cancel{border:1px solid #e5ded3;background:#fffdfa;color:#596a8b}.ddc-delete{border:0;background:#e97882;color:#fff}

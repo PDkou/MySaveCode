@@ -1,4 +1,10 @@
+import { useState } from 'react';
 import './DrawerManageScreen.css';
+import { TableSortFilterEntryScreen } from './TableSortFilterEntryScreen';
+import { TableSortScreen } from './TableSortScreen';
+import { TableFilterScreen } from './TableFilterScreen';
+import { DEFAULT_TABLE_COLUMNS, DEFAULT_TABLE_ROWS } from './TableViewScreen';
+import { DrawerDeleteConfirmScreen } from './DrawerDeleteConfirmScreen';
 
 interface DrawerManageRow {
   key: string;
@@ -16,12 +22,13 @@ interface DrawerManageScreenProps {
   onBack?: () => void;
   onRenameDrawer?: () => void;
   onEditFields?: () => void;
-  onSortFilterSettings?: () => void;
   onNotificationSettings?: () => void;
   onRecurrenceManage?: () => void;
   onBackupExport?: () => void;
   onDeleteDrawer?: () => void;
 }
+
+const SORT_FILTER_COLUMNS = DEFAULT_TABLE_COLUMNS.map((c) => ({ id: c.id, label: c.label, type: c.type ?? 'text' }));
 
 /**
  * #24 서랍 관리 메인. No separate TSX/CSS exists for this screen, only
@@ -39,9 +46,18 @@ interface DrawerManageScreenProps {
  * CONFIRMED.md's destinations: 이름/아이콘 변경 -> #25, 서랍칸 편집 ->
  * #26, 정렬/필터 설정 -> #27, 알림 설정 -> #29, 반복 관리 -> #33,
  * 백업/내보내기 -> existing data-management flow, 서랍 삭제 -> #28.
- * None of #25-#29/#33 exist yet, so every row is wired to the caller's
- * own handler, left as no-ops for now by the caller rather than guessed
- * destinations.
+ * #25/#26 are real routes (caller's own onRenameDrawer/onEditFields).
+ * #27/#28 are local sheet overlays rendered right here, matching the
+ * component-local-modal convention already used for #18's delete
+ * confirm -- #27's CONFIRMED.md ("27번은 진입 선택만 담당") is purely an
+ * entry-selection sheet into the already-built #22/#23
+ * (TableSortScreen/TableFilterScreen), fed this screen's own demo table
+ * data since there's no real per-drawer table data yet (V2-12
+ * territory, same caveat as #20's own table). #28 reuses #18's
+ * delete-sheet pattern; confirming calls the caller's onDeleteDrawer,
+ * which per CONFIRMED.md ("삭제 후 홈 복귀") is responsible for the
+ * actual navigate-home. #29/#33/backup still have no destination screen,
+ * so those three rows stay the caller's own no-op handler.
  */
 export function DrawerManageScreen({
   drawerName = '화장품',
@@ -51,17 +67,21 @@ export function DrawerManageScreen({
   onBack,
   onRenameDrawer,
   onEditFields,
-  onSortFilterSettings,
   onNotificationSettings,
   onRecurrenceManage,
   onBackupExport,
   onDeleteDrawer,
 }: DrawerManageScreenProps) {
+  const [sortFilterOpen, setSortFilterOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
   const groups: DrawerManageRow[][] = [
     [
       { key: 'rename', label: '서랍 이름 / 아이콘 변경', icon: '/assets/ui-icons/icon_edit.webp', onClick: onRenameDrawer },
       { key: 'fields', label: '서랍칸 편집', icon: '/assets/ui-icons/icon_grid.webp', onClick: onEditFields },
-      { key: 'sort-filter', label: '정렬 / 필터 설정', icon: '/assets/ui-icons/icon_sort.webp', onClick: onSortFilterSettings },
+      { key: 'sort-filter', label: '정렬 / 필터 설정', icon: '/assets/ui-icons/icon_sort.webp', onClick: () => setSortFilterOpen(true) },
     ],
     [
       { key: 'notifications', label: '알림 설정', icon: '/assets/ui-icons/icon_notification.webp', onClick: onNotificationSettings },
@@ -71,7 +91,7 @@ export function DrawerManageScreen({
       { key: 'backup', label: '백업 / 내보내기', icon: '/assets/ui-icons/icon_share.webp', onClick: onBackupExport },
     ],
     [
-      { key: 'delete', label: '서랍 삭제', icon: '/assets/ui-icons/icon_delete.webp', danger: true, onClick: onDeleteDrawer },
+      { key: 'delete', label: '서랍 삭제', icon: '/assets/ui-icons/icon_delete.webp', danger: true, onClick: () => setDeleteConfirmOpen(true) },
     ],
   ];
 
@@ -109,6 +129,40 @@ export function DrawerManageScreen({
           ))}
         </section>
       ))}
+
+      {sortFilterOpen && (
+        <TableSortFilterEntryScreen
+          onCancel={() => setSortFilterOpen(false)}
+          onPickSort={() => { setSortFilterOpen(false); setSortOpen(true); }}
+          onPickFilter={() => { setSortFilterOpen(false); setFilterOpen(true); }}
+        />
+      )}
+
+      {sortOpen && (
+        <TableSortScreen
+          columns={SORT_FILTER_COLUMNS}
+          onCancel={() => setSortOpen(false)}
+          onApply={() => setSortOpen(false)}
+        />
+      )}
+
+      {filterOpen && (
+        <TableFilterScreen
+          columns={SORT_FILTER_COLUMNS}
+          rows={DEFAULT_TABLE_ROWS}
+          onCancel={() => setFilterOpen(false)}
+          onApply={() => setFilterOpen(false)}
+        />
+      )}
+
+      {deleteConfirmOpen && (
+        <DrawerDeleteConfirmScreen
+          drawerName={drawerName}
+          recordCount={recordCount}
+          onCancel={() => setDeleteConfirmOpen(false)}
+          onDelete={() => { setDeleteConfirmOpen(false); onDeleteDrawer?.(); }}
+        />
+      )}
     </main>
   );
 }

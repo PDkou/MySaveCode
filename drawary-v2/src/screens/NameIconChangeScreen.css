@@ -1,0 +1,29 @@
+/* Byte-identical to the confirmed archive's name-icon-change.css. */
+button{font:inherit}
+.nic-page{width:390px;height:844px;overflow:hidden;margin:0 auto;background:#fff9ed;padding:28px 20px 24px}
+.nic-header{height:61px;display:grid;grid-template-columns:42px 1fr 42px;align-items:center;margin-bottom:12px}
+.nic-header h1{margin:0;text-align:center;color:#174d9f;font-size:20px;font-weight:900;letter-spacing:-.55px;white-space:nowrap}
+.nic-back{border:0;background:transparent;color:#1f58ad;width:42px;height:42px;padding:0;font:300 38px/38px Arial;text-align:left}
+.nic-preview{min-height:86px;border:1px solid #ead9c8;border-radius:17px;background:rgba(255,255,255,.74);display:flex;align-items:center;padding:12px 14px;margin-bottom:17px}
+.nic-preview-icon{width:58px;height:58px;border-radius:15px;background:#f5e7ee;display:grid;place-items:center;flex:0 0 58px}
+.nic-preview-icon img{width:42px;height:42px;object-fit:contain}
+.nic-preview>div:last-child{margin-left:13px;min-width:0;display:flex;flex-direction:column;gap:3px}
+.nic-preview span{font-size:10.5px;font-weight:750;color:#9291a0}
+.nic-preview strong{font-size:18px;font-weight:900;color:#244f9d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nic-section{margin-top:15px}
+.nic-section-title{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px;padding:0 2px}
+.nic-section-title strong{font-size:13px;font-weight:900;color:#566b95}
+.nic-section-title span{font-size:10.5px;font-weight:700;color:#9a96a0}
+.nic-name-input{width:100%;height:49px;border:1px solid #dfd5ca;border-radius:13px;background:#fffdfa;outline:0;padding:0 14px;color:#36558e;font-size:13px;font-weight:750}
+.nic-name-input:focus{border-color:#baa6f4;box-shadow:0 0 0 3px rgba(126,89,232,.08)}
+.nic-icon-section{margin-top:18px}
+.nic-icon-grid{height:302px;overflow-y:auto;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:2px 2px 8px;scrollbar-width:thin}
+.nic-icon-option{position:relative;height:55px;border:1px solid #e5dbd0;border-radius:13px;background:#fffdfa;display:grid;place-items:center;padding:0}
+.nic-icon-option img{width:34px;height:34px;object-fit:contain}
+.nic-icon-option.is-selected{border:2px solid #8b6de8;background:#f6f1ff}
+.nic-icon-option i{position:absolute;right:-4px;top:-5px;width:18px;height:18px;border-radius:50%;background:#7d58e8;color:white;font-style:normal;font-size:11px;font-weight:900;display:grid;place-items:center;border:2px solid #fff9ed}
+.nic-actions{display:grid;grid-template-columns:1fr 1.2fr;gap:10px;margin-top:20px}
+.nic-actions button{height:49px;border-radius:24px;font-size:13px;font-weight:850}
+.nic-cancel{border:1px solid #e5ddd3;background:#fffdfa;color:#687896}
+.nic-save{border:0;background:#7d58e8;color:#fff}
+.nic-save:disabled{background:#d9d2e8;color:#f8f6fb}

@@ -22,6 +22,15 @@ export interface DrawerFieldItem {
 
 export interface DrawerFieldsScreenProps {
   fields?: DrawerFieldItem[];
+  // #26 서랍칸 편집 (REUSE_MAPPING.md) reuses this exact screen against an
+  // existing drawer instead of the new-drawer-creation flow -- title,
+  // completeLabel and contextLabel let the caller swap the creation-flow's
+  // own copy/destination for that context without a second component.
+  // contextLabel is the REUSE_MAPPING's "approved visual refinement": the
+  // drawer name and field count shown on one baseline, centered as a group.
+  title?: string;
+  completeLabel?: string;
+  contextLabel?: { name: string; detail: string };
   onBack?: () => void;
   onEditField?: (field: DrawerFieldItem) => void;
   onAddField?: () => void;
@@ -50,6 +59,9 @@ const ICON_BY_KIND: Record<DrawerFieldKind, string> = {
 
 export function DrawerFieldsScreen({
   fields = DEFAULT_DRAWER_FIELDS,
+  title = '서랍 칸 정하기',
+  completeLabel = '서랍 만들기 완료하기',
+  contextLabel,
   onBack,
   onEditField,
   onAddField,
@@ -83,13 +95,20 @@ export function DrawerFieldsScreen({
   const endDrag = () => setDragging(null);
 
   return (
-    <main className="drawary-field-screen" aria-label="서랍 칸 정하기">
+    <main className="drawary-field-screen" aria-label={title}>
       <header className="drawary-field-header">
         <button type="button" className="drawary-back" onClick={onBack} aria-label="뒤로가기">
           <span aria-hidden="true">‹</span>
         </button>
-        <h1>서랍 칸 정하기</h1>
+        <h1>{title}</h1>
       </header>
+
+      {contextLabel && (
+        <p className="drawary-field-context">
+          <strong>{contextLabel.name}</strong>
+          <span>{contextLabel.detail}</span>
+        </p>
+      )}
 
       <section className="drawary-field-content">
         <p className="drawary-field-intro">
@@ -146,7 +165,7 @@ export function DrawerFieldsScreen({
         </section>
 
         <button type="button" className="drawary-complete" onClick={onComplete}>
-          서랍 만들기 완료하기
+          {completeLabel}
         </button>
       </section>
     </main>
