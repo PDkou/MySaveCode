@@ -17,16 +17,17 @@ import { BackupProgressScreen } from './screens/BackupProgressScreen';
 import { HomeEditScreen } from './screens/HomeEditScreen';
 import { StatsScreen } from './screens/StatsScreen';
 import { NewDrawerScreen } from './screens/NewDrawerScreen';
-import { DrawerDetailScreen } from './screens/DrawerDetailScreen';
+import { DrawerDetailScreen, DEFAULT_RECORDS } from './screens/DrawerDetailScreen';
+import { RecordDetailScreen } from './screens/RecordDetailScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail';
+type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail' | 'record-detail'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -68,6 +69,7 @@ export default function App() {
   const [route, setRoute] = useState<Route>(parseRoute);
   const lastTabRef = useRef<BottomNavTab>('home');
   const [drawerDetailName, setDrawerDetailName] = useState('화장품');
+  const [recordDetailId, setRecordDetailId] = useState('lip');
 
   useEffect(() => {
     const update = () => setRoute(parseRoute());
@@ -164,18 +166,44 @@ export default function App() {
   }
   if (route === 'drawer-detail') {
     // #15 서랍 상세 / 보관품 목록, reachable from #03's drawer-card
-    // hotspots. "표로 보기"(#20)/"서랍 관리"(#24) and opening a record
-    // (item detail, #16+) have no destination screens yet -- intentional
-    // no-ops, same reasoning as other not-yet-built destinations.
+    // hotspots. "표로 보기"(#20)/"서랍 관리"(#24) have no destination
+    // screens yet -- intentional no-ops, same reasoning as other
+    // not-yet-built destinations.
     return <main className="drawary-app-shell" data-route="drawer-detail">
       <FixedCanvas height={844}>
         <DrawerDetailScreen
           drawerName={drawerDetailName}
           onBack={returnToTab}
           onFillDrawer={() => navigate('fill-drawer')}
-          onOpenRecord={() => {}}
+          onOpenRecord={(id) => { setRecordDetailId(id); navigate('record-detail'); }}
           onOpenTable={() => {}}
           onOpenManage={() => {}}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'record-detail') {
+    // #16 보관품 상세, reachable from #15's record rows. Uses that same
+    // record's own demo title (DEFAULT_RECORDS) so the clicked item's
+    // content actually carries over, rather than always showing the
+    // same hardcoded 롬앤 sample regardless of which row was clicked.
+    // Photo: only #15's "lip" row has a matching full-resolution photo
+    // available (the same 롬앤 틴트 fixture #14 uses) -- #15's other 3
+    // rows only have small 92x98 list thumbnails, so this honestly
+    // reuses those (upscaled/soft) rather than inventing a higher-res
+    // photo that was never provided. "수정하기"(#17)/"보관품 삭제"(#18)
+    // have no destination screens yet -- intentional no-ops.
+    const record = DEFAULT_RECORDS.find((r) => r.id === recordDetailId) ?? DEFAULT_RECORDS[0];
+    const photoUri = record.id === 'lip' ? '/fixtures/sample_selected_photo.webp' : record.thumbnailUri;
+    return <main className="drawary-app-shell" data-route="record-detail">
+      <FixedCanvas height={844}>
+        <RecordDetailScreen
+          drawerName={drawerDetailName}
+          title={record.subtitle ?? record.title}
+          photoUri={photoUri}
+          onBack={() => navigate('drawer-detail')}
+          onEdit={() => {}}
+          onDelete={() => {}}
         />
       </FixedCanvas>
     </main>;

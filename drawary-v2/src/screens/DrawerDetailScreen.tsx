@@ -22,7 +22,7 @@ interface DrawerDetailScreenProps {
   onFillDrawer?: () => void;
 }
 
-const DEFAULT_RECORDS: DrawerRecordSummary[] = [
+export const DEFAULT_RECORDS: DrawerRecordSummary[] = [
   { id: 'lip', title: '립 틴트', subtitle: '롬앤 쥬시래스팅 틴트', dateLabel: '2024. 03. 12.', thumbnailUri: '/fixtures/sample_lip.webp' },
   { id: 'cushion', title: '쿠션 파운데이션', subtitle: '클리오 킬커버 쿠션', dateLabel: '2024. 02. 28.', thumbnailUri: '/fixtures/sample_cushion.webp' },
   { id: 'palette', title: '아이섀도우 팔레트', subtitle: '데이지크 새도우 팔레트', dateLabel: '2024. 01. 20.', thumbnailUri: '/fixtures/sample_palette.webp' },
