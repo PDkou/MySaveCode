@@ -56,9 +56,20 @@ own source) against #13's empty-photo state (dashed border + the same
 cute illustration, `state_photo_empty.webp`) and asked for the #13
 treatment instead, finding it cleaner. This is a deliberate deviation
 from the archived source at the user's explicit request, not a port --
-documented in `RecordEditScreen.tsx`'s own header comment. Changed
-`.re-photo-card.is-empty` to a dashed `#d7c9ba` border on `#fffaf5`
-(matching #13's `.fd-photo-empty` exactly) and swapped the icon+caption
-for the same illustration asset, sized to fill the card. Re-verified:
+documented in `RecordEditScreen.tsx`'s own header comment.
+
+First pass only copied the visual style (dashed `#d7c9ba` border on
+`#fffaf5`, same illustration) but left the empty card as a
+non-interactive div with a separate "사진 선택하기" button below doing
+all the work -- the user caught that this wasn't actually "같은
+방식" as #13, where the whole illustration box is itself a button
+(`.fd-photo-empty`, `onClick={onAddPhoto}`). Fixed by making the empty
+state a real `<button>` (`.re-photo-card.is-empty`, `onClick={onPickPhoto}`),
+matching #13's markup shape as well as its look -- same 178x154 image
+sizing, same `cursor:pointer`. Verified by clicking the illustration
+box directly (not the separate button below it) and confirming it
+triggers photo selection. The separate "사진 선택하기"/"사진 바꾸기"
+button below is kept, matching #13 (which also keeps a parallel "사진
+추가하기" button alongside its own clickable empty box). Re-verified:
 no regression on the photo-present state or the back/save navigation
 chain.

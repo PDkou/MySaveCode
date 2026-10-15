@@ -95,18 +95,16 @@ export function RecordEditScreen({
       </header>
 
       <section className="re-content">
-        <section className={`re-photo-card${photoUri ? '' : ' is-empty'}`}>
-          {photoUri ? (
-            <>
-              <img className="re-photo" src={photoUri} alt="등록한 보관품 사진" />
-              <button className="re-photo-remove" type="button" onClick={onRemovePhoto} aria-label="사진 제거">×</button>
-            </>
-          ) : (
-            <div className="re-photo-empty">
-              <img src="/assets/states/photo/state_photo_empty.webp" alt="" />
-            </div>
-          )}
-        </section>
+        {photoUri ? (
+          <section className="re-photo-card">
+            <img className="re-photo" src={photoUri} alt="등록한 보관품 사진" />
+            <button className="re-photo-remove" type="button" onClick={onRemovePhoto} aria-label="사진 제거">×</button>
+          </section>
+        ) : (
+          <button type="button" className="re-photo-card is-empty" onClick={onPickPhoto} aria-label="사진 선택">
+            <img src="/assets/states/photo/state_photo_empty.webp" alt="" />
+          </button>
+        )}
 
         <button className="re-photo-change" type="button" onClick={onPickPhoto}>
           <img src="/assets/field-types/field_photo.webp" alt="" />

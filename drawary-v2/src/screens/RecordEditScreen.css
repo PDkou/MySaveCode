@@ -34,15 +34,15 @@ button,input,textarea{font:inherit}
   background:rgba(82,75,81,.72);color:#fff;font:500 22px/28px Arial;padding:0;
 }
 /* Empty state restyled to match #13's dashed-border illustration look
-   (user-requested consistency, 2026-10-15) instead of the archive's
-   original plain icon + caption treatment. */
+   exactly (user-requested consistency, 2026-10-15), including the
+   whole card being a clickable button like #13's `.fd-photo-empty`,
+   not just the visual treatment -- instead of the archive's original
+   plain icon + caption on a non-interactive div. */
 .re-photo-card.is-empty{
   border:1px dashed #d7c9ba;background:#fffaf5;box-shadow:none;
+  display:grid;place-items:center;padding:0;cursor:pointer;
 }
-.re-photo-empty{
-  width:100%;height:100%;display:grid;place-items:center;
-}
-.re-photo-empty img{width:85%;height:85%;object-fit:contain;display:block}
+.re-photo-card.is-empty img{width:178px;height:154px;object-fit:contain;display:block}
 .re-photo-empty img{width:56px;height:56px;object-fit:contain;margin-bottom:8px}
 .re-photo-change{
   width:100%;height:48px;margin-top:9px;border:1px solid #ded4c8;border-radius:13px;background:#fffdfa;
