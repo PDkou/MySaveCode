@@ -32,6 +32,26 @@ button,input,textarea{font:inherit}
 .fd-photo-empty img{
   width:178px;height:154px;object-fit:contain;display:block;
 }
+/* Registered-photo state, ported from #14's photo-state.css (.ps-photo-card etc). */
+.fd-photo-card{
+  position:relative;width:100%;height:192px;border:1px solid #ead9d0;border-radius:15px;
+  background:#f9e1e6;overflow:hidden;box-shadow:0 2px 7px rgba(66,47,29,.04);
+}
+.fd-photo{width:100%;height:100%;display:block;object-fit:cover}
+.fd-remove{
+  position:absolute;right:10px;top:10px;width:30px;height:30px;border:0;border-radius:50%;
+  background:rgba(82,75,81,.72);color:#fff;font:500 22px/28px Arial;padding:0;cursor:pointer;
+}
+.fd-count{
+  position:absolute;right:10px;bottom:10px;min-width:48px;height:28px;padding:0 10px;border-radius:14px;
+  background:rgba(82,75,81,.72);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800;
+}
+.fd-thumbs{display:flex;gap:8px;margin-top:9px}
+.fd-thumbs button{
+  width:46px;height:46px;border:2px solid transparent;border-radius:10px;background:#fff;padding:0;overflow:hidden;
+}
+.fd-thumbs button.is-active{border-color:#815ee4}
+.fd-thumbs img{width:100%;height:100%;object-fit:cover}
 .fd-photo-add{
   width:100%;height:50px;margin-top:10px;border:1px solid #ded4c8;border-radius:13px;
   background:#fffdfa;color:#7755df;display:flex;align-items:center;justify-content:center;gap:8px;
