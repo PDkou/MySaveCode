@@ -1,0 +1,20 @@
+name: Drawary V2 design locks
+on:
+  push:
+    paths:
+      - 'drawary-v2/**'
+      - '.github/workflows/drawary-v2-design-lock.yml'
+  pull_request:
+    paths:
+      - 'drawary-v2/**'
+      - '.github/workflows/drawary-v2-design-lock.yml'
+jobs:
+  verify-locks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify approved screen 47 is not silently replaced
+        run: node drawary-v2/scripts/check-design-locks.mjs

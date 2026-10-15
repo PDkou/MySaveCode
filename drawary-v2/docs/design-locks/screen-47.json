@@ -1,0 +1,29 @@
+{
+  "screenId": 47,
+  "screenName": "백업 진행",
+  "designStatus": "USER_APPROVED_LOCKED",
+  "codeStatus": "PENDING_VERIFICATION",
+  "approvalDate": "2026-10-14",
+  "approvalEvidence": "User directly confirmed the revised asset-based screen 47 after choosing a mascot illustration plus code-driven loading spinner. The next screen 48 was then started.",
+  "finalDesignRequirements": {
+    "oneMascotIllustration": true,
+    "loadingSpinner": true,
+    "keepExactFinalApprovedTextAndLayout": true,
+    "doNotUsePriorSpinnerOnly11_4": true,
+    "noSimulatedBackupProgress": true
+  },
+  "finalReferenceArtwork": {
+    "exactFinalScreenFile": "NOT_YET_VERIFIED",
+    "sha256": null,
+    "chosenMascotAsset": "NOT_YET_VERIFIED",
+    "notes": "Do NOT assume that a nearby generated screenshot or state_backup_in_progress.webp is the exact file selected in the final approved 47 layout until verified against the acceptance record."
+  },
+  "implementation": {
+    "gitHubComponentIntegrated": false,
+    "developerQACompleted": false,
+    "userApprovalOfFinalReactCode": false,
+    "previousSpinnerOnlyCommit": "b711b52f71a6f1a289301a621ad70fc9ae4b3237",
+    "previousSpinnerOnlyRevertedCommit": "b8e2d02067035f17a4e997abffd55376b7ef660b"
+  },
+  "changePolicy": "Never overwrite an approved visual design with an earlier draft. Design changes require a NEW explicit user request/approval, with source+hash recorded. Code QA is distinct from design acceptance."
+}
