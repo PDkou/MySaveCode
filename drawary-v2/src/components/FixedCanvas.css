@@ -1,0 +1,12 @@
+.drawary-fixed-canvas-host {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+.drawary-fixed-canvas-scale {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 390px;
+  transform-origin: top center;
+}

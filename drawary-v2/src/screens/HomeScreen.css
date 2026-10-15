@@ -1,0 +1,21 @@
+/* Shows only the confirmed Home artwork's top 750px (844 - the approved
+   V4 nav's 94px) so the real ResponsiveBottomNav renders below it instead
+   of the image's own baked-in footer. The image itself is untouched. */
+.home-screen-crop {
+  position: relative;
+  width: 390px;
+  height: 750px;
+  overflow: hidden;
+}
+.home-screen-img {
+  display: block;
+  width: 390px;
+  height: 844px;
+}
+.home-screen-hotspot {
+  position: absolute;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}

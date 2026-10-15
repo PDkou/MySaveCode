@@ -3,18 +3,26 @@ import { ResponsiveBottomNav } from './components/ResponsiveBottomNav';
 import type { BottomNavTab } from './components/BottomNav_FINAL_CONFIRMED';
 import { SplashScreen } from './screens/SplashScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
+import { HomeScreen, type HomeAction } from './screens/HomeScreen';
+import { HomeEmptyScreen } from './screens/HomeEmptyScreen';
 
-type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding';
+type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding' | 'home-empty';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
-  if (route === 'splash' || route === 'onboarding' || route === 'create-drawer' || TABS.some(tab => tab === route)) return route as Route;
+  if (route === 'splash' || route === 'onboarding' || route === 'home-empty' || route === 'create-drawer' || TABS.some(tab => tab === route)) return route as Route;
   return 'home';
 };
+
+/** #03 Home content hotspots that have no destination screen yet (drawer
+ * detail / editing aren't built, screens 9+). Per CLAUDE.md, a missing
+ * source is a blocker to flag, not something to approximate -- so these
+ * are a deliberate no-op for now rather than a guessed navigation target. */
+const UNIMPLEMENTED_HOME_ACTIONS: ReadonlySet<HomeAction> = new Set(['edit', 'open-cosmetics', 'open-books', 'open-plants', 'open-travel', 'open-other']);
 
 /** V2-09-01/02: user-approved splash and onboarding components are available
  * at #/splash and #/onboarding for parity QA, and onboarding's "시작하기"/
@@ -51,11 +59,27 @@ export default function App() {
       <OnboardingScreen onDone={() => navigate('home')} />
     </main>;
   }
+  if (route === 'home-empty') {
+    // V2-09-04 QA route: the confirmed empty state isn't wired as the live
+    // '#/home' conditional yet -- that needs a real drawer count from the
+    // V2-12 data layer. Standalone here so it can be reviewed/tested now.
+    return <main className="drawary-app-shell" data-route="home-empty">
+      <section className="drawary-route-panel"><HomeEmptyScreen onCreateDrawer={() => navigate('create-drawer')} /></section>
+      <footer className="drawary-shell-footer">
+        <ResponsiveBottomNav active="home" onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />
+      </footer>
+    </main>;
+  }
   const tabRoute = isTab(route);
   return (
     <main className="drawary-app-shell" data-route={route}>
-      <section className="drawary-route-panel" aria-labelledby="drawary-dev-screen-title">
-        {tabRoute ? (
+      <section className="drawary-route-panel" aria-labelledby={route === 'home' ? undefined : 'drawary-dev-screen-title'}>
+        {route === 'home' ? (
+          <HomeScreen onAction={(action) => {
+            if (action === 'create-drawer') { navigate('create-drawer'); return; }
+            if (UNIMPLEMENTED_HOME_ACTIONS.has(action)) return; // no destination screen yet; see CLAUDE.md note above
+          }} />
+        ) : tabRoute ? (
           <div className="drawary-dev-only">
             <div className="drawary-dev-flag">개발 검수용 · 확정 화면 아님</div>
             <h1 id="drawary-dev-screen-title">{NAMES[route]}</h1>
