@@ -69,8 +69,8 @@
 .global-search-box::after {
   content: "";
   position: absolute;
-  left: 26px;
-  top: 25px;
+  left: 29px;
+  top: 31px;
   width: 7px;
   height: 2px;
   background: #3c4c7f;
