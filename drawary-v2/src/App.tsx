@@ -21,15 +21,16 @@ import { DrawerDetailScreen, DEFAULT_RECORDS } from './screens/DrawerDetailScree
 import { RecordDetailScreen } from './screens/RecordDetailScreen';
 import { RecordEditScreen } from './screens/RecordEditScreen';
 import { PhotoViewerScreen } from './screens/PhotoViewerScreen';
+import { TableViewScreen } from './screens/TableViewScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer';
+type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -173,8 +174,8 @@ export default function App() {
   }
   if (route === 'drawer-detail') {
     // #15 서랍 상세 / 보관품 목록, reachable from #03's drawer-card
-    // hotspots. "표로 보기"(#20)/"서랍 관리"(#24) have no destination
-    // screens yet -- intentional no-ops, same reasoning as other
+    // hotspots. "표로 보기" -> #20. "서랍 관리"(#24) has no destination
+    // screen yet -- intentional no-op, same reasoning as other
     // not-yet-built destinations.
     return <main className="drawary-app-shell" data-route="drawer-detail">
       <FixedCanvas height={844}>
@@ -183,8 +184,32 @@ export default function App() {
           onBack={returnToTab}
           onFillDrawer={() => navigate('fill-drawer')}
           onOpenRecord={(id) => { setRecordDetailId(id); navigate('record-detail'); }}
-          onOpenTable={() => {}}
+          onOpenTable={() => navigate('table-view')}
           onOpenManage={() => {}}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'table-view') {
+    // #20 표 보기, reachable from #15's "•••" menu's "표로 보기".
+    // README establishes #21/#22/#23 as search/sort/filter *states* of
+    // this same screen -- not built yet, so 검색/정렬/필터 are
+    // intentional no-ops for now, same reasoning as other not-yet-built
+    // destinations. CSV/PDF export (the "•••" menu) also has no
+    // destination yet. Clicking a row opens #16 for that row -- demo
+    // rows don't map back to #15's own DEFAULT_RECORDS (different
+    // sample data sets), so this always opens the "lip" record; real
+    // per-row linking needs the V2-12 data layer.
+    return <main className="drawary-app-shell" data-route="table-view">
+      <FixedCanvas height={844}>
+        <TableViewScreen
+          drawerName={drawerDetailName}
+          onBack={() => navigate('drawer-detail')}
+          onSearch={() => {}}
+          onSort={() => {}}
+          onFilter={() => {}}
+          onExport={() => {}}
+          onOpenRecord={() => { setRecordDetailId('lip'); navigate('record-detail'); }}
         />
       </FixedCanvas>
     </main>;

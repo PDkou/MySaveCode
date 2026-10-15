@@ -22,7 +22,8 @@
 - [x] V2-09-18: #18 보관품 삭제 확인 — React-integrated AND compiled-browser-QA-verified, rendered as a local overlay inside `RecordDetailScreen` (triggered from its "•••" menu), reusing #11's modal-sheet convention per CONFIRMED.md. "삭제하기" returns to #15 (drawer-detail). Caught and fixed a curly-quote typo during the port. Pixel-diff elevated overall only because of #16's already-documented photo-crop mismatch inherited in the dimmed background; the sheet itself is normal AA-noise range (mean 4.67 / 6.95% diff>30). See `docs/V2_09_18_RECORD_DELETE_CONFIRM_QA.md`.
 - [x] V2-09-19: #19 사진 확대/보기 — React-integrated AND compiled-browser-QA-verified, real gesture logic ported untouched (pinch-zoom, drag, swipe, double-tap toggle, verified via computed `transform` matrix, not just a screenshot). Wired as `#/photo-viewer`, reachable by tapping #16's photo (a new `onOpenPhoto` integration point, since #16's own source never defined one). The archive's 3 sample photos are mis-captured screenshot crops (same issue class as #16's); substituted 3 of #15's clean item thumbnails to exercise the mechanics honestly instead. See `docs/V2_09_19_PHOTO_VIEWER_QA.md`.
 - [x] V2-07/09-47: #47 backup progress — the long-standing `ASSET_BLOCKED` on the approved mascot binary is resolved: the user pushed `mascot_backup_progress.webp` directly to GitHub (commit `7f5574e`, verified via `git fetch`/`git log`, merged into this branch with no conflicts). React-integrated as `BackupProgressScreen` at `#/backup-progress`, compiled-browser-QA-verified at 3 viewports, pixel-diffed against the confirmed comparison package's `code_render_390x844.png` (mean diff 6.86 / 85.3% identical / 9.6% diff>30 — normal AA-noise range). See updated `docs/V2_07_SCREEN47_QA.md`.
-- [ ] V2-09: screens 14–28 remaining.
+- [x] V2-09-20: #20 표 보기 — React-integrated AND compiled-browser-QA-verified, wired as `#/table-view` from #15's "•••" menu. Real sticky-column + horizontal-scroll CSS, not simulated. Pixel-diff mean 4.11/90.7%/7.1% (normal range). See `docs/V2_09_20_TABLE_VIEW_QA.md`.
+- [ ] V2-09: screens 21–28 remaining.
 
 ## Baseline & safety
 - [x] New branch `drawary/59-design-rebuild-20261014` created.
@@ -50,7 +51,8 @@
 - [x] 17 보관품 수정 — React-integrated, QA-verified, live from #16's "수정하기"
 - [x] 18 보관품 삭제 확인 — React-integrated, QA-verified, live from #16's "•••" menu
 - [x] 19 사진 확대/보기 — React-integrated, QA-verified, live from #16's photo tap
-- [ ] 20–28 Table, sorting, filtering and drawer management
+- [x] 20 표 보기 — React-integrated, QA-verified, live from #15's "•••" menu
+- [ ] 21–28 Table search/sort/filter states and drawer management
 - [ ] 29–37 Notifications and recurrence
 - [ ] 38–44 Settings, security, lock, theme, data hub
 - [ ] 45–53 Backup, restore and reset (47 React-integrated and QA-verified; 45/46/48–53 still incomplete)
