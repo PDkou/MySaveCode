@@ -33,16 +33,22 @@ import { RecurrenceTargetDateScreen } from './screens/RecurrenceTargetDateScreen
 import { RecurrenceCycleScreen, type RecurrenceCycle, cycleLabel } from './screens/RecurrenceCycleScreen';
 import { RecurrenceEndConditionScreen, type RecurrenceEndCondition, endConditionLabel } from './screens/RecurrenceEndConditionScreen';
 import { RecurrenceCompleteScreen } from './screens/RecurrenceCompleteScreen';
+import { ThemeSettingsScreen } from './screens/ThemeSettingsScreen';
+import { SecuritySettingsScreen } from './screens/SecuritySettingsScreen';
+import { LockDetailScreen } from './screens/LockDetailScreen';
+import { PinSetupScreen } from './screens/PinSetupScreen';
+import { AppLockScreen } from './screens/AppLockScreen';
+import { DataManagementHubScreen } from './screens/DataManagementHubScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type StandaloneRoute = 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete';
+type StandaloneRoute = 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management';
 type Route = BottomNavTab | 'create-drawer' | StandaloneRoute;
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
 const NAMES: Record<Exclude<Route, StandaloneRoute>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -120,6 +126,13 @@ export default function App() {
   const [recurrenceCycle, setRecurrenceCycle] = useState<RecurrenceCycle>('monthly');
   const [recurrenceInterval, setRecurrenceInterval] = useState(1);
   const [recurrenceEndCondition, setRecurrenceEndCondition] = useState<RecurrenceEndCondition>({ kind: 'never' });
+
+  // #40-#43 보안/잠금. pinValue is the real PIN #42's flow commits (not
+  // the archive's own hardcoded demo PIN); appLockEnabled can only be
+  // switched on once a PIN exists, matching #41's own "don't turn on a
+  // lock before PIN is configured" rule for real.
+  const [pinValue, setPinValue] = useState<string | null>(null);
+  const [appLockEnabled, setAppLockEnabled] = useState(false);
 
   useEffect(() => {
     const update = () => setRoute(parseRoute());
@@ -493,6 +506,83 @@ export default function App() {
       </FixedCanvas>
     </main>;
   }
+  if (route === 'theme-settings') {
+    // #39 테마 설정, reachable from #38's "테마 설정" row. No approved
+    // TSX exists, only a self-contained `index.html` -- see
+    // ThemeSettingsScreen.tsx's own header comment. Back returns to #38.
+    return <main className="drawary-app-shell" data-route="theme-settings">
+      <FixedCanvas height={844}>
+        <ThemeSettingsScreen onBack={returnToTab} />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'security-settings') {
+    // #40 보안 설정, reachable from #38's "보안 설정" row. Back returns
+    // to #38. "앱 잠금" row -> #41.
+    return <main className="drawary-app-shell" data-route="security-settings">
+      <FixedCanvas height={844}>
+        <SecuritySettingsScreen onBack={returnToTab} onOpenAppLock={() => navigate('lock-detail')} />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'lock-detail') {
+    // #41 잠금 설정 상세, reachable from #40's "앱 잠금" row. Back
+    // returns to #40. "PIN 설정 / 변경" -> #42. The "앱 잠금 사용" switch
+    // is only enabled once a real PIN exists (see the pinValue state
+    // above); toggling it off is always allowed.
+    return <main className="drawary-app-shell" data-route="lock-detail">
+      <FixedCanvas height={844}>
+        <LockDetailScreen
+          hasPin={pinValue !== null}
+          appLockEnabled={appLockEnabled}
+          onBack={() => navigate('security-settings')}
+          onToggleAppLock={() => setAppLockEnabled((v) => !v)}
+          onOpenPinSetup={() => navigate('pin-setup')}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'pin-setup') {
+    // #42 PIN 설정 / 변경, reachable from #41's "PIN 설정 / 변경" row.
+    // Back returns to #41. Completing the real new->confirm->done flow
+    // (see PinSetupScreen.tsx's own header comment) commits the PIN
+    // into shared state and returns to #41, whose "앱 잠금 사용" switch
+    // becomes enabled immediately.
+    return <main className="drawary-app-shell" data-route="pin-setup">
+      <FixedCanvas height={844}>
+        <PinSetupScreen
+          onBack={() => navigate('lock-detail')}
+          onComplete={(pin) => { setPinValue(pin); navigate('lock-detail'); }}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'app-lock') {
+    // #43 앱 잠금 화면 (fullscreen PIN gate, no back button -- matches
+    // the archive exactly). Not reachable from any row in this app yet:
+    // none of #40-#44's own flows actually re-launch the app to trigger
+    // it, and simulating an app-restart is out of scope for a browser
+    // harness. Kept as a standalone QA route instead of inventing a fake
+    // trigger, same reasoning as #01's own standalone splash-timing
+    // route. `correctPin` uses the real PIN #42 committed, falling back
+    // to the archive's own demo PIN only when none has been set yet
+    // (see AppLockScreen.tsx's own header comment).
+    return <main className="drawary-app-shell" data-route="app-lock">
+      <FixedCanvas height={844}>
+        <AppLockScreen correctPin={pinValue ?? '2468'} onUnlock={() => {}} />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'data-management') {
+    // #44 데이터 관리 허브, reachable from #38's "데이터 관리" row. Back
+    // returns to #38. 백업(#45)/복원(#49)/초기화(#53) have no destination
+    // screen yet, so those three stay intentional no-ops.
+    return <main className="drawary-app-shell" data-route="data-management">
+      <FixedCanvas height={844}>
+        <DataManagementHubScreen onBack={returnToTab} onBackup={() => {}} onRestore={() => {}} onReset={() => {}} />
+      </FixedCanvas>
+    </main>;
+  }
   if (route === 'name-icon-change') {
     // #25 서랍 이름 / 아이콘 변경, reachable from #24's "서랍 이름 / 아이콘
     // 변경" row. Saving updates the shared drawerDetailName/drawerIconId
@@ -679,10 +769,14 @@ export default function App() {
           // HomeScreen's open-* actions above.
           <GlobalSearchScreen records={MOCK_SEARCH_RECORDS} onOpenRecord={() => {}} />
         ) : route === 'settings' ? (
-          // #38: every row (테마/보안/데이터/언어/도움말/정보/피드백) targets
-          // a screen (#39,#40,#44,#54,#55,#58,#59) not yet integrated --
-          // all intentionally unwired for now, same reasoning as above.
-          <SettingsHomeScreen />
+          // #38: 테마->#39, 보안->#40, 데이터->#44 all real routes now.
+          // 언어/도움말/정보/피드백 (#54/#55/#58/#59) still have no
+          // destination screen, so those three rows stay unwired.
+          <SettingsHomeScreen
+            onTheme={() => navigate('theme-settings')}
+            onSecurity={() => navigate('security-settings')}
+            onData={() => navigate('data-management')}
+          />
         ) : route === 'stats' ? (
           // #07: no approved source exists (STATUS.md: NO_FINAL_CODE_IMAGE_ONLY),
           // reconstructed from the two approved reference renders -- see

@@ -1,0 +1,32 @@
+/* Byte-identical values to the confirmed archive's index.html inline
+   style block, classes renamed to this file's dmh44- prefix. */
+button{font:inherit}
+.dmh44-screen{width:390px;height:844px;position:relative;background:#fff9f1;overflow:hidden;margin:0 auto;font-family:'NanumSquare','Noto Sans CJK KR','Noto Sans KR','Apple SD Gothic Neo',Arial,sans-serif;color:#2c4d7d}
+.dmh44-header{height:85px;display:flex;justify-content:center;align-items:center;padding-top:14px;position:relative}
+.dmh44-header h1{font-size:21px;letter-spacing:-.6px;font-weight:900;color:#1959a6;margin:0}
+.dmh44-back{position:absolute;left:20px;top:37px;width:30px;height:33px;border:0;background:transparent;cursor:pointer}
+.dmh44-back:after{content:'';position:absolute;left:9px;top:8px;width:13px;height:13px;border-left:3.5px solid #8b62f5;border-bottom:3.5px solid #8b62f5;transform:rotate(45deg);border-radius:1px}
+.dmh44-panel{position:absolute;left:16px;right:16px;top:85px;bottom:31px;background:#fff;border:1px solid #efebe7;border-radius:20px;box-shadow:0 3px 14px #372d280e;padding:21px 11px 25px}
+.dmh44-section-title{margin:0 0 17px 7px;font-weight:900;font-size:18px;letter-spacing:-.55px;line-height:25px;color:#2c4d7d}
+.dmh44-hero{margin:0 1px 17px;display:flex;align-items:center;height:109px;border:1px solid #e8ddf8;border-radius:19px;background:linear-gradient(112deg,#f5effe 0%,#f8f2ff 45%,#f9f6ff 100%);padding:16px 14px;gap:12px}
+.dmh44-hero-art{width:104px;height:79px;border-radius:20px;background:rgba(255,255,255,.5);display:grid;place-items:center;flex:none;box-shadow:0 3px 12px #cdb9f21c}
+.dmh44-hero-art img{width:102px;height:78px;object-fit:contain;object-position:center center}
+.dmh44-hero-copy strong{display:block;color:#4d4a89;font-size:14px;font-weight:900;letter-spacing:-.5px;white-space:nowrap}
+.dmh44-hero-copy span{display:block;color:#8d879d;margin-top:7px;font-size:10.8px;line-height:1.7;font-weight:650;letter-spacing:-.35px;white-space:normal}
+.dmh44-items{margin:0 1px;border:1px solid #ece5da;border-radius:18px;overflow:hidden;background:#fffdf9}
+.dmh44-item{height:90px;width:100%;display:flex;align-items:center;padding:10px 12px;position:relative;gap:11px;border:0;background:transparent;text-align:left;cursor:pointer;color:inherit}
+.dmh44-item + .dmh44-item{border-top:1px solid #efe8df}
+.dmh44-item-icon{width:45px;height:45px;flex:none;border-radius:14px;background:#f4edff;display:flex;align-items:center;justify-content:center}
+.dmh44-item-icon img{display:block;width:39px;height:39px;object-fit:contain}
+.dmh44-item-copy{flex:1;min-width:0}
+.dmh44-item-copy strong{font-size:14px;font-weight:900;color:#304f82;letter-spacing:-.45px;display:block;line-height:20px}
+.dmh44-item-copy small{display:block;margin-top:4px;font-size:11px;color:#9290a2;line-height:16px;font-weight:650;letter-spacing:-.4px;white-space:nowrap}
+.dmh44-right-arrow{font-size:0;position:relative;width:16px;flex:none}
+.dmh44-right-arrow:after{content:'';position:absolute;top:-3px;right:1px;width:8px;height:8px;border-top:2px solid #afa6bb;border-right:2px solid #afa6bb;transform:rotate(45deg);border-radius:1px}
+.dmh44-secondary-section{margin:22px 0 0}
+.dmh44-secondary-title{font-size:13px;letter-spacing:-.4px;color:#857e97;font-weight:850;margin:0 0 12px 9px}
+.dmh44-danger .dmh44-item-icon{background:#fff2f3}
+.dmh44-danger .dmh44-item-copy strong{color:#ab5860}
+.dmh44-danger .dmh44-item-copy small{color:#9d909a}
+.dmh44-danger-items{border-color:#f2e4e1}
+.dmh44-screen button:focus-visible{outline:3px solid #b79aff;outline-offset:-3px}

@@ -26,7 +26,8 @@
 - [x] V2-09-21~24: #21 (표 검색 상태, built into TableViewScreen), #22 (표 정렬 상태, TableSortScreen -- found+fixed an inverted sort-direction bug), #23 (표 필터 상태, TableFilterScreen, fully real filter logic ported near-verbatim), #24 (서랍 관리 메인, DrawerManageScreen, pixel-diff mean 2.17/97.0%/2.7%) -- all React-integrated AND compiled-browser-QA-verified. See `docs/V2_09_21_24_TABLE_STATES_AND_MANAGE_QA.md`.
 - [x] V2-09-25~28: #25 (서랍 이름/아이콘 변경, `NameIconChangeScreen`, new `#/name-icon-change` route, saves back into shared App state so #24's header updates immediately), #26 (서랍칸 편집 -- **no new screen** per REUSE_MAPPING.md, reuses #09/#10/#11 verbatim via new `title`/`completeLabel`/`contextLabel` props and three new `-manage` routes; found+fixed a real pre-existing dead-button bug in #11's own back button), #27 (정렬/필터 설정, new `TableSortFilterEntryScreen` local overlay inside DrawerManageScreen, pure entry-selection into #22/#23 with zero duplicated logic), #28 (서랍 삭제 확인, new `DrawerDeleteConfirmScreen` local overlay reusing #18's sheet pattern, confirms navigate all the way to `#/home` per CONFIRMED.md) -- all React-integrated AND compiled-browser-QA-verified. See `docs/V2_09_25_28_DRAWER_MANAGE_DESTINATIONS_QA.md`.
 - [x] V2-10-29~37: 알림 설정 wizard (#29 알림 설정, #30 날짜 칸 선택, #31 알림 시점/시간 설정 -- no archive TSX, built fresh from render.html+CONFIRMED.md, found+fixed a missing drawer-context card during QA, #32 알림 완료) and 반복 관리 wizard (#33 반복 관리 -- found+fixed a real CSS gap for `.rule-card`/`.rule-list`, #34 반복 대상/날짜 칸, #35 매주/매월/매년 설정, #36 반복 종료 조건, #37 반복 완료) -- all React-integrated AND compiled-browser-QA-verified, both wizards exercised end to end including the actual rule commit on #36 showing up back on #33. Also fixed a real icon-filter bug on #29's "알림 추가하기" button. See `docs/V2_10_29_37_NOTIFICATIONS_RECURRENCE_QA.md`.
-- [ ] V2-10: screens 38–44 remaining (next batch).
+- [x] V2-10-39~44: #39 테마 설정 (5 themes, new `theme_flower_*.webp` assets copied in), #40 보안 설정 (new `icon_security_biometric*.webp`), #41 잠금 설정 상세 (앱 잠금 switch really gated on PIN existing), #42 PIN 설정/변경 (real new→confirm→done state machine; found+fixed a real overflow bug from the added "확인" button pushing past the fixed panel height, new `icon_keypad_erase.webp` asset), #43 앱 잠금 화면 (real PIN verify/shake/unlock logic, standalone QA route), #44 데이터 관리 허브 -- all React-integrated AND compiled-browser-QA-verified, wired from #38 (테마/보안/데이터 rows, previously all no-ops). See `docs/V2_10_39_44_THEME_SECURITY_DATA_QA.md`.
+- [ ] V2-10/11: screens 45–59 remaining (next batch).
 
 ## Baseline & safety
 - [x] New branch `drawary/59-design-rebuild-20261014` created.
@@ -61,7 +62,7 @@
 - [x] 24 서랍 관리 메인 — React-integrated, QA-verified, live from #15's "•••" menu
 - [x] 25–28 Drawer rename, field edit entry, sort/filter settings entry and delete confirm
 - [x] 29–37 Notifications and recurrence
-- [ ] 38–44 Settings, security, lock, theme, data hub
+- [x] 38–44 Settings, security, lock, theme, data hub
 - [ ] 45–53 Backup, restore and reset (47 React-integrated and QA-verified; 45/46/48–53 still incomplete)
 - [ ] 54–59 Language, help, FAQ, guide, about and feedback
 

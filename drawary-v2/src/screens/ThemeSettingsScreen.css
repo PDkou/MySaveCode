@@ -1,0 +1,32 @@
+/* Byte-identical values to the confirmed archive's index.html inline
+   style block, classes renamed to this file's ts39- prefix. */
+:root{--ts39-paper:#fff9f1;--ts39-ink:#2c4d7d;--ts39-muted:#9ba9c0;--ts39-lavender:#8051ff}
+button{font:inherit;cursor:pointer}
+.ts39-screen{position:relative;width:390px;height:844px;margin:0 auto;background:var(--ts39-paper);overflow:hidden;font-family:'NanumSquare','Noto Sans CJK KR','Noto Sans KR',sans-serif}
+.ts39-header{height:85px;display:flex;align-items:center;justify-content:center;position:relative;padding-top:14px}
+.ts39-title{margin:0;color:#1959a6;font-size:21px;font-weight:900;letter-spacing:-.6px}
+.ts39-back{position:absolute;left:20px;top:37px;border:0;background:transparent;width:30px;height:33px;padding:0;display:flex;align-items:center;justify-content:center}
+.ts39-back::after{content:'';display:block;width:13px;height:13px;border-left:4px solid #8b62f5;border-bottom:4px solid #8b62f5;transform:rotate(45deg);border-radius:2px}
+.ts39-panel{position:absolute;left:16px;right:16px;top:85px;bottom:31px;background:#fff;border-radius:20px;box-shadow:0 3px 14px rgba(55,45,40,.06);border:1px solid #efebe7;padding:21px 11px 25px}
+.ts39-section-heading{margin:0 0 16px 7px;color:var(--ts39-ink);font-size:18px;line-height:25px;font-weight:900;letter-spacing:-.55px}
+.ts39-themes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:13px 10px}
+.ts39-theme{position:relative;display:flex;flex-direction:column;align-items:center;border:2px solid transparent;border-radius:20px;height:182px;padding:12px 8px 13px;background:var(--card-background);color:var(--ts39-ink);text-align:center;min-width:0;transition:border-color .12s,background .12s}
+.ts39-theme[aria-pressed="true"]{border-color:var(--theme-primary);background:var(--card-background)}
+.ts39-theme:focus-visible{outline:2px solid #303c65;outline-offset:2px}
+.ts39-theme-preview{display:block;flex:none;position:relative;width:100%;height:113px;border-radius:18px;background:var(--preview-background);border:1px solid var(--preview-border);box-shadow:0 3px 10px rgba(65,57,88,.06);overflow:hidden}
+.ts39-theme-flower{position:absolute;width:auto;height:48px;max-width:57px;left:11px;top:7px;object-fit:contain;z-index:3}
+.ts39-theme[data-theme="coral"] .ts39-theme-flower{top:10px;left:11px;height:45px;max-width:53px}
+.ts39-theme[data-theme="sage"] .ts39-theme-flower{top:9px;left:9px;height:47px;max-width:54px}
+.ts39-theme[data-theme="mustard"] .ts39-theme-flower{top:9px;left:10px;height:47px;max-width:52px}
+.ts39-theme[data-theme="sky"] .ts39-theme-flower{top:8px;left:10px;height:48px;max-width:58px}
+.ts39-accent-bar{position:absolute;width:43px;height:12px;top:28px;right:14px;border-radius:99px;background:var(--theme-primary);opacity:.69}
+.ts39-preview-field{position:absolute;bottom:11px;left:11px;right:11px;height:38px;border-radius:14px;background:#fff;box-shadow:0 2px 9px rgba(100,100,100,.045)}
+.ts39-theme-name{display:block;flex:none;font-size:17px;font-weight:900;letter-spacing:-.4px;line-height:23px;margin-top:12px;color:var(--ts39-ink)}
+.ts39-theme[aria-pressed="true"] .ts39-theme-name{color:var(--theme-primary)}
+.ts39-theme[data-theme="sky"]{grid-column:1 / 3;width:170px;justify-self:center}
+.ts39-theme[data-theme="lavender"]{--card-background:#f7f3fe;--preview-background:#f5efff;--preview-border:#e6ddfb;--theme-primary:#8051ff}
+.ts39-theme[data-theme="coral"]{--card-background:#fdf5f5;--preview-background:#fff1f1;--preview-border:#ffe2e1;--theme-primary:#f4898a}
+.ts39-theme[data-theme="sage"]{--card-background:#f4f9f3;--preview-background:#f2faf1;--preview-border:#e6f1e5;--theme-primary:#80b58c}
+.ts39-theme[data-theme="mustard"]{--card-background:#fdf9ef;--preview-background:#fff9ef;--preview-border:#f8edd7;--theme-primary:#e9b440}
+.ts39-theme[data-theme="sky"]{--card-background:#f2f8fd;--preview-background:#eff7ff;--preview-border:#e0ecfa;--theme-primary:#79b8ea}
+.ts39-theme-note{position:absolute;left:16px;right:16px;bottom:32px;margin:0;color:var(--ts39-muted);font-size:11.5px;line-height:18px;letter-spacing:-.35px;font-weight:700;text-align:center;white-space:nowrap}

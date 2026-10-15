@@ -1,0 +1,32 @@
+/* Byte-identical values to the confirmed archive's index.html inline
+   style block, classes renamed to this file's ld41- prefix. */
+button{font:inherit}
+.ld41-screen{width:390px;height:844px;position:relative;background:#fff9f1;overflow:hidden;margin:0 auto;font-family:'NanumSquare','Noto Sans CJK KR','Noto Sans KR','Apple SD Gothic Neo',Arial,sans-serif;color:#2c4d7d}
+.ld41-header{height:85px;display:flex;justify-content:center;align-items:center;padding-top:14px;position:relative}
+.ld41-header h1{font-size:21px;letter-spacing:-.6px;font-weight:900;color:#1959a6;margin:0}
+.ld41-back{position:absolute;left:20px;top:37px;width:30px;height:33px;border:0;background:transparent;cursor:pointer}
+.ld41-back:after{content:'';position:absolute;left:9px;top:8px;width:13px;height:13px;border-left:3.5px solid #8b62f5;border-bottom:3.5px solid #8b62f5;transform:rotate(45deg);border-radius:1px}
+.ld41-panel{position:absolute;left:16px;right:16px;top:85px;bottom:31px;background:#fff;border:1px solid #efebe7;border-radius:20px;box-shadow:0 3px 14px #372d280e;padding:21px 11px 25px}
+.ld41-section-title{margin:0 0 17px 7px;font-weight:900;font-size:18px;letter-spacing:-.55px;line-height:25px;color:#2c4d7d}
+.ld41-hero{margin:0 1px 17px;display:flex;align-items:center;height:109px;border:1px solid #e8ddf8;border-radius:19px;background:linear-gradient(112deg,#f5effe 0%,#f8f2ff 45%,#f9f6ff 100%);padding:16px 14px;gap:12px}
+.ld41-hero-art{width:95px;height:79px;border-radius:20px;background:rgba(255,255,255,.55);display:grid;place-items:center;flex:none;box-shadow:0 3px 12px #cdb9f21c}
+.ld41-hero-art img{width:101px;height:78px;object-fit:contain;object-position:center center}
+.ld41-hero-copy strong{display:block;color:#4d4a89;font-size:14.1px;font-weight:900;letter-spacing:-.5px}
+.ld41-hero-copy span{display:block;color:#8d879d;margin-top:7px;font-size:10.9px;line-height:1.55;font-weight:650;letter-spacing:-.35px}
+.ld41-items{margin:0 1px;border:1px solid #ece5da;border-radius:18px;overflow:hidden;background:#fffdf9}
+.ld41-item{height:88px;width:100%;display:flex;align-items:center;padding:10px 12px;position:relative;gap:11px;border:0;background:transparent;text-align:left;cursor:pointer;color:inherit}
+.ld41-item + .ld41-item{border-top:1px solid #efe8df}
+.ld41-item-icon{width:45px;height:45px;flex:none;border-radius:14px;background:#f4edff;display:flex;align-items:center;justify-content:center}
+.ld41-item-icon img{display:block;width:39px;height:39px;object-fit:contain}
+.ld41-item-copy{flex:1;min-width:0}
+.ld41-item-copy strong{font-size:14.1px;font-weight:900;color:#304f82;letter-spacing:-.45px;display:block;line-height:20px}
+.ld41-item-copy small{display:block;margin-top:4px;font-size:10.6px;color:#9290a2;line-height:16px;font-weight:650;letter-spacing:-.45px;white-space:nowrap}
+.ld41-right-arrow{font-size:0;position:relative;width:16px;flex:none}
+.ld41-right-arrow:after{content:"";position:absolute;top:5px;right:2px;width:8px;height:8px;border-top:2px solid #afa6bb;border-right:2px solid #afa6bb;transform:rotate(45deg);border-radius:1px}
+.ld41-switch{width:47px;height:26px;position:relative;border:0;border-radius:16px;background:#e9e3ec;flex:none;padding:0;transition:background .13s ease;cursor:pointer}
+.ld41-switch:before{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px #3e2a531f;transition:left .13s ease}
+.ld41-switch[aria-checked="true"]{background:linear-gradient(135deg,#bd97ff,#9165f1)}
+.ld41-switch[aria-checked="true"]:before{left:24px}
+.ld41-switch:disabled{opacity:.5;cursor:default}
+.ld41-note{margin-top:22px;padding:15px 14px;display:flex;align-items:flex-start;gap:8px;background:#faf7ff;border-radius:13px;border:1px solid #eee8f7;color:#8b87a3;font-size:11.1px;font-weight:650;line-height:1.55;letter-spacing:-.3px}
+.ld41-note-icon{display:block;flex:none;width:18px;height:18px;object-fit:contain;margin-top:0}
