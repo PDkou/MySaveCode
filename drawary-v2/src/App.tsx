@@ -13,15 +13,16 @@ import { NewFieldScreen } from './screens/NewFieldScreen';
 import { DrawerFieldEditScreen } from './screens/DrawerFieldEditScreen';
 import { CreationCompleteScreen } from './screens/CreationCompleteScreen';
 import { FillDrawerScreen } from './screens/FillDrawerScreen';
+import { BackupProgressScreen } from './screens/BackupProgressScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer';
+type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -101,6 +102,15 @@ export default function App() {
     // into -- that's #15/#16, not in this batch) and is left unwired.
     return <main className="drawary-app-shell" data-route="fill-drawer">
       <FixedCanvas height={844}><FillDrawerScreen onBack={() => navigate('creation-complete')} /></FixedCanvas>
+    </main>;
+  }
+  if (route === 'backup-progress') {
+    // #47 QA route. Standalone screen (no bottom nav); user-confirmed
+    // design per docs/V2_07_SCREEN47_QA.md, now React-integrated with the
+    // mascot binary the user pushed directly to GitHub (commit 7f5574e).
+    // No real backup logic wired yet -- onBack just returns to settings.
+    return <main className="drawary-app-shell" data-route="backup-progress">
+      <BackupProgressScreen onBack={() => navigate('settings')} />
     </main>;
   }
   if (route === 'home-empty') {

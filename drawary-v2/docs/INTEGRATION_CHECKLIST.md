@@ -14,6 +14,7 @@
 - [x] V2-09-09: #09 서랍 칸 정하기 — React-integrated AND compiled-browser-QA-verified, wired as the real `#/create-drawer` sub-flow screen. See `docs/V2_09_09_FIELD_SETUP_QA.md`.
 - [x] V2-09-10/11/12: #10 새 서랍 칸 추가, #11 서랍 칸 수정 (list view reconstructed from its own CSS after finding the bundled TSX was stale), #12 생성 완료 — all React-integrated, compiled-browser-QA-verified, and chained from #09's buttons (navigation only, no shared data model yet). See `docs/V2_09_10_11_12_QA.md`.
 - [x] V2-09-13: #13 서랍 채우기 — React-integrated, compiled-browser-QA-verified, chained from #12. Also closes the loop on #09–#13 all being pixel-diffed against their own confirmed render PNGs (not just eyeballed), catching and fixing one test-script mistake (#10B compared against the wrong field-type state) and independently validating #11A's reconstructed list view against a real confirmed reference. See `docs/V2_09_13_FILL_DRAWER_QA.md`.
+- [x] V2-07/09-47: #47 backup progress — the long-standing `ASSET_BLOCKED` on the approved mascot binary is resolved: the user pushed `mascot_backup_progress.webp` directly to GitHub (commit `7f5574e`, verified via `git fetch`/`git log`, merged into this branch with no conflicts). React-integrated as `BackupProgressScreen` at `#/backup-progress`, compiled-browser-QA-verified at 3 viewports, pixel-diffed against the confirmed comparison package's `code_render_390x844.png` (mean diff 6.86 / 85.3% identical / 9.6% diff>30 — normal AA-noise range). See updated `docs/V2_07_SCREEN47_QA.md`.
 - [ ] V2-09: screens 14–28 remaining.
 
 ## Baseline & safety
@@ -36,7 +37,7 @@
 - [ ] 20–28 Table, sorting, filtering and drawer management
 - [ ] 29–37 Notifications and recurrence
 - [ ] 38–44 Settings, security, lock, theme, data hub
-- [ ] 45–53 Backup, restore and reset (47 standalone code user-approved, React integration incomplete)
+- [ ] 45–53 Backup, restore and reset (47 React-integrated and QA-verified; 45/46/48–53 still incomplete)
 - [ ] 54–59 Language, help, FAQ, guide, about and feedback
 
 ## Platform behavior

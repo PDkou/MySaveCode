@@ -32,9 +32,19 @@
 - [x] 3개 화면 크기 확인
 - [x] 사용자 명시적 최종 확정
 - [x] 독립 코드 GitHub 저장 및 잠금 기록 작성
-- [ ] React 앱 화면 연결 (V2-08 이후)
-- [ ] 마스코트 바이너리 GitHub 반입
+- [x] React 앱 화면 연결 (V2-08 이후) — 2026-10-15, `BackupProgressScreen` (`#/backup-progress`)
+- [x] 마스코트 바이너리 GitHub 반입 — 2026-10-15, 사용자가 직접 커밋 `7f5574e108c40d541ea10c848994bd8df26b96aa`로 `drawary-v2/public/assets/mascot/mascot_backup_progress.webp` 푸시 (570×434, CSS의 `aspect-ratio: 570/434`와 정확히 일치). 로컬 브랜치에 병합 완료.
 - [ ] 실제 백업 로직 (후속 작업)
 - [ ] 전체 폰트 통일 (전체 작업)
 
-**V2-07 완료. V2-08 진행 가능.**
+## 2026-10-15 후속: React 통합 및 마스코트 반입 완료
+
+- 마스코트 바이너리 반입 확인: `git fetch` + `git log origin/drawary/59-design-rebuild-20261014`에서 사용자 본인 계정(db5704@gmail.com)이 직접 푸시한 커밋 `7f5574e`를 확인, `git merge`로 로컬에 병합(충돌 없음).
+- 이미지 내용 직접 열람으로 확정 마스코트(노란 폴더+하트+서류, 보라 니트)와 일치 확인.
+- `src/screens/BackupProgressScreen.tsx`/`.css`: `reference/screen-47/index.html`의 마크업/CSS를 그대로 이식, 로컬에 없던 `assets/approved_character_cutout.png` 참조만 신규 반입된 webp 경로로 교체. 링은 그대로 SVG+CSS 애니메이션(정지 이미지 아님).
+- `#/backup-progress` 라우트로 연결(설정 탭에서 추후 실제 백업 플로우와 연결 예정; 현재는 QA 라우트, 뒤로가기는 설정 탭으로 복귀).
+- 컴파일된 React 앱을 Chromium(390×844/320×640/430×932)으로 실제 렌더링, 콘솔/HTTP 에러 없음, 링 애니메이션 동작 확인, 뒤로가기 동작 확인.
+- 이번 보조 비교 자료의 `SCREEN_RENDERS/47/code_render_390x844.png`(2026-10-15 최종 승인 Chromium 렌더로 명시)와 실제 픽셀 비교: mean diff 6.86 / 동일 85.3% / diff>30 9.6% — 이 세션에서 확립한 정상 안티앨리어싱 범위(mean 2-8, bigdiff 3-13%) 안에 있고, 확대 diff 이미지에서도 텍스트/아이콘 윤곽선의 얇은 테두리만 보일 뿐 레이아웃·내용 불일치 없음.
+- 기존에 블로킹이었던 "마스코트 바이너리 GitHub 미반입" 상태는 사용자 본인의 직접 푸시로 해소됨 (본 세션이 아닌 사용자가 직접 업로드).
+
+**V2-07 완료. V2-08 진행 가능. 47번 React 통합/QA까지 완료 (실제 백업 로직·전체 폰트 통일은 후속 작업으로 보류).**
