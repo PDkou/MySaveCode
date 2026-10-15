@@ -1,0 +1,268 @@
+/* Byte-identical to the confirmed archive's drawer-fields-confirmed.css
+   except for the file rename itself (class names and values unchanged). */
+:root {
+  --drawary-bg: #fffaf0;
+  --drawary-navy: #123f96;
+  --drawary-copy: #5d76b0;
+  --drawary-purple: #7d58e8;
+  --drawary-purple-dark: #6e4ede;
+  --drawary-border: #e5ded3;
+  --drawary-row-bg: #fffdfa;
+  --drawary-tip-bg: #fff0d9;
+  --drawary-handle: #8791ad;
+}
+
+* { box-sizing: border-box; }
+
+.drawary-field-screen {
+  width: 390px;
+  height: 844px;
+  overflow: hidden;
+  background: var(--drawary-bg);
+  color: var(--drawary-navy);
+  font-family: "Noto Sans CJK KR", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+.drawary-field-header {
+  position: relative;
+  height: 93px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 12px;
+}
+
+.drawary-field-header h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 700;
+  letter-spacing: -0.55px;
+}
+
+.drawary-back {
+  position: absolute;
+  left: 21px;
+  bottom: 10px;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #2357ad;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.drawary-back span {
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: 40px;
+  line-height: 34px;
+  transform: translateY(-2px);
+  font-weight: 300;
+}
+
+.drawary-field-content {
+  padding: 0 24px 24px;
+}
+
+.drawary-field-intro {
+  margin: 7px 0 23px;
+  text-align: center;
+  color: var(--drawary-copy);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 23px;
+  letter-spacing: -0.3px;
+}
+
+.drawary-field-list {
+  display: grid;
+  gap: 12px;
+}
+
+.drawary-field-row {
+  height: 56px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 58px 1px 44px;
+  align-items: center;
+  border: 1px solid var(--drawary-border);
+  border-radius: 13px;
+  background: var(--drawary-row-bg);
+  box-shadow: 0 2px 7px rgba(66, 47, 29, 0.045);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.drawary-field-row.is-dragging {
+  transform: scale(1.015);
+  box-shadow: 0 8px 20px rgba(70, 55, 116, 0.13);
+  z-index: 2;
+}
+
+.drawary-field-main {
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 0;
+  background: transparent;
+  padding: 0 0 0 14px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.drawary-field-icon {
+  width: 31px;
+  height: 31px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.drawary-field-name {
+  min-width: 0;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawary-field-type {
+  justify-self: center;
+  color: #747b94;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+}
+
+.drawary-field-divider {
+  width: 1px;
+  height: 28px;
+  background: #ddd5ca;
+}
+
+.drawary-drag-handle {
+  width: 44px;
+  height: 56px;
+  border: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  touch-action: none;
+  cursor: grab;
+  padding: 0;
+}
+
+.drawary-drag-handle:active { cursor: grabbing; }
+
+.drawary-drag-handle i {
+  display: block;
+  width: 21px;
+  height: 3px;
+  border-radius: 99px;
+  background: var(--drawary-handle);
+}
+
+.drawary-add-field {
+  width: 100%;
+  height: 52px;
+  margin-top: 17px;
+  border: 1px solid #e2d9ce;
+  border-radius: 13px;
+  background: rgba(255,255,255,.58);
+  color: var(--drawary-purple);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  cursor: pointer;
+}
+
+.drawary-add-field span {
+  display: inline-block;
+  margin-right: 4px;
+  font-size: 19px;
+  font-weight: 400;
+  transform: translateY(1px);
+}
+
+.drawary-suggestion-box {
+  margin-top: 21px;
+  height: 140px;
+  padding: 13px 15px 14px;
+  border-radius: 16px;
+  background: var(--drawary-tip-bg);
+}
+
+.drawary-suggestion-box h2 {
+  margin: 0 0 10px;
+  color: #3a548e;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+  letter-spacing: -0.25px;
+}
+
+.drawary-suggestion-box h2 span {
+  display: inline-block;
+  margin-right: 5px;
+  font-size: 16px;
+  transform: translateY(1px);
+}
+
+.drawary-suggestion-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px 9px;
+}
+
+.drawary-suggestion-grid button {
+  height: 33px;
+  min-width: 0;
+  padding: 0 6px;
+  border: 1px solid #e5ddd2;
+  border-radius: 17px;
+  background: #fffdfa;
+  color: #415577;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 31px;
+  font-weight: 600;
+  letter-spacing: -0.25px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.drawary-complete {
+  width: 100%;
+  height: 54px;
+  margin-top: 28px;
+  border: 0;
+  border-radius: 28px;
+  background: linear-gradient(90deg, #7a55e7 0%, #835fe9 100%);
+  box-shadow: 0 7px 12px rgba(112, 75, 218, 0.18);
+  color: white;
+  font-family: inherit;
+  font-size: 17px;
+  line-height: 54px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 3px solid rgba(123, 88, 232, .25);
+  outline-offset: 2px;
+}

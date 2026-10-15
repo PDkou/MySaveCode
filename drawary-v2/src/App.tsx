@@ -8,6 +8,8 @@ import { HomeEmptyScreen } from './screens/HomeEmptyScreen';
 import { GlobalSearchScreen } from './screens/GlobalSearchScreen';
 import { MOCK_SEARCH_RECORDS } from './mockData';
 import { SettingsHomeScreen } from './screens/SettingsHomeScreen';
+import { DrawerFieldsScreen } from './screens/DrawerFieldsScreen';
+import { FixedCanvas } from './components/FixedCanvas';
 
 type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding' | 'home-empty';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
@@ -99,15 +101,15 @@ export default function App() {
             <p>V2-08 공통 하단바·화면 이동 동작 확인</p>
             <p className="drawary-dev-detail">이 영역의 실제 확정 화면은 후속 구현 단계에서 연결합니다.</p>
           </div>
-        ) : (
-          <div className="drawary-dev-only">
-            <div className="drawary-dev-flag">개발 검수용 · 확정 화면 아님</div>
-            <h1 id="drawary-dev-screen-title">새 서랍 만들기</h1>
-            <p>중앙 + 버튼으로 하위 흐름 이동 확인</p>
-            <p className="drawary-dev-detail">하위 흐름에는 공통 하단바를 표시하지 않습니다.</p>
-            <button type="button" className="drawary-dev-return" onClick={returnToTab}>이전 탭으로 돌아가기</button>
-          </div>
-        )}
+        ) : route === 'create-drawer' ? (
+          // #09: the real screen. onAddField/onEditField have no destination
+          // yet (#10/#11 not integrated); onComplete has no #12 to land on
+          // yet either, so it returns to the previous tab for now -- all
+          // intentional no-ops/placeholders, not guessed behavior.
+          <FixedCanvas height={844}>
+            <DrawerFieldsScreen onBack={returnToTab} onComplete={returnToTab} />
+          </FixedCanvas>
+        ) : null}
       </section>
       {tabRoute && <footer className="drawary-shell-footer">
         <ResponsiveBottomNav active={route} onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />

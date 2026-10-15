@@ -11,7 +11,8 @@
 - [x] V2-09-38: #38 settings home — body integrated; found the candidate's bundled "confirmed" nav is a different, older lineage than this repo's real V4 component and kept the real one. See same doc.
 - [ ] V2-09-06: #06 home edit mode — not started; needs V14 reference image pulled up before touching V3 code.
 - [ ] V2-09-07/08: #07/#08 — feasibility confirmed, reconstruction from approved PNG not started yet.
-- [ ] V2-09: screens 09–28 remaining (09–12 sources audited, ready to start).
+- [x] V2-09-09: #09 서랍 칸 정하기 — React-integrated AND compiled-browser-QA-verified, wired as the real `#/create-drawer` sub-flow screen. See `docs/V2_09_09_FIELD_SETUP_QA.md`.
+- [ ] V2-09: screens 10–28 remaining (10–12 sources audited, ready to start).
 
 ## Baseline & safety
 - [x] New branch `drawary/59-design-rebuild-20261014` created.
