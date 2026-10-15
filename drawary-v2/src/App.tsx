@@ -17,26 +17,43 @@ import { BackupProgressScreen } from './screens/BackupProgressScreen';
 import { HomeEditScreen } from './screens/HomeEditScreen';
 import { StatsScreen } from './screens/StatsScreen';
 import { NewDrawerScreen } from './screens/NewDrawerScreen';
+import { DrawerDetailScreen } from './screens/DrawerDetailScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit';
+type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
   return 'home';
 };
 
-/** #03 Home content hotspots that have no destination screen yet (drawer
- * detail / editing aren't built, screens 9+). Per CLAUDE.md, a missing
- * source is a blocker to flag, not something to approximate -- so these
- * are a deliberate no-op for now rather than a guessed navigation target. */
-const UNIMPLEMENTED_HOME_ACTIONS: ReadonlySet<HomeAction> = new Set(['open-cosmetics', 'open-books', 'open-plants', 'open-travel', 'open-other']);
+/** #03 Home content hotspots that have no destination screen yet. Per
+ * CLAUDE.md, a missing source is a blocker to flag, not something to
+ * approximate -- so these are a deliberate no-op for now rather than a
+ * guessed navigation target. The open-* drawer-card actions now DO have
+ * a destination (#15, below), so only "edit" was removed from here
+ * once #06 landed; this set no longer needs updating for the open-*
+ * actions either. */
+const UNIMPLEMENTED_HOME_ACTIONS: ReadonlySet<HomeAction> = new Set([]);
+
+/** HomeAction -> #15's drawerName, matching #03's own card labels.
+ * There's no real per-drawer data model yet (V2-12), so #15 always
+ * shows the same 4 demo records regardless of which card was opened --
+ * only the header's name/count differ, which is honest about what's
+ * actually wired rather than faking distinct per-drawer content. */
+const DRAWER_NAMES: Record<Exclude<HomeAction, 'create-drawer' | 'edit'>, string> = {
+  'open-cosmetics': '화장품',
+  'open-books': '책',
+  'open-plants': '식물',
+  'open-travel': '여행',
+  'open-other': '소중한 것들',
+};
 
 /** V2-09-01/02: user-approved splash and onboarding components are available
  * at #/splash and #/onboarding for parity QA, and onboarding's "시작하기"/
@@ -50,6 +67,7 @@ const UNIMPLEMENTED_HOME_ACTIONS: ReadonlySet<HomeAction> = new Set(['open-cosme
 export default function App() {
   const [route, setRoute] = useState<Route>(parseRoute);
   const lastTabRef = useRef<BottomNavTab>('home');
+  const [drawerDetailName, setDrawerDetailName] = useState('화장품');
 
   useEffect(() => {
     const update = () => setRoute(parseRoute());
@@ -136,11 +154,30 @@ export default function App() {
     </main>;
   }
   if (route === 'fill-drawer') {
-    // #13 QA route, reachable from #12's "서랍 채우기". onSave has no
-    // destination yet (no drawer-detail screen to return the new item
-    // into -- that's #15/#16, not in this batch) and is left unwired.
+    // #13/#14 QA route, reachable from #12's "서랍 채우기" or #15's own
+    // "서랍 채우기" button. onSave returns to #15 (drawer-detail) now
+    // that it exists, though the saved item isn't actually appended to
+    // #15's record list yet -- that's still V2-12 data-layer territory.
     return <main className="drawary-app-shell" data-route="fill-drawer">
-      <FixedCanvas height={844}><FillDrawerScreen onBack={() => navigate('creation-complete')} /></FixedCanvas>
+      <FixedCanvas height={844}><FillDrawerScreen onBack={() => navigate('creation-complete')} onSave={() => navigate('drawer-detail')} /></FixedCanvas>
+    </main>;
+  }
+  if (route === 'drawer-detail') {
+    // #15 서랍 상세 / 보관품 목록, reachable from #03's drawer-card
+    // hotspots. "표로 보기"(#20)/"서랍 관리"(#24) and opening a record
+    // (item detail, #16+) have no destination screens yet -- intentional
+    // no-ops, same reasoning as other not-yet-built destinations.
+    return <main className="drawary-app-shell" data-route="drawer-detail">
+      <FixedCanvas height={844}>
+        <DrawerDetailScreen
+          drawerName={drawerDetailName}
+          onBack={returnToTab}
+          onFillDrawer={() => navigate('fill-drawer')}
+          onOpenRecord={() => {}}
+          onOpenTable={() => {}}
+          onOpenManage={() => {}}
+        />
+      </FixedCanvas>
     </main>;
   }
   if (route === 'backup-progress') {
@@ -191,6 +228,8 @@ export default function App() {
             if (action === 'create-drawer') { navigate('create-drawer'); return; }
             if (action === 'edit') { navigate('home-edit'); return; }
             if (UNIMPLEMENTED_HOME_ACTIONS.has(action)) return; // no destination screen yet; see CLAUDE.md note above
+            setDrawerDetailName(DRAWER_NAMES[action]);
+            navigate('drawer-detail');
           }} />
         ) : route === 'search' ? (
           // #05: open-record has no destination screen yet (drawer/item

@@ -16,6 +16,7 @@
 - [x] V2-09-10/11/12: #10 새 서랍 칸 추가, #11 서랍 칸 수정 (list view reconstructed from its own CSS after finding the bundled TSX was stale), #12 생성 완료 — all React-integrated, compiled-browser-QA-verified, and chained from #09's buttons (navigation only, no shared data model yet). See `docs/V2_09_10_11_12_QA.md`.
 - [x] V2-09-13: #13 서랍 채우기 — React-integrated, compiled-browser-QA-verified, chained from #12. Also closes the loop on #09–#13 all being pixel-diffed against their own confirmed render PNGs (not just eyeballed), catching and fixing one test-script mistake (#10B compared against the wrong field-type state) and independently validating #11A's reconstructed list view against a real confirmed reference. See `docs/V2_09_13_FILL_DRAWER_QA.md`.
 - [x] V2-09-14: #14 사진 선택/등록 상태 — not a separate screen: per its own CONFIRMED.md, it's #13's registered-photo state. Merged into the existing `FillDrawerScreen` as a conditional branch (photo card/remove/count/thumbnails) rather than a parallel duplicate. `onAddPhoto` now adds a copied QA fixture photo to local state so the registered state is reachable without a real Android Photo Picker. Pixel-diffed against its own confirmed render (mean 4.07 / 89.2% identical / 5.8% diff>30). See `docs/V2_09_14_PHOTO_STATE_QA.md`.
+- [x] V2-09-15: #15 서랍 상세/보관품 목록 — React-integrated AND compiled-browser-QA-verified, wired as `#/drawer-detail` reachable from #03's 5 drawer-card hotspots (previously all no-ops). Found+fixed a real clipping bug (missing `FixedCanvas` wrapper broke it at 320px). Pixel-diffed against both confirmed renders (main: mean 2.63/94.7%/3.3%; menu-open: mean 2.84/94.4%/3.6% -- among the closest matches this session). See `docs/V2_09_15_DRAWER_DETAIL_QA.md`.
 - [x] V2-07/09-47: #47 backup progress — the long-standing `ASSET_BLOCKED` on the approved mascot binary is resolved: the user pushed `mascot_backup_progress.webp` directly to GitHub (commit `7f5574e`, verified via `git fetch`/`git log`, merged into this branch with no conflicts). React-integrated as `BackupProgressScreen` at `#/backup-progress`, compiled-browser-QA-verified at 3 viewports, pixel-diffed against the confirmed comparison package's `code_render_390x844.png` (mean diff 6.86 / 85.3% identical / 9.6% diff>30 — normal AA-noise range). See updated `docs/V2_07_SCREEN47_QA.md`.
 - [ ] V2-09: screens 14–28 remaining.
 
@@ -40,7 +41,8 @@
 - [x] 08 새 서랍 만들기 — React-integrated, QA-verified (reconstructed; now the real first step of create-drawer, #09 moved to `#/drawer-fields`)
 - [x] 09–13 서랍 칸 정하기/추가/수정/생성 완료/서랍 채우기 — all React-integrated, QA-verified (navigation only, no shared data model yet)
 - [x] 14 사진 선택/등록 상태 — merged into #13's FillDrawerScreen as its registered-photo state (not a separate screen), QA-verified
-- [ ] 15–19 Drawer item details
+- [x] 15 서랍 상세/보관품 목록 — React-integrated, QA-verified, live from #03's drawer-card hotspots
+- [ ] 16–19 Item detail and photos
 - [ ] 20–28 Table, sorting, filtering and drawer management
 - [ ] 29–37 Notifications and recurrence
 - [ ] 38–44 Settings, security, lock, theme, data hub

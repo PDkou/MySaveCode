@@ -1,0 +1,136 @@
+/* Byte-identical to the confirmed archive's drawer-detail.css. */
+:root{
+  --dd-bg:#fffaf0;
+  --dd-navy:#123f96;
+  --dd-purple:#7d58e8;
+  --dd-copy:#697cae;
+  --dd-border:#eadfd3;
+  --dd-card:#fffdfa;
+}
+*{box-sizing:border-box}
+button,input{font:inherit}
+.dd-screen{
+  width:390px;height:844px;overflow:hidden;background:var(--dd-bg);color:var(--dd-navy);
+  font-family:"Noto Sans CJK KR","Noto Sans KR","Apple SD Gothic Neo",sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;position:relative;
+}
+.dd-header{
+  position:relative;height:109px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:13px;
+}
+.dd-back{
+  position:absolute;left:18px;bottom:20px;width:40px;height:40px;border:0;background:transparent;
+  color:#2357ad;font:300 40px/34px Arial;padding:0;
+}
+.dd-title{text-align:center}
+.dd-title h1{margin:0;font-size:24px;line-height:30px;font-weight:800;letter-spacing:-.7px}
+.dd-title span{display:block;margin-top:2px;color:#6d7fb0;font-size:12px;font-weight:600}
+.dd-menu{
+  position:absolute;right:19px;bottom:24px;width:38px;height:32px;border:0;background:transparent;
+  color:#234f9e;font:800 18px/1 Arial;letter-spacing:1px;padding:0;
+}
+.dd-toolbar{display:grid;grid-template-columns:1fr 44px;gap:10px;padding:5px 22px 10px}
+.dd-search{
+  height:45px;border:1px solid #ded6cb;border-radius:23px;background:#fffdfa;
+  display:grid;grid-template-columns:38px 1fr;align-items:center;overflow:hidden;
+}
+.dd-search-icon{width:22px;height:22px;object-fit:contain;justify-self:center;display:block}
+.dd-search input{
+  width:100%;height:100%;border:0;background:transparent;outline:none;padding:0 13px 0 0;
+  color:#2e4e89;font-size:12.5px;
+}
+.dd-search input::placeholder{color:#a3a5b2}
+.dd-filter{
+  width:44px;height:44px;border:0;background:transparent;display:grid;place-items:center;padding:0;
+}
+.dd-filter img{width:31px;height:31px;object-fit:contain}
+.dd-list{padding:0 22px 96px}
+.dd-record{
+  width:100%;height:106px;border:0;border-bottom:1px solid #eadfd3;background:transparent;
+  display:grid;grid-template-columns:78px 1fr 20px;align-items:center;text-align:left;padding:0;
+}
+.dd-thumb{
+  width:70px;height:70px;border-radius:13px;overflow:hidden;background:#f8dfe4;display:grid;place-items:center;
+}
+.dd-thumb img{width:100%;height:100%;object-fit:cover}
+.dd-thumb img.is-fallback{width:52px;height:52px;object-fit:contain}
+.dd-record-copy{min-width:0;padding-left:7px;display:flex;flex-direction:column;gap:3px}
+.dd-record-copy strong{
+  font-size:15px;line-height:20px;font-weight:800;letter-spacing:-.35px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.dd-record-copy small{
+  color:#75809c;font-size:11.5px;line-height:16px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.dd-record-copy time{color:#7c89a7;font-size:11px;line-height:15px;font-weight:600}
+.dd-chevron{justify-self:end;color:#9ca4b8;font:300 27px Arial;transform:translateY(-1px)}
+.dd-fill{
+  position:absolute;right:22px;bottom:24px;height:54px;padding:0 21px 0 13px;border:0;border-radius:27px;
+  background:linear-gradient(90deg,#7853e8,#895ff1);color:white;display:flex;align-items:center;gap:8px;
+  box-shadow:0 8px 16px rgba(112,75,218,.23);font-size:14px;font-weight:800;letter-spacing:-.25px;
+}
+.dd-fill img{width:31px;height:31px;object-fit:contain}
+
+.dd-menu-popover{
+  position:absolute;
+  top:78px;
+  right:18px;
+  width:174px;
+  padding:7px;
+  border:1px solid #e8ddd2;
+  border-radius:16px;
+  background:#fffdfa;
+  box-shadow:0 10px 28px rgba(54,43,76,.15);
+  z-index:20;
+}
+.dd-menu-popover::before{
+  content:"";
+  position:absolute;
+  top:-7px;
+  right:18px;
+  width:13px;
+  height:13px;
+  background:#fffdfa;
+  border-left:1px solid #e8ddd2;
+  border-top:1px solid #e8ddd2;
+  transform:rotate(45deg);
+}
+.dd-menu-popover button{
+  position:relative;
+  z-index:1;
+  width:100%;
+  height:48px;
+  border:0;
+  border-radius:11px;
+  background:transparent;
+  display:grid;
+  grid-template-columns:32px 1fr 18px;
+  align-items:center;
+  padding:0 9px;
+  color:#35548d;
+  text-align:left;
+  cursor:pointer;
+}
+.dd-menu-popover button + button{
+  border-top:1px solid #efe7de;
+  border-radius:0 0 11px 11px;
+}
+.dd-menu-popover button:first-child{
+  border-radius:11px 11px 0 0;
+}
+.dd-menu-popover button:hover{
+  background:#f7f1ff;
+}
+.dd-menu-popover img{
+  width:25px;
+  height:25px;
+  object-fit:contain;
+}
+.dd-menu-popover span{
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:-.25px;
+}
+.dd-menu-popover b{
+  justify-self:end;
+  color:#a4a7b5;
+  font:300 24px/1 Arial;
+}
