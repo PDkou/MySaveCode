@@ -56,26 +56,17 @@
   border-color: #7657e8;
   box-shadow: 0 0 0 3px rgba(118, 87, 232, .10);
 }
-.global-search-box::before {
-  content: "";
+/* The candidate drew this as a CSS circle+line (a synthetic placeholder
+   shape); the app already ships a real approved search icon asset, so use
+   that instead rather than hand-drawing one. */
+.global-search-icon {
   position: absolute;
-  left: 15px;
-  top: 14px;
-  width: 16px;
-  height: 16px;
-  border: 2px solid #3c4c7f;
-  border-radius: 50%;
-}
-.global-search-box::after {
-  content: "";
-  position: absolute;
-  left: 29px;
-  top: 31px;
-  width: 7px;
-  height: 2px;
-  background: #3c4c7f;
-  transform: rotate(45deg);
-  border-radius: 2px;
+  left: 12px;
+  top: 13px;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  pointer-events: none;
 }
 .global-search-box input {
   position: absolute;

@@ -50,6 +50,7 @@ export function GlobalSearchScreen({ records, onOpenRecord }: GlobalSearchScreen
       </header>
 
       <div className="global-search-box">
+        <img className="global-search-icon" src="/assets/ui-icons/icon_search.webp" alt="" aria-hidden="true" />
         <input
           type="search"
           value={query}
