@@ -39,16 +39,24 @@ import { LockDetailScreen } from './screens/LockDetailScreen';
 import { PinSetupScreen } from './screens/PinSetupScreen';
 import { AppLockScreen } from './screens/AppLockScreen';
 import { DataManagementHubScreen } from './screens/DataManagementHubScreen';
+import { BackupTypeScreen, type BackupMode } from './screens/BackupTypeScreen';
+import { BackupDestinationScreen, type BackupDestination } from './screens/BackupDestinationScreen';
+import { BackupSuccessScreen } from './screens/BackupSuccessScreen';
+import { RestoreFilePickerScreen } from './screens/RestoreFilePickerScreen';
+import { RestoreReviewScreen } from './screens/RestoreReviewScreen';
+import { RestoreProgressScreen } from './screens/RestoreProgressScreen';
+import { RestoreSuccessScreen } from './screens/RestoreSuccessScreen';
+import { DataResetConfirmScreen } from './screens/DataResetConfirmScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type StandaloneRoute = 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management';
+type StandaloneRoute = 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management' | 'backup-type' | 'backup-destination' | 'backup-success' | 'restore-file-picker' | 'restore-review' | 'restore-progress' | 'restore-success' | 'data-reset-confirm';
 type Route = BottomNavTab | 'create-drawer' | StandaloneRoute;
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
 const NAMES: Record<Exclude<Route, StandaloneRoute>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -133,6 +141,11 @@ export default function App() {
   // lock before PIN is configured" rule for real.
   const [pinValue, setPinValue] = useState<string | null>(null);
   const [appLockEnabled, setAppLockEnabled] = useState(false);
+
+  // #44-#53 백업/복원/초기화.
+  const [backupMode, setBackupMode] = useState<BackupMode>('include');
+  const [backupDestination, setBackupDestination] = useState<BackupDestination>('device');
+  const [restoreFileName, setRestoreFileName] = useState<string | null>(null);
 
   useEffect(() => {
     const update = () => setRoute(parseRoute());
@@ -575,11 +588,138 @@ export default function App() {
   }
   if (route === 'data-management') {
     // #44 데이터 관리 허브, reachable from #38's "데이터 관리" row. Back
-    // returns to #38. 백업(#45)/복원(#49)/초기화(#53) have no destination
-    // screen yet, so those three stay intentional no-ops.
+    // returns to #38. 백업 -> #45, 복원 -> #49, 초기화 -> #53 (all real
+    // routes now).
     return <main className="drawary-app-shell" data-route="data-management">
       <FixedCanvas height={844}>
-        <DataManagementHubScreen onBack={returnToTab} onBackup={() => {}} onRestore={() => {}} onReset={() => {}} />
+        <DataManagementHubScreen
+          onBack={returnToTab}
+          onBackup={() => navigate('backup-type')}
+          onRestore={() => navigate('restore-file-picker')}
+          onReset={() => navigate('data-reset-confirm')}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'backup-type') {
+    // #45 백업 시작 / 종류 선택, reachable from #44's "백업하기" row.
+    // Back returns to #44. "다음" -> #46.
+    return <main className="drawary-app-shell" data-route="backup-type">
+      <FixedCanvas height={844}>
+        <BackupTypeScreen
+          initialMode={backupMode}
+          onBack={() => navigate('data-management')}
+          onNext={(mode) => { setBackupMode(mode); navigate('backup-destination'); }}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'backup-destination') {
+    // #46 저장 위치 선택, reachable from #45's "다음". Back returns to
+    // #45. "다음" -> #47 (backup progress, now actually chained into
+    // this flow instead of being a standalone QA route).
+    return <main className="drawary-app-shell" data-route="backup-destination">
+      <FixedCanvas height={844}>
+        <BackupDestinationScreen
+          initialDestination={backupDestination}
+          onBack={() => navigate('backup-type')}
+          onNext={(destination) => { setBackupDestination(destination); navigate('backup-progress'); }}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'backup-success') {
+    // #48 백업 완료, reachable from #47's auto-complete. No back
+    // button (decorative arrow only, matching the archive exactly).
+    // "확인" -> #44. Sample filename/location are the archive's own
+    // displayed values -- there's no real backup engine to report
+    // real ones yet (same caveat as every other backup/restore screen
+    // in this batch).
+    const description = backupMode === 'include' ? '사진 포함 백업' : '사진 제외 백업';
+    return <main className="drawary-app-shell" data-route="backup-success">
+      <FixedCanvas height={844}>
+        <BackupSuccessScreen
+          fileName="Drawary_Backup_2026-10-05.zip"
+          location={backupDestination === 'device' ? 'Download/Drawary' : 'Google Drive'}
+          description={description}
+          onConfirm={() => navigate('data-management')}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'restore-file-picker') {
+    // #49 복원 파일 선택, reachable from #44's "복원하기" row. Back
+    // returns to #44. Selecting a valid .zip/.json file -> #50.
+    return <main className="drawary-app-shell" data-route="restore-file-picker">
+      <FixedCanvas height={844}>
+        <RestoreFilePickerScreen
+          onBack={() => navigate('data-management')}
+          onFileSelected={(file) => { setRestoreFileName(file.name); navigate('restore-review'); }}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'restore-review') {
+    // #50 복원 내용 확인, reachable from #49's file selection. Back
+    // returns to #49. "계속" in the confirm dialog -> #51. Summary
+    // figures (5개 서랍 · 128개 기록 / 42장) are the archive's own
+    // displayed sample values -- there's no real backup-file parser to
+    // report real ones yet.
+    return <main className="drawary-app-shell" data-route="restore-review">
+      <FixedCanvas height={844}>
+        <RestoreReviewScreen
+          fileName={restoreFileName ?? 'Drawary_Backup_2026-10-05.zip'}
+          fileDetails="2026.10.05 14:58 · 백업 파일 1개"
+          hasPhotos
+          recordSummary="5개 서랍 · 128개 기록"
+          photoSummary="42장"
+          onBack={() => navigate('restore-file-picker')}
+          onConfirmRestore={() => navigate('restore-progress')}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'restore-progress') {
+    // #51 복원 진행, reachable from #50's confirm dialog. Back returns
+    // to #50. Auto-completes (see RestoreProgressScreen.tsx's own
+    // header comment) -> #52.
+    return <main className="drawary-app-shell" data-route="restore-progress">
+      <FixedCanvas height={844}>
+        <RestoreProgressScreen
+          onBack={() => navigate('restore-review')}
+          onComplete={() => navigate('restore-success')}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'restore-success') {
+    // #52 복원 완료, reachable from #51's auto-complete. Back and
+    // "확인" both return to #44 -- going back to the review screen
+    // after a completed restore doesn't make sense.
+    return <main className="drawary-app-shell" data-route="restore-success">
+      <FixedCanvas height={844}>
+        <RestoreSuccessScreen
+          recordCount="5개 서랍 · 128개 기록"
+          photoCount="42장"
+          settingsStatus="복원 완료"
+          onBack={() => navigate('data-management')}
+          onConfirm={() => navigate('data-management')}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'data-reset-confirm') {
+    // #53 데이터 초기화 확인, reachable from #44's "데이터 초기화" row.
+    // "취소"/뒤로가기 and "데이터 초기화" both return to #44 -- no real
+    // deletion happens anywhere (see DataResetConfirmScreen.tsx's own
+    // header comment and README.md's explicit "실제 앱 내 비가역 초기화
+    // 연결 금지").
+    return <main className="drawary-app-shell" data-route="data-reset-confirm">
+      <FixedCanvas height={844}>
+        <DataResetConfirmScreen
+          onCancel={() => navigate('data-management')}
+          onResetConfirmed={() => navigate('data-management')}
+        />
       </FixedCanvas>
     </main>;
   }
@@ -713,12 +853,13 @@ export default function App() {
     </main>;
   }
   if (route === 'backup-progress') {
-    // #47 QA route. Standalone screen (no bottom nav); user-confirmed
-    // design per docs/V2_07_SCREEN47_QA.md, now React-integrated with the
-    // mascot binary the user pushed directly to GitHub (commit 7f5574e).
-    // No real backup logic wired yet -- onBack just returns to settings.
+    // #47, now actually chained into the real #45->#46->#47->#48 backup
+    // flow (V2-10-45~53 batch) instead of being a standalone-only QA
+    // route reachable solely from Settings. Back returns to #46;
+    // auto-completes (see BackupProgressScreen.tsx's own header
+    // comment on the added onComplete) -> #48.
     return <main className="drawary-app-shell" data-route="backup-progress">
-      <BackupProgressScreen onBack={() => navigate('settings')} />
+      <BackupProgressScreen onBack={() => navigate('backup-destination')} onComplete={() => navigate('backup-success')} />
     </main>;
   }
   if (route === 'home-edit') {

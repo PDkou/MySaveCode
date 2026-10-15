@@ -1,0 +1,28 @@
+/* Byte-identical values to the confirmed archive's index.html inline
+   style block, classes renamed to this file's drc53- prefix. */
+button,input{font:inherit}
+.drc53-screen{position:relative;margin:0 auto;width:390px;max-width:100%;height:844px;overflow:hidden;background:#fff9f0;font-family:'Noto Sans CJK KR','Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;-webkit-font-smoothing:antialiased;color:#334864}
+.drc53-header{height:91px;position:relative;display:flex;align-items:center;justify-content:center;padding:16px 18px 0}
+.drc53-title{white-space:nowrap;color:#285a9b;font-size:20px;font-weight:850;letter-spacing:-.7px;line-height:24px}
+.drc53-back{position:absolute;left:25px;top:45px;width:15px;height:15px;border:0;border-left:2.5px solid #806aea;border-bottom:2.5px solid #806aea;transform:rotate(45deg);background:transparent;cursor:pointer}
+.drc53-panel{position:absolute;inset:91px 17px 19px;border-radius:23px;background:white;border:1px solid #f1ece7;box-shadow:0 4px 17px #7b67500b;padding:0 17px 98px;overflow:hidden}
+.drc53-intro{display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:103px;text-align:center}
+.drc53-warning-art{width:191px;height:156px;object-fit:contain;display:block;user-select:none}
+.drc53-heading{margin:14px 0 0;font-size:19px;font-weight:850;line-height:1.4;color:#2a4c80;letter-spacing:-.65px;white-space:nowrap}
+.drc53-description{margin:8px 0 0;font-size:12px;line-height:1.65;color:#8e9bb0;font-weight:650;letter-spacing:-.26px}
+.drc53-warning-card{margin-top:26px;width:100%;border-radius:16px;border:1px solid #f7d9dc;background:#fff7f7;padding:16px 14px 16px;display:flex;align-items:flex-start;gap:12px}
+.drc53-delete-art{width:35px;height:39px;object-fit:contain;display:block;flex:none;margin-top:2px}
+.drc53-warning-copy{flex:1;min-width:0}
+.drc53-warning-title{margin:0;color:#bd6470;font-size:13px;font-weight:850;letter-spacing:-.38px;line-height:1.5}
+.drc53-warning-lines{margin:7px 0 0;color:#8f7982;font-size:11.6px;line-height:1.68;font-weight:650;letter-spacing:-.27px}
+.drc53-warning-lines p{margin:0}
+.drc53-ack{display:flex;align-items:center;gap:10px;padding:15px 5px;margin:15px 0 0;cursor:pointer;user-select:none}
+.drc53-ack input{appearance:none;-webkit-appearance:none;margin:0;flex:none;width:19px;height:19px;border-radius:6px;border:1.8px solid #bcb4c5;background:#fff;position:relative;cursor:pointer}
+.drc53-ack input:checked{background:#9972ee;border-color:#9972ee}
+.drc53-ack input:checked::after{content:'';position:absolute;left:5px;top:2px;width:5px;height:9px;border-bottom:2px solid white;border-right:2px solid white;transform:rotate(45deg)}
+.drc53-ack span{color:#4b5168;font-weight:750;font-size:12.5px;letter-spacing:-.3px}
+.drc53-actions{position:absolute;left:18px;right:18px;bottom:23px;display:flex;gap:10px}
+.drc53-actions button{height:55px;border-radius:16px;border:0;font-size:15.5px;font-weight:850;letter-spacing:-.3px;cursor:pointer}
+.drc53-cancel{flex:1;background:#f5f3f7;color:#677189}
+.drc53-reset{flex:1.25;background:#e7757f;color:white;box-shadow:0 6px 15px rgba(231,117,127,.16)}
+.drc53-reset:disabled{background:#f2cbd0;color:#fff;box-shadow:none;cursor:not-allowed}

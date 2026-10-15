@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import './BackupProgressScreen.css';
 
 interface BackupProgressScreenProps {
   onBack: () => void;
+  onComplete?: () => void;
 }
 
 /** #47 백업 진행. Ported verbatim from the user-confirmed standalone source
@@ -10,8 +12,20 @@ interface BackupProgressScreenProps {
  * ring (not a static image). The only change from that standalone file is
  * swapping its missing local `assets/approved_character_cutout.png` for
  * the approved mascot binary now committed to this repo at
- * `public/assets/mascot/mascot_backup_progress.webp` (commit 7f5574e). */
-export function BackupProgressScreen({ onBack }: BackupProgressScreenProps) {
+ * `public/assets/mascot/mascot_backup_progress.webp` (commit 7f5574e).
+ *
+ * `onComplete` is new, added when this screen was wired into the real
+ * #45->#46->#47->#48 backup flow (V2-10-45~53 batch): there is no real
+ * backup engine to call it, so it fires after a fixed demo delay instead
+ * of staying permanently static -- disclosed, not a claim that backup
+ * actually runs. */
+export function BackupProgressScreen({ onBack, onComplete }: BackupProgressScreenProps) {
+  useEffect(() => {
+    if (!onComplete) return;
+    const timer = setTimeout(onComplete, 1600);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
   return (
     <main className="backup-progress-app">
       <header className="backup-progress-toolbar">
