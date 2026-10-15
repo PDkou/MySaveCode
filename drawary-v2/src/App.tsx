@@ -24,15 +24,25 @@ import { RecordEditScreen } from './screens/RecordEditScreen';
 import { PhotoViewerScreen } from './screens/PhotoViewerScreen';
 import { TableViewScreen } from './screens/TableViewScreen';
 import { DrawerManageScreen } from './screens/DrawerManageScreen';
+import { NotificationSettingsScreen } from './screens/NotificationSettingsScreen';
+import { NotificationDateFieldScreen } from './screens/NotificationDateFieldScreen';
+import { NotificationTimingScreen } from './screens/NotificationTimingScreen';
+import { NotificationCompleteScreen } from './screens/NotificationCompleteScreen';
+import { RecurrenceManagementScreen, type RecurrenceRuleSummary } from './screens/RecurrenceManagementScreen';
+import { RecurrenceTargetDateScreen } from './screens/RecurrenceTargetDateScreen';
+import { RecurrenceCycleScreen, type RecurrenceCycle, cycleLabel } from './screens/RecurrenceCycleScreen';
+import { RecurrenceEndConditionScreen, type RecurrenceEndCondition, endConditionLabel } from './screens/RecurrenceEndConditionScreen';
+import { RecurrenceCompleteScreen } from './screens/RecurrenceCompleteScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage';
+type StandaloneRoute = 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete';
+type Route = BottomNavTab | 'create-drawer' | StandaloneRoute;
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage'>, string> = {
+const NAMES: Record<Exclude<Route, StandaloneRoute>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -85,6 +95,31 @@ export default function App() {
   // rather than undefined or the default parameter would silently put
   // the photo right back (a real bug caught during this screen's QA).
   const [editPhotoUri, setEditPhotoUri] = useState('/fixtures/sample_edit_photo.webp');
+
+  // #29-#32 알림 설정 wizard state. dateFields comes from
+  // DEFAULT_DRAWER_FIELDS filtered to kind==='date' (the same demo
+  // drawer fields #09/#26 already use) -- for this drawer that's
+  // exactly one field (구매일), matching CONFIRMED.md's own "날짜
+  // 서랍칸이 1개뿐이면 기본 선택" case.
+  const dateFields = DEFAULT_DRAWER_FIELDS.filter((f) => f.kind === 'date').map((f) => ({ id: f.id, name: f.name }));
+  const [notifDateFieldId, setNotifDateFieldId] = useState<string | undefined>(undefined);
+  const [notifDaysBefore, setNotifDaysBefore] = useState(7);
+  const [notifTime, setNotifTime] = useState('09:00');
+
+  // #33-#37 반복 관리 wizard state. `recurrenceRules` starts empty so
+  // #33 shows CONFIRMED.md's own empty state first; completing #36 adds
+  // a rule (see the recurrence-end-condition route). Target candidates
+  // reuse #15's own DEFAULT_RECORDS (the real per-drawer item data this
+  // app already has) rather than inventing a "선크림" item that exists
+  // nowhere else in the app, even though CONFIRMED.md's own illustrative
+  // example happens to use that name.
+  const recurrenceTargets = DEFAULT_RECORDS.map((r) => ({ id: r.id, title: r.subtitle ?? r.title }));
+  const [recurrenceRules, setRecurrenceRules] = useState<RecurrenceRuleSummary[]>([]);
+  const [recurrenceTargetId, setRecurrenceTargetId] = useState<string | undefined>(undefined);
+  const [recurrenceDateFieldId, setRecurrenceDateFieldId] = useState<string | undefined>(undefined);
+  const [recurrenceCycle, setRecurrenceCycle] = useState<RecurrenceCycle>('monthly');
+  const [recurrenceInterval, setRecurrenceInterval] = useState(1);
+  const [recurrenceEndCondition, setRecurrenceEndCondition] = useState<RecurrenceEndCondition>({ kind: 'never' });
 
   useEffect(() => {
     const update = () => setRoute(parseRoute());
@@ -225,8 +260,9 @@ export default function App() {
     // handled as local overlays inside DrawerManageScreen itself now --
     // deleting calls this onDeleteDrawer, which per #28's CONFIRMED.md
     // ("삭제 후 홈 복귀") returns all the way to the home tab. 알림 설정
-    // (#29)/반복 관리(#33)/백업·내보내기 have no destination screen yet,
-    // so those three stay intentional no-ops.
+    // -> #29, 반복 관리 -> #33 (both real routes below). 백업/내보내기
+    // has no destination screen among #25-#37, so that one row stays an
+    // intentional no-op.
     return <main className="drawary-app-shell" data-route="drawer-manage">
       <FixedCanvas height={844}>
         <DrawerManageScreen
@@ -235,10 +271,224 @@ export default function App() {
           onBack={() => navigate('drawer-detail')}
           onRenameDrawer={() => navigate('name-icon-change')}
           onEditFields={() => navigate('drawer-fields-manage')}
-          onNotificationSettings={() => {}}
-          onRecurrenceManage={() => {}}
+          onNotificationSettings={() => navigate('notification-settings')}
+          onRecurrenceManage={() => navigate('recurrence-management')}
           onBackupExport={() => {}}
           onDeleteDrawer={() => navigate('home')}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'notification-settings') {
+    // #29 알림 설정, reachable from #24's "알림 설정" row. "알림 추가하기"
+    // -> #30. "알림 공통 설정" has no destination among #25-#37, so it
+    // stays an intentional no-op.
+    return <main className="drawary-app-shell" data-route="notification-settings">
+      <FixedCanvas height={844}>
+        <NotificationSettingsScreen
+          drawerName={drawerDetailName}
+          fieldCount={DEFAULT_DRAWER_FIELDS.length}
+          recordCount={DEFAULT_RECORDS.length}
+          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+          onBack={() => navigate('drawer-manage')}
+          onAddNotification={() => navigate('notification-date-field')}
+          onOpenCommonSettings={() => {}}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'notification-date-field') {
+    // #30 날짜 칸 선택, reachable from #29's "알림 추가하기". Back returns
+    // to #29. "다음" -> #31.
+    return <main className="drawary-app-shell" data-route="notification-date-field">
+      <FixedCanvas height={844}>
+        <NotificationDateFieldScreen
+          drawerName={drawerDetailName}
+          dateFields={dateFields}
+          selectedId={notifDateFieldId}
+          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+          onSelect={(fieldId) => setNotifDateFieldId(fieldId)}
+          onBack={() => navigate('notification-settings')}
+          onNext={(fieldId) => { setNotifDateFieldId(fieldId); navigate('notification-timing'); }}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'notification-timing') {
+    // #31 알림 시점 / 시간 설정. No separate TSX exists in the archive for
+    // this screen -- see NotificationTimingScreen.tsx's own header
+    // comment for what was built fresh vs. ported. Back returns to #30.
+    // "알림 설정하기" -> #32.
+    const dateField = dateFields.find((f) => f.id === notifDateFieldId) ?? dateFields[0];
+    return <main className="drawary-app-shell" data-route="notification-timing">
+      <FixedCanvas height={844}>
+        <NotificationTimingScreen
+          drawerName={drawerDetailName}
+          dateFieldName={dateField?.name ?? ''}
+          initialDaysBefore={notifDaysBefore}
+          initialTime={notifTime}
+          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+          onBack={() => navigate('notification-date-field')}
+          onSubmit={({ daysBefore, time }) => {
+            setNotifDaysBefore(daysBefore);
+            setNotifTime(time);
+            navigate('notification-complete');
+          }}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'notification-complete') {
+    // #32 알림 완료, reachable from #31's "알림 설정하기". "알림 더
+    // 추가하기" -> #30. "확인" -> #24.
+    const dateField = dateFields.find((f) => f.id === notifDateFieldId) ?? dateFields[0];
+    return <main className="drawary-app-shell" data-route="notification-complete">
+      <FixedCanvas height={844}>
+        <NotificationCompleteScreen
+          drawerName={drawerDetailName}
+          itemCount={DEFAULT_RECORDS.length}
+          dateFieldName={dateField?.name ?? ''}
+          daysBefore={notifDaysBefore}
+          time={notifTime}
+          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+          onAddAnother={() => navigate('notification-date-field')}
+          onDone={() => navigate('drawer-manage')}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'recurrence-management') {
+    // #33 반복 관리, reachable from #24's "반복 관리" row. "반복
+    // 설정하기"/"반복 설정 추가하기" -> #34. Row taps on an existing rule
+    // have no destination (CONFIRMED.md only asks for display, not
+    // edit), so those stay an intentional no-op.
+    return <main className="drawary-app-shell" data-route="recurrence-management">
+      <FixedCanvas height={844}>
+        <RecurrenceManagementScreen
+          drawerName={drawerDetailName}
+          fieldCount={DEFAULT_DRAWER_FIELDS.length}
+          itemCount={DEFAULT_RECORDS.length}
+          rules={recurrenceRules}
+          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+          onBack={() => navigate('drawer-manage')}
+          onAdd={() => navigate('recurrence-target-date')}
+          onOpenRule={() => {}}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'recurrence-target-date') {
+    // #34 반복 대상 / 날짜 칸, reachable from #33's "반복 설정하기"/"반복
+    // 설정 추가하기". `onSelectTarget` cycles through the demo target
+    // list -- see RecurrenceTargetDateScreen.tsx's own header comment on
+    // why (no dedicated item-picker screen exists among the 59 approved
+    // designs). Back returns to #33. "다음" -> #35.
+    return <main className="drawary-app-shell" data-route="recurrence-target-date">
+      <FixedCanvas height={844}>
+        <RecurrenceTargetDateScreen
+          drawerName={drawerDetailName}
+          fieldCount={DEFAULT_DRAWER_FIELDS.length}
+          itemCount={DEFAULT_RECORDS.length}
+          targets={recurrenceTargets}
+          dateFields={dateFields}
+          selectedTargetId={recurrenceTargetId}
+          selectedDateFieldId={recurrenceDateFieldId}
+          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+          onBack={() => navigate('recurrence-management')}
+          onSelectTarget={() => {
+            const ids = recurrenceTargets.map((t) => t.id);
+            const current = recurrenceTargetId ? ids.indexOf(recurrenceTargetId) : -1;
+            setRecurrenceTargetId(ids[(current + 1) % ids.length]);
+          }}
+          onSelectDateField={(fieldId) => setRecurrenceDateFieldId(fieldId)}
+          onNext={({ targetId, dateFieldId }) => {
+            setRecurrenceTargetId(targetId);
+            setRecurrenceDateFieldId(dateFieldId);
+            navigate('recurrence-cycle');
+          }}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'recurrence-cycle') {
+    // #35 매주 / 매월 / 매년 설정, reachable from #34's "다음". Back
+    // returns to #34. "다음" -> #36.
+    const target = recurrenceTargets.find((t) => t.id === recurrenceTargetId);
+    const dateField = dateFields.find((f) => f.id === recurrenceDateFieldId);
+    return <main className="drawary-app-shell" data-route="recurrence-cycle">
+      <FixedCanvas height={844}>
+        <RecurrenceCycleScreen
+          targetName={target?.title ?? ''}
+          dateFieldName={dateField?.name ?? ''}
+          initialCycle={recurrenceCycle}
+          initialInterval={recurrenceInterval}
+          onBack={() => navigate('recurrence-target-date')}
+          onNext={({ cycle, interval }) => {
+            setRecurrenceCycle(cycle);
+            setRecurrenceInterval(interval);
+            navigate('recurrence-end-condition');
+          }}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'recurrence-end-condition') {
+    // #36 반복 종료 조건, reachable from #35's "다음". Back returns to
+    // #35. "반복 설정하기" both commits the new rule into
+    // `recurrenceRules` (this is the last step with user input before
+    // the #37 summary screen) and navigates to #37.
+    const target = recurrenceTargets.find((t) => t.id === recurrenceTargetId);
+    const dateField = dateFields.find((f) => f.id === recurrenceDateFieldId);
+    const label = cycleLabel(recurrenceCycle, recurrenceInterval);
+    return <main className="drawary-app-shell" data-route="recurrence-end-condition">
+      <FixedCanvas height={844}>
+        <RecurrenceEndConditionScreen
+          targetName={target?.title ?? ''}
+          dateFieldName={dateField?.name ?? ''}
+          cycleLabel={label}
+          initial={recurrenceEndCondition}
+          onBack={() => navigate('recurrence-cycle')}
+          onSubmit={(condition) => {
+            setRecurrenceEndCondition(condition);
+            if (target && dateField) {
+              setRecurrenceRules((rules) => [
+                ...rules,
+                {
+                  id: `${target.id}-${Date.now()}`,
+                  targetLabel: target.title,
+                  dateFieldName: dateField.name,
+                  cycleLabel: label,
+                  enabled: true,
+                },
+              ]);
+            }
+            navigate('recurrence-complete');
+          }}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'recurrence-complete') {
+    // #37 반복 완료, reachable from #36's "반복 설정하기". "반복 더
+    // 추가하기" -> #34 (clearing the target/date selection so the next
+    // pass starts fresh). "확인" -> #24.
+    const target = recurrenceTargets.find((t) => t.id === recurrenceTargetId);
+    const dateField = dateFields.find((f) => f.id === recurrenceDateFieldId);
+    return <main className="drawary-app-shell" data-route="recurrence-complete">
+      <FixedCanvas height={844}>
+        <RecurrenceCompleteScreen
+          drawerName={drawerDetailName}
+          targetName={target?.title ?? ''}
+          dateFieldName={dateField?.name ?? ''}
+          cycleLabel={cycleLabel(recurrenceCycle, recurrenceInterval)}
+          endLabel={endConditionLabel(recurrenceEndCondition)}
+          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+          onAddAnother={() => {
+            setRecurrenceTargetId(undefined);
+            setRecurrenceDateFieldId(undefined);
+            navigate('recurrence-target-date');
+          }}
+          onDone={() => navigate('drawer-manage')}
         />
       </FixedCanvas>
     </main>;

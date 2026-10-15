@@ -1,0 +1,125 @@
+import './RecurrenceManagementScreen.css';
+
+export interface RecurrenceRuleSummary {
+  id: string;
+  targetLabel: string;
+  dateFieldName: string;
+  cycleLabel: string;
+  enabled: boolean;
+}
+
+export interface RecurrenceManagementScreenProps {
+  drawerName: string;
+  fieldCount: number;
+  itemCount: number;
+  rules: RecurrenceRuleSummary[];
+  drawerIconUri?: string;
+  onBack?: () => void;
+  onAdd?: () => void;
+  onOpenRule?: (ruleId: string) => void;
+}
+
+/**
+ * #33 반복 관리. Ported from `Drawary_33_FINAL_CONFIRMED_CODE`'s
+ * `RecurrenceManagement.tsx`/`recurrence-management.css` -- only asset
+ * paths remapped. CONFIRMED.md: 반복은 알림이 아니라 "다음 주기용
+ * 보관품 자동 생성" -- 기존 보관품을 갱신하지 않는다.
+ *
+ * The archive's own CSS never defines `.rule-card`/`.rule-list` at all,
+ * even though its TSX renders both for the `rules.length > 0` branch --
+ * a real gap in the given source, not something to port faithfully.
+ * Added `.rm-rule-card`/`.rm-rule-list` below, styled consistently with
+ * this screen's own `.rm-empty` card (same border/radius/background)
+ * and #36's `.option`/`.selected` active-state treatment, rather than
+ * guessing a different look. Reached from #24's "반복 관리" row; "반복
+ * 설정하기"/"반복 설정 추가하기" -> #34. CONFIRMED.md only asks for rule
+ * rows to display ("rules 존재 시 설정 목록 표시 지원"), not to edit an
+ * existing rule, so `onOpenRule` stays the caller's own no-op for now --
+ * same reasoning as other not-yet-built destinations.
+ */
+export function RecurrenceManagementScreen({
+  drawerName,
+  fieldCount,
+  itemCount,
+  rules,
+  drawerIconUri = '/assets/drawer-icons/drawer_icon_cosmetics.webp',
+  onBack,
+  onAdd,
+  onOpenRule,
+}: RecurrenceManagementScreenProps) {
+  return (
+    <main className="rm-screen">
+      <header className="rm-header">
+        <button className="rm-back" type="button" aria-label="뒤로" onClick={onBack}>‹</button>
+        <div className="rm-title">반복 관리</div>
+        <div />
+      </header>
+
+      <section className="rm-context">
+        <div className="rm-drawer-icon"><img src={drawerIconUri} alt="" /></div>
+        <div className="rm-context-copy">
+          <strong>{drawerName}</strong>
+          <span>{fieldCount}개 서랍칸 · {itemCount}개 보관품</span>
+        </div>
+      </section>
+
+      {rules.length === 0 ? (
+        <>
+          <div className="rm-hero">
+            <img src="/assets/states/recurrence/state_recurrence_settings.webp" alt="" />
+          </div>
+
+          <section className="rm-message">
+            <h2>다음 보관품을 자동으로 만들어요.</h2>
+            <p>날짜 서랍칸을 기준으로 매주·매달·매년 원하는 주기에 맞춰<br />새 보관품을 만들 수 있어요.</p>
+          </section>
+
+          <button className="rm-primary" type="button" onClick={onAdd}>
+            <span className="rm-plus">＋</span>반복 설정하기
+          </button>
+
+          <div className="rm-section-head">
+            <span>설정된 반복</span>
+            <span>0개</span>
+          </div>
+
+          <section className="rm-empty">
+            <div className="rm-empty-icon"><img src="/assets/ui-icons/icon_refresh.webp" alt="" /></div>
+            <div className="rm-empty-copy">
+              <strong>아직 반복 설정이 없어요.</strong>
+              <span>반복을 설정하면 다음 주기의<br />보관품이 자동으로 만들어져요.</span>
+            </div>
+          </section>
+        </>
+      ) : (
+        <>
+          <button className="rm-primary" type="button" onClick={onAdd}>
+            <span className="rm-plus">＋</span>반복 설정 추가하기
+          </button>
+
+          <div className="rm-section-head">
+            <span>설정된 반복</span>
+            <span>{rules.length}개</span>
+          </div>
+
+          <div className="rm-rule-list">
+            {rules.map((rule) => (
+              <button
+                type="button"
+                className={`rm-rule-card${rule.enabled ? ' is-enabled' : ''}`}
+                key={rule.id}
+                onClick={() => onOpenRule?.(rule.id)}
+              >
+                <strong>{rule.targetLabel}</strong>
+                <span>{rule.cycleLabel} · {rule.dateFieldName}</span>
+                <em>{rule.enabled ? '사용 중' : '일시 정지'}</em>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="rm-guide">반복 설정은 이 서랍의 보관품에만 적용돼요.</div>
+    </main>
+  );
+}

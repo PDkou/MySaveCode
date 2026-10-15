@@ -1,0 +1,67 @@
+/* Ported from the confirmed archive's render.html inline style block
+   (unprefixed classes), renamed to this file's nt- prefix; values
+   unchanged except the new custom-stepper/time-input additions this
+   screen's real interactivity needed (see this file's own header
+   comment -- the archive has no TSX to port those states from). */
+button,input{font:inherit}
+.nt-screen{position:relative;width:390px;height:844px;margin:0 auto;background:#fff9ef;overflow:hidden;font-family:Arial,"Noto Sans KR",sans-serif;color:#254d8c}
+.nt-header{height:88px;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;padding:18px 20px 0}
+.nt-back{border:0;background:transparent;color:#1f63ba;font-size:34px;line-height:1;padding:0}
+.nt-title{text-align:center;font-size:21px;font-weight:900;letter-spacing:-.65px;color:#1959a6}
+
+.nt-context{margin:8px 20px 0;height:66px;border:1px solid #eadbc9;border-radius:17px;background:#fffdf8;display:flex;align-items:center;padding:10px 13px}
+.nt-drawer-icon{width:42px;height:42px;border-radius:12px;background:#f2eafe;display:grid;place-items:center;flex:none}
+.nt-drawer-icon img{width:30px;height:30px;object-fit:contain}
+.nt-context-copy{margin-left:11px;min-width:0}
+.nt-context-copy strong{display:block;font-size:14.5px;font-weight:900;color:#2c5a9c}
+.nt-context-copy span{display:block;margin-top:3px;font-size:10.5px;color:#9592a1;font-weight:700}
+
+.nt-intro{margin:25px 18px 0;text-align:center}
+.nt-intro h2{margin:0;color:#294f91;font-size:18px;line-height:1.35;font-weight:900;letter-spacing:-.65px;white-space:nowrap}
+.nt-intro p{margin:8px auto 0;color:#888596;font-size:11.2px;line-height:1.5;font-weight:650;max-width:345px;white-space:nowrap}
+
+.nt-basis-card{
+  margin:17px 20px 0;height:60px;border-radius:16px;background:#f6f0fd;border:1px solid #e9ddf8;
+  display:grid;grid-template-columns:44px 1fr auto;align-items:center;padding:0 13px
+}
+.nt-basis-icon{width:36px;height:36px;border-radius:11px;background:#fffdf9;display:grid;place-items:center}
+.nt-basis-icon img{width:25px;height:25px;object-fit:contain}
+.nt-basis-copy strong{display:block;color:#315b99;font-size:13.5px;font-weight:900}
+.nt-basis-copy span{display:block;margin-top:3px;color:#8f89a0;font-size:10.2px;font-weight:700}
+.nt-basis-tag{font-size:10px;font-weight:850;color:#7866a8;background:#fffdf9;border-radius:999px;padding:6px 9px}
+
+.nt-section-label{margin:20px 22px 9px;color:#6f6d7e;font-size:11px;font-weight:900}
+.nt-timing-grid{margin:0 20px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.nt-timing{
+  height:44px;border:1px solid #e4ddd5;border-radius:13px;background:#fffdf9;
+  color:#52668c;font-size:12px;font-weight:850
+}
+.nt-timing.selected{border:2px solid #8a67ee;background:#f3edff;color:#6e50cf}
+.nt-custom{
+  width:350px;margin:9px 20px 0;height:44px;border:1px solid #e4ddd5;border-radius:13px;
+  background:#fffdf9;color:#6f7890;font-size:11.5px;font-weight:800;text-align:center
+}
+.nt-custom.selected{border:2px solid #8a67ee;background:#f3edff;color:#6e50cf}
+.nt-custom-stepper{
+  width:350px;margin:9px 20px 0;height:52px;border:1px solid #e4ddd5;border-radius:13px;background:#fffdf9;
+  display:grid;grid-template-columns:40px 1fr 40px;align-items:center;padding:0 8px
+}
+.nt-custom-stepper button{width:36px;height:36px;border:1px solid #ddd3e9;border-radius:10px;background:#f6f1fd;color:#6f50d1;font-size:18px;font-weight:900}
+.nt-custom-stepper strong{text-align:center;color:#4c5f88;font-size:13px;font-weight:900}
+
+.nt-time-card{
+  position:relative;width:350px;margin:0 20px;height:68px;border:1px solid #e4ddd5;border-radius:16px;background:#fffdf9;
+  display:grid;grid-template-columns:48px 1fr auto;align-items:center;padding:0 13px;text-align:left
+}
+.nt-time-icon{width:40px;height:40px;border-radius:12px;background:#f2eafe;display:grid;place-items:center}
+.nt-time-icon img{width:27px;height:27px;object-fit:contain}
+.nt-time-copy strong{display:block;color:#315a96;font-size:14px;font-weight:900}
+.nt-time-copy span{display:block;margin-top:3px;color:#9995a3;font-size:10.4px;font-weight:650}
+.nt-time-value{color:#6f50d1;font-size:16px;font-weight:900;letter-spacing:.2px}
+.nt-time-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.nt-time-note{margin:8px 22px 0;color:#a09aa7;font-size:10.2px;line-height:1.45;text-align:center;font-weight:650}
+
+.nt-actions{position:absolute;left:20px;right:20px;bottom:32px;display:grid;grid-template-columns:1fr 1.6fr;gap:10px}
+.nt-actions button{height:50px;border-radius:25px;font-size:13.5px;font-weight:900}
+.nt-prev{border:1px solid #e5ddd2;background:#fffdf9;color:#6d7891}
+.nt-save{border:0;background:#7a55ed;color:#fff;box-shadow:0 9px 18px rgba(119,79,228,.17)}
