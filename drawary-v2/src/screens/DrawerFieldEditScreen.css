@@ -1,0 +1,99 @@
+/* From the confirmed archive's field-edit.css, byte-equivalent except one
+   fix: .df-row-tap used `inset:0` (covering the whole row, including the
+   40px reorder-handle column), which would silently swallow every click
+   on .df-handle since it has no z-index of its own to win against the
+   tap overlay's z-index:3. Changed to leave exactly the handle's own
+   width uncovered so both documented interactions (tap row -> edit, drag
+   handle -> reorder) actually work side by side. */
+:root{
+  --bg:#fffaf0; --navy:#123f96; --copy:#5d76b0; --purple:#7d58e8;
+  --border:#e5ded3; --card:#fffdfa; --muted:#747b94; --danger:#d86a73;
+}
+*{box-sizing:border-box}button,input{font:inherit}
+.df-screen{width:390px;height:844px;overflow:hidden;background:var(--bg);color:var(--navy);
+font-family:"Noto Sans CJK KR","Noto Sans KR","Apple SD Gothic Neo",sans-serif;-webkit-font-smoothing:antialiased}
+.df-header{position:relative;height:93px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px}
+.df-header h1{margin:0;font-size:22px;line-height:30px;font-weight:700;letter-spacing:-.55px}
+.df-back{position:absolute;left:21px;bottom:10px;width:38px;height:38px;border:0;background:transparent;color:#2357ad;font:300 40px/34px Arial;transform:translateY(-2px)}
+.df-content,.df-edit-content{padding:0 24px 24px}
+.df-intro{margin:7px 0 20px;text-align:center;color:var(--copy);font-size:15px;line-height:23px;letter-spacing:-.3px}
+.df-list{display:grid;gap:9px}
+.df-row{height:52px;display:grid;grid-template-columns:minmax(0,1fr) 52px 1px 40px;align-items:center;border:1px solid var(--border);border-radius:13px;background:var(--card);box-shadow:0 2px 7px rgba(66,47,29,.045);position:relative;z-index:2}
+.df-main{min-width:0;height:100%;display:flex;align-items:center;gap:12px;padding-left:12px}
+.df-main img{width:30px;height:30px;object-fit:contain}.df-main strong{font-size:15px;letter-spacing:-.25px}
+.df-type{justify-self:center;color:var(--muted);font-size:13px}.df-divider{width:1px;height:25px;background:#ddd5ca}
+.df-handle{width:40px;height:52px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;z-index:4}
+.df-handle b{display:block;width:18px;height:2.5px;border-radius:9px;background:#a4a8b1}
+.df-add{width:100%;height:48px;margin-top:14px;border:1px solid #e2d9ce;border-radius:13px;background:rgba(255,255,255,.58);color:var(--purple);font-size:15px;font-weight:700}
+.df-complete{width:100%;height:54px;margin-top:18px;border:0;border-radius:28px;background:linear-gradient(90deg,#7a55e7,#835fe9);color:#fff;font-size:16px;font-weight:700;box-shadow:0 7px 12px rgba(112,75,218,.18)}
+.df-label{display:block;margin:5px 0 9px;color:#304e8e;font-size:14px;font-weight:700;letter-spacing:-.25px}
+.df-input-wrap{height:54px;border:1px solid var(--border);border-radius:13px;background:var(--card);display:grid;grid-template-columns:1fr 46px;align-items:center;margin-bottom:21px;overflow:hidden}
+.df-input-wrap input{height:100%;border:0;background:transparent;padding:0 14px;color:#304e8e;outline:none;font-size:14px}.df-input-wrap span{justify-self:center;color:#a0a7b7;font-size:11px}
+.df-selected-type{width:100%;height:68px;padding:0 14px;margin-bottom:21px;border:1px solid var(--border);background:var(--card);color:inherit;border-radius:13px;display:grid;grid-template-columns:46px 1fr 24px;align-items:center;text-align:left;box-shadow:0 2px 7px rgba(66,47,29,.045)}
+.df-type-icon{width:38px;height:38px;display:grid;place-items:center}.df-type-icon img{width:38px;height:38px;object-fit:contain}
+.df-type-copy{display:flex;flex-direction:column;gap:2px}.df-type-copy strong{font-size:14px}.df-type-copy small{font-size:11px;color:#7c86a0}.df-chevron{justify-self:end;color:#9aa2b9;font:300 28px Arial}
+.df-options h2{margin:0 0 9px;color:#304e8e;font-size:14px}.df-option-list{display:grid;gap:8px}
+.df-option-row{height:47px;border:1px solid var(--border);border-radius:12px;background:var(--card);display:grid;grid-template-columns:1fr 43px;overflow:hidden}
+.df-option-row input{border:0;background:transparent;padding:0 13px;outline:none;color:#43577e;font-size:13px}.df-option-row button{border:0;border-left:1px solid #eee6db;background:#fff8f6;color:#d66d72;font-size:21px}
+.df-add-option{width:100%;height:44px;margin-top:9px;border:1px solid #ddcff8;border-radius:12px;background:#fbf8ff;color:var(--purple);font-size:13px;font-weight:700}
+.df-required{margin-top:20px;min-height:66px;border-radius:14px;background:#fff0d9;padding:12px 13px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.df-required div{display:flex;flex-direction:column;gap:3px}.df-required strong{color:#3a548e;font-size:13px}.df-required small{color:#8a7a67;font-size:10.5px}
+.df-switch{flex:0 0 auto;width:46px;height:27px;border:0;border-radius:14px;background:#d7d3cf;padding:3px}.df-switch span{display:block;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15)}.df-switch.is-on{background:var(--purple)}.df-switch.is-on span{transform:translateX(19px)}
+.df-save{width:100%;height:54px;margin-top:24px;border:0;border-radius:28px;background:linear-gradient(90deg,#7a55e7,#835fe9);color:#fff;font-size:16px;font-weight:700;box-shadow:0 7px 12px rgba(112,75,218,.18)}
+.df-delete{width:100%;height:48px;margin-top:10px;border:1px solid #f0c9cd;border-radius:24px;background:#fff7f7;color:#b9535d;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px}.df-delete img{width:22px;height:22px;object-fit:contain}
+
+/* V2: no hidden swipe actions */
+.df-row-tap{
+  position:absolute;top:0;bottom:0;left:0;right:40px;border:0;background:transparent;z-index:3;cursor:pointer;
+}
+.df-row-edit-hint{
+  justify-self:center;color:#9aa2b9;font:300 24px/1 Arial;transform:translateY(-1px);
+}
+.df-list-help{
+  margin:0 0 14px;
+  padding:11px 14px 12px;
+  border-radius:12px;
+  background:#f7f0ff;
+  color:#6a6190;
+  font-size:11.5px;
+  line-height:18px;
+  text-align:center;
+  letter-spacing:-0.1px;
+}
+.df-list-help b{color:#6f54ca;font-weight:700}
+.df-row.is-editable{
+  grid-template-columns:minmax(0,1fr) 52px 22px 1px 40px;
+}
+.df-row.is-editable .df-divider{grid-column:4}
+.df-row.is-editable .df-handle{grid-column:5}
+.df-edit-danger-note{
+  margin:12px 0 0;text-align:center;color:#a17d82;font-size:10.5px;line-height:15px;
+}
+.df-modal-backdrop{
+  position:absolute;inset:0;background:rgba(44,38,56,.26);
+  display:flex;align-items:flex-end;justify-content:center;z-index:10;
+}
+.df-confirm-sheet{
+  width:100%;background:#fffaf3;border-radius:24px 24px 0 0;
+  padding:10px 22px 26px;box-shadow:0 -10px 34px rgba(55,45,70,.18);
+}
+.df-sheet-handle{
+  width:42px;height:4px;border-radius:99px;background:#d8d1ca;margin:0 auto 18px;
+}
+.df-confirm-icon{
+  width:54px;height:54px;border-radius:17px;background:#fff0f1;margin:0 auto 12px;
+  display:grid;place-items:center;
+}
+.df-confirm-icon img{width:32px;height:32px;object-fit:contain}
+.df-confirm-sheet h2{
+  margin:0;text-align:center;color:#304e8e;font-size:19px;letter-spacing:-.4px;
+}
+.df-confirm-sheet p{
+  margin:8px 0 18px;text-align:center;color:#7d7c8c;font-size:12.5px;line-height:19px;
+}
+.df-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.df-confirm-actions button{
+  height:49px;border-radius:24px;font-size:14px;font-weight:700;
+}
+.df-cancel{border:1px solid #e5ded3;background:#fffdfa;color:#596a8b}
+.df-confirm-delete{border:0;background:#e97882;color:white}

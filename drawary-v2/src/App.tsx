@@ -9,17 +9,21 @@ import { GlobalSearchScreen } from './screens/GlobalSearchScreen';
 import { MOCK_SEARCH_RECORDS } from './mockData';
 import { SettingsHomeScreen } from './screens/SettingsHomeScreen';
 import { DrawerFieldsScreen } from './screens/DrawerFieldsScreen';
+import { NewFieldScreen } from './screens/NewFieldScreen';
+import { DrawerFieldEditScreen } from './screens/DrawerFieldEditScreen';
+import { CreationCompleteScreen } from './screens/CreationCompleteScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding' | 'home-empty';
+type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
-  if (route === 'splash' || route === 'onboarding' || route === 'home-empty' || route === 'create-drawer' || TABS.some(tab => tab === route)) return route as Route;
+  if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
   return 'home';
 };
 
@@ -64,6 +68,30 @@ export default function App() {
       <OnboardingScreen onDone={() => navigate('home')} />
     </main>;
   }
+  if (route === 'new-field') {
+    // #10 QA route. Reachable from #09's "서랍 칸 추가" for now; returns to
+    // #09 on both back and add. Not yet wired to actually append the new
+    // field back into #09's list -- that needs shared create-drawer state
+    // across these still-independent screens (V2-12 territory), so this
+    // is a real navigable step, not yet a real round-trip of data.
+    return <main className="drawary-app-shell" data-route="new-field">
+      <FixedCanvas height={844}><NewFieldScreen onBack={() => navigate('create-drawer')} onAdd={() => navigate('create-drawer')} /></FixedCanvas>
+    </main>;
+  }
+  if (route === 'field-edit') {
+    // #11 QA route, reachable from #09's "서랍 칸 수정". Same caveat as
+    // #10: its own internal field list/edit state is independent of #09's,
+    // not yet unified.
+    return <main className="drawary-app-shell" data-route="field-edit">
+      <FixedCanvas height={844}><DrawerFieldEditScreen /></FixedCanvas>
+    </main>;
+  }
+  if (route === 'creation-complete') {
+    // #12 QA route, reachable from #09's "서랍 만들기 완료하기".
+    return <main className="drawary-app-shell" data-route="creation-complete">
+      <FixedCanvas height={844}><CreationCompleteScreen onFillDrawer={returnToTab} onLater={returnToTab} /></FixedCanvas>
+    </main>;
+  }
   if (route === 'home-empty') {
     // V2-09-04 QA route: the confirmed empty state isn't wired as the live
     // '#/home' conditional yet -- that needs a real drawer count from the
@@ -102,12 +130,18 @@ export default function App() {
             <p className="drawary-dev-detail">이 영역의 실제 확정 화면은 후속 구현 단계에서 연결합니다.</p>
           </div>
         ) : route === 'create-drawer' ? (
-          // #09: the real screen. onAddField/onEditField have no destination
-          // yet (#10/#11 not integrated); onComplete has no #12 to land on
-          // yet either, so it returns to the previous tab for now -- all
-          // intentional no-ops/placeholders, not guessed behavior.
+          // #09: the real screen, now chained to the real #10/#11/#12
+          // screens. onQuickAdd/onReorder still have no real behavior --
+          // #09's own fields list is local demo state, not yet backed by
+          // shared create-drawer state (V2-12), so a quick-add chip or a
+          // drag-reorder has nothing to actually mutate yet.
           <FixedCanvas height={844}>
-            <DrawerFieldsScreen onBack={returnToTab} onComplete={returnToTab} />
+            <DrawerFieldsScreen
+              onBack={returnToTab}
+              onAddField={() => navigate('new-field')}
+              onEditField={() => navigate('field-edit')}
+              onComplete={() => navigate('creation-complete')}
+            />
           </FixedCanvas>
         ) : null}
       </section>
