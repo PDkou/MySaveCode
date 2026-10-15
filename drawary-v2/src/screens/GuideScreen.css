@@ -1,0 +1,35 @@
+/* Byte-identical values to the confirmed archive's index.html inline
+   style block, classes renamed to this file's guide57- prefix. */
+button{font:inherit}
+.guide57-screen{width:390px;max-width:100%;height:844px;margin:0 auto;background:#fff9f1;position:relative;overflow:hidden;font-family:'Noto Sans CJK KR','Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;-webkit-font-smoothing:antialiased;color:#18295e}
+.guide57-appbar{height:66px;display:flex;align-items:center;justify-content:center;position:relative;flex:none}
+.guide57-appbar-title{font-size:23px;font-weight:850;letter-spacing:-1px;color:#18265b}
+.guide57-back{position:absolute;left:20px;top:23px;width:24px;height:24px;border:0;background:none;padding:4px;cursor:pointer;display:grid;place-items:center}
+.guide57-back::before{content:'';display:block;width:11px;height:11px;border-left:3px solid #8465ef;border-bottom:3px solid #8465ef;transform:rotate(45deg)}
+.guide57-scroll{height:calc(100% - 66px);overflow-y:auto;scrollbar-width:none;overscroll-behavior:contain;padding:0 14px 16px}
+.guide57-scroll::-webkit-scrollbar{display:none}
+.guide57-hero{height:163px;background:#f2ebff;border-radius:23px;overflow:hidden;position:relative;padding:24px 15px}
+.guide57-hero small{font-size:12px;font-weight:800;color:#805eed;letter-spacing:-.4px;display:block;margin-bottom:3px}
+.guide57-hero h1{font-size:19px;font-weight:900;letter-spacing:-.85px;color:#1c2c63;line-height:1.33;margin:0}
+.guide57-hero p{font-size:11.5px;font-weight:620;line-height:1.55;color:#8594b5;letter-spacing:-.2px;margin:7px 0 0}
+.guide57-hero img{position:absolute;width:123px;height:130px;object-fit:contain;right:12px;bottom:12px}
+.guide57-steps{display:flex;flex-direction:column;gap:10px;margin-top:13px;padding-bottom:12px}
+.guide57-step{height:144px;min-height:144px;width:100%;background:#fff;border:1px solid #e9e3dd;border-radius:22px;display:flex;position:relative;overflow:hidden;color:inherit;text-align:left;cursor:pointer;font:inherit;padding:0}
+.guide57-step-image{width:154px;flex:none;height:100%;position:relative;background:#fffaf0;display:flex;justify-content:center;align-items:center;overflow:hidden}
+.guide57-step-image.guide57-step2{background:#fffdf8}
+.guide57-step-image.guide57-step3{background:#fff9ea}
+.guide57-step-image.guide57-step4{background:#fffaf5}
+.guide57-step-number{position:absolute;top:9px;left:8px;width:29px;height:29px;background:#8560f2;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:850;z-index:2}
+.guide57-step-copy{flex:1;min-width:0;padding:13px 13px 11px 14px}
+.guide57-step-copy h2{font-size:17px;font-weight:900;color:#1b2f68;letter-spacing:-.65px;line-height:1.45;margin:0 0 4px}
+.guide57-step-copy p{font-size:11.8px;font-weight:620;color:#8999b8;letter-spacing:-.37px;line-height:1.43;margin:0}
+.guide57-step-path{margin-top:9px;display:inline-block;background:#f2ebff;border-radius:13px;color:#865fee;padding:8px 11px;font-size:10.8px;font-weight:780;line-height:1.35;letter-spacing:-.35px;max-width:100%;white-space:normal}
+.guide57-step-1-visual{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:radial-gradient(circle at 52% 47%,#f6efff 0%,#fffaf4 64%)}
+.guide57-plus-halo{width:83px;height:83px;border-radius:26px;display:flex;align-items:center;justify-content:center;background:#f0e6ff;border:1px solid #e7d8ff}
+.guide57-plus-halo img{width:72px;height:72px;object-fit:contain;display:block}
+.guide57-tap-label{font-size:10.4px;color:#7957db;font-weight:850;letter-spacing:-.3px;line-height:1}
+.guide57-step-art-zoom{width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.guide57-step-art-zoom img{width:181px;height:138px;object-fit:cover;object-position:center center;display:block;border-radius:12px;max-width:none}
+.guide57-step2 .guide57-step-art-zoom img{width:180px;height:132px}
+.guide57-step4 .guide57-step-art-zoom img{width:186px;height:130px}
+@media(max-width:365px){.guide57-step-image{width:142px}.guide57-step-copy h2{font-size:16px}.guide57-step-copy{padding-right:8px}.guide57-step-path{padding:8px}}

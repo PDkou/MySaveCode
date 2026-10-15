@@ -1,0 +1,29 @@
+/* Byte-identical values to the confirmed archive's index.html inline
+   style block, classes renamed to this file's help55- prefix. */
+button{font:inherit}
+.help55-screen{width:390px;max-width:100%;height:844px;min-height:700px;margin:0 auto;background:#fff9f1;overflow:hidden;position:relative;font-family:'Noto Sans CJK KR','Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;-webkit-font-smoothing:antialiased;color:#172c5c}
+.help55-appbar{height:71px;display:flex;align-items:center;justify-content:center;position:relative}
+.help55-appbar-title{font-size:23px;line-height:1.25;font-weight:850;letter-spacing:-.9px;color:#18275c}
+.help55-back{position:absolute;left:22px;top:29px;border:0;background:transparent;width:25px;height:25px;padding:4px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.help55-back::before{content:"";height:11px;width:11px;display:block;border-left:3px solid #8168f0;border-bottom:3px solid #8168f0;transform:rotate(45deg);border-radius:1px}
+.help55-content{padding:0 14px}
+.help55-hero{height:139px;border-radius:22px;background:#f4efff;position:relative;overflow:hidden;padding:16px 16px}
+.help55-hero .help55-eyebrow{font-size:12px;font-weight:850;letter-spacing:-.3px;color:#8464e9;margin:0 0 2px;line-height:1.4}
+.help55-hero h1{font-size:16.4px;letter-spacing:-.6px;line-height:1.32;font-weight:900;color:#1e3365;margin:0}
+.help55-hero p{margin:9px 0 0;font-size:11.4px;line-height:1.55;font-weight:620;letter-spacing:-.3px;color:#8392b5}
+.help55-hero img{position:absolute;right:18px;bottom:10px;width:100px;height:116px;object-fit:contain}
+.help55-main-options{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+.help55-menu-card{height:91px;border:1px solid #eae3db;border-radius:21px;background:#fff;display:flex;align-items:center;gap:17px;padding:0 15px;cursor:pointer;text-align:left;width:100%;color:inherit;font-family:inherit}
+.help55-icon-holder{width:47px;height:47px;min-width:47px;background:#f2ecff;border-radius:15px;display:flex;align-items:center;justify-content:center}
+.help55-icon-holder img{height:33px;width:33px;object-fit:contain}
+.help55-card-copy{min-width:0;flex:1}
+.help55-card-title{display:block;font-weight:880;font-size:16px;letter-spacing:-.6px;line-height:1.35;color:#1e3264;white-space:nowrap}
+.help55-card-desc{display:block;font-weight:630;font-size:11.7px;line-height:1.34;letter-spacing:-.3px;color:#8a98b9;margin-top:3px}
+.help55-chevron{width:8px;height:8px;display:block;border-top:1.8px solid #aaa0c8;border-right:1.8px solid #aaa0c8;transform:rotate(45deg);margin-right:12px;flex:none}
+.help55-quick-label{font-size:12px;color:#8c80aa;font-weight:700;margin:17px 5px 9px;letter-spacing:-.3px}
+.help55-quick-list{border:1px solid #eae3db;border-radius:20px;background:#fff;overflow:hidden}
+.help55-quick-item{height:56px;display:flex;align-items:center;padding:0 14px;border:0;background:transparent;cursor:pointer;font:800 12.8px/1.35 'Noto Sans CJK KR','Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;color:#172c5c;letter-spacing:-.33px;width:100%;text-align:left}
+.help55-quick-item+.help55-quick-item{border-top:1px solid #ebe5df}
+.help55-quick-item .help55-chevron{margin-left:auto;margin-right:12px}
+.help55-footnote{text-align:center;font-weight:650;font-size:10.4px;line-height:1.55;color:#b0b4c7;letter-spacing:-.2px;margin:20px auto 0;padding:0 3px}
+@media(max-width:380px){.help55-hero img{right:10px;width:95px}.help55-hero h1{font-size:15px}.help55-card-title{font-size:15px}.help55-quick-item{font-size:12px}}

@@ -47,16 +47,22 @@ import { RestoreReviewScreen } from './screens/RestoreReviewScreen';
 import { RestoreProgressScreen } from './screens/RestoreProgressScreen';
 import { RestoreSuccessScreen } from './screens/RestoreSuccessScreen';
 import { DataResetConfirmScreen } from './screens/DataResetConfirmScreen';
+import { LanguageSettingsScreen, type LanguageCode } from './screens/LanguageSettingsScreen';
+import { HelpMainScreen } from './screens/HelpMainScreen';
+import { FaqScreen } from './screens/FaqScreen';
+import { GuideScreen, type GuideRoute } from './screens/GuideScreen';
+import { InfoScreen } from './screens/InfoScreen';
+import { FeedbackScreen } from './screens/FeedbackScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type StandaloneRoute = 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management' | 'backup-type' | 'backup-destination' | 'backup-success' | 'restore-file-picker' | 'restore-review' | 'restore-progress' | 'restore-success' | 'data-reset-confirm';
+type StandaloneRoute = 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management' | 'backup-type' | 'backup-destination' | 'backup-success' | 'restore-file-picker' | 'restore-review' | 'restore-progress' | 'restore-success' | 'data-reset-confirm' | 'language-settings' | 'help-main' | 'faq' | 'guide' | 'info' | 'feedback';
 type Route = BottomNavTab | 'create-drawer' | StandaloneRoute;
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
 const NAMES: Record<Exclude<Route, StandaloneRoute>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm', 'language-settings', 'help-main', 'faq', 'guide', 'info', 'feedback'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -146,6 +152,10 @@ export default function App() {
   const [backupMode, setBackupMode] = useState<BackupMode>('include');
   const [backupDestination, setBackupDestination] = useState<BackupDestination>('device');
   const [restoreFileName, setRestoreFileName] = useState<string | null>(null);
+
+  // #54-#59 언어/도움말/FAQ/가이드/정보/피드백.
+  const [savedLanguage, setSavedLanguage] = useState<LanguageCode>('ko');
+  const [faqTopic, setFaqTopic] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const update = () => setRoute(parseRoute());
@@ -723,6 +733,81 @@ export default function App() {
       </FixedCanvas>
     </main>;
   }
+  if (route === 'language-settings') {
+    // #54 언어 설정, reachable from #38's "언어 설정" row. Both "취소"
+    // and "적용" return to #38 -- the archive's own source never
+    // navigates on its own, only resets/commits the selection.
+    return <main className="drawary-app-shell" data-route="language-settings">
+      <FixedCanvas height={844}>
+        <LanguageSettingsScreen
+          savedLanguage={savedLanguage}
+          onBack={returnToTab}
+          onCancel={returnToTab}
+          onApply={(code) => { setSavedLanguage(code); returnToTab(); }}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'help-main') {
+    // #55 도움말 메인, reachable from #38's "도움말" row. Back returns
+    // to #38. "자주 묻는 질문" card / quick-help rows -> #56 (quick-help
+    // rows pass a specific topic deep-link); "사용 가이드" card -> #57.
+    return <main className="drawary-app-shell" data-route="help-main">
+      <FixedCanvas height={844}>
+        <HelpMainScreen
+          onBack={returnToTab}
+          onOpenFaq={(topic) => { setFaqTopic(topic); navigate('faq'); }}
+          onOpenGuide={() => navigate('guide')}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'faq') {
+    // #56 자주 묻는 질문, reachable from #55. Back returns to #55.
+    return <main className="drawary-app-shell" data-route="faq">
+      <FixedCanvas height={844}>
+        <FaqScreen initialTopic={faqTopic} onBack={() => navigate('help-main')} />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'guide') {
+    // #57 사용 가이드, reachable from #55. Back returns to #55. Each
+    // step navigates to the real existing screen it names (see
+    // GuideScreen.tsx's own header comment) -- a genuine integration,
+    // not a no-op.
+    const guideRoutes: Record<GuideRoute, Route> = {
+      new_drawer: 'create-drawer',
+      drawer_fields: 'drawer-fields',
+      record_add: 'fill-drawer',
+      table_view: 'table-view',
+    };
+    return <main className="drawary-app-shell" data-route="guide">
+      <FixedCanvas height={844}>
+        <GuideScreen onBack={() => navigate('help-main')} onNavigate={(step) => navigate(guideRoutes[step])} />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'info') {
+    // #58 정보, reachable from #38's "정보" row. Back returns to #38.
+    // 개인정보 처리방침/이용약관/오픈소스 라이선스 have no destination
+    // among the 59 approved screens, so those three stay no-ops.
+    return <main className="drawary-app-shell" data-route="info">
+      <FixedCanvas height={844}>
+        <InfoScreen onBack={returnToTab} onNavigate={() => {}} />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'feedback') {
+    // #59 피드백, reachable from #38's "피드백" row. Back returns to
+    // #38. Submitting has no real backend (see FeedbackScreen.tsx's
+    // own header comment) -- shows a real local acknowledgment, then
+    // returns to #38.
+    return <main className="drawary-app-shell" data-route="feedback">
+      <FixedCanvas height={844}>
+        <FeedbackScreen onBack={returnToTab} onSubmit={() => setTimeout(returnToTab, 1200)} />
+      </FixedCanvas>
+    </main>;
+  }
   if (route === 'name-icon-change') {
     // #25 서랍 이름 / 아이콘 변경, reachable from #24's "서랍 이름 / 아이콘
     // 변경" row. Saving updates the shared drawerDetailName/drawerIconId
@@ -910,13 +995,17 @@ export default function App() {
           // HomeScreen's open-* actions above.
           <GlobalSearchScreen records={MOCK_SEARCH_RECORDS} onOpenRecord={() => {}} />
         ) : route === 'settings' ? (
-          // #38: 테마->#39, 보안->#40, 데이터->#44 all real routes now.
-          // 언어/도움말/정보/피드백 (#54/#55/#58/#59) still have no
-          // destination screen, so those three rows stay unwired.
+          // #38: 테마->#39, 보안->#40, 데이터->#44, 언어->#54, 도움말->
+          // #55, 정보->#58, 피드백->#59 -- all real routes now (final
+          // batch of the 59 screens).
           <SettingsHomeScreen
             onTheme={() => navigate('theme-settings')}
             onSecurity={() => navigate('security-settings')}
             onData={() => navigate('data-management')}
+            onLanguage={() => navigate('language-settings')}
+            onHelp={() => navigate('help-main')}
+            onInfo={() => navigate('info')}
+            onFeedback={() => navigate('feedback')}
           />
         ) : route === 'stats' ? (
           // #07: no approved source exists (STATUS.md: NO_FINAL_CODE_IMAGE_ONLY),
