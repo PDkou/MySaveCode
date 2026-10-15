@@ -1,0 +1,86 @@
+/* Values from the #38 V22 candidate's settings-home.css, translated to
+   this component's own class names. One layout adaptation: the candidate's
+   header reserved a 44px left column for a back button; Settings is a
+   root bottom-nav tab in this app (same as Home/Search, neither of which
+   has one either), so that column and its button are dropped and the
+   title is simply centered in the remaining space. Colors/sizes/spacing
+   of every other element are unchanged. */
+
+.settings-home-screen {
+  width: 390px;
+  height: 750px;
+  background: #fff9ef;
+  overflow: hidden;
+  font-family: Arial, "Noto Sans KR", sans-serif;
+  color: #243d6a;
+}
+.settings-home-screen * { box-sizing: border-box; }
+.settings-home-screen button { font: inherit; }
+
+.settings-home-header {
+  height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 20px 0;
+}
+.settings-home-title {
+  text-align: center;
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: -.65px;
+  color: #1959a6;
+}
+
+.settings-home-hero {
+  margin: 8px 20px 0;
+  padding: 17px 18px;
+  border-radius: 18px;
+  background: #f6f0fd;
+  border: 1px solid #eadff7;
+}
+.settings-home-hero h2 { margin: 0; color: #315a96; font-size: 16px; font-weight: 900; letter-spacing: -.4px; }
+.settings-home-hero p { margin: 6px 0 0; color: #8d8798; font-size: 10.8px; line-height: 1.45; font-weight: 650; }
+
+.settings-home-list {
+  margin: 16px 20px 0;
+  border: 1px solid #eadfcf;
+  border-radius: 18px;
+  background: #fffdf8;
+  overflow: hidden;
+}
+.settings-home-row {
+  width: 100%;
+  height: 61px;
+  border: 0;
+  background: transparent;
+  display: grid;
+  grid-template-columns: 46px 1fr 24px;
+  align-items: center;
+  padding: 0 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.settings-home-row + .settings-home-row { border-top: 1px solid #efe7de; }
+.settings-home-iconbox {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: #f3ecff;
+  display: grid;
+  place-items: center;
+}
+.settings-home-iconbox img { width: 27px; height: 27px; object-fit: contain; }
+.settings-home-copy { min-width: 0; }
+.settings-home-copy strong { display: block; color: #304f82; font-size: 13.2px; font-weight: 900; }
+.settings-home-copy span {
+  display: block;
+  margin-top: 4px;
+  color: #9a95a3;
+  font-size: 9.8px;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settings-home-chev { color: #a49cad; font-size: 23px; text-align: right; line-height: 1; }

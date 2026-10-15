@@ -1,11 +1,19 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './OnboardingScreen.css';
 
-// Ported verbatim from the user-approved
+// Ported from the user-approved
 // Drawary_02_ONBOARDING_FINAL_CONFIRMED/OnboardingScreen_FINAL_CONFIRMED.tsx
 // (confirmed 2026-10-08). Only the asset path changed, from the archive's
 // relative `./icons/drawary/onboarding/final/` to this app's
 // `/assets/onboarding/final/` convention -- same treatment #01 splash got.
+//
+// Bug fix (DRAWARY_CLAUDE_ISSUES_RESOLUTION_2026-10-15): the archive's own
+// README/CONFIRMED_STATUS both promised "키보드 ←→ 이동" but the confirmed
+// TSX shipped with no keyboard handler at all. Resolution doc's verdict:
+// implement and test the arrow-key behavior rather than leave the gap.
+// Added below, reusing the exact same prev/next used by the nav buttons
+// and the swipe gesture, so all three input paths share one bounds-safe
+// step function -- no new navigation semantics invented.
 const SLIDES = [
   { id: 'intro', title: <>나만의 소중한 것들을,<br />더 특별하게</>, body: <>Drawary와 함께<br />일상을 기록해보세요.</> },
   { id: 'create', title: <>나만의 서랍을 만들어보세요</>, body: <>좋아하는 주제로 서랍을 만들고<br />소중한 것들을 정리할 수 있어요.</> },
@@ -28,6 +36,15 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
     try { localStorage.setItem('drawary_onboarding_done', '1'); } catch { /* storage unavailable */ }
     onDone();
   };
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') prev();
+      else if (e.key === 'ArrowRight') next();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   return <div className="onboarding-screen">
     <section className={`onboarding-card ${last ? 'complete' : ''}`}

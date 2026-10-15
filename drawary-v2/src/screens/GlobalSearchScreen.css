@@ -1,0 +1,191 @@
+/* Values taken from the candidate's own standalone index.html <style>
+   block, class names translated to this component's own (global-search-*)
+   to avoid colliding with any other screen. Two deliberate departures from
+   the candidate, both because the footer it draws itself is being dropped
+   in favor of the real V4 nav rendered below this screen by App.tsx:
+   - .global-search-screen is 750px tall (844 - the nav's 94px), not 844,
+     and is a flex column so .global-search-content fills what's left.
+   - .global-search-content's bottom padding is 18px (matching its other
+     sides) instead of the candidate's 118px, which existed only to clear
+     its own absolutely-positioned footer. */
+
+.global-search-screen {
+  width: 390px;
+  height: 750px;
+  display: flex;
+  flex-direction: column;
+  background: #fffaf1;
+  overflow: hidden;
+  font-family: Arial, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+.global-search-screen * { box-sizing: border-box; }
+.global-search-screen button, .global-search-screen input { font: inherit; }
+
+.global-search-header {
+  flex: 0 0 auto;
+  padding: 30px 22px 0;
+}
+.global-search-brand { width: 151px; height: auto; display: block; }
+.global-search-header h1 {
+  margin: 15px 0 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+  color: #17275f;
+}
+.global-search-header p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #7b83a5;
+}
+
+.global-search-box {
+  flex: 0 0 auto;
+  position: relative;
+  margin: 12px 22px 0;
+  height: 48px;
+  border: 1.5px solid #cfc5e2;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(80, 60, 110, .04);
+}
+.global-search-box:focus-within {
+  border-color: #7657e8;
+  box-shadow: 0 0 0 3px rgba(118, 87, 232, .10);
+}
+.global-search-box::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 14px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #3c4c7f;
+  border-radius: 50%;
+}
+.global-search-box::after {
+  content: "";
+  position: absolute;
+  left: 26px;
+  top: 25px;
+  width: 7px;
+  height: 2px;
+  background: #3c4c7f;
+  transform: rotate(45deg);
+  border-radius: 2px;
+}
+.global-search-box input {
+  position: absolute;
+  left: 44px;
+  right: 42px;
+  top: 0;
+  height: 46px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #17275f;
+  font-size: 14px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.global-search-box input::placeholder { color: #aaa4b5; }
+/* type="search" inputs get a native clear icon in Chromium once there's a
+   value; this screen already has its own clear button (below), so the
+   native one is suppressed to avoid two overlapping "x" marks. Bug found
+   during QA screenshotting, not present in the candidate's own narrower
+   manual testing. */
+.global-search-box input::-webkit-search-cancel-button,
+.global-search-box input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.global-search-box button {
+  position: absolute;
+  right: 12px;
+  top: 13px;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: #eeeaf4;
+  color: #797286;
+  padding: 0;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.global-search-content {
+  flex: 1;
+  min-height: 0;
+  padding: 18px 22px 18px;
+  overflow: auto;
+}
+.global-search-empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-bottom: 60px;
+}
+.global-search-empty img { width: 150px; height: 150px; object-fit: contain; }
+.global-search-empty strong { margin-top: 10px; color: #17275f; font-size: 18px; }
+.global-search-empty span { margin-top: 7px; color: #7b83a5; font-size: 13px; line-height: 1.5; }
+
+.global-search-result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2px 2px 10px;
+}
+.global-search-result-head strong { font-size: 14px; color: #17275f; }
+.global-search-result-head span { font-size: 11px; color: #7b83a5; }
+
+.global-search-result-list { display: flex; flex-direction: column; gap: 10px; }
+.global-search-result-card {
+  width: 100%;
+  height: 86px;
+  border: 1px solid #e5ddec;
+  border-radius: 16px;
+  background: #fffdf8;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.global-search-result-card:active { transform: scale(.995); }
+.global-search-result-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #f3eefb;
+  display: grid;
+  place-items: center;
+  flex: 0 0 52px;
+}
+.global-search-result-icon img { width: 38px; height: 38px; object-fit: contain; }
+.global-search-result-body { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+.global-search-result-body small { font-size: 11px; color: #6e61b8; font-weight: 700; margin-bottom: 3px; }
+.global-search-result-body strong {
+  font-size: 15px;
+  font-weight: 800;
+  color: #17275f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.global-search-result-body span {
+  font-size: 11px;
+  color: #7b83a5;
+  margin-top: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.global-search-chevron { font-size: 24px; color: #a39ab2; }

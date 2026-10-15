@@ -7,7 +7,11 @@
 - [x] V2-09-01: #01 splash — React-integrated AND compiled-browser-QA-verified (0.0 diff / 100% identical, 3 viewports). See `docs/V2_09_01_SPLASH_QA.md`.
 - [x] V2-09-02: #02 onboarding — React-integrated AND compiled-browser-QA-verified (8/8 slides, nav/skip/start/swipe all exercised). See `docs/V2_09_02_ONBOARDING_QA.md`. One doc-vs-code discrepancy flagged (keyboard nav claimed in archive docs, absent from the confirmed TSX) — not invented, reported as an open question.
 - [x] V2-09-03/04: #03 home (filled) + #04 home (empty) — React-integrated AND compiled-browser-QA-verified, including a new `FixedCanvas` wrapper so the fixed-390px artwork scales instead of clipping at 320px. See `docs/V2_09_03_04_HOME_QA.md`. `#/home-empty` is a standalone QA route; live empty/filled switching needs the V2-12 data layer. Drawer-open/edit hotspots are intentionally inert — no destination screen exists yet.
-- [ ] V2-09: screens 05–28 remaining.
+- [x] V2-09-05: #05 global search — body integrated (candidate's own footer ignored, real V4 nav used instead), mock records pending V2-12, a real native-vs-custom clear-icon bug found+fixed. See `docs/V2_09_05_06_38_RESOLUTION_QA.md`.
+- [x] V2-09-38: #38 settings home — body integrated; found the candidate's bundled "confirmed" nav is a different, older lineage than this repo's real V4 component and kept the real one. See same doc.
+- [ ] V2-09-06: #06 home edit mode — not started; needs V14 reference image pulled up before touching V3 code.
+- [ ] V2-09-07/08: #07/#08 — feasibility confirmed, reconstruction from approved PNG not started yet.
+- [ ] V2-09: screens 09–28 remaining (09–12 sources audited, ready to start).
 
 ## Baseline & safety
 - [x] New branch `drawary/59-design-rebuild-20261014` created.

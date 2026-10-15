@@ -5,6 +5,9 @@ import { SplashScreen } from './screens/SplashScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
 import { HomeScreen, type HomeAction } from './screens/HomeScreen';
 import { HomeEmptyScreen } from './screens/HomeEmptyScreen';
+import { GlobalSearchScreen } from './screens/GlobalSearchScreen';
+import { MOCK_SEARCH_RECORDS } from './mockData';
+import { SettingsHomeScreen } from './screens/SettingsHomeScreen';
 
 type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding' | 'home-empty';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
@@ -73,12 +76,22 @@ export default function App() {
   const tabRoute = isTab(route);
   return (
     <main className="drawary-app-shell" data-route={route}>
-      <section className="drawary-route-panel" aria-labelledby={route === 'home' ? undefined : 'drawary-dev-screen-title'}>
+      <section className="drawary-route-panel" aria-labelledby={route === 'home' || route === 'search' || route === 'settings' ? undefined : 'drawary-dev-screen-title'}>
         {route === 'home' ? (
           <HomeScreen onAction={(action) => {
             if (action === 'create-drawer') { navigate('create-drawer'); return; }
             if (UNIMPLEMENTED_HOME_ACTIONS.has(action)) return; // no destination screen yet; see CLAUDE.md note above
           }} />
+        ) : route === 'search' ? (
+          // #05: open-record has no destination screen yet (drawer/item
+          // detail aren't built) -- intentional no-op, same reasoning as
+          // HomeScreen's open-* actions above.
+          <GlobalSearchScreen records={MOCK_SEARCH_RECORDS} onOpenRecord={() => {}} />
+        ) : route === 'settings' ? (
+          // #38: every row (테마/보안/데이터/언어/도움말/정보/피드백) targets
+          // a screen (#39,#40,#44,#54,#55,#58,#59) not yet integrated --
+          // all intentionally unwired for now, same reasoning as above.
+          <SettingsHomeScreen />
         ) : tabRoute ? (
           <div className="drawary-dev-only">
             <div className="drawary-dev-flag">개발 검수용 · 확정 화면 아님</div>
