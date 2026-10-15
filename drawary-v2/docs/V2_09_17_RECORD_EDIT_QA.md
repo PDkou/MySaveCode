@@ -47,3 +47,18 @@ Re-verified: the empty state now appears correctly and stays.
   identical, 2.5% diff>30 -- one of the closest matches this session,
   including the photo region (the fixture genuinely matches the
   reference here, unlike #16).
+
+## 2026-10-15 follow-up: user-requested empty-state restyle
+
+The user compared #17's empty-photo state (plain generic icon +
+"등록된 사진이 없어요" caption on a solid pink card, as in the archive's
+own source) against #13's empty-photo state (dashed border + the same
+cute illustration, `state_photo_empty.webp`) and asked for the #13
+treatment instead, finding it cleaner. This is a deliberate deviation
+from the archived source at the user's explicit request, not a port --
+documented in `RecordEditScreen.tsx`'s own header comment. Changed
+`.re-photo-card.is-empty` to a dashed `#d7c9ba` border on `#fffaf5`
+(matching #13's `.fd-photo-empty` exactly) and swapped the icon+caption
+for the same illustration asset, sized to fill the card. Re-verified:
+no regression on the photo-present state or the back/save navigation
+chain.

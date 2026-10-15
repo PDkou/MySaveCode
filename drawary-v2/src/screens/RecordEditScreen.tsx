@@ -57,6 +57,13 @@ interface RecordEditScreenProps {
  * caller representing "removed" with `undefined` (state set from
  * `onRemovePhoto`) silently gets the fixture photo put right back on
  * next render. Represent "no photo" with `''` instead.
+ *
+ * 2026-10-15, user-requested change: the archive's original empty-photo
+ * treatment (a plain generic icon + "등록된 사진이 없어요" caption on a
+ * solid pink card) was restyled to match #13's dashed-border +
+ * illustration look instead, after the user compared the two directly
+ * and asked for the more polished #13 treatment. This is a deliberate
+ * deviation from the archived source, not a port.
  */
 export function RecordEditScreen({
   drawerName = '화장품',
@@ -88,7 +95,7 @@ export function RecordEditScreen({
       </header>
 
       <section className="re-content">
-        <section className="re-photo-card">
+        <section className={`re-photo-card${photoUri ? '' : ' is-empty'}`}>
           {photoUri ? (
             <>
               <img className="re-photo" src={photoUri} alt="등록한 보관품 사진" />
@@ -96,8 +103,7 @@ export function RecordEditScreen({
             </>
           ) : (
             <div className="re-photo-empty">
-              <img src="/assets/field-types/field_photo.webp" alt="" />
-              <span>등록된 사진이 없어요.</span>
+              <img src="/assets/states/photo/state_photo_empty.webp" alt="" />
             </div>
           )}
         </section>
