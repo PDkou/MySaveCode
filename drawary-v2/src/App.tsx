@@ -15,15 +15,17 @@ import { CreationCompleteScreen } from './screens/CreationCompleteScreen';
 import { FillDrawerScreen } from './screens/FillDrawerScreen';
 import { BackupProgressScreen } from './screens/BackupProgressScreen';
 import { HomeEditScreen } from './screens/HomeEditScreen';
+import { StatsScreen } from './screens/StatsScreen';
+import { NewDrawerScreen } from './screens/NewDrawerScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit';
+type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -78,7 +80,43 @@ export default function App() {
     // across these still-independent screens (V2-12 territory), so this
     // is a real navigable step, not yet a real round-trip of data.
     return <main className="drawary-app-shell" data-route="new-field">
-      <FixedCanvas height={844}><NewFieldScreen onBack={() => navigate('create-drawer')} onAdd={() => navigate('create-drawer')} /></FixedCanvas>
+      <FixedCanvas height={844}><NewFieldScreen onBack={() => navigate('drawer-fields')} onAdd={() => navigate('drawer-fields')} /></FixedCanvas>
+    </main>;
+  }
+  if (route === 'drawer-fields') {
+    // #09: the real screen, now chained to the real #10/#11/#12 screens,
+    // and reachable only after #08's name/icon/color step (below). Back
+    // returns to #08 rather than all the way to the previous tab, since
+    // #08 -> #09 is the real forward step in this flow.
+    // onQuickAdd/onReorder still have no real behavior -- #09's own
+    // fields list is local demo state, not yet backed by shared
+    // create-drawer state (V2-12), so a quick-add chip or a drag-reorder
+    // has nothing to actually mutate yet.
+    return <main className="drawary-app-shell" data-route="drawer-fields">
+      <FixedCanvas height={844}>
+        <DrawerFieldsScreen
+          onBack={() => navigate('create-drawer')}
+          onAddField={() => navigate('new-field')}
+          onEditField={() => navigate('field-edit')}
+          onComplete={() => navigate('creation-complete')}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'create-drawer') {
+    // #08 새 서랍 만들기 (name/icon/color) -- the real first step of this
+    // flow, reached from the home "+" action / bottom-nav "+" / empty
+    // state / edit mode, all of which already call onCreateDrawer. No
+    // approved source exists (STATUS.md: NO_FINAL_CODE_IMAGE_ONLY);
+    // reconstructed as a bottom sheet over a dimmed Home -- see
+    // NewDrawerScreen.tsx's own header comment. The draft name/icon/color
+    // aren't persisted anywhere yet (no shared create-drawer state until
+    // V2-12), so "다음" just advances to #09 without carrying them.
+    return <main className="drawary-app-shell" data-route="create-drawer">
+      <section className="drawary-route-panel drawary-dimmed-home" aria-hidden="true">
+        <HomeScreen onAction={() => {}} />
+      </section>
+      <NewDrawerScreen onNext={() => navigate('drawer-fields')} onDismiss={returnToTab} />
     </main>;
   }
   if (route === 'field-edit') {
@@ -147,7 +185,7 @@ export default function App() {
   const tabRoute = isTab(route);
   return (
     <main className="drawary-app-shell" data-route={route}>
-      <section className="drawary-route-panel" aria-labelledby={route === 'home' || route === 'search' || route === 'settings' ? undefined : 'drawary-dev-screen-title'}>
+      <section className="drawary-route-panel" aria-labelledby={route === 'home' || route === 'search' || route === 'settings' || route === 'stats' ? undefined : 'drawary-dev-screen-title'}>
         {route === 'home' ? (
           <HomeScreen onAction={(action) => {
             if (action === 'create-drawer') { navigate('create-drawer'); return; }
@@ -164,6 +202,12 @@ export default function App() {
           // a screen (#39,#40,#44,#54,#55,#58,#59) not yet integrated --
           // all intentionally unwired for now, same reasoning as above.
           <SettingsHomeScreen />
+        ) : route === 'stats' ? (
+          // #07: no approved source exists (STATUS.md: NO_FINAL_CODE_IMAGE_ONLY),
+          // reconstructed from the two approved reference renders -- see
+          // StatsScreen.tsx's own header comment. onOpenInsight has no
+          // destination screen yet, same reasoning as above.
+          <StatsScreen />
         ) : tabRoute ? (
           <div className="drawary-dev-only">
             <div className="drawary-dev-flag">개발 검수용 · 확정 화면 아님</div>
@@ -171,20 +215,6 @@ export default function App() {
             <p>V2-08 공통 하단바·화면 이동 동작 확인</p>
             <p className="drawary-dev-detail">이 영역의 실제 확정 화면은 후속 구현 단계에서 연결합니다.</p>
           </div>
-        ) : route === 'create-drawer' ? (
-          // #09: the real screen, now chained to the real #10/#11/#12
-          // screens. onQuickAdd/onReorder still have no real behavior --
-          // #09's own fields list is local demo state, not yet backed by
-          // shared create-drawer state (V2-12), so a quick-add chip or a
-          // drag-reorder has nothing to actually mutate yet.
-          <FixedCanvas height={844}>
-            <DrawerFieldsScreen
-              onBack={returnToTab}
-              onAddField={() => navigate('new-field')}
-              onEditField={() => navigate('field-edit')}
-              onComplete={() => navigate('creation-complete')}
-            />
-          </FixedCanvas>
         ) : null}
       </section>
       {tabRoute && <footer className="drawary-shell-footer">

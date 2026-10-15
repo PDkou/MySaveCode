@@ -5,6 +5,9 @@ html, body, #root { width: 100%; min-height: 100%; margin: 0; }
 body { overflow-x: hidden; }
 .drawary-app-shell { display: flex; flex-direction: column; height: 100dvh; min-height: 320px; max-width: 430px; margin: 0 auto; padding-top: env(safe-area-inset-top, 0px); background: #fffaf2; }
 .drawary-route-panel { min-height: 0; flex: 1 1 auto; overflow-y: auto; }
+/* #08's dimmed Home behind the new-drawer sheet: inert, not interactive. */
+.drawary-dimmed-home { filter: brightness(0.82) saturate(0.85); pointer-events: none; overflow: hidden; }
+main[data-route="create-drawer"] { position: relative; overflow: hidden; }
 .drawary-dev-only { max-width: 345px; margin: 0 auto; padding: clamp(30px, 12vh, 120px) 22px 25px; text-align: center; }
 .drawary-dev-flag { display: inline-block; border: 1px solid #d8ccf4; background: #f8f4ff; color: #7361aa; border-radius: 20px; padding: 7px 11px; font-size: 11px; }
 .drawary-dev-only h1 { margin: 22px 0 8px; font-size: 26px; }

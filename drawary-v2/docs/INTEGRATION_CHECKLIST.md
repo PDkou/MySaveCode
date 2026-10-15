@@ -10,8 +10,9 @@
 - [x] V2-09-05: #05 global search — body integrated (candidate's own footer ignored, real V4 nav used instead), mock records pending V2-12, a real native-vs-custom clear-icon bug found+fixed. See `docs/V2_09_05_06_38_RESOLUTION_QA.md`.
 - [x] V2-09-38: #38 settings home — body integrated; found the candidate's bundled "confirmed" nav is a different, older lineage than this repo's real V4 component and kept the real one. See same doc.
 - [x] V2-09-06: #06 home edit mode — React-integrated as `HomeEditScreen` at `#/home-edit`, reachable from #03's "편집" hotspot. The "완료" control went through two revisions same day (V14's pill, then a newer user re-approval removing the pill and right-aligning plain text on the "내 서랍" row) — implemented against the latest. Reorder icon reconstructed as inline SVG (no matching approved asset exists); delete icon uses the real approved `icon_delete.webp`. See `docs/V2_09_06_HOME_EDIT_QA.md`.
-- [ ] V2-09-07/08: #07/#08 — feasibility confirmed, reconstruction from approved PNG not started yet.
-- [x] V2-09-09: #09 서랍 칸 정하기 — React-integrated AND compiled-browser-QA-verified, wired as the real `#/create-drawer` sub-flow screen. See `docs/V2_09_09_FIELD_SETUP_QA.md`.
+- [x] V2-09-07: #07 통계 — no approved source exists (`NO_FINAL_CODE_IMAGE_ONLY`); reconstructed as real React/CSS from the two approved reference renders and wired as the real `#/stats` tab body. Colors sampled directly from the references; brand header reuses the real approved `brand_lockup_horizontal.webp`. See `docs/V2_09_07_STATS_QA.md`.
+- [x] V2-09-08: #08 새 서랍 만들기 — no approved source exists (`NO_FINAL_CODE_IMAGE_ONLY`); reconstructed as a bottom sheet (name/icon/color) over a dimmed Home, reusing #11's modal-sheet convention. **Navigation restructure**: this is the real first step of the create-drawer flow, which previously skipped straight to #09 -- every existing "+" entry point now correctly lands here first via the same `navigate('create-drawer')` call, and #09 moved to its own `#/drawer-fields` route. See `docs/V2_09_08_NEW_DRAWER_QA.md`.
+- [x] V2-09-09: #09 서랍 칸 정하기 — React-integrated AND compiled-browser-QA-verified, now wired as `#/drawer-fields`, reached only after #08. See `docs/V2_09_09_FIELD_SETUP_QA.md` (route name updated since that doc was written).
 - [x] V2-09-10/11/12: #10 새 서랍 칸 추가, #11 서랍 칸 수정 (list view reconstructed from its own CSS after finding the bundled TSX was stale), #12 생성 완료 — all React-integrated, compiled-browser-QA-verified, and chained from #09's buttons (navigation only, no shared data model yet). See `docs/V2_09_10_11_12_QA.md`.
 - [x] V2-09-13: #13 서랍 채우기 — React-integrated, compiled-browser-QA-verified, chained from #12. Also closes the loop on #09–#13 all being pixel-diffed against their own confirmed render PNGs (not just eyeballed), catching and fixing one test-script mistake (#10B compared against the wrong field-type state) and independently validating #11A's reconstructed list view against a real confirmed reference. See `docs/V2_09_13_FILL_DRAWER_QA.md`.
 - [x] V2-07/09-47: #47 backup progress — the long-standing `ASSET_BLOCKED` on the approved mascot binary is resolved: the user pushed `mascot_backup_progress.webp` directly to GitHub (commit `7f5574e`, verified via `git fetch`/`git log`, merged into this branch with no conflicts). React-integrated as `BackupProgressScreen` at `#/backup-progress`, compiled-browser-QA-verified at 3 viewports, pixel-diffed against the confirmed comparison package's `code_render_390x844.png` (mean diff 6.86 / 85.3% identical / 9.6% diff>30 — normal AA-noise range). See updated `docs/V2_07_SCREEN47_QA.md`.
@@ -34,8 +35,10 @@
 - [x] 04 Home (empty) — React-integrated, QA-verified (standalone QA route, not yet the live conditional)
 - [x] 05 Global search — React-integrated, QA-verified (body only; mock data pending V2-12)
 - [x] 06 Home edit mode — React-integrated, QA-verified (standalone QA route + live #03 hotspot)
-- [ ] 07 Statistics
-- [ ] 08–19 Drawer creation, field editing, item details and photos
+- [x] 07 Statistics — React-integrated, QA-verified (reconstructed from reference image, no approved source existed)
+- [x] 08 새 서랍 만들기 — React-integrated, QA-verified (reconstructed; now the real first step of create-drawer, #09 moved to `#/drawer-fields`)
+- [x] 09–13 서랍 칸 정하기/추가/수정/생성 완료/서랍 채우기 — all React-integrated, QA-verified (navigation only, no shared data model yet)
+- [ ] 14–19 Drawer item details and photos
 - [ ] 20–28 Table, sorting, filtering and drawer management
 - [ ] 29–37 Notifications and recurrence
 - [ ] 38–44 Settings, security, lock, theme, data hub
