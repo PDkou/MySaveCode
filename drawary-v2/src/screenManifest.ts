@@ -1,9 +1,12 @@
-/** Accepted visual-screen inventory, NOT an implementation-complete list. */
+/** The user-approved visual & standalone-source screen inventory.
+ * standaloneCodeApproved tracks approved standalone source (HTML/CSS), NOT working React integration.
+ * Screen 47 user-approved Chromium standalone source on 2026-10-15; integration remains pending.
+ */
 export interface ScreenRecord {
   id: number;
   name: string;
   visualApproved: true;
-  standaloneCodeApproved: boolean;
+  standaloneCodeApproved: true;
   integrated: false;
 }
 
@@ -73,6 +76,6 @@ export const screenManifest: readonly ScreenRecord[] = acceptedNames.map((name, 
   id: index + 1,
   name,
   visualApproved: true,
-  standaloneCodeApproved: index !== 46,
+  standaloneCodeApproved: true,
   integrated: false,
 }));

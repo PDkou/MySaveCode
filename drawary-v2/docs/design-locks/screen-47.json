@@ -2,28 +2,66 @@
   "screenId": 47,
   "screenName": "백업 진행",
   "designStatus": "USER_APPROVED_LOCKED",
-  "codeStatus": "PENDING_VERIFICATION",
-  "approvalDate": "2026-10-14",
-  "approvalEvidence": "User directly confirmed the revised asset-based screen 47 after choosing a mascot illustration plus code-driven loading spinner. The next screen 48 was then started.",
+  "standaloneCodeStatus": "USER_APPROVED_LOCKED",
+  "reactAppIntegrationStatus": "NOT_INTEGRATED",
+  "backupOperationStatus": "NOT_IMPLEMENTED",
+  "originalDesignApprovedDate": "2026-10-14",
+  "renderedHtmlConfirmedDate": "2026-10-15",
+  "latestUserApproval": "글꼴은 나중에 다 통일 시킬꺼라 상관은없어 이걸로 확정해줘",
+  "deferredChanges": [
+    "전 화면 글꼴 통일 — 사용자가 추후 일괄 적용 승인; 이 화면만 임의 변경 금지"
+  ],
   "finalDesignRequirements": {
-    "oneMascotIllustration": true,
-    "loadingSpinner": true,
-    "keepExactFinalApprovedTextAndLayout": true,
-    "doNotUsePriorSpinnerOnly11_4": true,
-    "noSimulatedBackupProgress": true
+    "title": "백업하기",
+    "oneMascotIllustration": "노란 폴더를 들고 웃는 여자아이",
+    "loadingSpinner": "보라색 CSS 회전 스피너",
+    "body": [
+      "백업하고 있어요",
+      "잠시만 기다려주세요.",
+      "데이터를 안전하게 정리하고 있습니다."
+    ],
+    "roundedWhitePanel": true,
+    "noFakePercentage": true,
+    "doNotUsePriorSpinnerOnly11_4": true
   },
-  "finalReferenceArtwork": {
-    "exactFinalScreenFile": "NOT_YET_VERIFIED",
-    "sha256": null,
-    "chosenMascotAsset": "NOT_YET_VERIFIED",
-    "notes": "Do NOT assume that a nearby generated screenshot or state_backup_in_progress.webp is the exact file selected in the final approved 47 layout until verified against the acceptance record."
+  "approvedAssets": {
+    "exactWholeScreenUserUploaded": {
+      "name": "パステル調バックアップ進行画面(1).png",
+      "width": 853,
+      "height": 1844,
+      "sha256": "87d4618781b3d5559576a81a509574e09655add59b453e73c66d5418a6b52ccb"
+    },
+    "extractedCharacterCutout": {
+      "pathWithinArchive": "assets/approved_character_cutout.png",
+      "width": 570,
+      "height": 434,
+      "sha256": "cab7be0d343e09cbb152283e33dc321e95e57ba95651f876dfb36026cafd5ca7",
+      "note": "Exact standalone ZIP contains original cutout. Binary not yet imported into V2 Github; do not substitute with different mascot."
+    }
   },
-  "implementation": {
-    "gitHubComponentIntegrated": false,
-    "developerQACompleted": false,
-    "userApprovalOfFinalReactCode": false,
-    "previousSpinnerOnlyCommit": "b711b52f71a6f1a289301a621ad70fc9ae4b3237",
-    "previousSpinnerOnlyRevertedCommit": "b8e2d02067035f17a4e997abffd55376b7ef660b"
+  "approvedStandaloneSource": {
+    "gitHubPath": "drawary-v2/reference/screen-47/index.html",
+    "sha256": "82329d86f964d0dbfad8a02ec38f1ed828f2247348e34b932ec4b9875321e366",
+    "gitBlobSha1": "1d3ac84f036b8f6011ed2e703d4e8fcbec08b504",
+    "sourcePackage": "Drawary_47_APPROVED_FINAL_2026-10-15.zip",
+    "sourcePackageSha256": "beb394f65e774d2ea09852ca9c8bcafdecd2d458d1dac373f3a1507ffa57ee9e",
+    "screenshot390x844Sha256": "6c47bd275df4755e0090096e6909e7a983418ae1bec4ff8ca7fc52440ed355b1"
   },
-  "changePolicy": "Never overwrite an approved visual design with an earlier draft. Design changes require a NEW explicit user request/approval, with source+hash recorded. Code QA is distinct from design acceptance."
+  "qa": {
+    "renderedOnChromium": [
+      "320x640",
+      "390x844",
+      "430x932"
+    ],
+    "userVisualReview": "APPROVED",
+    "fontParity": "DEFERRED",
+    "actualBackupExecution": "NOT_TESTED",
+    "androidBuild": "NOT_TESTED"
+  },
+  "prohibitedSources": [
+    "Previous GitHub Drawary app code/assets",
+    "Old 11-4 spinner-only screen",
+    "AI-generated approximations in place of locked reference"
+  ],
+  "note": "Design + standalone HTML/CSS confirmed; this does not claim the screen is part of the functional React app."
 }

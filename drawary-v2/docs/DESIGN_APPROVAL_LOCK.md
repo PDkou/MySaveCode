@@ -1,31 +1,11 @@
-# 확정 디자인 잠금 기록 — Drawary 화면 47
+# Drawary final design lock policy (Screen 47)
 
-이 문서는 작업 편의를 위한 디자인 초안이 아니다. **사용자가 2026-10-14에 확정한 47번 디자인의 승인 기록**을 버전 관리로 남긴다.
+- `docs/design-locks/screen-47.json` contains the **2026-10-15 user-approved reference and verified SHA-256 hashes**.
+- `reference/screen-47/index.html` contains **the exact standalone HTML/CSS/SVG approved by the user**, not a new interpretation.
+- The mascot is **the yellow-folder girl extracted from the user's original screenshot**. The matching binary PNG is in `Drawary_47_APPROVED_FINAL_2026-10-15.zip`. GitHub still lacks the exact binary, so browser opening of the committed HTML on GitHub without that PNG will not reproduce the full illustration.
+- Do not silently substitute `state_backup_in_progress.webp`, older 11-4 spinner-only visuals, or an AI-generated replacement for the final mascot.
+- The approved standalone code includes a real rotating CSS/SVG spinner; no simulated percentage.
+- User explicitly **deferred typography normalization** to the global pass across all 59 screens. Do not change this screen alone for font reasons.
+- `scripts/check-design-locks.mjs` runs on GitHub Actions, enforcing the approved HTML content hash, metadata and required content. This protects against accidental changes but does not replace visual QA.
 
-## 확정된 사항 (재질문 불필요)
-- 화면 번호: **47 백업 진행**
-- 상태: **최종 디자인 확정, 디자인 변경 금지**
-- 핵심 구성: **마스코트 일러스트 1개 + 코드로 동작하는 로딩 스피너**
-- 11-4의 **스피너만 있는 구버전으로 되돌리면 안 됨**
-- 이전 GitHub Drawary 앱의 디자인·코드·에셋은 참조하지 않음
-
-## 아직 확인이 필요한 사항 (디자인 확정 취소가 아님)
-- 10월 14일 승인된 **전체 화면 파일의 정확한 경로와 SHA-256**
-- 최종 승인 이미지에서 **어떤 마스코트 에셋을 선택했는지**
-- 해당 전체 화면과 일치하는 React 코드의 구현/실제 렌더링
-
-`state_backup_in_progress.webp`라는 이름만으로 그 에셋이 최종 선택본이라고 판단하지 않으며, 만들어진 다른 파스텔 백업 이미지도 승인 증거 없이 최종 원본으로 지정하지 않는다.
-
-## 사고 기록
-2026-10-15에 이전 11-4 이미지를 최신 47번 디자인으로 혼동하여 스피너 전용 React 코드를 생성하고 GitHub에 등록함. 사용자 지적 후 해당 코드 삭제. 당시의 비교 이미지·QA 통과 주장 **전부 최신 확정본에는 무효**.
-
-## 재발 방지
-- 승인 기록 `screen-47.json`을 기준으로 체크.
-- 새 47번 코드에 마스코트 또는 로딩 스피너 중 하나라도 빠졌다면 자동 검사 실패.
-- **최종 전체 화면 원본의 식별 및 체크섬 등록 전에는 47번 React 구현을 추가하지 못하도록 검사.**
-- 승인된 비주얼 상태와 코드 검수 상태를 독립적으로 기록.
-- 사용자의 명시적인 변경 승인 없이는 `USER_APPROVED_LOCKED`를 해제하거나 구버전으로 대체하지 않음.
-- 검사 자동화는 보조수단이므로 실제 디자인 비교/사용자 확인을 대체하지 않음.
-
-## 상태
-V2-06 완료. **V2-07 미완료(확정 디자인 원본 위치 검증과 코드 제작 필요)**. V2-08은 아직 시작하지 않음.
+**Checklist:** V2-06 complete; V2-07 complete (standalone screen only); next V2-08 common layout/navbar/navigation. React app routing and actual backup operations remain pending. Other projects and older GitHub app not used as sources.
