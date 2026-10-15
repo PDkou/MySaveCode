@@ -1,18 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ResponsiveBottomNav } from './components/ResponsiveBottomNav';
 import type { BottomNavTab } from './components/BottomNav_FINAL_CONFIRMED';
+import { SplashScreen } from './screens/SplashScreen';
 
-type Route = BottomNavTab | 'create-drawer';
+type Route = BottomNavTab | 'create-drawer' | 'splash';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Route, string> = {
+const NAMES: Record<Exclude<Route, 'splash'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
+const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
-  return route === 'create-drawer' || TABS.some(tab => tab === route) ? route as Route : 'home';
+  if (route === 'splash' || route === 'create-drawer' || TABS.some(tab => tab === route)) return route as Route;
+  return 'home';
 };
 
-/** V2-08 developer-only routing harness. Product screens are deliberately NOT fabricated here. */
+/** V2-09-01: User-approved splash component available at #/splash for parity QA.
+ * Cold-start display time and 02 onboarding transition await the approved flow integration.
+ * All other routes remain the developer-only V2-08 harness, not finished product screens.
+ */
 export default function App() {
   const [route, setRoute] = useState<Route>(parseRoute);
   const lastTabRef = useRef<BottomNavTab>('home');
@@ -24,14 +30,17 @@ export default function App() {
   }, []);
 
   const navigate = useCallback((to: Route) => {
-    if (TABS.some(tab => tab === to)) lastTabRef.current = to as BottomNavTab;
+    if (isTab(to)) lastTabRef.current = to;
     const next = `#/${to}`;
     if (window.location.hash === next) { setRoute(to); return; }
     window.location.hash = next;
     setRoute(to);
   }, []);
   const returnToTab = useCallback(() => navigate(lastTabRef.current), [navigate]);
-  const tabRoute = route !== 'create-drawer';
+  if (route === 'splash') {
+    return <main className="drawary-app-shell drawary-splash-route" data-route="splash"><SplashScreen fadingOut={false}/></main>;
+  }
+  const tabRoute = isTab(route);
   return (
     <main className="drawary-app-shell" data-route={route}>
       <section className="drawary-route-panel" aria-labelledby="drawary-dev-screen-title">

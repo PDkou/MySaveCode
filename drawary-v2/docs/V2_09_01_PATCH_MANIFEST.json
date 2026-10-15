@@ -1,0 +1,52 @@
+[
+  {
+    "path": "docs/V2_09_01_SPLASH_QA.md",
+    "sha256": "8ee6e5a9801bdaea9bd37089b1c0b6c96d07d52a337b4125919213c133ab3882",
+    "bytes": 1716
+  },
+  {
+    "path": "public/assets/splash-approved/decor_001.webp",
+    "sha256": "d8ac4e889ebd6d8177a69cb518aaa1e23097ce36c3158baa3f39c48c17d774be",
+    "bytes": 7486
+  },
+  {
+    "path": "public/assets/splash-approved/decor_013.webp",
+    "sha256": "d89878ed3fb89c759fe4b5d1488f630e317b548fd34e31a2f6d19de3f97c7763",
+    "bytes": 8672
+  },
+  {
+    "path": "public/assets/splash-approved/decor_019.webp",
+    "sha256": "e73da09a58238121ef74c4f0f9679268d1d432b5952ab74cb69f9ff31485bb0a",
+    "bytes": 5282
+  },
+  {
+    "path": "public/assets/splash-approved/decor_020.webp",
+    "sha256": "2505bf75f401b590dbcd74b1ee2eaf93635dc29ad6125bebd851113c8a5cd78a",
+    "bytes": 4974
+  },
+  {
+    "path": "public/assets/splash-approved/mascot_wave.webp",
+    "sha256": "b56acc8a6d496986d7762b63a8a6f72b3d1900fd12921b7ba1139fbf734a53bb",
+    "bytes": 50258
+  },
+  {
+    "path": "public/assets/splash-approved/splash_logo_1024.webp",
+    "sha256": "a26c51b72e5512cedac11a9fe0cbef0794e9d4fd5e66ea54dcddebb10a3d4b7f",
+    "bytes": 115832
+  },
+  {
+    "path": "src/App.tsx",
+    "sha256": "b29cd4672c4197817c46ad0dc730fc5d1c1e21760ffa97a8807670144a082893",
+    "bytes": 3429
+  },
+  {
+    "path": "src/screens/SplashScreen.css",
+    "sha256": "d15430091c72609198736776cb80a054fbde47ab5b7b9df5d75512f0f20d882e",
+    "bytes": 1598
+  },
+  {
+    "path": "src/screens/SplashScreen.tsx",
+    "sha256": "3073d51bf6c294e1fce0e451b0347e380b743ee6f1cbd5bd1866c75d083464af",
+    "bytes": 1796
+  }
+]
