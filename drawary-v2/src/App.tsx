@@ -20,15 +20,16 @@ import { NewDrawerScreen } from './screens/NewDrawerScreen';
 import { DrawerDetailScreen, DEFAULT_RECORDS } from './screens/DrawerDetailScreen';
 import { RecordDetailScreen } from './screens/RecordDetailScreen';
 import { RecordEditScreen } from './screens/RecordEditScreen';
+import { PhotoViewerScreen } from './screens/PhotoViewerScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit';
+type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail' | 'record-detail' | 'record-edit'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -214,6 +215,26 @@ export default function App() {
           onBack={() => navigate('drawer-detail')}
           onEdit={() => navigate('record-edit')}
           onDelete={() => navigate('drawer-detail')}
+          onOpenPhoto={() => navigate('photo-viewer')}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'photo-viewer') {
+    // #19 사진 확대/보기, reachable by tapping #16's main photo
+    // (CLAUDE.md note: #16's own confirmed source never defines that
+    // tap target, so this wiring is this app's own addition -- see
+    // RecordDetailScreen.tsx's onOpenPhoto comment). Closing returns to
+    // #16 per CONFIRMED.md. No clean 3-photo set for a single item
+    // exists in any archive (the real fixtures are mis-captured
+    // screenshot crops, like #16's) -- reuses #15's 3 clean item
+    // thumbnails purely to exercise the swipe/zoom/thumbnail mechanics,
+    // not as "the" approved photo set.
+    return <main className="drawary-app-shell" data-route="photo-viewer">
+      <FixedCanvas height={844}>
+        <PhotoViewerScreen
+          photoUris={['/fixtures/sample_lip.webp', '/fixtures/sample_cushion.webp', '/fixtures/sample_palette.webp']}
+          onClose={() => navigate('record-detail')}
         />
       </FixedCanvas>
     </main>;

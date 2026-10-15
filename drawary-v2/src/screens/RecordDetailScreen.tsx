@@ -48,6 +48,7 @@ interface RecordDetailScreenProps {
   onBack?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onOpenPhoto?: () => void;
 }
 
 /**
@@ -73,6 +74,13 @@ interface RecordDetailScreenProps {
  * component-local-modal convention already used for #11's delete
  * confirm. The `onDelete` prop only fires once the user actually
  * confirms in that sheet, not just from opening the menu.
+ *
+ * `onOpenPhoto` is an addition beyond the confirmed #16 source: #19's
+ * own CONFIRMED.md says closing the photo viewer "복귀" (returns) to
+ * #16, implying #16 is meant to launch it, but the confirmed #16
+ * source itself never defines that tap target. Added here as the
+ * natural integration point (tapping the photo) rather than inventing
+ * a different entry point #19's own spec doesn't support.
  */
 export function RecordDetailScreen({
   drawerName = '화장품',
@@ -82,6 +90,7 @@ export function RecordDetailScreen({
   onBack,
   onEdit,
   onDelete,
+  onOpenPhoto,
 }: RecordDetailScreenProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -110,11 +119,13 @@ export function RecordDetailScreen({
       </header>
 
       <section className="rd-content">
-        <div className="rd-photo">
-          {photoUri
-            ? <img src={photoUri} alt={`${title} 사진`} />
-            : <div className="rd-photo-empty">사진 없음</div>}
-        </div>
+        {photoUri ? (
+          <button type="button" className="rd-photo" onClick={onOpenPhoto} aria-label="사진 크게 보기">
+            <img src={photoUri} alt={`${title} 사진`} />
+          </button>
+        ) : (
+          <div className="rd-photo"><div className="rd-photo-empty">사진 없음</div></div>
+        )}
 
         <div className="rd-heading">
           <small>{drawerName} 서랍</small>
