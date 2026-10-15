@@ -12,15 +12,16 @@ import { DrawerFieldsScreen } from './screens/DrawerFieldsScreen';
 import { NewFieldScreen } from './screens/NewFieldScreen';
 import { DrawerFieldEditScreen } from './screens/DrawerFieldEditScreen';
 import { CreationCompleteScreen } from './screens/CreationCompleteScreen';
+import { FillDrawerScreen } from './screens/FillDrawerScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete';
+type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -87,9 +88,19 @@ export default function App() {
     </main>;
   }
   if (route === 'creation-complete') {
-    // #12 QA route, reachable from #09's "서랍 만들기 완료하기".
+    // #12 QA route, reachable from #09's "서랍 만들기 완료하기". "서랍 채우기"
+    // chains to the real #13; "나중에" has nowhere more specific to land
+    // than the previous tab, since there's no real drawer yet to return to.
     return <main className="drawary-app-shell" data-route="creation-complete">
-      <FixedCanvas height={844}><CreationCompleteScreen onFillDrawer={returnToTab} onLater={returnToTab} /></FixedCanvas>
+      <FixedCanvas height={844}><CreationCompleteScreen onFillDrawer={() => navigate('fill-drawer')} onLater={returnToTab} /></FixedCanvas>
+    </main>;
+  }
+  if (route === 'fill-drawer') {
+    // #13 QA route, reachable from #12's "서랍 채우기". onSave has no
+    // destination yet (no drawer-detail screen to return the new item
+    // into -- that's #15/#16, not in this batch) and is left unwired.
+    return <main className="drawary-app-shell" data-route="fill-drawer">
+      <FixedCanvas height={844}><FillDrawerScreen onBack={() => navigate('creation-complete')} /></FixedCanvas>
     </main>;
   }
   if (route === 'home-empty') {
