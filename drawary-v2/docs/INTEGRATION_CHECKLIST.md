@@ -4,7 +4,9 @@
 - [x] V2-06: 294 approved WebP assets imported and exact original tree verified.
 - [x] V2-07: screen 47 standalone HTML/CSS and Chromium render explicitly confirmed by user (global font harmonization deferred). React integration pending.
 - [x] V2-08: approved V4 shared navbar, responsive shell, and tab/subflow routing scaffold committed. GitHub Actions TypeScript/Vite build **success**; Chromium fixture passed four viewports. Actual locked screen bodies still pending.
-- [ ] V2-09: integrate screens 01–28 using exact approved design/source files, with real React renders.
+- [x] V2-09-01: #01 splash — React-integrated AND compiled-browser-QA-verified (0.0 diff / 100% identical, 3 viewports). See `docs/V2_09_01_SPLASH_QA.md`.
+- [x] V2-09-02: #02 onboarding — React-integrated AND compiled-browser-QA-verified (8/8 slides, nav/skip/start/swipe all exercised). See `docs/V2_09_02_ONBOARDING_QA.md`. One doc-vs-code discrepancy flagged (keyboard nav claimed in archive docs, absent from the confirmed TSX) — not invented, reported as an open question.
+- [ ] V2-09: screens 03–28 remaining.
 
 ## Baseline & safety
 - [x] New branch `drawary/59-design-rebuild-20261014` created.
@@ -17,7 +19,9 @@
 - [ ] Establish fallback/rollback and Android package update strategy.
 
 ## Screen integration
-- [ ] 01–07 Splash, onboarding, home, search and statistics
+- [x] 01 Splash — React-integrated, QA-verified
+- [x] 02 Onboarding — React-integrated, QA-verified
+- [ ] 03–07 Home, search and statistics
 - [ ] 08–19 Drawer creation, field editing, item details and photos
 - [ ] 20–28 Table, sorting, filtering and drawer management
 - [ ] 29–37 Notifications and recurrence

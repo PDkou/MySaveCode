@@ -1,0 +1,125 @@
+/* Exact rules from the confirmed screen-02 standalone preview's <style>
+   block (colors/sizes/positions), remapped onto the class names the
+   confirmed OnboardingScreen_FINAL_CONFIRMED.tsx actually renders
+   (.screen/.card/.art/... -> .onboarding-screen/.onboarding-card/...).
+   Values are unchanged. */
+
+.onboarding-screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fbf4e8;
+}
+.onboarding-card {
+  position: relative;
+  width: min(94vw, 368px);
+  height: 387px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #fffdf8;
+  box-shadow: 0 0 0 1px rgba(140, 120, 95, .04);
+  touch-action: pan-y;
+  user-select: none;
+}
+.onboarding-art {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 226px;
+  object-fit: cover;
+  object-position: center top;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+.onboarding-copy {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 235px;
+  text-align: center;
+}
+.onboarding-copy h1 {
+  margin: 0;
+  color: #0b2c8e;
+  font-size: 21px;
+  line-height: 1.28;
+  font-weight: 800;
+  letter-spacing: -.45px;
+}
+.onboarding-copy p {
+  margin: 9px 0 0;
+  color: #7484b6;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 500;
+  letter-spacing: -.2px;
+}
+.onboarding-progress {
+  position: absolute;
+  left: 50%;
+  bottom: 25px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+}
+.onboarding-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #dfe2eb;
+}
+.onboarding-dot.active {
+  width: 7px;
+  height: 7px;
+  background: #7a59ea;
+}
+.onboarding-nav {
+  position: absolute;
+  bottom: 14px;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 29px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+}
+.onboarding-nav.prev { left: 18px; background: #f3efff; color: #8c72ee; }
+.onboarding-nav.next { right: 18px; background: linear-gradient(145deg, #8b69ef, #6d4be2); color: #fff; }
+.onboarding-skip {
+  position: absolute;
+  left: 20px;
+  bottom: 26px;
+  border: 0;
+  background: transparent;
+  color: #7484b6;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.onboarding-start {
+  position: absolute;
+  left: 38px;
+  right: 38px;
+  bottom: 25px;
+  height: 50px;
+  border: 0;
+  border-radius: 26px;
+  background: linear-gradient(90deg, #7656e9, #8b68eb);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.onboarding-card.complete .onboarding-art { height: 205px; }
+.onboarding-card.complete .onboarding-copy { top: 218px; }
+.onboarding-card.complete .onboarding-copy h1 { font-size: 20px; }
+.onboarding-card.complete .onboarding-copy p { font-size: 16px; }
