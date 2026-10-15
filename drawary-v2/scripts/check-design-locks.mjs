@@ -19,7 +19,7 @@ if (!manifest.includes('standaloneCodeApproved: index !== 46'))
 const candidate = join(root, 'src/screens/BackupProgressScreen.tsx');
 if (existsSync(candidate)) {
   const source = readFileSync(candidate, 'utf8');
-  const hasMascot = /<img\\b|<picture\\b|<ApprovedIllustration\\b|<MascotIllustration\\b|<AssetImage\\b/.test(source);
+  const hasMascot = ['<img', '<picture', '<ApprovedIllustration', '<MascotIllustration', '<AssetImage'].some(token => source.includes(token));
   const hasSpinner = /spinner|loading.?ring|progress.?ring|aria-busy/i.test(source);
   if (!hasMascot || !hasSpinner) errors.push('Screen 47 code needs approved mascot artwork AND spinner (reject 11-4 spinner-only fallback)');
   if (lock.finalReferenceArtwork.sha256 === null)
