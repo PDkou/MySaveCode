@@ -9,7 +9,7 @@
 - [x] V2-09-03/04: #03 home (filled) + #04 home (empty) — React-integrated AND compiled-browser-QA-verified, including a new `FixedCanvas` wrapper so the fixed-390px artwork scales instead of clipping at 320px. See `docs/V2_09_03_04_HOME_QA.md`. `#/home-empty` is a standalone QA route; live empty/filled switching needs the V2-12 data layer. Drawer-open/edit hotspots are intentionally inert — no destination screen exists yet.
 - [x] V2-09-05: #05 global search — body integrated (candidate's own footer ignored, real V4 nav used instead), mock records pending V2-12, a real native-vs-custom clear-icon bug found+fixed. See `docs/V2_09_05_06_38_RESOLUTION_QA.md`.
 - [x] V2-09-38: #38 settings home — body integrated; found the candidate's bundled "confirmed" nav is a different, older lineage than this repo's real V4 component and kept the real one. See same doc.
-- [ ] V2-09-06: #06 home edit mode — not started; needs V14 reference image pulled up before touching V3 code.
+- [x] V2-09-06: #06 home edit mode — React-integrated as `HomeEditScreen` at `#/home-edit`, reachable from #03's "편집" hotspot. The "완료" control went through two revisions same day (V14's pill, then a newer user re-approval removing the pill and right-aligning plain text on the "내 서랍" row) — implemented against the latest. Reorder icon reconstructed as inline SVG (no matching approved asset exists); delete icon uses the real approved `icon_delete.webp`. See `docs/V2_09_06_HOME_EDIT_QA.md`.
 - [ ] V2-09-07/08: #07/#08 — feasibility confirmed, reconstruction from approved PNG not started yet.
 - [x] V2-09-09: #09 서랍 칸 정하기 — React-integrated AND compiled-browser-QA-verified, wired as the real `#/create-drawer` sub-flow screen. See `docs/V2_09_09_FIELD_SETUP_QA.md`.
 - [x] V2-09-10/11/12: #10 새 서랍 칸 추가, #11 서랍 칸 수정 (list view reconstructed from its own CSS after finding the bundled TSX was stale), #12 생성 완료 — all React-integrated, compiled-browser-QA-verified, and chained from #09's buttons (navigation only, no shared data model yet). See `docs/V2_09_10_11_12_QA.md`.
@@ -32,7 +32,9 @@
 - [x] 02 Onboarding — React-integrated, QA-verified
 - [x] 03 Home (filled) — React-integrated, QA-verified
 - [x] 04 Home (empty) — React-integrated, QA-verified (standalone QA route, not yet the live conditional)
-- [ ] 05–07 Search and statistics
+- [x] 05 Global search — React-integrated, QA-verified (body only; mock data pending V2-12)
+- [x] 06 Home edit mode — React-integrated, QA-verified (standalone QA route + live #03 hotspot)
+- [ ] 07 Statistics
 - [ ] 08–19 Drawer creation, field editing, item details and photos
 - [ ] 20–28 Table, sorting, filtering and drawer management
 - [ ] 29–37 Notifications and recurrence

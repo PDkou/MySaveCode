@@ -1,0 +1,79 @@
+/* Same crop rationale as HomeScreen.css: shows only the confirmed Home
+   artwork's top 750px so the real ResponsiveBottomNav renders below it. */
+.home-edit-crop {
+  position: relative;
+  width: 390px;
+  height: 750px;
+  overflow: hidden;
+  background: #fffaf1;
+}
+.home-edit-img {
+  display: block;
+  width: 390px;
+  height: 844px;
+  user-select: none;
+  pointer-events: none;
+}
+.home-edit-mask {
+  position: absolute;
+  left: 300px;
+  top: 101px;
+  width: 80px;
+  height: 38px;
+  background: #fffaf1;
+  z-index: 5;
+}
+/* 2026-10-15 user re-approval (06_Home_Edit_USER_APPROVED_2026-10-15.png,
+   superseding the earlier V14 pill): no pill, no border -- plain purple
+   text right-aligned on the same row as the base image's "내 서랍"
+   heading, sized smaller than it (~85% of its height, same baseline). */
+.home-edit-done {
+  position: absolute;
+  right: 17px;
+  top: 106px;
+  width: 70px;
+  height: 20px;
+  line-height: 20px;
+  background: transparent;
+  border: 0;
+  color: #7657e8;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: right;
+  padding: 0;
+  z-index: 6;
+}
+.home-edit-card-controls {
+  position: absolute;
+  width: 165px;
+  height: 158px;
+  pointer-events: none;
+  z-index: 7;
+}
+.home-edit-action {
+  position: absolute;
+  top: 9px;
+  width: 30px;
+  height: 30px;
+  border-radius: 11px;
+  border: 1px solid rgba(118, 87, 232, 0.12);
+  background: rgba(255, 253, 249, 0.84);
+  box-shadow: 0 2px 7px rgba(55, 39, 100, 0.08);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  pointer-events: auto;
+}
+.home-edit-action--delete { left: 9px; border-color: rgba(255, 107, 121, 0.14); }
+.home-edit-action--reorder { right: 9px; }
+.home-edit-action img { width: 21px; height: 21px; object-fit: contain; display: block; }
+.home-edit-create-hotspot {
+  position: absolute;
+  left: 203px;
+  top: 489px;
+  width: 165px;
+  height: 158px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}

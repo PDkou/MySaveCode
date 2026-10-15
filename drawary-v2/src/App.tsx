@@ -14,15 +14,16 @@ import { DrawerFieldEditScreen } from './screens/DrawerFieldEditScreen';
 import { CreationCompleteScreen } from './screens/CreationCompleteScreen';
 import { FillDrawerScreen } from './screens/FillDrawerScreen';
 import { BackupProgressScreen } from './screens/BackupProgressScreen';
+import { HomeEditScreen } from './screens/HomeEditScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress';
+type Route = BottomNavTab | 'create-drawer' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -33,7 +34,7 @@ const parseRoute = (): Route => {
  * detail / editing aren't built, screens 9+). Per CLAUDE.md, a missing
  * source is a blocker to flag, not something to approximate -- so these
  * are a deliberate no-op for now rather than a guessed navigation target. */
-const UNIMPLEMENTED_HOME_ACTIONS: ReadonlySet<HomeAction> = new Set(['edit', 'open-cosmetics', 'open-books', 'open-plants', 'open-travel', 'open-other']);
+const UNIMPLEMENTED_HOME_ACTIONS: ReadonlySet<HomeAction> = new Set(['open-cosmetics', 'open-books', 'open-plants', 'open-travel', 'open-other']);
 
 /** V2-09-01/02: user-approved splash and onboarding components are available
  * at #/splash and #/onboarding for parity QA, and onboarding's "시작하기"/
@@ -113,6 +114,25 @@ export default function App() {
       <BackupProgressScreen onBack={() => navigate('settings')} />
     </main>;
   }
+  if (route === 'home-edit') {
+    // #06 QA route, reachable from #03's "편집" hotspot. Delete/reorder
+    // are local demo no-ops for now (same V2-12 data-layer caveat as
+    // #09's quick-add/reorder) -- this screen only proves the edit-mode
+    // overlay itself, not a live mutation of the home grid.
+    return <main className="drawary-app-shell" data-route="home-edit">
+      <section className="drawary-route-panel">
+        <HomeEditScreen
+          onDone={() => navigate('home')}
+          onDeleteDrawer={() => {}}
+          onReorderDrawer={() => {}}
+          onCreateDrawer={() => navigate('create-drawer')}
+        />
+      </section>
+      <footer className="drawary-shell-footer">
+        <ResponsiveBottomNav active="home" onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />
+      </footer>
+    </main>;
+  }
   if (route === 'home-empty') {
     // V2-09-04 QA route: the confirmed empty state isn't wired as the live
     // '#/home' conditional yet -- that needs a real drawer count from the
@@ -131,6 +151,7 @@ export default function App() {
         {route === 'home' ? (
           <HomeScreen onAction={(action) => {
             if (action === 'create-drawer') { navigate('create-drawer'); return; }
+            if (action === 'edit') { navigate('home-edit'); return; }
             if (UNIMPLEMENTED_HOME_ACTIONS.has(action)) return; // no destination screen yet; see CLAUDE.md note above
           }} />
         ) : route === 'search' ? (
