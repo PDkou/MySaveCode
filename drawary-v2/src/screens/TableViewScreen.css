@@ -73,3 +73,35 @@ button{font:inherit}
   height:33px;display:flex;align-items:center;justify-content:center;
   border-top:1px solid #eee6dd;background:#fffaf5;color:#9992a2;font-size:10px;font-weight:650;
 }
+
+/* #21 search state, byte-identical to the confirmed archive's render.html
+   (.ts-* classes extracted from its inline <style>). */
+.ts-search-row{
+  display:grid;grid-template-columns:1fr 47px;gap:8px;padding:0 20px 9px;
+}
+.ts-search-box{
+  height:45px;border:1px solid #dcd3c8;border-radius:23px;background:#fffdfa;
+  display:grid;grid-template-columns:39px 1fr 34px;align-items:center;overflow:hidden;
+  box-shadow:0 2px 5px rgba(62,47,27,.025);
+}
+.ts-search-icon{width:22px;height:22px;object-fit:contain;justify-self:center}
+.ts-search-box input{
+  width:100%;height:100%;border:0;outline:none;background:transparent;color:#2e4e89;
+  padding:0 5px 0 0;font-size:13px;font-weight:650;
+}
+.ts-search-box input::placeholder{color:#a0a3af}
+.ts-search-box input::-webkit-search-cancel-button{-webkit-appearance:none}
+.ts-clear{
+  width:32px;height:32px;border:0;background:transparent;padding:0;display:grid;place-items:center;
+}
+.ts-clear img{width:21px;height:21px;object-fit:contain;opacity:.66}
+.ts-cancel{
+  height:45px;border:0;background:transparent;color:#7252d6;font-size:12.5px;font-weight:800;padding:0;
+}
+.ts-result-count{
+  height:38px;padding:0 21px;display:flex;align-items:center;color:#7f879f;font-size:11px;font-weight:650;
+}
+.ts-result-count strong{margin-left:4px;color:#5d68a0;font-weight:800}
+.ts-empty{
+  text-align:center!important;color:#9993a3!important;font-weight:650!important;height:118px!important;
+}

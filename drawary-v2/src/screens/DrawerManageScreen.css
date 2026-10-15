@@ -1,0 +1,49 @@
+/* Ported from the confirmed archive's render.html inline style block
+   (its manage- and drawer-summary classes), renamed to this file's dm-
+   prefix; values unchanged. */
+.dm-screen{
+  width:390px;height:844px;overflow:hidden;margin:0 auto;background:#fff9ed;padding:28px 20px 30px;
+  color:#234f9b;font-family:"Noto Sans CJK KR","Noto Sans KR","Apple SD Gothic Neo",sans-serif;
+  box-sizing:border-box;
+}
+.dm-screen *{box-sizing:border-box}
+.dm-screen button{font:inherit}
+.dm-header{
+  height:61px;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;margin-bottom:14px;
+}
+.dm-header h1{margin:0;text-align:center;color:#174d9f;font-size:24px;font-weight:900;letter-spacing:-.7px}
+.dm-back{
+  border:0;background:transparent;color:#1f58ad;width:44px;height:44px;padding:0;
+  font:300 38px/38px Arial;text-align:left;
+}
+.dm-header-spacer{width:44px;height:44px}
+.dm-summary{
+  min-height:94px;border:1px solid #ead9c8;border-radius:17px;background:rgba(255,255,255,.72);
+  display:flex;align-items:center;padding:14px 15px;margin-bottom:15px;
+}
+.dm-summary-icon{
+  width:62px;height:62px;border-radius:15px;background:#f0e9ff;display:grid;place-items:center;flex:0 0 62px;
+}
+.dm-summary-icon img{width:44px;height:44px;object-fit:contain}
+.dm-summary-copy{min-width:0;margin-left:14px;display:flex;flex-direction:column;gap:4px}
+.dm-summary-copy strong{
+  color:#1e4d9a;font-size:19px;font-weight:900;letter-spacing:-.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.dm-summary-copy span{color:#8389a0;font-size:12px;font-weight:700;letter-spacing:-.1px}
+.dm-card{
+  overflow:hidden;border:1px solid #eadfd2;border-radius:16px;background:rgba(255,255,255,.78);margin-bottom:13px;
+}
+.dm-row{
+  width:100%;height:66px;border:0;border-bottom:1px solid #eee4da;background:transparent;
+  display:grid;grid-template-columns:42px 1fr 24px;align-items:center;text-align:left;padding:0 13px 0 14px;
+  color:#2e4f88;
+}
+.dm-row:last-child{border-bottom:0}
+.dm-row-icon{width:34px;height:34px;display:grid;place-items:center}
+.dm-row-icon img{width:27px;height:27px;object-fit:contain}
+.dm-row-label{font-size:14px;font-weight:850;letter-spacing:-.25px}
+.dm-chevron{justify-self:end;color:#9ca2af;font:400 26px/1 Arial;margin-top:-2px}
+.dm-row:active{background:#faf5ee}
+.dm-row.danger .dm-row-label{color:#e65058}
+.dm-row.danger .dm-chevron{color:#e97980}
+.dm-row.danger .dm-row-icon img{opacity:.95}

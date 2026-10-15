@@ -23,7 +23,8 @@
 - [x] V2-09-19: #19 사진 확대/보기 — React-integrated AND compiled-browser-QA-verified, real gesture logic ported untouched (pinch-zoom, drag, swipe, double-tap toggle, verified via computed `transform` matrix, not just a screenshot). Wired as `#/photo-viewer`, reachable by tapping #16's photo (a new `onOpenPhoto` integration point, since #16's own source never defined one). The archive's 3 sample photos are mis-captured screenshot crops (same issue class as #16's); substituted 3 of #15's clean item thumbnails to exercise the mechanics honestly instead. See `docs/V2_09_19_PHOTO_VIEWER_QA.md`.
 - [x] V2-07/09-47: #47 backup progress — the long-standing `ASSET_BLOCKED` on the approved mascot binary is resolved: the user pushed `mascot_backup_progress.webp` directly to GitHub (commit `7f5574e`, verified via `git fetch`/`git log`, merged into this branch with no conflicts). React-integrated as `BackupProgressScreen` at `#/backup-progress`, compiled-browser-QA-verified at 3 viewports, pixel-diffed against the confirmed comparison package's `code_render_390x844.png` (mean diff 6.86 / 85.3% identical / 9.6% diff>30 — normal AA-noise range). See updated `docs/V2_07_SCREEN47_QA.md`.
 - [x] V2-09-20: #20 표 보기 — React-integrated AND compiled-browser-QA-verified, wired as `#/table-view` from #15's "•••" menu. Real sticky-column + horizontal-scroll CSS, not simulated. Pixel-diff mean 4.11/90.7%/7.1% (normal range). See `docs/V2_09_20_TABLE_VIEW_QA.md`.
-- [ ] V2-09: screens 21–28 remaining.
+- [x] V2-09-21~24: #21 (표 검색 상태, built into TableViewScreen), #22 (표 정렬 상태, TableSortScreen -- found+fixed an inverted sort-direction bug), #23 (표 필터 상태, TableFilterScreen, fully real filter logic ported near-verbatim), #24 (서랍 관리 메인, DrawerManageScreen, pixel-diff mean 2.17/97.0%/2.7%) -- all React-integrated AND compiled-browser-QA-verified. See `docs/V2_09_21_24_TABLE_STATES_AND_MANAGE_QA.md`.
+- [ ] V2-09: screens 25–28 remaining.
 
 ## Baseline & safety
 - [x] New branch `drawary/59-design-rebuild-20261014` created.
@@ -52,7 +53,11 @@
 - [x] 18 보관품 삭제 확인 — React-integrated, QA-verified, live from #16's "•••" menu
 - [x] 19 사진 확대/보기 — React-integrated, QA-verified, live from #16's photo tap
 - [x] 20 표 보기 — React-integrated, QA-verified, live from #15's "•••" menu
-- [ ] 21–28 Table search/sort/filter states and drawer management
+- [x] 21 표 검색 상태 — built into TableViewScreen, QA-verified
+- [x] 22 표 정렬 상태 — React-integrated, QA-verified (sort-direction bug found+fixed)
+- [x] 23 표 필터 상태 — React-integrated, QA-verified (real filter logic)
+- [x] 24 서랍 관리 메인 — React-integrated, QA-verified, live from #15's "•••" menu
+- [ ] 25–28 Drawer rename, field edit entry, sort/filter settings entry and delete confirm
 - [ ] 29–37 Notifications and recurrence
 - [ ] 38–44 Settings, security, lock, theme, data hub
 - [ ] 45–53 Backup, restore and reset (47 React-integrated and QA-verified; 45/46/48–53 still incomplete)

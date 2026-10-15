@@ -22,15 +22,16 @@ import { RecordDetailScreen } from './screens/RecordDetailScreen';
 import { RecordEditScreen } from './screens/RecordEditScreen';
 import { PhotoViewerScreen } from './screens/PhotoViewerScreen';
 import { TableViewScreen } from './screens/TableViewScreen';
+import { DrawerManageScreen } from './screens/DrawerManageScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view';
+type Route = BottomNavTab | 'create-drawer' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage';
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
-const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view'>, string> = {
+const NAMES: Record<Exclude<Route, 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-fields' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage'>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view'];
+const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -185,31 +186,48 @@ export default function App() {
           onFillDrawer={() => navigate('fill-drawer')}
           onOpenRecord={(id) => { setRecordDetailId(id); navigate('record-detail'); }}
           onOpenTable={() => navigate('table-view')}
-          onOpenManage={() => {}}
+          onOpenManage={() => navigate('drawer-manage')}
         />
       </FixedCanvas>
     </main>;
   }
   if (route === 'table-view') {
     // #20 표 보기, reachable from #15's "•••" menu's "표로 보기".
-    // README establishes #21/#22/#23 as search/sort/filter *states* of
-    // this same screen -- not built yet, so 검색/정렬/필터 are
-    // intentional no-ops for now, same reasoning as other not-yet-built
-    // destinations. CSV/PDF export (the "•••" menu) also has no
-    // destination yet. Clicking a row opens #16 for that row -- demo
-    // rows don't map back to #15's own DEFAULT_RECORDS (different
-    // sample data sets), so this always opens the "lip" record; real
-    // per-row linking needs the V2-12 data layer.
+    // #21/#22/#23 (search/sort/filter) are built into TableViewScreen
+    // itself as internal states -- see its own header comment. CSV/PDF
+    // export (the "•••" menu) has no destination yet. Clicking a row
+    // opens #16 for that row -- demo rows don't map back to #15's own
+    // DEFAULT_RECORDS (different sample data sets), so this always
+    // opens the "lip" record; real per-row linking needs V2-12.
     return <main className="drawary-app-shell" data-route="table-view">
       <FixedCanvas height={844}>
         <TableViewScreen
           drawerName={drawerDetailName}
           onBack={() => navigate('drawer-detail')}
-          onSearch={() => {}}
-          onSort={() => {}}
-          onFilter={() => {}}
           onExport={() => {}}
           onOpenRecord={() => { setRecordDetailId('lip'); navigate('record-detail'); }}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'drawer-manage') {
+    // #24 서랍 관리 메인, reachable from #15's "•••" menu's "서랍 관리"
+    // (previously a no-op). Every row's destination (#25/#26/#27/#29/#33/
+    // #28, plus the existing backup/export flow) is not built yet, so
+    // all are intentional no-ops for now, same reasoning as other
+    // not-yet-built destinations.
+    return <main className="drawary-app-shell" data-route="drawer-manage">
+      <FixedCanvas height={844}>
+        <DrawerManageScreen
+          drawerName={drawerDetailName}
+          onBack={() => navigate('drawer-detail')}
+          onRenameDrawer={() => {}}
+          onEditFields={() => {}}
+          onSortFilterSettings={() => {}}
+          onNotificationSettings={() => {}}
+          onRecurrenceManage={() => {}}
+          onBackupExport={() => {}}
+          onDeleteDrawer={() => {}}
         />
       </FixedCanvas>
     </main>;

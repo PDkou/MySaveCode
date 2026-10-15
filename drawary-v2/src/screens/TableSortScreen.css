@@ -1,0 +1,26 @@
+/* Byte-identical to the confirmed archive's table-sort-v3.css. */
+.sv3-backdrop{position:absolute;inset:0;z-index:60;background:rgba(42,38,54,.26);display:flex;align-items:flex-end}
+.sv3-sheet{width:100%;background:#fffaf3;border-radius:24px 24px 0 0;padding:10px 20px 26px;box-shadow:0 -12px 36px rgba(52,42,68,.18);color:#324f88}
+.sv3-handle{width:42px;height:4px;border-radius:99px;background:#d8d1ca;margin:0 auto 17px}
+.sv3-head,.sv3-picker-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.sv3-head h2,.sv3-picker-head h2{margin:0;font-size:20px;line-height:26px;font-weight:850;color:#244f9d}
+.sv3-head p,.sv3-picker-head p{margin:3px 0 0;color:#8a8997;font-size:11.5px;font-weight:650}
+.sv3-reset{border:0;background:transparent;color:#7759d8;font-size:12px;font-weight:800;padding:5px 0}
+.sv3-section{margin-top:15px}.sv3-label{display:block;margin-bottom:8px;font-size:12px;font-weight:800;color:#68779b}
+.sv3-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.sv3-quick button{height:44px;border:1px solid #e2d9cf;background:#fffdfa;border-radius:12px;color:#5c6d93;font-size:11.5px;font-weight:800}
+.sv3-quick button.on{border-color:#bca8f4;background:#f6f1ff;color:#684fbd;box-shadow:0 0 0 1px rgba(126,89,232,.05)}
+.sv3-more{width:100%;height:38px;margin-top:8px;border:0;background:transparent;color:#765bd1;font-size:11.5px;font-weight:800}
+.sv3-dir{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sv3-dir button{height:46px;border:1px solid #e5ddd3;background:#fffdfa;border-radius:12px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;color:#596b92;font-size:12px;font-weight:750}
+.sv3-dir i,.sv3-list i{width:16px;height:16px;border:1.5px solid #cfc6bc;border-radius:50%;position:relative}
+.sv3-dir .on,.sv3-list .on{border-color:#baa6f4;background:#f6f1ff;color:#6651b9}.sv3-dir .on i,.sv3-list .on i{border-color:#8c71e8}
+.sv3-dir .on i:after,.sv3-list .on i:after{content:"";position:absolute;inset:3px;border-radius:50%;background:#8c71e8}
+.sv3-actions{display:grid;grid-template-columns:1fr 1.25fr;gap:10px;margin-top:20px}
+.sv3-actions button{height:49px;border-radius:24px;font-size:13px;font-weight:800}.sv3-cancel{border:1px solid #e5ddd3;background:#fffdfa;color:#687896}.sv3-apply{border:0;background:#7d58e8;color:white}
+.sv3-picker-head{position:relative;justify-content:flex-start;padding-left:36px}.sv3-back{position:absolute;left:0;top:-3px;width:30px;height:30px;border:0;background:transparent;color:#7257cf;font:300 33px/26px Arial}
+.sv3-search{height:44px;border:1px solid #ddd4c9;border-radius:22px;background:#fffdfa;display:grid;grid-template-columns:40px 1fr 34px;align-items:center;margin-bottom:10px}
+.sv3-search>img{width:22px;height:22px;justify-self:center}.sv3-search input{height:100%;border:0;outline:0;background:transparent;color:#36558e;font-size:12.5px;font-weight:650}
+.sv3-list{max-height:246px;overflow-y:auto;border:1px solid #e6ddd3;border-radius:14px;background:#fffdfa}
+.sv3-list button{width:100%;height:48px;border:0;border-bottom:1px solid #eee6dd;background:transparent;display:flex;align-items:center;justify-content:space-between;padding:0 14px;color:#566b95;font-size:12.5px;font-weight:750}
+.sv3-list .on{background:#f7f2ff;color:#684fbd}
