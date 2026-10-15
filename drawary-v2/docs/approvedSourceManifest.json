@@ -49,7 +49,7 @@
   },
   "specialCases": {
     "screen46": "Use selected merged design, not earlier 11-3 alternative.",
-    "screen47": "Approved visual only; final standalone code and integration QA pending."
+    "screen47": "Visual and standalone HTML/CSS Chromium render user approved on 2026-10-15; reference SHA-256 87d4618781b3d5559576a81a509574e09655add59b453e73c66d5418a6b52ccb. React integration and actual backup execution still pending."
   },
   "priorScreenCandidateZipCount": 16,
   "priorCandidateRange": "39–56 except 46, 47",

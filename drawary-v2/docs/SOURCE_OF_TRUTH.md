@@ -28,7 +28,7 @@ The previous directories are preserved only to avoid destructive changes. They a
 - 0/59 integrated into React V2.
 - Do not claim an implemented or approved animated splash based on the static splash artwork alone.
 - Before implementing any screen, locate the latest approved design for that specific screen; do not invent it.
-- Screen 47 is visual-approved; the final standalone implementation still needs verification.
+- Screen 47 latest exact full-screen artwork and Chromium-rendered standalone HTML/CSS were **explicitly user-approved on 2026-10-15**. See `docs/design-locks/screen-47.json`. Preserve the yellow-folder mascot and rotating ring. Font normalization deferred to global pass. React integration and real backup operations not implemented.
 
 To import locally in an actual checkout:
 

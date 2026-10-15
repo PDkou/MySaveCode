@@ -16,7 +16,7 @@
 - [ ] 20–28 Table, sorting, filtering and drawer management
 - [ ] 29–37 Notifications and recurrence
 - [ ] 38–44 Settings, security, lock, theme, data hub
-- [ ] 45–53 Backup, restore and reset (47 approved visual, standalone code incomplete)
+- [ ] 45–53 Backup, restore and reset (47 standalone code user-approved, React integration incomplete)
 - [ ] 54–59 Language, help, FAQ, guide, about and feedback
 
 ## Platform behavior

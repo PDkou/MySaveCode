@@ -15,7 +15,7 @@ The extracted sources contain the original HTML and all referenced files under t
 - 59 must use **the refined user-approved feedback screen**, not older `10_feedback_final.png`.
 - 57 must use **the refined guide screen**, not older `08_guide_final.png`.
 - 46 uses **the selected merged screen**.
-- 47 final standalone implementation is **not confirmed**, despite design approval.
+- 47 standalone HTML/CSS/SVG is **user-confirmed (2026-10-15)**; see `docs/design-locks/screen-47.json`, with precise full-screen reference hash and Chromium QA. React routing and actual backup engine remain pending.
 
 ## Other materials inventoried
 
