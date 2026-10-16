@@ -1,0 +1,55 @@
+/* Drawary approved-design restoration: screens 16, 17, 20/21 and 24.
+   Screen-scoped styles derived from the final approved layouts.
+   Does not touch the locked 01/02/03/04/07/38 screens or 09-15 fixes.
+   Header heights are defined by the corresponding ScreenHeader height props. */
+.drawary-app-shell[data-route="record-detail"] .uf-header--stacked .uf-stacked-text,
+.drawary-app-shell[data-route="record-edit"] .uf-header--stacked .uf-stacked-text,
+.drawary-app-shell[data-route="table-view"] .uf-header--stacked .uf-stacked-text {
+  grid-column: 2;
+  align-self: flex-end;
+  justify-self: stretch;
+  text-align: center;
+}
+.drawary-app-shell[data-route="record-detail"] .uf-stacked-text h1 {
+  color:#123f96; font-size:21px; line-height:30px; font-weight:800; letter-spacing:-.6px;
+}
+.drawary-app-shell[data-route="record-edit"] .uf-stacked-text h1 {
+  color:#123f96; font-size:21px; line-height:27px; font-weight:800; letter-spacing:-.65px;
+}
+.drawary-app-shell[data-route="record-edit"] .uf-subtitle {
+  display:block; text-align:center; color:#7a83a6; font-size:11px; font-weight:650; line-height:15px; margin-top:2px;
+}
+.drawary-app-shell[data-route="table-view"] .uf-stacked-text h1 {
+  color:#123f96; font-size:23px; line-height:28px; font-weight:800; letter-spacing:-.7px;
+}
+.drawary-app-shell[data-route="table-view"] .uf-subtitle {
+  display:block; text-align:center; color:#7b83a0; font-size:11px; font-weight:700; line-height:15px; margin-top:2px;
+}
+.drawary-app-shell[data-route="record-detail"] .uf-header--stacked { padding-bottom:12px; }
+.drawary-app-shell[data-route="record-edit"] .uf-header--stacked { padding-bottom:10px; }
+.drawary-app-shell[data-route="table-view"] .uf-header--stacked { padding-bottom:12px; }
+.drawary-app-shell[data-route="record-detail"] .uf-header--stacked .uf-back,
+.drawary-app-shell[data-route="record-edit"] .uf-header--stacked .uf-back,
+.drawary-app-shell[data-route="table-view"] .uf-header--stacked .uf-back {
+  position:absolute; left:18px; width:40px; height:40px; margin:0;
+}
+.drawary-app-shell[data-route="record-detail"] .uf-header--stacked .uf-back { bottom:9px; }
+.drawary-app-shell[data-route="record-edit"] .uf-header--stacked .uf-back { bottom:10px; }
+.drawary-app-shell[data-route="table-view"] .uf-header--stacked .uf-back { bottom:15px; }
+.drawary-app-shell[data-route="drawer-manage"] .uf-header--center { margin-bottom:14px; }
+.drawary-app-shell[data-route="drawer-manage"] .uf-title {
+  text-align:center; color:#174d9f; font-size:24px; font-weight:900; letter-spacing:-.7px;
+}
+.drawary-app-shell[data-route="drawer-manage"] .uf-back {
+  width:44px; height:44px; color:#1f58ad;
+}
+.drawary-app-shell[data-route="record-detail"] .uf-back::before,
+.drawary-app-shell[data-route="record-edit"] .uf-back::before,
+.drawary-app-shell[data-route="table-view"] .uf-back::before,
+.drawary-app-shell[data-route="drawer-manage"] .uf-back::before {
+  content:'‹'; width:auto; height:34px; border:0; border-radius:0;
+  color:#2357ad; font:300 40px/34px Arial,sans-serif; transform:translateY(-2px);
+}
+.drawary-app-shell[data-route="drawer-manage"] .uf-back::before {
+  color:#1f58ad; font-size:38px; line-height:38px;
+}
