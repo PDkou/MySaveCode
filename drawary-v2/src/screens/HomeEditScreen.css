@@ -30,13 +30,14 @@
 .home-edit-done {
   position: absolute;
   right: 17px;
-  top: 106px;
+  top: 112px;
   width: 70px;
   height: 20px;
   line-height: 20px;
   background: transparent;
   border: 0;
   color: #7657e8;
+  font-family: "Noto Sans CJK KR", "Noto Sans KR", "Malgun Gothic", sans-serif;
   font-size: 15px;
   font-weight: 700;
   text-align: right;
