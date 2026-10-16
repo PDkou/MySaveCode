@@ -68,7 +68,7 @@ export function DrawerDetailScreen({
         title={drawerName}
         subtitle={`보관품 ${recordCount}개`}
         onBack={onBack}
-        height={100}
+        height={109}
         rightSlot={
           <>
             <button
