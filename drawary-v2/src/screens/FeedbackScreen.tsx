@@ -17,7 +17,7 @@ export interface FeedbackScreenProps {
 }
 
 const TYPE_CONFIG: Record<FeedbackType, { name: string; icon: string; iconClass?: string; placeholder: string; hint: string }> = {
-  improvement: { name: '개선 제안', icon: '/assets/decor/decor_sprout_01.webp', placeholder: '어떤 점이 불편했나요? 이렇게 바뀌면 좋겠다는 생각도 좋아요.', hint: '어떤 화면에서 느낀 점인지 알려주시면 도움이 돼요.' },
+  improvement: { name: '개선 제안', icon: '/assets/decor/decor_sprout_01.webp', placeholder: '어떤 점이 불편했는지, 어떻게 바꾸면 좋을지 알려주세요.', hint: '오류를 제보하실 경우, 해당 화면이나 발생 상황을 함께 적어주세요.' },
   bug: { name: '오류 제보', icon: '/assets/ui-icons/feedback_error_from_approved.png', iconClass: 'fb59-approved-crop', placeholder: '어느 화면에서 어떤 문제가 있었나요? 발생한 순서대로 적어주세요.', hint: '오류가 난 화면과 동작을 적어주시면 확인에 도움이 돼요.' },
   feature: { name: '기능 요청', icon: '/assets/decor/decor_flower_01.webp', placeholder: '어떤 기능이 있으면 좋을까요? 사용하는 상황도 알려주세요.', hint: '어떤 상황에서 필요한지 함께 알려주시면 좋아요.' },
   other: { name: '기타', icon: '/assets/ui-icons/feedback_other_from_approved.png', iconClass: 'fb59-approved-crop', placeholder: '하고 싶은 이야기를 자유롭게 남겨주세요.', hint: '칭찬, 질문, 다른 의견도 모두 환영해요.' },
@@ -132,7 +132,7 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
           <h2 className="fb59-hero-title">Drawary를 더 편하게<br />사용 할 수 있도록 알려주<br />세요.</h2>
           <p className="fb59-hero-desc">불편했던 점이나 개선 아이디어를<br />자유롭게 남겨주세요.</p>
           <div className="fb59-hero-orb" aria-hidden="true" />
-          <img className="fb59-hero-mascot" src="/assets/mascot/mascot_default.webp" alt="" />
+          <img className="fb59-hero-mascot" src="/assets/mascot/mascot_feedback_approved.webp" alt="" />
           <img className="fb59-hero-flower" src="/assets/decor/decor_flower_01.webp" alt="" />
         </section>
         <form id="fb59-form" onSubmit={handleSubmit} noValidate>
@@ -203,7 +203,7 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
       </div>
       <div className="fb59-bottom">
         <button className="fb59-send uf-cta-primary" form="fb59-form" type="submit">피드백 보내기</button>
-        <p className="fb59-bottom-note">입력하신 내용을 확인한 뒤 보내주세요.</p>
+        <p className="fb59-bottom-note">보내기 전 입력한 내용을 한 번 확인해 주세요.</p>
       </div>
       {status && <div className="fb59-status" role="status" aria-live="polite">{status}</div>}
     </main>
