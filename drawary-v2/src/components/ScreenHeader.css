@@ -1,4 +1,5 @@
 @import '../screens/ApprovedHeaderRestore.css';
+@import '../screens/ApprovedHeaderRestoreBatch04.css';
 
 /* Unified header tokens -- one back-button visual, one title
    typography, one height per layout family. See ScreenHeader.tsx's
