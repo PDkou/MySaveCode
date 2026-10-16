@@ -1,0 +1,50 @@
+name: Drawary V2 React visual QA
+on:
+  push:
+    branches:
+      - drawary/59-design-rebuild-20261014
+    paths:
+      - 'drawary-v2/**'
+      - '.github/workflows/drawary-v2-visual-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture-actual-screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: drawary-v2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install app dependencies
+        run: npm install --no-audit --no-fund
+      - name: Type-check and build
+        run: npm run build
+      - name: Install visual QA browser (CI only)
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: Start real React app
+        run: |
+          npm run dev -- --host 127.0.0.1 > /tmp/drawary-v2-vite.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/drawary-v2-vite.log
+          exit 1
+      - name: Capture every reachable React route
+        run: node scripts/capture-qa-screens.mjs
+      - name: Upload actual React screenshots and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawary-v2-react-screens-390x844
+          path: drawary-v2/qa-screenshots/
+          if-no-files-found: warn
+          retention-days: 14
