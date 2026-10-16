@@ -79,7 +79,7 @@ export function NameIconChangeScreen({
 
   return (
     <main className="nic-page">
-      <ScreenHeader title="서랍 이름 / 아이콘 변경" onBack={onBack} height={88} />
+      <ScreenHeader title="서랍 이름 / 아이콘 변경" onBack={onBack} height={61} />
 
       <section className="nic-preview" aria-label="변경 미리보기">
         <div className="nic-preview-icon">
