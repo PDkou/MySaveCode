@@ -1,0 +1,61 @@
+/* Drawary 25,29-37: approved screen-local header restoration.
+ * Protected screens 01,02,03,04,07,38 and reuse #26 unchanged. */
+.drawary-app-shell[data-route="name-icon-change"] .uf-header--center {
+ grid-template-columns:42px minmax(0,1fr) 42px;
+ margin-bottom:12px;
+}
+.drawary-app-shell[data-route="name-icon-change"] .uf-title {
+ color:#174d9f;font-size:20px;font-weight:900;letter-spacing:-.55px;
+}
+.drawary-app-shell[data-route="name-icon-change"] .uf-back {width:42px;height:42px;justify-content:flex-start}
+.drawary-app-shell[data-route="name-icon-change"] .uf-back::before {
+ content:'‹';border:0;border-radius:0;width:auto;height:38px;
+ font:300 38px/38px Arial,sans-serif;color:#1f58ad;transform:none;
+}
+.drawary-app-shell:is(
+ [data-route="notification-settings"],
+ [data-route="notification-date-field"],
+ [data-route="notification-timing"],
+ [data-route="notification-complete"],
+ [data-route="recurrence-management"],
+ [data-route="recurrence-target-date"],
+ [data-route="recurrence-cycle"],
+ [data-route="recurrence-end-condition"],
+ [data-route="recurrence-complete"]
+) .uf-header--center {
+ padding:18px 20px 0;
+ grid-template-columns:44px minmax(0,1fr) 44px;
+}
+.drawary-app-shell:is(
+ [data-route="notification-settings"],
+ [data-route="notification-date-field"],
+ [data-route="notification-timing"],
+ [data-route="notification-complete"],
+ [data-route="recurrence-management"],
+ [data-route="recurrence-target-date"],
+ [data-route="recurrence-cycle"],
+ [data-route="recurrence-end-condition"],
+ [data-route="recurrence-complete"]
+) .uf-title {color:#1959a6;font-size:21px;font-weight:900;letter-spacing:-.65px}
+.drawary-app-shell[data-route="notification-settings"] .uf-title {font-size:22px;letter-spacing:-.7px}
+.drawary-app-shell:is(
+ [data-route="notification-settings"],
+ [data-route="notification-date-field"],
+ [data-route="notification-timing"],
+ [data-route="recurrence-management"],
+ [data-route="recurrence-target-date"],
+ [data-route="recurrence-cycle"],
+ [data-route="recurrence-end-condition"]
+) .uf-back {justify-content:flex-start}
+.drawary-app-shell:is(
+ [data-route="notification-settings"],
+ [data-route="notification-date-field"],
+ [data-route="notification-timing"],
+ [data-route="recurrence-management"],
+ [data-route="recurrence-target-date"],
+ [data-route="recurrence-cycle"],
+ [data-route="recurrence-end-condition"]
+) .uf-back::before {
+ content:'‹';border:0;border-radius:0;width:auto;height:34px;
+ font:300 34px/34px Arial,sans-serif;color:#1f63ba;transform:none;
+}
