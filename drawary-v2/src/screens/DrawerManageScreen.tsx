@@ -98,7 +98,7 @@ export function DrawerManageScreen({
 
   return (
     <main className="dm-screen">
-      <ScreenHeader title="서랍 관리" onBack={onBack} height={88} />
+      <ScreenHeader title="서랍 관리" onBack={onBack} height={61} />
 
       <section className="dm-summary">
         <div className="dm-summary-icon">
