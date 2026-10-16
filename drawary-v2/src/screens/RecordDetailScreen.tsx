@@ -102,7 +102,7 @@ export function RecordDetailScreen({
         variant="stacked"
         title="보관품 상세"
         onBack={onBack}
-        height={93}
+        height={92}
         rightSlot={
           <>
             <button
