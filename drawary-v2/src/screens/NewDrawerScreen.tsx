@@ -48,6 +48,12 @@ interface NewDrawerScreenProps {
  * the "•••" tile which is genuinely `drawer_icon_misc.webp`, not a
  * placeholder) -- no reconstruction needed here, unlike #06's reorder
  * icon. The 6 swatch colors were sampled directly from the reference.
+ *
+ * A 2026-10-15 source audit recovered the real pre-inheritance
+ * `AddDrawerModal.tsx` (2026-10-04), confirming this reconstruction's
+ * copy/icons/colors independently, and also surfacing one real gap: its
+ * "다음" button is `disabled={!name.trim()}`. Applied the same guard
+ * below -- it was missing here.
  */
 export function NewDrawerScreen({ onNext, onDismiss }: NewDrawerScreenProps) {
   const [name, setName] = useState('');
@@ -106,6 +112,7 @@ export function NewDrawerScreen({ onNext, onDismiss }: NewDrawerScreenProps) {
         <button
           type="button"
           className="new-drawer-next"
+          disabled={!name.trim()}
           onClick={() => onNext({ name, icon, color })}
         >
           다음

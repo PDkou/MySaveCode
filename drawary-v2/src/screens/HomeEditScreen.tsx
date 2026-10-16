@@ -42,13 +42,12 @@ interface HomeEditScreenProps {
  *    code render -- so it's a design target, not a pixel-diff baseline.
  *
  * The reorder-icon asset the candidate TSX references
- * (`./assets/icon_reorder.svg`) was never actually present in that
- * archive, and no equivalent exists among the 294 approved WebP assets.
- * Reconstructed here as an inline SVG matching V14's pixel glyph exactly
- * (3 equal bars + a vertical double-arrow, solid #8C74E8) -- same
- * CSS-glyph-reconstruction approach already used for #11's reorder
- * handle. This is new code, not an approved binary; flagged here rather
- * than guessed at silently.
+ * (`./assets/icon_reorder.svg`) was earlier believed missing from the V3
+ * archive and reconstructed as an inline SVG glyph. A later source audit
+ * (2026-10-15 AUDITED package) found the real file present in that same
+ * V3 archive after all; copied in as
+ * `public/assets/ui-icons/icon_reorder.svg` and used directly below,
+ * replacing the inline reconstruction.
  */
 export function HomeEditScreen({ onDone, onDeleteDrawer, onReorderDrawer, onCreateDrawer }: HomeEditScreenProps) {
   return (
@@ -82,7 +81,7 @@ export function HomeEditScreen({ onDone, onDeleteDrawer, onReorderDrawer, onCrea
               onClick={() => onReorderDrawer(drawer.id)}
               aria-label={`${drawer.id} 서랍 순서 변경`}
             >
-              <ReorderGlyph />
+              <img src="/assets/ui-icons/icon_reorder.svg" alt="" width={20} height={20} />
             </button>
           </div>
         ))}
@@ -95,18 +94,5 @@ export function HomeEditScreen({ onDone, onDeleteDrawer, onReorderDrawer, onCrea
         />
       </div>
     </FixedCanvas>
-  );
-}
-
-function ReorderGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" width={20} height={20} aria-hidden="true">
-      <rect x="2" y="4.5" width="13" height="3" rx="1.5" fill="#8C74E8" />
-      <rect x="2" y="10.5" width="13" height="3" rx="1.5" fill="#8C74E8" />
-      <rect x="2" y="16.5" width="13" height="3" rx="1.5" fill="#8C74E8" />
-      <path d="M19.5 3 L22 7 H17 Z" fill="#8C74E8" />
-      <rect x="18.7" y="6.5" width="1.6" height="11" fill="#8C74E8" />
-      <path d="M19.5 21 L17 17 H22 Z" fill="#8C74E8" />
-    </svg>
   );
 }

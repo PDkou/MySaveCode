@@ -81,8 +81,9 @@
   height: 52px;
   border-radius: 999px;
   border: 0;
-  background: #d7caec;
+  background: #7657e8;
   color: #ffffff;
   font-size: 15px;
   font-weight: 700;
 }
+.new-drawer-next:disabled { opacity: .4; }
