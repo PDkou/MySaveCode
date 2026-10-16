@@ -48,6 +48,41 @@ for (const route of routes) {
       && (!check.newDrawerNext || check.newDrawerNext.bottom>844 || check.newDrawerNext.top<0 || check.newDrawerNext.left<0 || check.newDrawerNext.right>390);
     if (newDrawerClipped) errors.push('Approved #08 Next button is clipped or missing');
     report.routes.push({route, status:response?.status() ?? null, visibleRoute:check.visibleRoute, textLength:check.htmlLength, brokenImages:broken, errors, newDrawerNext:check.newDrawerNext});
+
+    // Capture every confirmed #05 search state with the real React handlers.
+    if (route==='search') {
+      const input=page.locator('.global-search-box input[type="search"]');
+      if (await input.count() !== 1) {
+        errors.push('Approved #05 search input missing');
+      } else {
+        if (await input.evaluate(el => document.activeElement===el)) {
+          errors.push('Approved #05 idle state incorrectly auto-focused');
+        }
+        await input.fill('틴트');
+        await page.screenshot({path:join(output,'screens','search-results.png'),animations:'disabled'});
+        if (!(await page.locator('.global-search-result-card').count())) {
+          errors.push('Approved #05 results state has no cards');
+        }
+        await input.fill('없는검색어');
+        await page.screenshot({path:join(output,'screens','search-no-results.png'),animations:'disabled'});
+        if (!(await page.getByText('검색 결과가 없어요.').count())) {
+          errors.push('Approved #05 no-results state missing');
+        }
+      }
+    }
+    // Also check #08's enabled Next button, not only its disabled state.
+    if (route==='create-drawer') {
+      const nameInput=page.locator('#new-drawer-name');
+      if (await nameInput.count()===1) {
+        await nameInput.fill('화장품');
+        await page.screenshot({path:join(output,'screens','create-drawer-enabled.png'),animations:'disabled'});
+        if (!(await page.locator('.new-drawer-next').isEnabled())) {
+          errors.push('Approved #08 valid name must enable Next');
+        }
+      } else {
+        errors.push('Approved #08 drawer name input missing');
+      }
+    }
   } catch (error) {
     report.routes.push({route, fatal:String(error), errors});
   } finally {
