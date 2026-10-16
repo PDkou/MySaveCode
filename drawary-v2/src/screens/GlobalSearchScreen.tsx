@@ -50,7 +50,7 @@ export function GlobalSearchScreen({ records, onOpenRecord }: GlobalSearchScreen
       </header>
 
       <div className="global-search-box">
-        <img className="global-search-icon" src="/assets/ui-icons/icon_search.webp" alt="" aria-hidden="true" />
+        <span className="global-search-icon" aria-hidden="true" />
         <input
           type="search"
           value={query}
@@ -66,7 +66,7 @@ export function GlobalSearchScreen({ records, onOpenRecord }: GlobalSearchScreen
           <div className="global-search-empty">
             <img src="/assets/states/search/state_search_empty.webp" alt="" />
             <strong>찾고 싶은 보관품이 있나요?</strong>
-            <span>검색어를 입력하면 모든 서랍에서 함께 찾아드려요.</span>
+            <span>검색어를 입력하면<br />모든 서랍에서 함께 찾아드려요.</span>
           </div>
         )}
 
