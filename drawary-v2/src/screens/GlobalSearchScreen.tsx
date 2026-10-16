@@ -56,7 +56,6 @@ export function GlobalSearchScreen({ records, onOpenRecord }: GlobalSearchScreen
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="보관품 이름, 메모, 서랍 이름 검색"
-          autoFocus
         />
         {query && <button type="button" onClick={() => setQuery('')} aria-label="검색어 지우기">×</button>}
       </div>
