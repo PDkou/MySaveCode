@@ -17,7 +17,7 @@ button{font:inherit}
 .bkd46-option.selected{background:#fbf8ff;border:2px solid #9c75f3}
 .bkd46-icon-wrap{width:60px;height:60px;border-radius:16px;background:#f5edff;display:flex;align-items:center;justify-content:center;flex:none}
 .bkd46-icon-wrap img.bkd46-device{width:46px;height:46px;object-fit:contain}
-.bkd46-icon-wrap img.bkd46-drive{width:40px;height:42px;object-fit:contain}
+.bkd46-icon-wrap img.bkd46-drive{width:44px;height:44px;object-fit:contain}
 .bkd46-text{min-width:0;flex:1}
 .bkd46-text strong{display:block;font-size:15px;line-height:1.2;color:#324260;font-weight:900;letter-spacing:-.45px;white-space:nowrap}
 .bkd46-text span{display:block;margin-top:6px;font-size:11.5px;line-height:1.55;color:#928ca0;font-weight:650;letter-spacing:-.3px}
@@ -26,4 +26,4 @@ button{font:inherit}
 .bkd46-option.selected .bkd46-radio::after{content:"";width:9px;height:9px;border-radius:50%;background:#9b74f4}
 .bkd46-notice{display:flex;align-items:center;gap:8px;background:#faf6fc;border:1px solid #eee7f6;border-radius:14px;padding:12px 13px;margin:18px 2px 0;color:#928ba0;font-size:11.4px;line-height:1.45;font-weight:650;letter-spacing:-.28px}
 .bkd46-notice img{width:16px;height:16px;object-fit:contain;flex:none}
-.bkd46-btn{position:absolute;left:18px;right:18px;bottom:24px;height:54px;border:0;border-radius:27px;background:linear-gradient(90deg,#7853e8,#9364ed);display:flex;align-items:center;justify-content:center;color:white;font-size:16px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;cursor:pointer}
+.bkd46-btn{position:absolute;left:18px;right:18px;bottom:24px;height:54px;border:0;border-radius:13px;background:linear-gradient(90deg,#7853e8,#9364ed);display:flex;align-items:center;justify-content:center;color:white;font-size:16px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;cursor:pointer}

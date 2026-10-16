@@ -50,7 +50,7 @@ export function BackupDestinationScreen({ initialDestination = 'device', onBack,
           onClick={() => setDestination('device')}
         >
           <span className="bkd46-icon-wrap"><img className="bkd46-device" src="/assets/ui-icons/icon_save.webp" alt="" /></span>
-          <span className="bkd46-text"><strong>이 기기에 저장</strong><span>원하는 폴더에 백업 파일을 저장해요.</span></span>
+          <span className="bkd46-text"><strong>이 기기에 저장</strong><span>원하는 폴더에<br />백업 파일을 저장해요.</span></span>
           <span className="bkd46-radio" />
         </button>
         <button
@@ -60,8 +60,8 @@ export function BackupDestinationScreen({ initialDestination = 'device', onBack,
           aria-checked={destination === 'drive'}
           onClick={() => setDestination('drive')}
         >
-          <span className="bkd46-icon-wrap"><img className="bkd46-drive" src="/assets/ui-icons/icon_upload.webp" alt="" /></span>
-          <span className="bkd46-text"><strong>Google Drive</strong><span>Google Drive에 백업 파일을 보관해요.</span></span>
+          <span className="bkd46-icon-wrap"><img className="bkd46-drive" src="/assets/ui/google_drive_2026.png" alt="" /></span>
+          <span className="bkd46-text"><strong>Google Drive</strong><span>Google Drive에<br />백업 파일을 보관해요.</span></span>
           <span className="bkd46-radio" />
         </button>
         <div className="bkd46-notice"><img src="/assets/ui-icons/icon_info.webp" alt="" /><span>다음 단계에서 저장할 폴더를 선택해요.</span></div>
