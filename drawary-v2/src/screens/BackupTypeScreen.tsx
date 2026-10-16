@@ -28,7 +28,7 @@ export function BackupTypeScreen({ initialMode = 'include', onBack, onNext }: Ba
 
   return (
     <div className="bkt45-screen">
-      <ScreenHeader title="백업하기" onBack={onBack} backLabel="데이터 관리로 돌아가기" height={88} />
+      <ScreenHeader title="백업하기" onBack={onBack} backLabel="데이터 관리로 돌아가기" height={85} />
       <main className="bkt45-panel">
         <h2 className="bkt45-section-title">백업할 내용 선택</h2>
         <section className="bkt45-hero" aria-label="백업 안내">
