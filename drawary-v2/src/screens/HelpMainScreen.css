@@ -11,7 +11,7 @@ button{font:inherit}
 .help55-hero .help55-eyebrow{font-size:12px;font-weight:850;letter-spacing:-.3px;color:#8464e9;margin:0 0 2px;line-height:1.4}
 .help55-hero h1{font-size:16.4px;letter-spacing:-.6px;line-height:1.32;font-weight:900;color:#1e3365;margin:0}
 .help55-hero p{margin:9px 0 0;font-size:11.4px;line-height:1.55;font-weight:620;letter-spacing:-.3px;color:#8392b5}
-.help55-hero img{position:absolute;right:18px;bottom:10px;width:100px;height:116px;object-fit:contain}
+.help55-hero img{position:absolute;right:14px;top:11px;bottom:auto;width:105px;height:119px;object-fit:contain}
 .help55-main-options{margin-top:14px;display:flex;flex-direction:column;gap:12px}
 .help55-menu-card{height:91px;border:1px solid #eae3db;border-radius:21px;background:#fff;display:flex;align-items:center;gap:17px;padding:0 15px;cursor:pointer;text-align:left;width:100%;color:inherit;font-family:inherit}
 .help55-icon-holder{width:47px;height:47px;min-width:47px;background:#f2ecff;border-radius:15px;display:flex;align-items:center;justify-content:center}
@@ -26,4 +26,4 @@ button{font:inherit}
 .help55-quick-item+.help55-quick-item{border-top:1px solid #ebe5df}
 .help55-quick-item .help55-chevron{margin-left:auto;margin-right:12px}
 .help55-footnote{text-align:center;font-weight:650;font-size:10.4px;line-height:1.55;color:#b0b4c7;letter-spacing:-.2px;margin:20px auto 0;padding:0 3px}
-@media(max-width:380px){.help55-hero img{right:10px;width:95px}.help55-hero h1{font-size:15px}.help55-card-title{font-size:15px}.help55-quick-item{font-size:12px}}
+@media(max-width:380px){.help55-hero img{right:9px;width:95px;height:108px}.help55-hero h1{font-size:15px}.help55-card-title{font-size:15px}.help55-quick-item{font-size:12px}}
