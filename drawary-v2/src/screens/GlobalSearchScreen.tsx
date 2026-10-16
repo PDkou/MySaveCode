@@ -44,7 +44,7 @@ export function GlobalSearchScreen({ records, onOpenRecord }: GlobalSearchScreen
     <FixedCanvas height={750}>
     <div className="global-search-screen">
       <header className="global-search-header">
-        <img className="global-search-brand" src="/assets/brand/brand_lockup_horizontal.webp" alt="Drawary" />
+        <img className="global-search-brand" src="/assets/global-search-approved/brand.webp" alt="Drawary" />
         <h1>검색</h1>
         <p>모든 서랍의 보관품을 한 번에 찾아보세요.</p>
       </header>
@@ -64,7 +64,7 @@ export function GlobalSearchScreen({ records, onOpenRecord }: GlobalSearchScreen
       <main className="global-search-content">
         {!q && (
           <div className="global-search-empty">
-            <img src="/assets/states/search/state_search_empty.webp" alt="" />
+            <img src="/assets/global-search-approved/search_empty.webp" alt="" />
             <strong>찾고 싶은 보관품이 있나요?</strong>
             <span>검색어를 입력하면<br />모든 서랍에서 함께 찾아드려요.</span>
           </div>
@@ -72,7 +72,7 @@ export function GlobalSearchScreen({ records, onOpenRecord }: GlobalSearchScreen
 
         {q && results.length === 0 && (
           <div className="global-search-empty">
-            <img src="/assets/states/search/state_search_empty.webp" alt="" />
+            <img src="/assets/global-search-approved/search_empty.webp" alt="" />
             <strong>검색 결과가 없어요.</strong>
             <span>다른 검색어로 다시 찾아보세요.</span>
           </div>
