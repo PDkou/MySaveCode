@@ -1,0 +1,128 @@
+/* Drawary Batch 06 — final approved per-screen header restoration, #39–#59.
+   Style changes are restricted to explicit routes and header elements.
+   #38 and all earlier locked screens remain untouched; #43 uses its own
+   approved header, while #46 lacks a confirmed header implementation. */
+
+.drawary-app-shell:is(
+  [data-route="theme-settings"],[data-route="security-settings"],
+  [data-route="lock-detail"],[data-route="pin-setup"],
+  [data-route="data-management"],[data-route="backup-type"]
+) .uf-header--center { padding-top:14px; }
+.drawary-app-shell:is(
+  [data-route="theme-settings"],[data-route="security-settings"],
+  [data-route="lock-detail"],[data-route="pin-setup"],
+  [data-route="data-management"],[data-route="backup-type"]
+) .uf-title { color:#1959a6; font-size:21px; font-weight:900; letter-spacing:-.6px; }
+.drawary-app-shell:is(
+  [data-route="theme-settings"],[data-route="security-settings"],
+  [data-route="lock-detail"],[data-route="pin-setup"],
+  [data-route="data-management"],[data-route="backup-type"]
+) .uf-back { position:absolute; left:20px; top:37px; width:30px; height:33px; }
+.drawary-app-shell:is(
+  [data-route="theme-settings"],[data-route="security-settings"],
+  [data-route="lock-detail"],[data-route="pin-setup"],
+  [data-route="data-management"],[data-route="backup-type"]
+) .uf-back::before {
+  width:13px;height:13px;border-left:3.5px solid #8b62f5;
+  border-bottom:3.5px solid #8b62f5; border-radius:1px;transform:rotate(45deg);
+}
+.drawary-app-shell[data-route="theme-settings"] .uf-back::before {
+  border-left-width:4px;border-bottom-width:4px;border-radius:2px;
+}
+
+/* #47 approved backup-progress layout: separate 81px overlay toolbar. */
+.drawary-app-shell[data-route="backup-progress"] .uf-header--center {
+  position:absolute;top:env(safe-area-inset-top,0px);left:0;right:0;
+  z-index:1;width:100%;padding:0;
+}
+.drawary-app-shell[data-route="backup-progress"] .uf-title {
+  color:#215c9e;font-size:22px;font-weight:800;letter-spacing:-.9px;
+}
+.drawary-app-shell[data-route="backup-progress"] .uf-back {
+  position:absolute;left:17px;top:30px;width:34px;height:34px;
+}
+.drawary-app-shell[data-route="backup-progress"] .uf-back::before {
+  width:14px;height:14px;border-left:3px solid #8e5af5;
+  border-bottom:3px solid #8e5af5;transform:translateX(4px) rotate(45deg);
+}
+
+/* #48–#53: approved 91px header family, centered title and lilac chevron. */
+.drawary-app-shell:is(
+  [data-route="backup-success"],[data-route="restore-file-picker"],
+  [data-route="restore-review"],[data-route="restore-progress"],
+  [data-route="restore-success"],[data-route="data-reset-confirm"]
+) .uf-header--center { padding:16px 18px 0; }
+.drawary-app-shell:is(
+  [data-route="backup-success"],[data-route="restore-file-picker"],
+  [data-route="restore-review"],[data-route="restore-progress"],
+  [data-route="restore-success"],[data-route="data-reset-confirm"]
+) .uf-title {font-size:20px;line-height:24px;font-weight:850;letter-spacing:-.7px;color:#285a9b}
+.drawary-app-shell:is(
+  [data-route="restore-file-picker"],[data-route="restore-review"],
+  [data-route="restore-progress"],[data-route="restore-success"],
+  [data-route="data-reset-confirm"]
+) .uf-back {position:absolute;left:17px;top:33px;width:40px;height:40px}
+.drawary-app-shell:is(
+  [data-route="restore-file-picker"],[data-route="restore-review"],
+  [data-route="restore-progress"],[data-route="restore-success"],
+  [data-route="data-reset-confirm"]
+) .uf-back::before {
+  width:15px;height:15px;border-left:2.5px solid #806aea;
+  border-bottom:2.5px solid #806aea;transform:rotate(45deg);border-radius:0;
+}
+.drawary-app-shell[data-route="backup-success"] .uf-header-spacer:last-child {
+  grid-row:1;grid-column:3;
+}
+
+/* #54 is a distinct approved absolute-positioned header (93px offset),
+   already positioned by its JSX style prop: change typography and chevron only. */
+.drawary-app-shell[data-route="language-settings"] .uf-title {
+  font-size:21px;font-weight:800;letter-spacing:-.6px;color:#1b2558;
+}
+.drawary-app-shell[data-route="language-settings"] .uf-back {
+  position:absolute;left:15px;top:5px;width:34px;height:34px;
+}
+.drawary-app-shell[data-route="language-settings"] .uf-back::before {
+  width:16px;height:16px;border-left:3px solid #8061f7;
+  border-bottom:3px solid #8061f7;border-radius:1px;transform:rotate(45deg);
+}
+
+/* #55–#59: each of these confirmed layouts has its own app-bar geometry. */
+.drawary-app-shell[data-route="help-main"] .uf-title {
+  font-size:23px;line-height:1.25;font-weight:850;letter-spacing:-.9px;color:#18275c;
+}
+.drawary-app-shell[data-route="faq"] .uf-title {
+  font-size:22px;line-height:1.2;font-weight:850;letter-spacing:-.9px;color:#1b2d65;
+}
+.drawary-app-shell[data-route="guide"] .uf-title {
+  font-size:23px;font-weight:850;letter-spacing:-1px;color:#18265b;
+}
+.drawary-app-shell[data-route="info"] .uf-title {
+  font-size:23px;line-height:1.25;font-weight:850;letter-spacing:-.85px;color:#19285f;
+}
+.drawary-app-shell[data-route="feedback"] .uf-title {
+  font-size:21px;font-weight:850;letter-spacing:-.7px;color:#1c2e6c;
+}
+.drawary-app-shell[data-route="help-main"] .uf-back,
+.drawary-app-shell[data-route="faq"] .uf-back,
+.drawary-app-shell[data-route="guide"] .uf-back,
+.drawary-app-shell[data-route="info"] .uf-back,
+.drawary-app-shell[data-route="feedback"] .uf-back {
+  position:absolute;width:33px;height:33px;
+}
+.drawary-app-shell[data-route="help-main"] .uf-back {left:18px;top:25px}
+.drawary-app-shell[data-route="faq"] .uf-back {left:19px;top:24px}
+.drawary-app-shell[data-route="guide"] .uf-back {left:16px;top:18px}
+.drawary-app-shell[data-route="info"] .uf-back {left:18px;top:25px}
+.drawary-app-shell[data-route="feedback"] .uf-back {left:16px;top:17px}
+.drawary-app-shell:is(
+ [data-route="help-main"],[data-route="faq"],[data-route="guide"],
+ [data-route="info"],[data-route="feedback"]
+) .uf-back::before {
+  width:11px;height:11px;border-left:3px solid #8168f0;
+  border-bottom:3px solid #8168f0;border-radius:1px;transform:rotate(45deg);
+}
+.drawary-app-shell[data-route="faq"] .uf-back::before {border-color:#8467ec}
+.drawary-app-shell[data-route="guide"] .uf-back::before {border-color:#8465ef}
+.drawary-app-shell[data-route="info"] .uf-back::before {border-color:#8163ef}
+.drawary-app-shell[data-route="feedback"] .uf-back::before {border-color:#8061f1}
