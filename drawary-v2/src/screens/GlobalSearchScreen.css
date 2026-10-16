@@ -180,3 +180,23 @@
   text-overflow: ellipsis;
 }
 .global-search-chevron { font-size: 24px; color: #a39ab2; }
+
+/* #05 confirmed global search V3 parity (three approved states, 390x844).
+   Screen-local only; the approved V4 bottom nav is not modified. */
+.global-search-header { padding-top:38px; }
+.global-search-header h1 { margin-top:22px; font-weight:800; }
+.global-search-box { margin-top:24px; }
+.global-search-empty { transform:translateY(-9px); }
+.global-search-empty strong { font-weight:800; }
+.global-search-empty span { max-width:280px; }
+/* Approved reference magnifier uses a navy circle and short handle. */
+.global-search-icon {
+  left:15px; top:14px; width:16px; height:16px;
+  border:2px solid #3c4c7f; border-radius:50%;
+  object-fit:initial;
+}
+.global-search-icon::after {
+  content:''; position:absolute; width:7px; height:2px;
+  background:#3c4c7f; right:-5px; bottom:-3px;
+  transform:rotate(45deg); border-radius:2px;
+}
