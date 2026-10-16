@@ -62,13 +62,14 @@ button{cursor:pointer}
 .fb59-hero-title{font-size:19px;line-height:1.3;max-width:255px;letter-spacing:-.55px}
 .fb59-hero-desc{font-size:11.8px;line-height:1.5;margin-top:10px}
 .fb59-hero-orb,.fb59-hero-flower{display:none}
-.fb59-hero-mascot{width:105px;height:105px;right:20px;top:42px;bottom:auto;background:#fff;border-radius:15px;object-fit:contain}
+.fb59-hero-mascot{width:104px;height:101px;right:20px;top:43px;bottom:auto;background:#fff;border-radius:0;object-fit:contain}
 .fb59-type{height:75px;border-radius:17px}
 .fb59-type.selected{background:#f5f0ff;border-color:#b49afd}
 .fb59-type-icon{width:52px;height:52px;background:transparent;border-radius:12px}
 .fb59-type-icon img{width:42px;height:42px}
 .fb59-type-name{font-size:14px}
 .fb59-type-check,.fb59-type.selected .fb59-type-check{display:none}
+.fb59-counter{display:none}
 #fb59-message{height:149px;border-radius:17px;padding:13px 14px}
 .fb59-tip{padding:0 4px;margin-top:10px;min-height:20px;border:0;background:transparent;display:block}
 .fb59-tip .fb59-tip-flower{display:none}
