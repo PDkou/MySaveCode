@@ -118,7 +118,7 @@ export function TableViewScreen({
         title={drawerName}
         subtitle="표 보기"
         onBack={onBack}
-        height={100}
+        height={103}
         rightSlot={<button className="tv-export" type="button" onClick={onExport} aria-label="표 내보내기 메뉴">•••</button>}
       />
 
