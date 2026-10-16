@@ -34,10 +34,20 @@ for (const route of routes) {
       title:document.title,
       htmlLength:document.body.innerText.length,
       images:Array.from(document.images,img => ({url:img.getAttribute('src'),ok:img.complete && img.naturalWidth>0})),
-      visibleRoute:document.querySelector('[data-route]')?.getAttribute('data-route') ?? null
+      visibleRoute:document.querySelector('[data-route]')?.getAttribute('data-route') ?? null,
+      newDrawerNext: (() => {
+        const button=document.querySelector('.new-drawer-next');
+        if (!button) return null;
+        const rect=button.getBoundingClientRect();
+        return { top:rect.top,bottom:rect.bottom,left:rect.left,right:rect.right };
+      })()
     }));
     const broken = check.images.filter(i => !i.ok);
-    report.routes.push({route, status:response?.status() ?? null, visibleRoute:check.visibleRoute, textLength:check.htmlLength, brokenImages:broken, errors});
+    // #08: approved Next CTA must remain fully inside 390x844 viewport.
+    const newDrawerClipped = route==='create-drawer'
+      && (!check.newDrawerNext || check.newDrawerNext.bottom>844 || check.newDrawerNext.top<0 || check.newDrawerNext.left<0 || check.newDrawerNext.right>390);
+    if (newDrawerClipped) errors.push('Approved #08 Next button is clipped or missing');
+    report.routes.push({route, status:response?.status() ?? null, visibleRoute:check.visibleRoute, textLength:check.htmlLength, brokenImages:broken, errors, newDrawerNext:check.newDrawerNext});
   } catch (error) {
     report.routes.push({route, fatal:String(error), errors});
   } finally {
