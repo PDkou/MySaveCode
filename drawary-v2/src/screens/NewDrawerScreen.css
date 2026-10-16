@@ -87,3 +87,23 @@
   font-weight: 700;
 }
 .new-drawer-next:disabled { opacity: .4; }
+
+/* #08 approved 390x844 sheet: restore exact icon tile geometry,
+   swatch scale and bottom CTA positioning. Does not affect the locked
+   #03 underlying Home screen or the globally approved bottom bar.
+   Verified from Batch01 08_Approved_Current_Candidate.png. */
+.new-drawer-sheet { padding-left:20px; padding-right:20px; padding-bottom:24px; }
+.new-drawer-label { margin-bottom:4px; }
+.new-drawer-input { margin-bottom:10px; }
+.new-drawer-icon-grid { margin-bottom:10px; }
+.new-drawer-icon {
+  aspect-ratio:auto;
+  height:52px;
+  border:1px solid #ece4d8;
+  border-radius:11px;
+  padding:3px;
+}
+.new-drawer-icon img { width:36px; height:36px; }
+.new-drawer-icon.is-selected { border:2px solid #7657e8; }
+.new-drawer-color-row { margin-left:-3px; margin-bottom:24px; }
+.new-drawer-swatch { width:42px; height:42px; }
