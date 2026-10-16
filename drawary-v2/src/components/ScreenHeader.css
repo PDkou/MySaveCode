@@ -15,6 +15,8 @@
 .uf-back::before { content: ''; width: 11px; height: 11px; border-left: 3px solid #7a5cf0; border-bottom: 3px solid #7a5cf0; transform: rotate(45deg); border-radius: 1px; }
 
 .uf-header-spacer { grid-column: 1; width: 44px; height: 44px; }
+/* Last spacer occupies the right slot. The prior grid-column:1 placed it on a second row. */
+.uf-header--center > .uf-header-spacer:last-child { grid-column: 3; grid-row: 1; }
 
 .uf-title { grid-column: 2; margin: 0; text-align: center; font-size: 21px; font-weight: 850; letter-spacing: -.5px; color: #1b2d65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
