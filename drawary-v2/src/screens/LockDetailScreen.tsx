@@ -24,7 +24,7 @@ export interface LockDetailScreenProps {
 export function LockDetailScreen({ hasPin, appLockEnabled, onBack, onToggleAppLock, onOpenPinSetup }: LockDetailScreenProps) {
   return (
     <div className="ld41-screen">
-      <ScreenHeader title="앱 잠금" onBack={onBack} backLabel="보안 설정으로 돌아가기" height={88} />
+      <ScreenHeader title="앱 잠금" onBack={onBack} backLabel="보안 설정으로 돌아가기" height={85} />
       <main className="ld41-panel">
         <h2 className="ld41-section-title">잠금 관리</h2>
         <section className="ld41-hero">
