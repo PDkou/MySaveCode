@@ -129,14 +129,14 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
       <div className="fb59-main">
         <section className="fb59-hero" aria-label="피드백 안내">
           <p className="fb59-hero-kicker">당신의 의견이 필요해요</p>
-          <h2 className="fb59-hero-title">작은 의견 하나가<br />더 편리한 Drawary를<br />만들어요.</h2>
-          <p className="fb59-hero-desc">좋았던 점도, 아쉬웠던 점도<br />편하게 들려주세요.</p>
+          <h2 className="fb59-hero-title">Drawary를 더 편하게<br />사용 할 수 있도록 알려주<br />세요.</h2>
+          <p className="fb59-hero-desc">불편했던 점이나 개선 아이디어를<br />자유롭게 남겨주세요.</p>
           <div className="fb59-hero-orb" aria-hidden="true" />
-          <img className="fb59-hero-mascot" src="/assets/mascot/mascot_lean_on_drawer.webp" alt="" />
+          <img className="fb59-hero-mascot" src="/assets/mascot/mascot_default.webp" alt="" />
           <img className="fb59-hero-flower" src="/assets/decor/decor_flower_01.webp" alt="" />
         </section>
         <form id="fb59-form" onSubmit={handleSubmit} noValidate>
-          <h3 className="fb59-section-label">어떤 이야기인가요?</h3>
+          <h3 className="fb59-section-label">피드백 종류</h3>
           <div className="fb59-types" role="group" aria-label="피드백 종류 선택">
             {TYPES.map((t) => {
               const cfg = TYPE_CONFIG[t];
@@ -157,7 +157,7 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
           </div>
           <div className="fb59-message-title">
             <h3 className="fb59-section-label"><label htmlFor="fb59-message">내용</label></h3>
-            <span className="fb59-counter">{message.length} / 1000</span>
+            <span className="fb59-counter" aria-label={`입력한 글자 수 ${message.length}자`}>{message.length} / 1000</span>
           </div>
           <textarea
             id="fb59-message"
@@ -187,7 +187,7 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
             onChange={handleAttachmentChange}
           />
           <div className="fb59-email-title">
-            <div className="fb59-email-row"><label htmlFor="fb59-email">답변 받을 이메일</label><span className="fb59-optional">선택</span></div>
+            <div className="fb59-email-row"><label htmlFor="fb59-email">답변 받을 이메일</label><span className="fb59-optional">(선택)</span></div>
           </div>
           <input
             id="fb59-email"
