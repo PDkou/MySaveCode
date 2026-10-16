@@ -43,7 +43,7 @@ export function RestoreReviewScreen({
 
   return (
     <main className="rr50-screen" aria-label="복원 내용 확인 화면">
-      <ScreenHeader title="복원 내용 확인" onBack={onBack} height={88} />
+      <ScreenHeader title="복원 내용 확인" onBack={onBack} height={91} />
       <section className="rr50-panel" aria-label="백업 파일에 포함된 내용">
         <div className="rr50-file-card" aria-label="선택된 백업 파일">
           <div className="rr50-file-main">
