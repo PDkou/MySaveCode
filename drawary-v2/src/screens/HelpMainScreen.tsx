@@ -25,7 +25,7 @@ export function HelpMainScreen({ onBack, onOpenFaq, onOpenGuide }: HelpMainScree
           <p className="help55-eyebrow">무엇이 궁금한가요?</p>
           <h1>필요한 도움을<br />빠르게 찾아보세요.</h1>
           <p>궁금한 내용을 선택하면<br />필요한 안내를 확인할 수 있어요.</p>
-          <img src="/assets/mascot/mascot_wave.webp" alt="손을 흔드는 Drawary 마스코트" />
+          <img src="/assets/mascot/mascot_help_approved.webp" alt="손을 흔드는 Drawary 마스코트" />
         </section>
         <nav className="help55-main-options" aria-label="도움말 메뉴">
           <button className="help55-menu-card" type="button" onClick={() => onOpenFaq?.()}>
