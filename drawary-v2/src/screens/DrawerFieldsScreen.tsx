@@ -1,5 +1,6 @@
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import { useRef, useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './DrawerFieldsScreen.css';
 
 // Ported from Drawary_09_FIELD_SETUP_FINAL_CONFIRMED_CODE's
@@ -96,12 +97,7 @@ export function DrawerFieldsScreen({
 
   return (
     <main className="drawary-field-screen" aria-label={title}>
-      <header className="drawary-field-header">
-        <button type="button" className="drawary-back" onClick={onBack} aria-label="뒤로가기">
-          <span aria-hidden="true">‹</span>
-        </button>
-        <h1>{title}</h1>
-      </header>
+      <ScreenHeader variant="stacked" title={title} onBack={onBack} height={93} />
 
       {contextLabel && (
         <p className="drawary-field-context">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './DrawerDetailScreen.css';
 
 export interface DrawerRecordSummary {
@@ -62,34 +63,38 @@ export function DrawerDetailScreen({
 
   return (
     <main className="dd-screen">
-      <header className="dd-header">
-        <button className="dd-back" type="button" onClick={onBack} aria-label="뒤로가기">‹</button>
-        <div className="dd-title">
-          <h1>{drawerName}</h1>
-          <span>보관품 {recordCount}개</span>
-        </div>
-        <button
-          className="dd-menu"
-          type="button"
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-expanded={menuOpen}
-          aria-label="서랍 메뉴"
-        >•••</button>
-        {menuOpen && (
-          <div className="dd-menu-popover" role="menu">
-            <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onOpenTable?.(); }}>
-              <img src="/assets/ui-icons/icon_table.webp" alt="" />
-              <span>표로 보기</span>
-              <b aria-hidden="true">›</b>
-            </button>
-            <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onOpenManage?.(); }}>
-              <img src="/assets/ui-icons/icon_edit.webp" alt="" />
-              <span>서랍 관리</span>
-              <b aria-hidden="true">›</b>
-            </button>
-          </div>
-        )}
-      </header>
+      <ScreenHeader
+        variant="stacked"
+        title={drawerName}
+        subtitle={`보관품 ${recordCount}개`}
+        onBack={onBack}
+        height={109}
+        rightSlot={
+          <>
+            <button
+              className="dd-menu"
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-expanded={menuOpen}
+              aria-label="서랍 메뉴"
+            >•••</button>
+            {menuOpen && (
+              <div className="dd-menu-popover" role="menu">
+                <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onOpenTable?.(); }}>
+                  <img src="/assets/ui-icons/icon_table.webp" alt="" />
+                  <span>표로 보기</span>
+                  <b aria-hidden="true">›</b>
+                </button>
+                <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onOpenManage?.(); }}>
+                  <img src="/assets/ui-icons/icon_edit.webp" alt="" />
+                  <span>서랍 관리</span>
+                  <b aria-hidden="true">›</b>
+                </button>
+              </div>
+            )}
+          </>
+        }
+      />
 
       <section className="dd-toolbar">
         <label className="dd-search">

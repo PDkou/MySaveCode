@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './DrawerFieldEditScreen.css';
 
 // Ported from Drawary_11_FINAL_CONFIRMED_CODE (CONFIRMED.md: 행 전체 탭 →
@@ -52,10 +53,7 @@ export function DrawerFieldEditScreen({ onBack }: DrawerFieldEditScreenProps) {
   if (mode === 'list') {
     return (
       <main className="df-screen">
-        <header className="df-header">
-          <button className="df-back" aria-label="뒤로가기" onClick={onBack}>‹</button>
-          <h1>서랍칸 정하기</h1>
-        </header>
+        <ScreenHeader variant="stacked" title="서랍칸 정하기" onBack={onBack} height={93} />
         <section className="df-content">
           <p className="df-intro">이 서랍에 어떤 내용을 기록할까요?<br />원하는 서랍칸을 직접 정할 수 있어요.</p>
           <p className="df-list-help"><b>서랍칸</b>을 누르면 수정할 수 있고,<br />오른쪽 <b>손잡이</b>를 끌면 순서를 바꿀 수 있어요.</p>
@@ -80,10 +78,7 @@ export function DrawerFieldEditScreen({ onBack }: DrawerFieldEditScreenProps) {
 
   return (
     <main className="df-screen">
-      <header className="df-header">
-        <button className="df-back" onClick={() => setMode('list')} aria-label="뒤로가기">‹</button>
-        <h1>서랍칸 수정</h1>
-      </header>
+      <ScreenHeader variant="stacked" title="서랍칸 수정" onBack={() => setMode('list')} height={93} />
       <section className="df-edit-content">
         <label className="df-label" htmlFor="field-name">서랍칸 이름</label>
         <div className="df-input-wrap">

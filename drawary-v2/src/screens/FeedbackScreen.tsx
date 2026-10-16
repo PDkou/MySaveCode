@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './FeedbackScreen.css';
 
 export type FeedbackType = 'improvement' | 'bug' | 'feature' | 'other';
@@ -124,10 +125,7 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
 
   return (
     <main className="fb59-screen" aria-label="Drawary 피드백 화면">
-      <header className="fb59-appbar">
-        <button className="fb59-back" type="button" aria-label="뒤로 가기" onClick={onBack} />
-        <h1>피드백</h1>
-      </header>
+      <ScreenHeader title="피드백" onBack={onBack} backLabel="뒤로 가기" height={65} />
       <div className="fb59-main">
         <section className="fb59-hero" aria-label="피드백 안내">
           <p className="fb59-hero-kicker">당신의 의견이 필요해요</p>
@@ -204,7 +202,7 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
         </form>
       </div>
       <div className="fb59-bottom">
-        <button className="fb59-send" form="fb59-form" type="submit">피드백 보내기</button>
+        <button className="fb59-send uf-cta-primary" form="fb59-form" type="submit">피드백 보내기</button>
         <p className="fb59-bottom-note">입력하신 내용을 확인한 뒤 보내주세요.</p>
       </div>
       {status && <div className="fb59-status" role="status" aria-live="polite">{status}</div>}

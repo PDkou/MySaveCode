@@ -1,3 +1,4 @@
+import { ScreenHeader } from '../components/ScreenHeader';
 import './NotificationSettingsScreen.css';
 
 export interface NotificationSettingsScreenProps {
@@ -37,11 +38,7 @@ export function NotificationSettingsScreen({
 }: NotificationSettingsScreenProps) {
   return (
     <main className="ns-screen">
-      <header className="ns-header">
-        <button className="ns-back" type="button" aria-label="뒤로" onClick={onBack}>‹</button>
-        <div className="ns-title">알림 설정</div>
-        <div />
-      </header>
+      <ScreenHeader title="알림 설정" onBack={onBack} height={92} />
 
       <section className="ns-context">
         <div className="ns-drawer-icon"><img src={drawerIconUri} alt="" /></div>
@@ -60,7 +57,7 @@ export function NotificationSettingsScreen({
         </p>
       </section>
 
-      <button className="ns-add-btn" type="button" onClick={onAddNotification}>
+      <button className="ns-add-btn uf-cta-primary" type="button" onClick={onAddNotification}>
         <img src="/assets/ui-icons/icon_add.webp" alt="" />
         알림 추가하기
       </button>

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './BackupProgressScreen.css';
 
 interface BackupProgressScreenProps {
@@ -28,10 +29,7 @@ export function BackupProgressScreen({ onBack, onComplete }: BackupProgressScree
 
   return (
     <main className="backup-progress-app">
-      <header className="backup-progress-toolbar">
-        <button type="button" className="backup-progress-back" aria-label="뒤로 가기" onClick={onBack} />
-        <h1>백업하기</h1>
-      </header>
+      <ScreenHeader title="백업하기" onBack={onBack} backLabel="뒤로 가기" height={81} />
       <section className="backup-progress-panel" aria-label="백업 진행 상태">
         <img
           className="backup-progress-illustration"

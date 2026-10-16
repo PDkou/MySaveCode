@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './DrawerManageScreen.css';
 import { TableSortFilterEntryScreen } from './TableSortFilterEntryScreen';
 import { TableSortScreen } from './TableSortScreen';
@@ -97,11 +98,7 @@ export function DrawerManageScreen({
 
   return (
     <main className="dm-screen">
-      <header className="dm-header">
-        <button className="dm-back" type="button" onClick={onBack} aria-label="뒤로가기">‹</button>
-        <h1>서랍 관리</h1>
-        <span className="dm-header-spacer" />
-      </header>
+      <ScreenHeader title="서랍 관리" onBack={onBack} height={61} />
 
       <section className="dm-summary">
         <div className="dm-summary-icon">

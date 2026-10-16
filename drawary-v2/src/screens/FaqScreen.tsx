@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './FaqScreen.css';
 
 export type FaqCategory = 'all' | 'basic' | 'data' | 'repeat' | 'settings';
@@ -98,10 +99,7 @@ export function FaqScreen({ initialTopic, onBack }: FaqScreenProps) {
   return (
     <main className="faq56-screen" aria-label="자주 묻는 질문">
       <div className="faq56-scroller">
-        <header className="faq56-appbar">
-          <button type="button" className="faq56-back" aria-label="도움말로 돌아가기" onClick={onBack} />
-          <h1>자주 묻는 질문</h1>
-        </header>
+        <ScreenHeader title="자주 묻는 질문" onBack={onBack} backLabel="도움말로 돌아가기" height={78} />
         <section className="faq56-sticky" aria-label="질문 검색 및 분류">
           <div className="faq56-searchbox">
             <span className="faq56-magnify" aria-hidden="true" />

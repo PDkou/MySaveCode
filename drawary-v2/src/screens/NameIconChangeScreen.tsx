@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './NameIconChangeScreen.css';
 
 export interface DrawerIconOption {
@@ -78,11 +79,7 @@ export function NameIconChangeScreen({
 
   return (
     <main className="nic-page">
-      <header className="nic-header">
-        <button type="button" className="nic-back" onClick={onBack} aria-label="뒤로가기">‹</button>
-        <h1>서랍 이름 / 아이콘 변경</h1>
-        <span />
-      </header>
+      <ScreenHeader title="서랍 이름 / 아이콘 변경" onBack={onBack} height={61} />
 
       <section className="nic-preview" aria-label="변경 미리보기">
         <div className="nic-preview-icon">

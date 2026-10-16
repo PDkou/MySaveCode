@@ -1,3 +1,4 @@
+import { ScreenHeader } from '../components/ScreenHeader';
 import './RecurrenceCompleteScreen.css';
 
 export interface RecurrenceCompleteScreenProps {
@@ -29,11 +30,7 @@ export function RecurrenceCompleteScreen({
 }: RecurrenceCompleteScreenProps) {
   return (
     <main className="rcx-screen">
-      <header className="rcx-header">
-        <div className="rcx-header-spacer" />
-        <div className="rcx-title">반복 설정 완료</div>
-        <div className="rcx-header-spacer" />
-      </header>
+      <ScreenHeader title="반복 설정 완료" height={88} />
 
       <div className="rcx-hero">
         <img src="/assets/states/recurrence/state_recurrence_entry_created.webp" alt="" />

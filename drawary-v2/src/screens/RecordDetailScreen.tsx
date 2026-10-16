@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './RecordDetailScreen.css';
 import { RecordDeleteConfirmScreen } from './RecordDeleteConfirmScreen';
 
@@ -97,26 +98,31 @@ export function RecordDetailScreen({
 
   return (
     <main className="rd-screen">
-      <header className="rd-header">
-        <button className="rd-back" type="button" onClick={onBack} aria-label="뒤로가기">‹</button>
-        <h1>보관품 상세</h1>
-        <button
-          className="rd-menu"
-          type="button"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-expanded={menuOpen}
-          aria-label="보관품 메뉴"
-        >•••</button>
-
-        {menuOpen && (
-          <div className="rd-menu-popover" role="menu">
-            <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setDeleteConfirmOpen(true); }}>
-              <img src="/assets/ui-icons/icon_delete.webp" alt="" />
-              <span>보관품 삭제</span>
-            </button>
-          </div>
-        )}
-      </header>
+      <ScreenHeader
+        variant="stacked"
+        title="보관품 상세"
+        onBack={onBack}
+        height={92}
+        rightSlot={
+          <>
+            <button
+              className="rd-menu"
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-expanded={menuOpen}
+              aria-label="보관품 메뉴"
+            >•••</button>
+            {menuOpen && (
+              <div className="rd-menu-popover" role="menu">
+                <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setDeleteConfirmOpen(true); }}>
+                  <img src="/assets/ui-icons/icon_delete.webp" alt="" />
+                  <span>보관품 삭제</span>
+                </button>
+              </div>
+            )}
+          </>
+        }
+      />
 
       <section className="rd-content">
         {photoUri ? (

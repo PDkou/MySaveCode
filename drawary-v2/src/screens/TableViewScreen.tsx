@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './TableViewScreen.css';
 import { TableSortScreen, type SortChoice } from './TableSortScreen';
 import { TableFilterScreen, type FilterRule } from './TableFilterScreen';
@@ -112,16 +113,14 @@ export function TableViewScreen({
 
   return (
     <main className="tv-screen">
-      <header className="tv-header">
-        <button className="tv-back" type="button" onClick={onBack} aria-label="뒤로가기">‹</button>
-
-        <div className="tv-title">
-          <h1>{drawerName}</h1>
-          <span>표 보기</span>
-        </div>
-
-        <button className="tv-export" type="button" onClick={onExport} aria-label="표 내보내기 메뉴">•••</button>
-      </header>
+      <ScreenHeader
+        variant="stacked"
+        title={drawerName}
+        subtitle="표 보기"
+        onBack={onBack}
+        height={103}
+        rightSlot={<button className="tv-export" type="button" onClick={onExport} aria-label="표 내보내기 메뉴">•••</button>}
+      />
 
       <section className="tv-summary">
         <div className="tv-summary-left">

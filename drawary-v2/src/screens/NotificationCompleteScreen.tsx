@@ -1,3 +1,4 @@
+import { ScreenHeader } from '../components/ScreenHeader';
 import './NotificationCompleteScreen.css';
 
 export interface NotificationCompleteScreenProps {
@@ -31,11 +32,7 @@ export function NotificationCompleteScreen({
 
   return (
     <main className="nc-screen">
-      <header className="nc-header">
-        <div className="nc-header-spacer" />
-        <div className="nc-title">알림 설정 완료</div>
-        <div className="nc-header-spacer" />
-      </header>
+      <ScreenHeader title="알림 설정 완료" height={88} />
 
       <div className="nc-hero">
         <img src="/assets/states/reminder/state_notification_enabled.webp" alt="" />

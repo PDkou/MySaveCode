@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './RecurrenceEndConditionScreen.css';
 
 export type RecurrenceEndCondition =
@@ -63,11 +64,7 @@ export function RecurrenceEndConditionScreen({
 
   return (
     <main className="red-screen">
-      <header className="red-header">
-        <button className="red-back" type="button" aria-label="뒤로" onClick={onBack}>‹</button>
-        <div className="red-title">반복 종료 설정</div>
-        <div />
-      </header>
+      <ScreenHeader title="반복 종료 설정" onBack={onBack} height={88} />
 
       <section className="red-summary">
         <span className="red-summary-icon"><img src="/assets/field-types/field_date.webp" alt="" /></span>

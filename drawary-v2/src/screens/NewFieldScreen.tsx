@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './NewFieldScreen.css';
 
 // Ported verbatim from Drawary_10_FINAL_CONFIRMED_CODE's NewFieldFlow.tsx
@@ -47,10 +48,7 @@ export function NewFieldScreen({ onBack, onAdd }: Props) {
   if (step === 'type') {
     return (
       <main className="nf-screen">
-        <header className="nf-header">
-          <button className="nf-back" type="button" onClick={onBack} aria-label="뒤로가기">‹</button>
-          <h1>서랍칸 종류 선택</h1>
-        </header>
+        <ScreenHeader variant="stacked" title="서랍칸 종류 선택" onBack={onBack} height={93} />
 
         <section className="nf-content nf-type-content">
           <p className="nf-intro">
@@ -82,10 +80,7 @@ export function NewFieldScreen({ onBack, onAdd }: Props) {
 
   return (
     <main className="nf-screen">
-      <header className="nf-header">
-        <button className="nf-back" type="button" onClick={() => setStep('type')} aria-label="이전 단계">‹</button>
-        <h1>서랍칸 추가</h1>
-      </header>
+      <ScreenHeader variant="stacked" title="서랍칸 추가" onBack={() => setStep('type')} backLabel="이전 단계" height={93} />
 
       <section className="nf-content nf-detail-content">
         <label className="nf-label" htmlFor="field-name">서랍칸 이름</label>

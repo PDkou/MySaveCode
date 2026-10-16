@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './InfoScreen.css';
 
 export type InfoDestination = 'privacy' | 'terms' | 'licenses';
@@ -33,10 +34,7 @@ export function InfoScreen({ onBack, onNavigate }: InfoScreenProps) {
 
   return (
     <main className="info58-screen" aria-label="Drawary 정보 화면">
-      <header className="info58-appbar">
-        <button className="info58-back" type="button" aria-label="이전 화면" onClick={onBack} />
-        <span className="info58-appbar-title">정보</span>
-      </header>
+      <ScreenHeader title="정보" onBack={onBack} height={80} />
       <section className="info58-brand" aria-label="Drawary 브랜드 소개">
         <img className="info58-flower" src="/assets/brand/brand_symbol_flower_small.webp" alt="Drawary 꽃 로고" />
         <h1 className="info58-brand-name">Drawary</h1>

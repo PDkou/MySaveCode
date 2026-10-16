@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './NotificationTimingScreen.css';
 
 export interface NotificationTimingScreenProps {
@@ -56,11 +57,7 @@ export function NotificationTimingScreen({
 
   return (
     <main className="nt-screen">
-      <header className="nt-header">
-        <button className="nt-back" type="button" aria-label="뒤로" onClick={onBack}>‹</button>
-        <div className="nt-title">알림 추가하기</div>
-        <div />
-      </header>
+      <ScreenHeader title="알림 추가하기" onBack={onBack} height={88} />
 
       <section className="nt-context">
         <div className="nt-drawer-icon"><img src={drawerIconUri} alt="" /></div>

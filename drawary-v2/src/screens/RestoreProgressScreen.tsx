@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './RestoreProgressScreen.css';
 
 export interface RestoreProgressScreenProps {
@@ -28,10 +29,7 @@ export function RestoreProgressScreen({ onBack, onComplete }: RestoreProgressScr
 
   return (
     <main className="rp51-screen" aria-label="복원 진행 화면">
-      <header className="rp51-header">
-        <button type="button" className="rp51-back" aria-label="이전 화면" onClick={onBack} />
-        <span className="rp51-title">복원 중</span>
-      </header>
+      <ScreenHeader title="복원 중" onBack={onBack} height={91} />
       <section className="rp51-panel" aria-live="polite" aria-label="복원 진행 상태">
         <div className="rp51-progress-content">
           <img className="rp51-illustration" src="/assets/states/backup/state_restore_downloading.webp" alt="파일 복원을 안내하는 Drawary 마스코트" />

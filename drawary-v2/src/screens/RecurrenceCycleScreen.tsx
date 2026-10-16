@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './RecurrenceCycleScreen.css';
 
 export type RecurrenceCycle = 'weekly' | 'monthly' | 'yearly';
@@ -48,11 +49,7 @@ export function RecurrenceCycleScreen({
 
   return (
     <main className="rc-screen">
-      <header className="rc-header">
-        <button className="rc-back" type="button" aria-label="뒤로" onClick={onBack}>‹</button>
-        <div className="rc-title">반복 주기 설정</div>
-        <div />
-      </header>
+      <ScreenHeader title="반복 주기 설정" onBack={onBack} height={88} />
 
       <section className="rc-summary">
         <span className="rc-summary-icon"><img src="/assets/field-types/field_date.webp" alt="" /></span>

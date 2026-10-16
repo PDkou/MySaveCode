@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './BackupDestinationScreen.css';
 
 export type BackupDestination = 'device' | 'drive';
@@ -33,10 +34,7 @@ export function BackupDestinationScreen({ initialDestination = 'device', onBack,
 
   return (
     <div className="bkd46-screen">
-      <header className="bkd46-header">
-        <button type="button" className="bkd46-back" aria-label="백업 종류 선택으로 돌아가기" onClick={onBack} />
-        <h1>백업하기</h1>
-      </header>
+      <ScreenHeader title="백업하기" onBack={onBack} backLabel="백업 종류 선택으로 돌아가기" height={84} />
       <main className="bkd46-panel">
         <h2 className="bkd46-section-title">저장 위치 선택</h2>
         <section className="bkd46-hero">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './DataResetConfirmScreen.css';
 
 export interface DataResetConfirmScreenProps {
@@ -24,10 +25,7 @@ export function DataResetConfirmScreen({ onCancel, onResetConfirmed }: DataReset
 
   return (
     <main className="drc53-screen" aria-label="데이터 초기화 확인 화면">
-      <header className="drc53-header">
-        <button className="drc53-back" type="button" aria-label="이전 화면" onClick={onCancel} />
-        <span className="drc53-title">데이터 초기화</span>
-      </header>
+      <ScreenHeader title="데이터 초기화" onBack={onCancel} height={91} />
       <section className="drc53-panel" aria-labelledby="drc53-heading">
         <div className="drc53-intro">
           <img className="drc53-warning-art" src="/assets/states/generic/state_generic_warning.webp" alt="주의 표시를 든 Drawary 마스코트" />

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './RecordEditScreen.css';
 
 export type EditableFieldType = 'text' | 'date' | 'currency' | 'note';
@@ -86,13 +87,7 @@ export function RecordEditScreen({
 
   return (
     <main className="re-screen">
-      <header className="re-header">
-        <button className="re-back" type="button" onClick={onBack} aria-label="뒤로가기">‹</button>
-        <div className="re-title">
-          <h1>보관품 수정</h1>
-          <span>{drawerName} 서랍</span>
-        </div>
-      </header>
+      <ScreenHeader variant="stacked" title="보관품 수정" subtitle={`${drawerName} 서랍`} onBack={onBack} height={94} />
 
       <section className="re-content">
         {photoUri ? (

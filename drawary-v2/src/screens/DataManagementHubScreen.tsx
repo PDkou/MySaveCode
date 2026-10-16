@@ -1,3 +1,4 @@
+import { ScreenHeader } from '../components/ScreenHeader';
 import './DataManagementHubScreen.css';
 
 export interface DataManagementHubScreenProps {
@@ -21,10 +22,7 @@ export interface DataManagementHubScreenProps {
 export function DataManagementHubScreen({ onBack, onBackup, onRestore, onReset }: DataManagementHubScreenProps) {
   return (
     <div className="dmh44-screen">
-      <header className="dmh44-header">
-        <button type="button" className="dmh44-back" aria-label="설정으로 돌아가기" onClick={onBack} />
-        <h1>데이터 관리</h1>
-      </header>
+      <ScreenHeader title="데이터 관리" onBack={onBack} backLabel="설정으로 돌아가기" height={85} />
       <main className="dmh44-panel">
         <h2 className="dmh44-section-title">내 기록 관리하기</h2>
         <section className="dmh44-hero" aria-label="기록 관리 안내">

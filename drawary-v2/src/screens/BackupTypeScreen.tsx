@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './BackupTypeScreen.css';
 
 export type BackupMode = 'include' | 'exclude';
@@ -27,10 +28,7 @@ export function BackupTypeScreen({ initialMode = 'include', onBack, onNext }: Ba
 
   return (
     <div className="bkt45-screen">
-      <header className="bkt45-header">
-        <button type="button" className="bkt45-back" aria-label="데이터 관리로 돌아가기" onClick={onBack} />
-        <h1>백업하기</h1>
-      </header>
+      <ScreenHeader title="백업하기" onBack={onBack} backLabel="데이터 관리로 돌아가기" height={85} />
       <main className="bkt45-panel">
         <h2 className="bkt45-section-title">백업할 내용 선택</h2>
         <section className="bkt45-hero" aria-label="백업 안내">
@@ -59,7 +57,7 @@ export function BackupTypeScreen({ initialMode = 'include', onBack, onNext }: Ba
           <img src="/assets/ui-icons/icon_info.webp" alt="" />
           <span>다음 단계에서 저장 위치를 선택할 수 있습니다.</span>
         </aside>
-        <button type="button" className="bkt45-bottom-action" onClick={() => onNext?.(mode)}>다음</button>
+        <button type="button" className="bkt45-bottom-action uf-cta-primary" onClick={() => onNext?.(mode)}>다음</button>
       </main>
     </div>
   );

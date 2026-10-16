@@ -1,3 +1,4 @@
+import { ScreenHeader } from '../components/ScreenHeader';
 import './RestoreSuccessScreen.css';
 
 export interface RestoreSuccessScreenProps {
@@ -18,10 +19,7 @@ export interface RestoreSuccessScreenProps {
 export function RestoreSuccessScreen({ recordCount, photoCount, settingsStatus, onBack, onConfirm }: RestoreSuccessScreenProps) {
   return (
     <main className="rs52-screen" aria-label="복원 완료 화면">
-      <header className="rs52-header">
-        <button type="button" className="rs52-back" aria-label="이전 화면" onClick={onBack} />
-        <span className="rs52-title">복원 완료</span>
-      </header>
+      <ScreenHeader title="복원 완료" onBack={onBack} height={91} />
       <section className="rs52-panel" aria-label="복원 완료 결과">
         <div className="rs52-content">
           <img className="rs52-art" src="/assets/states/backup/state_restore_success.webp" alt="복원 성공 표시를 든 Drawary 마스코트" />

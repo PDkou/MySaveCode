@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './LanguageSettingsScreen.css';
 
 export type LanguageCode = 'ko' | 'ja' | 'en';
@@ -46,10 +47,12 @@ export function LanguageSettingsScreen({ savedLanguage = 'ko', onBack, onCancel,
 
   return (
     <main className="lang54-screen" lang={selected} aria-label="언어 설정">
-      <header className="lang54-header">
-        <button className="lang54-back" type="button" aria-label={t.previous} onClick={onBack} />
-        <span className="lang54-title">{t.heading}</span>
-      </header>
+      <ScreenHeader
+        title={t.heading}
+        onBack={onBack}
+        backLabel={t.previous}
+        style={{ position: 'absolute', top: 93, height: 50, width: '100%' }}
+      />
       <section className="lang54-form" aria-label="언어 선택">
         {CARDS.map((card) => (
           <button

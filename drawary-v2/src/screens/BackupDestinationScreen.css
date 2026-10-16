@@ -5,10 +5,6 @@
    the rest of this batch's header/back-button convention. */
 button{font:inherit}
 .bkd46-screen{width:390px;height:844px;margin:0 auto;background:#fdf8ef;position:relative;overflow:hidden;font-family:"Noto Sans CJK KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:#243552}
-.bkd46-header{height:84px;display:flex;align-items:flex-end;justify-content:center;padding:0 24px 18px;position:relative}
-.bkd46-back{position:absolute;left:20px;bottom:18px;width:30px;height:33px;border:0;background:transparent;cursor:pointer;padding:0}
-.bkd46-back::after{content:'';position:absolute;left:9px;top:8px;width:13px;height:13px;border-left:3px solid #7e68ee;border-bottom:3px solid #7e68ee;transform:rotate(45deg);border-radius:1px}
-.bkd46-header h1{font-size:21px;font-weight:900;letter-spacing:-.6px;color:#3062b4;white-space:nowrap;margin:0}
 .bkd46-panel{position:absolute;left:18px;right:18px;top:86px;bottom:18px;background:#fff;border-radius:22px;border:1px solid #f0ece8;box-shadow:0 4px 16px rgba(51,39,22,.07);padding:20px 14px 16px;overflow:hidden}
 .bkd46-section-title{margin:4px 4px 16px;font-size:18px;font-weight:900;letter-spacing:-.45px;color:#31486e}
 .bkd46-hero{display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,#f4eefc,#f5effa);border:1px solid #ece3f8;border-radius:18px;padding:12px 14px;margin:0 2px 16px}
@@ -30,4 +26,4 @@ button{font:inherit}
 .bkd46-option.selected .bkd46-radio::after{content:"";width:9px;height:9px;border-radius:50%;background:#9b74f4}
 .bkd46-notice{display:flex;align-items:center;gap:8px;background:#faf6fc;border:1px solid #eee7f6;border-radius:14px;padding:12px 13px;margin:18px 2px 0;color:#928ba0;font-size:11.4px;line-height:1.45;font-weight:650;letter-spacing:-.28px}
 .bkd46-notice img{width:16px;height:16px;object-fit:contain;flex:none}
-.bkd46-btn{position:absolute;left:18px;right:18px;bottom:24px;height:54px;border:0;border-radius:17px;background:linear-gradient(90deg,#b58ef6,#9360ee);display:flex;align-items:center;justify-content:center;color:white;font-size:16px;font-weight:900;letter-spacing:-.35px;box-shadow:0 8px 20px rgba(147,96,238,.24);white-space:nowrap;cursor:pointer}
+.bkd46-btn{position:absolute;left:18px;right:18px;bottom:24px;height:54px;border:0;border-radius:27px;background:linear-gradient(90deg,#7853e8,#9364ed);display:flex;align-items:center;justify-content:center;color:white;font-size:16px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;cursor:pointer}

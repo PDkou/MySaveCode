@@ -1,3 +1,4 @@
+import { ScreenHeader } from '../components/ScreenHeader';
 import './RecurrenceTargetDateScreen.css';
 
 export interface RecurrenceTarget {
@@ -61,11 +62,7 @@ export function RecurrenceTargetDateScreen({
 
   return (
     <main className="rtd-screen">
-      <header className="rtd-header">
-        <button className="rtd-back" type="button" aria-label="뒤로" onClick={onBack}>‹</button>
-        <div className="rtd-title">반복 설정하기</div>
-        <div />
-      </header>
+      <ScreenHeader title="반복 설정하기" onBack={onBack} height={88} />
 
       <section className="rtd-context">
         <div className="rtd-drawer-icon"><img src={drawerIconUri} alt="" /></div>

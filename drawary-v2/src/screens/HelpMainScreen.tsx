@@ -1,3 +1,4 @@
+import { ScreenHeader } from '../components/ScreenHeader';
 import './HelpMainScreen.css';
 
 export interface HelpMainScreenProps {
@@ -18,10 +19,7 @@ export interface HelpMainScreenProps {
 export function HelpMainScreen({ onBack, onOpenFaq, onOpenGuide }: HelpMainScreenProps) {
   return (
     <main className="help55-screen" aria-label="도움말 메인">
-      <header className="help55-appbar">
-        <button type="button" className="help55-back" aria-label="이전 화면" onClick={onBack} />
-        <span className="help55-appbar-title">도움말</span>
-      </header>
+      <ScreenHeader title="도움말" onBack={onBack} height={71} />
       <div className="help55-content">
         <section className="help55-hero" aria-label="도움말 안내">
           <p className="help55-eyebrow">무엇이 궁금한가요?</p>

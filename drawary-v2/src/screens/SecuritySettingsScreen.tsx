@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './SecuritySettingsScreen.css';
 
 export interface SecuritySettingsScreenProps {
@@ -24,10 +25,7 @@ export function SecuritySettingsScreen({ onBack, onOpenAppLock }: SecuritySettin
 
   return (
     <div className="sec40-screen">
-      <header className="sec40-header">
-        <button type="button" className="sec40-back" aria-label="설정으로 돌아가기" onClick={onBack} />
-        <h1>보안 설정</h1>
-      </header>
+      <ScreenHeader title="보안 설정" onBack={onBack} backLabel="설정으로 돌아가기" height={85} />
       <main className="sec40-panel">
         <h2 className="sec40-section-title">내 서랍 보호하기</h2>
         <section className="sec40-hero">

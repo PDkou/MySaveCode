@@ -1,3 +1,4 @@
+import { ScreenHeader } from '../components/ScreenHeader';
 import './NotificationDateFieldScreen.css';
 
 export interface DateFieldOption {
@@ -37,11 +38,7 @@ export function NotificationDateFieldScreen({
 
   return (
     <main className="ndf-screen">
-      <header className="ndf-header">
-        <button className="ndf-back" type="button" aria-label="뒤로" onClick={onBack}>‹</button>
-        <div className="ndf-title">알림 추가하기</div>
-        <div />
-      </header>
+      <ScreenHeader title="알림 추가하기" onBack={onBack} height={88} />
 
       <section className="ndf-context">
         <div className="ndf-drawer-icon"><img src={drawerIconUri} alt="" /></div>

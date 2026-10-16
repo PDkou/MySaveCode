@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './RestoreFilePickerScreen.css';
 
 export interface RestoreFilePickerScreenProps {
@@ -33,10 +34,7 @@ export function RestoreFilePickerScreen({ onBack, onFileSelected }: RestoreFileP
 
   return (
     <main className="rfp49-screen" aria-label="복원 파일 선택 화면">
-      <header className="rfp49-header">
-        <button className="rfp49-back" type="button" aria-label="이전 화면" onClick={onBack} />
-        <span className="rfp49-title">복원</span>
-      </header>
+      <ScreenHeader title="복원" onBack={onBack} height={91} />
       <section className="rfp49-panel" aria-label="복원할 파일 선택">
         <div className="rfp49-content">
           <img className="rfp49-art" src="/assets/states/backup/state_restore_available.webp" alt="복원을 준비하는 서랍장 마스코트" />

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScreenHeader } from '../components/ScreenHeader';
 import './FillDrawerScreen.css';
 
 // Ported from Drawary_13_FINAL_CONFIRMED_CODE's FillDrawer.tsx (the
@@ -68,10 +69,7 @@ export function FillDrawerScreen({
 
   return (
     <main className="fd-screen">
-      <header className="fd-header">
-        <button type="button" className="fd-back" onClick={onBack} aria-label="뒤로가기">‹</button>
-        <h1>{drawerName} 서랍 채우기</h1>
-      </header>
+      <ScreenHeader variant="stacked" title={`${drawerName} 서랍 채우기`} onBack={onBack} height={91} />
 
       <section className="fd-content">
         {hasPhoto ? (

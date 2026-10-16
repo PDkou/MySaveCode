@@ -1,3 +1,4 @@
+import { ScreenHeader } from '../components/ScreenHeader';
 import './RecurrenceManagementScreen.css';
 
 export interface RecurrenceRuleSummary {
@@ -49,11 +50,7 @@ export function RecurrenceManagementScreen({
 }: RecurrenceManagementScreenProps) {
   return (
     <main className="rm-screen">
-      <header className="rm-header">
-        <button className="rm-back" type="button" aria-label="뒤로" onClick={onBack}>‹</button>
-        <div className="rm-title">반복 관리</div>
-        <div />
-      </header>
+      <ScreenHeader title="반복 관리" onBack={onBack} height={88} />
 
       <section className="rm-context">
         <div className="rm-drawer-icon"><img src={drawerIconUri} alt="" /></div>
