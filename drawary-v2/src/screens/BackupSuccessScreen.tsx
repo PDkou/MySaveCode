@@ -20,6 +20,7 @@ export function BackupSuccessScreen({ fileName, location, description, onConfirm
   return (
     <main className="bks48-screen" aria-label="백업 완료 화면">
       <ScreenHeader title="완료" height={91} />
+      <span className="bks48-back" aria-hidden="true" />
       <section className="bks48-panel" aria-label="백업 완료 내용">
         <div className="bks48-content">
           <img className="bks48-art" src="/assets/states/backup/state_backup_success.webp" alt="백업을 완료하고 확인 표시를 든 서랍장 마스코트" />
