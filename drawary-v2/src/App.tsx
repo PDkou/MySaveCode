@@ -22,6 +22,7 @@ import { DrawerDetailScreen, DEFAULT_RECORDS } from './screens/DrawerDetailScree
 import { RecordDetailScreen } from './screens/RecordDetailScreen';
 import { RecordEditScreen } from './screens/RecordEditScreen';
 import { PhotoViewerScreen } from './screens/PhotoViewerScreen';
+import { loadRecordPhotoBlobs, makeRecordPhotoURLs, pickRecordPhotos, releaseRecordPhotoURLs, saveRecordPhotoBlobs } from './data/recordPhotos';
 import { TableViewScreen } from './screens/TableViewScreen';
 import { DrawerManageScreen } from './screens/DrawerManageScreen';
 import { NotificationSettingsScreen } from './screens/NotificationSettingsScreen';
@@ -114,7 +115,67 @@ export default function App() {
   // the fixture only when passed `undefined`, so removal must use ''
   // rather than undefined or the default parameter would silently put
   // the photo right back (a real bug caught during this screen's QA).
-  const [editPhotoUri, setEditPhotoUri] = useState('/fixtures/sample_edit_photo.webp');
+  // The approved UI is unchanged: photo data is bound to a stable drawer/record key.
+  // No stored row = approved demo photo; an empty stored array = photos deleted.
+  const [drawerDetailKey, setDrawerDetailKey] = useState('open-cosmetics');
+  const recordPhotoKey = drawerDetailKey + ':' + recordDetailId;
+  const [recordPhotoOverrides, setRecordPhotoOverrides] = useState<Record<string, string[]>>({});
+  const storedPhotoUrlRef = useRef(new Map<string, string[]>());
+  const editPhotoUrlRef = useRef<string[]>([]);
+  const [editPendingBlobs, setEditPendingBlobs] = useState<Blob[] | null>(null);
+  const [editPendingUrls, setEditPendingUrls] = useState<string[] | null>(null);
+
+  const selectedRecord = DEFAULT_RECORDS.find(r => r.id === recordDetailId) ?? DEFAULT_RECORDS[0];
+  const defaultPhoto = selectedRecord.id === 'lip'
+    ? '/fixtures/sample_selected_photo.webp'
+    : selectedRecord.thumbnailUri;
+  const selectedRecordPhotos = recordPhotoOverrides[recordPhotoKey]
+    ?? (defaultPhoto ? [defaultPhoto] : []);
+
+  // Load previously saved photos whenever the selected record changes.
+  useEffect(() => {
+    let cancelled = false;
+    loadRecordPhotoBlobs(recordPhotoKey).then(blobs => {
+      if (cancelled || blobs === null) return;
+      const urls = makeRecordPhotoURLs(blobs);
+      releaseRecordPhotoURLs(storedPhotoUrlRef.current.get(recordPhotoKey) ?? []);
+      storedPhotoUrlRef.current.set(recordPhotoKey, urls);
+      setRecordPhotoOverrides(prev => ({ ...prev, [recordPhotoKey]: urls }));
+    }).catch(error => console.error('보관품 사진 불러오기 실패', error));
+    return () => { cancelled = true; };
+  }, [recordPhotoKey]);
+
+  const clearPendingPhotoEdit = () => {
+    releaseRecordPhotoURLs(editPhotoUrlRef.current);
+    editPhotoUrlRef.current = [];
+    setEditPendingBlobs(null);
+    setEditPendingUrls(null);
+  };
+  const pickPhotosForEdit = async () => {
+    const files = await pickRecordPhotos();
+    if (!files.length) return;
+    const urls = makeRecordPhotoURLs(files);
+    releaseRecordPhotoURLs(editPhotoUrlRef.current);
+    editPhotoUrlRef.current = urls;
+    setEditPendingBlobs(files);
+    setEditPendingUrls(urls);
+  };
+  const finishPhotoEdit = async () => {
+    if (editPendingBlobs !== null) {
+      try {
+        await saveRecordPhotoBlobs(recordPhotoKey, editPendingBlobs);
+      } catch (error) {
+        window.alert(error instanceof Error ? error.message : '사진을 저장하지 못했어요.');
+        return;
+      }
+      const urls = makeRecordPhotoURLs(editPendingBlobs);
+      releaseRecordPhotoURLs(storedPhotoUrlRef.current.get(recordPhotoKey) ?? []);
+      storedPhotoUrlRef.current.set(recordPhotoKey, urls);
+      setRecordPhotoOverrides(prev => ({ ...prev, [recordPhotoKey]: urls }));
+    }
+    clearPendingPhotoEdit();
+    navigate('record-detail');
+  };
 
   // #29-#32 알림 설정 wizard state. dateFields comes from
   // DEFAULT_DRAWER_FIELDS filtered to kind==='date' (the same demo
@@ -883,8 +944,8 @@ export default function App() {
     // which per #18's CONFIRMED.md returns to #15 (서랍 상세) -- there's
     // no real deletion from a data model yet (V2-12), so this is
     // navigation-only, same caveat as #09-#13's local demo state.
-    const record = DEFAULT_RECORDS.find((r) => r.id === recordDetailId) ?? DEFAULT_RECORDS[0];
-    const photoUri = record.id === 'lip' ? '/fixtures/sample_selected_photo.webp' : record.thumbnailUri;
+    const record = selectedRecord;
+    const photoUri = selectedRecordPhotos[0] ?? '';
     return <main className="drawary-app-shell" data-route="record-detail">
       <FixedCanvas height={844}>
         <RecordDetailScreen
@@ -892,7 +953,7 @@ export default function App() {
           title={record.subtitle ?? record.title}
           photoUri={photoUri}
           onBack={() => navigate('drawer-detail')}
-          onEdit={() => navigate('record-edit')}
+          onEdit={() => { clearPendingPhotoEdit(); navigate('record-edit'); }}
           onDelete={() => navigate('drawer-detail')}
           onOpenPhoto={() => navigate('photo-viewer')}
         />
@@ -900,39 +961,34 @@ export default function App() {
     </main>;
   }
   if (route === 'photo-viewer') {
-    // #19 사진 확대/보기, reachable by tapping #16's main photo
-    // (CLAUDE.md note: #16's own confirmed source never defines that
-    // tap target, so this wiring is this app's own addition -- see
-    // RecordDetailScreen.tsx's onOpenPhoto comment). Closing returns to
-    // #16 per CONFIRMED.md. No clean 3-photo set for a single item
-    // exists in any archive (the real fixtures are mis-captured
-    // screenshot crops, like #16's) -- reuses #15's 3 clean item
-    // thumbnails purely to exercise the swipe/zoom/thumbnail mechanics,
-    // not as "the" approved photo set.
+    // #19: the final approved viewer/gestures are untouched.
+    // Photos belong only to the selected record, never another product.
     return <main className="drawary-app-shell" data-route="photo-viewer">
       <FixedCanvas height={844}>
         <PhotoViewerScreen
-          photoUris={['/fixtures/sample_lip.webp', '/fixtures/sample_cushion.webp', '/fixtures/sample_palette.webp']}
+          key={recordPhotoKey}
+          photoUris={selectedRecordPhotos}
           onClose={() => navigate('record-detail')}
         />
       </FixedCanvas>
     </main>;
   }
   if (route === 'record-edit') {
-    // #17 보관품 수정, reachable from #16's "수정하기" (previously a
-    // no-op). Per CONFIRMED.md, "수정 완료" returns to #16 (보관품 상세),
-    // not somewhere new. Photo remove/re-add is real local state here
-    // (not yet written back into #16's own displayed photo -- no shared
-    // record data model exists until V2-12).
+    // #17: selected photos are staged until "수정 완료"; cancel discards edits.
+    // Approved component DOM and CSS are unchanged.
     return <main className="drawary-app-shell" data-route="record-edit">
       <FixedCanvas height={844}>
         <RecordEditScreen
           drawerName={drawerDetailName}
-          photoUri={editPhotoUri}
-          onBack={() => navigate('record-detail')}
-          onPickPhoto={() => setEditPhotoUri('/fixtures/sample_edit_photo.webp')}
-          onRemovePhoto={() => setEditPhotoUri('')}
-          onSave={() => navigate('record-detail')}
+          photoUri={editPendingUrls !== null
+            ? (editPendingUrls[0] ?? '')
+            : (recordPhotoOverrides[recordPhotoKey] === undefined && selectedRecord.id === 'lip'
+                ? '/fixtures/sample_edit_photo.webp'
+                : (selectedRecordPhotos[0] ?? ''))}
+          onBack={() => { clearPendingPhotoEdit(); navigate('record-detail'); }}
+          onPickPhoto={pickPhotosForEdit}
+          onRemovePhoto={() => { clearPendingPhotoEdit(); setEditPendingBlobs([]); setEditPendingUrls([]); }}
+          onSave={finishPhotoEdit}
         />
       </FixedCanvas>
     </main>;
@@ -987,6 +1043,7 @@ export default function App() {
             if (action === 'edit') { navigate('home-edit'); return; }
             if (UNIMPLEMENTED_HOME_ACTIONS.has(action)) return; // no destination screen yet; see CLAUDE.md note above
             setDrawerDetailName(DRAWER_NAMES[action]);
+            setDrawerDetailKey(action);
             navigate('drawer-detail');
           }} />
         ) : route === 'search' ? (
