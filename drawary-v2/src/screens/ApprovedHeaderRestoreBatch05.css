@@ -59,3 +59,13 @@
  content:'‹';border:0;border-radius:0;width:auto;height:34px;
  font:300 34px/34px Arial,sans-serif;color:#1f63ba;transform:none;
 }
+
+/* Approved #32/#37 completion headers have no back button; place
+ * both spacer slots on the SAME grid row to center the title vertically. */
+.drawary-app-shell:is(
+ [data-route="notification-complete"],
+ [data-route="recurrence-complete"]
+) .uf-header--center .uf-header-spacer:last-child {
+ grid-column:3;
+ grid-row:1;
+}
