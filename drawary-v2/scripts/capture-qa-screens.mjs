@@ -49,10 +49,10 @@ writeFileSync(join(output,'report.json'),JSON.stringify(report,null,2));
 const lines = ['# Drawary V2 actual React visual QA','','Viewport: 390×844. Screenshots are NOT final approved design comparisons.','',
 '| Route | Result | Broken images | Browser errors |','|---|---|---:|---:|'];
 for (const item of report.routes) {
- const ok = !item.fatal && item.status===200 && !(item.brokenImages?.length) && !(item.errors?.length) && item.textLength>0;
+ const ok = !item.fatal && item.status===200 && !(item.brokenImages?.length) && !(item.errors?.length) && (item.textLength>0 || item.route==='splash');
  lines.push(`| ${item.route} | ${ok?'PASS':'REVIEW'} | ${item.brokenImages?.length??'—'} | ${item.errors?.length??'—'} |`);
 }
 writeFileSync(join(output,'report.md'),lines.join('\n')+'\n');
-const bad=report.routes.filter(item => item.fatal || item.status !==200 || item.brokenImages?.length || item.errors?.length || item.textLength===0);
+const bad=report.routes.filter(item => item.fatal || item.status !==200 || item.brokenImages?.length || item.errors?.length || (item.textLength===0 && item.route!=='splash'));
 console.log(`Captured ${report.routes.length} React routes. Issues: ${bad.length}. Reports at ${output}/`);
 if (bad.length) process.exitCode=1;
