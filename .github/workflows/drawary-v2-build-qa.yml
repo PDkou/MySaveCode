@@ -24,3 +24,5 @@ jobs:
         run: npm run build
       - name: Guard approved screen 47
         run: node drawary-v2/scripts/check-design-locks.mjs
+      - name: Guard latest approved #55 and #59 sources
+        run: node drawary-v2/scripts/guard-latest-approved.mjs
