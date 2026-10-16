@@ -69,7 +69,7 @@ export function FillDrawerScreen({
 
   return (
     <main className="fd-screen">
-      <ScreenHeader variant="stacked" title={`${drawerName} 서랍 채우기`} onBack={onBack} height={91} />
+      <ScreenHeader variant="stacked" title={`${drawerName} 서랍 채우기`} onBack={onBack} height={93} />
 
       <section className="fd-content">
         {hasPhoto ? (

@@ -87,7 +87,7 @@ export function RecordEditScreen({
 
   return (
     <main className="re-screen">
-      <ScreenHeader variant="stacked" title="보관품 수정" subtitle={`${drawerName} 서랍`} onBack={onBack} height={94} />
+      <ScreenHeader variant="stacked" title="보관품 수정" subtitle={`${drawerName} 서랍`} onBack={onBack} height={100} />
 
       <section className="re-content">
         {photoUri ? (

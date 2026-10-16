@@ -5,7 +5,7 @@ button,input{font:inherit}
 .drc53-header{height:91px;position:relative;display:flex;align-items:center;justify-content:center;padding:16px 18px 0}
 .drc53-title{white-space:nowrap;color:#285a9b;font-size:20px;font-weight:850;letter-spacing:-.7px;line-height:24px}
 .drc53-back{position:absolute;left:25px;top:45px;width:15px;height:15px;border:0;border-left:2.5px solid #806aea;border-bottom:2.5px solid #806aea;transform:rotate(45deg);background:transparent;cursor:pointer}
-.drc53-panel{position:absolute;inset:91px 17px 19px;border-radius:23px;background:white;border:1px solid #f1ece7;box-shadow:0 4px 17px #7b67500b;padding:0 17px 98px;overflow:hidden}
+.drc53-panel{position:absolute;inset:88px 17px 19px;border-radius:23px;background:white;border:1px solid #f1ece7;box-shadow:0 4px 17px #7b67500b;padding:0 17px 98px;overflow:hidden}
 .drc53-intro{display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:103px;text-align:center}
 .drc53-warning-art{width:191px;height:156px;object-fit:contain;display:block;user-select:none}
 .drc53-heading{margin:14px 0 0;font-size:19px;font-weight:850;line-height:1.4;color:#2a4c80;letter-spacing:-.65px;white-space:nowrap}

@@ -25,7 +25,7 @@ export function SecuritySettingsScreen({ onBack, onOpenAppLock }: SecuritySettin
 
   return (
     <div className="sec40-screen">
-      <ScreenHeader title="보안 설정" onBack={onBack} backLabel="설정으로 돌아가기" height={85} />
+      <ScreenHeader title="보안 설정" onBack={onBack} backLabel="설정으로 돌아가기" height={88} />
       <main className="sec40-panel">
         <h2 className="sec40-section-title">내 서랍 보호하기</h2>
         <section className="sec40-hero">

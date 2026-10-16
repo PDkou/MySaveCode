@@ -6,7 +6,7 @@ button{font:inherit}
 .ld41-header h1{font-size:21px;letter-spacing:-.6px;font-weight:900;color:#1959a6;margin:0}
 .ld41-back{position:absolute;left:20px;top:37px;width:30px;height:33px;border:0;background:transparent;cursor:pointer}
 .ld41-back:after{content:'';position:absolute;left:9px;top:8px;width:13px;height:13px;border-left:3.5px solid #8b62f5;border-bottom:3.5px solid #8b62f5;transform:rotate(45deg);border-radius:1px}
-.ld41-panel{position:absolute;left:16px;right:16px;top:85px;bottom:31px;background:#fff;border:1px solid #efebe7;border-radius:20px;box-shadow:0 3px 14px #372d280e;padding:21px 11px 25px}
+.ld41-panel{position:absolute;left:16px;right:16px;top:88px;bottom:31px;background:#fff;border:1px solid #efebe7;border-radius:20px;box-shadow:0 3px 14px #372d280e;padding:21px 11px 25px}
 .ld41-section-title{margin:0 0 17px 7px;font-weight:900;font-size:18px;letter-spacing:-.55px;line-height:25px;color:#2c4d7d}
 .ld41-hero{margin:0 1px 17px;display:flex;align-items:center;height:109px;border:1px solid #e8ddf8;border-radius:19px;background:linear-gradient(112deg,#f5effe 0%,#f8f2ff 45%,#f9f6ff 100%);padding:16px 14px;gap:12px}
 .ld41-hero-art{width:95px;height:79px;border-radius:20px;background:rgba(255,255,255,.55);display:grid;place-items:center;flex:none;box-shadow:0 3px 12px #cdb9f21c}

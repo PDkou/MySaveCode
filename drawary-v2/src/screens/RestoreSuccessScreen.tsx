@@ -19,7 +19,7 @@ export interface RestoreSuccessScreenProps {
 export function RestoreSuccessScreen({ recordCount, photoCount, settingsStatus, onBack, onConfirm }: RestoreSuccessScreenProps) {
   return (
     <main className="rs52-screen" aria-label="복원 완료 화면">
-      <ScreenHeader title="복원 완료" onBack={onBack} height={91} />
+      <ScreenHeader title="복원 완료" onBack={onBack} height={88} />
       <section className="rs52-panel" aria-label="복원 완료 결과">
         <div className="rs52-content">
           <img className="rs52-art" src="/assets/states/backup/state_restore_success.webp" alt="복원 성공 표시를 든 Drawary 마스코트" />

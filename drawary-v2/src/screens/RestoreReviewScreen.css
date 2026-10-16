@@ -5,7 +5,7 @@ button{font:inherit}
 .rr50-header{height:91px;display:flex;align-items:center;justify-content:center;position:relative;padding:16px 18px 0}
 .rr50-title{font-size:20px;font-weight:850;line-height:24px;letter-spacing:-.7px;color:#285a9b;white-space:nowrap}
 .rr50-back{position:absolute;left:25px;top:45px;width:15px;height:15px;border:0;border-left:2.5px solid #806aea;border-bottom:2.5px solid #806aea;transform:rotate(45deg);background:none;cursor:pointer}
-.rr50-panel{position:absolute;top:91px;bottom:19px;left:17px;right:17px;border-radius:23px;background:#fff;border:1px solid #f1ece7;box-shadow:0 4px 17px #7b67500b;padding:20px 17px 92px;overflow:hidden}
+.rr50-panel{position:absolute;top:88px;bottom:19px;left:17px;right:17px;border-radius:23px;background:#fff;border:1px solid #f1ece7;box-shadow:0 4px 17px #7b67500b;padding:20px 17px 92px;overflow:hidden}
 .rr50-file-card{width:100%;background:#fcfbff;border:1px solid #e7e3f3;border-radius:16px;padding:14px 15px 13px;display:flex;align-items:flex-start;gap:10px}
 .rr50-file-main{min-width:0;flex:1}
 .rr50-file-name{font-size:13.5px;font-weight:850;letter-spacing:-.35px;color:#344762;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.35;display:block}

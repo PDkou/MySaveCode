@@ -40,7 +40,7 @@ export function ThemeSettingsScreen({ initialTheme = 'lavender', onBack, onTheme
 
   return (
     <main className="ts39-screen">
-      <ScreenHeader title="테마" onBack={onBack} backLabel="설정으로 돌아가기" height={85} />
+      <ScreenHeader title="테마" onBack={onBack} backLabel="설정으로 돌아가기" height={88} />
       <section className="ts39-panel" aria-label="테마 설정">
         <h2 className="ts39-section-heading">테마 스타일</h2>
         <div className="ts39-themes" aria-label="테마 선택">

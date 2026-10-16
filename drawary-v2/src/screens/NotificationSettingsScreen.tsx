@@ -38,7 +38,7 @@ export function NotificationSettingsScreen({
 }: NotificationSettingsScreenProps) {
   return (
     <main className="ns-screen">
-      <ScreenHeader title="알림 설정" onBack={onBack} height={92} />
+      <ScreenHeader title="알림 설정" onBack={onBack} height={88} />
 
       <section className="ns-context">
         <div className="ns-drawer-icon"><img src={drawerIconUri} alt="" /></div>

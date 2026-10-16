@@ -34,7 +34,7 @@ export function RestoreFilePickerScreen({ onBack, onFileSelected }: RestoreFileP
 
   return (
     <main className="rfp49-screen" aria-label="복원 파일 선택 화면">
-      <ScreenHeader title="복원" onBack={onBack} height={91} />
+      <ScreenHeader title="복원" onBack={onBack} height={88} />
       <section className="rfp49-panel" aria-label="복원할 파일 선택">
         <div className="rfp49-content">
           <img className="rfp49-art" src="/assets/states/backup/state_restore_available.webp" alt="복원을 준비하는 서랍장 마스코트" />

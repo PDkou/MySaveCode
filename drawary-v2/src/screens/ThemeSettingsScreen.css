@@ -7,7 +7,7 @@ button{font:inherit;cursor:pointer}
 .ts39-title{margin:0;color:#1959a6;font-size:21px;font-weight:900;letter-spacing:-.6px}
 .ts39-back{position:absolute;left:20px;top:37px;border:0;background:transparent;width:30px;height:33px;padding:0;display:flex;align-items:center;justify-content:center}
 .ts39-back::after{content:'';display:block;width:13px;height:13px;border-left:4px solid #8b62f5;border-bottom:4px solid #8b62f5;transform:rotate(45deg);border-radius:2px}
-.ts39-panel{position:absolute;left:16px;right:16px;top:85px;bottom:31px;background:#fff;border-radius:20px;box-shadow:0 3px 14px rgba(55,45,40,.06);border:1px solid #efebe7;padding:21px 11px 25px}
+.ts39-panel{position:absolute;left:16px;right:16px;top:88px;bottom:31px;background:#fff;border-radius:20px;box-shadow:0 3px 14px rgba(55,45,40,.06);border:1px solid #efebe7;padding:21px 11px 25px}
 .ts39-section-heading{margin:0 0 16px 7px;color:var(--ts39-ink);font-size:18px;line-height:25px;font-weight:900;letter-spacing:-.55px}
 .ts39-themes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:13px 10px}
 .ts39-theme{position:relative;display:flex;flex-direction:column;align-items:center;border:2px solid transparent;border-radius:20px;height:182px;padding:12px 8px 13px;background:var(--card-background);color:var(--ts39-ink);text-align:center;min-width:0;transition:border-color .12s,background .12s}

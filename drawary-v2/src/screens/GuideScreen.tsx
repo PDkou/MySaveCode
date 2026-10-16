@@ -24,7 +24,7 @@ export interface GuideScreenProps {
 export function GuideScreen({ onBack, onNavigate }: GuideScreenProps) {
   return (
     <main className="guide57-screen" aria-label="Drawary 사용 가이드">
-      <ScreenHeader title="사용 가이드" onBack={onBack} height={66} />
+      <ScreenHeader title="사용 가이드" onBack={onBack} height={88} />
       <div className="guide57-scroll">
         <section className="guide57-hero">
           <small>Drawary와 함께</small>

@@ -22,7 +22,7 @@ export interface DataManagementHubScreenProps {
 export function DataManagementHubScreen({ onBack, onBackup, onRestore, onReset }: DataManagementHubScreenProps) {
   return (
     <div className="dmh44-screen">
-      <ScreenHeader title="데이터 관리" onBack={onBack} backLabel="설정으로 돌아가기" height={85} />
+      <ScreenHeader title="데이터 관리" onBack={onBack} backLabel="설정으로 돌아가기" height={88} />
       <main className="dmh44-panel">
         <h2 className="dmh44-section-title">내 기록 관리하기</h2>
         <section className="dmh44-hero" aria-label="기록 관리 안내">

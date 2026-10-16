@@ -29,7 +29,7 @@ export function RestoreProgressScreen({ onBack, onComplete }: RestoreProgressScr
 
   return (
     <main className="rp51-screen" aria-label="복원 진행 화면">
-      <ScreenHeader title="복원 중" onBack={onBack} height={91} />
+      <ScreenHeader title="복원 중" onBack={onBack} height={88} />
       <section className="rp51-panel" aria-live="polite" aria-label="복원 진행 상태">
         <div className="rp51-progress-content">
           <img className="rp51-illustration" src="/assets/states/backup/state_restore_downloading.webp" alt="파일 복원을 안내하는 Drawary 마스코트" />

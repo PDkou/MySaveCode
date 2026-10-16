@@ -7,7 +7,7 @@ button{font:inherit}
 .ps42-header h1{font-size:21px;letter-spacing:-.6px;font-weight:900;color:#1959a6;margin:0}
 .ps42-back{position:absolute;left:20px;top:37px;width:30px;height:33px;border:0;background:transparent;cursor:pointer}
 .ps42-back:after{content:'';position:absolute;left:9px;top:8px;width:13px;height:13px;border-left:3.5px solid #8b62f5;border-bottom:3.5px solid #8b62f5;transform:rotate(45deg);border-radius:1px}
-.ps42-panel{position:absolute;left:16px;right:16px;top:85px;bottom:31px;background:#fff;border:1px solid #efebe7;border-radius:20px;box-shadow:0 3px 14px #372d280e;padding:21px 11px 25px;overflow:hidden}
+.ps42-panel{position:absolute;left:16px;right:16px;top:88px;bottom:31px;background:#fff;border:1px solid #efebe7;border-radius:20px;box-shadow:0 3px 14px #372d280e;padding:21px 11px 25px;overflow:hidden}
 .ps42-section-title{margin:0 0 15px 7px;font-weight:900;font-size:18px;letter-spacing:-.55px;line-height:25px;color:#2c4d7d}
 .ps42-pin-hero{height:114px;margin:0 1px 9px;padding:12px 13px;border-radius:19px;border:1px solid #e8ddf8;background:linear-gradient(112deg,#f5effe 0%,#f9f6ff 100%);display:flex;align-items:center;gap:12px}
 .ps42-pin-hero-icon{height:83px;width:126px;flex:none;display:flex;align-items:center;justify-content:center}
