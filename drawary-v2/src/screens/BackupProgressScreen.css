@@ -5,7 +5,7 @@
   height: 100dvh;
   min-height: 440px;
   overflow: hidden;
-  font-family: 'NanumSquare', 'Noto Sans CJK KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-family: 'Noto Sans CJK KR', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   color: #235a9d;
   background: radial-gradient(ellipse 110% 66% at 50% 46%, #fffdfa 0%, #fcf6ec 100%);
 }
@@ -24,7 +24,7 @@
 .backup-progress-toolbar h1 {
   margin: 0;
   color: #215c9e;
-  font-size: 22px;
+  font-size: 24px;
   letter-spacing: -0.9px;
   font-weight: 800;
 }
@@ -61,7 +61,7 @@
 
 .backup-progress-panel {
   position: absolute;
-  top: calc(90px + env(safe-area-inset-top, 0px));
+  top: calc(83px + env(safe-area-inset-top, 0px));
   left: 16px;
   right: 16px;
   bottom: calc(51px + env(safe-area-inset-bottom, 0px));
@@ -105,7 +105,7 @@
 }
 
 .backup-progress-copy h2 {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
   letter-spacing: -0.9px;
   margin: 0 0 14px;

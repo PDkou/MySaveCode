@@ -36,7 +36,8 @@
   z-index:1;width:100%;padding:0;
 }
 .drawary-app-shell[data-route="backup-progress"] .uf-title {
-  color:#215c9e;font-size:22px;font-weight:800;letter-spacing:-.9px;
+  color:#215c9e;font-size:24px;font-weight:800;letter-spacing:-.9px;
+  font-family:"Noto Sans CJK KR","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
 }
 .drawary-app-shell[data-route="backup-progress"] .uf-back {
   position:absolute;left:17px;top:30px;width:34px;height:34px;
