@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ScreenHeader } from '../components/ScreenHeader';
 import './PinSetupScreen.css';
 
 export interface PinSetupScreenProps {
@@ -76,7 +75,10 @@ export function PinSetupScreen({ onBack, onComplete }: PinSetupScreenProps) {
 
   return (
     <div className="ps42-screen">
-      <ScreenHeader title="PIN 설정" onBack={onBack} backLabel="앱 잠금으로 돌아가기" height={85} />
+      <header className="ps42-header">
+        {onBack && <button type="button" className="ps42-back" onClick={onBack} aria-label="앱 잠금으로 돌아가기" />}
+        <h1>PIN 설정</h1>
+      </header>
       <main className="ps42-panel">
         <h2 className="ps42-section-title">PIN 만들기</h2>
         <section className="ps42-pin-hero" aria-label="PIN 안내">
