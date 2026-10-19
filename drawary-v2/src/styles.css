@@ -19,3 +19,13 @@ main[data-route="create-drawer"] { position: relative; overflow: hidden; }
 .drawary-nav-scale { position: absolute; top: 0; left: 50%; width: 390px; height: 94px; transform-origin: top center; }
 /* Explicit keyboard focus while preserving the fixed final artwork. */
 .drawary-dynamic-bottom-nav__hotspot:focus-visible { outline: 2px solid #684de1; outline-offset: -5px; border-radius: 14px; }
+
+/* #08 backdrop only: suppress live Home's count label, preserve locked #03. */
+.drawary-app-shell[data-route="create-drawer"] .drawary-dimmed-home { position:relative; }
+.drawary-app-shell[data-route="create-drawer"] .drawary-dimmed-home::after {
+  content:""; position:absolute; top:45px; right:0; width:110px; height:90px;
+  background-color:#fffaf2;
+  background-image:url('/assets/ui-icons/icon_flower.webp');
+  background-position:60px 20px; background-size:37px 37px;
+  background-repeat:no-repeat; pointer-events:none;
+}
