@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ScreenHeader } from '../components/ScreenHeader';
 import './ThemeSettingsScreen.css';
 
 export type ThemeId = 'lavender' | 'coral' | 'sage' | 'mustard' | 'sky';
@@ -40,7 +39,10 @@ export function ThemeSettingsScreen({ initialTheme = 'lavender', onBack, onTheme
 
   return (
     <main className="ts39-screen">
-      <ScreenHeader title="테마" onBack={onBack} backLabel="설정으로 돌아가기" height={85} />
+      <header className="ts39-header">
+        {onBack && <button type="button" className="ts39-back" onClick={onBack} aria-label="설정으로 돌아가기" />}
+        <h1 className="ts39-title">테마</h1>
+      </header>
       <section className="ts39-panel" aria-label="테마 설정">
         <h2 className="ts39-section-heading">테마 스타일</h2>
         <div className="ts39-themes" aria-label="테마 선택">
