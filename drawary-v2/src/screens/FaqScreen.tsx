@@ -133,7 +133,7 @@ export function FaqScreen({ initialTopic, onBack }: FaqScreenProps) {
         </section>
         {showIntro && (
           <div className="faq56-intro">
-            <div className="faq56-intro-icon"><img src="/assets/ui-icons/ui_help.webp" alt="" /></div>
+            <div className="faq56-intro-icon"><img src="/assets/ui-icons/icon_help.webp" alt="" /></div>
             <div><strong>궁금한 내용을 확인해보세요</strong><span>검색하거나 카테고리를 선택해 빠르게 찾을 수 있어요.</span></div>
           </div>
         )}
