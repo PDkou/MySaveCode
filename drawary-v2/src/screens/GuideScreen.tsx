@@ -1,4 +1,3 @@
-import { ScreenHeader } from '../components/ScreenHeader';
 import './GuideScreen.css';
 
 export type GuideRoute = 'new_drawer' | 'drawer_fields' | 'record_add' | 'table_view';
@@ -24,7 +23,10 @@ export interface GuideScreenProps {
 export function GuideScreen({ onBack, onNavigate }: GuideScreenProps) {
   return (
     <main className="guide57-screen" aria-label="Drawary 사용 가이드">
-      <ScreenHeader title="사용 가이드" onBack={onBack} height={66} />
+      <header className="guide57-appbar">
+        {onBack && <button type="button" className="guide57-back" onClick={onBack} aria-label="도움말로 돌아가기" />}
+        <span className="guide57-appbar-title">사용 가이드</span>
+      </header>
       <div className="guide57-scroll">
         <section className="guide57-hero">
           <small>Drawary와 함께</small>
