@@ -57,7 +57,7 @@ export function BackupTypeScreen({ initialMode = 'include', onBack, onNext }: Ba
           <img src="/assets/ui-icons/icon_info.webp" alt="" />
           <span>다음 단계에서 저장 위치를 선택할 수 있습니다.</span>
         </aside>
-        <button type="button" className="bkt45-bottom-action uf-cta-primary" onClick={() => onNext?.(mode)}>다음</button>
+        <button type="button" className="bkt45-bottom-action" onClick={() => onNext?.(mode)}>다음</button>
       </main>
     </div>
   );
