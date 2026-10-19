@@ -33,3 +33,6 @@ button{font:inherit}
 .sec40-clock-overlay:before{content:'';position:absolute;left:6px;top:3px;height:5px;width:1.8px;border-radius:3px;background:#9366f1}
 .sec40-clock-overlay:after{content:'';position:absolute;left:7px;top:7px;width:4px;height:1.8px;border-radius:3px;background:#9366f1;transform:rotate(25deg);transform-origin:left center}
 .sec40-note-icon{display:block;flex:none;width:18px;height:18px;object-fit:contain;margin-top:0}
+
+/* Approved #40 first row has no visible trailing chevron; keep navigation hot area. */
+.sec40-screen .sec40-right-arrow { display:none; }
