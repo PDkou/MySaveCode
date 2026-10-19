@@ -129,8 +129,13 @@ export default function App() {
   const defaultPhoto = selectedRecord.id === 'lip'
     ? '/fixtures/sample_selected_photo.webp'
     : selectedRecord.thumbnailUri;
+  // The approved #19 visual shows three photos for the sample lipstick.
+  // Seed only the demo fallback. User-added/deleted photos still take priority.
+  const sampleRecordPhotos = selectedRecord.id === 'lip'
+    ? ['/fixtures/sample_selected_photo.webp', '/fixtures/sample_lip.webp', '/fixtures/sample_edit_photo.webp']
+    : (defaultPhoto ? [defaultPhoto] : []);
   const selectedRecordPhotos = recordPhotoOverrides[recordPhotoKey]
-    ?? (defaultPhoto ? [defaultPhoto] : []);
+    ?? sampleRecordPhotos;
 
   // Load previously saved photos whenever the selected record changes.
   useEffect(() => {
