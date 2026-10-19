@@ -19,7 +19,15 @@ check(feedback.includes('작은 의견 하나가<br />더 편리한 Drawary를<b
 check(feedback.includes('/assets/mascot/mascot_lean_on_drawer.webp'), '#59 revised mascot replaced');
 check(!feedback.includes('mascot_feedback_approved.webp'), '#59 obsolete 10/08 screenshot crop reintroduced');
 check(help.includes('mascot_help_approved.webp'), '#55 confirmed mascot missing');
-check(help.includes('help_question_final.webp')&&help.includes('help_list_final.webp'), '#55 confirmed icons missing');
+// The approved screenshot uses the official purple 3D help/list icons.
+// Verify both the references AND immutable bytes rather than retaining the
+// earlier simplified help_question_final/help_list_final substitutes.
+check(help.includes('/assets/ui-icons/icon_help.webp') && help.includes('/assets/ui-icons/icon_list.webp'), '#55 original approved icon paths missing');
+const iconSHA256 = name => createHash('sha256').update(readFileSync(new URL('public/assets/ui-icons/'+name, root))).digest('hex');
+check(iconSHA256('icon_help.webp') === '5733d3fff7df110135ead8bc7254f8811553f1986deac199260cab6ee2ffac3e', '#55 approved help icon bytes changed');
+check(iconSHA256('icon_list.webp') === 'e1c4efabf9e1eba62e1e6a8e98dc94abe97af9461f76d66146956e560372ce37', '#55 approved list icon bytes changed');
+const faq = read('src/screens/FaqScreen.tsx');
+check(faq.includes('/assets/ui-icons/icon_help.webp'), '#56 approved FAQ intro icon missing');
 // #05 approved screen V3 originals (not substituted generic app icons).
 const sha256 = file => createHash('sha256').update(readFileSync(new URL(file,root))).digest('hex');
 const search = read('src/screens/GlobalSearchScreen.tsx');
