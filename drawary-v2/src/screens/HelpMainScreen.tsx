@@ -31,12 +31,12 @@ export function HelpMainScreen({ onBack, onOpenFaq, onOpenGuide }: HelpMainScree
         </section>
         <nav className="help55-main-options" aria-label="도움말 메뉴">
           <button className="help55-menu-card" type="button" onClick={() => onOpenFaq?.()}>
-            <span className="help55-icon-holder"><img src="/assets/ui-icons/help_question_final.webp" alt="" /></span>
+            <span className="help55-icon-holder"><img src="/assets/ui-icons/icon_help.webp" alt="" /></span>
             <span className="help55-card-copy"><span className="help55-card-title">자주 묻는 질문</span><span className="help55-card-desc">자주 궁금해하는 내용을<br />빠르게 확인해요.</span></span>
             <span className="help55-chevron" aria-hidden="true" />
           </button>
           <button className="help55-menu-card" type="button" onClick={onOpenGuide}>
-            <span className="help55-icon-holder"><img src="/assets/ui-icons/help_list_final.webp" alt="" /></span>
+            <span className="help55-icon-holder"><img src="/assets/ui-icons/icon_list.webp" alt="" /></span>
             <span className="help55-card-copy"><span className="help55-card-title">사용 가이드</span><span className="help55-card-desc">Drawary의 주요 기능을<br />그림으로 쉽게 알아봐요.</span></span>
             <span className="help55-chevron" aria-hidden="true" />
           </button>
