@@ -107,3 +107,6 @@
 .new-drawer-icon.is-selected { border:2px solid #7657e8; }
 .new-drawer-color-row { margin-left:-3px; margin-bottom:24px; }
 .new-drawer-swatch { width:42px; height:42px; }
+
+/* #08: approved sheet is 22px lower than previous real React capture (390x844). Keep artwork/inputs untouched. */
+.drawary-app-shell[data-route="create-drawer"] .new-drawer-sheet { transform: translateY(22px); }
