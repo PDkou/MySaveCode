@@ -6,7 +6,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import java.time.Instant
+import java.time.LocalDate
 
 /**
  * Fires once a day (see ReminderScheduler) to nudge the user back into the
@@ -70,7 +70,10 @@ class DailyReminderReceiver : BroadcastReceiver() {
     // `names` translation table in index.html) isn't running at all, not a
     // second source of truth for anything gameplay-affecting.
     private fun todaysCardBody(prefs: android.content.SharedPreferences, lang: String?): String? {
-        val today = Instant.now().toString().substring(0, 10)
+        // v0.140: must match IncidentAnalyzer.localDateKey() (local
+        // calendar date, not UTC) -- see that function's own v0.140
+        // comment for why.
+        val today = LocalDate.now().toString()
         if (prefs.getString("todays_card_date", null) != today) return null
         val type = prefs.getString("todays_card_type", null) ?: return null
         val rarity = prefs.getString("todays_card_rarity", null) ?: return null

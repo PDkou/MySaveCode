@@ -758,7 +758,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.140.0';
+const APP_VERSION='0.141.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -789,7 +789,20 @@ const supported=['ko','ja'];const detected=(navigator.language||'ko').slice(0,2)
 const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false,dailyReminder:false,reminderHour:21,reminderMinute:0},onboardStep:1,tab:params.get('tab')||'cases',data:null,detailItem:null,revealItem:null,exitConfirmOpen:false,history:{days:{},discoveries:{},revealShownDate:null},weeklyHighlight:null,recordsFilter:null,debugBuild:false};
 function l(ko,ja,en){return state.settings.language==='ko'?ko:state.settings.language==='ja'?ja:en}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function todayKey(){return new Date().toISOString().slice(0,10)}
+// v0.140: director-reported bug fix -- this used to be
+// `d.toISOString().slice(0,10)` (the UTC calendar date), which disagreed
+// with the native day-usage window (local midnight to now, see
+// IncidentAnalyzer.kt's own v0.140 comment). In KST (UTC+9), local
+// midnight to 9am is still "yesterday" in UTC, so opening the app in that
+// window keyed a correct small partial-day summary under what was still
+// yesterday's UTC key, wholesale-overwriting yesterday's complete record
+// on the native side, and flipping revealShownDate/computeStreak/
+// weekRecap's own day boundary at 9am instead of local midnight here.
+// getFullYear()/getMonth()/getDate() are local-time accessors (unlike
+// toISOString(), which is always UTC), so this now matches
+// IncidentAnalyzer.localDateKey() on the native side.
+function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function todayKey(){return dateKey(new Date())}
 // v0.81: streak counter -- counts consecutive calendar days (today
 // included) that have a recorded state.history.days entry, walking
 // backward day-by-day until the first gap. Same date-key iteration
@@ -800,7 +813,7 @@ function computeStreak(){
   let streak=0;
   for(let i=0;;i++){
     const dt=new Date();dt.setDate(dt.getDate()-i);
-    const key=dt.toISOString().slice(0,10);
+    const key=dateKey(dt);
     if(state.history.days[key])streak++;else break;
   }
   return streak;
@@ -1786,7 +1799,7 @@ function weekRecap(){
   const days=[];
   for(let i=6;i>=0;i--){
     const dt=new Date();dt.setDate(dt.getDate()-i);
-    const key=dt.toISOString().slice(0,10);
+    const key=dateKey(dt);
     const entry=state.history.days[key];
     days.push({label:`${dt.getMonth()+1}/${dt.getDate()}`,count:entry?entry.report.totalIncidents:null,isToday:i===0});
   }

@@ -5435,3 +5435,57 @@ schedule()`/`IncidentCheckScheduler.schedule()`은 원래 `Int` 파라미터라
 SDK 없음)에서는 로컬 컴파일/실기기 동작 확인 둘 다 불가능 -- CI
 디버그 빌드가 실제 컴파일 성공 여부의 유일한 검증 수단. 커밋/푸시 후
 CI 트리거.
+
+## v0.141 — 자정~오전9시 사이 전날 기록이 덮어써지는 UTC/로컬 날짜 키 불일치 수정
+
+**배경**: v0.140에서 찾은 두 버그 중 뒤로 미뤄뒀던 (1)번. director에게
+"12시땡하면 다음날로 판정지을까 아니면 이대로 놔둘까"라고 의견을
+물어봤고, 답변: 하루 집계 윈도우(`analyzeToday()`의
+`LocalDate.now().atStartOfDay(zone)`)는 이미 "로컬 자정 = 새 하루"로
+설계된 의도이고 사용자도 그렇게 생각하니 경계 자체는 그대로 두고,
+저장 키 쪽을 그 의도에 맞게 로컬 날짜로 고치는 게 맞다고 제안.
+기존 데이터 마이그레이션 부담도 적다고 설명(한국시간 09:00~24:00에
+기록된 날은 UTC 날짜와 로컬 날짜가 어차피 같아서 키가 안 바뀜,
+영향받는 건 이미 버그가 터진 날짜들뿐). director가 "그럼 그렇게
+고쳐줘"로 승인.
+
+**구현**: UTC 날짜 키를 쓰던 4곳을 전부 로컬 날짜 키로 통일.
+- `IncidentAnalyzer.kt`: `utcDateKey()`(`Instant.now().toString().
+  substring(0,10)`)를 `localDateKey()`(`LocalDate.now().toString()`)로
+  교체, `recordDay()`/`rememberTodaysCard()` 호출부 갱신, 미사용된
+  `Instant` import 제거.
+- `DailyReminderReceiver.kt`: `todaysCardBody()`가 `rememberTodaysCard()`
+  가 저장한 날짜와 비교하는 `today` 변수도 같은 방식(UTC)으로 계산하고
+  있어서, `IncidentAnalyzer`만 고치면 이 비교가 깨짐 -- 같이
+  `LocalDate.now().toString()`으로 교체.
+- `IncidentCheckWorker.kt`: "오늘 이미 알림 보냈는지" 카운터용
+  `todayKey()`도 같은 UTC 방식이라 자정이 아니라 오전 9시에 리셋되던
+  문제 -- 같이 교체.
+- `index.html`: `todayKey()`가 쓰던 `new Date().toISOString().
+  slice(0,10)`(UTC)을 로컬 `getFullYear()/getMonth()/getDate()` 기반의
+  새 `dateKey(d)` 헬퍼로 교체. `computeStreak()`/`weekRecap()` 둘 다
+  내부에서 직접 `dt.toISOString().slice(0,10)`로 조회 키를 만들고
+  있었는데, 그 옆의 표시용 라벨(`dt.getMonth()+1/getDate()`)은 원래부터
+  로컬 기준이라 둘이 서로 다른 날을 가리킬 수 있었음(새벽 시간대에
+  그래프 막대가 엉뚱한 날 데이터를 보여주는 부수 증상의 직접 원인) --
+  두 곳 다 `dateKey(dt)`로 교체해서 라벨과 키가 항상 같은 날을 가리키게
+  통일.
+- `HistoryRepository.kt`/`DayHistoryEntity.kt`의 "date는 UTC
+  YYYY-MM-DD" 주석도 로컬 날짜 기준으로 갱신.
+- `NativeBridge.kt`의 `getRevealShownDate()`/`setRevealShownDate()`는
+  JS가 만든 문자열을 그대로 저장/반환만 하는 pass-through라 변경 불필요
+  (`index.html`의 `todayKey()`만 고치면 자동으로 맞음).
+
+버전 141/0.141.0. 검증: Playwright에 `timezoneId:'Asia/Seoul'`을 줘서
+실제로 KST 새벽 2시(2026-01-02 02:00 로컬)에 수정 전 코드라면
+`d.toISOString().slice(0,10)`이 "2026-01-01"(전날)을 반환했을 것을
+확인 -- 새 `dateKey(d)`는 같은 입력에서 "2026-01-02"(올바른 로컬
+날짜)를 반환함을 직접 비교해서 검증. `weekRecap()`의 라벨과 키가 같은
+로컬 날짜 필드에서 나와 항상 일치하는지도 확인. `node --check`로
+스크립트 블록 문법 확인. 네이티브 Kotlin 쪽(IncidentAnalyzer/
+DailyReminderReceiver/IncidentCheckWorker)은 이 샌드박스에 Android
+SDK가 없어 로컬 컴파일/실기기 확인 둘 다 불가능 -- CI 디버그 빌드
+컴파일 성공 여부가 유일한 검증 수단이고, 실제 자정 전후 동작의 최종
+확인은 director 쪽 실기기 테스트가 필요함을 공유. 기존에 이미 버그로
+깨진 날짜의 과거 기록은 (설계상 이미 손실된 데이터라) 복구 대상이
+아님도 함께 안내. 커밋/푸시 후 CI 트리거.

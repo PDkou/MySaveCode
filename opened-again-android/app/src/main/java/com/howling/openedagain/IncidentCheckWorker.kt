@@ -9,7 +9,7 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.howling.openedagain.data.HistoryRepository
 import com.howling.openedagain.data.IncidentAnalyzer
-import java.time.Instant
+import java.time.LocalDate
 
 /**
  * v0.72: fires every ~4 hours (see IncidentCheckScheduler) to re-run the
@@ -65,7 +65,11 @@ class IncidentCheckWorker(context: Context, params: WorkerParameters) : Worker(c
         return Result.success()
     }
 
-    private fun todayKey(): String = Instant.now().toString().substring(0, 10)
+    // v0.140: changed from the UTC calendar date (Instant.now().toString()
+    // prefix) to the local one -- matches IncidentAnalyzer.localDateKey(),
+    // and this worker's own "already notified for today" reset (line 58)
+    // used to flip at 9am KST instead of local midnight because of it.
+    private fun todayKey(): String = LocalDate.now().toString()
 
     private fun notifyMultipleIncidents(context: Context, count: Int) {
         // Reuses ReminderScheduler's own channel -- one settings toggle

@@ -76,11 +76,14 @@ class HistoryRepository(context: Context) {
         dao.clearDays()
     }
 
-    // `date` is "YYYY-MM-DD" in UTC -- see NativeBridge.utcDateKey(), which
-    // both this call site and index.html's own todayKey() must agree with
-    // for a given day's record() and this upsert to ever land on the same
-    // row. Pulled out of the raw summary/report JSON analyzeToday() already
-    // built rather than re-typing a parallel parameter list.
+    // `date` is "YYYY-MM-DD" in the device's LOCAL calendar date (v0.140:
+    // was UTC until a director-reported bug -- see
+    // IncidentAnalyzer.localDateKey()'s own comment) -- see
+    // IncidentAnalyzer.localDateKey(), which both this call site and
+    // index.html's own todayKey() must agree with for a given day's
+    // record() and this upsert to ever land on the same row. Pulled out of
+    // the raw summary/report JSON analyzeToday() already built rather than
+    // re-typing a parallel parameter list.
     fun recordDay(date: String, summary: JSONObject, totalIncidents: Int, hiddenCount: Int, legendaryCount: Int) {
         dao.upsertDay(
             DayHistoryEntity(

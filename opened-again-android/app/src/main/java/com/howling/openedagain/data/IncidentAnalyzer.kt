@@ -11,7 +11,6 @@ import com.howling.openedagain.core.SessionBuilder
 import com.howling.openedagain.core.UsageSession
 import org.json.JSONArray
 import org.json.JSONObject
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -46,7 +45,7 @@ class IncidentAnalyzer(private val context: Context, private val history: Histor
         val report = DailyReportEngine().build(incidents)
         val summary = DailySummaryEngine(zone).build(sessions)
         val summaryJson = summaryToJson(summary)
-        history.recordDay(utcDateKey(), summaryJson, report.totalIncidents, report.hiddenCount, report.legendaryCount)
+        history.recordDay(localDateKey(), summaryJson, report.totalIncidents, report.hiddenCount, report.legendaryCount)
         rememberTodaysCard(report)
         return Result(report, summary, summaryJson)
     }
@@ -85,13 +84,26 @@ class IncidentAnalyzer(private val context: Context, private val history: Histor
     private fun rememberTodaysCard(report: DailyReport) {
         val rep = report.representative ?: return
         context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).edit()
-            .putString("todays_card_date", utcDateKey())
+            .putString("todays_card_date", localDateKey())
             .putString("todays_card_type", rep.type.name)
             .putString("todays_card_rarity", rep.rarity.name)
             .apply()
     }
 
-    private fun utcDateKey(): String = Instant.now().toString().substring(0, 10)
+    // v0.140: director-reported bug fix -- this used to be utcDateKey()
+    // (Instant.now().toString().substring(0,10), the UTC calendar date),
+    // which disagreed with analyzeToday()'s own usage window above
+    // (LocalDate.now().atStartOfDay(zone), the LOCAL calendar day). In KST
+    // (UTC+9), local midnight to 9am is still "yesterday" in UTC, so
+    // opening the app in that window computed a correct small partial-day
+    // summary but upserted it under what was still yesterday's UTC key,
+    // wholesale-overwriting yesterday's complete record. Local midnight is
+    // the intended day boundary (it's what the usage window already uses,
+    // and what a user means by "today"), so the key is changed to match
+    // the window instead of changing the window to match the key.
+    // index.html's own todayKey()/weekRecap() must use the same local-date
+    // convention -- see that file's own v0.140 comment.
+    private fun localDateKey(): String = LocalDate.now().toString()
 
     private fun summaryToJson(s: DailyUsageSummary) = JSONObject().apply {
         put("startTime", s.startTime)
