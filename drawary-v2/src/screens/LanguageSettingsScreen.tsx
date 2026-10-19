@@ -51,7 +51,7 @@ export function LanguageSettingsScreen({ savedLanguage = 'ko', onBack, onCancel,
         title={t.heading}
         onBack={onBack}
         backLabel={t.previous}
-        style={{ position: 'absolute', top: 93, height: 50, width: '100%' }}
+        style={{ position: 'absolute', top: 0, height: 71, width: '100%' }}
       />
       <section className="lang54-form" aria-label="언어 선택">
         {CARDS.map((card) => (
