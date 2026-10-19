@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { ScreenHeader } from '../components/ScreenHeader';
 import './RestoreReviewScreen.css';
 
 export interface RestoreReviewScreenProps {
@@ -43,7 +42,10 @@ export function RestoreReviewScreen({
 
   return (
     <main className="rr50-screen" aria-label="복원 내용 확인 화면">
-      <ScreenHeader title="복원 내용 확인" onBack={onBack} height={91} />
+      <header className="rr50-header">
+        {onBack && <button className="rr50-back" type="button" onClick={onBack} aria-label="이전 화면" />}
+        <h1 className="rr50-title">복원 내용 확인</h1>
+      </header>
       <section className="rr50-panel" aria-label="백업 파일에 포함된 내용">
         <div className="rr50-file-card" aria-label="선택된 백업 파일">
           <div className="rr50-file-main">
