@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ScreenHeader } from '../components/ScreenHeader';
 import './BackupTypeScreen.css';
 
 export type BackupMode = 'include' | 'exclude';
@@ -28,7 +27,10 @@ export function BackupTypeScreen({ initialMode = 'include', onBack, onNext }: Ba
 
   return (
     <div className="bkt45-screen">
-      <ScreenHeader title="백업하기" onBack={onBack} backLabel="데이터 관리로 돌아가기" height={85} />
+      <header className="bkt45-header">
+        {onBack && <button type="button" className="bkt45-back" onClick={onBack} aria-label="데이터 관리로 돌아가기" />}
+        <h1>백업하기</h1>
+      </header>
       <main className="bkt45-panel">
         <h2 className="bkt45-section-title">백업할 내용 선택</h2>
         <section className="bkt45-hero" aria-label="백업 안내">
