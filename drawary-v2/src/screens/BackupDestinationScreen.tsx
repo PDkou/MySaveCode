@@ -39,7 +39,7 @@ export function BackupDestinationScreen({ initialDestination = 'device', onBack,
         <h2 className="bkd46-section-title">저장 위치 선택</h2>
         <section className="bkd46-hero">
           <img src="/assets/states/permissions/state_permission_storage.webp" alt="" />
-          <div className="bkd46-copy"><strong>백업 파일은 어디에<br />보관할까요?</strong><span>원하는 저장 위치를<br />선택해 주세요.</span></div>
+          <div className="bkd46-copy"><strong>백업 파일은 어디<br />에<br />보관할까요?</strong><span>원하는 저장 위치를<br />선택해 주세요.</span></div>
         </section>
         <div className="bkd46-label">저장할 곳</div>
         <button
