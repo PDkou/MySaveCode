@@ -75,8 +75,10 @@
   position: absolute;
   top: calc(50% - 195px);
   left: 50%;
+  /* Keep the original WebP's intrinsic proportions and complete artwork visible. */
   width: min(67vw, 260px);
-  aspect-ratio: 570 / 434;
+  height: auto;
+  max-width: calc(100% - 24px);
   transform: translateX(-50%);
   object-fit: contain;
   user-select: none;
