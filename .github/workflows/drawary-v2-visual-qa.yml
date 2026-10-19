@@ -29,6 +29,11 @@ jobs:
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright
           npx playwright install --with-deps chromium
+      - name: Install approved-design Korean font for reproducible screenshots
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y fonts-noto-cjk
+          fc-match 'Noto Sans CJK KR'
       - name: Start real React app
         run: |
           npm run dev -- --host 127.0.0.1 > /tmp/drawary-v2-vite.log 2>&1 &
