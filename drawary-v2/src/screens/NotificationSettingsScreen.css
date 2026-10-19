@@ -41,3 +41,6 @@ button{font:inherit}
 
 /* #29 approved CTA depicts the simple white mark, not the purple badge. */
 .ns-screen .ns-add-btn img { filter:brightness(0) invert(1); }
+
+/* #29 approved common-setting label is left-aligned inside its grid cell. */
+.ns-common-card { text-align:left; }
