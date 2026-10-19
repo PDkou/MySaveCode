@@ -519,9 +519,15 @@ class NativeBridge(
     // background" would be a confusing amount of new surface for what is,
     // from the user's point of view, one decision ("do I want notifications
     // from this app or not").
+    // v0.139: precautionary fix, same shape as showExitAd's Float narrowing
+    // above -- this was the one other @JavascriptInterface method still
+    // taking a non-Double numeric type straight from JS. Whether Int
+    // specifically ever actually failed over the bridge (unlike Float,
+    // which was a confirmed real failure) was never confirmed on a device;
+    // narrowing here costs nothing and removes the doubt either way.
     @JavascriptInterface
-    fun scheduleDailyReminder(hour: Int, minute: Int) {
-        ReminderScheduler.schedule(activity, hour, minute)
+    fun scheduleDailyReminder(hour: Double, minute: Double) {
+        ReminderScheduler.schedule(activity, hour.toInt(), minute.toInt())
         IncidentCheckScheduler.schedule(activity)
     }
 

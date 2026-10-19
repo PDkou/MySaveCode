@@ -5404,3 +5404,34 @@ director 쪽에서 필요. 커밋/푸시 후 CI 빌드(debug+release) 함께
 재현 후 수정 확인). `node --check`로 스크립트 블록 문법도 확인.
 `tapMoni()`도 같은 방식으로 ja 전환 후 문구가 바뀌는지 직접 호출해서
 확인.
+
+## v0.140 — scheduleDailyReminder 브릿지 타입 선제 수정
+
+**배경**: director가 "다른 안좋은 코드등등 버그 일으키는것이나 그런건
+없는지 확인해봐"라고 요청. 서브에이전트로 `index.html` 전체와
+`NativeBridge.kt`를 정적으로 리드스루해서 두 가지를 찾음 -- (1)
+`IncidentAnalyzer.kt`의 하루 집계 윈도우는 로컬 자정 기준인데 저장
+키(`utcDateKey()`)는 UTC 날짜라, 한국 기준 매일 00시~09시 사이 앱을
+열면 전날 기록 전체가 그날 새벽의 소량 데이터로 덮어써지는 실제
+데이터 손실 버그(네이티브 DB 마이그레이션이 걸려서 director 확인 후
+별도 처리 예정), (2) `scheduleDailyReminder(hour: Int, minute: Int)`가
+`showExitAd`와 똑같은 모양으로 JS 숫자를 바로 `Int`로 받고 있어서,
+`showExitAd`가 과거에 실제로 겪었던 "`@JavascriptInterface`는 JS
+숫자를 Float로 못 받는다"는 문제와 같은 패턴이 Int에도 해당하는지
+불확실한 상태로 남아있었음. director가 "2번 먼저 안전하게 고쳐줘"로
+먼저 처리 지시.
+
+**구현**: `NativeBridge.kt`의 `scheduleDailyReminder`를
+`showExitAd(x: Double, ...)`와 같은 모양으로 `hour: Double, minute:
+Double`로 받고 내부에서 `.toInt()`로 narrowing -- `ReminderScheduler.
+schedule()`/`IncidentCheckScheduler.schedule()`은 원래 `Int` 파라미터라
+호출부는 그대로 둠. index.html의 호출부(`N.scheduleDailyReminder(h,m)`)
+는 원래부터 순수 JS 숫자를 넘기고 있어서 변경 불필요. 주석에는 "Int가
+실제로 브릿지에서 깨지는지는 기기로 확인한 적 없고, Float처럼 실제
+확인된 문제는 아니다"라고 솔직하게 불확실성을 남겨둠 -- 고치는 비용이
+거의 없어서 확인 여부와 무관하게 선제적으로 맞춘 것.
+
+버전 140/0.140.0. 검증: 네이티브 Kotlin 변경이라 이 샌드박스(Android
+SDK 없음)에서는 로컬 컴파일/실기기 동작 확인 둘 다 불가능 -- CI
+디버그 빌드가 실제 컴파일 성공 여부의 유일한 검증 수단. 커밋/푸시 후
+CI 트리거.
