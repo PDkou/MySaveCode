@@ -64,7 +64,7 @@ export function BackupDestinationScreen({ initialDestination = 'device', onBack,
           <span className="bkd46-text"><strong>Google Drive</strong><span>Google Drive에<br />백업 파일을 보관해요.</span></span>
           <span className="bkd46-radio" />
         </button>
-        <div className="bkd46-notice"><img src="/assets/ui-icons/icon_info.webp" alt="" /><span>다음 단계에서 저장할 폴더를 선택해요.</span></div>
+        <div className="bkd46-notice"><img src="/assets/ui-icons/icon_info.webp" alt="" /><span>다음 단계에서 저장할 폴더를 선택해<br />요.</span></div>
         <button type="button" className="bkd46-btn" onClick={() => onNext?.(destination)}>다음</button>
       </main>
     </div>
