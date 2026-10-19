@@ -23,7 +23,7 @@ main[data-route="create-drawer"] { position: relative; overflow: hidden; }
 /* #08 backdrop only: suppress live Home's count label, preserve locked #03. */
 .drawary-app-shell[data-route="create-drawer"] .drawary-dimmed-home { position:relative; }
 .drawary-app-shell[data-route="create-drawer"] .drawary-dimmed-home::after {
-  content:""; position:absolute; top:45px; right:0; width:110px; height:90px;
+  content:""; position:absolute; top:12px; right:0; width:110px; height:123px;
   background-color:#fffaf2;
   background-image:url('/assets/ui-icons/icon_flower.webp');
   background-position:60px 20px; background-size:37px 37px;
