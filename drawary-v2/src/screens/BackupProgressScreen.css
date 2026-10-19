@@ -143,3 +143,25 @@
 @media (prefers-reduced-motion: reduce) {
   .backup-progress-ring { animation: none; }
 }
+
+/* Screen 47 only. Source: drawary-v2/reference/screen-47/index.html.
+ * Keep approved 390x844 layout; do not modify other screens. */
+.backup-progress-app {
+  font-family: 'NanumSquare', 'Noto Sans CJK KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+.backup-progress-app .uf-title {
+  font-family: 'NanumSquare', 'Noto Sans CJK KR', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.9px;
+  transform: translateY(5px);
+}
+.backup-progress-app .backup-progress-illustration {
+  top: calc(50% - 211px);
+}
+.backup-progress-app .backup-progress-copy h2 {
+  font-family: 'NanumSquare', 'Noto Sans CJK KR', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.9px;
+}
