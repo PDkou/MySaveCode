@@ -35,5 +35,6 @@ button{font:inherit}
 }
 .bkd46-panel { top:87px; left:20px; right:18px; }
 .bkd46-hero { height:129px; box-sizing:border-box; }
-.bkd46-notice span { max-width:210px; }
+.bkd46-notice { min-height:59px; box-sizing:border-box; }
+.bkd46-notice span { max-width:185px; }
 .bkd46-btn { background:linear-gradient(90deg,#b58af6 0%,#945dec 100%); }
