@@ -20,14 +20,15 @@
 ## Not themed on purpose
 Mascot and status illustrations, drawer category icons and colours (the user's own choice per drawer), the brand logo / wordmark / app icon, splash, Stats' category tiles named `--lavender`, the #47 backup spinner screen (approved as-is), #39's own swatches.
 
-## Lavender is unchanged
-All 54 routes were screenshotted before and after (390x844, seeded data): pixel-identical. One route (#creation-complete) is non-deterministic between runs on its own; a re-run matched.
-**Deviation to decide:** the spec lists the lavender gradient as confirmed, but the approved renders (#39, #38) have a flat cream background (255,249,241). Lavender therefore keeps the flat cream; turning the gradient on for lavender is one line (`:root:not([data-color-theme])` gets `--theme-bg` too).
+## Page background on every theme, lavender included (user decision 2026-10-20)
+All five themes use the spec background (lavender tint `rgba(118,87,223,.08)`), for consistency. This changes lavender's flat cream (255,249,241) of the approved #38/#39 renders to the spec gradient; the user approved that. The lavender *colours* of buttons/text/icons are unchanged (lavender defines no overrides, the CSS fallbacks are the approved values).
+Not covered: #04 empty-home (a baked approved image, nothing to make transparent), onboarding/splash/#47 backup progress (approved art/backgrounds), the dark photo viewer.
+Before the background change, all 54 routes were pixel-identical to before the theme work (one route non-deterministic on its own).
 
 ## Known limits
-- Mustard's main colour with white button text has low contrast (~2.4:1); it is the approved colour.
+- Mustard's main colour with white button text has low contrast (~2.4:1); it is the approved colour. Left as is for now (user unsure); an option is dark text on mustard buttons only.
 - Sage's main colour is desaturated (S≈20%), so sage accents read grey-green; that is the spec value.
-- #39's footer text still reads the approved "선택한 테마는 앱 전체의 주요 색상과 장식에 적용됩니다."; the spec words it "배경, 주요 버튼, 강조색과 장식에 적용됩니다." — not changed without approval.
+- #39's footer text stays the approved "선택한 테마는 앱 전체의 주요 색상과 장식에 적용됩니다." (user: no need to change it).
 - Print/PDF export is not tinted (print CSS has its own palette).
 
 ## Tests
