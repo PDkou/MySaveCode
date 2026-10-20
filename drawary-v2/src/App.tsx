@@ -9,7 +9,7 @@ import { HomeEmptyScreen } from './screens/HomeEmptyScreen';
 import { GlobalSearchScreen } from './screens/GlobalSearchScreen';
 import { MOCK_SEARCH_RECORDS } from './mockData';
 import { SettingsHomeScreen } from './screens/SettingsHomeScreen';
-import { DrawerFieldsScreen, DEFAULT_DRAWER_FIELDS, toFieldItem } from './screens/DrawerFieldsScreen';
+import { DrawerFieldsScreen, toFieldItem } from './screens/DrawerFieldsScreen';
 import {
   DEFAULT_DRAFT_FIELDS, QUICK_ADD_KINDS, addDraftField, moveDraftField, removeDraftField, updateDraftField,
   type DraftField,
@@ -22,11 +22,19 @@ import { FillDrawerScreen } from './screens/FillDrawerScreen';
 import { BackupProgressScreen } from './screens/BackupProgressScreen';
 import { StatsScreen } from './screens/StatsScreen';
 import { NewDrawerScreen } from './screens/NewDrawerScreen';
-import { DrawerDetailScreen, DEFAULT_RECORDS } from './screens/DrawerDetailScreen';
+import { DrawerDetailScreen } from './screens/DrawerDetailScreen';
 import { RecordDetailScreen } from './screens/RecordDetailScreen';
 import { RecordEditScreen } from './screens/RecordEditScreen';
 import { PhotoViewerScreen } from './screens/PhotoViewerScreen';
-import { loadRecordPhotoBlobs, makeRecordPhotoURLs, pickRecordPhotos, releaseRecordPhotoURLs, saveRecordPhotoBlobs } from './data/recordPhotos';
+import { pickRecordPhotos } from './data/recordPhotos';
+import { useFirstPhotoUrls, useObjectUrls, useRecordPhotos } from './data/photoHooks';
+import { MAX_RECORD_PHOTOS } from './data/types';
+import {
+  draftFromRecord, draftToValues, formatValue, hasControl, recordMatches, summarizeRecord,
+  type RecordDraft,
+} from './flow/recordForm';
+import type { RecordFieldType, RecordFieldValue } from './screens/RecordDetailScreen';
+import type { DrawerRecordSummary } from './screens/DrawerDetailScreen';
 import { TableViewScreen } from './screens/TableViewScreen';
 import { DrawerManageScreen } from './screens/DrawerManageScreen';
 import { NotificationSettingsScreen } from './screens/NotificationSettingsScreen';
@@ -121,7 +129,12 @@ export default function App() {
       creatingRef.current = false;
     }
   };
-  const currentDrawer = currentDrawerId ? drawerById(store, currentDrawerId) : undefined;
+  // Record screens work on one drawer. It is the one last opened/created; a direct
+  // URL with nothing opened yet falls back to the first drawer.
+  const currentDrawer = (currentDrawerId ? drawerById(store, currentDrawerId) : undefined)
+    ?? (store.status === 'ready' ? store.drawers[0] : undefined);
+  const currentFields = currentDrawer ? fieldsOf(store, currentDrawer.id) : [];
+  const currentRecords = currentDrawer ? recordsOf(store, currentDrawer.id) : [];
   const drawerDetailName = currentDrawer?.name ?? '';
   const homeCards: HomeDrawerCard[] = store.drawers.map((d) => ({
     id: d.id, name: d.name, iconKey: d.iconKey, colorKey: d.colorKey,
@@ -132,75 +145,39 @@ export default function App() {
   // asks for, done via shared App-level state rather than local state in
   // either screen.
   const drawerIconId = currentDrawer?.iconKey ?? 'misc';
-  const [recordDetailId, setRecordDetailId] = useState('lip');
-  // '' means "no photo" -- RecordEditScreen's photoUri prop defaults to
-  // the fixture only when passed `undefined`, so removal must use ''
-  // rather than undefined or the default parameter would silently put
-  // the photo right back (a real bug caught during this screen's QA).
-  // The approved UI is unchanged: photo data is bound to a stable drawer/record key.
-  // No stored row = approved demo photo; an empty stored array = photos deleted.
-  const recordPhotoKey = (currentDrawerId ?? '') + ':' + recordDetailId;
-  const [recordPhotoOverrides, setRecordPhotoOverrides] = useState<Record<string, string[]>>({});
-  const storedPhotoUrlRef = useRef(new Map<string, string[]>());
-  const editPhotoUrlRef = useRef<string[]>([]);
-  const [editPendingBlobs, setEditPendingBlobs] = useState<Blob[] | null>(null);
-  const [editPendingUrls, setEditPendingUrls] = useState<string[] | null>(null);
+  // Records (#13-#19). Photos live in the on-device store keyed by record id;
+  // nothing here is demo data any more.
+  const [recordDetailId, setRecordDetailId] = useState<string | null>(null);
+  const selectedRecord = recordDetailId ? store.records.find((r) => r.id === recordDetailId) : undefined;
+  // Bumped after photos change so the readers below load them again.
+  const [photoVersion, setPhotoVersion] = useState(0);
+  const [recordQuery, setRecordQuery] = useState('');
+  const recordThumbs = useFirstPhotoUrls(currentRecords.map((r) => r.id), photoVersion);
+  const selectedPhotos = useRecordPhotos(selectedRecord?.id ?? null, photoVersion);
 
-  const selectedRecord = DEFAULT_RECORDS.find(r => r.id === recordDetailId) ?? DEFAULT_RECORDS[0];
-  const defaultPhoto = selectedRecord.id === 'lip'
-    ? '/fixtures/sample_selected_photo.webp'
-    : selectedRecord.thumbnailUri;
-  // The approved #19 visual shows three photos for the sample lipstick.
-  // Seed only the demo fallback. User-added/deleted photos still take priority.
-  const sampleRecordPhotos = selectedRecord.id === 'lip'
-    ? ['/fixtures/sample_selected_photo.webp', '/fixtures/sample_lip.webp', '/fixtures/sample_edit_photo.webp']
-    : (defaultPhoto ? [defaultPhoto] : []);
-  const selectedRecordPhotos = recordPhotoOverrides[recordPhotoKey]
-    ?? sampleRecordPhotos;
-
-  // Load previously saved photos whenever the selected record changes.
-  useEffect(() => {
-    let cancelled = false;
-    loadRecordPhotoBlobs(recordPhotoKey).then(blobs => {
-      if (cancelled || blobs === null) return;
-      const urls = makeRecordPhotoURLs(blobs);
-      releaseRecordPhotoURLs(storedPhotoUrlRef.current.get(recordPhotoKey) ?? []);
-      storedPhotoUrlRef.current.set(recordPhotoKey, urls);
-      setRecordPhotoOverrides(prev => ({ ...prev, [recordPhotoKey]: urls }));
-    }).catch(error => console.error('보관품 사진 불러오기 실패', error));
-    return () => { cancelled = true; };
-  }, [recordPhotoKey]);
-
-  const clearPendingPhotoEdit = () => {
-    releaseRecordPhotoURLs(editPhotoUrlRef.current);
-    editPhotoUrlRef.current = [];
-    setEditPendingBlobs(null);
-    setEditPendingUrls(null);
+  // #13/#14 fill form: photos picked so far, where "back" returns to, and a counter
+  // that remounts the form empty each time it is opened.
+  const [fillPhotos, setFillPhotos] = useState<Blob[]>([]);
+  const fillUrls = useObjectUrls(fillPhotos);
+  const [fillKey, setFillKey] = useState(0);
+  const [fillBack, setFillBack] = useState<'creation-complete' | 'drawer-detail'>('drawer-detail');
+  const [recordSaving, setRecordSaving] = useState(false);
+  const recordSavingRef = useRef(false);
+  const startFill = (from: 'creation-complete' | 'drawer-detail') => {
+    setFillPhotos([]); setFillKey((k) => k + 1); setFillBack(from); navigate('fill-drawer');
   };
-  const pickPhotosForEdit = async () => {
+  const pickMorePhotos = async (current: Blob[], set: (b: Blob[]) => void) => {
     const files = await pickRecordPhotos();
-    if (!files.length) return;
-    const urls = makeRecordPhotoURLs(files);
-    releaseRecordPhotoURLs(editPhotoUrlRef.current);
-    editPhotoUrlRef.current = urls;
-    setEditPendingBlobs(files);
-    setEditPendingUrls(urls);
+    if (files.length) set([...current, ...files].slice(0, MAX_RECORD_PHOTOS));
   };
-  const finishPhotoEdit = async () => {
-    if (editPendingBlobs !== null) {
-      try {
-        await saveRecordPhotoBlobs(recordPhotoKey, editPendingBlobs);
-      } catch (error) {
-        window.alert(error instanceof Error ? error.message : '사진을 저장하지 못했어요.');
-        return;
-      }
-      const urls = makeRecordPhotoURLs(editPendingBlobs);
-      releaseRecordPhotoURLs(storedPhotoUrlRef.current.get(recordPhotoKey) ?? []);
-      storedPhotoUrlRef.current.set(recordPhotoKey, urls);
-      setRecordPhotoOverrides(prev => ({ ...prev, [recordPhotoKey]: urls }));
-    }
-    clearPendingPhotoEdit();
-    navigate('record-detail');
+  // #17 edit form: photos staged until "수정 완료" (null = unchanged, [] = removed).
+  const [editPhotos, setEditPhotos] = useState<Blob[] | null>(null);
+  const editUrls = useObjectUrls(editPhotos);
+  const [editKey, setEditKey] = useState(0);
+  const guardedSave = async (work: () => Promise<void>) => {
+    if (recordSavingRef.current) return;
+    recordSavingRef.current = true; setRecordSaving(true);
+    try { await work(); } catch (e) { alertError(e); } finally { recordSavingRef.current = false; setRecordSaving(false); }
   };
 
   // #29-#32 알림 설정 wizard state. dateFields comes from
@@ -208,7 +185,7 @@ export default function App() {
   // drawer fields #09/#26 already use) -- for this drawer that's
   // exactly one field (구매일), matching CONFIRMED.md's own "날짜
   // 서랍칸이 1개뿐이면 기본 선택" case.
-  const dateFields = DEFAULT_DRAWER_FIELDS.filter((f) => f.kind === 'date').map((f) => ({ id: f.id, name: f.name }));
+  const dateFields = currentFields.filter((f) => f.kind === 'date').map((f) => ({ id: f.id, name: f.name }));
   const [notifDateFieldId, setNotifDateFieldId] = useState<string | undefined>(undefined);
   const [notifDaysBefore, setNotifDaysBefore] = useState(7);
   const [notifTime, setNotifTime] = useState('09:00');
@@ -220,7 +197,7 @@ export default function App() {
   // app already has) rather than inventing a "선크림" item that exists
   // nowhere else in the app, even though CONFIRMED.md's own illustrative
   // example happens to use that name.
-  const recurrenceTargets = DEFAULT_RECORDS.map((r) => ({ id: r.id, title: r.subtitle ?? r.title }));
+  const recurrenceTargets = currentRecords.map((r) => ({ id: r.id, title: summarizeRecord(currentFields, r).title }));
   const [recurrenceRules, setRecurrenceRules] = useState<RecurrenceRuleSummary[]>([]);
   const [recurrenceTargetId, setRecurrenceTargetId] = useState<string | undefined>(undefined);
   const [recurrenceDateFieldId, setRecurrenceDateFieldId] = useState<string | undefined>(undefined);
@@ -258,6 +235,15 @@ export default function App() {
     setRoute(to);
   }, []);
   const returnToTab = useCallback(() => navigate(lastTabRef.current), [navigate]);
+  // Record screens need an open drawer (and #16/#17/#19 a record). A direct URL or a
+  // deleted record sends the user back to where there is something to show.
+  useEffect(() => {
+    if (store.status !== 'ready') return;
+    const recordRoute = route === 'record-detail' || route === 'record-edit' || route === 'photo-viewer';
+    if ((route === 'drawer-detail' || route === 'fill-drawer' || recordRoute) && !currentDrawer) navigate('home');
+    else if (recordRoute && !selectedRecord) navigate('drawer-detail');
+  }, [route, store.status, currentDrawer, selectedRecord, navigate]);
+
   if (route === 'splash') {
     return <main className="drawary-app-shell drawary-splash-route" data-route="splash"><SplashScreen fadingOut={false}/></main>;
   }
@@ -336,31 +322,57 @@ export default function App() {
         drawerName={currentDrawer?.name}
         iconKey={currentDrawer?.iconKey}
         fieldCount={currentDrawer ? fieldsOf(store, currentDrawer.id).length : undefined}
-        onFillDrawer={() => navigate('fill-drawer')}
+        onFillDrawer={() => startFill('creation-complete')}
         onLater={returnToTab}
       /></FixedCanvas>
     </main>;
   }
   if (route === 'fill-drawer') {
-    // #13/#14 QA route, reachable from #12's "서랍 채우기" or #15's own
-    // "서랍 채우기" button. onSave returns to #15 (drawer-detail) now
-    // that it exists, though the saved item isn't actually appended to
-    // #15's record list yet -- that's still V2-12 data-layer territory.
+    // #13/#14: the form follows the open drawer's 서랍 칸; "담기" saves the record
+    // and its photos in one transaction and shows it in #15. Back returns to
+    // #12 or #15, whichever opened it.
+    if (!currentDrawer) return <main className="drawary-app-shell" data-route="fill-drawer" />;
     return <main className="drawary-app-shell" data-route="fill-drawer">
-      <FixedCanvas height={844}><FillDrawerScreen onBack={() => navigate('creation-complete')} onSave={() => navigate('drawer-detail')} /></FixedCanvas>
+      <FixedCanvas height={844}>
+        <FillDrawerScreen
+          key={fillKey}
+          drawerName={currentDrawer.name}
+          fields={currentFields}
+          photoUris={fillUrls}
+          saving={recordSaving}
+          onBack={() => navigate(fillBack)}
+          onPickPhotos={() => { void pickMorePhotos(fillPhotos, setFillPhotos); }}
+          onRemovePhoto={(i) => setFillPhotos((prev) => prev.filter((_, j) => j !== i))}
+          onSave={(draft) => { void guardedSave(async () => {
+            await actions.createRecord(currentDrawer.id, draftToValues(currentFields, draft), fillPhotos);
+            setPhotoVersion((v) => v + 1);
+            setFillPhotos([]);
+            navigate('drawer-detail');
+          }); }}
+        />
+      </FixedCanvas>
     </main>;
   }
   if (route === 'drawer-detail') {
-    // #15 서랍 상세 / 보관품 목록, reachable from #03's drawer-card
-    // hotspots. "표로 보기" -> #20. "서랍 관리"(#24) has no destination
-    // screen yet -- intentional no-op, same reasoning as other
-    // not-yet-built destinations.
+    // #15: this drawer's real 보관품, newest first. The search box filters them by
+    // any value; "표로 보기" -> #20, "서랍 관리" -> #24.
+    if (!currentDrawer) return <main className="drawary-app-shell" data-route="drawer-detail" />;
+    const summaries: DrawerRecordSummary[] = currentRecords
+      .filter((r) => recordMatches(currentFields, r, recordQuery))
+      .map((r) => {
+        const sum = summarizeRecord(currentFields, r);
+        return { id: r.id, title: sum.title, subtitle: sum.subtitle, dateLabel: sum.dateLabel, thumbnailUri: recordThumbs[r.id] };
+      });
     return <main className="drawary-app-shell" data-route="drawer-detail">
       <FixedCanvas height={844}>
         <DrawerDetailScreen
-          drawerName={drawerDetailName}
-          onBack={returnToTab}
-          onFillDrawer={() => navigate('fill-drawer')}
+          drawerName={currentDrawer.name}
+          recordCount={currentRecords.length}
+          fallbackIconKey={currentDrawer.iconKey}
+          records={summaries}
+          onBack={() => { setRecordQuery(''); returnToTab(); }}
+          onSearch={setRecordQuery}
+          onFillDrawer={() => startFill('drawer-detail')}
           onOpenRecord={(id) => { setRecordDetailId(id); navigate('record-detail'); }}
           onOpenTable={() => navigate('table-view')}
           onOpenManage={() => navigate('drawer-manage')}
@@ -382,7 +394,7 @@ export default function App() {
           drawerName={drawerDetailName}
           onBack={() => navigate('drawer-detail')}
           onExport={() => {}}
-          onOpenRecord={() => { setRecordDetailId('lip'); navigate('record-detail'); }}
+          onOpenRecord={() => { const first = currentRecords[0]; if (first) { setRecordDetailId(first.id); navigate('record-detail'); } }}
         />
       </FixedCanvas>
     </main>;
@@ -421,8 +433,8 @@ export default function App() {
       <FixedCanvas height={844}>
         <NotificationSettingsScreen
           drawerName={drawerDetailName}
-          fieldCount={DEFAULT_DRAWER_FIELDS.length}
-          recordCount={DEFAULT_RECORDS.length}
+          fieldCount={currentFields.length}
+          recordCount={currentRecords.length}
           drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
           onBack={() => navigate('drawer-manage')}
           onAddNotification={() => navigate('notification-date-field')}
@@ -480,7 +492,7 @@ export default function App() {
       <FixedCanvas height={844}>
         <NotificationCompleteScreen
           drawerName={drawerDetailName}
-          itemCount={DEFAULT_RECORDS.length}
+          itemCount={currentRecords.length}
           dateFieldName={dateField?.name ?? ''}
           daysBefore={notifDaysBefore}
           time={notifTime}
@@ -500,8 +512,8 @@ export default function App() {
       <FixedCanvas height={844}>
         <RecurrenceManagementScreen
           drawerName={drawerDetailName}
-          fieldCount={DEFAULT_DRAWER_FIELDS.length}
-          itemCount={DEFAULT_RECORDS.length}
+          fieldCount={currentFields.length}
+          itemCount={currentRecords.length}
           rules={recurrenceRules}
           drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
           onBack={() => navigate('drawer-manage')}
@@ -521,8 +533,8 @@ export default function App() {
       <FixedCanvas height={844}>
         <RecurrenceTargetDateScreen
           drawerName={drawerDetailName}
-          fieldCount={DEFAULT_DRAWER_FIELDS.length}
-          itemCount={DEFAULT_RECORDS.length}
+          fieldCount={currentFields.length}
+          itemCount={currentRecords.length}
           targets={recurrenceTargets}
           dateFields={dateFields}
           selectedTargetId={recurrenceTargetId}
@@ -941,7 +953,7 @@ export default function App() {
         <DrawerFieldsScreen
           title="서랍칸 편집"
           completeLabel="완료"
-          contextLabel={{ name: drawerDetailName, detail: `${DEFAULT_DRAWER_FIELDS.length}개 서랍칸` }}
+          contextLabel={{ name: drawerDetailName, detail: `${currentFields.length}개 서랍칸` }}
           onBack={() => navigate('drawer-manage')}
           onAddField={() => navigate('new-field-manage')}
           onEditField={() => navigate('field-edit-manage')}
@@ -968,65 +980,82 @@ export default function App() {
     </main>;
   }
   if (route === 'record-detail') {
-    // #16 보관품 상세, reachable from #15's record rows. Uses that same
-    // record's own demo title (DEFAULT_RECORDS) so the clicked item's
-    // content actually carries over, rather than always showing the
-    // same hardcoded 롬앤 sample regardless of which row was clicked.
-    // Photo: only #15's "lip" row has a matching full-resolution photo
-    // available (the same 롬앤 틴트 fixture #14 uses) -- #15's other 3
-    // rows only have small 92x98 list thumbnails, so this honestly
-    // reuses those (upscaled/soft) rather than inventing a higher-res
-    // photo that was never provided. "수정하기" -> #17. "보관품 삭제"
-    // opens #18's confirm sheet (handled locally inside
-    // RecordDetailScreen); confirming it there calls this onDelete,
-    // which per #18's CONFIRMED.md returns to #15 (서랍 상세) -- there's
-    // no real deletion from a data model yet (V2-12), so this is
-    // navigation-only, same caveat as #09-#13's local demo state.
-    const record = selectedRecord;
-    const photoUri = selectedRecordPhotos[0] ?? '';
+    // #16: the saved record. Its first text field is the heading; the other filled
+    // fields are listed below (money as stored, dates with weekday). "수정하기" -> #17;
+    // "보관품 삭제" confirms in #18, then deletes the record and its photos and
+    // returns to #15. Tapping the photo opens #19.
+    if (!selectedRecord || !currentDrawer) return <main className="drawary-app-shell" data-route="record-detail" />;
+    const sum = summarizeRecord(currentFields, selectedRecord);
+    const rows: RecordFieldValue[] = currentFields
+      .filter((f) => hasControl(f.kind) && f.id !== sum.titleFieldId && (f.kind === 'check' || selectedRecord.values[f.id] != null))
+      .map((f) => ({
+        id: f.id, label: f.name, value: formatValue(f, selectedRecord.values[f.id]),
+        type: (f.kind === 'long_text' ? 'note' : f.kind === 'check' ? 'checkbox' : f.kind) as RecordFieldType,
+      }));
     return <main className="drawary-app-shell" data-route="record-detail">
       <FixedCanvas height={844}>
         <RecordDetailScreen
-          drawerName={drawerDetailName}
-          title={record.subtitle ?? record.title}
-          photoUri={photoUri}
+          drawerName={currentDrawer.name}
+          title={sum.title}
+          photoUri={selectedPhotos.urls[0] ?? ''}
+          photoLoading={selectedPhotos.blobs === null}
+          fields={rows}
           onBack={() => navigate('drawer-detail')}
-          onEdit={() => { clearPendingPhotoEdit(); navigate('record-edit'); }}
-          onDelete={() => navigate('drawer-detail')}
+          onEdit={() => { setEditPhotos(null); setEditKey((k) => k + 1); navigate('record-edit'); }}
+          onDelete={() => { void guardedSave(async () => {
+            const id = selectedRecord.id;
+            await actions.deleteRecord(id);
+            setRecordDetailId(null);
+            navigate('drawer-detail');
+          }); }}
           onOpenPhoto={() => navigate('photo-viewer')}
         />
       </FixedCanvas>
     </main>;
   }
   if (route === 'photo-viewer') {
-    // #19: the final approved viewer/gestures are untouched.
-    // Photos belong only to the selected record, never another product.
+    // #19: this record's photos only; the approved viewer/gestures are untouched.
+    if (!selectedRecord || selectedPhotos.urls.length === 0) {
+      return <main className="drawary-app-shell" data-route="photo-viewer" />;
+    }
     return <main className="drawary-app-shell" data-route="photo-viewer">
       <FixedCanvas height={844}>
         <PhotoViewerScreen
-          key={recordPhotoKey}
-          photoUris={selectedRecordPhotos}
+          key={selectedRecord.id}
+          photoUris={selectedPhotos.urls}
           onClose={() => navigate('record-detail')}
         />
       </FixedCanvas>
     </main>;
   }
   if (route === 'record-edit') {
-    // #17: selected photos are staged until "수정 완료"; cancel discards edits.
-    // Approved component DOM and CSS are unchanged.
+    // #17: edits every field of the record; photos are staged until "수정 완료"
+    // (back discards). One set of up to 3: "사진 바꾸기" replaces it, × removes it.
+    if (!selectedRecord || !currentDrawer) return <main className="drawary-app-shell" data-route="record-edit" />;
+    const shownPhoto = editPhotos !== null
+      ? (editPhotos.length ? (editUrls[0] ?? selectedPhotos.urls[0] ?? '') : '')
+      : (selectedPhotos.urls[0] ?? '');
     return <main className="drawary-app-shell" data-route="record-edit">
       <FixedCanvas height={844}>
         <RecordEditScreen
-          drawerName={drawerDetailName}
-          photoUri={editPendingUrls !== null
-            ? (editPendingUrls[0] ?? '')
-            : (recordPhotoOverrides[recordPhotoKey] === undefined && selectedRecord.id === 'lip'
-                ? '/fixtures/sample_edit_photo.webp'
-                : (selectedRecordPhotos[0] ?? ''))}
-          onBack={() => { clearPendingPhotoEdit(); navigate('record-detail'); }}
-          onPickPhoto={pickPhotosForEdit}
-          onRemovePhoto={() => { clearPendingPhotoEdit(); setEditPendingBlobs([]); setEditPendingUrls([]); }}
-          onSave={finishPhotoEdit}
+          key={`${selectedRecord.id}:${editKey}`}
+          drawerName={currentDrawer.name}
+          fields={currentFields}
+          initialDraft={draftFromRecord(currentFields, selectedRecord)}
+          photoUri={shownPhoto}
+          saving={recordSaving}
+          onBack={() => { setEditPhotos(null); navigate('record-detail'); }}
+          onPickPhoto={() => { void (async () => {
+            const files = await pickRecordPhotos();
+            if (files.length) setEditPhotos(files);
+          })(); }}
+          onRemovePhoto={() => setEditPhotos([])}
+          onSave={(draft: RecordDraft) => { void guardedSave(async () => {
+            await actions.updateRecord(selectedRecord.id, draftToValues(currentFields, draft), editPhotos ?? undefined);
+            setPhotoVersion((v) => v + 1);
+            setEditPhotos(null);
+            navigate('record-detail');
+          }); }}
         />
       </FixedCanvas>
     </main>;

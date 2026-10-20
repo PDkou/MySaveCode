@@ -69,8 +69,8 @@ export const actions = {
   reorderFields: (drawerId: string, ids: readonly string[]) => write(() => repo.reorderFields(drawerId, ids)),
   deleteField: (id: string) => write(() => repo.deleteField(id)),
 
-  createRecord: (drawerId: string, values: Record<string, FieldValue>) => write(() => repo.createRecord(drawerId, values)),
-  updateRecord: (id: string, values: Record<string, FieldValue>) => write(() => repo.updateRecord(id, values)),
+  createRecord: (drawerId: string, values: Record<string, FieldValue>, photos?: readonly Blob[]) => write(() => repo.createRecord(drawerId, values, photos)),
+  updateRecord: (id: string, values: Record<string, FieldValue>, photos?: readonly Blob[]) => write(() => repo.updateRecord(id, values, photos)),
   deleteRecord: (id: string) => write(() => repo.deleteRecord(id)),
 
   setPhotos: (recordId: string, photos: readonly Blob[]) => write(() => repo.setPhotos(recordId, photos)),

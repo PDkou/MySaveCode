@@ -1,33 +1,22 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { RecordFieldControl } from '../components/RecordFieldControl';
+import type { Field } from '../data/types';
+import { hasControl, type RecordDraft } from '../flow/recordForm';
 import './RecordEditScreen.css';
-
-export type EditableFieldType = 'text' | 'date' | 'currency' | 'note';
-
-export interface EditableRecordField {
-  id: string;
-  label: string;
-  type: EditableFieldType;
-  value: string;
-  required?: boolean;
-  maxLength?: number;
-}
-
-const DEFAULT_FIELDS: EditableRecordField[] = [
-  { id: 'product-name', label: '제품명', type: 'text', value: '롬앤 쥬시래스팅 틴트', required: true },
-  { id: 'purchase-date', label: '구매일', type: 'date', value: '2024. 03. 12. (화)' },
-  { id: 'price', label: '가격', type: 'currency', value: '13,000' },
-  { id: 'memo', label: '메모', type: 'note', value: '발색이 자연스럽고 지속력이 좋아요.' },
-];
 
 interface RecordEditScreenProps {
   drawerName?: string;
+  /** '' means "no photo" (see the gotcha in the comment below). */
   photoUri?: string;
-  fields?: EditableRecordField[];
+  fields: Field[];
+  /** What the form starts with; mount the screen with a `key` per record. */
+  initialDraft: RecordDraft;
+  saving?: boolean;
   onBack?: () => void;
   onPickPhoto?: () => void;
   onRemovePhoto?: () => void;
-  onSave?: (values: Record<string, string>) => void;
+  onSave?: (draft: RecordDraft) => void;
 }
 
 /**
@@ -59,6 +48,10 @@ interface RecordEditScreenProps {
  * `onRemovePhoto`) silently gets the fixture photo put right back on
  * next render. Represent "no photo" with `''` instead.
  *
+ * V2-12 step 1-C: the form follows the record's real 서랍 칸 (all 10 kinds)
+ * and saves what was typed. Photos here are one set of up to 3: "사진 바꾸기"
+ * replaces the whole set with newly picked photos, × removes them all.
+ *
  * 2026-10-15, user-requested change: the archive's original empty-photo
  * treatment (a plain generic icon + "등록된 사진이 없어요" caption on a
  * solid pink card) was restyled to match #13's dashed-border +
@@ -68,22 +61,16 @@ interface RecordEditScreenProps {
  */
 export function RecordEditScreen({
   drawerName = '화장품',
-  photoUri = '/fixtures/sample_edit_photo.webp',
-  fields = DEFAULT_FIELDS,
+  photoUri = '',
+  fields,
+  initialDraft,
+  saving = false,
   onBack,
   onPickPhoto,
   onRemovePhoto,
   onSave,
 }: RecordEditScreenProps) {
-  const initialValues = useMemo(
-    () => Object.fromEntries(fields.map((field) => [field.id, field.value])),
-    [fields]
-  );
-  const [values, setValues] = useState<Record<string, string>>(initialValues);
-
-  const updateValue = (id: string, value: string) => {
-    setValues((prev) => ({ ...prev, [id]: value }));
-  };
+  const [draft, setDraft] = useState<RecordDraft>(initialDraft);
 
   return (
     <main className="re-screen">
@@ -107,49 +94,23 @@ export function RecordEditScreen({
         </button>
 
         <div className="re-fields">
-          {fields.map((field) => (
+          {fields.filter((f) => hasControl(f.kind)).map((field) => (
             <div className="re-field" key={field.id}>
               <label htmlFor={`field-${field.id}`}>
-                {field.label}{field.required && <em>*</em>}
+                {field.name}{field.required && <em>*</em>}
               </label>
-
-              {field.type === 'note' ? (
-                <div className="re-textarea-wrap">
-                  <textarea
-                    id={`field-${field.id}`}
-                    value={values[field.id] ?? ''}
-                    maxLength={field.maxLength ?? 500}
-                    onChange={(e) => updateValue(field.id, e.target.value)}
-                  />
-                  <small>{(values[field.id] ?? '').length}/{field.maxLength ?? 500}</small>
-                </div>
-              ) : field.type === 'date' || field.type === 'currency' ? (
-                <div className="re-input-icon">
-                  <img
-                    src={field.type === 'date'
-                      ? '/assets/ui-icons/icon_calendar.webp'
-                      : '/assets/field-types/field_currency.webp'}
-                    alt=""
-                  />
-                  <input
-                    id={`field-${field.id}`}
-                    value={values[field.id] ?? ''}
-                    onChange={(e) => updateValue(field.id, e.target.value)}
-                  />
-                </div>
-              ) : (
-                <input
-                  id={`field-${field.id}`}
-                  className="re-input"
-                  value={values[field.id] ?? ''}
-                  onChange={(e) => updateValue(field.id, e.target.value)}
-                />
-              )}
+              <RecordFieldControl
+                field={field}
+                variant="re"
+                id={`field-${field.id}`}
+                value={draft[field.id] ?? ''}
+                onChange={(v) => setDraft((prev) => ({ ...prev, [field.id]: v }))}
+              />
             </div>
           ))}
         </div>
 
-        <button className="re-save" type="button" onClick={() => onSave?.(values)}>
+        <button className="re-save" type="button" disabled={saving} onClick={() => onSave?.(draft)}>
           수정 완료
         </button>
       </section>

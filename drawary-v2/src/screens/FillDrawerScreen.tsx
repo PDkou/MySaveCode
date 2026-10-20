@@ -1,71 +1,54 @@
 import { useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { RecordFieldControl } from '../components/RecordFieldControl';
+import type { Field } from '../data/types';
+import { MAX_RECORD_PHOTOS } from '../data/types';
+import { emptyDraft, hasControl, type RecordDraft } from '../flow/recordForm';
 import './FillDrawerScreen.css';
 
 // Ported from Drawary_13_FINAL_CONFIRMED_CODE's FillDrawer.tsx (the
 // empty-photo state) merged with Drawary_14_FINAL_CONFIRMED_CODE's
 // PhotoRegisteredState.tsx (the registered-photo state) -- per #14's own
 // CONFIRMED.md, these are the same screen's two states ("사진 선택 /
-// 등록 상태"), not two separate screens: same title, same product-name/
-// date/price/memo fields, same primary button, differing only in
-// whether a photo has been picked yet. Only the flat archive asset
-// paths changed to this app's real layout (`/assets/states/photo/...`,
-// `/assets/field-types/...`, `/assets/ui-icons/...`). No footer:
-// sub-flow screen.
+// 등록 상태"), not two separate screens. Markup, classes and asset paths of
+// the photo area, labels, buttons and the approved input boxes are
+// unchanged. No footer: sub-flow screen.
 //
-// #14's CONFIRMED.md: photo selection assumes the Android Photo Picker,
-// returning real URIs for dynamic preview; the sample image is a
-// render-QA fixture, not a fixed app asset. This app has no Android
-// picker to call, so `onAddPhoto` defaults to adding that same QA
-// fixture (`/fixtures/sample_selected_photo.webp`) to local state --
-// enough to exercise and verify the registered-state UI in a browser --
-// while still calling a caller-supplied `onAddPhoto` first, so a real
-// picker integration can take over this responsibility later without
-// changing this component.
+// V2-12 step 1-C: the form now follows the drawer's real 서랍 칸 (any of the
+// 10 kinds) instead of the four hard-coded demo inputs, starts empty, and
+// photos are real (chosen by the caller, shown here, max 3). Fields of kind
+// `photo` have no row: photos are always the area at the top.
 interface FillDrawerScreenProps {
   drawerName?: string;
+  fields: Field[];
   maxPhotos?: number;
+  /** Object URLs of the photos picked so far. */
+  photoUris: string[];
+  /** True while the record is being saved, so a double tap cannot add it twice. */
+  saving?: boolean;
   onBack?: () => void;
-  onAddPhoto?: () => void;
-  onSave?: (data: {
-    productName: string;
-    purchaseDate: string;
-    price: string;
-    memo: string;
-    photoUris: string[];
-  }) => void;
+  onPickPhotos?: () => void;
+  onRemovePhoto?: (index: number) => void;
+  onSave?: (draft: RecordDraft) => void;
 }
-
-const QA_FIXTURE_PHOTO = '/fixtures/sample_selected_photo.webp';
 
 export function FillDrawerScreen({
   drawerName = '화장품',
-  maxPhotos = 3,
+  fields,
+  maxPhotos = MAX_RECORD_PHOTOS,
+  photoUris,
+  saving = false,
   onBack,
-  onAddPhoto,
+  onPickPhotos,
+  onRemovePhoto,
   onSave,
 }: FillDrawerScreenProps) {
-  const [productName, setProductName] = useState('롬앤 쥬시래스팅 틴트');
-  const [purchaseDate, setPurchaseDate] = useState('2024. 03. 12. (화)');
-  const [price, setPrice] = useState('13,000');
-  const [memo, setMemo] = useState('발색이 자연스럽고 지속력이 좋아요.');
-  const [photoUris, setPhotoUris] = useState<string[]>([]);
+  const [draft, setDraft] = useState<RecordDraft>(() => emptyDraft(fields));
   const [activeIndex, setActiveIndex] = useState(0);
 
   const hasPhoto = photoUris.length > 0;
-  const activePhoto = photoUris[activeIndex] ?? photoUris[0];
-
-  const handleAddPhoto = () => {
-    onAddPhoto?.();
-    if (photoUris.length < maxPhotos) {
-      setPhotoUris((prev) => [...prev, QA_FIXTURE_PHOTO]);
-    }
-  };
-
-  const handleRemovePhoto = (index: number) => {
-    setPhotoUris((prev) => prev.filter((_, i) => i !== index));
-    setActiveIndex(0);
-  };
+  const shownIndex = Math.min(activeIndex, photoUris.length - 1);
+  const activePhoto = photoUris[shownIndex];
 
   return (
     <main className="fd-screen">
@@ -78,13 +61,13 @@ export function FillDrawerScreen({
             <button
               type="button"
               className="fd-remove"
-              onClick={() => handleRemovePhoto(activeIndex)}
+              onClick={() => { onRemovePhoto?.(shownIndex); setActiveIndex(0); }}
               aria-label="현재 사진 삭제"
             >×</button>
-            <span className="fd-count">{activeIndex + 1} / {maxPhotos}</span>
+            <span className="fd-count">{shownIndex + 1} / {maxPhotos}</span>
           </section>
         ) : (
-          <button type="button" className="fd-photo-empty" onClick={handleAddPhoto} aria-label="사진 추가">
+          <button type="button" className="fd-photo-empty" onClick={onPickPhotos} aria-label="사진 추가">
             <img src="/assets/states/photo/state_photo_empty.webp" alt="" />
           </button>
         )}
@@ -95,7 +78,7 @@ export function FillDrawerScreen({
               <button
                 type="button"
                 key={`${uri}-${index}`}
-                className={index === activeIndex ? 'is-active' : ''}
+                className={index === shownIndex ? 'is-active' : ''}
                 onClick={() => setActiveIndex(index)}
               >
                 <img src={uri} alt="" />
@@ -105,55 +88,30 @@ export function FillDrawerScreen({
         )}
 
         {photoUris.length < maxPhotos && (
-          <button type="button" className="fd-photo-add" onClick={handleAddPhoto}>
+          <button type="button" className="fd-photo-add" onClick={onPickPhotos}>
             <img src="/assets/field-types/field_photo.webp" alt="" />
             <span>{hasPhoto ? '사진 더 담기' : '사진 추가하기'}</span>
           </button>
         )}
 
-        <label className="fd-label" htmlFor="fd-product">제품명 <em>*</em></label>
-        <input
-          id="fd-product"
-          className="fd-input"
-          value={productName}
-          onChange={(e) => setProductName(e.target.value)}
-        />
-
-        <label className="fd-label" htmlFor="fd-date">구매일</label>
-        <div className="fd-input-icon">
-          <img src="/assets/ui-icons/icon_calendar.webp" alt="" />
-          <input
-            id="fd-date"
-            value={purchaseDate}
-            onChange={(e) => setPurchaseDate(e.target.value)}
-          />
-        </div>
-
-        <label className="fd-label" htmlFor="fd-price">가격</label>
-        <div className="fd-input-icon">
-          <img src="/assets/field-types/field_currency.webp" alt="" />
-          <input
-            id="fd-price"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
-        </div>
-
-        <label className="fd-label" htmlFor="fd-memo">메모</label>
-        <div className="fd-textarea-wrap">
-          <textarea
-            id="fd-memo"
-            maxLength={500}
-            value={memo}
-            onChange={(e) => setMemo(e.target.value)}
-          />
-          <span>{memo.length}/500</span>
-        </div>
+        {fields.filter((f) => hasControl(f.kind)).map((field) => (
+          <div key={field.id}>
+            <label className="fd-label" htmlFor={`fd-${field.id}`}>{field.name}{field.required && <> <em>*</em></>}</label>
+            <RecordFieldControl
+              field={field}
+              variant="fd"
+              id={`fd-${field.id}`}
+              value={draft[field.id] ?? ''}
+              onChange={(v) => setDraft((prev) => ({ ...prev, [field.id]: v }))}
+            />
+          </div>
+        ))}
 
         <button
           type="button"
           className="fd-primary"
-          onClick={() => onSave?.({ productName, purchaseDate, price, memo, photoUris })}
+          disabled={saving}
+          onClick={() => onSave?.(draft)}
         >
           담기
         </button>

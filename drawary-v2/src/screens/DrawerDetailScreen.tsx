@@ -13,6 +13,8 @@ export interface DrawerRecordSummary {
 interface DrawerDetailScreenProps {
   drawerName?: string;
   recordCount?: number;
+  /** Drawer icon shown in a row that has no photo (defaults to the sample drawer's). */
+  fallbackIconKey?: string;
   records?: DrawerRecordSummary[];
   onBack?: () => void;
   onOpenRecord?: (id: string) => void;
@@ -50,6 +52,7 @@ export const DEFAULT_RECORDS: DrawerRecordSummary[] = [
 export function DrawerDetailScreen({
   drawerName = '화장품',
   recordCount = 24,
+  fallbackIconKey = 'cosmetics',
   records = DEFAULT_RECORDS,
   onBack,
   onOpenRecord,
@@ -121,7 +124,7 @@ export function DrawerDetailScreen({
             <div className="dd-thumb">
               {record.thumbnailUri
                 ? <img src={record.thumbnailUri} alt="" />
-                : <img className="is-fallback" src="/assets/drawer-icons/drawer_icon_cosmetics.webp" alt="" />}
+                : <img className="is-fallback" src={`/assets/drawer-icons/drawer_icon_${fallbackIconKey}.webp`} alt="" />}
             </div>
             <div className="dd-record-copy">
               <strong>{record.title}</strong>

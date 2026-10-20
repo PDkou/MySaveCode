@@ -203,25 +203,39 @@ async function fieldsOf(s: { fields: IDBObjectStore }, drawerId: string): Promis
   return req(s.fields.index('drawerId').getAll(drawerId) as IDBRequest<Field[]>);
 }
 
-export async function createRecord(drawerId: string, values: Record<string, FieldValue>): Promise<RecordItem> {
-  return withTx([STORES.drawers, STORES.fields, STORES.records], 'readwrite', async (s) => {
+function assertPhotos(photos: readonly Blob[]): void {
+  if (photos.length > MAX_RECORD_PHOTOS) throw new ValidationError(`사진은 최대 ${MAX_RECORD_PHOTOS}장까지 등록할 수 있어요.`);
+  if (photos.some((p) => !p.type.startsWith('image/'))) throw new ValidationError('이미지 파일만 등록할 수 있어요.');
+}
+
+/** Adds a record, and its photos in the same transaction (none are written when there are none). */
+export async function createRecord(drawerId: string, values: Record<string, FieldValue>, photos: readonly Blob[] = []): Promise<RecordItem> {
+  assertPhotos(photos);
+  return withTx([STORES.drawers, STORES.fields, STORES.records, STORES.photos], 'readwrite', async (s) => {
     if (!(await req(s.drawers.get(drawerId)))) throw new ValidationError('서랍을 찾을 수 없어요.');
     validateRecordValues(await fieldsOf(s, drawerId), values);
     const now = Date.now();
     const record: RecordItem = { id: newId(), drawerId, values: { ...values }, createdAt: now, updatedAt: now };
     await req(s.records.add(record));
+    if (photos.length > 0) await req(s.photos.put({ recordId: record.id, photos: [...photos] }));
     return record;
   });
 }
 
-/** Replaces all values of a record (the edit screen always submits the full set). */
-export async function updateRecord(id: string, values: Record<string, FieldValue>): Promise<RecordItem> {
-  return withTx([STORES.fields, STORES.records], 'readwrite', async (s) => {
+/**
+ * Replaces all values of a record (the edit screen always submits the full
+ * set). `photos` undefined leaves the saved photos alone; an array (even an
+ * empty one) replaces them, in the same transaction as the values.
+ */
+export async function updateRecord(id: string, values: Record<string, FieldValue>, photos?: readonly Blob[]): Promise<RecordItem> {
+  if (photos) assertPhotos(photos);
+  return withTx([STORES.fields, STORES.records, STORES.photos], 'readwrite', async (s) => {
     const current = (await req(s.records.get(id))) as RecordItem | undefined;
     if (!current) throw new ValidationError('보관품을 찾을 수 없어요.');
     validateRecordValues(await fieldsOf(s, current.drawerId), values);
     const next: RecordItem = { ...current, values: { ...values }, updatedAt: Date.now() };
     await req(s.records.put(next));
+    if (photos) await req(s.photos.put({ recordId: id, photos: [...photos] }));
     return next;
   });
 }
@@ -244,8 +258,7 @@ export async function getPhotos(recordId: string): Promise<Blob[] | null> {
 }
 
 export async function setPhotos(recordId: string, photos: readonly Blob[]): Promise<void> {
-  if (photos.length > MAX_RECORD_PHOTOS) throw new ValidationError(`사진은 최대 ${MAX_RECORD_PHOTOS}장까지 등록할 수 있어요.`);
-  if (photos.some((p) => !p.type.startsWith('image/'))) throw new ValidationError('이미지 파일만 등록할 수 있어요.');
+  assertPhotos(photos);
   await withTx([STORES.records, STORES.photos], 'readwrite', async (s) => {
     if (!(await req(s.records.get(recordId)))) throw new ValidationError('보관품을 찾을 수 없어요.');
     await req(s.photos.put({ recordId, photos: [...photos] }));

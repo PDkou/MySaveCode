@@ -45,6 +45,8 @@ interface RecordDetailScreenProps {
   drawerName?: string;
   title?: string;
   photoUri?: string;
+  /** True while the photo is still being read, so "사진 없음" is not flashed first. */
+  photoLoading?: boolean;
   fields?: RecordFieldValue[];
   onBack?: () => void;
   onEdit?: () => void;
@@ -87,6 +89,7 @@ export function RecordDetailScreen({
   drawerName = '화장품',
   title = '롬앤 쥬시래스팅 틴트',
   photoUri = '/fixtures/sample_selected_photo.webp',
+  photoLoading = false,
   fields = DEFAULT_FIELDS,
   onBack,
   onEdit,
@@ -125,7 +128,9 @@ export function RecordDetailScreen({
       />
 
       <section className="rd-content">
-        {photoUri ? (
+        {photoLoading ? (
+          <div className="rd-photo" aria-busy="true" />
+        ) : photoUri ? (
           <button type="button" className="rd-photo" onClick={onOpenPhoto} aria-label="사진 크게 보기">
             <img src={photoUri} alt={`${title} 사진`} />
           </button>

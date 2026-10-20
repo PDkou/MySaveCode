@@ -249,6 +249,36 @@ describe('records', () => {
   });
 });
 
+describe('records saved together with their photos', () => {
+  it('creates a record and its photos atomically, and writes nothing for a bad photo', async () => {
+    const d = await makeDrawer(); const name = await addField(d.id, { name: '제품명', kind: 'text', required: true });
+    const rec = await createRecord(d.id, { [name.id]: '립' }, [png(), png()]);
+    expect((await getPhotos(rec.id))?.length).toBe(2);
+    const plain = await createRecord(d.id, { [name.id]: '쿠션' });
+    expect(await getPhotos(plain.id)).toBeNull();
+    const before = (await loadAll()).records.length;
+    await expect(createRecord(d.id, { [name.id]: '향수' }, [new Blob(['x'], { type: 'text/plain' })])).rejects.toBeInstanceOf(ValidationError);
+    await expect(createRecord(d.id, { [name.id]: '향수' }, [png(), png(), png(), png()])).rejects.toBeInstanceOf(ValidationError);
+    await expect(createRecord(d.id, {}, [png()])).rejects.toBeInstanceOf(ValidationError);
+    expect((await loadAll()).records.length).toBe(before);
+  });
+
+  it('updates values with photos left alone, replaced, or cleared, never half-applied', async () => {
+    const d = await makeDrawer(); const name = await addField(d.id, { name: '제품명', kind: 'text', required: true });
+    const rec = await createRecord(d.id, { [name.id]: '립' }, [png()]);
+    await updateRecord(rec.id, { [name.id]: '립2' });
+    expect((await getPhotos(rec.id))?.length).toBe(1);
+    await updateRecord(rec.id, { [name.id]: '립3' }, [png(), png()]);
+    expect((await getPhotos(rec.id))?.length).toBe(2);
+    await updateRecord(rec.id, { [name.id]: '립4' }, []);
+    expect(await getPhotos(rec.id)).toEqual([]);
+    await expect(updateRecord(rec.id, {}, [png()])).rejects.toBeInstanceOf(ValidationError); // required name missing
+    const after = (await loadAll()).records.find((r) => r.id === rec.id)!;
+    expect(after.values[name.id]).toBe('립4');
+    expect(await getPhotos(rec.id)).toEqual([]);
+  });
+});
+
 describe('photos', () => {
   async function recordId() {
     const d = await makeDrawer();
