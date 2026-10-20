@@ -580,14 +580,13 @@ export default function App() {
           drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
           onBack={() => navigate('drawer-manage')}
           onAddNotification={() => { setNotifTime(readNotifyCommon(store.settings).defaultTime); navigate('notification-date-field'); }}
-          onOpenCommonSettings={() => {}}
+          onOpenCommonSettings={() => navigate('notification-common')}
         />
       </FixedCanvas>
     </main>;
   }
   if (route === 'notification-common') {
-    // 알림 공통 설정 (default time + 알림 쉬는 시간). NOT yet linked from #29's row: it waits
-    // for the user's approval of this screen; reachable only by its URL until then.
+    // 알림 공통 설정 (default time + 알림 쉬는 시간), opened from #29's "알림 공통 설정" row (the user asked for it to be linked, 2026-10-20).
     return <main className="drawary-app-shell" data-route="notification-common">
       <FixedCanvas height={844}>
         <NotificationCommonSettingsScreen
