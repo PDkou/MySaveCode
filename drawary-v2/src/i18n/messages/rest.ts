@@ -269,4 +269,5 @@ export const rest: Messages = {
   '메일 앱을 열지 못했어요. 메일 앱이 있는지 확인해 주세요.': { ja: 'メールアプリを開けませんでした。メールアプリがあるか確認してください。', en: 'Couldn\'t open a mail app. Please check that one is installed.' },
   '저장을 취소했어요.': { ja: '保存をキャンセルしました。', en: 'Saving was cancelled.' },
   'Google Drive에 저장하지 못했어요.': { ja: 'Google Driveに保存できませんでした。', en: 'Couldn\'t save to Google Drive.' },
+  '아니요': { ja: 'いいえ', en: 'No' },
 };
