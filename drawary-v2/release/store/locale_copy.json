@@ -1,0 +1,531 @@
+{
+  "screens": {
+    "A": {
+      "KR": [
+        "나만의 기록 서랍장",
+        "소중한 것들을 한곳에"
+      ],
+      "JP": [
+        "わたしのひきだし帳",
+        "大切なものを、ひとつの場所に"
+      ],
+      "EN": [
+        "Your personal drawers",
+        "Keep what matters together"
+      ]
+    },
+    "B": {
+      "KR": [
+        "내 방식대로 정리해요",
+        "자유로운 서랍과 카테고리"
+      ],
+      "JP": [
+        "自分らしく整理しよう",
+        "自由につくれるカテゴリー"
+      ],
+      "EN": [
+        "Organize your way",
+        "Create your own categories"
+      ]
+    },
+    "C": {
+      "KR": [
+        "필요한 기록을 빠르게",
+        "서랍 속에서 바로 찾아요"
+      ],
+      "JP": [
+        "探したい記録をすぐに",
+        "ひきだしの中から見つけよう"
+      ],
+      "EN": [
+        "Find it when you need it",
+        "Search through your drawers"
+      ]
+    },
+    "D": {
+      "KR": [
+        "소중한 기록을 채워요",
+        "사진과 메모를 함께 보관"
+      ],
+      "JP": [
+        "大切な記録を残そう",
+        "写真もメモもひとまとめ"
+      ],
+      "EN": [
+        "Fill your drawers",
+        "Keep photos and notes together"
+      ]
+    },
+    "E": {
+      "KR": [
+        "내 기록을 내가 관리",
+        "필요한 내용을 체계적으로"
+      ],
+      "JP": [
+        "自分の記録は自分で管理",
+        "大切な情報をすっきり整理"
+      ],
+      "EN": [
+        "Stay in control",
+        "Keep your records organized"
+      ]
+    }
+  },
+  "feature": {
+    "KR": [
+      "나만의 소중한 것들을,",
+      "더 특별하게 기록하는 서랍장"
+    ],
+    "JP": [
+      "大切なものを、もっと特別に",
+      "日々の記録をしまうひきだし帳"
+    ],
+    "EN": [
+      "A little drawer for what matters",
+      "Keep your memories in one place"
+    ]
+  },
+  "render_info": {
+    "KR_A": {
+      "title": "나만의 기록 서랍장",
+      "subtitle": "소중한 것들을 한곳에",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "KR_B": {
+      "title": "내 방식대로 정리해요",
+      "subtitle": "자유로운 서랍과 카테고리",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "KR_C": {
+      "title": "필요한 기록을 빠르게",
+      "subtitle": "서랍 속에서 바로 찾아요",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "KR_D": {
+      "title": "소중한 기록을 채워요",
+      "subtitle": "사진과 메모를 함께 보관",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "KR_E": {
+      "title": "내 기록을 내가 관리",
+      "subtitle": "필요한 내용을 체계적으로",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "JP_A": {
+      "title": "わたしのひきだし帳",
+      "subtitle": "大切なものを、ひとつの場所に",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "JP_B": {
+      "title": "自分らしく整理しよう",
+      "subtitle": "自由につくれるカテゴリー",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "JP_C": {
+      "title": "探したい記録をすぐに",
+      "subtitle": "ひきだしの中から見つけよう",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "JP_D": {
+      "title": "大切な記録を残そう",
+      "subtitle": "写真もメモもひとまとめ",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "JP_E": {
+      "title": "自分の記録は自分で管理",
+      "subtitle": "大切な情報をすっきり整理",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "EN_A": {
+      "title": "Your personal drawers",
+      "subtitle": "Keep what matters together",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "EN_B": {
+      "title": "Organize your way",
+      "subtitle": "Create your own categories",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "EN_C": {
+      "title": "Find it when you need it",
+      "subtitle": "Search through your drawers",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "EN_D": {
+      "title": "Fill your drawers",
+      "subtitle": "Keep photos and notes together",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    },
+    "EN_E": {
+      "title": "Stay in control",
+      "subtitle": "Keep your records organized",
+      "title_render": {
+        "font_size": 34,
+        "bbox": [
+          210,
+          223,
+          718,
+          277
+        ]
+      },
+      "subtitle_render": {
+        "font_size": 23,
+        "bbox": [
+          266,
+          297,
+          664,
+          336
+        ]
+      }
+    }
+  },
+  "pixel_check": {
+    "KR_A": {
+      "pixels_changed_only_in_existing_title_bars": 5626,
+      "outside_text_pixel_differences": 0
+    },
+    "KR_B": {
+      "pixels_changed_only_in_existing_title_bars": 6332,
+      "outside_text_pixel_differences": 0
+    },
+    "KR_C": {
+      "pixels_changed_only_in_existing_title_bars": 6509,
+      "outside_text_pixel_differences": 0
+    },
+    "KR_D": {
+      "pixels_changed_only_in_existing_title_bars": 6493,
+      "outside_text_pixel_differences": 0
+    },
+    "KR_E": {
+      "pixels_changed_only_in_existing_title_bars": 6044,
+      "outside_text_pixel_differences": 0
+    },
+    "JP_A": {
+      "pixels_changed_only_in_existing_title_bars": 6451,
+      "outside_text_pixel_differences": 0
+    },
+    "JP_B": {
+      "pixels_changed_only_in_existing_title_bars": 6247,
+      "outside_text_pixel_differences": 0
+    },
+    "JP_C": {
+      "pixels_changed_only_in_existing_title_bars": 6893,
+      "outside_text_pixel_differences": 0
+    },
+    "JP_D": {
+      "pixels_changed_only_in_existing_title_bars": 6931,
+      "outside_text_pixel_differences": 0
+    },
+    "JP_E": {
+      "pixels_changed_only_in_existing_title_bars": 8983,
+      "outside_text_pixel_differences": 0
+    },
+    "EN_A": {
+      "pixels_changed_only_in_existing_title_bars": 6555,
+      "outside_text_pixel_differences": 0
+    },
+    "EN_B": {
+      "pixels_changed_only_in_existing_title_bars": 5713,
+      "outside_text_pixel_differences": 0
+    },
+    "EN_C": {
+      "pixels_changed_only_in_existing_title_bars": 6784,
+      "outside_text_pixel_differences": 0
+    },
+    "EN_D": {
+      "pixels_changed_only_in_existing_title_bars": 5761,
+      "outside_text_pixel_differences": 0
+    },
+    "EN_E": {
+      "pixels_changed_only_in_existing_title_bars": 4999,
+      "outside_text_pixel_differences": 0
+    }
+  },
+  "feature_illustration_details_localized": {
+    "JP": {
+      "four_cards": [
+        "記録する",
+        "分ける",
+        "飾る",
+        "ずっと大切に"
+      ],
+      "phone_subtitle": "大切なものを、自分らしく",
+      "categories": [
+        "コスメ",
+        "本",
+        "植物",
+        "旅行",
+        "大切なもの"
+      ],
+      "record_counts": [
+        "24件の記録",
+        "18件の記録",
+        "12件の記録",
+        "9件の記録",
+        "7件の記録"
+      ]
+    },
+    "EN": {
+      "four_cards": [
+        "Record",
+        "Organize",
+        "Decorate",
+        "Keep forever"
+      ],
+      "phone_subtitle": "Keep what matters, your way",
+      "categories": [
+        "Beauty",
+        "Books",
+        "Plants",
+        "Travel",
+        "Keepsakes"
+      ],
+      "record_counts": [
+        "24 records",
+        "18 records",
+        "12 records",
+        "9 records",
+        "7 records"
+      ]
+    }
+  },
+  "rework_2026_10_20": "JP/EN feature baked-in Korean captions were replaced; all five portrait images per language untouched; review only; screenshots placeholders still blank."
+}
