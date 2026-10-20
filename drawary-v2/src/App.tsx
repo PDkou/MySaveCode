@@ -46,6 +46,8 @@ import { NotificationTimingScreen } from './screens/NotificationTimingScreen';
 import { NotificationCompleteScreen } from './screens/NotificationCompleteScreen';
 import { RecurrenceManagementScreen, type RecurrenceRuleSummary } from './screens/RecurrenceManagementScreen';
 import { RecordPickerSheet } from './screens/RecordPickerSheet';
+import { NotificationCommonSettingsScreen } from './screens/NotificationCommonSettingsScreen';
+import { NOTIFY_COMMON_KEY, readNotifyCommon } from './flow/notifySettings';
 import { computeNotificationPlan } from './flow/notificationPlan';
 import { syncNotificationPlan } from './data/nativeBridge';
 import { toISODate } from './flow/recurrence';
@@ -75,14 +77,14 @@ import { InfoScreen } from './screens/InfoScreen';
 import { FeedbackScreen } from './screens/FeedbackScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 
-type StandaloneRoute = 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management' | 'backup-type' | 'backup-destination' | 'backup-success' | 'restore-file-picker' | 'restore-review' | 'restore-progress' | 'restore-success' | 'data-reset-confirm' | 'language-settings' | 'help-main' | 'faq' | 'guide' | 'info' | 'feedback';
+type StandaloneRoute = 'notification-common' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management' | 'backup-type' | 'backup-destination' | 'backup-success' | 'restore-file-picker' | 'restore-review' | 'restore-progress' | 'restore-success' | 'data-reset-confirm' | 'language-settings' | 'help-main' | 'faq' | 'guide' | 'info' | 'feedback';
 type Route = BottomNavTab | 'create-drawer' | StandaloneRoute;
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
 const NAMES: Record<Exclude<Route, StandaloneRoute>, string> = {
   home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm', 'language-settings', 'help-main', 'faq', 'guide', 'info', 'feedback'];
+const STANDALONE_ROUTES: readonly Route[] = ['notification-common', 'splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm', 'language-settings', 'help-main', 'faq', 'guide', 'info', 'feedback'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -286,10 +288,11 @@ export default function App() {
     const timer = window.setTimeout(() => {
       syncNotificationPlan(computeNotificationPlan({
         rules: store.notificationRules, drawers: store.drawers, fields: store.fields, records: store.records, now: Date.now(),
+        quiet: readNotifyCommon(store.settings),
       }));
     }, 400);
     return () => window.clearTimeout(timer);
-  }, [store.status, store.notificationRules, store.drawers, store.fields, store.records]);
+  }, [store.status, store.notificationRules, store.drawers, store.fields, store.records, store.settings]);
 
   // #40-#43 보안/잠금. pinValue is the real PIN #42's flow commits (not
   // the archive's own hardcoded demo PIN); appLockEnabled can only be
@@ -552,8 +555,21 @@ export default function App() {
           recordCount={currentRecords.length}
           drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
           onBack={() => navigate('drawer-manage')}
-          onAddNotification={() => navigate('notification-date-field')}
+          onAddNotification={() => { setNotifTime(readNotifyCommon(store.settings).defaultTime); navigate('notification-date-field'); }}
           onOpenCommonSettings={() => {}}
+        />
+      </FixedCanvas>
+    </main>;
+  }
+  if (route === 'notification-common') {
+    // 알림 공통 설정 (default time + 알림 쉬는 시간). NOT yet linked from #29's row: it waits
+    // for the user's approval of this screen; reachable only by its URL until then.
+    return <main className="drawary-app-shell" data-route="notification-common">
+      <FixedCanvas height={844}>
+        <NotificationCommonSettingsScreen
+          value={readNotifyCommon(store.settings)}
+          onChange={(next) => { void actions.setSetting(NOTIFY_COMMON_KEY, next).catch(alertError); }}
+          onBack={() => navigate('notification-settings')}
         />
       </FixedCanvas>
     </main>;

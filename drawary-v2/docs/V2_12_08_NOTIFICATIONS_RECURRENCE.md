@@ -29,8 +29,8 @@ Screen layouts are unchanged; the three visible additions are listed under "Addi
 
 ## Open decisions / not done
 
-- **`알림 공통 설정`** (default notification time, `알림 쉬는 시간`) has **no approved screen** among the 59, so it is not built and quiet hours are not applied; notifications fire at each rule's time.
-- **Photos on generated records**: not copied (storage and privacy); copy them instead if you want.
+- **`알림 공통 설정`** has no approved screen among the 59. Built as proposal B (2026-10-20, see below); **#29's row is not linked to it until the user approves the preview.**
+- **Photos on generated records**: not copied. Decided with the user (2026-10-20): keep it that way.
 - Notification **delivery**, the permission prompt and the Android alarm limits: step 6.
 - Texts are Korean only (step 4 adds JA/EN).
 
@@ -38,3 +38,10 @@ Screen layouts are unchanged; the three visible additions are listed under "Addi
 
 - `npm test` 96 (was 71): period maths (weeks, month-end clamps, leap years), due/cap/end conditions, rule validation, each rule type creating NEW records while the original (values, `updatedAt`, photos) is untouched, idempotency (same day twice and two concurrent runs), catch-up after an absence, count and inclusive end date, deleted target, required field added later, cascades on field/drawer delete, the v1 -> v2 database upgrade keeping data, and the notification plan. Mutation-checked (breaking the progress counter or the date shift fails the tests).
 - Real Chromium + IndexedDB: #29-#32 end to end (duplicate refused, delete declined/accepted), #33-#37 end to end (picker + search, undated target refused, rule saved, duplicate refused), then with the clock moved: one new record on its date, the list shows both, the original unchanged, and a count-2 rule finishing; the Android bridge received the upcoming list. `tsc -b`, `npm run build`, 54/54 route smoke, earlier flows re-run.
+
+## Added after the first review (2026-10-20)
+
+- **Decisions:** photos stay uncopied; #22's `초기화` returning to the default order (no sort) is right; a small marker for an active sort/filter is wanted.
+- **Active marker (#20):** while a sort or filter is in effect, its `정렬` / `필터` button takes the selected tint of the sheets and a small purple dot, and its accessible name says `(적용 중)` / `(N개 적용 중)`. The header count still shows the drawer's total.
+- **알림 공통 설정 (proposal, awaiting approval):** a new screen (`#/notification-common`) built from #29/#31's own header, cards, icon tile, time row and switch. `새 알림의 기본 시간` (default 09:00; #31 starts with it when a notification is added from #29) and `알림 쉬는 시간` (off by default; start 22:00, end 07:00, may cross midnight). Changes save at once as the setting `notify.common`. **Quiet hours postpone, never drop:** a notification that would ring inside the window rings when it ends (same day if the window ends later today, else next morning); existing notifications are affected too; the time of existing rules does not change. The plan handed to the Android shell already applies it. Not linked from #29's `알림 공통 설정` row yet -- one line to connect after approval.
+- Tests 101 (was 96): settings parsing, window maths (including across midnight), postponing, the plan with quiet hours.

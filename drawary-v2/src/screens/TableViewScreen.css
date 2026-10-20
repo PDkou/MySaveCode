@@ -124,3 +124,11 @@ button{font:inherit}
 .tv-menu-popover button:hover{background:#f7f1ff}
 .tv-menu-popover img{width:25px;height:25px;object-fit:contain}
 .tv-menu-popover span{font-size:13px;font-weight:800;letter-spacing:-.25px}
+
+/* A sort or filter is in effect (user-approved small marker): the button takes the sheets' selected tint and a dot. */
+.tv-tools button{position:relative}
+.tv-tools button.is-active{border-color:#baa6f4;background:#f6f1ff;color:#684fbd}
+.tv-tools button.is-active::after{
+  content:"";position:absolute;top:7px;right:9px;width:8px;height:8px;border-radius:50%;background:#7d58e8;
+  box-shadow:0 0 0 2px #f6f1ff;
+}

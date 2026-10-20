@@ -1,5 +1,6 @@
 import type { Drawer, Field, NotificationRule, RecordItem } from '../data/types';
 import { summarizeRecord } from './recordForm';
+import { applyQuietHours, type NotifyCommon } from './notifySettings';
 
 export interface PlannedNotification {
   /** Stable per rule+record, so the native side can replace instead of duplicate. */
@@ -19,7 +20,8 @@ export interface PlannedNotification {
  * that date at the rule's time". Dates already past are skipped, as are
  * notifications whose moment has gone. This only reads dates; it has nothing
  * to do with recurrence (records a recurrence rule makes simply have dates too).
- * `limit` keeps the list short enough for the phone's alarm quota.
+ * `limit` keeps the list short enough for the phone's alarm quota. Quiet hours
+ * (알림 쉬는 시간) postpone a notification to when they end; none is dropped.
  */
 export function computeNotificationPlan(input: {
   rules: readonly NotificationRule[];
@@ -28,6 +30,8 @@ export function computeNotificationPlan(input: {
   records: readonly RecordItem[];
   now: number;
   limit?: number;
+  /** 알림 쉬는 시간: a notification inside it moves to when it ends. */
+  quiet?: Pick<NotifyCommon, 'quietEnabled' | 'quietStart' | 'quietEnd'>;
 }): PlannedNotification[] {
   const out: PlannedNotification[] = [];
   for (const rule of input.rules) {
@@ -41,8 +45,9 @@ export function computeNotificationPlan(input: {
       const v = record.values[rule.fieldId];
       const m = typeof v === 'string' ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(v) : null;
       if (!m) continue;
-      const fireAt = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]) - rule.daysBefore, hh, mm, 0, 0).getTime();
-      if (fireAt <= input.now) continue;
+      const planned = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]) - rule.daysBefore, hh, mm, 0, 0).getTime();
+      if (planned <= input.now) continue;
+      const fireAt = input.quiet ? applyQuietHours(planned, input.quiet) : planned;
       const title = summarizeRecord(drawerFields, record).title;
       out.push({
         key: `${rule.id}:${record.id}`, fireAt, drawerId: drawer.id, recordId: record.id, ruleId: rule.id,

@@ -78,6 +78,9 @@ export function TableViewScreen({
   }, [allRows, columns, view, searchOpen, query]);
 
   const count = recordCount ?? allRows.length;
+  // A saved sort/filter is easy to forget: mark the tool buttons while one is in effect.
+  const sortActive = Boolean(view.sort && columns.some((c) => c.id === view.sort!.columnId));
+  const activeFilters = view.rules.filter((r) => columns.some((c) => c.id === r.columnId)).length;
 
   return (
     <main className="tv-screen">
@@ -144,11 +147,11 @@ export function TableViewScreen({
             <img src="/assets/ui-icons/icon_search.webp" alt="" />
             <span>검색</span>
           </button>
-          <button type="button" onClick={() => setSortOpen(true)}>
+          <button type="button" className={sortActive ? 'is-active' : ''} aria-label={sortActive ? '정렬 (적용 중)' : '정렬'} onClick={() => setSortOpen(true)}>
             <img src="/assets/ui-icons/icon_sort.webp" alt="" />
             <span>정렬</span>
           </button>
-          <button type="button" onClick={() => setFilterOpen(true)}>
+          <button type="button" className={activeFilters > 0 ? 'is-active' : ''} aria-label={activeFilters > 0 ? `필터 (${activeFilters}개 적용 중)` : '필터'} onClick={() => setFilterOpen(true)}>
             <img src="/assets/ui-icons/icon_filter.webp" alt="" />
             <span>필터</span>
           </button>
