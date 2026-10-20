@@ -48,7 +48,7 @@ jobs:
 
       - name: Show lint findings
         if: always()
-        run: cat drawary-v2/android/app/build/intermediates/lint_intermediate_text_report/release/lintReportRelease/lint-results-release.txt || true
+        run: grep -A6 "Error:" drawary-v2/android/app/build/intermediates/lint_intermediate_text_report/release/lintReportRelease/lint-results-release.txt || true
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4

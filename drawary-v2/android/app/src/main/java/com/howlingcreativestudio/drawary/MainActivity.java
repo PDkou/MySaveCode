@@ -1,6 +1,7 @@
 package com.howlingcreativestudio.drawary;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -37,7 +38,7 @@ public class MainActivity extends Activity {
     private WebView webView;
     private NativeBridge bridge;
     private ValueCallback<Uri[]> fileCallback;
-    private OnBackInvokedCallback backCallback;
+    private Object backCallback; // an OnBackInvokedCallback on Android 13+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,16 +58,26 @@ public class MainActivity extends Activity {
         bridge = new NativeBridge(this, webView);
         webView.addJavascriptInterface(bridge, "__DrawaryAndroid");
 
-        if (Build.VERSION.SDK_INT >= 33) {
-            backCallback = this::handleBack;
-            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, backCallback);
-        }
+        if (Build.VERSION.SDK_INT >= 33) registerBackCallback();
 
         if (savedInstanceState != null && webView.restoreState(savedInstanceState) != null) return;
         webView.loadUrl(AssetServer.START_URL);
     }
 
+    @TargetApi(33)
+    private void registerBackCallback() {
+        OnBackInvokedCallback callback = this::handleBack;
+        backCallback = callback;
+        getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, callback);
+    }
+
+    @TargetApi(33)
+    private void unregisterBackCallback() {
+        getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback((OnBackInvokedCallback) backCallback);
+    }
+
     /** The page is a fixed-size layout: keep it clear of the status bar, navigation bar, camera cut-out and keyboard. */
+    @TargetApi(30)
     private void applyInsets(View root) {
         if (Build.VERSION.SDK_INT < 30) return; // before Android 11 the system already keeps the window clear of the bars
         getWindow().setDecorFitsSystemWindows(false);
@@ -216,7 +227,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        if (backCallback != null) getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(backCallback);
+        if (backCallback != null && Build.VERSION.SDK_INT >= 33) unregisterBackCallback();
         if (bridge != null) bridge.shutdown();
         if (webView != null) {
             ((ViewGroup) webView.getParent()).removeView(webView);
