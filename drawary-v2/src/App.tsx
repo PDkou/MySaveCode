@@ -50,7 +50,7 @@ import { RecordPickerSheet } from './screens/RecordPickerSheet';
 import { NotificationCommonSettingsScreen } from './screens/NotificationCommonSettingsScreen';
 import { NOTIFY_COMMON_KEY, readNotifyCommon } from './flow/notifySettings';
 import { computeNotificationPlan } from './flow/notificationPlan';
-import { hasNativeBiometric, authenticateBiometric, deliverBackup, syncNotificationPlan, hasNativeFeedback, hasNativeSave, sendNativeFeedback, setSecureScreen } from './data/nativeBridge';
+import { hasNativeBiometric, authenticateBiometric, deliverBackup, syncNotificationPlan, syncLanguage, hasNativeFeedback, hasNativeSave, sendNativeFeedback, setSecureScreen } from './data/nativeBridge';
 import * as repo from './data/repository';
 import { createBackup, readBackup, type ParsedBackup } from './backup/backupFile';
 import { useAppLock } from './flow/useAppLock';
@@ -84,6 +84,7 @@ import { InfoScreen } from './screens/InfoScreen';
 import { FeedbackScreen } from './screens/FeedbackScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 import { getLocale, t, K } from './i18n';
+import { closeOpenOverlay } from './flow/overlayBack';
 
 type StandaloneRoute = 'notification-common' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management' | 'backup-type' | 'backup-destination' | 'backup-success' | 'restore-file-picker' | 'restore-review' | 'restore-progress' | 'restore-success' | 'data-reset-confirm' | 'language-settings' | 'help-main' | 'faq' | 'guide' | 'info' | 'feedback';
 type Route = BottomNavTab | 'create-drawer' | StandaloneRoute;
@@ -326,6 +327,7 @@ export default function App() {
   // Set while rendering, before any screen below is drawn; a change re-renders the whole tree because the setting lives in the store.
   const language = readLanguage(store.settings);
   setLang(language);
+  useEffect(() => { if (store.status === 'ready') syncLanguage(language); }, [store.status, language]);
 
   // #39 테마: the saved choice is put on the page whenever it changes (and once the saved data has loaded).
   const theme = readTheme(store.settings);
@@ -454,6 +456,61 @@ export default function App() {
     else if (recordRoute && !selectedRecord) navigate('drawer-detail');
     else if ((route === 'restore-review' || route === 'restore-progress') && !restorePlan) navigate('restore-file-picker');
   }, [route, store.status, currentDrawer, selectedRecord, manageField, navigate]);
+
+  // The phone's back button (Android shell): does what the screen's own back arrow does. Anything open on top (dialog,
+  // menu, PIN gate) closes first; on Home (or the lock screen) it returns false and the shell leaves the app.
+  const hardwareBack = (): boolean => {
+    if (boot !== 'done') return true;
+    if (lock.locked) return false;
+    if (closeOpenOverlay()) return true;
+    if (pinGate) { setPinGate(null); return true; }
+    if (confirmLockOff) { setConfirmLockOff(false); return true; }
+    if (targetPickerOpen) { setTargetPickerOpen(false); return true; }
+    switch (route) {
+      case 'home': case 'home-empty': case 'app-lock': case 'splash': return false;
+      case 'onboarding': {
+        const e = new CustomEvent('drawary:back', { detail: { handled: false } });
+        window.dispatchEvent(e);
+        return e.detail.handled; // a slide back, or leave the app from the first slide
+      }
+      case 'search': case 'stats': case 'settings': navigate('home'); return true;
+      case 'create-drawer': resetCreateFlow(); returnToTab(); return true;
+      case 'drawer-fields': case 'field-edit': navigate(route === 'drawer-fields' ? 'create-drawer' : 'drawer-fields'); return true;
+      case 'new-field': navigate('drawer-fields'); return true;
+      case 'creation-complete': case 'theme-settings': case 'security-settings': case 'data-management': case 'language-settings':
+      case 'help-main': case 'info': case 'feedback': returnToTab(); return true;
+      case 'fill-drawer': navigate(fillBack); return true;
+      case 'drawer-detail': setRecordQuery(''); returnToTab(); return true;
+      case 'table-view': case 'drawer-manage': navigate('drawer-detail'); return true;
+      case 'notification-settings': case 'recurrence-management': case 'notification-complete': case 'recurrence-complete':
+      case 'name-icon-change': case 'drawer-fields-manage': navigate('drawer-manage'); return true;
+      case 'notification-common': case 'notification-date-field': navigate('notification-settings'); return true;
+      case 'notification-timing': navigate('notification-date-field'); return true;
+      case 'recurrence-target-date': navigate('recurrence-management'); return true;
+      case 'recurrence-cycle': navigate('recurrence-target-date'); return true;
+      case 'recurrence-end-condition': navigate('recurrence-cycle'); return true;
+      case 'new-field-manage': case 'field-edit-manage': navigate('drawer-fields-manage'); return true;
+      case 'lock-detail': navigate('security-settings'); return true;
+      case 'pin-setup': navigate('lock-detail'); return true;
+      case 'backup-type': case 'restore-file-picker': case 'backup-success': case 'restore-success': case 'data-reset-confirm': navigate('data-management'); return true;
+      case 'backup-destination': navigate('backup-type'); return true;
+      case 'backup-progress': navigate('backup-destination'); return true;
+      case 'restore-review': navigate('restore-file-picker'); return true;
+      case 'restore-progress': return true; // the restore is writing: not interruptible
+      case 'faq': case 'guide': navigate('help-main'); return true;
+      case 'record-detail': navigate(recordBack); return true;
+      case 'photo-viewer': navigate('record-detail'); return true;
+      case 'record-edit': setEditPhotos(null); navigate('record-detail'); return true;
+      case 'home-edit': navigate('home'); return true;
+      default: return false;
+    }
+  };
+  const hardwareBackRef = useRef(hardwareBack);
+  hardwareBackRef.current = hardwareBack;
+  useEffect(() => {
+    window.__drawaryBack = () => hardwareBackRef.current();
+    return () => { delete window.__drawaryBack; };
+  }, []);
 
   if (boot !== 'done') {
     return <main className="drawary-app-shell drawary-splash-route" data-route="boot-splash"><SplashScreen fadingOut={boot === 'fading'} /></main>;

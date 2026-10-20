@@ -40,6 +40,17 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
     onDone();
   };
 
+  // The phone's back button (see App.hardwareBack): one slide back; on the first slide it is left to leave the app.
+  const indexRef = useRef(0);
+  indexRef.current = index;
+  useEffect(() => {
+    const onBack = (e: Event) => {
+      if (indexRef.current > 0) { prev(); (e as CustomEvent<{ handled: boolean }>).detail.handled = true; }
+    };
+    window.addEventListener('drawary:back', onBack);
+    return () => window.removeEventListener('drawary:back', onBack);
+  }, []);
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') prev();

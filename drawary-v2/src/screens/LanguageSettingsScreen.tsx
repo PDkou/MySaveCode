@@ -11,16 +11,16 @@ export interface LanguageSettingsScreenProps {
   onApply?: (code: LanguageCode) => void;
 }
 
-const STRINGS: Record<LanguageCode, { heading: string; hint: string; cancel: string; apply: string; previous: string }> = {
-  ko: { heading: '언어 설정', hint: '선택한 언어가 앱 전체에 적용돼요.', cancel: '취소', apply: '적용', previous: '이전 화면' },
-  ja: { heading: '言語設定', hint: '選択した言語がアプリ全体に適用されます。', cancel: 'キャンセル', apply: '適用', previous: '前の画面' },
-  en: { heading: 'Language settings', hint: 'The selected language will apply throughout the app.', cancel: 'Cancel', apply: 'Apply', previous: 'Back' },
+const STRINGS: Record<LanguageCode, { heading: string; hint: string; cancel: string; apply: string; previous: string; choose: string }> = {
+  ko: { heading: '언어 설정', hint: '선택한 언어가 앱 전체에 적용돼요.', cancel: '취소', apply: '적용', previous: '이전 화면', choose: '언어 선택' },
+  ja: { heading: '言語設定', hint: '選択した言語がアプリ全体に適用されます。', cancel: 'キャンセル', apply: '適用', previous: '前の画面', choose: '言語を選択' },
+  en: { heading: 'Language settings', hint: 'The selected language will apply throughout the app.', cancel: 'Cancel', apply: 'Apply', previous: 'Back', choose: 'Choose a language' },
 };
 
 const CARDS: { code: LanguageCode; name: string; desc: ReactNode; alt: string; asset: string }[] = [
   { code: 'ko', name: '한국어', desc: '앱 전체를 한국어로', alt: '한복을 입고 인사하는 Drawary 마스코트', asset: '/assets/language/language_ko.png' },
-  { code: 'ja', name: '日本語', desc: 'アプリ全体を日本語に', alt: '기모노를 입고 인사하는 Drawary 마스코트', asset: '/assets/language/language_ja.png' },
-  { code: 'en', name: 'English', desc: <>Use English throughout<br />the app</>, alt: '여행 가방을 들고 인사하는 Drawary 마스코트', asset: '/assets/language/language_en.png' },
+  { code: 'ja', name: '日本語', desc: 'アプリ全体を日本語に', alt: '着物で挨拶するDrawaryのマスコット', asset: '/assets/language/language_ja.png' },
+  { code: 'en', name: 'English', desc: <>Use English throughout<br />the app</>, alt: 'Drawary mascot waving with a travel bag', asset: '/assets/language/language_en.png' },
 ];
 
 /**
@@ -46,14 +46,14 @@ export function LanguageSettingsScreen({ savedLanguage = 'ko', onBack, onCancel,
   const t = STRINGS[selected];
 
   return (
-    <section className="lang54-screen" lang={selected} aria-label="언어 설정">
+    <section className="lang54-screen" lang={selected} aria-label={t.heading}>
       <ScreenHeader
         title={t.heading}
         onBack={onBack}
         backLabel={t.previous}
         style={{ position: 'absolute', top: 0, height: 71, width: '100%' }}
       />
-      <section className="lang54-form" aria-label="언어 선택">
+      <section className="lang54-form" aria-label={t.choose}>
         {CARDS.map((card) => (
           <button
             key={card.code}

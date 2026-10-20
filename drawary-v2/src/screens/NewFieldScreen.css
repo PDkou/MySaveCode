@@ -89,4 +89,4 @@ button,input{font:inherit}
   box-shadow:0 7px 12px rgba(var(--tr-112-75-218,112,75,218),.18);color:white;
   font-size:17px;line-height:54px;font-weight:700;letter-spacing:-.4px;cursor:pointer;
 }
-button:focus-visible,input:focus-visible{outline:3px solid rgba(var(--tr-123-88-232,123,88,232),.22);outline-offset:2px}
+.nf-screen button:focus-visible,.nf-screen input:focus-visible{outline:3px solid rgba(var(--tr-123-88-232,123,88,232),.22);outline-offset:2px}

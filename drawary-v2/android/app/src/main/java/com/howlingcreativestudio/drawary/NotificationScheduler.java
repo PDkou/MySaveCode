@@ -39,10 +39,11 @@ final class NotificationScheduler {
 
     static void ensureChannel(Context context) {
         NotificationManager nm = context.getSystemService(NotificationManager.class);
-        if (nm == null || nm.getNotificationChannel(CHANNEL_ID) != null) return;
+        if (nm == null) return;
+        // Creating a channel that exists only updates its name and description, so this also follows a language change.
         NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                context.getString(R.string.channel_reminders), NotificationManager.IMPORTANCE_DEFAULT);
-        channel.setDescription(context.getString(R.string.channel_reminders_desc));
+                AppLocale.str(context, R.string.channel_reminders), NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setDescription(AppLocale.str(context, R.string.channel_reminders_desc));
         nm.createNotificationChannel(channel);
     }
 

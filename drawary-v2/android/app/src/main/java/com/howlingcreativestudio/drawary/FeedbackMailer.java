@@ -36,7 +36,7 @@ final class FeedbackMailer {
         body.append("Drawary ").append(BuildConfig.VERSION_NAME)
                 .append(" / Android ").append(Build.VERSION.RELEASE)
                 .append(" / ").append(Build.MANUFACTURER).append(' ').append(Build.MODEL);
-        String subject = context.getString(R.string.feedback_subject);
+        String subject = AppLocale.str(context, R.string.feedback_subject);
 
         Uri attachment = null;
         String attachmentBase64 = f.optString("attachmentBase64");
@@ -67,7 +67,7 @@ final class FeedbackMailer {
         intent.putExtra(Intent.EXTRA_SUBJECT, subject);
         intent.putExtra(Intent.EXTRA_TEXT, body.toString());
 
-        Intent chooser = Intent.createChooser(intent, context.getString(R.string.feedback_chooser));
+        Intent chooser = Intent.createChooser(intent, AppLocale.str(context, R.string.feedback_chooser));
         try {
             context.startActivity(chooser);
             return true;

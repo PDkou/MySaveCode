@@ -44,6 +44,11 @@ public class MainActivity extends Activity {
     private Object backCallback; // an OnBackInvokedCallback on Android 13+
 
     @Override
+    protected void attachBaseContext(android.content.Context base) {
+        super.attachBaseContext(AppLocale.forActivity(base));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Decided before anything is drawn, so the lock screen is never captured on a cold start.
@@ -151,7 +156,7 @@ public class MainActivity extends Activity {
             public boolean onJsAlert(WebView v, String url, String message, JsResult result) {
                 new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
                         .setMessage(message)
-                        .setPositiveButton(android.R.string.ok, (d, w) -> result.confirm())
+                        .setPositiveButton(AppLocale.wrap(MainActivity.this).getString(android.R.string.ok), (d, w) -> result.confirm())
                         .setOnCancelListener(d -> result.cancel())
                         .show();
                 return true;
@@ -161,8 +166,8 @@ public class MainActivity extends Activity {
             public boolean onJsConfirm(WebView v, String url, String message, JsResult result) {
                 new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
                         .setMessage(message)
-                        .setPositiveButton(android.R.string.ok, (d, w) -> result.confirm())
-                        .setNegativeButton(android.R.string.cancel, (d, w) -> result.cancel())
+                        .setPositiveButton(AppLocale.wrap(MainActivity.this).getString(android.R.string.ok), (d, w) -> result.confirm())
+                        .setNegativeButton(AppLocale.wrap(MainActivity.this).getString(android.R.string.cancel), (d, w) -> result.cancel())
                         .setOnCancelListener(d -> result.cancel())
                         .show();
                 return true;
@@ -211,9 +216,20 @@ public class MainActivity extends Activity {
         else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
     }
 
+    /**
+     * The phone's back button: the page decides (window.__drawaryBack closes a dialog / menu or goes up one screen, like the
+     * screen's own back arrow). When it says no (Home, lock screen) or the page cannot answer, the app goes to the background.
+     */
     private void handleBack() {
-        if (webView != null && webView.canGoBack()) webView.goBack();
-        else finish();
+        if (webView == null) {
+            moveTaskToBack(true);
+            return;
+        }
+        webView.evaluateJavascript(
+                "(function(){try{return window.__drawaryBack?window.__drawaryBack():false}catch(e){return false}})()",
+                value -> {
+                    if (!"true".equals(value)) moveTaskToBack(true);
+                });
     }
 
     @Override

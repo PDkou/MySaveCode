@@ -22,6 +22,7 @@
     });
   }
   window.DrawaryNative = {
+    setLanguage: function (lang) { A.setLanguage(String(lang)); },
     setNotificationPlan: function (json) { A.setNotificationPlan(json); },
     isBiometricAvailable: function () { return A.isBiometricAvailable() === true; },
     authenticateBiometric: function () { return call('authenticateBiometric', []).then(function (v) { return v === true; }); },

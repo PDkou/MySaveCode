@@ -17,6 +17,10 @@ main[data-route="create-drawer"] { position: relative; overflow: hidden; }
 .drawary-shell-footer { flex: 0 0 auto; width: 100%; padding-bottom: env(safe-area-inset-bottom, 0px); background: white; }
 .drawary-nav-host { position: relative; width: 100%; max-width: 390px; margin: 0 auto; overflow: visible; }
 .drawary-nav-scale { position: absolute; top: 0; left: 50%; width: 390px; height: 94px; transform-origin: top center; }
+/* One focus ring for every field/button that does not draw its own. :where() keeps it at zero specificity, so a screen's own
+ * focus style (e.g. a ring on the wrapper with outline:0 on the input inside it) always wins. Before, four screens' unscoped
+ * `button/input:focus-visible` rules leaked app-wide and drew a square ring inside rounded field wrappers. */
+:where(input, textarea, select, button):focus-visible { outline: 3px solid rgba(var(--tr-123-88-232,123,88,232), .22); outline-offset: 2px; }
 /* Explicit keyboard focus while preserving the fixed final artwork. */
 .drawary-dynamic-bottom-nav__hotspot:focus-visible { outline: 2px solid var(--tc-684de1,#684de1); outline-offset: -5px; border-radius: 14px; }
 

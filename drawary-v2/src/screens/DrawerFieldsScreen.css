@@ -283,7 +283,7 @@
   cursor: pointer;
 }
 
-button:focus-visible {
+.drawary-field-screen button:focus-visible {
   outline: 3px solid rgba(var(--tr-123-88-232,123,88,232), .25);
   outline-offset: 2px;
 }

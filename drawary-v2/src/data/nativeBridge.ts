@@ -15,6 +15,8 @@ export interface DrawaryNativeApi {
    * soonest first). Called after every data change and when the app opens.
    */
   setNotificationPlan?: (json: string) => void;
+  /** The app's language ('ko' | 'ja' | 'en'): the shell's own texts (fingerprint window, reminder channel, mail subject) follow it. */
+  setLanguage?: (lang: string) => void;
   /** True when the phone has a fingerprint/face lock set up that the app may use. */
   isBiometricAvailable?: () => boolean;
   /**
@@ -46,11 +48,19 @@ export interface DrawaryNativeApi {
 }
 
 declare global {
-  interface Window { DrawaryNative?: DrawaryNativeApi }
+  interface Window {
+    DrawaryNative?: DrawaryNativeApi;
+    /** Set by the app: the phone's back button was pressed. true = handled inside the app, false = leave the app. */
+    __drawaryBack?: () => boolean;
+  }
 }
 
 export const hasNativeNotifications = (): boolean =>
   typeof window !== 'undefined' && typeof window.DrawaryNative?.setNotificationPlan === 'function';
+
+export function syncLanguage(lang: string): void {
+  try { window.DrawaryNative?.setLanguage?.(lang); } catch (e) { console.error('language not sent', e); }
+}
 
 export function syncNotificationPlan(plan: readonly PlannedNotification[]): void {
   if (!hasNativeNotifications()) return;

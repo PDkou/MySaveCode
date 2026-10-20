@@ -55,6 +55,14 @@ final class NativeBridge {
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_SECURE, false);
     }
 
+    /** The app's language (ko / ja / en) for the shell's own texts. */
+    @JavascriptInterface
+    public void setLanguage(final String lang) {
+        worker.execute(() -> {
+            if (AppLocale.set(activity, lang)) main.post(activity::recreate);
+        });
+    }
+
     // ---- notifications -------------------------------------------------------------------------------------
 
     @JavascriptInterface
@@ -94,9 +102,9 @@ final class NativeBridge {
             final AtomicBoolean answered = new AtomicBoolean(false);
             try {
                 BiometricPrompt.Builder builder = new BiometricPrompt.Builder(activity)
-                        .setTitle(activity.getString(R.string.biometric_title))
-                        .setSubtitle(activity.getString(R.string.biometric_subtitle))
-                        .setNegativeButton(activity.getString(R.string.biometric_use_pin), activity.getMainExecutor(), (dialog, which) -> {
+                        .setTitle(AppLocale.str(activity, R.string.biometric_title))
+                        .setSubtitle(AppLocale.str(activity, R.string.biometric_subtitle))
+                        .setNegativeButton(AppLocale.str(activity, R.string.biometric_use_pin), activity.getMainExecutor(), (dialog, which) -> {
                             if (answered.compareAndSet(false, true)) resolve(id, "false");
                         });
                 if (Build.VERSION.SDK_INT >= 30) builder.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK);
@@ -174,8 +182,8 @@ final class NativeBridge {
         String authority = uri.getAuthority() == null ? "" : uri.getAuthority();
         if (authority.startsWith("com.google.android.apps.docs")) return "Google Drive";
         if (authority.equals("com.android.providers.downloads.documents")) return "Download";
-        if (authority.equals("com.android.externalstorage.documents")) return activity.getString(R.string.place_phone);
-        return activity.getString(R.string.place_chosen);
+        if (authority.equals("com.android.externalstorage.documents")) return AppLocale.str(activity, R.string.place_phone);
+        return AppLocale.str(activity, R.string.place_chosen);
     }
 
     @JavascriptInterface
@@ -183,7 +191,7 @@ final class NativeBridge {
         main.post(() -> {
             PrintManager pm = activity.getSystemService(PrintManager.class);
             if (pm == null) return;
-            String job = activity.getString(R.string.print_job);
+            String job = AppLocale.str(activity, R.string.print_job);
             PrintAttributes attrs = new PrintAttributes.Builder()
                     .setMediaSize(PrintAttributes.MediaSize.ISO_A4.asLandscape())
                     .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
