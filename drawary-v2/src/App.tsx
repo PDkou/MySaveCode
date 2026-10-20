@@ -3,7 +3,8 @@ import { ResponsiveBottomNav } from './components/ResponsiveBottomNav';
 import type { BottomNavTab } from './components/BottomNav_FINAL_CONFIRMED';
 import { SplashScreen } from './screens/SplashScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
-import { HomeScreen, type HomeAction } from './screens/HomeScreen';
+import { HomeScreen, type HomeDrawerCard } from './screens/HomeScreen';
+import { actions, drawerById, recordsOf, useStore } from './data/store';
 import { HomeEmptyScreen } from './screens/HomeEmptyScreen';
 import { GlobalSearchScreen } from './screens/GlobalSearchScreen';
 import { MOCK_SEARCH_RECORDS } from './mockData';
@@ -15,7 +16,6 @@ import { NameIconChangeScreen } from './screens/NameIconChangeScreen';
 import { CreationCompleteScreen } from './screens/CreationCompleteScreen';
 import { FillDrawerScreen } from './screens/FillDrawerScreen';
 import { BackupProgressScreen } from './screens/BackupProgressScreen';
-import { HomeEditScreen } from './screens/HomeEditScreen';
 import { StatsScreen } from './screens/StatsScreen';
 import { NewDrawerScreen } from './screens/NewDrawerScreen';
 import { DrawerDetailScreen, DEFAULT_RECORDS } from './screens/DrawerDetailScreen';
@@ -70,28 +70,6 @@ const parseRoute = (): Route => {
   return 'home';
 };
 
-/** #03 Home content hotspots that have no destination screen yet. Per
- * CLAUDE.md, a missing source is a blocker to flag, not something to
- * approximate -- so these are a deliberate no-op for now rather than a
- * guessed navigation target. The open-* drawer-card actions now DO have
- * a destination (#15, below), so only "edit" was removed from here
- * once #06 landed; this set no longer needs updating for the open-*
- * actions either. */
-const UNIMPLEMENTED_HOME_ACTIONS: ReadonlySet<HomeAction> = new Set([]);
-
-/** HomeAction -> #15's drawerName, matching #03's own card labels.
- * There's no real per-drawer data model yet (V2-12), so #15 always
- * shows the same 4 demo records regardless of which card was opened --
- * only the header's name/count differ, which is honest about what's
- * actually wired rather than faking distinct per-drawer content. */
-const DRAWER_NAMES: Record<Exclude<HomeAction, 'create-drawer' | 'edit'>, string> = {
-  'open-cosmetics': '화장품',
-  'open-books': '책',
-  'open-plants': '식물',
-  'open-travel': '여행',
-  'open-other': '소중한 것들',
-};
-
 /** V2-09-01/02: user-approved splash and onboarding components are available
  * at #/splash and #/onboarding for parity QA, and onboarding's "시작하기"/
  * "건너뛰기" both route to #/home as confirmed.
@@ -104,12 +82,19 @@ const DRAWER_NAMES: Record<Exclude<HomeAction, 'create-drawer' | 'edit'>, string
 export default function App() {
   const [route, setRoute] = useState<Route>(parseRoute);
   const lastTabRef = useRef<BottomNavTab>('home');
-  const [drawerDetailName, setDrawerDetailName] = useState('화장품');
+  const store = useStore();
+  const [currentDrawerId, setCurrentDrawerId] = useState<string | null>(null);
+  const currentDrawer = currentDrawerId ? drawerById(store, currentDrawerId) : undefined;
+  const drawerDetailName = currentDrawer?.name ?? '';
+  const homeCards: HomeDrawerCard[] = store.drawers.map((d) => ({
+    id: d.id, name: d.name, iconKey: d.iconKey, colorKey: d.colorKey,
+    recordCount: recordsOf(store, d.id).length,
+  }));
   // #25 서랍 이름 / 아이콘 변경 writes both of these back on save, and #24
   // reads them straight back out -- the "상단 정보 즉시 갱신" CONFIRMED.md
   // asks for, done via shared App-level state rather than local state in
   // either screen.
-  const [drawerIconId, setDrawerIconId] = useState('cosmetics');
+  const drawerIconId = currentDrawer?.iconKey ?? 'misc';
   const [recordDetailId, setRecordDetailId] = useState('lip');
   // '' means "no photo" -- RecordEditScreen's photoUri prop defaults to
   // the fixture only when passed `undefined`, so removal must use ''
@@ -117,8 +102,7 @@ export default function App() {
   // the photo right back (a real bug caught during this screen's QA).
   // The approved UI is unchanged: photo data is bound to a stable drawer/record key.
   // No stored row = approved demo photo; an empty stored array = photos deleted.
-  const [drawerDetailKey, setDrawerDetailKey] = useState('open-cosmetics');
-  const recordPhotoKey = drawerDetailKey + ':' + recordDetailId;
+  const recordPhotoKey = (currentDrawerId ?? '') + ':' + recordDetailId;
   const [recordPhotoOverrides, setRecordPhotoOverrides] = useState<Record<string, string[]>>({});
   const storedPhotoUrlRef = useRef(new Map<string, string[]>());
   const editPhotoUrlRef = useRef<string[]>([]);
@@ -286,7 +270,7 @@ export default function App() {
     // V2-12), so "다음" just advances to #09 without carrying them.
     return <main className="drawary-app-shell" data-route="create-drawer">
       <section className="drawary-route-panel drawary-dimmed-home" aria-hidden="true">
-        <HomeScreen onAction={() => {}} />
+        <HomeScreen drawers={homeCards} totalRecords={store.records.length} />
       </section>
       <NewDrawerScreen onNext={() => navigate('drawer-fields')} onDismiss={returnToTab} />
     </main>;
@@ -886,9 +870,10 @@ export default function App() {
           initialIconId={drawerIconId}
           onBack={() => navigate('drawer-manage')}
           onSave={({ name, iconId }) => {
-            setDrawerDetailName(name);
-            setDrawerIconId(iconId);
-            navigate('drawer-manage');
+            if (!currentDrawerId) return;
+            actions.updateDrawer(currentDrawerId, { name, iconKey: iconId })
+              .then(() => navigate('drawer-manage'))
+              .catch((e: unknown) => window.alert(e instanceof Error ? e.message : '저장하지 못했어요.'));
           }}
         />
       </FixedCanvas>
@@ -1009,17 +994,27 @@ export default function App() {
     </main>;
   }
   if (route === 'home-edit') {
-    // #06 QA route, reachable from #03's "편집" hotspot. Delete/reorder
-    // are local demo no-ops for now (same V2-12 data-layer caveat as
-    // #09's quick-add/reorder) -- this screen only proves the edit-mode
-    // overlay itself, not a live mutation of the home grid.
+    // #6 홈 편집 모드: same grid as #3 with delete / reorder controls on
+    // each card. Delete here asks first (a drawer takes its fields, items
+    // and photos with it); reorder is a drag on the card's handle.
     return <main className="drawary-app-shell" data-route="home-edit">
       <section className="drawary-route-panel">
-        <HomeEditScreen
+        <HomeScreen
+          mode="edit"
+          drawers={homeCards}
+          totalRecords={store.records.length}
           onDone={() => navigate('home')}
-          onDeleteDrawer={() => {}}
-          onReorderDrawer={() => {}}
           onCreateDrawer={() => navigate('create-drawer')}
+          onDeleteDrawer={(id) => {
+            const target = drawerById(store, id);
+            if (!target) return;
+            const count = recordsOf(store, id).length;
+            const detail = count > 0 ? `\n보관품 ${count}개와 사진도 함께 삭제돼요.` : '';
+            if (window.confirm(`'${target.name}' 서랍을 삭제할까요?${detail}\n삭제한 내용은 되돌릴 수 없어요.`)) {
+              actions.deleteDrawer(id).catch((e: unknown) => window.alert(e instanceof Error ? e.message : '삭제하지 못했어요.'));
+            }
+          }}
+          onReorder={(ids) => { actions.reorderDrawers(ids).catch((e: unknown) => window.alert(e instanceof Error ? e.message : '순서를 바꾸지 못했어요.')); }}
         />
       </section>
       <footer className="drawary-shell-footer">
@@ -1043,14 +1038,21 @@ export default function App() {
     <main className="drawary-app-shell" data-route={route}>
       <section className="drawary-route-panel" aria-labelledby={route === 'home' || route === 'search' || route === 'settings' || route === 'stats' ? undefined : 'drawary-dev-screen-title'}>
         {route === 'home' ? (
-          <HomeScreen onAction={(action) => {
-            if (action === 'create-drawer') { navigate('create-drawer'); return; }
-            if (action === 'edit') { navigate('home-edit'); return; }
-            if (UNIMPLEMENTED_HOME_ACTIONS.has(action)) return; // no destination screen yet; see CLAUDE.md note above
-            setDrawerDetailName(DRAWER_NAMES[action]);
-            setDrawerDetailKey(action);
-            navigate('drawer-detail');
-          }} />
+          // #3 / #4: the empty state is shown whenever there are no drawers.
+          // Nothing is rendered until the saved data has loaded, so a
+          // returning user never sees a flash of the empty screen.
+          store.status === 'loading' ? null
+          : store.drawers.length === 0 ? (
+            <HomeEmptyScreen onCreateDrawer={() => navigate('create-drawer')} />
+          ) : (
+            <HomeScreen
+              drawers={homeCards}
+              totalRecords={store.records.length}
+              onOpenDrawer={(id) => { setCurrentDrawerId(id); navigate('drawer-detail'); }}
+              onCreateDrawer={() => navigate('create-drawer')}
+              onEdit={() => navigate('home-edit')}
+            />
+          )
         ) : route === 'search' ? (
           // #05: open-record has no destination screen yet (drawer/item
           // detail aren't built) -- intentional no-op, same reasoning as

@@ -1,60 +1,178 @@
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import './HomeScreen.css';
 import { FixedCanvas } from '../components/FixedCanvas';
+import { drawerCardColor, drawerIconPlacement, drawerIconUrl } from '../data/drawerStyle';
 
-// Ported from the user-approved Home_FINAL_CONFIRMED.tsx (screen #3,
-// confirmed 2026-10-08; CONFIRMED_STATUS.txt: 화면/코드 상태 모두 확정).
-// Two deliberate integration adaptations, neither altering the confirmed
-// pixels:
-// 1) The confirmed component renders the full 390x844 image including its
-//    own baked-in bottom nav, with hotspots for home/search/+/stats/settings
-//    laid over it. CLAUDE.md rule 6 says the real V4 ResponsiveBottomNav is
-//    already built and "visible on tab screens only" -- App.tsx already
-//    wraps every tab route (including 'home') in it. Rendering both would
-//    double the nav. The README's own "+10px" footer recalibration note
-//    exists specifically so the baked image's footer lines up with the real
-//    nav component's position -- i.e. this swap was the intended endpoint.
-//    So: crop to the top 750px (844 - the nav's documented 94px height) via
-//    a clipped container, and drop only the bottom-nav hotspots (home/
-//    search/center-add/stats/settings); every content hotspot above that
-//    line is kept exactly as confirmed.
-// 2) Asset path changed from the archive's relative `./home_footer_centered.webp`
-//    to this app's `/assets/home/` convention.
-export type HomeAction = 'edit' | 'open-cosmetics' | 'open-books' | 'open-plants' | 'open-travel' | 'open-other' | 'create-drawer';
+// #3 홈 / #6 홈 편집 모드, drawn from real data. The approved artwork for
+// both was a flat 390x844 image with hotspots laid over it; that can't show
+// a drawer the user just created, so this redraws the same layout (header,
+// counts, "내 서랍" row, 2-column cards, dashed "새 서랍 만들기" card) as
+// DOM. Geometry and colors were measured off the approved render and the
+// result is pixel-diffed against it in QA. Cropped to 750px high so the real
+// ResponsiveBottomNav supplies the footer, exactly as before.
 
-export function HomeScreen({ onAction }: { onAction: (action: HomeAction) => void }) {
-  return (
-    <FixedCanvas height={750}>
-      <div className="home-screen-crop">
-        <img
-          src="/assets/home/home_footer_centered.webp"
-          alt="Drawary 홈"
-          width={390}
-          height={844}
-          draggable={false}
-          className="home-screen-img"
-        />
-
-        <Hotspot label="편집" left={313} top={105} width={60} height={38} onClick={() => onAction('edit')} />
-        <Hotspot label="화장품 서랍" left={22} top={145} width={165} height={158} onClick={() => onAction('open-cosmetics')} />
-        <Hotspot label="책 서랍" left={203} top={145} width={165} height={158} onClick={() => onAction('open-books')} />
-        <Hotspot label="식물 서랍" left={22} top={317} width={165} height={158} onClick={() => onAction('open-plants')} />
-        <Hotspot label="여행 서랍" left={203} top={317} width={165} height={158} onClick={() => onAction('open-travel')} />
-        <Hotspot label="소중한 것들 서랍" left={22} top={489} width={165} height={158} onClick={() => onAction('open-other')} />
-        <Hotspot label="새 서랍 만들기" left={203} top={489} width={165} height={158} onClick={() => onAction('create-drawer')} />
-      </div>
-    </FixedCanvas>
-  );
+export interface HomeDrawerCard {
+  id: string;
+  name: string;
+  iconKey: string;
+  colorKey: string;
+  recordCount: number;
 }
 
-function Hotspot(props: { label: string; left: number; top: number; width: number; height: number; onClick: () => void }) {
-  const { label, left, top, width, height, onClick } = props;
+interface HomeScreenProps {
+  drawers: HomeDrawerCard[];
+  totalRecords: number;
+  mode?: 'view' | 'edit';
+  onOpenDrawer?: (id: string) => void;
+  onCreateDrawer?: () => void;
+  onEdit?: () => void;
+  onDone?: () => void;
+  onDeleteDrawer?: (id: string) => void;
+  onReorder?: (idsInOrder: string[]) => void;
+}
+
+const COL_PITCH = 181; // card 165 + gap 16
+const ROW_PITCH = 172; // card 158 + gap 14
+
+export function HomeScreen({
+  drawers, totalRecords, mode = 'view',
+  onOpenDrawer, onCreateDrawer, onEdit, onDone, onDeleteDrawer, onReorder,
+}: HomeScreenProps) {
+  const editing = mode === 'edit';
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOrder, setDragOrder] = useState<string[] | null>(null);
+
+  const drawersRef = useRef(drawers);
+  drawersRef.current = drawers;
+
+  const ordered = dragOrder
+    ? dragOrder.map((id) => drawers.find((d) => d.id === id)).filter((d): d is HomeDrawerCard => !!d)
+    : drawers;
+
+  const cellFromPointer = (clientX: number, clientY: number, count: number): number => {
+    const grid = gridRef.current;
+    if (!grid) return 0;
+    const rect = grid.getBoundingClientRect();
+    const scale = rect.width / 390 || 1;
+    const x = (clientX - rect.left) / scale - 22;
+    const y = (clientY - rect.top) / scale;
+    const col = Math.min(1, Math.max(0, Math.floor(x / COL_PITCH)));
+    const row = Math.max(0, Math.floor(y / ROW_PITCH));
+    return Math.min(count - 1, row * 2 + col);
+  };
+
+  // Reordering moves the dragged card's DOM node, which drops element-level
+  // pointer capture mid-drag; so move/up are tracked on window while dragging.
+  const dragOrderRef = useRef<string[] | null>(null);
+  dragOrderRef.current = dragOrder;
+  const onReorderRef = useRef(onReorder);
+  onReorderRef.current = onReorder;
+
+  useEffect(() => {
+    if (!dragId) return;
+    const move = (event: PointerEvent) => {
+      const order = dragOrderRef.current;
+      if (!order) return;
+      const target = cellFromPointer(event.clientX, event.clientY, order.length);
+      const from = order.indexOf(dragId);
+      if (target === from) return;
+      const next = order.filter((id) => id !== dragId);
+      next.splice(target, 0, dragId);
+      dragOrderRef.current = next;
+      setDragOrder(next);
+    };
+    const end = () => {
+      const order = dragOrderRef.current;
+      if (order && order.some((id, i) => id !== drawersRef.current[i]?.id)) onReorderRef.current?.(order);
+      setDragId(null);
+      setDragOrder(null);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dragId]);
+
+  const startDrag = (id: string) => (event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    setDragId(id);
+    setDragOrder(drawers.map((d) => d.id));
+  };
+
   return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className="home-screen-hotspot"
-      style={{ left, top, width, height }}
-    />
+    <FixedCanvas height={750}>
+      <div className="hs-screen">
+        <img className="hs-brand" src="/assets/brand/brand_lockup_horizontal.webp" alt="Drawary" draggable={false} />
+        <p className="hs-tagline">나만의 소중한 것들을, 더 특별하게</p>
+        <div className="hs-counts" aria-label="요약">
+          <span>내 서랍 <b>{drawers.length}개</b></span>
+          <span>보관품 <b>{totalRecords}개</b></span>
+        </div>
+
+        <h1 className="hs-heading">내 서랍</h1>
+        {editing ? (
+          <button type="button" className="hs-done" onClick={onDone}>완료</button>
+        ) : (
+          <button type="button" className="hs-edit" onClick={onEdit} aria-label="편집">
+            <img src="/assets/ui-icons/icon_edit.webp" alt="" draggable={false} />
+            <span>편집</span>
+          </button>
+        )}
+
+        <div className="hs-scroll">
+          <div className="hs-grid" ref={gridRef}>
+            {ordered.map((drawer) => (
+              <div
+                key={drawer.id}
+                className={`hs-card-wrap${dragId === drawer.id ? ' is-dragging' : ''}`}
+              >
+                <button
+                  type="button"
+                  className="hs-card"
+                  style={{ background: drawerCardColor(drawer.colorKey) }}
+                  aria-label={`${drawer.name} 서랍`}
+                  disabled={editing}
+                  onClick={() => onOpenDrawer?.(drawer.id)}
+                >
+                  <img className="hs-card-icon" src={drawerIconUrl(drawer.iconKey)} style={drawerIconPlacement(drawer.iconKey)} alt="" draggable={false} />
+                  <span className="hs-card-name">{drawer.name}</span>
+                  <span className="hs-card-count">보관품 {drawer.recordCount}개<i aria-hidden="true" /></span>
+                </button>
+                {editing && (
+                  <>
+                    <button
+                      type="button"
+                      className="hs-action hs-action--delete"
+                      aria-label={`${drawer.name} 서랍 삭제`}
+                      onClick={() => onDeleteDrawer?.(drawer.id)}
+                    >
+                      <img src="/assets/ui-icons/icon_delete.webp" alt="" draggable={false} />
+                    </button>
+                    <button
+                      type="button"
+                      className="hs-action hs-action--reorder"
+                      aria-label={`${drawer.name} 서랍 순서 변경`}
+                      onPointerDown={startDrag(drawer.id)}
+                    >
+                      <img src="/assets/ui-icons/icon_reorder.svg" alt="" width={20} height={20} draggable={false} />
+                    </button>
+                  </>
+                )}
+              </div>
+            ))}
+            <button type="button" className="hs-card hs-card--new" aria-label="새 서랍 만들기" onClick={onCreateDrawer}>
+              <span className="hs-plus" aria-hidden="true" />
+              <span className="hs-new-label">새 서랍 만들기</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </FixedCanvas>
   );
 }
