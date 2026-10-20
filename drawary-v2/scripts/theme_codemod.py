@@ -10,8 +10,9 @@ spinner screen (approved as-is), and 3-digit/other non-accent colours.
 import glob, re, sys
 from theme_colors import is_accent
 
-SKIP_FILES = ('ThemeSettingsScreen.css', 'BackupProgressScreen.css')
-HEX = re.compile(r'#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b')
+SKIP_FILES = ('ThemeSettingsScreen.css', 'BackupProgressScreen.css', 'themes.css')
+# `var(--tc-…,#…)` is already wrapped: matched first and left alone, so the tool can be run again after adding colours
+HEX = re.compile(r'var\(--t[cr]-[^)]*\)|#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b')
 RGB = re.compile(r'rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?=[,)])')
 
 def expand(h):
@@ -20,6 +21,7 @@ def expand(h):
     return h
 
 def hex_rep(m):
+    if m.group(0).startswith('var('): return m.group(0)
     h = expand(m.group(0))
     r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
     if not is_accent(r, g, b): return m.group(0)

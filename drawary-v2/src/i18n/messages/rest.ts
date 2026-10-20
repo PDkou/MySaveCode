@@ -259,4 +259,6 @@ export const rest: Messages = {
   '포함@op': { ja: '含む', en: 'Contains' },
   '선택@opt': { ja: '任意', en: 'Optional' },
   '{n}건@event': { ja: '{n}件', en: '{n} {n:event|events}' },
+  '아직 만든 서랍이 없어요.': { ja: 'まだひきだしがありません。', en: 'No drawers yet.' },
+  '정리하고 싶은 것부터\n하나 만들어보세요.': { ja: '整理したいものから\nひとつ作ってみましょう。', en: 'Start with something\nyou\'d like to organize.' },
 };

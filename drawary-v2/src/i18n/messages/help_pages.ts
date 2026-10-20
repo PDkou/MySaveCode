@@ -132,7 +132,6 @@ export const help_pages: Messages = {
   '빠른 도움말': { ja: 'クイックヘルプ', en: 'Quick help' },
   '백업과 복원은 어디에서 하나요?': { ja: 'バックアップと復元はどこでしますか？', en: 'Where do I back up and restore?' },
   '필요한 내용을 찾지 못했다면 설정의 피드백에서 알려주세요.': { ja: '見つからない場合は、設定のフィードバックからお知らせください。', en: 'If you can\'t find what you need, let us know in Settings → Feedback.' },
-  'Drawary 홈 빈 상태': { ja: 'Drawaryホーム（空の状態）', en: 'Drawary home (empty)' },
   '첫 서랍 만들기': { ja: '最初のひきだしを作る', en: 'Create your first drawer' },
   '나만의 소중한 것들을, 더 특별하게': { ja: '大切なものを、もっと特別に', en: 'Make what matters to you more special' },
   '요약': { ja: 'サマリー', en: 'Summary' },
