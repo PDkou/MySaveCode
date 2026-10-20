@@ -2,7 +2,7 @@
 :root{
   --fd-bg:#fffaf0;
   --fd-navy:#123f96;
-  --fd-purple:#7d58e8;
+  --fd-purple:var(--tc-7d58e8,#7d58e8);
   --fd-copy:#6679ae;
   --fd-border:#e3d9cd;
   --fd-card:#fffdfa;
@@ -50,11 +50,11 @@ button,input,textarea{font:inherit}
 .fd-thumbs button{
   width:46px;height:46px;border:2px solid transparent;border-radius:10px;background:#fff;padding:0;overflow:hidden;
 }
-.fd-thumbs button.is-active{border-color:#815ee4}
+.fd-thumbs button.is-active{border-color:var(--tc-815ee4,#815ee4)}
 .fd-thumbs img{width:100%;height:100%;object-fit:cover}
 .fd-photo-add{
   width:100%;height:50px;margin-top:10px;border:1px solid #ded4c8;border-radius:13px;
-  background:#fffdfa;color:#7755df;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:#fffdfa;color:var(--tc-7755df,#7755df);display:flex;align-items:center;justify-content:center;gap:8px;
   font-size:14px;font-weight:700;letter-spacing:-.25px;
 }
 .fd-photo-add img{width:26px;height:26px;object-fit:contain}
@@ -90,9 +90,9 @@ button,input,textarea{font:inherit}
 }
 .fd-primary{
   width:100%;height:56px;margin-top:18px;border:0;border-radius:28px;
-  background:linear-gradient(90deg,#7853e8,#845fe9);color:#fff;font-size:17px;font-weight:800;
-  letter-spacing:-.4px;box-shadow:0 8px 14px rgba(112,75,218,.18);cursor:pointer;
+  background:linear-gradient(90deg,var(--tc-7853e8,#7853e8),var(--tc-845fe9,#845fe9));color:#fff;font-size:17px;font-weight:800;
+  letter-spacing:-.4px;box-shadow:0 8px 14px rgba(var(--tr-112-75-218,112,75,218),.18);cursor:pointer;
 }
 button:focus-visible,input:focus-visible,textarea:focus-visible{
-  outline:3px solid rgba(123,88,232,.22);outline-offset:2px;
+  outline:3px solid rgba(var(--tr-123-88-232,123,88,232),.22);outline-offset:2px;
 }

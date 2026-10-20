@@ -6,7 +6,7 @@
    width uncovered so both documented interactions (tap row -> edit, drag
    handle -> reorder) actually work side by side. */
 :root{
-  --bg:#fffaf0; --navy:#123f96; --copy:#5d76b0; --purple:#7d58e8;
+  --bg:#fffaf0; --navy:#123f96; --copy:#5d76b0; --purple:var(--tc-7d58e8,#7d58e8);
   --border:#e5ded3; --card:#fffdfa; --muted:#747b94; --danger:#d86a73;
 }
 *{box-sizing:border-box}button,input{font:inherit}
@@ -25,7 +25,7 @@ font-family:"Noto Sans CJK KR","Noto Sans KR","Apple SD Gothic Neo",sans-serif;-
 .df-handle{width:40px;height:52px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;z-index:4}
 .df-handle b{display:block;width:18px;height:2.5px;border-radius:9px;background:#a4a8b1}
 .df-add{width:100%;height:48px;margin-top:14px;border:1px solid #e2d9ce;border-radius:13px;background:rgba(255,255,255,.58);color:var(--purple);font-size:15px;font-weight:700}
-.df-complete{width:100%;height:54px;margin-top:18px;border:0;border-radius:28px;background:linear-gradient(90deg,#7a55e7,#835fe9);color:#fff;font-size:16px;font-weight:700;box-shadow:0 7px 12px rgba(112,75,218,.18)}
+.df-complete{width:100%;height:54px;margin-top:18px;border:0;border-radius:28px;background:linear-gradient(90deg,var(--tc-7a55e7,#7a55e7),var(--tc-835fe9,#835fe9));color:#fff;font-size:16px;font-weight:700;box-shadow:0 7px 12px rgba(var(--tr-112-75-218,112,75,218),.18)}
 .df-label{display:block;margin:5px 0 9px;color:#304e8e;font-size:14px;font-weight:700;letter-spacing:-.25px}
 .df-input-wrap{height:54px;border:1px solid var(--border);border-radius:13px;background:var(--card);display:grid;grid-template-columns:1fr 46px;align-items:center;margin-bottom:21px;overflow:hidden}
 .df-input-wrap input{height:100%;border:0;background:transparent;padding:0 14px;color:#304e8e;outline:none;font-size:14px}.df-input-wrap span{justify-self:center;color:#a0a7b7;font-size:11px}
@@ -35,11 +35,11 @@ font-family:"Noto Sans CJK KR","Noto Sans KR","Apple SD Gothic Neo",sans-serif;-
 .df-options h2{margin:0 0 9px;color:#304e8e;font-size:14px}.df-option-list{display:grid;gap:8px}
 .df-option-row{height:47px;border:1px solid var(--border);border-radius:12px;background:var(--card);display:grid;grid-template-columns:1fr 43px;overflow:hidden}
 .df-option-row input{border:0;background:transparent;padding:0 13px;outline:none;color:#43577e;font-size:13px}.df-option-row button{border:0;border-left:1px solid #eee6db;background:#fff8f6;color:#d66d72;font-size:21px}
-.df-add-option{width:100%;height:44px;margin-top:9px;border:1px solid #ddcff8;border-radius:12px;background:#fbf8ff;color:var(--purple);font-size:13px;font-weight:700}
+.df-add-option{width:100%;height:44px;margin-top:9px;border:1px solid var(--tc-ddcff8,#ddcff8);border-radius:12px;background:var(--tc-fbf8ff,#fbf8ff);color:var(--purple);font-size:13px;font-weight:700}
 .df-required{margin-top:20px;min-height:66px;border-radius:14px;background:#fff0d9;padding:12px 13px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .df-required div{display:flex;flex-direction:column;gap:3px}.df-required strong{color:#3a548e;font-size:13px}.df-required small{color:#8a7a67;font-size:10.5px}
 .df-switch{flex:0 0 auto;width:46px;height:27px;border:0;border-radius:14px;background:#d7d3cf;padding:3px}.df-switch span{display:block;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15)}.df-switch.is-on{background:var(--purple)}.df-switch.is-on span{transform:translateX(19px)}
-.df-save{width:100%;height:54px;margin-top:24px;border:0;border-radius:28px;background:linear-gradient(90deg,#7a55e7,#835fe9);color:#fff;font-size:16px;font-weight:700;box-shadow:0 7px 12px rgba(112,75,218,.18)}
+.df-save{width:100%;height:54px;margin-top:24px;border:0;border-radius:28px;background:linear-gradient(90deg,var(--tc-7a55e7,#7a55e7),var(--tc-835fe9,#835fe9));color:#fff;font-size:16px;font-weight:700;box-shadow:0 7px 12px rgba(var(--tr-112-75-218,112,75,218),.18)}
 .df-delete{width:100%;height:48px;margin-top:10px;border:1px solid #f0c9cd;border-radius:24px;background:#fff7f7;color:#b9535d;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px}.df-delete img{width:22px;height:22px;object-fit:contain}
 
 /* V2: no hidden swipe actions */
@@ -53,14 +53,14 @@ font-family:"Noto Sans CJK KR","Noto Sans KR","Apple SD Gothic Neo",sans-serif;-
   margin:0 0 14px;
   padding:11px 14px 12px;
   border-radius:12px;
-  background:#f7f0ff;
-  color:#6a6190;
+  background:var(--tc-f7f0ff,#f7f0ff);
+  color:var(--tc-6a6190,#6a6190);
   font-size:11.5px;
   line-height:18px;
   text-align:center;
   letter-spacing:-0.1px;
 }
-.df-list-help b{color:#6f54ca;font-weight:700}
+.df-list-help b{color:var(--tc-6f54ca,#6f54ca);font-weight:700}
 .df-row.is-editable{
   grid-template-columns:minmax(0,1fr) 52px 22px 1px 40px;
 }
@@ -75,7 +75,7 @@ font-family:"Noto Sans CJK KR","Noto Sans KR","Apple SD Gothic Neo",sans-serif;-
 }
 .df-confirm-sheet{
   width:100%;background:#fffaf3;border-radius:24px 24px 0 0;
-  padding:10px 22px 26px;box-shadow:0 -10px 34px rgba(55,45,70,.18);
+  padding:10px 22px 26px;box-shadow:0 -10px 34px rgba(var(--tr-55-45-70,55,45,70),.18);
 }
 .df-sheet-handle{
   width:42px;height:4px;border-radius:99px;background:#d8d1ca;margin:0 auto 18px;

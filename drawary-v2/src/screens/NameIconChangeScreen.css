@@ -15,15 +15,15 @@ button{font:inherit}
 .nic-section-title strong{font-size:13px;font-weight:900;color:#566b95}
 .nic-section-title span{font-size:10.5px;font-weight:700;color:#9a96a0}
 .nic-name-input{width:100%;height:49px;border:1px solid #dfd5ca;border-radius:13px;background:#fffdfa;outline:0;padding:0 14px;color:#36558e;font-size:13px;font-weight:750}
-.nic-name-input:focus{border-color:#baa6f4;box-shadow:0 0 0 3px rgba(126,89,232,.08)}
+.nic-name-input:focus{border-color:var(--tc-baa6f4,#baa6f4);box-shadow:0 0 0 3px rgba(var(--tr-126-89-232,126,89,232),.08)}
 .nic-icon-section{margin-top:18px}
 .nic-icon-grid{height:302px;overflow-y:auto;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:2px 2px 8px;scrollbar-width:thin}
 .nic-icon-option{position:relative;height:55px;border:1px solid #e5dbd0;border-radius:13px;background:#fffdfa;display:grid;place-items:center;padding:0}
 .nic-icon-option img{width:34px;height:34px;object-fit:contain}
-.nic-icon-option.is-selected{border:2px solid #8b6de8;background:#f6f1ff}
-.nic-icon-option i{position:absolute;right:-4px;top:-5px;width:18px;height:18px;border-radius:50%;background:#7d58e8;color:white;font-style:normal;font-size:11px;font-weight:900;display:grid;place-items:center;border:2px solid #fff9ed}
+.nic-icon-option.is-selected{border:2px solid var(--tc-8b6de8,#8b6de8);background:var(--tc-f6f1ff,#f6f1ff)}
+.nic-icon-option i{position:absolute;right:-4px;top:-5px;width:18px;height:18px;border-radius:50%;background:var(--tc-7d58e8,#7d58e8);color:white;font-style:normal;font-size:11px;font-weight:900;display:grid;place-items:center;border:2px solid #fff9ed}
 .nic-actions{display:grid;grid-template-columns:1fr 1.2fr;gap:10px;margin-top:20px}
 .nic-actions button{height:49px;border-radius:24px;font-size:13px;font-weight:850}
 .nic-cancel{border:1px solid #e5ddd3;background:#fffdfa;color:#687896}
-.nic-save{border:0;background:#7d58e8;color:#fff}
-.nic-save:disabled{background:#d9d2e8;color:#f8f6fb}
+.nic-save{border:0;background:var(--tc-7d58e8,#7d58e8);color:#fff}
+.nic-save:disabled{background:var(--tc-d9d2e8,#d9d2e8);color:var(--tc-f8f6fb,#f8f6fb)}

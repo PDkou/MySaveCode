@@ -9,16 +9,16 @@ body { overflow-x: hidden; }
 .drawary-dimmed-home { filter: brightness(0.82) saturate(0.85); pointer-events: none; overflow: hidden; }
 main[data-route="create-drawer"] { position: relative; overflow: hidden; }
 .drawary-dev-only { max-width: 345px; margin: 0 auto; padding: clamp(30px, 12vh, 120px) 22px 25px; text-align: center; }
-.drawary-dev-flag { display: inline-block; border: 1px solid #d8ccf4; background: #f8f4ff; color: #7361aa; border-radius: 20px; padding: 7px 11px; font-size: 11px; }
+.drawary-dev-flag { display: inline-block; border: 1px solid var(--tc-d8ccf4,#d8ccf4); background: var(--tc-f8f4ff,#f8f4ff); color: var(--tc-7361aa,#7361aa); border-radius: 20px; padding: 7px 11px; font-size: 11px; }
 .drawary-dev-only h1 { margin: 22px 0 8px; font-size: 26px; }
 .drawary-dev-only p { font-size: 14px; line-height: 1.6; }
 .drawary-dev-detail { color: #777485; }
-.drawary-dev-return { cursor: pointer; border: 1px solid #d5caf5; color: #6a46bd; padding: 10px 16px; border-radius: 10px; background: white; font: inherit; }
+.drawary-dev-return { cursor: pointer; border: 1px solid var(--tc-d5caf5,#d5caf5); color: var(--tc-6a46bd,#6a46bd); padding: 10px 16px; border-radius: 10px; background: white; font: inherit; }
 .drawary-shell-footer { flex: 0 0 auto; width: 100%; padding-bottom: env(safe-area-inset-bottom, 0px); background: white; }
 .drawary-nav-host { position: relative; width: 100%; max-width: 390px; margin: 0 auto; overflow: visible; }
 .drawary-nav-scale { position: absolute; top: 0; left: 50%; width: 390px; height: 94px; transform-origin: top center; }
 /* Explicit keyboard focus while preserving the fixed final artwork. */
-.drawary-dynamic-bottom-nav__hotspot:focus-visible { outline: 2px solid #684de1; outline-offset: -5px; border-radius: 14px; }
+.drawary-dynamic-bottom-nav__hotspot:focus-visible { outline: 2px solid var(--tc-684de1,#684de1); outline-offset: -5px; border-radius: 14px; }
 
 /* #08 backdrop only: suppress live Home's count label, preserve locked #03. */
 .drawary-app-shell[data-route="create-drawer"] .drawary-dimmed-home { position:relative; }

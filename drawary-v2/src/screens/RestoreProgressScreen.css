@@ -3,12 +3,12 @@
 button{font:inherit}
 .rp51-screen{width:390px;max-width:100%;height:844px;margin:0 auto;position:relative;overflow:hidden;background:#fff9f0;font-family:'Noto Sans CJK KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#2d507f}
 .rp51-header{height:91px;display:flex;align-items:center;justify-content:center;padding-top:14px;position:relative}
-.rp51-back{position:absolute;left:25px;top:45px;border:0;background:none;width:17px;height:17px;border-left:2.5px solid #806aea;border-bottom:2.5px solid #806aea;transform:rotate(45deg);cursor:pointer}
+.rp51-back{position:absolute;left:25px;top:45px;border:0;background:none;width:17px;height:17px;border-left:2.5px solid var(--tc-806aea,#806aea);border-bottom:2.5px solid var(--tc-806aea,#806aea);transform:rotate(45deg);cursor:pointer}
 .rp51-title{font-size:20px;font-weight:850;color:#285a9b;letter-spacing:-.7px;white-space:nowrap}
 .rp51-panel{position:absolute;top:88px;bottom:19px;left:17px;right:17px;background:#fff;border:1px solid #f1ece7;box-shadow:0 4px 17px #7b67500b;border-radius:23px;display:flex;flex-direction:column;align-items:center;text-align:center}
 .rp51-progress-content{position:absolute;left:0;right:0;top:166px;display:flex;flex-direction:column;align-items:center}
 .rp51-illustration{display:block;width:227px;height:145px;object-fit:contain;user-select:none}
-.rp51-spinner{width:62px;height:62px;margin-top:25px;border:6px solid #eadefc;border-top-color:#9768ed;border-right-color:#b28af8;border-radius:50%;animation:rp51-spin 1.2s linear infinite}
+.rp51-spinner{width:62px;height:62px;margin-top:25px;border:6px solid var(--tc-eadefc,#eadefc);border-top-color:var(--tc-9768ed,#9768ed);border-right-color:var(--tc-b28af8,#b28af8);border-radius:50%;animation:rp51-spin 1.2s linear infinite}
 @keyframes rp51-spin{to{transform:rotate(360deg)}}
 .rp51-copy{margin-top:27px}
 .rp51-copy h1{font-size:19px;font-weight:850;line-height:1.4;letter-spacing:-.7px;margin:0;color:#2d507f}

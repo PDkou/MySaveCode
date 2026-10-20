@@ -1,7 +1,7 @@
 /* Byte-identical to the confirmed archive's photo-viewer.css. */
 :root{
-  --pv-bg:#171522;
-  --pv-panel:rgba(27,24,38,.78);
+  --pv-bg:var(--tc-171522,#171522);
+  --pv-panel:rgba(var(--tr-27-24-38,27,24,38),.78);
   --pv-border:rgba(255,255,255,.22);
 }
 *{box-sizing:border-box}
@@ -27,7 +27,7 @@ button{font:inherit}
   align-items:flex-end;
   justify-content:center;
   padding:0 18px 14px;
-  background:linear-gradient(to bottom, rgba(13,12,18,.76), rgba(13,12,18,0));
+  background:linear-gradient(to bottom, rgba(var(--tr-13-12-18,13,12,18),.76), rgba(var(--tr-13-12-18,13,12,18),0));
 }
 .pv-close{
   position:absolute;
@@ -88,7 +88,7 @@ button{font:inherit}
   justify-content:center;
   gap:9px;
   padding:10px 18px;
-  background:linear-gradient(to top, rgba(13,12,18,.72), rgba(13,12,18,0));
+  background:linear-gradient(to top, rgba(var(--tr-13-12-18,13,12,18),.72), rgba(var(--tr-13-12-18,13,12,18),0));
 }
 .pv-thumbs button{
   width:52px;
@@ -101,9 +101,9 @@ button{font:inherit}
   opacity:.68;
 }
 .pv-thumbs button.is-active{
-  border-color:#b39af6;
+  border-color:var(--tc-b39af6,#b39af6);
   opacity:1;
-  box-shadow:0 0 0 2px rgba(179,154,246,.15);
+  box-shadow:0 0 0 2px rgba(var(--tr-179-154-246,179,154,246),.15);
 }
 .pv-thumbs img{
   width:100%;

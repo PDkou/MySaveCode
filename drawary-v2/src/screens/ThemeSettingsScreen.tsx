@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import './ThemeSettingsScreen.css';
 
-export type ThemeId = 'lavender' | 'coral' | 'sage' | 'mustard' | 'sky';
+import type { ThemeId } from '../flow/theme';
+export type { ThemeId };
 
 export interface ThemeSettingsScreenProps {
   initialTheme?: ThemeId;

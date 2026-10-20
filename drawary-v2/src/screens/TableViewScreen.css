@@ -2,7 +2,7 @@
 :root{
   --tv-bg:#fffaf0;
   --tv-navy:#123f96;
-  --tv-purple:#7d58e8;
+  --tv-purple:var(--tc-7d58e8,#7d58e8);
   --tv-border:#e8dfd5;
   --tv-header:#eef1f5;
   --tv-card:#fffdfa;
@@ -96,7 +96,7 @@ button{font:inherit}
 }
 .ts-clear img{width:21px;height:21px;object-fit:contain;opacity:.66}
 .ts-cancel{
-  height:45px;border:0;background:transparent;color:#7252d6;font-size:12.5px;font-weight:800;padding:0;
+  height:45px;border:0;background:transparent;color:var(--tc-7252d6,#7252d6);font-size:12.5px;font-weight:800;padding:0;
 }
 .ts-result-count{
   height:38px;padding:0 21px;display:flex;align-items:center;color:#7f879f;font-size:11px;font-weight:650;
@@ -109,7 +109,7 @@ button{font:inherit}
 /* "•••" export menu: same look as #15's menu (no separate approved design). */
 .tv-menu-popover{
   position:absolute;top:92px;right:18px;width:190px;padding:7px;border:1px solid #e8ddd2;border-radius:16px;
-  background:#fffdfa;box-shadow:0 10px 28px rgba(54,43,76,.15);z-index:20;
+  background:#fffdfa;box-shadow:0 10px 28px rgba(var(--tr-54-43-76,54,43,76),.15);z-index:20;
 }
 .tv-menu-popover::before{
   content:"";position:absolute;top:-7px;right:18px;width:13px;height:13px;background:#fffdfa;
@@ -121,14 +121,14 @@ button{font:inherit}
 }
 .tv-menu-popover button + button{border-top:1px solid #efe7de;border-radius:0 0 11px 11px}
 .tv-menu-popover button:first-child{border-radius:11px 11px 0 0}
-.tv-menu-popover button:hover{background:#f7f1ff}
+.tv-menu-popover button:hover{background:var(--tc-f7f1ff,#f7f1ff)}
 .tv-menu-popover img{width:25px;height:25px;object-fit:contain}
 .tv-menu-popover span{font-size:13px;font-weight:800;letter-spacing:-.25px}
 
 /* A sort or filter is in effect (user-approved small marker): the button takes the sheets' selected tint and a dot. */
 .tv-tools button{position:relative}
-.tv-tools button.is-active{border-color:#baa6f4;background:#f6f1ff;color:#684fbd}
+.tv-tools button.is-active{border-color:var(--tc-baa6f4,#baa6f4);background:var(--tc-f6f1ff,#f6f1ff);color:var(--tc-684fbd,#684fbd)}
 .tv-tools button.is-active::after{
-  content:"";position:absolute;top:7px;right:9px;width:8px;height:8px;border-radius:50%;background:#7d58e8;
-  box-shadow:0 0 0 2px #f6f1ff;
+  content:"";position:absolute;top:7px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--tc-7d58e8,#7d58e8);
+  box-shadow:0 0 0 2px var(--tc-f6f1ff,#f6f1ff);
 }

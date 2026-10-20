@@ -4,25 +4,25 @@ button{font:inherit}
 .lang54-screen{width:390px;height:844px;position:relative;margin:0 auto;overflow:hidden;background:#fff9f0;font-family:'Noto Sans CJK KR','Noto Sans CJK JP','Malgun Gothic',sans-serif;color:#142754}
 .lang54-header{position:absolute;top:93px;height:50px;width:100%;display:flex;align-items:center;justify-content:center}
 .lang54-title{font-size:21px;font-weight:800;letter-spacing:-.6px;color:#1b2558;white-space:nowrap}
-.lang54-back{position:absolute;left:23px;top:14px;width:16px;height:16px;border:0;border-left:3px solid #8061f7;border-bottom:3px solid #8061f7;transform:rotate(45deg);border-radius:1px;background:none}
+.lang54-back{position:absolute;left:23px;top:14px;width:16px;height:16px;border:0;border-left:3px solid var(--tc-8061f7,#8061f7);border-bottom:3px solid var(--tc-8061f7,#8061f7);transform:rotate(45deg);border-radius:1px;background:none}
 .lang54-form{position:absolute;top:86px;left:15px;right:15px;display:flex;flex-direction:column;gap:11px}
-.lang54-card{display:flex;align-items:center;position:relative;width:100%;height:154px;min-height:154px;border-radius:22px;border:2px solid transparent;padding:13px 12px;background:#f3eeff;text-align:left;cursor:pointer;color:inherit;transition:border-color .12s ease,transform .1s ease}
+.lang54-card{display:flex;align-items:center;position:relative;width:100%;height:154px;min-height:154px;border-radius:22px;border:2px solid transparent;padding:13px 12px;background:var(--tc-f3eeff,#f3eeff);text-align:left;cursor:pointer;color:inherit;transition:border-color .12s ease,transform .1s ease}
 .lang54-card:active{transform:scale(.996)}
 .lang54-card[data-lang="ja"]{background:#fff0f3}
 .lang54-card[data-lang="en"]{background:#eaf5ff}
-.lang54-card.is-selected{border-color:#9067fc}
+.lang54-card.is-selected{border-color:var(--tc-9067fc,#9067fc)}
 .lang54-card .lang54-art{width:183px;height:123px;flex:0 0 183px;border-radius:15px;object-fit:cover;display:block;overflow:hidden}
 .lang54-card-copy{flex:1;min-width:0;padding-left:16px;padding-right:2px}
 .lang54-card-copy strong{display:block;font-size:20px;line-height:1.25;font-weight:850;color:#141519;letter-spacing:-.4px;white-space:nowrap}
 .lang54-card-copy span{display:block;margin-top:9px;font-size:11.4px;line-height:1.45;font-weight:550;color:#8397bc;letter-spacing:-.25px;overflow-wrap:break-word}
-.lang54-check{display:none;position:absolute;right:15px;top:13px;width:30px;height:30px;border-radius:50%;background:#9167f3;align-items:center;justify-content:center}
+.lang54-check{display:none;position:absolute;right:15px;top:13px;width:30px;height:30px;border-radius:50%;background:var(--tc-9167f3,#9167f3);align-items:center;justify-content:center}
 .lang54-card.is-selected .lang54-check{display:flex}
 .lang54-check svg{width:21px;height:21px}
 .lang54-footer-note{margin:13px 0 0;text-align:center;color:#8c9fc2;font-size:11px;line-height:1.6;letter-spacing:-.2px;font-weight:600;white-space:nowrap}
 .lang54-actions{margin-top:0;display:flex;gap:9px;width:100%;height:48px}
 .lang54-actions button{height:48px;flex:1;border-radius:16px;font-size:14px;font-weight:750;cursor:pointer}
-.lang54-cancel{border:1px solid #d5c1ff;background:#fff;color:#8187aa}
-.lang54-apply{border:1px solid #9468ec;background:#9666ee;color:#fff}
+.lang54-cancel{border:1px solid var(--tc-d5c1ff,#d5c1ff);background:#fff;color:#8187aa}
+.lang54-apply{border:1px solid var(--tc-9468ec,#9468ec);background:var(--tc-9666ee,#9666ee);color:#fff}
 @media(max-width:380px){.lang54-card .lang54-art{width:48%;flex-basis:48%}.lang54-card-copy{padding-left:12px}}
 
 /* #54 approved follow-up: align language screen header with the other settings pages. */

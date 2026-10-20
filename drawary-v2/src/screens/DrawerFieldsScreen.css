@@ -4,8 +4,8 @@
   --drawary-bg: #fffaf0;
   --drawary-navy: #123f96;
   --drawary-copy: #5d76b0;
-  --drawary-purple: #7d58e8;
-  --drawary-purple-dark: #6e4ede;
+  --drawary-purple: var(--tc-7d58e8,#7d58e8);
+  --drawary-purple-dark: var(--tc-6e4ede,#6e4ede);
   --drawary-border: #e5ded3;
   --drawary-row-bg: #fffdfa;
   --drawary-tip-bg: #fff0d9;
@@ -120,7 +120,7 @@
 
 .drawary-field-row.is-dragging {
   transform: scale(1.015);
-  box-shadow: 0 8px 20px rgba(70, 55, 116, 0.13);
+  box-shadow: 0 8px 20px rgba(var(--tr-70-55-116,70,55,116), 0.13);
   z-index: 2;
 }
 
@@ -272,8 +272,8 @@
   margin-top: 28px;
   border: 0;
   border-radius: 28px;
-  background: linear-gradient(90deg, #7a55e7 0%, #835fe9 100%);
-  box-shadow: 0 7px 12px rgba(112, 75, 218, 0.18);
+  background: linear-gradient(90deg, var(--tc-7a55e7,#7a55e7) 0%, var(--tc-835fe9,#835fe9) 100%);
+  box-shadow: 0 7px 12px rgba(var(--tr-112-75-218,112,75,218), 0.18);
   color: white;
   font-family: inherit;
   font-size: 17px;
@@ -284,6 +284,6 @@
 }
 
 button:focus-visible {
-  outline: 3px solid rgba(123, 88, 232, .25);
+  outline: 3px solid rgba(var(--tr-123-88-232,123,88,232), .25);
   outline-offset: 2px;
 }

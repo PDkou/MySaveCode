@@ -22,7 +22,7 @@
   display:flex;align-items:center;padding:14px 15px;margin-bottom:15px;
 }
 .dm-summary-icon{
-  width:62px;height:62px;border-radius:15px;background:#f0e9ff;display:grid;place-items:center;flex:0 0 62px;
+  width:62px;height:62px;border-radius:15px;background:var(--tc-f0e9ff,#f0e9ff);display:grid;place-items:center;flex:0 0 62px;
 }
 .dm-summary-icon img{width:44px;height:44px;object-fit:contain}
 .dm-summary-copy{min-width:0;margin-left:14px;display:flex;flex-direction:column;gap:4px}

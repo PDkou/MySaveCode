@@ -12,7 +12,7 @@
 
 .uf-back { grid-column: 1; width: 44px; height: 44px; border: 0; background: transparent; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .uf-header--stacked .uf-back { align-self: flex-end; margin-bottom: 4px; }
-.uf-back::before { content: ''; width: 11px; height: 11px; border-left: 3px solid #7a5cf0; border-bottom: 3px solid #7a5cf0; transform: rotate(45deg); border-radius: 1px; }
+.uf-back::before { content: ''; width: 11px; height: 11px; border-left: 3px solid var(--tc-7a5cf0,#7a5cf0); border-bottom: 3px solid var(--tc-7a5cf0,#7a5cf0); transform: rotate(45deg); border-radius: 1px; }
 
 .uf-header-spacer { grid-column: 1; width: 44px; height: 44px; }
 /* Last spacer occupies the right slot. The prior grid-column:1 placed it on a second row. */
@@ -30,8 +30,8 @@
 /* Shared CTA bottom-bar tokens, used alongside the header by screens
    that render a primary/secondary action button (see
    docs/V2_UNIFIED_HEADER_FOOTER.md for which screens use which). */
-.uf-cta-primary { width: 100%; height: 54px; border: 0; border-radius: 27px; background: linear-gradient(90deg, #7853e8, #9364ed); color: #fff; font-size: 16px; font-weight: 800; letter-spacing: -.2px; }
+.uf-cta-primary { width: 100%; height: 54px; border: 0; border-radius: 27px; background: linear-gradient(90deg, var(--tc-7853e8,#7853e8), var(--tc-9364ed,#9364ed)); color: #fff; font-size: 16px; font-weight: 800; letter-spacing: -.2px; }
 .uf-cta-primary:disabled { opacity: .4; }
-.uf-cta-secondary { width: 100%; height: 54px; border: 1.5px solid #ddd3f7; border-radius: 27px; background: #fffdfb; color: #6a5a9a; font-size: 15px; font-weight: 700; }
+.uf-cta-secondary { width: 100%; height: 54px; border: 1.5px solid var(--tc-ddd3f7,#ddd3f7); border-radius: 27px; background: #fffdfb; color: var(--tc-6a5a9a,#6a5a9a); font-size: 15px; font-weight: 700; }
 .uf-cta-row { display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; }
 .uf-cta-row--even { grid-template-columns: 1fr 1fr; }

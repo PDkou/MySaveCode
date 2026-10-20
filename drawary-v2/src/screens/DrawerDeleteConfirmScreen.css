@@ -1,7 +1,7 @@
 /* Byte-identical to the confirmed archive's drawer-delete-confirm.css. */
 button{font:inherit}
 .ddc-backdrop{position:absolute;inset:0;z-index:90;background:rgba(44,38,56,.30);display:flex;align-items:flex-end;justify-content:center}
-.ddc-sheet{width:100%;background:#fffaf3;border-radius:24px 24px 0 0;padding:10px 22px 28px;box-shadow:0 -10px 34px rgba(55,45,70,.18)}
+.ddc-sheet{width:100%;background:#fffaf3;border-radius:24px 24px 0 0;padding:10px 22px 28px;box-shadow:0 -10px 34px rgba(var(--tr-55-45-70,55,45,70),.18)}
 .ddc-handle{width:42px;height:4px;border-radius:99px;background:#d8d1ca;margin:0 auto 18px}
 .ddc-icon{width:54px;height:54px;border-radius:17px;background:#fff0f1;margin:0 auto 12px;display:grid;place-items:center}
 .ddc-icon img{width:32px;height:32px;object-fit:contain}

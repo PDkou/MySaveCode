@@ -24,8 +24,8 @@
   width: 66px;
   height: 66px;
   border-radius: 50%;
-  background: rgba(118, 87, 232, 0.105);
-  border: 1px solid rgba(118, 87, 232, 0.075);
+  background: rgba(var(--tr-118-87-232,118,87,232), 0.105);
+  border: 1px solid rgba(var(--tr-118-87-232,118,87,232), 0.075);
   pointer-events: none;
   z-index: 1;
 }
@@ -76,7 +76,7 @@
 }
 
 .drawary-dynamic-bottom-nav__label.is-active {
-  color: rgb(105, 75, 225);
+  color: rgb(var(--tr-105-75-225,105,75,225));
 }
 
 .drawary-dynamic-bottom-nav__hotspot {

@@ -51,6 +51,7 @@ import { NOTIFY_COMMON_KEY, readNotifyCommon } from './flow/notifySettings';
 import { computeNotificationPlan } from './flow/notificationPlan';
 import { hasNativeBiometric, authenticateBiometric, syncNotificationPlan } from './data/nativeBridge';
 import { useAppLock } from './flow/useAppLock';
+import { applyTheme, readTheme, THEME_KEY } from './flow/theme';
 import { savePin, setAppLock, setAutoLock, setBiometric, verifyPin } from './data/appLockActions';
 import { toISODate } from './flow/recurrence';
 import { RecurrenceTargetDateScreen } from './screens/RecurrenceTargetDateScreen';
@@ -302,6 +303,10 @@ export default function App() {
   const sec = lock.security;
   // "앱 잠금 사용" switched off asks for the current PIN first.
   const [confirmLockOff, setConfirmLockOff] = useState(false);
+
+  // #39 테마: the saved choice is put on the page whenever it changes (and once the saved data has loaded).
+  const theme = readTheme(store.settings);
+  useEffect(() => { if (store.status === 'ready') applyTheme(theme); }, [store.status, theme]);
 
   // #44-#53 백업/복원/초기화.
   const [backupMode, setBackupMode] = useState<BackupMode>('include');
@@ -803,7 +808,7 @@ export default function App() {
     // ThemeSettingsScreen.tsx's own header comment. Back returns to #38.
     return <main className="drawary-app-shell" data-route="theme-settings">
       <FixedCanvas height={844}>
-        <ThemeSettingsScreen onBack={returnToTab} />
+        <ThemeSettingsScreen initialTheme={theme} onBack={returnToTab} onThemeChange={(id) => { void actions.setSetting(THEME_KEY, id).catch(alertError); }} />
       </FixedCanvas>
     </main>;
   }

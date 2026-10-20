@@ -2,7 +2,7 @@
 :root{
   --re-bg:#fffaf0;
   --re-navy:#123f96;
-  --re-purple:#7d58e8;
+  --re-purple:var(--tc-7d58e8,#7d58e8);
   --re-border:#e3d9cd;
   --re-card:#fffdfa;
 }
@@ -46,7 +46,7 @@ button,input,textarea{font:inherit}
 .re-photo-empty img{width:56px;height:56px;object-fit:contain;margin-bottom:8px}
 .re-photo-change{
   width:100%;height:48px;margin-top:9px;border:1px solid #ded4c8;border-radius:13px;background:#fffdfa;
-  color:#7755df;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;font-weight:800;
+  color:var(--tc-7755df,#7755df);display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;font-weight:800;
 }
 .re-photo-change img{width:25px;height:25px;object-fit:contain}
 .re-fields{margin-top:11px}
@@ -74,6 +74,6 @@ button,input,textarea{font:inherit}
 .re-textarea-wrap small{position:absolute;right:10px;bottom:7px;color:#9098ad;font-size:9px;font-weight:600}
 .re-save{
   width:100%;height:54px;margin-top:17px;border:0;border-radius:27px;
-  background:linear-gradient(90deg,#7853e8,#845fe9);color:#fff;font-size:16px;font-weight:800;
-  letter-spacing:-.4px;box-shadow:0 8px 14px rgba(112,75,218,.18);
+  background:linear-gradient(90deg,var(--tc-7853e8,#7853e8),var(--tc-845fe9,#845fe9));color:#fff;font-size:16px;font-weight:800;
+  letter-spacing:-.4px;box-shadow:0 8px 14px rgba(var(--tr-112-75-218,112,75,218),.18);
 }

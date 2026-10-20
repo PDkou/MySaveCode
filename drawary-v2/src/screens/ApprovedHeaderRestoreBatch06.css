@@ -23,8 +23,8 @@
   [data-route="lock-detail"],[data-route="pin-setup"],
   [data-route="data-management"],[data-route="backup-type"]
 ) .uf-back::before {
-  width:13px;height:13px;border-left:3.5px solid #8b62f5;
-  border-bottom:3.5px solid #8b62f5; border-radius:1px;transform:rotate(45deg);
+  width:13px;height:13px;border-left:3.5px solid var(--tc-8b62f5,#8b62f5);
+  border-bottom:3.5px solid var(--tc-8b62f5,#8b62f5); border-radius:1px;transform:rotate(45deg);
 }
 .drawary-app-shell[data-route="theme-settings"] .uf-back::before {
   border-left-width:4px;border-bottom-width:4px;border-radius:2px;
@@ -43,8 +43,8 @@
   position:absolute;left:17px;top:30px;width:34px;height:34px;
 }
 .drawary-app-shell[data-route="backup-progress"] .uf-back::before {
-  width:14px;height:14px;border-left:3px solid #8e5af5;
-  border-bottom:3px solid #8e5af5;transform:translateX(4px) rotate(45deg);
+  width:14px;height:14px;border-left:3px solid var(--tc-8e5af5,#8e5af5);
+  border-bottom:3px solid var(--tc-8e5af5,#8e5af5);transform:translateX(4px) rotate(45deg);
 }
 
 /* #48–#53: approved 91px header family, centered title and lilac chevron. */
@@ -68,8 +68,8 @@
   [data-route="restore-progress"],[data-route="restore-success"],
   [data-route="data-reset-confirm"]
 ) .uf-back::before {
-  width:15px;height:15px;border-left:2.5px solid #806aea;
-  border-bottom:2.5px solid #806aea;transform:rotate(45deg);border-radius:0;
+  width:15px;height:15px;border-left:2.5px solid var(--tc-806aea,#806aea);
+  border-bottom:2.5px solid var(--tc-806aea,#806aea);transform:rotate(45deg);border-radius:0;
 }
 .drawary-app-shell[data-route="backup-success"] .uf-header-spacer:last-child {
   grid-row:1;grid-column:3;
@@ -84,8 +84,8 @@
   position:absolute;left:15px;top:5px;width:34px;height:34px;
 }
 .drawary-app-shell[data-route="language-settings"] .uf-back::before {
-  width:16px;height:16px;border-left:3px solid #8061f7;
-  border-bottom:3px solid #8061f7;border-radius:1px;transform:rotate(45deg);
+  width:16px;height:16px;border-left:3px solid var(--tc-8061f7,#8061f7);
+  border-bottom:3px solid var(--tc-8061f7,#8061f7);border-radius:1px;transform:rotate(45deg);
 }
 
 /* #55–#59: each of these confirmed layouts has its own app-bar geometry. */
@@ -120,10 +120,10 @@
  [data-route="help-main"],[data-route="faq"],[data-route="guide"],
  [data-route="info"],[data-route="feedback"]
 ) .uf-back::before {
-  width:11px;height:11px;border-left:3px solid #8168f0;
-  border-bottom:3px solid #8168f0;border-radius:1px;transform:rotate(45deg);
+  width:11px;height:11px;border-left:3px solid var(--tc-8168f0,#8168f0);
+  border-bottom:3px solid var(--tc-8168f0,#8168f0);border-radius:1px;transform:rotate(45deg);
 }
-.drawary-app-shell[data-route="faq"] .uf-back::before {border-color:#8467ec}
-.drawary-app-shell[data-route="guide"] .uf-back::before {border-color:#8465ef}
-.drawary-app-shell[data-route="info"] .uf-back::before {border-color:#8163ef}
-.drawary-app-shell[data-route="feedback"] .uf-back::before {border-color:#8061f1}
+.drawary-app-shell[data-route="faq"] .uf-back::before {border-color:var(--tc-8467ec,#8467ec)}
+.drawary-app-shell[data-route="guide"] .uf-back::before {border-color:var(--tc-8465ef,#8465ef)}
+.drawary-app-shell[data-route="info"] .uf-back::before {border-color:var(--tc-8163ef,#8163ef)}
+.drawary-app-shell[data-route="feedback"] .uf-back::before {border-color:var(--tc-8061f1,#8061f1)}

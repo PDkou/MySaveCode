@@ -47,14 +47,14 @@
   position: relative;
   margin: 12px 22px 0;
   height: 48px;
-  border: 1.5px solid #cfc5e2;
+  border: 1.5px solid var(--tc-cfc5e2,#cfc5e2);
   border-radius: 16px;
   background: #fff;
-  box-shadow: 0 2px 6px rgba(80, 60, 110, .04);
+  box-shadow: 0 2px 6px rgba(var(--tr-80-60-110,80,60,110), .04);
 }
 .global-search-box:focus-within {
-  border-color: #7657e8;
-  box-shadow: 0 0 0 3px rgba(118, 87, 232, .10);
+  border-color: var(--tc-7657e8,#7657e8);
+  box-shadow: 0 0 0 3px rgba(var(--tr-118-87-232,118,87,232), .10);
 }
 /* The candidate drew this as a CSS circle+line (a synthetic placeholder
    shape); the app already ships a real approved search icon asset, so use
@@ -101,7 +101,7 @@
   height: 22px;
   border: 0;
   border-radius: 50%;
-  background: #eeeaf4;
+  background: var(--tc-eeeaf4,#eeeaf4);
   color: #797286;
   padding: 0;
   line-height: 22px;
@@ -140,7 +140,7 @@
 .global-search-result-card {
   width: 100%;
   height: 86px;
-  border: 1px solid #e5ddec;
+  border: 1px solid var(--tc-e5ddec,#e5ddec);
   border-radius: 16px;
   background: #fffdf8;
   display: flex;
@@ -155,14 +155,14 @@
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  background: #f3eefb;
+  background: var(--tc-f3eefb,#f3eefb);
   display: grid;
   place-items: center;
   flex: 0 0 52px;
 }
 .global-search-result-icon img { width: 38px; height: 38px; object-fit: contain; }
 .global-search-result-body { min-width: 0; flex: 1; display: flex; flex-direction: column; }
-.global-search-result-body small { font-size: 11px; color: #6e61b8; font-weight: 700; margin-bottom: 3px; }
+.global-search-result-body small { font-size: 11px; color: var(--tc-6e61b8,#6e61b8); font-weight: 700; margin-bottom: 3px; }
 .global-search-result-body strong {
   font-size: 15px;
   font-weight: 800;
@@ -179,7 +179,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.global-search-chevron { font-size: 24px; color: #a39ab2; }
+.global-search-chevron { font-size: 24px; color: var(--tc-a39ab2,#a39ab2); }
 
 /* #05 confirmed global search V3 parity (three approved states, 390x844).
    Screen-local only; the approved V4 bottom nav is not modified. */

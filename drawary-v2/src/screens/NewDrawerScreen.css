@@ -21,7 +21,7 @@
   background: #fffaf1;
   border-radius: 24px 24px 0 0;
   padding: 10px 22px 26px;
-  box-shadow: 0 -10px 34px rgba(55, 45, 70, 0.18);
+  box-shadow: 0 -10px 34px rgba(var(--tr-55-45-70,55,45,70), 0.18);
   box-sizing: border-box;
 }
 .new-drawer-handle {
@@ -64,7 +64,7 @@
   padding: 6px;
 }
 .new-drawer-icon img { width: 70%; height: 70%; object-fit: contain; }
-.new-drawer-icon.is-selected { border-color: #7657e8; background: #f1ecff; }
+.new-drawer-icon.is-selected { border-color: var(--tc-7657e8,#7657e8); background: var(--tc-f1ecff,#f1ecff); }
 
 .new-drawer-color-row { display: flex; gap: 10px; margin-bottom: 22px; }
 .new-drawer-swatch {
@@ -74,14 +74,14 @@
   border: 2px solid transparent;
   padding: 0;
 }
-.new-drawer-swatch.is-selected { border-color: #7657e8; box-shadow: 0 0 0 2px #fffaf1 inset; }
+.new-drawer-swatch.is-selected { border-color: var(--tc-7657e8,#7657e8); box-shadow: 0 0 0 2px #fffaf1 inset; }
 
 .new-drawer-next {
   width: 100%;
   height: 52px;
   border-radius: 999px;
   border: 0;
-  background: #7657e8;
+  background: var(--tc-7657e8,#7657e8);
   color: #ffffff;
   font-size: 15px;
   font-weight: 700;
@@ -104,7 +104,7 @@
   padding:3px;
 }
 .new-drawer-icon img { width:36px; height:36px; }
-.new-drawer-icon.is-selected { border:2px solid #7657e8; }
+.new-drawer-icon.is-selected { border:2px solid var(--tc-7657e8,#7657e8); }
 .new-drawer-color-row { margin-left:-3px; margin-bottom:24px; }
 .new-drawer-swatch { width:42px; height:42px; }
 

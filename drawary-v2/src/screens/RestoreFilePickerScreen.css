@@ -4,20 +4,20 @@ button{font:inherit}
 .rfp49-screen{width:390px;height:844px;max-width:100%;overflow:hidden;background:#fff9f0;position:relative;margin:0 auto;font-family:'Noto Sans CJK KR','Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;color:#30435f}
 .rfp49-header{height:91px;display:flex;align-items:center;justify-content:center;position:relative;padding:16px 18px 0}
 .rfp49-title{font-size:20px;font-weight:850;line-height:24px;letter-spacing:-.7px;color:#285a9b;white-space:nowrap}
-.rfp49-back{position:absolute;left:25px;top:45px;width:15px;height:15px;border:0;border-left:2.5px solid #806aea;border-bottom:2.5px solid #806aea;transform:rotate(45deg);background:none;cursor:pointer}
+.rfp49-back{position:absolute;left:25px;top:45px;width:15px;height:15px;border:0;border-left:2.5px solid var(--tc-806aea,#806aea);border-bottom:2.5px solid var(--tc-806aea,#806aea);transform:rotate(45deg);background:none;cursor:pointer}
 .rfp49-panel{position:absolute;top:88px;bottom:19px;left:17px;right:17px;border-radius:23px;background:#fff;border:1px solid #f1ece7;box-shadow:0 4px 17px #7b67500b}
 .rfp49-content{display:flex;flex-direction:column;align-items:center;width:100%;position:absolute;left:0;top:130px;padding:0 17px}
 .rfp49-art{width:231px;height:157px;object-fit:contain;display:block}
 .rfp49-heading{font-size:18px;line-height:1.4;letter-spacing:-.85px;color:#2a4c80;font-weight:850;margin:16px 0 0;white-space:nowrap}
 .rfp49-description{color:#8f9baf;font-size:12.3px;font-weight:650;letter-spacing:-.25px;line-height:1.55;text-align:center;margin-top:7px}
-.rfp49-pick-card{width:100%;margin-top:29px;border-radius:16px;background:#fcfbff;border:1px solid #e6e3ef;padding:14px 16px;min-height:82px;display:flex;align-items:center;gap:13px;text-align:left;color:inherit;cursor:pointer}
-.rfp49-pick-card:focus-visible{outline:3px solid #8b64da;outline-offset:3px}
-.rfp49-pick-icon{width:51px;height:51px;display:flex;align-items:center;justify-content:center;background:#f4eefe;border-radius:13px;flex-shrink:0}
+.rfp49-pick-card{width:100%;margin-top:29px;border-radius:16px;background:var(--tc-fcfbff,#fcfbff);border:1px solid var(--tc-e6e3ef,#e6e3ef);padding:14px 16px;min-height:82px;display:flex;align-items:center;gap:13px;text-align:left;color:inherit;cursor:pointer}
+.rfp49-pick-card:focus-visible{outline:3px solid var(--tc-8b64da,#8b64da);outline-offset:3px}
+.rfp49-pick-icon{width:51px;height:51px;display:flex;align-items:center;justify-content:center;background:var(--tc-f4eefe,#f4eefe);border-radius:13px;flex-shrink:0}
 .rfp49-pick-icon img{width:43px;height:43px;object-fit:contain}
 .rfp49-pick-text{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
 .rfp49-pick-text strong{font-size:14.5px;color:#354462;letter-spacing:-.5px;line-height:1.2;font-weight:800}
 .rfp49-pick-text small{font-size:11.6px;color:#90a0b4;line-height:1.25;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;max-width:180px}
 .rfp49-chevron{width:9px;height:9px;border-top:2px solid #8c92aa;border-right:2px solid #8c92aa;transform:rotate(45deg);margin-right:5px;flex-shrink:0}
 .rfp49-hint{font-size:11.6px;line-height:1.6;color:#96a0b2;letter-spacing:-.3px;margin-top:16px;text-align:center;white-space:nowrap}
-.rfp49-confirm{position:absolute;bottom:23px;left:18px;right:18px;border:0;height:55px;border-radius:16px;background:linear-gradient(100deg,#af8af5 0%,#9462ed 100%);box-shadow:0 6px 16px rgba(152,102,225,.16);color:#fff;font-size:16px;font-weight:800;letter-spacing:-.3px;cursor:pointer}
+.rfp49-confirm{position:absolute;bottom:23px;left:18px;right:18px;border:0;height:55px;border-radius:16px;background:linear-gradient(100deg,var(--tc-af8af5,#af8af5) 0%,var(--tc-9462ed,#9462ed) 100%);box-shadow:0 6px 16px rgba(var(--tr-152-102-225,152,102,225),.16);color:#fff;font-size:16px;font-weight:800;letter-spacing:-.3px;cursor:pointer}
 .rfp49-file-input{position:absolute!important;width:1px;height:1px;opacity:0;pointer-events:none}

@@ -76,7 +76,7 @@
 .onboarding-dot.active {
   width: 7px;
   height: 7px;
-  background: #7a59ea;
+  background: var(--tc-7a59ea,#7a59ea);
 }
 .onboarding-nav {
   position: absolute;
@@ -92,8 +92,8 @@
   cursor: pointer;
   font-family: Arial, sans-serif;
 }
-.onboarding-nav.prev { left: 18px; background: #f3efff; color: #8c72ee; }
-.onboarding-nav.next { right: 18px; background: linear-gradient(145deg, #8b69ef, #6d4be2); color: #fff; }
+.onboarding-nav.prev { left: 18px; background: var(--tc-f3efff,#f3efff); color: var(--tc-8c72ee,#8c72ee); }
+.onboarding-nav.next { right: 18px; background: linear-gradient(145deg, var(--tc-8b69ef,#8b69ef), var(--tc-6d4be2,#6d4be2)); color: #fff; }
 .onboarding-skip {
   position: absolute;
   left: 20px;
@@ -113,7 +113,7 @@
   height: 50px;
   border: 0;
   border-radius: 26px;
-  background: linear-gradient(90deg, #7656e9, #8b68eb);
+  background: linear-gradient(90deg, var(--tc-7656e9,#7656e9), var(--tc-8b68eb,#8b68eb));
   color: #fff;
   font-size: 18px;
   font-weight: 700;
