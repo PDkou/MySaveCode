@@ -107,3 +107,13 @@
 .new-drawer-icon.is-selected { border:2px solid #7657e8; }
 .new-drawer-color-row { margin-left:-3px; margin-bottom:24px; }
 .new-drawer-swatch { width:42px; height:42px; }
+
+/* Name counter (user-approved 2026-10-20), same look as #10's "0/20". The
+   wrapper owns the bottom margin the input had, so spacing below is unchanged. */
+.new-drawer-input-wrap { position: relative; margin-bottom: 10px; }
+.new-drawer-input-wrap .new-drawer-input { margin-bottom: 0; padding-right: 54px; }
+.new-drawer-count {
+  position: absolute; right: 14px; top: 0; height: 46px;
+  display: flex; align-items: center;
+  font-size: 11px; color: #a0a7b7; pointer-events: none;
+}

@@ -72,15 +72,19 @@ export function NewDrawerScreen({ initial, onNext, onDismiss }: NewDrawerScreenP
         <p className="new-drawer-subtitle">먼저 서랍의 이름과 분위기를 정해보세요.</p>
 
         <label className="new-drawer-label" htmlFor="new-drawer-name">서랍 이름</label>
-        <input
-          id="new-drawer-name"
-          className="new-drawer-input"
-          type="text"
-          placeholder="예: 화장품"
-          value={name}
-          maxLength={MAX_DRAWER_NAME_LENGTH}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <div className="new-drawer-input-wrap">
+          <input
+            id="new-drawer-name"
+            className="new-drawer-input"
+            type="text"
+            placeholder="예: 화장품"
+            value={name}
+            maxLength={MAX_DRAWER_NAME_LENGTH}
+            onChange={(e) => setName(e.target.value)}
+          />
+          {/* 2026-10-20: user-approved addition, styled like #10's name counter. */}
+          <span className="new-drawer-count" aria-hidden="true">{name.length}/{MAX_DRAWER_NAME_LENGTH}</span>
+        </div>
 
         <span className="new-drawer-label">아이콘</span>
         <div className="new-drawer-icon-grid">

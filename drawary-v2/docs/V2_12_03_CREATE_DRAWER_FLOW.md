@@ -1,6 +1,8 @@
 # V2-12 step 1-B: create-drawer flow is saved (#8 -> #9 -> #10/#11 -> #12)
 
-Visuals are untouched: #9, #10, #11, #12 and #8 render **pixel-identical** (0 changed pixels, real Chromium, default state) before and after this step. Only data and behavior were wired.
+Visuals are untouched: #9, #10, #11 and #12 render **pixel-identical** (0 changed pixels, real Chromium, default state) before and after this step. Only data and behavior were wired.
+
+**One user-approved visual addition (2026-10-20, after a preview):** #8's name field now shows a `0/20` counter inside its right edge, styled like #10's (11px, `#a0a7b7`). The field gets 54px right padding so text never runs under it; the icon grid below did not move (0px, measured). Counting is by JavaScript string length, so an emoji counts as 2 (same as #10).
 
 ## How it works
 
