@@ -15,7 +15,8 @@ import { t, tl } from '../i18n';
 // Added below, reusing the exact same prev/next used by the nav buttons
 // and the swipe gesture, so all three input paths share one bounds-safe
 // step function -- no new navigation semantics invented.
-const SLIDES = [
+// A function, not a constant: the texts must be looked up in the language that is current when the screen is drawn.
+const slides = () => [
   { id: 'intro', title: <>{tl('나만의 소중한 것들을,\n더 특별하게')}</>, body: <>{tl('Drawary와 함께\n일상을 기록해보세요.')}</> },
   { id: 'create', title: <>{t('나만의 서랍을 만들어보세요')}</>, body: <>{tl('좋아하는 주제로 서랍을 만들고\n소중한 것들을 정리할 수 있어요.')}</> },
   { id: 'fields', title: <>{t('아이콘으로 서랍을 꾸며보세요')}</>, body: <>{tl('다양한 아이콘 중에서\n내 서랍에 어울리는 아이콘을 선택하세요.')}</> },
@@ -27,6 +28,7 @@ const SLIDES = [
 ];
 
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {
+  const SLIDES = slides();
   const [index, setIndex] = useState(0);
   const startX = useRef<number | null>(null);
   const slide = SLIDES[index];

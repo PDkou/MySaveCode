@@ -101,6 +101,25 @@ describe('translations', () => {
   });
 });
 
+describe('where t() is called', () => {
+  it('never at module level (the text would stay in the language that was current at start-up)', () => {
+    const early: string[] = [];
+    for (const f of sourceFiles(SRC)) {
+      const sf = ts.createSourceFile(f, readFileSync(f, 'utf8'), ts.ScriptTarget.Latest, true, f.endsWith('x') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+      const visit = (n: ts.Node) => {
+        if (ts.isCallExpression(n) && /^(t|tl|tx)$/.test(n.expression.getText())) {
+          let inFn = false;
+          for (let p: ts.Node | undefined = n.parent; p; p = p.parent) if (ts.isFunctionLike(p)) { inFn = true; break; }
+          if (!inFn) early.push(`${f.replace(SRC, '')}: ${n.getText().slice(0, 40)}`);
+        }
+        ts.forEachChild(n, visit);
+      };
+      visit(sf);
+    }
+    expect(early).toEqual([]);
+  });
+});
+
 describe('t()', () => {
   it('returns the Korean for Korean, and the saved text for the other languages', () => {
     expect(translate('저장', 'ko')).toBe('저장');
