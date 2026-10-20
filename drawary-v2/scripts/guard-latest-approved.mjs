@@ -15,7 +15,8 @@ const check = (condition, message) => {
   if (!condition) { console.error('FINAL APPROVAL GUARD FAILED: '+message); process.exitCode=1; }
 };
 check(manifest.approvedFinalHtml['59']?.sha256==='481c8d9ecf680b3c4c84b2f0295e1401216742a5ec3fab1a27c3611905f484df', '#59 approved source manifest changed');
-check(feedback.includes('작은 의견 하나가<br />더 편리한 Drawary를<br />만들어요.'), '#59 revised headline changed');
+// Same three lines, now written with `\n` inside tl() so the headline can be translated (i18n step); the Korean text is the key.
+check(feedback.includes('작은 의견 하나가\\n더 편리한 Drawary를\\n만들어요.') || feedback.includes('작은 의견 하나가<br />더 편리한 Drawary를<br />만들어요.'), '#59 revised headline changed');
 check(feedback.includes('/assets/mascot/mascot_lean_on_drawer.webp'), '#59 revised mascot replaced');
 check(!feedback.includes('mascot_feedback_approved.webp'), '#59 obsolete 10/08 screenshot crop reintroduced');
 check(help.includes('mascot_help_approved.webp'), '#55 confirmed mascot missing');
