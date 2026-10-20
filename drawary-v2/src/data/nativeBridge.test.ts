@@ -23,6 +23,18 @@ describe('native bridge (Android shell contract)', () => {
     await expect(deliverBackup('drive', 'b.zip', new Blob(['x']))).rejects.toThrow();
   });
 
+  it('Google Drive backup goes through the phone save window; a closed window is a friendly "cancelled"', async () => {
+    const saveBackupToDrive = vi.fn(async () => 'Google Drive');
+    setNative({ saveBackupToDrive });
+    const blob = new Blob([new Uint8Array([1, 2, 3])]);
+    expect(await deliverBackup('drive', 'b.zip', blob)).toBe('Google Drive');
+    expect(saveBackupToDrive).toHaveBeenCalledWith('b.zip', 'AQID');
+    setNative({ saveBackupToDrive: async () => { throw new Error('cancelled'); } });
+    await expect(deliverBackup('drive', 'b.zip', blob)).rejects.toThrow('저장을 취소했어요.');
+    setNative({ saveBackupToDrive: async () => { throw new Error('failed'); } });
+    await expect(deliverBackup('drive', 'b.zip', blob)).rejects.toThrow('Google Drive에 저장하지 못했어요.');
+  });
+
   it('feedback: packs the attachment, passes the shell result through, and is false without a shell', async () => {
     setNative({});
     expect(hasNativeFeedback()).toBe(false);

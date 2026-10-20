@@ -1,5 +1,6 @@
 import type { PlannedNotification } from '../flow/notificationPlan';
 import { saveBlob, blobToBase64 } from './fileSave';
+import { suspendAutoLock, endAutoLockSuspension } from './appLockGuard';
 import { t } from '../i18n';
 
 /**
@@ -36,7 +37,11 @@ export interface DrawaryNativeApi {
    * with). JSON of {@link NativeFeedback}. Resolves true when a mail app was opened, false when there is none.
    */
   sendFeedback?: (json: string) => Promise<boolean>;
-  /** Same, to the person's Google Drive (sign-in and permission are the shell's job). Resolves with the place to show. */
+  /**
+   * Saves a backup where the person picks in the phone's own "save to" window (Google Drive is one of its places, when the
+   * Drive app is installed): no sign-in or network code in this app. Resolves with the place to show ("Google Drive",
+   * "Download", ...); rejects with message 'cancelled' when the window is closed without saving.
+   */
   saveBackupToDrive?: (fileName: string, base64: string) => Promise<string>;
 }
 
@@ -108,7 +113,15 @@ export async function deliverBackup(destination: 'device' | 'drive', fileName: s
   const native = typeof window === 'undefined' ? undefined : window.DrawaryNative;
   if (destination === 'drive') {
     if (typeof native?.saveBackupToDrive !== 'function') throw new Error(t('Google Drive 백업은 안드로이드 앱에서 사용할 수 있어요.'));
-    return native.saveBackupToDrive(fileName, await blobToBase64(blob));
+    // The phone's save window takes the app to the background for as long as the person needs.
+    suspendAutoLock(120_000);
+    try {
+      return await native.saveBackupToDrive(fileName, await blobToBase64(blob));
+    } catch (e) {
+      throw new Error(e instanceof Error && e.message === 'cancelled' ? t('저장을 취소했어요.') : t('Google Drive에 저장하지 못했어요.'));
+    } finally {
+      endAutoLockSuspension();
+    }
   }
   return saveBlob(blob, fileName);
 }

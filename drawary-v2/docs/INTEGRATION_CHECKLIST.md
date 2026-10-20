@@ -71,7 +71,7 @@
 - [x] Local persistence and error handling (IndexedDB, serialized writes; `V2_12_00_DATA_LAYER.md`)
 - [x] Photos: system image chooser, stored in the on-device DB (browser-QA'd). Android file chooser wired in the shell; **device: no**
 - [x] Backup import/export: custom ZIP/JSON, strict validation, all-or-nothing restore (`V2_12_14_BACKUP_RESTORE.md`). Android saves to `Download/Drawary` via MediaStore; **device: no**
-- [ ] Google Drive auth and file workflow (not implemented; optional, last; needs a Google Cloud OAuth client and the INTERNET permission)
+- [x] Google Drive backup: built as the phone's own save window where the person picks Drive (no OAuth, no network permission); **device: no**. A direct in-app Drive upload (sign-in + REST) is intentionally not built
 - [x] Backup/restore semantics: restore replaces everything after a strict check and the PIN (when the lock is on); backup is not encrypted by owner decision
 - [x] Notification scheduling & recurrence semantics (web logic + tests; Android alarms built in the shell, CI-built, **device: no**)
 - [x] PIN / biometrics (PBKDF2 PIN, limiter, auto-lock; biometrics through the shell, **device: no**)

@@ -26,6 +26,7 @@
     isBiometricAvailable: function () { return A.isBiometricAvailable() === true; },
     authenticateBiometric: function () { return call('authenticateBiometric', []).then(function (v) { return v === true; }); },
     saveFile: function (name, mime, base64) { return call('saveFile', [name, mime, base64]); },
+    saveBackupToDrive: function (name, base64) { return call('saveBackupToDrive', [name, base64]); },
     printPage: function () { A.printPage(); },
     setSecureScreen: function (secure) { A.setSecureScreen(!!secure); },
     sendFeedback: function (json) { return call('sendFeedback', [json]).then(function (v) { return v === true; }); }

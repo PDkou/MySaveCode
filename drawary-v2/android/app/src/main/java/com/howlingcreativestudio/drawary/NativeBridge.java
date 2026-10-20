@@ -134,6 +134,50 @@ final class NativeBridge {
         });
     }
 
+    /** The phone's own "save to" window (Google Drive is one of its places); see MainActivity.startDriveSave. */
+    @JavascriptInterface
+    public void saveBackupToDrive(final int id, final String fileName, final String base64) {
+        worker.execute(() -> {
+            try {
+                final byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+                main.post(() -> activity.startDriveSave(id, fileName, bytes));
+            } catch (IllegalArgumentException e) {
+                reject(id, "failed");
+            }
+        });
+    }
+
+    /** Called by the activity once the person picked a place: write the backup there. */
+    void writeToPickedPlace(final int id, final android.net.Uri uri, final byte[] bytes) {
+        worker.execute(() -> {
+            try (java.io.OutputStream out = activity.getContentResolver().openOutputStream(uri, "wt")) {
+                if (out == null) throw new java.io.IOException("Could not open the place");
+                out.write(bytes);
+                resolve(id, JSONObject.quote(placeName(uri)));
+            } catch (Exception e) {
+                Log.w(TAG, "Saving the backup failed", e);
+                reject(id, "failed");
+            }
+        });
+    }
+
+    void cancelled(int id) {
+        reject(id, "cancelled");
+    }
+
+    void failed(int id) {
+        reject(id, "failed");
+    }
+
+    /** A short name for where the file went, from the provider the person chose. */
+    private String placeName(android.net.Uri uri) {
+        String authority = uri.getAuthority() == null ? "" : uri.getAuthority();
+        if (authority.startsWith("com.google.android.apps.docs")) return "Google Drive";
+        if (authority.equals("com.android.providers.downloads.documents")) return "Download";
+        if (authority.equals("com.android.externalstorage.documents")) return activity.getString(R.string.place_phone);
+        return activity.getString(R.string.place_chosen);
+    }
+
     @JavascriptInterface
     public void printPage() {
         main.post(() -> {

@@ -9,4 +9,6 @@
     <string name="feedback_subject">ひきだし帳へのフィードバック</string>
     <string name="feedback_chooser">フィードバックを送る</string>
     <string name="print_job">ひきだし帳の表</string>
+    <string name="place_phone">このスマートフォン</string>
+    <string name="place_chosen">選んだ場所</string>
 </resources>

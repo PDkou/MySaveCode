@@ -9,4 +9,6 @@
     <string name="feedback_subject">나만의 서랍장 피드백</string>
     <string name="feedback_chooser">피드백 보내기</string>
     <string name="print_job">나만의 서랍장 표</string>
+    <string name="place_phone">내 폰</string>
+    <string name="place_chosen">선택한 위치</string>
 </resources>

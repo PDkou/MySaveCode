@@ -34,10 +34,13 @@ import android.widget.FrameLayout;
 public class MainActivity extends Activity {
     static final int REQ_FILE_CHOOSER = 1001;
     static final int REQ_NOTIFICATIONS = 1002;
+    static final int REQ_DRIVE_SAVE = 1003;
 
     private WebView webView;
     private NativeBridge bridge;
     private ValueCallback<Uri[]> fileCallback;
+    private int drivePendingId = -1;
+    private byte[] drivePendingBytes;
     private Object backCallback; // an OnBackInvokedCallback on Android 13+
 
     @Override
@@ -167,6 +170,31 @@ public class MainActivity extends Activity {
         });
     }
 
+    /**
+     * "Google Drive" backup: opens the phone's own save window (title = the backup's name). Google Drive is one of the
+     * places listed there when the Drive app is installed; the Drive app does the upload, so this app needs no sign-in
+     * and no network permission. Main thread.
+     */
+    void startDriveSave(int id, String fileName, byte[] bytes) {
+        if (drivePendingBytes != null) {
+            bridge.failed(id);
+            return;
+        }
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType(fileName.toLowerCase(java.util.Locale.ROOT).endsWith(".json") ? "application/json" : "application/zip")
+                .putExtra(Intent.EXTRA_TITLE, FileSaver.safeName(fileName));
+        drivePendingId = id;
+        drivePendingBytes = bytes;
+        try {
+            startActivityForResult(intent, REQ_DRIVE_SAVE);
+        } catch (ActivityNotFoundException e) {
+            drivePendingId = -1;
+            drivePendingBytes = null;
+            bridge.failed(id);
+        }
+    }
+
     private void openExternally(Uri uri) {
         String scheme = uri.getScheme();
         if (!"http".equals(scheme) && !"https".equals(scheme) && !"mailto".equals(scheme)) return;
@@ -202,6 +230,17 @@ public class MainActivity extends Activity {
                 fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
                 fileCallback = null;
             }
+            return;
+        }
+        if (requestCode == REQ_DRIVE_SAVE) {
+            int id = drivePendingId;
+            byte[] bytes = drivePendingBytes;
+            drivePendingId = -1;
+            drivePendingBytes = null;
+            if (bytes == null) return;
+            Uri target = data == null ? null : data.getData();
+            if (resultCode == RESULT_OK && target != null) bridge.writeToPickedPlace(id, target, bytes);
+            else bridge.cancelled(id);
             return;
         }
         super.onActivityResult(requestCode, resultCode, data);

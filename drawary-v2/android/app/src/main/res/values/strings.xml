@@ -9,4 +9,6 @@
     <string name="feedback_subject">Drawary feedback</string>
     <string name="feedback_chooser">Send feedback</string>
     <string name="print_job">Drawary table</string>
+    <string name="place_phone">Phone</string>
+    <string name="place_chosen">Chosen place</string>
 </resources>
