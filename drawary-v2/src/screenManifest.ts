@@ -1,4 +1,7 @@
 /** The user-approved visual & standalone-source screen inventory.
+ * On 2026-10-20, the user explicitly accepted all 59 current screens as final
+ * and requested no further visual edits. This acceptance is distinct from
+ * pixel-parity or feature-integration claims.
  * standaloneCodeApproved tracks approved standalone source (HTML/CSS), NOT working React integration.
  * Screen 47 user-approved Chromium standalone source on 2026-10-15; integration remains pending.
  */
@@ -6,6 +9,7 @@ export interface ScreenRecord {
   id: number;
   name: string;
   visualApproved: true;
+  userFinalAccepted: true;
   standaloneCodeApproved: true;
   integrated: false;
 }
@@ -76,6 +80,7 @@ export const screenManifest: readonly ScreenRecord[] = acceptedNames.map((name, 
   id: index + 1,
   name,
   visualApproved: true,
+  userFinalAccepted: true,
   standaloneCodeApproved: true,
   integrated: false,
 }));
