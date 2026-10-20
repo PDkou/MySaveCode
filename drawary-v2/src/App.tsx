@@ -49,7 +49,9 @@ import { RecordPickerSheet } from './screens/RecordPickerSheet';
 import { NotificationCommonSettingsScreen } from './screens/NotificationCommonSettingsScreen';
 import { NOTIFY_COMMON_KEY, readNotifyCommon } from './flow/notifySettings';
 import { computeNotificationPlan } from './flow/notificationPlan';
-import { syncNotificationPlan } from './data/nativeBridge';
+import { hasNativeBiometric, authenticateBiometric, syncNotificationPlan } from './data/nativeBridge';
+import { useAppLock } from './flow/useAppLock';
+import { savePin, setAppLock, setAutoLock, setBiometric, verifyPin } from './data/appLockActions';
 import { toISODate } from './flow/recurrence';
 import { RecurrenceTargetDateScreen } from './screens/RecurrenceTargetDateScreen';
 import { RecurrenceCycleScreen, type RecurrenceCycle, cycleLabel } from './screens/RecurrenceCycleScreen';
@@ -294,12 +296,12 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [store.status, store.notificationRules, store.drawers, store.fields, store.records, store.settings]);
 
-  // #40-#43 보안/잠금. pinValue is the real PIN #42's flow commits (not
-  // the archive's own hardcoded demo PIN); appLockEnabled can only be
-  // switched on once a PIN exists, matching #41's own "don't turn on a
-  // lock before PIN is configured" rule for real.
-  const [pinValue, setPinValue] = useState<string | null>(null);
-  const [appLockEnabled, setAppLockEnabled] = useState(false);
+  // #40-#43 보안/잠금. The PIN is saved as a salted hash (see flow/appLock.ts);
+  // `lock` says whether the lock screen must cover the app right now.
+  const lock = useAppLock(store.status !== 'loading', store.settings);
+  const sec = lock.security;
+  // "앱 잠금 사용" switched off asks for the current PIN first.
+  const [confirmLockOff, setConfirmLockOff] = useState(false);
 
   // #44-#53 백업/복원/초기화.
   const [backupMode, setBackupMode] = useState<BackupMode>('include');
@@ -335,6 +337,16 @@ export default function App() {
     else if (route === 'field-edit-manage' && !manageField) navigate('drawer-fields-manage');
     else if (recordRoute && !selectedRecord) navigate('drawer-detail');
   }, [route, store.status, currentDrawer, selectedRecord, manageField, navigate]);
+
+  // Nothing is drawn until the saved data (and with it the lock setting) has loaded.
+  if (store.status === 'loading') return <main className="drawary-app-shell" data-route="loading" />;
+  if (lock.locked) {
+    return <main className="drawary-app-shell" data-route="locked">
+      <FixedCanvas height={844}>
+        <AppLockScreen verify={verifyPin} lockedUntil={sec.attempts.lockedUntil} onUnlock={lock.unlock} />
+      </FixedCanvas>
+    </main>;
+  }
 
   if (route === 'splash') {
     return <main className="drawary-app-shell drawary-splash-route" data-route="splash"><SplashScreen fadingOut={false}/></main>;
@@ -797,25 +809,56 @@ export default function App() {
   }
   if (route === 'security-settings') {
     // #40 보안 설정, reachable from #38's "보안 설정" row. Back returns
-    // to #38. "앱 잠금" row -> #41.
+    // to #38. "앱 잠금" row -> #41. 생체 인증 is turned on only after the
+    // phone's own prompt has been passed once (so it is known to work).
     return <main className="drawary-app-shell" data-route="security-settings">
       <FixedCanvas height={844}>
-        <SecuritySettingsScreen onBack={returnToTab} onOpenAppLock={() => navigate('lock-detail')} />
+        <SecuritySettingsScreen
+          appLockEnabled={sec.appLock}
+          autoLock={sec.autoLock}
+          biometric={sec.biometric}
+          biometricAvailable={hasNativeBiometric()}
+          onBack={returnToTab}
+          onOpenAppLock={() => navigate('lock-detail')}
+          onToggleAutoLock={() => { void setAutoLock(!sec.autoLock).catch(alertError); }}
+          onToggleBiometric={() => {
+            if (sec.biometric) { void setBiometric(false).catch(alertError); return; }
+            void authenticateBiometric()
+              .then((ok) => (ok ? setBiometric(true) : window.alert('지문/얼굴 인식을 확인하지 못했어요. 다시 시도해 주세요.')))
+              .catch(alertError);
+          }}
+        />
       </FixedCanvas>
     </main>;
   }
   if (route === 'lock-detail') {
     // #41 잠금 설정 상세, reachable from #40's "앱 잠금" row. Back
     // returns to #40. "PIN 설정 / 변경" -> #42. The "앱 잠금 사용" switch
-    // is only enabled once a real PIN exists (see the pinValue state
-    // above); toggling it off is always allowed.
+    // is only enabled once a PIN exists; turning it OFF asks for the
+    // current PIN first (the #42 screen in its "verify" mode).
+    if (confirmLockOff) {
+      return <main className="drawary-app-shell" data-route="lock-detail">
+        <FixedCanvas height={844}>
+          <PinSetupScreen
+            mode="verify"
+            verify={verifyPin}
+            lockedUntil={sec.attempts.lockedUntil}
+            onBack={() => setConfirmLockOff(false)}
+            onVerified={() => { void setAppLock(false).then(() => setConfirmLockOff(false)).catch(alertError); }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
     return <main className="drawary-app-shell" data-route="lock-detail">
       <FixedCanvas height={844}>
         <LockDetailScreen
-          hasPin={pinValue !== null}
-          appLockEnabled={appLockEnabled}
+          hasPin={sec.pin !== null}
+          appLockEnabled={sec.appLock}
           onBack={() => navigate('security-settings')}
-          onToggleAppLock={() => setAppLockEnabled((v) => !v)}
+          onToggleAppLock={() => {
+            if (sec.appLock) setConfirmLockOff(true);
+            else void setAppLock(true).catch(alertError);
+          }}
           onOpenPinSetup={() => navigate('pin-setup')}
         />
       </FixedCanvas>
@@ -823,32 +866,30 @@ export default function App() {
   }
   if (route === 'pin-setup') {
     // #42 PIN 설정 / 변경, reachable from #41's "PIN 설정 / 변경" row.
-    // Back returns to #41. Completing the real new->confirm->done flow
-    // (see PinSetupScreen.tsx's own header comment) commits the PIN
-    // into shared state and returns to #41, whose "앱 잠금 사용" switch
-    // becomes enabled immediately.
+    // Back returns to #41. With a PIN already saved, the current PIN is
+    // asked first. Completing the flow saves the new PIN's hash and returns
+    // to #41.
     return <main className="drawary-app-shell" data-route="pin-setup">
       <FixedCanvas height={844}>
         <PinSetupScreen
+          mode={sec.pin ? 'change' : 'set'}
+          verify={verifyPin}
+          lockedUntil={sec.attempts.lockedUntil}
           onBack={() => navigate('lock-detail')}
-          onComplete={(pin) => { setPinValue(pin); navigate('lock-detail'); }}
+          onComplete={(pin) => { void savePin(pin).then(() => navigate('lock-detail')).catch(alertError); }}
         />
       </FixedCanvas>
     </main>;
   }
   if (route === 'app-lock') {
     // #43 앱 잠금 화면 (fullscreen PIN gate, no back button -- matches
-    // the archive exactly). Not reachable from any row in this app yet:
-    // none of #40-#44's own flows actually re-launch the app to trigger
-    // it, and simulating an app-restart is out of scope for a browser
-    // harness. Kept as a standalone QA route instead of inventing a fake
-    // trigger, same reasoning as #01's own standalone splash-timing
-    // route. `correctPin` uses the real PIN #42 committed, falling back
-    // to the archive's own demo PIN only when none has been set yet
-    // (see AppLockScreen.tsx's own header comment).
+    // the archive exactly). The real gate is shown above, before any route,
+    // whenever the lock is on and the app is locked. This route stays as a
+    // QA preview of the same screen: it checks the real saved PIN and goes
+    // home when it is right (with no PIN saved there is nothing to check).
     return <main className="drawary-app-shell" data-route="app-lock">
       <FixedCanvas height={844}>
-        <AppLockScreen correctPin={pinValue ?? '2468'} onUnlock={() => {}} />
+        <AppLockScreen verify={verifyPin} lockedUntil={sec.attempts.lockedUntil} onUnlock={() => navigate('home')} />
       </FixedCanvas>
     </main>;
   }
@@ -1299,10 +1340,9 @@ export default function App() {
       <section className="drawary-route-panel" aria-labelledby={route === 'home' || route === 'search' || route === 'settings' || route === 'stats' ? undefined : 'drawary-dev-screen-title'}>
         {route === 'home' ? (
           // #3 / #4: the empty state is shown whenever there are no drawers.
-          // Nothing is rendered until the saved data has loaded, so a
-          // returning user never sees a flash of the empty screen.
-          store.status === 'loading' ? null
-          : store.drawers.length === 0 ? (
+          // The whole app waits for the saved data (see the loading gate
+          // above), so a returning user never sees a flash of the empty screen.
+          store.drawers.length === 0 ? (
             <HomeEmptyScreen onCreateDrawer={() => navigate('create-drawer')} />
           ) : (
             <HomeScreen

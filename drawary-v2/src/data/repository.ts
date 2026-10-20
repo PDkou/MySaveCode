@@ -453,6 +453,13 @@ export async function setSetting(key: string, value: unknown): Promise<void> {
   });
 }
 
+/** Saves several settings in one transaction: all of them or none. */
+export async function setSettings(entries: Record<string, unknown>): Promise<void> {
+  await withTx([STORES.settings], 'readwrite', async (s) => {
+    for (const [key, value] of Object.entries(entries)) await req(s.settings.put({ key, value }));
+  });
+}
+
 // ------------------------------------------------------------------ reset
 
 /** "데이터 초기화": removes every drawer, field, record, photo and setting. */

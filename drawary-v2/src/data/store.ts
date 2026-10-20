@@ -84,6 +84,7 @@ export const actions = {
   runRecurrences: (todayISO: string) => write(() => repo.runRecurrences(todayISO)),
 
   setSetting: (key: string, value: unknown) => write(() => repo.setSetting(key, value)),
+  setSettings: (entries: Record<string, unknown>) => write(() => repo.setSettings(entries)),
   resetAllData: () => write(() => repo.resetAllData()),
 };
 

@@ -1,4 +1,5 @@
 import { MAX_RECORD_PHOTOS } from './types';
+import { endAutoLockSuspension, suspendAutoLock } from './appLockGuard';
 
 /**
  * Opens the system image chooser (multiple, up to MAX_RECORD_PHOTOS) and
@@ -9,6 +10,7 @@ import { MAX_RECORD_PHOTOS } from './types';
  */
 export function pickRecordPhotos(): Promise<File[]> {
   return new Promise((resolve) => {
+    suspendAutoLock(60_000); // the chooser can take a while; finish() ends it early below
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -18,6 +20,7 @@ export function pickRecordPhotos(): Promise<File[]> {
     const finish = (selected: File[]) => {
       if (settled) return;
       settled = true;
+      endAutoLockSuspension();
       input.remove();
       resolve(selected.slice(0, MAX_RECORD_PHOTOS));
     };

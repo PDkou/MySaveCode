@@ -1,3 +1,5 @@
+import { suspendAutoLock } from './appLockGuard';
+
 /**
  * Hands a generated file to the user. On the web it is a normal browser
  * download and "PDF" is the browser's print dialog (choose "PDF로 저장").
@@ -5,6 +7,7 @@
  * these to work there (Android QA, step 6).
  */
 export function saveBlob(blob: Blob, fileName: string): void {
+  suspendAutoLock();
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -37,6 +40,7 @@ const PRINT_CSS = `
 
 /** Prints the given HTML on its own pages (the rest of the app is hidden while printing). */
 export function printHtml(html: string): void {
+  suspendAutoLock(30_000);
   document.getElementById(PRINT_ID)?.remove();
   const root = document.createElement('div');
   root.id = PRINT_ID;

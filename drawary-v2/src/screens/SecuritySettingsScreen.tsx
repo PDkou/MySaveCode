@@ -1,9 +1,16 @@
-import { useState } from 'react';
 import './SecuritySettingsScreen.css';
 
 export interface SecuritySettingsScreenProps {
+  /** 앱 잠금 is on (a PIN exists and the lock is switched on). */
+  appLockEnabled: boolean;
+  autoLock: boolean;
+  biometric: boolean;
+  /** The phone has a fingerprint/face lock the app may use. */
+  biometricAvailable: boolean;
   onBack?: () => void;
   onOpenAppLock?: () => void;
+  onToggleAutoLock?: () => void;
+  onToggleBiometric?: () => void;
 }
 
 /**
@@ -17,10 +24,20 @@ export interface SecuritySettingsScreenProps {
  * as the source's own comment specifies (no new art). "앱 잠금" row ->
  * #41; 41번/42번은 README's own words "별도, 미확정"이었지만 이번
  * 배치에서 함께 확정/통합.
+ *
+ * V2-12 step 4-A: the two switches are real now. They need 앱 잠금 on, and
+ * 생체 인증 also needs a phone that has it (Android shell); when a switch
+ * cannot be used, the small line under its title says why (new copy, not
+ * in the approved source) and the switch is dimmed like #41's.
  */
-export function SecuritySettingsScreen({ onBack, onOpenAppLock }: SecuritySettingsScreenProps) {
-  const [biometric, setBiometric] = useState(false);
-  const [autoLock, setAutoLock] = useState(false);
+export function SecuritySettingsScreen({
+  appLockEnabled, autoLock, biometric, biometricAvailable, onBack, onOpenAppLock, onToggleAutoLock, onToggleBiometric,
+}: SecuritySettingsScreenProps) {
+  // The two switches only work with 앱 잠금 on; the line under each says why when they cannot be used.
+  const biometricOff = !appLockEnabled || !biometricAvailable;
+  const biometricHint = !appLockEnabled ? '앱 잠금을 먼저 켜 주세요.'
+    : !biometricAvailable ? '이 기기에서는 사용할 수 없어요.'
+    : '지문이나 얼굴 인식으로 잠금을 풀어요.';
 
   return (
     <div className="sec40-screen">
@@ -45,14 +62,15 @@ export function SecuritySettingsScreen({ onBack, onOpenAppLock }: SecuritySettin
           </button>
           <div className="sec40-item">
             <span className="sec40-item-icon"><img src="/assets/ui-icons/icon_security_biometric_512.webp" alt="" /></span>
-            <span className="sec40-item-copy"><strong>생체 인증</strong><small>지문이나 얼굴 인식으로 잠금을 풀어요.</small></span>
+            <span className="sec40-item-copy"><strong>생체 인증</strong><small>{biometricHint}</small></span>
             <button
               type="button"
               role="switch"
               aria-label="생체 인증 사용"
               aria-checked={biometric}
               className="sec40-switch"
-              onClick={() => setBiometric((v) => !v)}
+              disabled={biometricOff && !biometric}
+              onClick={onToggleBiometric}
             />
           </div>
           <div className="sec40-item">
@@ -60,14 +78,15 @@ export function SecuritySettingsScreen({ onBack, onOpenAppLock }: SecuritySettin
               <img src="/assets/ui-icons/icon_lock.webp" alt="" />
               <span className="sec40-clock-overlay" aria-hidden="true" />
             </span>
-            <span className="sec40-item-copy"><strong>자동 잠금</strong><small>앱을 벗어나면 자동으로 잠가요.</small></span>
+            <span className="sec40-item-copy"><strong>자동 잠금</strong><small>{appLockEnabled ? '앱을 벗어나면 자동으로 잠가요.' : '앱 잠금을 먼저 켜 주세요.'}</small></span>
             <button
               type="button"
               role="switch"
               aria-label="자동 잠금 사용"
               aria-checked={autoLock}
               className="sec40-switch"
-              onClick={() => setAutoLock((v) => !v)}
+              disabled={!appLockEnabled}
+              onClick={onToggleAutoLock}
             />
           </div>
         </section>

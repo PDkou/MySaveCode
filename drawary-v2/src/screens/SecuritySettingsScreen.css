@@ -36,3 +36,4 @@ button{font:inherit}
 
 /* Approved #40 first row has no visible trailing chevron; keep navigation hot area. */
 .sec40-screen .sec40-right-arrow { display:none; }
+.sec40-switch:disabled{opacity:.5;cursor:default}

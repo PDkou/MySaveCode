@@ -1,55 +1,70 @@
 import { useState } from 'react';
+import { cooldownMessage, failureMessage, type VerifyResult } from '../flow/appLock';
+import { useCooldown } from '../flow/useCooldown';
 import './AppLockScreen.css';
 
 export interface AppLockScreenProps {
-  correctPin: string;
+  /** Checks the typed PIN against the saved one. */
+  verify: (pin: string) => Promise<VerifyResult>;
+  /** Epoch ms until which entry is paused after too many wrong tries. */
+  lockedUntil?: number;
   onUnlock?: () => void;
 }
 
 /**
  * #43 앱 잠금 화면. Ported from
  * `Drawary_43_APP_LOCK_CONFIRMED_2026-10-13`'s `index.html` -- the
- * vanilla JS's real verify/error-shake/unlock logic ported 1:1, not
- * simulated. No back button at all, matching the source exactly (a
- * fullscreen authentication gate has nowhere to go back to).
+ * vanilla JS's verify/error-shake/unlock flow. No back button at all,
+ * matching the source exactly (a fullscreen authentication gate has
+ * nowhere to go back to).
  *
- * `correctPin` is the real PIN committed via #42's flow (App.tsx wires
- * it through), not the archive's own hardcoded `demoPIN='2468'` --
- * falls back to that same demo value only when no PIN has been set yet
- * (e.g. a standalone QA visit to this route), so the archive's own
- * explicit "NEVER use this as an application PIN" caveat still holds:
- * this is still a design-preview verifier, not a secure credential
- * store.
+ * V2-12 step 4-A: the archive compared the typed digits with a hardcoded
+ * demo PIN ("NEVER use this as an application PIN"). Here `verify` checks
+ * the saved PIN hash instead and counts wrong tries; after too many the
+ * keypad pauses and the line under the dots counts the seconds down
+ * (`lockedUntil`, saved, so closing the app does not skip the wait). That
+ * pause line is new copy, not in the approved source.
  */
-export function AppLockScreen({ correctPin, onUnlock }: AppLockScreenProps) {
+export function AppLockScreen({ verify, lockedUntil = 0, onUnlock }: AppLockScreenProps) {
   const [typed, setTyped] = useState('');
   const [unlocked, setUnlocked] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [shake, setShake] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const wait = useCooldown(lockedUntil);
+  const paused = wait > 0;
 
   const enter = (digit: string) => {
-    if (unlocked || typed.length >= 4) return;
+    if (unlocked || typed.length >= 4 || busy || paused) return;
     setFeedback('');
     const next = typed + digit;
     setTyped(next);
-    if (next.length === 4) {
-      if (next === correctPin) {
-        setUnlocked(true);
-        onUnlock?.();
-      } else {
+    if (next.length < 4) return;
+    setBusy(true);
+    verify(next)
+      .then((result) => {
+        if (result.ok) {
+          setUnlocked(true);
+          onUnlock?.();
+          return;
+        }
         setTyped('');
-        setFeedback('PIN이 일치하지 않아요. 다시 입력해 주세요.');
+        setFeedback(failureMessage(result));
         setShake(true);
         setTimeout(() => setShake(false), 240);
-      }
-    }
+      })
+      .catch(() => { setTyped(''); setFeedback('확인하지 못했어요. 다시 시도해 주세요.'); })
+      .finally(() => setBusy(false));
   };
 
   const erase = () => {
-    if (unlocked) return;
+    if (unlocked || busy) return;
     setTyped((v) => v.slice(0, -1));
     setFeedback('');
   };
+
+  const shownFeedback = paused ? cooldownMessage(wait) : feedback;
+  const keysOff = unlocked || busy || paused;
 
   return (
     <div className="al43-screen">
@@ -71,18 +86,18 @@ export function AppLockScreen({ correctPin, onUnlock }: AppLockScreenProps) {
         <div className={`al43-pin-indicators${shake ? ' error' : ''}`} aria-label="PIN 4자리 입력 상태">
           {[0, 1, 2, 3].map((i) => <span key={i} className={i < typed.length ? 'filled' : ''} />)}
         </div>
-        <div className="al43-pin-feedback" aria-live="polite">{feedback}</div>
+        <div className="al43-pin-feedback" aria-live="polite">{shownFeedback}</div>
         <section className="al43-keypad" aria-label="PIN 숫자 키패드">
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
-            <button key={d} type="button" className="al43-num" disabled={unlocked} onClick={() => enter(d)}>{d}</button>
+            <button key={d} type="button" className="al43-num" disabled={keysOff} onClick={() => enter(d)}>{d}</button>
           ))}
           <span className="al43-num al43-void" aria-hidden="true" />
-          <button type="button" className="al43-num" disabled={unlocked} onClick={() => enter('0')}>0</button>
+          <button type="button" className="al43-num" disabled={keysOff} onClick={() => enter('0')}>0</button>
           <button
             type="button"
             className="al43-num al43-erase"
             aria-label="마지막 숫자 지우기"
-            disabled={unlocked}
+            disabled={keysOff}
             onClick={erase}
           >
             <img src="/assets/ui-icons/icon_keypad_erase.webp" alt="" />
