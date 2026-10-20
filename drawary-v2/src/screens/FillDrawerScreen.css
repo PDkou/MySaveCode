@@ -93,6 +93,6 @@ button,input,textarea{font:inherit}
   background:linear-gradient(90deg,var(--tc-7853e8,#7853e8),var(--tc-845fe9,#845fe9));color:#fff;font-size:17px;font-weight:800;
   letter-spacing:-.4px;box-shadow:0 8px 14px rgba(var(--tr-112-75-218,112,75,218),.18);cursor:pointer;
 }
-.fd-screen button:focus-visible,.fd-screen input:focus-visible,.fd-screen textarea:focus-visible{
+.fd-screen button:focus-visible{
   outline:3px solid rgba(var(--tr-123-88-232,123,88,232),.22);outline-offset:2px;
 }

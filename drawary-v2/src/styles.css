@@ -21,6 +21,15 @@ main[data-route="create-drawer"] { position: relative; overflow: hidden; }
  * focus style (e.g. a ring on the wrapper with outline:0 on the input inside it) always wins. Before, four screens' unscoped
  * `button/input:focus-visible` rules leaked app-wide and drew a square ring inside rounded field wrappers. */
 :where(input, textarea, select, button):focus-visible { outline: 3px solid rgba(var(--tr-123-88-232,123,88,232), .22); outline-offset: 2px; }
+/* Fields drawn as a bordered box with a bare input inside: the box takes the focus look (violet border + soft halo, as in the
+ * search box). `main` in front keeps this above each screen's own box rule regardless of CSS order. */
+main .sv3-search:focus-within, main .tf-search:focus-within, main .df-input-wrap:focus-within, main .df-option-row:focus-within,
+main .nf-input-wrap:focus-within, main .nf-option-row:focus-within, main .faq56-searchbox:focus-within,
+main .new-drawer-input:focus-visible {
+  border-color: var(--tc-7657e8, #7657e8);
+  box-shadow: 0 0 0 3px rgba(var(--tr-118-87-232, 118, 87, 232), .10);
+  outline: 0;
+}
 /* Explicit keyboard focus while preserving the fixed final artwork. */
 .drawary-dynamic-bottom-nav__hotspot:focus-visible { outline: 2px solid var(--tc-684de1,#684de1); outline-offset: -5px; border-radius: 14px; }
 
