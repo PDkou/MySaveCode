@@ -1,0 +1,38 @@
+diff --git a/drawary-v2/src/screens/FaqScreen.css b/drawary-v2/src/screens/FaqScreen.css
+index 2ea73c0..d55e413 100644
+--- a/drawary-v2/src/screens/FaqScreen.css
++++ b/drawary-v2/src/screens/FaqScreen.css
+@@ -18,7 +18,7 @@ button,input{font:inherit}
+ .faq56-tabs{margin-top:10px;display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;white-space:nowrap}
+ .faq56-tabs::-webkit-scrollbar{display:none}
+ .faq56-tab{height:31px;padding:0 13px;border-radius:18px;background:#fff;border:1px solid var(--tc-e6def4,#e6def4);flex:none;font-size:12px;font-weight:700;color:var(--tc-7778a3,#6f709e);cursor:pointer;letter-spacing:-.3px}
+-.faq56-tab[aria-selected=true]{color:#fff;background:var(--tc-9068ea,#9068ea);border-color:var(--tc-9068ea,#9068ea)}
++.faq56-tab[aria-selected=true]{color:#fff;background:var(--tc-9068ea,#8458e8);border-color:var(--tc-9068ea,#8458e8)}
+ .faq56-intro{display:flex;align-items:center;gap:12px;padding:14px 16px 8px}
+ .faq56-intro-icon{background:var(--tc-f0eaff,#f0eaff);border-radius:13px;width:42px;height:42px;flex:none;display:flex;align-items:center;justify-content:center}
+ .faq56-intro-icon img{width:34px;height:34px;object-fit:contain}
+diff --git a/drawary-v2/src/screens/LanguageSettingsScreen.css b/drawary-v2/src/screens/LanguageSettingsScreen.css
+index 4009958..7734173 100644
+--- a/drawary-v2/src/screens/LanguageSettingsScreen.css
++++ b/drawary-v2/src/screens/LanguageSettingsScreen.css
+@@ -22,7 +22,7 @@ button{font:inherit}
+ .lang54-actions{margin-top:0;display:flex;gap:9px;width:100%;height:48px}
+ .lang54-actions button{height:48px;flex:1;border-radius:16px;font-size:14px;font-weight:750;cursor:pointer}
+ .lang54-cancel{border:1px solid var(--tc-d5c1ff,#d5c1ff);background:#fff;color:#6c739c}
+-.lang54-apply{border:1px solid var(--tc-9468ec,#9468ec);background:var(--tc-9666ee,#9666ee);color:#fff}
++.lang54-apply{border:1px solid var(--tc-9468ec,#8756ea);background:var(--tc-9666ee,#8954ec);color:#fff}
+ @media(max-width:380px){.lang54-card .lang54-art{width:48%;flex-basis:48%}.lang54-card-copy{padding-left:12px}}
+ 
+ /* #54 approved follow-up: align language screen header with the other settings pages. */
+diff --git a/drawary-v2/src/screens/ThemeSettingsScreen.css b/drawary-v2/src/screens/ThemeSettingsScreen.css
+index 2df2505..b1a8749 100644
+--- a/drawary-v2/src/screens/ThemeSettingsScreen.css
++++ b/drawary-v2/src/screens/ThemeSettingsScreen.css
+@@ -23,6 +23,7 @@ button{font:inherit;cursor:pointer}
+ .ts39-preview-field{position:absolute;bottom:11px;left:11px;right:11px;height:38px;border-radius:14px;background:#fff;box-shadow:0 2px 9px rgba(100,100,100,.045)}
+ .ts39-theme-name{display:block;flex:none;font-size:17px;font-weight:900;letter-spacing:-.4px;line-height:23px;margin-top:12px;color:var(--ts39-ink)}
+ .ts39-theme[aria-pressed="true"] .ts39-theme-name{color:var(--theme-primary)}
++.ts39-theme[data-theme="lavender"][aria-pressed="true"] .ts39-theme-name{color:#7947ff}
+ .ts39-theme[data-theme="sky"]{grid-column:1 / 3;width:170px;justify-self:center}
+ .ts39-theme[data-theme="lavender"]{--card-background:#f7f3fe;--preview-background:#f5efff;--preview-border:#e6ddfb;--theme-primary:#8051ff}
+ .ts39-theme[data-theme="coral"]{--card-background:#fdf5f5;--preview-background:#fff1f1;--preview-border:#ffe2e1;--theme-primary:#f4898a}
