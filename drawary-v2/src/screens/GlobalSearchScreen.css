@@ -82,6 +82,7 @@
   -webkit-appearance: none;
   appearance: none;
 }
+.global-search-box input:focus-visible { outline: 0; } /* other screens' unscoped input:focus-visible rules leak here; the box's own focus ring (above) is the indicator */
 .global-search-box input::placeholder { color: #aaa4b5; }
 /* type="search" inputs get a native clear icon in Chromium once there's a
    value; this screen already has its own clear button (below), so the
