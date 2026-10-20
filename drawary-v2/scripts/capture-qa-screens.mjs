@@ -16,7 +16,9 @@ const origin = process.env.DRAWARY_QA_ORIGIN || 'http://127.0.0.1:5173';
 const output = process.env.DRAWARY_QA_OUTPUT || 'qa-screenshots';
 mkdirSync(join(output,'screens'), { recursive: true });
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
-const context = await browser.newContext({ viewport: { width:390, height:844 }, deviceScaleFactor:1, reducedMotion:'reduce' });
+// Korean phone: the app starts in the phone's language, and this QA's texts are Korean.
+const context = await browser.newContext({ viewport: { width:390, height:844 }, deviceScaleFactor:1, reducedMotion:'reduce', locale:'ko-KR' });
+await context.addInitScript(() => { try { localStorage.setItem('drawary_onboarding_done', '1'); } catch (e) { /* ignore */ } });
 const report = { source: 'actual React Vite application', size:'390x844', timestamp:new Date().toISOString(), routes: [] };
 for (const route of routes) {
   const page = await context.newPage();
@@ -51,6 +53,16 @@ for (const route of routes) {
 
     // Capture every confirmed #05 search state with the real React handlers.
     if (route==='search') {
+      // Search reads the real on-device data, which is empty in CI: put one sample item in first.
+      await page.evaluate(async () => {
+        const db = await new Promise((res, rej) => { const r = indexedDB.open('drawary-v2'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+        const tx = db.transaction(['drawers', 'fields', 'records'], 'readwrite'); const now = Date.now();
+        tx.objectStore('drawers').put({ id: 'qa-d', name: '화장품', iconKey: 'cosmetics', colorKey: 'pink', order: 0, createdAt: now, updatedAt: now });
+        tx.objectStore('fields').put({ id: 'qa-f', drawerId: 'qa-d', name: '제품명', kind: 'text', required: true, options: [], order: 0 });
+        tx.objectStore('records').put({ id: 'qa-r', drawerId: 'qa-d', values: { 'qa-f': '립 틴트' }, createdAt: now, updatedAt: now });
+        await new Promise((res) => { tx.oncomplete = res; });
+      });
+      await page.reload({ waitUntil: 'networkidle' });
       const input=page.locator('.global-search-box input[type="search"]');
       if (await input.count() !== 1) {
         errors.push('Approved #05 search input missing');
