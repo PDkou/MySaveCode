@@ -148,7 +148,7 @@ export async function addField(drawerId: string, input: FieldInput): Promise<Fie
 
 /** Kind cannot change after creation: existing record values would no longer match it. */
 export async function updateField(id: string, patch: Partial<Pick<Field, 'name' | 'required' | 'options'>>): Promise<Field> {
-  return withTx([STORES.fields], 'readwrite', async (s) => {
+  return withTx([STORES.fields, STORES.records], 'readwrite', async (s) => {
     const current = (await req(s.fields.get(id))) as Field | undefined;
     if (!current) throw new ValidationError('서랍 칸을 찾을 수 없어요.');
     const options = patch.options ? patch.options.map((o) => o.trim()).filter(Boolean) : current.options;
@@ -163,6 +163,18 @@ export async function updateField(id: string, patch: Partial<Pick<Field, 'name' 
       options: current.kind === 'select' ? options : [],
     };
     await req(s.fields.put(next));
+    // A choice that is no longer offered cannot stay as a record's value: clear it, in this same transaction.
+    if (current.kind === 'select') {
+      const kept = new Set(options);
+      const records = await req(s.records.index('drawerId').getAll(current.drawerId) as IDBRequest<RecordItem[]>);
+      for (const record of records) {
+        const v = record.values[id];
+        if (typeof v === 'string' && !kept.has(v)) {
+          const { [id]: _removed, ...rest } = record.values;
+          await req(s.records.put({ ...record, values: rest, updatedAt: Date.now() }));
+        }
+      }
+    }
     return next;
   });
 }
@@ -186,6 +198,8 @@ export async function deleteField(id: string): Promise<void> {
   await withTx([STORES.fields, STORES.records], 'readwrite', async (s) => {
     const field = (await req(s.fields.get(id))) as Field | undefined;
     if (!field) return;
+    const siblings = await req(s.fields.index('drawerId').getAll(field.drawerId) as IDBRequest<Field[]>);
+    if (siblings.length <= 1) throw new ValidationError('서랍 칸은 최소 1개 있어야 해요.');
     const records = await req(s.records.index('drawerId').getAll(field.drawerId) as IDBRequest<RecordItem[]>);
     for (const record of records) {
       if (id in record.values) {

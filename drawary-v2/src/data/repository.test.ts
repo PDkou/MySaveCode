@@ -249,6 +249,37 @@ describe('records', () => {
   });
 });
 
+describe('editing the fields of an existing drawer', () => {
+  it('clears a record value whose choice is taken away, and leaves the others', async () => {
+    const d = await makeDrawer();
+    const cat = await addField(d.id, { name: '분류', kind: 'select', options: ['가', '나', '다'] });
+    const a = await createRecord(d.id, { [cat.id]: '가' });
+    const b = await createRecord(d.id, { [cat.id]: '나' });
+    await updateField(cat.id, { options: ['나', '다'] });
+    const after = (await loadAll()).records;
+    expect(after.find((r) => r.id === a.id)!.values[cat.id]).toBeUndefined();
+    expect(after.find((r) => r.id === b.id)!.values[cat.id]).toBe('나');
+    expect((await loadAll()).fields[0].options).toEqual(['나', '다']);
+  });
+
+  it('keeps record values untouched when the update itself is rejected', async () => {
+    const d = await makeDrawer();
+    const cat = await addField(d.id, { name: '분류', kind: 'select', options: ['가', '나'] });
+    const r = await createRecord(d.id, { [cat.id]: '가' });
+    await expect(updateField(cat.id, { options: ['나'] })).rejects.toBeInstanceOf(ValidationError);
+    expect((await loadAll()).records.find((x) => x.id === r.id)!.values[cat.id]).toBe('가');
+  });
+
+  it('refuses to delete the last remaining field of a drawer', async () => {
+    const d = await makeDrawer();
+    const a = await addField(d.id, { name: '제품명', kind: 'text' });
+    const b = await addField(d.id, { name: '메모', kind: 'text' });
+    await deleteField(b.id);
+    await expect(deleteField(a.id)).rejects.toBeInstanceOf(ValidationError);
+    expect((await loadAll()).fields).toHaveLength(1);
+  });
+});
+
 describe('records saved together with their photos', () => {
   it('creates a record and its photos atomically, and writes nothing for a bad photo', async () => {
     const d = await makeDrawer(); const name = await addField(d.id, { name: '제품명', kind: 'text', required: true });

@@ -174,6 +174,17 @@ export default function App() {
   const [editPhotos, setEditPhotos] = useState<Blob[] | null>(null);
   const editUrls = useObjectUrls(editPhotos);
   const [editKey, setEditKey] = useState(0);
+
+  // #26 서랍칸 편집 on an existing drawer: edits are saved straight away (no draft).
+  // `manageOrder` holds the order while a row is being dragged, saved on release.
+  const [manageFieldId, setManageFieldId] = useState<string | null>(null);
+  const manageField = currentFields.find((f) => f.id === manageFieldId);
+  const [manageOrder, setManageOrder] = useState<string[] | null>(null);
+  const manageOrderRef = useRef<string[] | null>(null);
+  manageOrderRef.current = manageOrder;
+  const manageList = manageOrder
+    ? manageOrder.map((id) => currentFields.find((f) => f.id === id)).filter((f): f is NonNullable<typeof f> => !!f)
+    : currentFields;
   const guardedSave = async (work: () => Promise<void>) => {
     if (recordSavingRef.current) return;
     recordSavingRef.current = true; setRecordSaving(true);
@@ -240,9 +251,12 @@ export default function App() {
   useEffect(() => {
     if (store.status !== 'ready') return;
     const recordRoute = route === 'record-detail' || route === 'record-edit' || route === 'photo-viewer';
-    if ((route === 'drawer-detail' || route === 'fill-drawer' || recordRoute) && !currentDrawer) navigate('home');
+    const manageRoute = route === 'drawer-manage' || route === 'name-icon-change' || route === 'drawer-fields-manage'
+      || route === 'new-field-manage' || route === 'field-edit-manage';
+    if ((route === 'drawer-detail' || route === 'fill-drawer' || recordRoute || manageRoute) && !currentDrawer) navigate('home');
+    else if (route === 'field-edit-manage' && !manageField) navigate('drawer-fields-manage');
     else if (recordRoute && !selectedRecord) navigate('drawer-detail');
-  }, [route, store.status, currentDrawer, selectedRecord, navigate]);
+  }, [route, store.status, currentDrawer, selectedRecord, manageField, navigate]);
 
   if (route === 'splash') {
     return <main className="drawary-app-shell drawary-splash-route" data-route="splash"><SplashScreen fadingOut={false}/></main>;
@@ -414,13 +428,19 @@ export default function App() {
         <DrawerManageScreen
           drawerName={drawerDetailName}
           drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+          fieldCount={currentFields.length}
+          recordCount={currentRecords.length}
           onBack={() => navigate('drawer-detail')}
           onRenameDrawer={() => navigate('name-icon-change')}
           onEditFields={() => navigate('drawer-fields-manage')}
           onNotificationSettings={() => navigate('notification-settings')}
           onRecurrenceManage={() => navigate('recurrence-management')}
           onBackupExport={() => {}}
-          onDeleteDrawer={() => navigate('home')}
+          onDeleteDrawer={() => { if (!currentDrawer) return; void guardedSave(async () => {
+            await actions.deleteDrawer(currentDrawer.id);
+            setCurrentDrawerId(null); setRecordDetailId(null); setRecordQuery('');
+            navigate('home');
+          }); }}
         />
       </FixedCanvas>
     </main>;
@@ -930,8 +950,8 @@ export default function App() {
           initialIconId={drawerIconId}
           onBack={() => navigate('drawer-manage')}
           onSave={({ name, iconId }) => {
-            if (!currentDrawerId) return;
-            actions.updateDrawer(currentDrawerId, { name, iconKey: iconId })
+            if (!currentDrawer) return;
+            actions.updateDrawer(currentDrawer.id, { name, iconKey: iconId })
               .then(() => navigate('drawer-manage'))
               .catch((e: unknown) => window.alert(e instanceof Error ? e.message : '저장하지 못했어요.'));
           }}
@@ -948,35 +968,72 @@ export default function App() {
     // for this reuse. contextLabel renders the REUSE_MAPPING's own
     // approved visual refinement: drawer name + field count on one
     // baseline, centered as a group.
+    if (!currentDrawer) return <main className="drawary-app-shell" data-route="drawer-fields-manage" />;
     return <main className="drawary-app-shell" data-route="drawer-fields-manage">
       <FixedCanvas height={844}>
         <DrawerFieldsScreen
           title="서랍칸 편집"
           completeLabel="완료"
           contextLabel={{ name: drawerDetailName, detail: `${currentFields.length}개 서랍칸` }}
+          fields={manageList.map(toFieldItem)}
           onBack={() => navigate('drawer-manage')}
           onAddField={() => navigate('new-field-manage')}
-          onEditField={() => navigate('field-edit-manage')}
+          onEditField={(field) => { setManageFieldId(field.id); navigate('field-edit-manage'); }}
+          onQuickAdd={(label) => { void actions.addField(currentDrawer.id, { name: label, kind: QUICK_ADD_KINDS[label] ?? 'text' }).catch(alertError); }}
+          onReorder={(from, to) => setManageOrder((prev) => {
+            const ids = prev ?? currentFields.map((f) => f.id);
+            if (from === to || from < 0 || to < 0 || from >= ids.length || to >= ids.length) return ids;
+            const next = [...ids]; const [moved] = next.splice(from, 1); next.splice(to, 0, moved); return next;
+          })}
+          onReorderEnd={() => {
+            const ids = manageOrderRef.current;
+            if (ids && ids.some((id, i) => id !== currentFields[i]?.id)) {
+              void actions.reorderFields(currentDrawer.id, ids).catch(alertError).finally(() => setManageOrder(null));
+            } else setManageOrder(null);
+          }}
           onComplete={() => navigate('drawer-manage')}
         />
       </FixedCanvas>
     </main>;
   }
   if (route === 'new-field-manage') {
-    // #26's reuse of #10 (NewFieldScreen), entered only from
-    // drawer-fields-manage -- back/add both return there instead of the
-    // creation-flow's drawer-fields route.
+    // #26's reuse of #10 (NewFieldScreen), entered only from drawer-fields-manage;
+    // "추가하기" adds the field to the drawer straight away (a rejected name or
+    // options stays here with a message).
+    if (!currentDrawer) return <main className="drawary-app-shell" data-route="new-field-manage" />;
     return <main className="drawary-app-shell" data-route="new-field-manage">
-      <FixedCanvas height={844}><NewFieldScreen onBack={() => navigate('drawer-fields-manage')} onAdd={() => navigate('drawer-fields-manage')} /></FixedCanvas>
+      <FixedCanvas height={844}>
+        <NewFieldScreen
+          onBack={() => navigate('drawer-fields-manage')}
+          onAdd={(data) => { void actions.addField(currentDrawer.id, data).then(() => navigate('drawer-fields-manage')).catch(alertError); }}
+        />
+      </FixedCanvas>
     </main>;
   }
   if (route === 'field-edit-manage') {
-    // #26's reuse of #11 (DrawerFieldEditScreen), entered only from
-    // drawer-fields-manage. Added a real onBack prop to DrawerFieldEditScreen
-    // itself for this (its own archive never wired the back button at
-    // all), reused here and by the existing field-edit route below.
+    // #26's reuse of #11, opened on the tapped field. Saving applies at once. Taking
+    // away a choice that records already use clears it from those records, after a
+    // confirmation; deleting a field (its own confirm sheet) removes its values from
+    // every record, and the last remaining field cannot be deleted.
+    if (!manageField) return <main className="drawary-app-shell" data-route="field-edit-manage" />;
     return <main className="drawary-app-shell" data-route="field-edit-manage">
-      <FixedCanvas height={844}><DrawerFieldEditScreen onBack={() => navigate('drawer-fields-manage')} /></FixedCanvas>
+      <FixedCanvas height={844}>
+        <DrawerFieldEditScreen
+          key={manageField.id}
+          field={manageField}
+          onBack={() => navigate('drawer-fields-manage')}
+          onSave={(patch) => {
+            const kept = new Set(patch.options.map((o) => o.trim()).filter(Boolean));
+            const removed = manageField.options.filter((o) => !kept.has(o));
+            const affected = manageField.kind === 'select'
+              ? currentRecords.filter((r) => typeof r.values[manageField.id] === 'string' && removed.includes(r.values[manageField.id] as string)).length
+              : 0;
+            if (affected > 0 && !window.confirm(`없애는 선택 항목을 쓰고 있는 보관품 ${affected}개의 값이 지워져요. 계속할까요?`)) return;
+            void actions.updateField(manageField.id, patch).then(() => navigate('drawer-fields-manage')).catch(alertError);
+          }}
+          onDelete={() => { void actions.deleteField(manageField.id).then(() => { setManageFieldId(null); navigate('drawer-fields-manage'); }).catch(alertError); }}
+        />
+      </FixedCanvas>
     </main>;
   }
   if (route === 'record-detail') {

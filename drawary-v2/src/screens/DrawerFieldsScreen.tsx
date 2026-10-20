@@ -45,6 +45,8 @@ export interface DrawerFieldsScreenProps {
   onAddField?: () => void;
   onQuickAdd?: (label: string) => void;
   onReorder?: (fromIndex: number, toIndex: number) => void;
+  /** Called once when a drag-reorder is released, so a caller can save the final order. */
+  onReorderEnd?: () => void;
   onComplete?: () => void;
 }
 
@@ -72,6 +74,7 @@ export function DrawerFieldsScreen({
   onAddField,
   onQuickAdd,
   onReorder,
+  onReorderEnd,
   onComplete,
 }: DrawerFieldsScreenProps) {
   const [dragging, setDragging] = useState<number | null>(null);
@@ -79,6 +82,8 @@ export function DrawerFieldsScreen({
   const draggingRef = useRef<number | null>(null);
   const onReorderRef = useRef(onReorder);
   onReorderRef.current = onReorder;
+  const onReorderEndRef = useRef(onReorderEnd);
+  onReorderEndRef.current = onReorderEnd;
 
   const startDrag = (index: number, event: ReactPointerEvent<HTMLButtonElement>) => {
     if (!onReorder) return;
@@ -106,7 +111,7 @@ export function DrawerFieldsScreen({
         setDragging(over);
       }
     };
-    const end = () => { draggingRef.current = null; setDragging(null); };
+    const end = () => { draggingRef.current = null; setDragging(null); onReorderEndRef.current?.(); };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', end);
     window.addEventListener('pointercancel', end);
