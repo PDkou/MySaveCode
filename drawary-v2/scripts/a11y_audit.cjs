@@ -37,10 +37,17 @@ const SEED = `(async () => {
   await page.goto(BASE + '#/home'); await page.waitForTimeout(800);
   await page.evaluate(SEED); await page.reload(); await page.waitForTimeout(800);
   const rules = {};
+  const pairs = {};
   const audit = async (label) => {
     await page.addScriptTag({ content: axeSource }).catch(() => {});
     const res = await page.evaluate(() => window.axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'] } }));
     for (const v of res.violations) {
+      if (v.id === 'color-contrast') for (const n of v.nodes) {
+        const d = (n.any[0] || {}).data || {};
+        const k = `${d.fgColor} on ${d.bgColor} (${d.contrastRatio}:1, ${d.fontSize}, needs ${d.expectedContrastRatio}:1)`;
+        const e = (pairs[k] ||= { nodes: 0, screens: new Set(), sample: '' });
+        e.nodes++; e.screens.add(label); if (!e.sample) e.sample = n.target.join(' ');
+      }
       const r = (rules[v.id] ||= { impact: v.impact, help: v.help, nodes: 0, screens: {}, sample: [] });
       r.nodes += v.nodes.length; r.screens[label] = (r.screens[label] || 0) + v.nodes.length;
       for (const n of v.nodes.slice(0, 2)) if (r.sample.length < 4) r.sample.push(label + ' :: ' + n.target.join(' ') + ' :: ' + (n.any[0] || n.all[0] || n.none[0] || {}).message);
@@ -64,4 +71,7 @@ const SEED = `(async () => {
     r.sample.forEach((s) => console.log('  e.g. ' + s));
   }
   if (!out.length) console.log('no violations');
+  const list = Object.entries(pairs).sort((a, b) => b[1].nodes - a[1].nodes);
+  if (list.length) console.log('\n--- color-contrast pairs (' + list.length + ' distinct) ---');
+  for (const [k, e] of list) console.log(`${String(e.nodes).padStart(3)}x ${k}  screens: ${[...e.screens].slice(0, 4).join(',')}${e.screens.size > 4 ? '…' : ''}  e.g. ${e.sample}`);
 })();
