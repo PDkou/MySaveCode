@@ -3,7 +3,7 @@ name: Drawary V2 Android build
 # Builds the Android WebView app in drawary-v2/android/ (the web app is built first and packed into the APK).
 # Result: an installable debug APK and a minified (R8) release-test APK, as downloadable artifacts of the run.
 # The release-test APK is signed with the debug key unless android/keystore.properties exists, so it is NOT for the store.
-# Optional repository variable DRAWARY_FEEDBACK_EMAIL = the address "피드백 보내기" mails to.
+# The address "피드백 보내기" mails to is in android/gradle.properties; the optional repository variable DRAWARY_FEEDBACK_EMAIL overrides it.
 on:
   push:
     paths:
@@ -44,7 +44,8 @@ jobs:
           FEEDBACK_EMAIL: ${{ vars.DRAWARY_FEEDBACK_EMAIL }}
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon -PfeedbackEmail="$FEEDBACK_EMAIL" assembleDebug assembleRelease lintRelease
+          # android/gradle.properties holds the default address; the repository variable overrides it when set.
+          ./gradlew --no-daemon ${FEEDBACK_EMAIL:+-PfeedbackEmail="$FEEDBACK_EMAIL"} assembleDebug assembleRelease lintRelease
 
       - name: Show lint findings
         if: always()

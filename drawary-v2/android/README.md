@@ -11,8 +11,8 @@ debug key unless `android/keystore.properties` exists, so **not for the store**)
 
 Locally (needs the Android SDK, platform 36): `cd drawary-v2 && npm ci && npm run build && cd android && ./gradlew assembleDebug`.
 
-Feedback address: set the repository variable `DRAWARY_FEEDBACK_EMAIL` (CI) or `-PfeedbackEmail=…` (local). While it is
-empty "피드백 보내기" opens the share sheet instead of a mail app addressed to the support mailbox.
+Feedback address: `feedbackEmail` in `android/gradle.properties` (db5704@gmail.com, given by the owner); the repository variable
+`DRAWARY_FEEDBACK_EMAIL` (CI) or `-PfeedbackEmail=…` (local) overrides it. Empty = the share sheet opens instead.
 
 ## How the pieces fit
 
