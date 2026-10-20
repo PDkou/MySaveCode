@@ -42,3 +42,8 @@
   screen's own classification explicitly says "do not invent UI" rather
   than "must pixel-match," and the visual structure/content match is
   strong, this was not chased further.
+
+
+## Owner decision 2026-10-20
+
+No original source exists; the owner confirmed the reconstruction (now drawn from real data, `src/flow/stats.ts`) as the final #07. It is no longer an open item.

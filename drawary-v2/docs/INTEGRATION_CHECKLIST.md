@@ -47,7 +47,7 @@
 - [x] 04 Home (empty) — React-integrated, QA-verified (standalone QA route, not yet the live conditional)
 - [x] 05 Global search — React-integrated, QA-verified (body only; mock data pending V2-12)
 - [x] 06 Home edit mode — React-integrated, QA-verified (standalone QA route + live #03 hotspot)
-- [x] 07 Statistics — React-integrated, QA-verified (reconstructed from reference image, no approved source existed)
+- [x] 07 Statistics — React-integrated, QA-verified; **final**: owner decision 2026-10-20 — the reconstruction (now on real data) is the confirmed design, no original source will be supplied
 - [x] 08 새 서랍 만들기 — React-integrated, QA-verified (reconstructed; now the real first step of create-drawer, #09 moved to `#/drawer-fields`)
 - [x] 09–13 서랍 칸 정하기/추가/수정/생성 완료/서랍 채우기 — all React-integrated, QA-verified (navigation only, no shared data model yet)
 - [x] 14 사진 선택/등록 상태 — merged into #13's FillDrawerScreen as its registered-photo state (not a separate screen), QA-verified
