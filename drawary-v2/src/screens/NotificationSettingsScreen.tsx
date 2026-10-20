@@ -55,7 +55,7 @@ export function NotificationSettingsScreen({
   onOpenCommonSettings,
 }: NotificationSettingsScreenProps) {
   return (
-    <main className="ns-screen">
+    <section className="ns-screen">
       <ScreenHeader title={t('알림 설정')} onBack={onBack} height={92} />
 
       <section className="ns-context">
@@ -102,6 +102,6 @@ export function NotificationSettingsScreen({
       </button>
 
       <div className="ns-tip">{t('알림 추가하기를 누르면 먼저 날짜 서랍칸을 선택해요.')}</div>
-    </main>
+    </section>
   );
 }

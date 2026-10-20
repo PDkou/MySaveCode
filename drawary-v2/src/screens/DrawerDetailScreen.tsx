@@ -66,7 +66,7 @@ export function DrawerDetailScreen({
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <main className="dd-screen">
+    <section className="dd-screen">
       <ScreenHeader
         variant="stacked"
         title={drawerName}
@@ -141,6 +141,6 @@ export function DrawerDetailScreen({
         <img src="/assets/ui-icons/icon_add.webp" alt="" />
         <span>{t('서랍 채우기')}</span>
       </button>
-    </main>
+    </section>
   );
 }

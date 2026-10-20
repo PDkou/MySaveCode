@@ -1,5 +1,6 @@
 package com.howlingcreativestudio.drawary;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -178,8 +179,8 @@ public class MainActivity extends Activity {
 
     @Override
     @SuppressWarnings("deprecation")
+    @SuppressLint("GestureBackNavigation") // Android 13+ uses the OnBackInvokedCallback registered in onCreate; this is for 10-12.
     public void onBackPressed() {
-        // Android 13+ uses the callback registered in onCreate; this is for 10-12.
         handleBack();
     }
 

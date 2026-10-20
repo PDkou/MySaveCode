@@ -23,7 +23,7 @@ export interface GuideScreenProps {
  */
 export function GuideScreen({ onBack, onNavigate }: GuideScreenProps) {
   return (
-    <main className="guide57-screen" aria-label={t('Drawary 사용 가이드')}>
+    <section className="guide57-screen" aria-label={t('Drawary 사용 가이드')}>
       <header className="guide57-appbar">
         {onBack && <button type="button" className="guide57-back" onClick={onBack} aria-label={t('도움말로 돌아가기')} />}
         <span className="guide57-appbar-title">{t('사용 가이드')}</span>
@@ -85,6 +85,6 @@ export function GuideScreen({ onBack, onNavigate }: GuideScreenProps) {
           </button>
         </div>
       </div>
-    </main>
+    </section>
   );
 }

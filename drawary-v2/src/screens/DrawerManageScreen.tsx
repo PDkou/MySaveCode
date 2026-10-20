@@ -107,7 +107,7 @@ export function DrawerManageScreen({
   ];
 
   return (
-    <main className="dm-screen">
+    <section className="dm-screen">
       <ScreenHeader title={t('서랍 관리')} onBack={onBack} height={61} />
 
       <section className="dm-summary">
@@ -175,6 +175,6 @@ export function DrawerManageScreen({
           onDelete={() => { setDeleteConfirmOpen(false); onDeleteDrawer?.(); }}
         />
       )}
-    </main>
+    </section>
   );
 }

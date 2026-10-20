@@ -26,7 +26,7 @@ export function DataManagementHubScreen({ onBack, onBackup, onRestore, onReset }
         {onBack && <button type="button" className="dmh44-back" onClick={onBack} aria-label={t('설정으로 돌아가기')} />}
         <h1>{t('데이터 관리')}</h1>
       </header>
-      <main className="dmh44-panel">
+      <section className="dmh44-panel">
         <h2 className="dmh44-section-title">{t('내 기록 관리하기')}</h2>
         <section className="dmh44-hero" aria-label={t('기록 관리 안내')}>
           <div className="dmh44-hero-art"><img src="/assets/mascot/mascot_default.webp" alt="" /></div>
@@ -57,7 +57,7 @@ export function DataManagementHubScreen({ onBack, onBackup, onRestore, onReset }
             </button>
           </div>
         </section>
-      </main>
+      </section>
     </div>
   );
 }

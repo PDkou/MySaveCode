@@ -19,7 +19,7 @@ export interface RestoreSuccessScreenProps {
  */
 export function RestoreSuccessScreen({ recordCount, photoCount, settingsStatus, onBack, onConfirm }: RestoreSuccessScreenProps) {
   return (
-    <main className="rs52-screen" aria-label={t('복원 완료 화면')}>
+    <section className="rs52-screen" aria-label={t('복원 완료 화면')}>
       <ScreenHeader title={t('복원 완료')} onBack={onBack} height={91} />
       <section className="rs52-panel" aria-label={t('복원 완료 결과')}>
         <div className="rs52-content">
@@ -34,6 +34,6 @@ export function RestoreSuccessScreen({ recordCount, photoCount, settingsStatus, 
         </div>
         <button type="button" className="rs52-confirm" onClick={onConfirm}>{t('확인')}</button>
       </section>
-    </main>
+    </section>
   );
 }

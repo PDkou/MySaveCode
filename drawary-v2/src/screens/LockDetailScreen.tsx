@@ -28,7 +28,7 @@ export function LockDetailScreen({ hasPin, appLockEnabled, onBack, onToggleAppLo
         {onBack && <button type="button" className="ld41-back" onClick={onBack} aria-label={t('보안 설정으로 돌아가기')} />}
         <h1>{t('앱 잠금')}</h1>
       </header>
-      <main className="ld41-panel">
+      <section className="ld41-panel">
         <h2 className="ld41-section-title">{t('잠금 관리')}</h2>
         <section className="ld41-hero">
           <div className="ld41-hero-art"><img src="/assets/states/permissions/state_permission_lock.webp" alt="" /></div>
@@ -61,7 +61,7 @@ export function LockDetailScreen({ hasPin, appLockEnabled, onBack, onToggleAppLo
           <img className="ld41-note-icon" src="/assets/ui-icons/icon_info.webp" alt="" />
           <span>{tl('앱 잠금을 사용하려면 먼저 PIN을 설정해 주세요.\nPIN은 이 기기에만 저장돼요.')}</span>
         </div>
-      </main>
+      </section>
     </div>
   );
 }

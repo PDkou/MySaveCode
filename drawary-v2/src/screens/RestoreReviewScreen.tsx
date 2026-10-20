@@ -42,7 +42,7 @@ export function RestoreReviewScreen({
   }, [dialogOpen]);
 
   return (
-    <main className="rr50-screen" aria-label={t('복원 내용 확인 화면')}>
+    <section className="rr50-screen" aria-label={t('복원 내용 확인 화면')}>
       <header className="rr50-header">
         {onBack && <button className="rr50-back" type="button" onClick={onBack} aria-label={t('이전 화면')} />}
         <h1 className="rr50-title">{t('복원 내용 확인')}</h1>
@@ -91,6 +91,6 @@ export function RestoreReviewScreen({
           </div>
         </div>
       )}
-    </main>
+    </section>
   );
 }

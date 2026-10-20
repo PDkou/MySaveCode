@@ -124,7 +124,7 @@ export function DrawerFieldsScreen({
   }, [dragging != null]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <main className="drawary-field-screen" aria-label={t(title)}>
+    <section className="drawary-field-screen" aria-label={t(title)}>
       <ScreenHeader variant="stacked" title={t(title)} onBack={onBack} height={93} />
 
       {contextLabel && (
@@ -189,6 +189,6 @@ export function DrawerFieldsScreen({
           {t(completeLabel)}
         </button>
       </section>
-    </main>
+    </section>
   );
 }

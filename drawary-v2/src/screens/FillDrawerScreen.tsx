@@ -52,7 +52,7 @@ export function FillDrawerScreen({
   const activePhoto = photoUris[shownIndex];
 
   return (
-    <main className="fd-screen">
+    <section className="fd-screen">
       <ScreenHeader variant="stacked" title={t('{drawerName} 서랍 채우기', { drawerName })} onBack={onBack} height={91} />
 
       <section className="fd-content">
@@ -118,6 +118,6 @@ export function FillDrawerScreen({
           {t('담기')}
         </button>
       </section>
-    </main>
+    </section>
   );
 }

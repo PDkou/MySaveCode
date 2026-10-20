@@ -40,7 +40,7 @@ export function ThemeSettingsScreen({ initialTheme = 'lavender', onBack, onTheme
   };
 
   return (
-    <main className="ts39-screen">
+    <section className="ts39-screen">
       <header className="ts39-header">
         {onBack && <button type="button" className="ts39-back" onClick={onBack} aria-label={t('설정으로 돌아가기')} />}
         <h1 className="ts39-title">{t('테마')}</h1>
@@ -68,6 +68,6 @@ export function ThemeSettingsScreen({ initialTheme = 'lavender', onBack, onTheme
         </div>
         <p className="ts39-theme-note">{t('선택한 테마는 앱 전체의 주요 색상과 장식에 적용됩니다.')}</p>
       </section>
-    </main>
+    </section>
   );
 }

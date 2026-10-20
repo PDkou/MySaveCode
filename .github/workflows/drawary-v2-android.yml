@@ -46,6 +46,10 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon -PfeedbackEmail="$FEEDBACK_EMAIL" assembleDebug assembleRelease lintRelease
 
+      - name: Show lint findings
+        if: always()
+        run: cat drawary-v2/android/app/build/intermediates/lint_intermediate_text_report/release/lintReportRelease/lint-results-release.txt || true
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:

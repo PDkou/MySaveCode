@@ -29,7 +29,7 @@ function TimeRow({ title, hint, value, onChange }: { title: string; hint: string
 export function NotificationCommonSettingsScreen({ value, onChange, onBack }: Props) {
   const set = (patch: Partial<NotifyCommon>) => onChange({ ...value, ...patch });
   return (
-    <main className="ncs-screen">
+    <section className="ncs-screen">
       <ScreenHeader title={t('알림 공통 설정')} onBack={onBack} height={92} />
 
       <div className="ncs-label">{t('기본 알림 시간')}</div>
@@ -66,6 +66,6 @@ export function NotificationCommonSettingsScreen({ value, onChange, onBack }: Pr
       )}
 
       <p className="ncs-tip">{t('설정은 모든 서랍의 알림에 바로 적용돼요.')}</p>
-    </main>
+    </section>
   );
 }

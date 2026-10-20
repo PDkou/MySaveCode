@@ -52,7 +52,7 @@ export function RecurrenceManagementScreen({
   onOpenRule,
 }: RecurrenceManagementScreenProps) {
   return (
-    <main className="rm-screen">
+    <section className="rm-screen">
       <ScreenHeader title={t('반복 관리')} onBack={onBack} height={88} />
 
       <section className="rm-context">
@@ -120,6 +120,6 @@ export function RecurrenceManagementScreen({
       )}
 
       <div className="rm-guide">{t('반복 설정은 이 서랍의 보관품에만 적용돼요.')}</div>
-    </main>
+    </section>
   );
 }

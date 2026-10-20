@@ -47,7 +47,7 @@ export function NewFieldScreen({ onBack, onAdd }: Props) {
 
   if (step === 'type') {
     return (
-      <main className="nf-screen">
+      <section className="nf-screen">
         <ScreenHeader variant="stacked" title={t('서랍칸 종류 선택')} onBack={onBack} height={93} />
 
         <section className="nf-content nf-type-content">
@@ -74,12 +74,12 @@ export function NewFieldScreen({ onBack, onAdd }: Props) {
             ))}
           </div>
         </section>
-      </main>
+      </section>
     );
   }
 
   return (
-    <main className="nf-screen">
+    <section className="nf-screen">
       <ScreenHeader variant="stacked" title={t('서랍칸 추가')} onBack={() => setStep('type')} backLabel={t('이전 단계')} height={93} />
 
       <section className="nf-content nf-detail-content">
@@ -153,6 +153,6 @@ export function NewFieldScreen({ onBack, onAdd }: Props) {
           {t('추가하기')}
         </button>
       </section>
-    </main>
+    </section>
   );
 }

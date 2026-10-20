@@ -79,7 +79,7 @@ export function NameIconChangeScreen({
   const canSave = trimmed.length > 0 && changed;
 
   return (
-    <main className="nic-page">
+    <section className="nic-page">
       <ScreenHeader title={t('서랍 이름 / 아이콘 변경')} onBack={onBack} height={61} />
 
       <section className="nic-preview" aria-label={t('변경 미리보기')}>
@@ -140,6 +140,6 @@ export function NameIconChangeScreen({
           {t('저장')}
         </button>
       </div>
-    </main>
+    </section>
   );
 }

@@ -70,7 +70,7 @@ export function AppLockScreen({ verify, lockedUntil = 0, onUnlock }: AppLockScre
   return (
     <div className="al43-screen">
       <header className="al43-header"><h1>{t('앱 잠금')}</h1></header>
-      <main className="al43-panel">
+      <section className="al43-panel">
         <h2 className="al43-section-title">{t('내 서랍 열기')}</h2>
         <section className="al43-pin-hero" aria-label={t('PIN 안내')}>
           <div className="al43-pin-hero-icon"><img src="/assets/states/permissions/state_permission_lock.webp" alt="" /></div>
@@ -104,7 +104,7 @@ export function AppLockScreen({ verify, lockedUntil = 0, onUnlock }: AppLockScre
             <img src="/assets/ui-icons/icon_keypad_erase.webp" alt="" />
           </button>
         </section>
-      </main>
+      </section>
     </div>
   );
 }

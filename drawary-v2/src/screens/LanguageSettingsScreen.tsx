@@ -46,7 +46,7 @@ export function LanguageSettingsScreen({ savedLanguage = 'ko', onBack, onCancel,
   const t = STRINGS[selected];
 
   return (
-    <main className="lang54-screen" lang={selected} aria-label="언어 설정">
+    <section className="lang54-screen" lang={selected} aria-label="언어 설정">
       <ScreenHeader
         title={t.heading}
         onBack={onBack}
@@ -76,6 +76,6 @@ export function LanguageSettingsScreen({ savedLanguage = 'ko', onBack, onCancel,
           <button className="lang54-apply" type="button" onClick={() => { setSaved(selected); onApply?.(selected); }}>{t.apply}</button>
         </div>
       </section>
-    </main>
+    </section>
   );
 }

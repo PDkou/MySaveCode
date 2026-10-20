@@ -140,7 +140,7 @@ export function PhotoViewerScreen({
   if (!photoUris.length) return null;
 
   return (
-    <main className="pv-screen">
+    <section className="pv-screen">
       <header className="pv-topbar">
         <button className="pv-close" type="button" onClick={onClose} aria-label={t('사진 보기 닫기')}>
           <img src="/assets/ui-icons/icon_cancel.webp" alt="" />
@@ -182,6 +182,6 @@ export function PhotoViewerScreen({
           ))}
         </nav>
       )}
-    </main>
+    </section>
   );
 }

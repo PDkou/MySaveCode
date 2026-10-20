@@ -62,7 +62,7 @@ export function RecurrenceTargetDateScreen({
   const canNext = Boolean(target && selectedDateField);
 
   return (
-    <main className="rtd-screen">
+    <section className="rtd-screen">
       <ScreenHeader title={t('반복 설정하기')} onBack={onBack} height={88} />
 
       <section className="rtd-context">
@@ -127,6 +127,6 @@ export function RecurrenceTargetDateScreen({
           {t('다음')}
         </button>
       </div>
-    </main>
+    </section>
   );
 }

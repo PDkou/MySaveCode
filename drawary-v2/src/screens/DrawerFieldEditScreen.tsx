@@ -72,7 +72,7 @@ export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: Drawe
 
   if (mode === 'list') {
     return (
-      <main className="df-screen">
+      <section className="df-screen">
         <ScreenHeader variant="stacked" title={t('서랍칸 정하기')} onBack={onBack} height={93} />
         <section className="df-content">
           <p className="df-intro">{tl('이 서랍에 어떤 내용을 기록할까요?\n원하는 서랍칸을 직접 정할 수 있어요.')}</p>
@@ -92,12 +92,12 @@ export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: Drawe
           <button className="df-add">{t('＋ 서랍칸 추가')}</button>
           <button className="df-complete">{t('서랍 만들기 완료하기')}</button>
         </section>
-      </main>
+      </section>
     );
   }
 
   return (
-    <main className="df-screen">
+    <section className="df-screen">
       <ScreenHeader variant="stacked" title={t('서랍칸 수정')} onBack={field ? onBack : () => setMode('list')} height={93} />
       <section className="df-edit-content">
         <label className="df-label" htmlFor="field-name">{t('서랍칸 이름')}</label>
@@ -150,6 +150,6 @@ export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: Drawe
           </div>
         )}
       </section>
-    </main>
+    </section>
   );
 }

@@ -18,7 +18,7 @@ export interface HelpMainScreenProps {
  */
 export function HelpMainScreen({ onBack, onOpenFaq, onOpenGuide }: HelpMainScreenProps) {
   return (
-    <main className="help55-screen" aria-label={t('도움말 메인')}>
+    <section className="help55-screen" aria-label={t('도움말 메인')}>
       <header className="help55-appbar">
         {onBack && <button type="button" className="help55-back" onClick={onBack} aria-label={t('이전 화면')} />}
         <span className="help55-appbar-title">{t('도움말')}</span>
@@ -53,6 +53,6 @@ export function HelpMainScreen({ onBack, onOpenFaq, onOpenGuide }: HelpMainScree
         </nav>
         <p className="help55-footnote">{t('필요한 내용을 찾지 못했다면 설정의 피드백에서 알려주세요.')}</p>
       </div>
-    </main>
+    </section>
   );
 }

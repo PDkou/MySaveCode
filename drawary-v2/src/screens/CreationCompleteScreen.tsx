@@ -22,7 +22,7 @@ export function CreationCompleteScreen({
   onLater,
 }: CreationCompleteScreenProps) {
   return (
-    <main className="cc-screen">
+    <section className="cc-screen">
       <section className="cc-content">
         <div className="cc-celebrate" aria-hidden="true">
           <span className="cc-spark cc-spark-a">✦</span>
@@ -59,6 +59,6 @@ export function CreationCompleteScreen({
           {t('나중에')}
         </button>
       </section>
-    </main>
+    </section>
   );
 }

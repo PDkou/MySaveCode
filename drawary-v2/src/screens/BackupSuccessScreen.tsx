@@ -19,7 +19,7 @@ export interface BackupSuccessScreenProps {
  */
 export function BackupSuccessScreen({ fileName, location, description, onConfirm }: BackupSuccessScreenProps) {
   return (
-    <main className="bks48-screen" aria-label={t('백업 완료 화면')}>
+    <section className="bks48-screen" aria-label={t('백업 완료 화면')}>
       <ScreenHeader title={t('완료')} height={91} />
       <span className="bks48-back" aria-hidden="true" />
       <section className="bks48-panel" aria-label={t('백업 완료 내용')}>
@@ -34,6 +34,6 @@ export function BackupSuccessScreen({ fileName, location, description, onConfirm
         </div>
         <button className="bks48-confirm" type="button" onClick={onConfirm}>{t('확인')}</button>
       </section>
-    </main>
+    </section>
   );
 }

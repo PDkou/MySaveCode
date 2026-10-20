@@ -135,7 +135,7 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
   const config = TYPE_CONFIG[type];
 
   return (
-    <main className="fb59-screen" aria-label={t('Drawary 피드백 화면')}>
+    <section className="fb59-screen" aria-label={t('Drawary 피드백 화면')}>
       <header className="fb59-appbar">
         {onBack && <button className="fb59-back" type="button" aria-label={t('뒤로 가기')} onClick={onBack} />}
         <h1>{t('피드백')}</h1>
@@ -220,6 +220,6 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
         <p className="fb59-bottom-note">{t('입력하신 내용을 확인한 뒤 보내주세요.')}</p>
       </div>
       {status && <div className="fb59-status" role="status" aria-live="polite">{status}</div>}
-    </main>
+    </section>
   );
 }

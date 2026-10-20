@@ -35,7 +35,7 @@ export function BackupDestinationScreen({ initialDestination = 'device', onBack,
   return (
     <div className="bkd46-screen">
       <ScreenHeader title={t('백업하기')} onBack={onBack} backLabel={t('백업 종류 선택으로 돌아가기')} height={88} />
-      <main className="bkd46-panel">
+      <section className="bkd46-panel">
         <h2 className="bkd46-section-title">{t('저장 위치 선택')}</h2>
         <section className="bkd46-hero">
           <img src="/assets/states/permissions/state_permission_storage.webp" alt="" />
@@ -66,7 +66,7 @@ export function BackupDestinationScreen({ initialDestination = 'device', onBack,
         </button>
         <div className="bkd46-notice"><img src="/assets/ui-icons/icon_info.webp" alt="" /><span>{tl('다음 단계에서 저장할 폴더를 선택해\n요.')}</span></div>
         <button type="button" className="bkd46-btn" onClick={() => onNext?.(destination)}>{t('다음')}</button>
-      </main>
+      </section>
     </div>
   );
 }

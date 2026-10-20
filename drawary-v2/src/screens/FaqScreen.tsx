@@ -97,7 +97,7 @@ export function FaqScreen({ initialTopic, onBack }: FaqScreenProps) {
   const showIntro = category === 'all' && !q;
 
   return (
-    <main className="faq56-screen" aria-label={t('자주 묻는 질문')}>
+    <section className="faq56-screen" aria-label={t('자주 묻는 질문')}>
       <div className="faq56-scroller">
         <header className="faq56-appbar">
           {onBack && <button type="button" className="faq56-back" onClick={onBack} aria-label={t('도움말로 돌아가기')} />}
@@ -168,6 +168,6 @@ export function FaqScreen({ initialTopic, onBack }: FaqScreenProps) {
           {visibleCount > 0 && <p className="faq56-footnote">{t('검색어와 필터는 함께 사용할 수 있어요.')}</p>}
         </div>
       </div>
-    </main>
+    </section>
   );
 }

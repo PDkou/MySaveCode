@@ -30,7 +30,7 @@ export function RecurrenceCompleteScreen({
   onDone,
 }: RecurrenceCompleteScreenProps) {
   return (
-    <main className="rcx-screen">
+    <section className="rcx-screen">
       <ScreenHeader title={t('반복 설정 완료')} height={88} />
 
       <div className="rcx-hero">
@@ -74,6 +74,6 @@ export function RecurrenceCompleteScreen({
         <button className="rcx-add" type="button" onClick={onAddAnother}>{t('반복 더 추가하기')}</button>
         <button className="rcx-done" type="button" onClick={onDone}>{t('확인')}</button>
       </div>
-    </main>
+    </section>
   );
 }

@@ -127,7 +127,7 @@ export function PinSetupScreen({ mode = 'set', purpose = 'unlock', verify, locke
         {onBack && <button type="button" className="ps42-back" onClick={onBack} aria-label={t('앱 잠금으로 돌아가기')} />}
         <h1>{isVerify ? t('PIN 확인') : t('PIN 설정')}</h1>
       </header>
-      <main className="ps42-panel">
+      <section className="ps42-panel">
         <h2 className="ps42-section-title">{isVerify ? t('PIN 확인하기') : t('PIN 만들기')}</h2>
         <section className="ps42-pin-hero" aria-label={t('PIN 안내')}>
           <div className="ps42-pin-hero-icon"><img src="/assets/states/permissions/state_permission_lock.webp" alt="" /></div>
@@ -148,7 +148,7 @@ export function PinSetupScreen({ mode = 'set', purpose = 'unlock', verify, locke
           <span className="ps42-step-badge">{t(STEP_BADGE[phase])}</span>
         </div>
         <p className="ps42-prompt">{t(PROMPT[phase])}</p>
-        <div className={`ps42-pin-indicators${shake ? ' error' : ''}`} aria-label={t('PIN 4자리 입력 상태')}>
+        <div className={`ps42-pin-indicators${shake ? ' error' : ''}`} role="img" aria-label={t('PIN 4자리 입력 상태')}>
           {[0, 1, 2, 3].map((i) => <span key={i} className={i < typed.length ? 'filled' : ''} />)}
         </div>
         <div className="ps42-pin-feedback" aria-live="polite">{shownFeedback}</div>
@@ -178,7 +178,7 @@ export function PinSetupScreen({ mode = 'set', purpose = 'unlock', verify, locke
               : <span>{tl('PIN은 이 기기에서만 사용돼요.\n다음 단계에서 한 번 더 확인해요.')}</span>}
           </div>
         )}
-      </main>
+      </section>
     </div>
   );
 }

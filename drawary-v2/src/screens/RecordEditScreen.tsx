@@ -74,7 +74,7 @@ export function RecordEditScreen({
   const [draft, setDraft] = useState<RecordDraft>(initialDraft);
 
   return (
-    <main className="re-screen">
+    <section className="re-screen">
       <ScreenHeader variant="stacked" title={t('보관품 수정')} subtitle={t('{drawerName} 서랍', { drawerName })} onBack={onBack} height={94} />
 
       <section className="re-content">
@@ -116,6 +116,6 @@ export function RecordEditScreen({
           {t('수정 완료')}
         </button>
       </section>
-    </main>
+    </section>
   );
 }

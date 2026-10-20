@@ -32,7 +32,7 @@ export function NotificationCompleteScreen({
   const timingLabel = daysBefore === 0 ? t('당일') : t('{daysBefore}일 전', { daysBefore });
 
   return (
-    <main className="nc-screen">
+    <section className="nc-screen">
       <ScreenHeader title={t('알림 설정 완료')} height={88} />
 
       <div className="nc-hero">
@@ -73,6 +73,6 @@ export function NotificationCompleteScreen({
         <button className="nc-add" type="button" onClick={onAddAnother}>{t('알림 더 추가하기')}</button>
         <button className="nc-done" type="button" onClick={onDone}>{t('확인')}</button>
       </div>
-    </main>
+    </section>
   );
 }

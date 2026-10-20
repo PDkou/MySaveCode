@@ -33,7 +33,7 @@ export function InfoScreen({ onBack, onNavigate }: InfoScreenProps) {
   }, [dialogOpen]);
 
   return (
-    <main className="info58-screen" aria-label={t('Drawary 정보 화면')}>
+    <section className="info58-screen" aria-label={t('Drawary 정보 화면')}>
       <header className="info58-appbar">
         {onBack && <button className="info58-back" type="button" aria-label={t('이전 화면')} onClick={onBack} />}
         <span className="info58-appbar-title">{t('정보')}</span>
@@ -71,6 +71,6 @@ export function InfoScreen({ onBack, onNavigate }: InfoScreenProps) {
           </section>
         </div>
       )}
-    </main>
+    </section>
   );
 }

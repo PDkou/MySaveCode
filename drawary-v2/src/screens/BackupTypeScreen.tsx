@@ -32,7 +32,7 @@ export function BackupTypeScreen({ initialMode = 'include', onBack, onNext }: Ba
         {onBack && <button type="button" className="bkt45-back" onClick={onBack} aria-label={t('데이터 관리로 돌아가기')} />}
         <h1>{t('백업하기')}</h1>
       </header>
-      <main className="bkt45-panel">
+      <section className="bkt45-panel">
         <h2 className="bkt45-section-title">{t('백업할 내용 선택')}</h2>
         <section className="bkt45-hero" aria-label={t('백업 안내')}>
           <div className="bkt45-hero-art"><img src="/assets/states/backup/state_backup_local_save.webp" alt="" /></div>
@@ -61,7 +61,7 @@ export function BackupTypeScreen({ initialMode = 'include', onBack, onNext }: Ba
           <span>{t('다음 단계에서 저장 위치를 선택할 수 있습니다.')}</span>
         </aside>
         <button type="button" className="bkt45-bottom-action" onClick={() => onNext?.(mode)}>{t('다음')}</button>
-      </main>
+      </section>
     </div>
   );
 }

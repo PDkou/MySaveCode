@@ -101,7 +101,7 @@ export function RecordDetailScreen({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   return (
-    <main className="rd-screen">
+    <section className="rd-screen">
       <ScreenHeader
         variant="stacked"
         title={t('보관품 상세')}
@@ -174,6 +174,6 @@ export function RecordDetailScreen({
           onDelete={() => { setDeleteConfirmOpen(false); onDelete?.(); }}
         />
       )}
-    </main>
+    </section>
   );
 }

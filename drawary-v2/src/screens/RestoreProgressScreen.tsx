@@ -25,7 +25,7 @@ export function RestoreProgressScreen({ onBack, onComplete }: RestoreProgressScr
   }, [onComplete]);
 
   return (
-    <main className="rp51-screen" aria-label={t('복원 진행 화면')}>
+    <section className="rp51-screen" aria-label={t('복원 진행 화면')}>
       <ScreenHeader title={t('복원 중')} onBack={onBack} height={91} />
       <section className="rp51-panel" aria-live="polite" aria-label={t('복원 진행 상태')}>
         <div className="rp51-progress-content">
@@ -38,6 +38,6 @@ export function RestoreProgressScreen({ onBack, onComplete }: RestoreProgressScr
           </div>
         </div>
       </section>
-    </main>
+    </section>
   );
 }

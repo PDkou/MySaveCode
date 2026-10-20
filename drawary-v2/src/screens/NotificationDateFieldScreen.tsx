@@ -38,7 +38,7 @@ export function NotificationDateFieldScreen({
   const effectiveSelectedId = selectedId ?? (dateFields.length === 1 ? dateFields[0]?.id : undefined);
 
   return (
-    <main className="ndf-screen">
+    <section className="ndf-screen">
       <ScreenHeader title={t('알림 추가하기')} onBack={onBack} height={88} />
 
       <section className="ndf-context">
@@ -84,6 +84,6 @@ export function NotificationDateFieldScreen({
           {t('다음')}
         </button>
       </div>
-    </main>
+    </section>
   );
 }

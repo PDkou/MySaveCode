@@ -64,7 +64,7 @@ export function RecurrenceEndConditionScreen({
     (condition.kind === 'date' && Boolean(condition.endDate));
 
   return (
-    <main className="red-screen">
+    <section className="red-screen">
       <ScreenHeader title={t('반복 종료 설정')} onBack={onBack} height={88} />
 
       <section className="red-summary">
@@ -139,6 +139,6 @@ export function RecurrenceEndConditionScreen({
           {t('반복 설정하기')}
         </button>
       </div>
-    </main>
+    </section>
   );
 }

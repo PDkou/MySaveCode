@@ -66,7 +66,7 @@ export function GlobalSearchScreen({ records, onOpenRecord, query: controlledQue
         {query && <button type="button" onClick={() => setQuery('')} aria-label={t('검색어 지우기')}>×</button>}
       </div>
 
-      <main className="global-search-content">
+      <section className="global-search-content">
         {!q && (
           <div className="global-search-empty">
             <img src="/assets/global-search-approved/search_empty.webp" alt="" />
@@ -110,7 +110,7 @@ export function GlobalSearchScreen({ records, onOpenRecord, query: controlledQue
             </div>
           </section>
         )}
-      </main>
+      </section>
     </div>
     </FixedCanvas>
   );

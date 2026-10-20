@@ -26,7 +26,7 @@ export function BackupProgressScreen({ onBack, onComplete }: BackupProgressScree
   }, [onComplete]);
 
   return (
-    <main className="backup-progress-app">
+    <section className="backup-progress-app">
       <ScreenHeader title={t('백업하기')} onBack={onBack} backLabel={t('뒤로 가기')} height={81} />
       <section className="backup-progress-panel" aria-label={t('백업 진행 상태')}>
         <img
@@ -47,6 +47,6 @@ export function BackupProgressScreen({ onBack, onComplete }: BackupProgressScree
           <p>{t('데이터를 안전하게 정리하고 있습니다.')}</p>
         </div>
       </section>
-    </main>
+    </section>
   );
 }

@@ -46,7 +46,7 @@ export function SecuritySettingsScreen({
         {onBack && <button type="button" className="sec40-back" onClick={onBack} aria-label={t('설정으로 돌아가기')} />}
         <h1>{t('보안 설정')}</h1>
       </header>
-      <main className="sec40-panel">
+      <section className="sec40-panel">
         <h2 className="sec40-section-title">{t('내 서랍 보호하기')}</h2>
         <section className="sec40-hero">
           <div className="sec40-hero-art"><img src="/assets/states/permissions/state_permission_lock.webp" alt="" /></div>
@@ -95,7 +95,7 @@ export function SecuritySettingsScreen({
           <img className="sec40-note-icon" src="/assets/ui-icons/icon_info.webp" alt="" />
           <span>{tl('보안 설정은 이 기기에서만 사용돼요.\n언제든 설정을 바꿀 수 있어요.')}</span>
         </div>
-      </main>
+      </section>
     </div>
   );
 }

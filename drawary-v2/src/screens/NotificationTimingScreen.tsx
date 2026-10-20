@@ -57,7 +57,7 @@ export function NotificationTimingScreen({
   const [time, setTime] = useState(initialTime);
 
   return (
-    <main className="nt-screen">
+    <section className="nt-screen">
       <ScreenHeader title={t('알림 추가하기')} onBack={onBack} height={88} />
 
       <section className="nt-context">
@@ -136,6 +136,6 @@ export function NotificationTimingScreen({
           {t('알림 설정하기')}
         </button>
       </div>
-    </main>
+    </section>
   );
 }

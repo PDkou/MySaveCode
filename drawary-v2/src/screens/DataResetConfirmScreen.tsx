@@ -25,7 +25,7 @@ export function DataResetConfirmScreen({ onCancel, onResetConfirmed }: DataReset
   const [acknowledged, setAcknowledged] = useState(false);
 
   return (
-    <main className="drc53-screen" aria-label={t('데이터 초기화 확인 화면')}>
+    <section className="drc53-screen" aria-label={t('데이터 초기화 확인 화면')}>
       <ScreenHeader title={t('데이터 초기화')} onBack={onCancel} height={91} />
       <section className="drc53-panel" aria-labelledby="drc53-heading">
         <div className="drc53-intro">
@@ -66,6 +66,6 @@ export function DataResetConfirmScreen({ onCancel, onResetConfirmed }: DataReset
           </button>
         </div>
       </section>
-    </main>
+    </section>
   );
 }

@@ -84,7 +84,7 @@ export function TableViewScreen({
   const activeFilters = view.rules.filter((r) => columns.some((c) => c.id === r.columnId)).length;
 
   return (
-    <main className="tv-screen">
+    <section className="tv-screen">
       <ScreenHeader
         variant="stacked"
         title={drawerName}
@@ -215,6 +215,6 @@ export function TableViewScreen({
           onApply={(rules, matchMode) => { onViewChange?.({ ...view, rules, matchMode }); setFilterOpen(false); }}
         />
       )}
-    </main>
+    </section>
   );
 }

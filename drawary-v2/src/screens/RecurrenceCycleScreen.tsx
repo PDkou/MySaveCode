@@ -49,7 +49,7 @@ export function RecurrenceCycleScreen({
   const meta = useMemo(() => CYCLE_META[cycle], [cycle]);
 
   return (
-    <main className="rc-screen">
+    <section className="rc-screen">
       <ScreenHeader title={t('반복 주기 설정')} onBack={onBack} height={88} />
 
       <section className="rc-summary">
@@ -110,6 +110,6 @@ export function RecurrenceCycleScreen({
           {t('다음')}
         </button>
       </div>
-    </main>
+    </section>
   );
 }
