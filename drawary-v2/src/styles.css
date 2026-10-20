@@ -29,3 +29,10 @@ main[data-route="create-drawer"] { position: relative; overflow: hidden; }
   background-position:60px 20px; background-size:37px 37px;
   background-repeat:no-repeat; pointer-events:none;
 }
+
+/* 2026-10-20 user-approved typography family unification.
+ * Keep each of the 59 approved screens' own font-size, font-weight, line-height,
+ * letter-spacing and layout values unchanged. Only the font FAMILY is unified.
+ * This also wins over legacy per-screen font shorthands and NanumSquare.
+ */
+.drawary-app-shell, .drawary-app-shell * { font-family: 'Noto Sans CJK KR', sans-serif !important; }
