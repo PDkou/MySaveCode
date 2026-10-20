@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './RestoreFilePickerScreen.css';
+import { t, tl } from '../i18n';
 
 export interface RestoreFilePickerScreenProps {
   onBack?: () => void;
@@ -17,7 +18,7 @@ export interface RestoreFilePickerScreenProps {
  */
 export function RestoreFilePickerScreen({ onBack, onFileSelected }: RestoreFilePickerScreenProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [fileName, setFileName] = useState('.zip 또는 .json 파일');
+  const [fileName, setFileName] = useState(t('.zip 또는 .json 파일'));
 
   const openPicker = () => inputRef.current?.click();
 
@@ -33,28 +34,28 @@ export function RestoreFilePickerScreen({ onBack, onFileSelected }: RestoreFileP
   };
 
   return (
-    <main className="rfp49-screen" aria-label="복원 파일 선택 화면">
-      <ScreenHeader title="복원" onBack={onBack} height={91} />
-      <section className="rfp49-panel" aria-label="복원할 파일 선택">
+    <main className="rfp49-screen" aria-label={t('복원 파일 선택 화면')}>
+      <ScreenHeader title={t('복원')} onBack={onBack} height={91} />
+      <section className="rfp49-panel" aria-label={t('복원할 파일 선택')}>
         <div className="rfp49-content">
-          <img className="rfp49-art" src="/assets/states/backup/state_restore_available.webp" alt="복원을 준비하는 서랍장 마스코트" />
-          <h1 className="rfp49-heading">복원할 백업 파일을 선택해주세요</h1>
-          <p className="rfp49-description">Drawary 백업 파일을 불러와<br />기록과 설정을 복원할 수 있어요.</p>
-          <button className="rfp49-pick-card" type="button" aria-label="백업 파일 선택" onClick={openPicker}>
+          <img className="rfp49-art" src="/assets/states/backup/state_restore_available.webp" alt={t('복원을 준비하는 서랍장 마스코트')} />
+          <h1 className="rfp49-heading">{t('복원할 백업 파일을 선택해주세요')}</h1>
+          <p className="rfp49-description">{tl('Drawary 백업 파일을 불러와\n기록과 설정을 복원할 수 있어요.')}</p>
+          <button className="rfp49-pick-card" type="button" aria-label={t('백업 파일 선택')} onClick={openPicker}>
             <span className="rfp49-pick-icon"><img src="/assets/ui-icons/icon_import.webp" alt="" /></span>
-            <span className="rfp49-pick-text"><strong>백업 파일 선택</strong><small>{fileName}</small></span>
+            <span className="rfp49-pick-text"><strong>{t('백업 파일 선택')}</strong><small>{fileName}</small></span>
             <span className="rfp49-chevron" aria-hidden="true" />
           </button>
-          <p className="rfp49-hint">파일을 선택하면 복원할 내용을 먼저 확인할 수 있어요.</p>
+          <p className="rfp49-hint">{t('파일을 선택하면 복원할 내용을 먼저 확인할 수 있어요.')}</p>
         </div>
-        <button className="rfp49-confirm" type="button" onClick={openPicker}>파일 선택</button>
+        <button className="rfp49-confirm" type="button" onClick={openPicker}>{t('파일 선택')}</button>
       </section>
       <input
         ref={inputRef}
         type="file"
         className="rfp49-file-input"
         accept=".zip,.json,application/zip,application/json"
-        aria-label="Drawary 백업 파일을 선택해주세요"
+        aria-label={t('Drawary 백업 파일을 선택해주세요')}
         onChange={handleChange}
       />
     </main>

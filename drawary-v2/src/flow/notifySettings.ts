@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * "알림 공통 설정": the default time for new notifications and the 알림 쉬는
  * 시간 (quiet hours). Saved as one setting; applies to every drawer.
@@ -58,5 +59,5 @@ export function applyQuietHours(fireAt: number, c: Pick<NotifyCommon, 'quietEnab
 /** "22:00 ~ 07:00 (다음 날)" for the settings screen. */
 export function quietSummary(c: Pick<NotifyCommon, 'quietStart' | 'quietEnd'>): string {
   const cross = minutes(c.quietStart) > minutes(c.quietEnd);
-  return `${c.quietStart} ~ ${c.quietEnd}${cross ? ' (다음 날)' : ''}`;
+  return `${c.quietStart} ~ ${c.quietEnd}${cross ? t(' (다음 날)') : ''}`;
 }

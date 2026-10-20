@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './NewDrawerScreen.css';
 import { MAX_DRAWER_NAME_LENGTH } from '../data/types';
+import { t } from '../i18n';
 
 interface DrawerIconOption {
   key: string;
@@ -65,19 +66,19 @@ export function NewDrawerScreen({ initial, onNext, onDismiss }: NewDrawerScreenP
 
   return (
     <div className="new-drawer-overlay">
-      <button type="button" className="new-drawer-backdrop" aria-label="닫기" onClick={onDismiss} />
-      <div className="new-drawer-sheet" role="dialog" aria-label="새 서랍 만들기">
+      <button type="button" className="new-drawer-backdrop" aria-label={t('닫기')} onClick={onDismiss} />
+      <div className="new-drawer-sheet" role="dialog" aria-label={t('새 서랍 만들기')}>
         <div className="new-drawer-handle" />
-        <h1>새 서랍 만들기</h1>
-        <p className="new-drawer-subtitle">먼저 서랍의 이름과 분위기를 정해보세요.</p>
+        <h1>{t('새 서랍 만들기')}</h1>
+        <p className="new-drawer-subtitle">{t('먼저 서랍의 이름과 분위기를 정해보세요.')}</p>
 
-        <label className="new-drawer-label" htmlFor="new-drawer-name">서랍 이름</label>
+        <label className="new-drawer-label" htmlFor="new-drawer-name">{t('서랍 이름')}</label>
         <div className="new-drawer-input-wrap">
           <input
             id="new-drawer-name"
             className="new-drawer-input"
             type="text"
-            placeholder="예: 화장품"
+            placeholder={t('예: 화장품')}
             value={name}
             maxLength={MAX_DRAWER_NAME_LENGTH}
             onChange={(e) => setName(e.target.value)}
@@ -86,7 +87,7 @@ export function NewDrawerScreen({ initial, onNext, onDismiss }: NewDrawerScreenP
           <span className="new-drawer-count" aria-hidden="true">{name.length}/{MAX_DRAWER_NAME_LENGTH}</span>
         </div>
 
-        <span className="new-drawer-label">아이콘</span>
+        <span className="new-drawer-label">{t('아이콘')}</span>
         <div className="new-drawer-icon-grid">
           {ICON_OPTIONS.map((opt) => (
             <button
@@ -102,7 +103,7 @@ export function NewDrawerScreen({ initial, onNext, onDismiss }: NewDrawerScreenP
           ))}
         </div>
 
-        <span className="new-drawer-label">서랍 색상</span>
+        <span className="new-drawer-label">{t('서랍 색상')}</span>
         <div className="new-drawer-color-row">
           {COLOR_OPTIONS.map((opt) => (
             <button
@@ -123,7 +124,8 @@ export function NewDrawerScreen({ initial, onNext, onDismiss }: NewDrawerScreenP
           disabled={!name.trim()}
           onClick={() => onNext({ name: name.trim(), icon, color })}
         >
-          다음
+          
+          {t('다음')}
         </button>
       </div>
     </div>

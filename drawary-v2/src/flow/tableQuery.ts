@@ -1,5 +1,6 @@
 import type { Field, FieldKind, FieldValue, RecordItem } from '../data/types';
 import { formatDate, formatValue } from './recordForm';
+import { getLocale, t } from '../i18n';
 
 /**
  * Table view (#20-#23, #27): columns are a drawer's 서랍 칸, rows are its
@@ -64,7 +65,7 @@ export function columnsOf(fields: readonly Field[]): TableColumn[] {
 
 /** What a cell shows (and what table search matches). */
 export function cellText(col: TableColumn, row: TableRowData): string {
-  if (col.type === 'photo') return row.photoCount > 0 ? `${row.photoCount}장` : '';
+  if (col.type === 'photo') return row.photoCount > 0 ? t('{photoCount}장', { photoCount: row.photoCount }) : '';
   const v = row.values[col.id];
   if (v === undefined || v === null) return '';
   // Dates in the table drop the weekday, like #15's date line; money has no symbol (#20 CONFIRMED.md).
@@ -116,7 +117,7 @@ export function sortRows(rows: readonly TableRowData[], cols: readonly TableColu
     if (b.key === null) return -1;
     const cmp = typeof a.key === 'number' && typeof b.key === 'number'
       ? a.key - b.key
-      : String(a.key).localeCompare(String(b.key), 'ko-KR');
+      : String(a.key).localeCompare(String(b.key), getLocale());
     return cmp === 0 ? a.i - b.i : choice.direction === 0 ? cmp : -cmp;
   });
   return indexed.map((x) => x.row);
@@ -160,17 +161,17 @@ export function ruleProblem(rule: Pick<FilterRule, 'operator' | 'value' | 'value
   if (!operatorNeedsValue(rule.operator)) return null;
   const v = (rule.value ?? '').trim();
   const v2 = (rule.value2 ?? '').trim();
-  if (rule.operator === 'contains' || rule.operator === 'equals') return v ? null : '내용을 입력해 주세요.';
+  if (rule.operator === 'contains' || rule.operator === 'equals') return v ? null : t('내용을 입력해 주세요.');
   const needsSecond = rule.operator === 'between';
   if (type === 'date') {
     const a = parseDateInput(v); const b = parseDateInput(v2);
-    if (!a || (needsSecond && !b)) return '날짜를 확인해 주세요.';
-    if (needsSecond && a > b!) return '시작 날짜가 끝 날짜보다 늦어요.';
+    if (!a || (needsSecond && !b)) return t('날짜를 확인해 주세요.');
+    if (needsSecond && a > b!) return t('시작 날짜가 끝 날짜보다 늦어요.');
     return null;
   }
   const a = parseNumberInput(v); const b = parseNumberInput(v2);
-  if (a === null || (needsSecond && b === null)) return '숫자를 입력해 주세요.';
-  if (needsSecond && a > b!) return '작은 값을 앞에 입력해 주세요.';
+  if (a === null || (needsSecond && b === null)) return t('숫자를 입력해 주세요.');
+  if (needsSecond && a > b!) return t('작은 값을 앞에 입력해 주세요.');
   return null;
 }
 

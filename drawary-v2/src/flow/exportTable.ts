@@ -1,5 +1,6 @@
 import { formatValue } from './recordForm';
 import { cellText, type TableColumn, type TableRowData } from './tableQuery';
+import { t } from '../i18n';
 
 /**
  * Table export (#20's "•••" menu): the rows currently shown, with every column.
@@ -30,7 +31,7 @@ export function buildCsv(columns: readonly TableColumn[], rows: readonly TableRo
 }
 
 export function exportFileName(drawerName: string, ext: 'csv' | 'pdf', now = new Date()): string {
-  const safe = drawerName.replace(/[\\/:*?"<>|\s]+/g, '_').replace(/^_+|_+$/g, '') || '서랍';
+  const safe = drawerName.replace(/[\\/:*?"<>|\s]+/g, '_').replace(/^_+|_+$/g, '') || t('서랍');
   const d = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
   return `${safe}_${d}.${ext}`;
 }
@@ -42,6 +43,6 @@ export function buildPrintHtml(drawerName: string, columns: readonly TableColumn
   const head = columns.map((c) => `<th>${esc(c.label)}</th>`).join('');
   const body = rows.length
     ? rows.map((r) => `<tr>${columns.map((c, i) => `<td${i === 0 ? ' class="first"' : ''}>${esc(cellText(c, r))}</td>`).join('')}</tr>`).join('')
-    : `<tr><td colspan="${Math.max(columns.length, 1)}" class="none">보관품이 없어요.</td></tr>`;
-  return `<h1>${esc(drawerName)}</h1><p class="meta">보관품 ${rows.length}개 · ${esc(printedOn)}</p><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+    : `<tr><td colspan="${Math.max(columns.length, 1)}" class="none">${esc(t('보관품이 없어요.'))}</td></tr>`;
+  return `<h1>${esc(drawerName)}</h1><p class="meta">${esc(t('보관품 {n}개', { n: rows.length }))} · ${esc(printedOn)}</p><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }

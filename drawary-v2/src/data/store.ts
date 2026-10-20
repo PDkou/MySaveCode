@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import * as repo from './repository';
 import type { Drawer, DrawerInput, Field, FieldInput, FieldValue, NotificationRule, RecordItem, RecurrenceRule } from './types';
+import { t } from '../i18n';
 
 /**
  * In-memory mirror of the on-device database. Screens read from this
@@ -40,7 +41,7 @@ async function refresh() {
 export function startStore(): Promise<void> {
   if (!started) {
     started = refresh().catch((e: unknown) => {
-      publish({ ...INITIAL, status: 'error', error: e instanceof Error ? e.message : '데이터를 불러오지 못했어요.' });
+      publish({ ...INITIAL, status: 'error', error: e instanceof Error ? e.message : t('데이터를 불러오지 못했어요.') });
     });
     // Ask the browser not to evict our data under storage pressure. Best effort.
     void navigator.storage?.persist?.().catch(() => undefined);

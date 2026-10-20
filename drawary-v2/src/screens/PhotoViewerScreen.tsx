@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import './PhotoViewerScreen.css';
+import { t } from '../i18n';
 
 interface PhotoViewerScreenProps {
   photoUris: string[];
@@ -141,7 +142,7 @@ export function PhotoViewerScreen({
   return (
     <main className="pv-screen">
       <header className="pv-topbar">
-        <button className="pv-close" type="button" onClick={onClose} aria-label="사진 보기 닫기">
+        <button className="pv-close" type="button" onClick={onClose} aria-label={t('사진 보기 닫기')}>
           <img src="/assets/ui-icons/icon_cancel.webp" alt="" />
         </button>
         <span className="pv-count">{index + 1} / {photoUris.length}</span>
@@ -158,7 +159,7 @@ export function PhotoViewerScreen({
         <img
           className="pv-main-photo"
           src={photoUris[index]}
-          alt={`보관품 사진 ${index + 1}`}
+          alt={t('보관품 사진 {n}', { n: index + 1 })}
           draggable={false}
           style={{
             transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
@@ -167,14 +168,14 @@ export function PhotoViewerScreen({
       </div>
 
       {photoUris.length > 1 && (
-        <nav className="pv-thumbs" aria-label="사진 목록">
+        <nav className="pv-thumbs" aria-label={t('사진 목록')}>
           {photoUris.map((uri, photoIndex) => (
             <button
               key={`${uri}-${photoIndex}`}
               type="button"
               className={photoIndex === index ? 'is-active' : ''}
               onClick={() => show(photoIndex)}
-              aria-label={`${photoIndex + 1}번째 사진 보기`}
+              aria-label={t('{n}번째 사진 보기', { n: photoIndex + 1 })}
             >
               <img src={uri} alt="" />
             </button>

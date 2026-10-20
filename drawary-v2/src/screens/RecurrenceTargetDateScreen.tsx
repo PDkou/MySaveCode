@@ -1,5 +1,6 @@
 import { ScreenHeader } from '../components/ScreenHeader';
 import './RecurrenceTargetDateScreen.css';
+import { t } from '../i18n';
 
 export interface RecurrenceTarget {
   id: string;
@@ -62,34 +63,34 @@ export function RecurrenceTargetDateScreen({
 
   return (
     <main className="rtd-screen">
-      <ScreenHeader title="반복 설정하기" onBack={onBack} height={88} />
+      <ScreenHeader title={t('반복 설정하기')} onBack={onBack} height={88} />
 
       <section className="rtd-context">
         <div className="rtd-drawer-icon"><img src={drawerIconUri} alt="" /></div>
         <div className="rtd-context-copy">
           <strong>{drawerName}</strong>
-          <span>{fieldCount}개 서랍칸 · {itemCount}개 보관품</span>
+          <span>{t('{fields}개 서랍칸 · {items}개 보관품', { fields: fieldCount, items: itemCount })}</span>
         </div>
       </section>
 
       <section className="rtd-intro">
-        <h2>어떤 보관품을 반복해서 만들까요?</h2>
-        <p>반복할 보관품과 기준이 될 날짜 서랍칸을 선택해 주세요.</p>
+        <h2>{t('어떤 보관품을 반복해서 만들까요?')}</h2>
+        <p>{t('반복할 보관품과 기준이 될 날짜 서랍칸을 선택해 주세요.')}</p>
       </section>
 
-      <div className="rtd-section-label">반복할 보관품</div>
+      <div className="rtd-section-label">{t('반복할 보관품')}</div>
       <button className="rtd-selector" type="button" onClick={onSelectTarget}>
         <span className="rtd-selector-icon"><img src="/assets/ui-icons/icon_list.webp" alt="" /></span>
         <span className="rtd-selector-copy">
-          <strong>{target?.title ?? '보관품을 선택해 주세요'}</strong>
-          <span>{target ? `${drawerName} 서랍의 보관품` : `${itemCount}개 보관품 중 선택`}</span>
+          <strong>{target?.title ?? t('보관품을 선택해 주세요')}</strong>
+          <span>{target ? t('{drawerName} 서랍의 보관품', { drawerName }) : t('{itemCount}개 보관품 중 선택', { itemCount })}</span>
         </span>
         <span className="rtd-chev">›</span>
       </button>
 
-      <div className="rtd-section-label">기준 날짜</div>
+      <div className="rtd-section-label">{t('기준 날짜')}</div>
       {dateFields.length === 0 ? (
-        <div className="rtd-guide">이 서랍에는 날짜 서랍칸이 없어요. 날짜 서랍칸을 먼저 추가해 주세요.</div>
+        <div className="rtd-guide">{t('이 서랍에는 날짜 서랍칸이 없어요. 날짜 서랍칸을 먼저 추가해 주세요.')}</div>
       ) : dateFields.map((field) => {
         const active = field.id === effectiveDateId;
         return (
@@ -100,18 +101,18 @@ export function RecurrenceTargetDateScreen({
             onClick={() => onSelectDateField?.(field.id)}
           >
             <span className="rtd-field-icon"><img src="/assets/field-types/field_date.webp" alt="" /></span>
-            <span className="rtd-field-copy"><strong>{field.name}</strong><span>날짜 서랍칸</span></span>
+            <span className="rtd-field-copy"><strong>{field.name}</strong><span>{t('날짜 서랍칸')}</span></span>
             {active ? <span className="rtd-selected">✓</span> : <span />}
           </button>
         );
       })}
 
       {dateFields.length > 0 && (
-        <div className="rtd-guide">선택한 날짜를 기준으로 다음 보관품의 날짜가 계산돼요.</div>
+        <div className="rtd-guide">{t('선택한 날짜를 기준으로 다음 보관품의 날짜가 계산돼요.')}</div>
       )}
 
       <div className="rtd-actions">
-        <button className="rtd-prev" type="button" onClick={onBack}>이전</button>
+        <button className="rtd-prev" type="button" onClick={onBack}>{t('이전')}</button>
         <button
           className="rtd-next"
           type="button"
@@ -122,7 +123,8 @@ export function RecurrenceTargetDateScreen({
             }
           }}
         >
-          다음
+          
+          {t('다음')}
         </button>
       </div>
     </main>

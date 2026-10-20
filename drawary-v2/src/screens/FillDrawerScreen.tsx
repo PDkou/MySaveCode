@@ -5,6 +5,7 @@ import type { Field } from '../data/types';
 import { MAX_RECORD_PHOTOS } from '../data/types';
 import { emptyDraft, hasControl, type RecordDraft } from '../flow/recordForm';
 import './FillDrawerScreen.css';
+import { t } from '../i18n';
 
 // Ported from Drawary_13_FINAL_CONFIRMED_CODE's FillDrawer.tsx (the
 // empty-photo state) merged with Drawary_14_FINAL_CONFIRMED_CODE's
@@ -52,28 +53,28 @@ export function FillDrawerScreen({
 
   return (
     <main className="fd-screen">
-      <ScreenHeader variant="stacked" title={`${drawerName} 서랍 채우기`} onBack={onBack} height={91} />
+      <ScreenHeader variant="stacked" title={t('{drawerName} 서랍 채우기', { drawerName })} onBack={onBack} height={91} />
 
       <section className="fd-content">
         {hasPhoto ? (
-          <section className="fd-photo-card" aria-label="등록한 사진">
-            <img className="fd-photo" src={activePhoto} alt="등록한 보관품 사진" />
+          <section className="fd-photo-card" aria-label={t('등록한 사진')}>
+            <img className="fd-photo" src={activePhoto} alt={t('등록한 보관품 사진')} />
             <button
               type="button"
               className="fd-remove"
               onClick={() => { onRemovePhoto?.(shownIndex); setActiveIndex(0); }}
-              aria-label="현재 사진 삭제"
+              aria-label={t('현재 사진 삭제')}
             >×</button>
             <span className="fd-count">{shownIndex + 1} / {maxPhotos}</span>
           </section>
         ) : (
-          <button type="button" className="fd-photo-empty" onClick={onPickPhotos} aria-label="사진 추가">
+          <button type="button" className="fd-photo-empty" onClick={onPickPhotos} aria-label={t('사진 추가')}>
             <img src="/assets/states/photo/state_photo_empty.webp" alt="" />
           </button>
         )}
 
         {hasPhoto && photoUris.length > 1 && (
-          <div className="fd-thumbs" aria-label="등록한 사진 목록">
+          <div className="fd-thumbs" aria-label={t('등록한 사진 목록')}>
             {photoUris.map((uri, index) => (
               <button
                 type="button"
@@ -90,7 +91,7 @@ export function FillDrawerScreen({
         {photoUris.length < maxPhotos && (
           <button type="button" className="fd-photo-add" onClick={onPickPhotos}>
             <img src="/assets/field-types/field_photo.webp" alt="" />
-            <span>{hasPhoto ? '사진 더 담기' : '사진 추가하기'}</span>
+            <span>{hasPhoto ? t('사진 더 담기') : t('사진 추가하기')}</span>
           </button>
         )}
 
@@ -113,7 +114,8 @@ export function FillDrawerScreen({
           disabled={saving}
           onClick={() => onSave?.(draft)}
         >
-          담기
+          
+          {t('담기')}
         </button>
       </section>
     </main>

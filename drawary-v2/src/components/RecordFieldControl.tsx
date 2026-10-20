@@ -1,6 +1,7 @@
 import './RecordFieldControl.css';
 import type { Field } from '../data/types';
 import type { FieldDraft } from '../flow/recordForm';
+import { t } from '../i18n';
 
 interface Props {
   field: Field;
@@ -47,7 +48,7 @@ export function RecordFieldControl({ field, value, onChange, variant: p, id }: P
     case 'select':
       return (
         <select id={id} className={`${p}-input rfc-select`} value={text} onChange={(e) => onChange(e.target.value)}>
-          <option value="">선택 안 함</option>
+          <option value="">{t('선택 안 함')}</option>
           {field.options.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
       );
@@ -62,19 +63,19 @@ export function RecordFieldControl({ field, value, onChange, variant: p, id }: P
           onClick={() => onChange(value !== true)}
         >
           <span className="rfc-check-box" aria-hidden="true">{value === true ? '✓' : ''}</span>
-          <span>{value === true ? '체크함' : '체크 안 함'}</span>
+          <span>{value === true ? t('체크함') : t('체크 안 함')}</span>
         </button>
       );
     case 'rating': {
       const stars = typeof value === 'number' ? value : 0;
       return (
-        <div id={id} className={`${p}-input rfc-rating`} role="group" aria-label={`${field.name} 별점`}>
+        <div id={id} className={`${p}-input rfc-rating`} role="group" aria-label={t('{name} 별점', { name: field.name })}>
           {[1, 2, 3, 4, 5].map((n) => (
             <button
               key={n}
               type="button"
               className={n <= stars ? 'is-on' : ''}
-              aria-label={`${n}점`}
+              aria-label={t('{n}점', { n })}
               aria-pressed={n === stars}
               // Tapping the current score again clears it back to "not rated".
               onClick={() => onChange(n === stars ? 0 : n)}

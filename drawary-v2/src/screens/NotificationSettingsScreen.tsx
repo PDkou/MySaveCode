@@ -1,5 +1,6 @@
 import { ScreenHeader } from '../components/ScreenHeader';
 import './NotificationSettingsScreen.css';
+import { t, tl } from '../i18n';
 
 export interface NotificationRuleRow {
   id: string;
@@ -55,31 +56,32 @@ export function NotificationSettingsScreen({
 }: NotificationSettingsScreenProps) {
   return (
     <main className="ns-screen">
-      <ScreenHeader title="알림 설정" onBack={onBack} height={92} />
+      <ScreenHeader title={t('알림 설정')} onBack={onBack} height={92} />
 
       <section className="ns-context">
         <div className="ns-drawer-icon"><img src={drawerIconUri} alt="" /></div>
         <div className="ns-context-copy">
           <strong>{drawerName}</strong>
-          <span>{fieldCount}개 서랍칸 · {recordCount}개 보관품</span>
+          <span>{t('{fields}개 서랍칸 · {items}개 보관품', { fields: fieldCount, items: recordCount })}</span>
         </div>
       </section>
 
       <section className="ns-hero">
         <img className="ns-hero-art" src="/assets/states/reminder/state_notification_settings.webp" alt="" />
-        <h2>설정한 날짜가 다가오면<br />알려드려요.</h2>
+        <h2>{tl('설정한 날짜가 다가오면\n알려드려요.')}</h2>
         <p>
-          이 서랍에 있는 날짜 서랍칸을 기준으로<br />
-          필요한 시점에 알림을 받을 수 있어요.
+          
+          {tl('이 서랍에 있는 날짜 서랍칸을 기준으로\n필요한 시점에 알림을 받을 수 있어요.')}
         </p>
       </section>
 
       <button className="ns-add-btn uf-cta-primary" type="button" onClick={onAddNotification}>
         <img src="/assets/ui-icons/icon_add.webp" alt="" />
-        알림 추가하기
+        
+        {t('알림 추가하기')}
       </button>
 
-      <div className="ns-section-label">이 서랍의 알림</div>
+      <div className="ns-section-label">{t('이 서랍의 알림')}</div>
       {rules.map((rule) => (
         <button className="ns-rule-card" type="button" key={rule.id} onClick={() => onOpenRule?.(rule.id)}>
           <div className="ns-common-icon"><img src="/assets/ui-icons/icon_notification.webp" alt="" /></div>
@@ -93,13 +95,13 @@ export function NotificationSettingsScreen({
       <button className="ns-common-card" type="button" onClick={onOpenCommonSettings}>
         <div className="ns-common-icon"><img src="/assets/ui-icons/icon_notification.webp" alt="" /></div>
         <div className="ns-common-copy">
-          <strong>알림 공통 설정</strong>
-          <span>기본 알림 시간 · 알림 쉬는 시간</span>
+          <strong>{t('알림 공통 설정')}</strong>
+          <span>{t('기본 알림 시간 · 알림 쉬는 시간')}</span>
         </div>
         <div className="ns-chev">›</div>
       </button>
 
-      <div className="ns-tip">알림 추가하기를 누르면 먼저 날짜 서랍칸을 선택해요.</div>
+      <div className="ns-tip">{t('알림 추가하기를 누르면 먼저 날짜 서랍칸을 선택해요.')}</div>
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import './GlobalSearchScreen.css';
 import { FixedCanvas } from '../components/FixedCanvas';
+import { t, tl } from '../i18n';
 
 // Ported from GlobalSearch_NEW_CANDIDATE.tsx (#05, source_code_verification:
 // CANDIDATE_SOURCE_NEEDS_PARITY). Per
@@ -50,8 +51,8 @@ export function GlobalSearchScreen({ records, onOpenRecord, query: controlledQue
     <div className="global-search-screen">
       <header className="global-search-header">
         <img className="global-search-brand" src="/assets/global-search-approved/brand.webp" alt="Drawary" />
-        <h1>검색</h1>
-        <p>모든 서랍의 보관품을 한 번에 찾아보세요.</p>
+        <h1>{t('검색')}</h1>
+        <p>{t('모든 서랍의 보관품을 한 번에 찾아보세요.')}</p>
       </header>
 
       <div className="global-search-box">
@@ -60,32 +61,32 @@ export function GlobalSearchScreen({ records, onOpenRecord, query: controlledQue
           type="search"
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="보관품 이름, 메모, 서랍 이름 검색"
+          placeholder={t('보관품 이름, 메모, 서랍 이름 검색')}
         />
-        {query && <button type="button" onClick={() => setQuery('')} aria-label="검색어 지우기">×</button>}
+        {query && <button type="button" onClick={() => setQuery('')} aria-label={t('검색어 지우기')}>×</button>}
       </div>
 
       <main className="global-search-content">
         {!q && (
           <div className="global-search-empty">
             <img src="/assets/global-search-approved/search_empty.webp" alt="" />
-            <strong>찾고 싶은 보관품이 있나요?</strong>
-            <span>검색어를 입력하면<br />모든 서랍에서 함께 찾아드려요.</span>
+            <strong>{t('찾고 싶은 보관품이 있나요?')}</strong>
+            <span>{tl('검색어를 입력하면\n모든 서랍에서 함께 찾아드려요.')}</span>
           </div>
         )}
 
         {q && results.length === 0 && (
           <div className="global-search-empty">
             <img src="/assets/global-search-approved/search_empty.webp" alt="" />
-            <strong>검색 결과가 없어요.</strong>
-            <span>다른 검색어로 다시 찾아보세요.</span>
+            <strong>{t('검색 결과가 없어요.')}</strong>
+            <span>{t('다른 검색어로 다시 찾아보세요.')}</span>
           </div>
         )}
 
         {results.length > 0 && (
           <section>
             <div className="global-search-result-head">
-              <strong>검색 결과</strong><span>{results.length}건</span>
+              <strong>{t('검색 결과')}</strong><span>{t('{n}건', { n: results.length })}</span>
             </div>
             <div className="global-search-result-list">
               {results.map(r => (

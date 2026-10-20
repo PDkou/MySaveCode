@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './RecurrenceEndConditionScreen.css';
+import { t } from '../i18n';
 
 export type RecurrenceEndCondition =
   | { kind: 'never' }
@@ -19,9 +20,9 @@ export interface RecurrenceEndConditionScreenProps {
 // Exported so #37 (which only displays an already-committed condition)
 // can format the same label without duplicating this mapping.
 export function endConditionLabel(condition: RecurrenceEndCondition): string {
-  if (condition.kind === 'never') return '계속 만들기';
-  if (condition.kind === 'count') return `${condition.count}개 생성 후 종료`;
-  return condition.endDate ? `${condition.endDate}까지` : '날짜 정하기';
+  if (condition.kind === 'never') return t('계속 만들기');
+  if (condition.kind === 'count') return t('{count}개 생성 후 종료', { count: condition.count });
+  return condition.endDate ? t('{endDate}까지', { endDate: condition.endDate }) : t('날짜 정하기');
 }
 
 /**
@@ -46,9 +47,9 @@ export function RecurrenceEndConditionScreen({
   const [condition, setCondition] = useState<RecurrenceEndCondition>(initial);
 
   const options = [
-    { kind: 'never' as const, title: '계속 만들기', desc: '직접 멈출 때까지 계속 새 보관품을 만들어요.', icon: '/assets/ui-icons/icon_refresh.webp' },
-    { kind: 'count' as const, title: '횟수 정하기', desc: '정한 횟수만큼 만든 뒤 자동으로 끝나요.', icon: '/assets/ui-icons/icon_refresh.webp' },
-    { kind: 'date' as const, title: '날짜 정하기', desc: '정한 날짜까지만 새 보관품을 만들어요.', icon: '/assets/ui-icons/icon_calendar.webp' },
+    { kind: 'never' as const, title: t('계속 만들기'), desc: t('직접 멈출 때까지 계속 새 보관품을 만들어요.'), icon: '/assets/ui-icons/icon_refresh.webp' },
+    { kind: 'count' as const, title: t('횟수 정하기'), desc: t('정한 횟수만큼 만든 뒤 자동으로 끝나요.'), icon: '/assets/ui-icons/icon_refresh.webp' },
+    { kind: 'date' as const, title: t('날짜 정하기'), desc: t('정한 날짜까지만 새 보관품을 만들어요.'), icon: '/assets/ui-icons/icon_calendar.webp' },
   ];
 
   const selectKind = (kind: 'never' | 'count' | 'date') => {
@@ -64,7 +65,7 @@ export function RecurrenceEndConditionScreen({
 
   return (
     <main className="red-screen">
-      <ScreenHeader title="반복 종료 설정" onBack={onBack} height={88} />
+      <ScreenHeader title={t('반복 종료 설정')} onBack={onBack} height={88} />
 
       <section className="red-summary">
         <span className="red-summary-icon"><img src="/assets/field-types/field_date.webp" alt="" /></span>
@@ -72,12 +73,12 @@ export function RecurrenceEndConditionScreen({
           <strong>{targetName}</strong>
           <span>{dateFieldName} · {cycleLabel}</span>
         </span>
-        <span className="red-summary-tag">새 보관품 생성</span>
+        <span className="red-summary-tag">{t('새 보관품 생성')}</span>
       </section>
 
       <section className="red-intro">
-        <h2>새 보관품을 언제까지 만들까요?</h2>
-        <p>반복을 계속할지, 횟수나 날짜를 정해 끝낼지 선택해 주세요.</p>
+        <h2>{t('새 보관품을 언제까지 만들까요?')}</h2>
+        <p>{t('반복을 계속할지, 횟수나 날짜를 정해 끝낼지 선택해 주세요.')}</p>
       </section>
 
       <div className="red-options">
@@ -104,12 +105,12 @@ export function RecurrenceEndConditionScreen({
       {condition.kind === 'count' && (
         <div className="red-detail">
           <div className="red-detail-copy">
-            <strong>몇 개를 만들고 끝낼까요?</strong>
-            <span>현재 보관품은 횟수에 포함하지 않아요.</span>
+            <strong>{t('몇 개를 만들고 끝낼까요?')}</strong>
+            <span>{t('현재 보관품은 횟수에 포함하지 않아요.')}</span>
           </div>
           <div className="red-stepper">
             <button type="button" onClick={() => setCondition({ kind: 'count', count: Math.max(1, condition.count - 1) })}>−</button>
-            <strong>{condition.count}개</strong>
+            <strong>{t('{n}개', { n: condition.count })}</strong>
             <button type="button" onClick={() => setCondition({ kind: 'count', count: Math.min(999, condition.count + 1) })}>＋</button>
           </div>
         </div>
@@ -118,8 +119,8 @@ export function RecurrenceEndConditionScreen({
       {condition.kind === 'date' && (
         <div className="red-detail">
           <div className="red-detail-copy">
-            <strong>마지막 기준 날짜</strong>
-            <span>이 날짜를 넘기면 더 이상 만들지 않아요.</span>
+            <strong>{t('마지막 기준 날짜')}</strong>
+            <span>{t('이 날짜를 넘기면 더 이상 만들지 않아요.')}</span>
           </div>
           <input
             type="date"
@@ -129,12 +130,13 @@ export function RecurrenceEndConditionScreen({
         </div>
       )}
 
-      <div className="red-note">종료 조건은 나중에 반복 관리에서 언제든 바꿀 수 있어요.</div>
+      <div className="red-note">{t('종료 조건은 나중에 반복 관리에서 언제든 바꿀 수 있어요.')}</div>
 
       <div className="red-actions">
-        <button className="red-prev" type="button" onClick={onBack}>이전</button>
+        <button className="red-prev" type="button" onClick={onBack}>{t('이전')}</button>
         <button className="red-next" type="button" disabled={!canSubmit} onClick={() => canSubmit && onSubmit?.(condition)}>
-          반복 설정하기
+          
+          {t('반복 설정하기')}
         </button>
       </div>
     </main>

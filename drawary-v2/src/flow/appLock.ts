@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * App lock logic with no screen in it: PIN hashing, the wrong-PIN limiter and
  * how the saved security settings are read. Everything is saved as settings
@@ -66,7 +67,7 @@ const fromB64 = (b64: string): Uint8Array => Uint8Array.from(atob(b64), (c) => c
 
 async function derive(pin: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
   const subtle = globalThis.crypto?.subtle;
-  if (!subtle) throw new Error('이 환경에서는 PIN을 안전하게 저장할 수 없어요 (보안 연결이 필요해요).');
+  if (!subtle) throw new Error(t('이 환경에서는 PIN을 안전하게 저장할 수 없어요 (보안 연결이 필요해요).'));
   const key = await subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits']);
   const bits = await subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: salt as BufferSource, iterations }, key, 256);
   return new Uint8Array(bits);
@@ -74,7 +75,7 @@ async function derive(pin: string, salt: Uint8Array, iterations: number): Promis
 
 /** Hashes a new PIN with a fresh random salt. */
 export async function hashPin(pin: string): Promise<PinRecord> {
-  if (!isValidPin(pin)) throw new Error('PIN은 숫자 4자리여야 해요.');
+  if (!isValidPin(pin)) throw new Error(t('PIN은 숫자 4자리여야 해요.'));
   const salt = globalThis.crypto.getRandomValues(new Uint8Array(16));
   const hash = await derive(pin, salt, PBKDF2_ITERATIONS);
   return { v: 1, salt: toB64(salt), hash: toB64(hash), iterations: PBKDF2_ITERATIONS };
@@ -120,11 +121,11 @@ export type VerifyResult =
 
 /** The message under the PIN dots after a failed try. */
 export const cooldownMessage = (waitMs: number): string =>
-  `너무 많이 틀렸어요. ${Math.ceil(waitMs / 1000)}초 뒤에 다시 입력해 주세요.`;
+  t('너무 많이 틀렸어요. {seconds}초 뒤에 다시 입력해 주세요.', { seconds: Math.ceil(waitMs / 1000) });
 
 export function failureMessage(r: Extract<VerifyResult, { ok: false }>): string {
   if (r.waitMs > 0) return cooldownMessage(r.waitMs);
-  return 'PIN이 일치하지 않아요. 다시 입력해 주세요.';
+  return t('PIN이 일치하지 않아요. 다시 입력해 주세요.');
 }
 
 // ----------------------------------------------------------------- settings

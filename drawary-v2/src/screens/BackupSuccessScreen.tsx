@@ -1,5 +1,6 @@
 import { ScreenHeader } from '../components/ScreenHeader';
 import './BackupSuccessScreen.css';
+import { t, tx } from '../i18n';
 
 export interface BackupSuccessScreenProps {
   fileName: string;
@@ -18,20 +19,20 @@ export interface BackupSuccessScreenProps {
  */
 export function BackupSuccessScreen({ fileName, location, description, onConfirm }: BackupSuccessScreenProps) {
   return (
-    <main className="bks48-screen" aria-label="백업 완료 화면">
-      <ScreenHeader title="완료" height={91} />
+    <main className="bks48-screen" aria-label={t('백업 완료 화면')}>
+      <ScreenHeader title={t('완료')} height={91} />
       <span className="bks48-back" aria-hidden="true" />
-      <section className="bks48-panel" aria-label="백업 완료 내용">
+      <section className="bks48-panel" aria-label={t('백업 완료 내용')}>
         <div className="bks48-content">
-          <img className="bks48-art" src="/assets/states/backup/state_backup_success.webp" alt="백업을 완료하고 확인 표시를 든 서랍장 마스코트" />
-          <h1 className="bks48-heading">백업이 완료됐어요!</h1>
-          <div className="bks48-destination">저장 위치: <strong>{location}</strong></div>
+          <img className="bks48-art" src="/assets/states/backup/state_backup_success.webp" alt={t('백업을 완료하고 확인 표시를 든 서랍장 마스코트')} />
+          <h1 className="bks48-heading">{t('백업이 완료됐어요!')}</h1>
+          <div className="bks48-destination">{tx('저장 위치: {place}', { place: <strong>{location}</strong> })}</div>
           <div className="bks48-file-card">
             <div className="bks48-filename">{fileName}</div>
             <div className="bks48-details">{description}</div>
           </div>
         </div>
-        <button className="bks48-confirm" type="button" onClick={onConfirm}>확인</button>
+        <button className="bks48-confirm" type="button" onClick={onConfirm}>{t('확인')}</button>
       </section>
     </main>
   );

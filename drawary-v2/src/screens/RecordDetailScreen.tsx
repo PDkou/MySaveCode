@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './RecordDetailScreen.css';
 import { RecordDeleteConfirmScreen } from './RecordDeleteConfirmScreen';
+import { t } from '../i18n';
 
 export type RecordFieldType =
   | 'text'
@@ -103,7 +104,7 @@ export function RecordDetailScreen({
     <main className="rd-screen">
       <ScreenHeader
         variant="stacked"
-        title="보관품 상세"
+        title={t('보관품 상세')}
         onBack={onBack}
         height={92}
         rightSlot={
@@ -113,13 +114,13 @@ export function RecordDetailScreen({
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
               aria-expanded={menuOpen}
-              aria-label="보관품 메뉴"
+              aria-label={t('보관품 메뉴')}
             >•••</button>
             {menuOpen && (
               <div className="rd-menu-popover" role="menu">
                 <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setDeleteConfirmOpen(true); }}>
                   <img src="/assets/ui-icons/icon_delete.webp" alt="" />
-                  <span>보관품 삭제</span>
+                  <span>{t('보관품 삭제')}</span>
                 </button>
               </div>
             )}
@@ -131,15 +132,15 @@ export function RecordDetailScreen({
         {photoLoading ? (
           <div className="rd-photo" aria-busy="true" />
         ) : photoUri ? (
-          <button type="button" className="rd-photo" onClick={onOpenPhoto} aria-label="사진 크게 보기">
-            <img src={photoUri} alt={`${title} 사진`} />
+          <button type="button" className="rd-photo" onClick={onOpenPhoto} aria-label={t('사진 크게 보기')}>
+            <img src={photoUri} alt={t('{title} 사진', { title })} />
           </button>
         ) : (
-          <div className="rd-photo"><div className="rd-photo-empty">사진 없음</div></div>
+          <div className="rd-photo"><div className="rd-photo-empty">{t('사진 없음')}</div></div>
         )}
 
         <div className="rd-heading">
-          <small>{drawerName} 서랍</small>
+          <small>{t('{name} 서랍', { name: drawerName })}</small>
           <h2>{title}</h2>
         </div>
 
@@ -162,7 +163,7 @@ export function RecordDetailScreen({
 
         <button className="rd-edit" type="button" onClick={onEdit}>
           <img src="/assets/ui-icons/icon_edit.webp" alt="" />
-          <span>수정하기</span>
+          <span>{t('수정하기')}</span>
         </button>
       </section>
 

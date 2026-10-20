@@ -1,5 +1,6 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import './FeedbackScreen.css';
+import { t, tl, K } from '../i18n';
 
 export type FeedbackType = 'improvement' | 'bug' | 'feature' | 'other';
 
@@ -16,14 +17,14 @@ export interface FeedbackScreenProps {
 }
 
 const TYPE_CONFIG: Record<FeedbackType, { name: string; icon: string; iconClass?: string; placeholder: string; hint: string }> = {
-  improvement: { name: '개선 제안', icon: '/assets/decor/decor_sprout_01.webp', placeholder: '어떤 점이 불편했나요? 이렇게 바뀌면 좋겠다는 생각도 좋아요.', hint: '어떤 화면에서 느낀 점인지 알려주시면 도움이 돼요.' },
-  bug: { name: '오류 제보', icon: '/assets/ui-icons/feedback_error_from_approved.png', iconClass: 'fb59-approved-crop', placeholder: '어느 화면에서 어떤 문제가 있었나요? 발생한 순서대로 적어주세요.', hint: '오류가 난 화면과 동작을 적어주시면 확인에 도움이 돼요.' },
-  feature: { name: '기능 요청', icon: '/assets/decor/decor_flower_01.webp', placeholder: '어떤 기능이 있으면 좋을까요? 사용하는 상황도 알려주세요.', hint: '어떤 상황에서 필요한지 함께 알려주시면 좋아요.' },
-  other: { name: '기타', icon: '/assets/ui-icons/feedback_other_from_approved.png', iconClass: 'fb59-approved-crop', placeholder: '하고 싶은 이야기를 자유롭게 남겨주세요.', hint: '칭찬, 질문, 다른 의견도 모두 환영해요.' },
+  improvement: { name: K('개선 제안'), icon: '/assets/decor/decor_sprout_01.webp', placeholder: K('어떤 점이 불편했나요? 이렇게 바뀌면 좋겠다는 생각도 좋아요.'), hint: K('어떤 화면에서 느낀 점인지 알려주시면 도움이 돼요.') },
+  bug: { name: K('오류 제보'), icon: '/assets/ui-icons/feedback_error_from_approved.png', iconClass: 'fb59-approved-crop', placeholder: K('어느 화면에서 어떤 문제가 있었나요? 발생한 순서대로 적어주세요.'), hint: K('오류가 난 화면과 동작을 적어주시면 확인에 도움이 돼요.') },
+  feature: { name: K('기능 요청'), icon: '/assets/decor/decor_flower_01.webp', placeholder: K('어떤 기능이 있으면 좋을까요? 사용하는 상황도 알려주세요.'), hint: K('어떤 상황에서 필요한지 함께 알려주시면 좋아요.') },
+  other: { name: K('기타'), icon: '/assets/ui-icons/feedback_other_from_approved.png', iconClass: 'fb59-approved-crop', placeholder: K('하고 싶은 이야기를 자유롭게 남겨주세요.'), hint: K('칭찬, 질문, 다른 의견도 모두 환영해요.') },
 };
 
 const TYPES: FeedbackType[] = ['improvement', 'bug', 'feature', 'other'];
-const DEFAULT_ATTACH_CAPTION = '오류 화면이 있다면 첨부해 주세요. (선택)';
+const DEFAULT_ATTACH_CAPTION = K('오류 화면이 있다면 첨부해 주세요. (선택)');
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
 
@@ -77,14 +78,14 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
     }
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       e.target.value = '';
-      setAttachCaption('PNG, JPG, WebP 이미지를 선택해 주세요.');
-      inform('이미지 파일만 첨부할 수 있어요.');
+      setAttachCaption(t('PNG, JPG, WebP 이미지를 선택해 주세요.'));
+      inform(t('이미지 파일만 첨부할 수 있어요.'));
       return;
     }
     if (file.size > MAX_ATTACHMENT_BYTES) {
       e.target.value = '';
-      setAttachCaption('8MB 이하 이미지를 선택해 주세요.');
-      inform('이미지 파일은 8MB 이하로 선택해 주세요.');
+      setAttachCaption(t('8MB 이하 이미지를 선택해 주세요.'));
+      inform(t('이미지 파일은 8MB 이하로 선택해 주세요.'));
       return;
     }
     setAttachment(file);
@@ -97,12 +98,12 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
     const trimmedEmail = email.trim();
     if (!trimmedMessage) {
       messageRef.current?.focus();
-      inform('피드백 내용을 입력해 주세요.');
+      inform(t('피드백 내용을 입력해 주세요.'));
       return;
     }
     if (trimmedEmail && !emailRef.current?.checkValidity()) {
       emailRef.current?.focus();
-      inform('이메일 주소를 확인해 주세요.');
+      inform(t('이메일 주소를 확인해 주세요.'));
       return;
     }
     const draft: FeedbackDraft = { type, message: trimmedMessage, email: trimmedEmail, attachment: type === 'bug' ? attachment : null };
@@ -113,52 +114,52 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
       // App.tsx does wire a real onSubmit (no backend, but a real
       // "received" acknowledgment), show one here instead of silently
       // calling the callback with no feedback to the user.
-      inform('피드백을 보내주셔서 감사해요.');
+      inform(t('피드백을 보내주셔서 감사해요.'));
       onSubmit(draft);
     } else {
-      inform('현재 미리보기에서는 전송되지 않아요. 실제 앱 연결이 필요해요.');
+      inform(t('현재 미리보기에서는 전송되지 않아요. 실제 앱 연결이 필요해요.'));
     }
   };
 
   const config = TYPE_CONFIG[type];
 
   return (
-    <main className="fb59-screen" aria-label="Drawary 피드백 화면">
+    <main className="fb59-screen" aria-label={t('Drawary 피드백 화면')}>
       <header className="fb59-appbar">
-        {onBack && <button className="fb59-back" type="button" aria-label="뒤로 가기" onClick={onBack} />}
-        <h1>피드백</h1>
+        {onBack && <button className="fb59-back" type="button" aria-label={t('뒤로 가기')} onClick={onBack} />}
+        <h1>{t('피드백')}</h1>
       </header>
       <div className="fb59-main">
-        <section className="fb59-hero" aria-label="피드백 안내">
-          <p className="fb59-hero-kicker">당신의 의견이 필요해요</p>
-          <h2 className="fb59-hero-title">작은 의견 하나가<br />더 편리한 Drawary를<br />만들어요.</h2>
-          <p className="fb59-hero-desc">좋았던 점도, 아쉬웠던 점도<br />편하게 들려주세요.</p>
+        <section className="fb59-hero" aria-label={t('피드백 안내')}>
+          <p className="fb59-hero-kicker">{t('당신의 의견이 필요해요')}</p>
+          <h2 className="fb59-hero-title">{tl('작은 의견 하나가\n더 편리한 Drawary를\n만들어요.')}</h2>
+          <p className="fb59-hero-desc">{tl('좋았던 점도, 아쉬웠던 점도\n편하게 들려주세요.')}</p>
           <div className="fb59-hero-orb" aria-hidden="true" />
           <img className="fb59-hero-mascot" src="/assets/mascot/mascot_lean_on_drawer.webp" alt="" />
           <img className="fb59-hero-flower" src="/assets/decor/decor_flower_01.webp" alt="" />
         </section>
         <form id="fb59-form" onSubmit={handleSubmit} noValidate>
-          <h3 className="fb59-section-label">어떤 이야기인가요?</h3>
-          <div className="fb59-types" role="group" aria-label="피드백 종류 선택">
-            {TYPES.map((t) => {
-              const cfg = TYPE_CONFIG[t];
+          <h3 className="fb59-section-label">{t('어떤 이야기인가요?')}</h3>
+          <div className="fb59-types" role="group" aria-label={t('피드백 종류 선택')}>
+            {TYPES.map((ty) => {
+              const cfg = TYPE_CONFIG[ty];
               return (
                 <button
-                  key={t}
+                  key={ty}
                   type="button"
-                  className={`fb59-type${type === t ? ' selected' : ''}`}
-                  aria-pressed={type === t}
-                  onClick={() => selectType(t)}
+                  className={`fb59-type${type === ty ? ' selected' : ''}`}
+                  aria-pressed={type === ty}
+                  onClick={() => selectType(ty)}
                 >
                   <span className="fb59-type-icon"><img className={cfg.iconClass} src={cfg.icon} alt="" /></span>
-                  <span className="fb59-type-name">{cfg.name}</span>
+                  <span className="fb59-type-name">{t(cfg.name)}</span>
                   <span className="fb59-type-check" aria-hidden="true">✓</span>
                 </button>
               );
             })}
           </div>
           <div className="fb59-message-title">
-            <h3 className="fb59-section-label"><label htmlFor="fb59-message">내용</label></h3>
+            <h3 className="fb59-section-label"><label htmlFor="fb59-message">{t('내용')}</label></h3>
             <span className="fb59-counter">{message.length} / 1000</span>
           </div>
           <textarea
@@ -166,18 +167,18 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
             ref={messageRef}
             maxLength={1000}
             required
-            placeholder={config.placeholder}
+            placeholder={t(config.placeholder)}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
           <div className="fb59-tip" role="note">
             <img className="fb59-tip-flower" src="/assets/decor/decor_flower_01.webp" alt="" />
-            <p>{config.hint}</p>
+            <p>{t(config.hint)}</p>
           </div>
           {type === 'bug' && (
             <label className="fb59-attach" htmlFor="fb59-attachment">
               <span className="fb59-attach-icon" aria-hidden="true">＋</span>
-              <span className="fb59-attach-copy"><strong>화면 사진 첨부</strong><span>{attachCaption}</span></span>
+              <span className="fb59-attach-copy"><strong>{t('화면 사진 첨부')}</strong><span>{attachCaption === DEFAULT_ATTACH_CAPTION ? t(attachCaption) : attachCaption}</span></span>
               <span className="fb59-attach-right" aria-hidden="true">›</span>
             </label>
           )}
@@ -189,7 +190,7 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
             onChange={handleAttachmentChange}
           />
           <div className="fb59-email-title">
-            <div className="fb59-email-row"><label htmlFor="fb59-email">답변 받을 이메일</label><span className="fb59-optional">선택</span></div>
+            <div className="fb59-email-row"><label htmlFor="fb59-email">{t('답변 받을 이메일')}</label><span className="fb59-optional">{t('선택@opt')}</span></div>
           </div>
           <input
             id="fb59-email"
@@ -200,12 +201,12 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <p className="fb59-email-hint">답변이 필요한 경우에만 적어주세요. 입력하지 않아도 돼요.</p>
+          <p className="fb59-email-hint">{t('답변이 필요한 경우에만 적어주세요. 입력하지 않아도 돼요.')}</p>
         </form>
       </div>
       <div className="fb59-bottom">
-        <button className="fb59-send uf-cta-primary" form="fb59-form" type="submit">피드백 보내기</button>
-        <p className="fb59-bottom-note">입력하신 내용을 확인한 뒤 보내주세요.</p>
+        <button className="fb59-send uf-cta-primary" form="fb59-form" type="submit">{t('피드백 보내기')}</button>
+        <p className="fb59-bottom-note">{t('입력하신 내용을 확인한 뒤 보내주세요.')}</p>
       </div>
       {status && <div className="fb59-status" role="status" aria-live="polite">{status}</div>}
     </main>

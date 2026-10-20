@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './BackupTypeScreen.css';
+import { t, tl } from '../i18n';
 
 export type BackupMode = 'include' | 'exclude';
 
@@ -21,23 +22,23 @@ export function BackupTypeScreen({ initialMode = 'include', onBack, onNext }: Ba
   const [mode, setMode] = useState<BackupMode>(initialMode);
 
   const options: { id: BackupMode; icon: string; title: string; desc: string }[] = [
-    { id: 'include', icon: '/assets/field-types/field_photo.webp', title: '사진 포함', desc: '서랍과 기록, 사진을 함께 저장해요.' },
-    { id: 'exclude', icon: '/assets/ui-icons/icon_save.webp', title: '사진 제외', desc: '사진을 제외하고 기록만 저장해요.' },
+    { id: 'include', icon: '/assets/field-types/field_photo.webp', title: t('사진 포함'), desc: t('서랍과 기록, 사진을 함께 저장해요.') },
+    { id: 'exclude', icon: '/assets/ui-icons/icon_save.webp', title: t('사진 제외'), desc: t('사진을 제외하고 기록만 저장해요.') },
   ];
 
   return (
     <div className="bkt45-screen">
       <header className="bkt45-header">
-        {onBack && <button type="button" className="bkt45-back" onClick={onBack} aria-label="데이터 관리로 돌아가기" />}
-        <h1>백업하기</h1>
+        {onBack && <button type="button" className="bkt45-back" onClick={onBack} aria-label={t('데이터 관리로 돌아가기')} />}
+        <h1>{t('백업하기')}</h1>
       </header>
       <main className="bkt45-panel">
-        <h2 className="bkt45-section-title">백업할 내용 선택</h2>
-        <section className="bkt45-hero" aria-label="백업 안내">
+        <h2 className="bkt45-section-title">{t('백업할 내용 선택')}</h2>
+        <section className="bkt45-hero" aria-label={t('백업 안내')}>
           <div className="bkt45-hero-art"><img src="/assets/states/backup/state_backup_local_save.webp" alt="" /></div>
-          <div className="bkt45-hero-copy"><strong>내 기록을 안전하게 보관해요</strong><span>사진도 함께 담을지<br />선택해 주세요.</span></div>
+          <div className="bkt45-hero-copy"><strong>{t('내 기록을 안전하게 보관해요')}</strong><span>{tl('사진도 함께 담을지\n선택해 주세요.')}</span></div>
         </section>
-        <h3 className="bkt45-options-heading" id="bkt45-option-title">백업 종류</h3>
+        <h3 className="bkt45-options-heading" id="bkt45-option-title">{t('백업 종류')}</h3>
         <div className="bkt45-option-list" role="radiogroup" aria-labelledby="bkt45-option-title">
           {options.map((opt) => (
             <button
@@ -46,7 +47,7 @@ export function BackupTypeScreen({ initialMode = 'include', onBack, onNext }: Ba
               className="bkt45-option"
               role="radio"
               aria-checked={mode === opt.id}
-              aria-label={`${opt.title} 백업 선택`}
+              aria-label={t('{title} 백업 선택', { title: opt.title })}
               onClick={() => setMode(opt.id)}
             >
               <span className="bkt45-option-icon"><img src={opt.icon} alt="" /></span>
@@ -57,9 +58,9 @@ export function BackupTypeScreen({ initialMode = 'include', onBack, onNext }: Ba
         </div>
         <aside className="bkt45-select-hint">
           <img src="/assets/ui-icons/icon_info.webp" alt="" />
-          <span>다음 단계에서 저장 위치를 선택할 수 있습니다.</span>
+          <span>{t('다음 단계에서 저장 위치를 선택할 수 있습니다.')}</span>
         </aside>
-        <button type="button" className="bkt45-bottom-action" onClick={() => onNext?.(mode)}>다음</button>
+        <button type="button" className="bkt45-bottom-action" onClick={() => onNext?.(mode)}>{t('다음')}</button>
       </main>
     </div>
   );

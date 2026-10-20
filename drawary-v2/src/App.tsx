@@ -11,7 +11,7 @@ import type { GlobalSearchRecord } from './screens/GlobalSearchScreen';
 import { SettingsHomeScreen } from './screens/SettingsHomeScreen';
 import { DrawerFieldsScreen, toFieldItem } from './screens/DrawerFieldsScreen';
 import {
-  DEFAULT_DRAFT_FIELDS, QUICK_ADD_KINDS, addDraftField, moveDraftField, removeDraftField, updateDraftField,
+  defaultDraftFields, QUICK_ADD_KINDS, addDraftField, moveDraftField, removeDraftField, updateDraftField,
   type DraftField,
 } from './flow/drawerDraft';
 import { NewFieldScreen } from './screens/NewFieldScreen';
@@ -52,6 +52,7 @@ import { computeNotificationPlan } from './flow/notificationPlan';
 import { hasNativeBiometric, authenticateBiometric, syncNotificationPlan } from './data/nativeBridge';
 import { useAppLock } from './flow/useAppLock';
 import { applyTheme, readTheme, THEME_KEY } from './flow/theme';
+import { LANGUAGE_KEY, readLanguage, setLang } from './i18n';
 import { savePin, setAppLock, setAutoLock, setBiometric, verifyPin } from './data/appLockActions';
 import { toISODate } from './flow/recurrence';
 import { RecurrenceTargetDateScreen } from './screens/RecurrenceTargetDateScreen';
@@ -72,19 +73,20 @@ import { RestoreReviewScreen } from './screens/RestoreReviewScreen';
 import { RestoreProgressScreen } from './screens/RestoreProgressScreen';
 import { RestoreSuccessScreen } from './screens/RestoreSuccessScreen';
 import { DataResetConfirmScreen } from './screens/DataResetConfirmScreen';
-import { LanguageSettingsScreen, type LanguageCode } from './screens/LanguageSettingsScreen';
+import { LanguageSettingsScreen } from './screens/LanguageSettingsScreen';
 import { HelpMainScreen } from './screens/HelpMainScreen';
 import { FaqScreen } from './screens/FaqScreen';
 import { GuideScreen, type GuideRoute } from './screens/GuideScreen';
 import { InfoScreen } from './screens/InfoScreen';
 import { FeedbackScreen } from './screens/FeedbackScreen';
 import { FixedCanvas } from './components/FixedCanvas';
+import { getLocale, t, K } from './i18n';
 
 type StandaloneRoute = 'notification-common' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management' | 'backup-type' | 'backup-destination' | 'backup-success' | 'restore-file-picker' | 'restore-review' | 'restore-progress' | 'restore-success' | 'data-reset-confirm' | 'language-settings' | 'help-main' | 'faq' | 'guide' | 'info' | 'feedback';
 type Route = BottomNavTab | 'create-drawer' | StandaloneRoute;
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
 const NAMES: Record<Exclude<Route, StandaloneRoute>, string> = {
-  home: '홈', search: '검색', stats: '통계', settings: '설정', 'create-drawer': '새 서랍 만들기',
+  home: K('홈'), search: K('검색'), stats: K('통계'), settings: K('설정'), 'create-drawer': K('새 서랍 만들기'),
 };
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
 const STANDALONE_ROUTES: readonly Route[] = ['notification-common', 'splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm', 'language-settings', 'help-main', 'faq', 'guide', 'info', 'feedback'];
@@ -116,16 +118,16 @@ export default function App() {
   const [draftFields, setDraftFields] = useState<DraftField[] | null>(null);
   const [editingDraftFieldId, setEditingDraftFieldId] = useState<string | null>(null);
   const creatingRef = useRef(false);
-  const fieldsDraft: DraftField[] = draftFields ?? [...DEFAULT_DRAFT_FIELDS];
+  const fieldsDraft: DraftField[] = draftFields ?? defaultDraftFields();
   const editingDraftField = fieldsDraft.find((f) => f.id === editingDraftFieldId);
-  const alertError = (e: unknown) => window.alert(e instanceof Error ? e.message : '저장하지 못했어요.');
+  const alertError = (e: unknown) => window.alert(e instanceof Error ? e.message : t('저장하지 못했어요.'));
   const resetCreateFlow = () => { setCreateDraft(null); setDraftFields(null); setEditingDraftFieldId(null); };
   const tryDraft = (next: () => DraftField[]): boolean => {
     try { setDraftFields(next()); return true; } catch (e) { alertError(e); return false; }
   };
   const completeCreate = async () => {
     if (creatingRef.current) return;
-    if (!createDraft) { window.alert('서랍 이름을 먼저 정해 주세요.'); navigate('create-drawer'); return; }
+    if (!createDraft) { window.alert(t('서랍 이름을 먼저 정해 주세요.')); navigate('create-drawer'); return; }
     creatingRef.current = true;
     try {
       const { drawer } = await actions.createDrawerWithFields(
@@ -183,7 +185,7 @@ export default function App() {
   const exportTable = (kind: 'csv' | 'pdf', shown: ReturnType<typeof toRows>) => {
     if (!currentDrawer) return;
     if (kind === 'csv') saveBlob(new Blob([buildCsv(tableColumns, shown)], { type: 'text/csv;charset=utf-8' }), exportFileName(currentDrawer.name, 'csv'));
-    else printHtml(buildPrintHtml(currentDrawer.name, tableColumns, shown, new Date().toLocaleDateString('ko-KR')));
+    else printHtml(buildPrintHtml(currentDrawer.name, tableColumns, shown, new Date().toLocaleDateString(getLocale())));
   };
   const saveTableView = (view: TableViewState) => {
     if (currentDrawer) void actions.setSetting(`tableview.${currentDrawer.id}`, view).catch(alertError);
@@ -269,7 +271,7 @@ export default function App() {
         dateFieldName: currentFields.find((f) => f.id === r.fieldId)?.name ?? '',
         cycleLabel: cycleLabel(r.cycle, r.interval),
         enabled: !r.finished,
-        statusLabel: r.finished ? '끝남' : r.createdCount > 0 ? `${r.createdCount}개 만듦` : undefined,
+        statusLabel: r.finished ? t('끝남') : r.createdCount > 0 ? t('{createdCount}개 만듦', { createdCount: r.createdCount }) : undefined,
       }))
     : [];
 
@@ -304,6 +306,11 @@ export default function App() {
   // "앱 잠금 사용" switched off asks for the current PIN first.
   const [confirmLockOff, setConfirmLockOff] = useState(false);
 
+  // #54 언어: the saved choice (or, on the very first start, the phone's language) is what every t() call answers in.
+  // Set while rendering, before any screen below is drawn; a change re-renders the whole tree because the setting lives in the store.
+  const language = readLanguage(store.settings);
+  setLang(language);
+
   // #39 테마: the saved choice is put on the page whenever it changes (and once the saved data has loaded).
   const theme = readTheme(store.settings);
   useEffect(() => { if (store.status === 'ready') applyTheme(theme); }, [store.status, theme]);
@@ -314,7 +321,6 @@ export default function App() {
   const [restoreFileName, setRestoreFileName] = useState<string | null>(null);
 
   // #54-#59 언어/도움말/FAQ/가이드/정보/피드백.
-  const [savedLanguage, setSavedLanguage] = useState<LanguageCode>('ko');
   const [faqTopic, setFaqTopic] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -379,8 +385,8 @@ export default function App() {
           onBack={() => navigate('create-drawer')}
           onAddField={() => navigate('new-field')}
           onEditField={(field) => { setEditingDraftFieldId(field.id); navigate('field-edit'); }}
-          onQuickAdd={(label) => { tryDraft(() => addDraftField(fieldsDraft, { name: label, kind: QUICK_ADD_KINDS[label] ?? 'text', required: false, options: [] })); }}
-          onReorder={(from, to) => setDraftFields((prev) => moveDraftField(prev ?? [...DEFAULT_DRAFT_FIELDS], from, to))}
+          onQuickAdd={(label) => { tryDraft(() => addDraftField(fieldsDraft, { name: t(label), kind: QUICK_ADD_KINDS[label] ?? 'text', required: false, options: [] })); }}
+          onReorder={(from, to) => setDraftFields((prev) => moveDraftField(prev ?? defaultDraftFields(), from, to))}
           onComplete={() => { void completeCreate(); }}
         />
       </FixedCanvas>
@@ -559,12 +565,12 @@ export default function App() {
           rules={drawerNotifRules.map((n) => ({
             id: n.id,
             fieldName: currentFields.find((f) => f.id === n.fieldId)?.name ?? '',
-            when: `${n.daysBefore === 0 ? '당일' : `${n.daysBefore}일 전`} · ${n.time}`,
+            when: `${n.daysBefore === 0 ? t('당일') : t('{daysBefore}일 전', { daysBefore: n.daysBefore })} · ${n.time}`,
           }))}
           onOpenRule={(id) => {
             const n = drawerNotifRules.find((x) => x.id === id);
             const field = currentFields.find((f) => f.id === n?.fieldId);
-            if (n && window.confirm(`'${field?.name ?? ''}' ${n.daysBefore === 0 ? '당일' : `${n.daysBefore}일 전`} ${n.time} 알림을 삭제할까요?`)) {
+            if (n && window.confirm(t("'{field}' {when} {time} 알림을 삭제할까요?", { field: field?.name ?? '', when: n.daysBefore === 0 ? t('당일') : t('{daysBefore}일 전', { daysBefore: n.daysBefore }), time: n.time }))) {
               void actions.deleteNotificationRule(id).catch(alertError);
             }
           }}
@@ -669,7 +675,7 @@ export default function App() {
           onAdd={() => navigate('recurrence-target-date')}
           onOpenRule={(id) => {
             const r = store.recurrenceRules.find((x) => x.id === id);
-            if (r && window.confirm(`'${r.targetLabel}' 반복 설정을 삭제할까요?\n이미 만들어진 보관품은 그대로 남아요.`)) {
+            if (r && window.confirm(t('\'{targetLabel}\' 반복 설정을 삭제할까요?\n이미 만들어진 보관품은 그대로 남아요.', { targetLabel: r.targetLabel }))) {
               void actions.deleteRecurrenceRule(id).catch(alertError);
             }
           }}
@@ -701,7 +707,7 @@ export default function App() {
             const rec = currentRecords.find((r) => r.id === targetId);
             const df = currentFields.find((f) => f.id === dateFieldId);
             if (!rec || typeof rec.values[dateFieldId] !== 'string') {
-              window.alert(`이 보관품에는 '${df?.name ?? '날짜'}' 날짜가 없어요. 날짜를 먼저 채워 주세요.`);
+              window.alert(t("이 보관품에는 '{field}' 날짜가 없어요. 날짜를 먼저 채워 주세요.", { field: df?.name ?? t('날짜') }));
               return;
             }
             setRecurrenceTargetId(targetId);
@@ -711,7 +717,7 @@ export default function App() {
         />
         {targetPickerOpen && (
           <RecordPickerSheet
-            title="반복할 보관품 선택"
+            title={t('반복할 보관품 선택')}
             records={currentRecords.map((r) => {
               const sum = summarizeRecord(currentFields, r);
               return { id: r.id, title: sum.title, detail: sum.dateLabel };
@@ -829,7 +835,7 @@ export default function App() {
           onToggleBiometric={() => {
             if (sec.biometric) { void setBiometric(false).catch(alertError); return; }
             void authenticateBiometric()
-              .then((ok) => (ok ? setBiometric(true) : window.alert('지문/얼굴 인식을 확인하지 못했어요. 다시 시도해 주세요.')))
+              .then((ok) => (ok ? setBiometric(true) : window.alert(t('지문/얼굴 인식을 확인하지 못했어요. 다시 시도해 주세요.'))))
               .catch(alertError);
           }}
         />
@@ -947,7 +953,7 @@ export default function App() {
     // displayed values -- there's no real backup engine to report
     // real ones yet (same caveat as every other backup/restore screen
     // in this batch).
-    const description = backupMode === 'include' ? '사진 포함 백업' : '사진 제외 백업';
+    const description = backupMode === 'include' ? t('사진 포함 백업') : t('사진 제외 백업');
     return <main className="drawary-app-shell" data-route="backup-success">
       <FixedCanvas height={844}>
         <BackupSuccessScreen
@@ -981,10 +987,10 @@ export default function App() {
       <FixedCanvas height={844}>
         <RestoreReviewScreen
           fileName={restoreFileName ?? 'Drawary_Backup_2026-10-05.zip'}
-          fileDetails="2026.10.05 14:58 · 백업 파일 1개"
+          fileDetails={t('2026.10.05 14:58 · 백업 파일 1개')}
           hasPhotos
-          recordSummary="5개 서랍 · 128개 기록"
-          photoSummary="42장"
+          recordSummary={t('5개 서랍 · 128개 기록')}
+          photoSummary={t('42장')}
           onBack={() => navigate('restore-file-picker')}
           onConfirmRestore={() => navigate('restore-progress')}
         />
@@ -1011,9 +1017,9 @@ export default function App() {
     return <main className="drawary-app-shell" data-route="restore-success">
       <FixedCanvas height={844}>
         <RestoreSuccessScreen
-          recordCount="5개 서랍 · 128개 기록"
-          photoCount="42장"
-          settingsStatus="복원 완료"
+          recordCount={t('5개 서랍 · 128개 기록')}
+          photoCount={t('42장')}
+          settingsStatus={t('복원 완료')}
           onBack={() => navigate('data-management')}
           onConfirm={() => navigate('data-management')}
         />
@@ -1042,10 +1048,10 @@ export default function App() {
     return <main className="drawary-app-shell" data-route="language-settings">
       <FixedCanvas height={844}>
         <LanguageSettingsScreen
-          savedLanguage={savedLanguage}
+          savedLanguage={language}
           onBack={returnToTab}
           onCancel={returnToTab}
-          onApply={(code) => { setSavedLanguage(code); returnToTab(); }}
+          onApply={(code) => { void actions.setSetting(LANGUAGE_KEY, code).then(returnToTab).catch(alertError); }}
         />
       </FixedCanvas>
     </main>;
@@ -1125,7 +1131,7 @@ export default function App() {
             if (!currentDrawer) return;
             actions.updateDrawer(currentDrawer.id, { name, iconKey: iconId })
               .then(() => navigate('drawer-manage'))
-              .catch((e: unknown) => window.alert(e instanceof Error ? e.message : '저장하지 못했어요.'));
+              .catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('저장하지 못했어요.')));
           }}
         />
       </FixedCanvas>
@@ -1144,14 +1150,14 @@ export default function App() {
     return <main className="drawary-app-shell" data-route="drawer-fields-manage">
       <FixedCanvas height={844}>
         <DrawerFieldsScreen
-          title="서랍칸 편집"
-          completeLabel="완료"
-          contextLabel={{ name: drawerDetailName, detail: `${currentFields.length}개 서랍칸` }}
+          title={t('서랍칸 편집')}
+          completeLabel={t('완료')}
+          contextLabel={{ name: drawerDetailName, detail: t('{length}개 서랍칸', { length: currentFields.length }) }}
           fields={manageList.map(toFieldItem)}
           onBack={() => navigate('drawer-manage')}
           onAddField={() => navigate('new-field-manage')}
           onEditField={(field) => { setManageFieldId(field.id); navigate('field-edit-manage'); }}
-          onQuickAdd={(label) => { void actions.addField(currentDrawer.id, { name: label, kind: QUICK_ADD_KINDS[label] ?? 'text' }).catch(alertError); }}
+          onQuickAdd={(label) => { void actions.addField(currentDrawer.id, { name: t(label), kind: QUICK_ADD_KINDS[label] ?? 'text' }).catch(alertError); }}
           onReorder={(from, to) => setManageOrder((prev) => {
             const ids = prev ?? currentFields.map((f) => f.id);
             if (from === to || from < 0 || to < 0 || from >= ids.length || to >= ids.length) return ids;
@@ -1200,7 +1206,7 @@ export default function App() {
             const affected = manageField.kind === 'select'
               ? currentRecords.filter((r) => typeof r.values[manageField.id] === 'string' && removed.includes(r.values[manageField.id] as string)).length
               : 0;
-            if (affected > 0 && !window.confirm(`없애는 선택 항목을 쓰고 있는 보관품 ${affected}개의 값이 지워져요. 계속할까요?`)) return;
+            if (affected > 0 && !window.confirm(t('없애는 선택 항목을 쓰고 있는 보관품 {affected}개의 값이 지워져요. 계속할까요?', { affected }))) return;
             void actions.updateField(manageField.id, patch).then(() => navigate('drawer-fields-manage')).catch(alertError);
           }}
           onDelete={() => { void actions.deleteField(manageField.id).then(() => { setManageFieldId(null); navigate('drawer-fields-manage'); }).catch(alertError); }}
@@ -1315,12 +1321,12 @@ export default function App() {
             const target = drawerById(store, id);
             if (!target) return;
             const count = recordsOf(store, id).length;
-            const detail = count > 0 ? `\n보관품 ${count}개와 사진도 함께 삭제돼요.` : '';
-            if (window.confirm(`'${target.name}' 서랍을 삭제할까요?${detail}\n삭제한 내용은 되돌릴 수 없어요.`)) {
-              actions.deleteDrawer(id).catch((e: unknown) => window.alert(e instanceof Error ? e.message : '삭제하지 못했어요.'));
+            const detail = count > 0 ? t('\n보관품 {count}개와 사진도 함께 삭제돼요.', { count }) : '';
+            if (window.confirm(t('\'{name}\' 서랍을 삭제할까요?{detail}\n삭제한 내용은 되돌릴 수 없어요.', { name: target.name, detail }))) {
+              actions.deleteDrawer(id).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('삭제하지 못했어요.')));
             }
           }}
-          onReorder={(ids) => { actions.reorderDrawers(ids).catch((e: unknown) => window.alert(e instanceof Error ? e.message : '순서를 바꾸지 못했어요.')); }}
+          onReorder={(ids) => { actions.reorderDrawers(ids).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('순서를 바꾸지 못했어요.'))); }}
         />
       </section>
       <footer className="drawary-shell-footer">
@@ -1388,7 +1394,7 @@ export default function App() {
         ) : tabRoute ? (
           <div className="drawary-dev-only">
             <div className="drawary-dev-flag">개발 검수용 · 확정 화면 아님</div>
-            <h1 id="drawary-dev-screen-title">{NAMES[route]}</h1>
+            <h1 id="drawary-dev-screen-title">{t(NAMES[route])}</h1>
             <p>V2-08 공통 하단바·화면 이동 동작 확인</p>
             <p className="drawary-dev-detail">이 영역의 실제 확정 화면은 후속 구현 단계에서 연결합니다.</p>
           </div>

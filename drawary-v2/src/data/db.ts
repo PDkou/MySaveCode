@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /**
  * IndexedDB plumbing for the on-device data store. One database, one
  * connection, versioned migrations. Nothing here knows about drawers or
@@ -46,7 +47,7 @@ let dbPromise: Promise<IDBDatabase> | null = null;
 export function openDB(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
   if (typeof indexedDB === 'undefined') {
-    return Promise.reject(new Error('이 환경에서는 기기 저장소를 사용할 수 없어요.'));
+    return Promise.reject(new Error(t('이 환경에서는 기기 저장소를 사용할 수 없어요.')));
   }
   dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -59,8 +60,8 @@ export function openDB(): Promise<IDBDatabase> {
       db.onversionchange = () => { db.close(); dbPromise = null; };
       resolve(db);
     };
-    request.onerror = () => reject(request.error ?? new Error('기기 저장소를 열 수 없어요.'));
-    request.onblocked = () => reject(new Error('기기 저장소가 다른 창에서 사용 중이에요.'));
+    request.onerror = () => reject(request.error ?? new Error(t('기기 저장소를 열 수 없어요.')));
+    request.onblocked = () => reject(new Error(t('기기 저장소가 다른 창에서 사용 중이에요.')));
   }).catch((error) => {
     dbPromise = null;
     throw error;
@@ -79,7 +80,7 @@ export async function closeDB(): Promise<void> {
 export function req<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error ?? new Error('저장소 요청에 실패했어요.'));
+    request.onerror = () => reject(request.error ?? new Error(t('저장소 요청에 실패했어요.')));
   });
 }
 
@@ -101,8 +102,8 @@ export async function withTx<T>(
   for (const name of names) stores[name] = tx.objectStore(name);
   const done = new Promise<void>((resolve, reject) => {
     tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error ?? new Error('저장 중 오류가 났어요.'));
-    tx.onabort = () => reject(tx.error ?? new Error('저장이 중단됐어요.'));
+    tx.onerror = () => reject(tx.error ?? new Error(t('저장 중 오류가 났어요.')));
+    tx.onabort = () => reject(tx.error ?? new Error(t('저장이 중단됐어요.')));
   });
   let result: T;
   try {

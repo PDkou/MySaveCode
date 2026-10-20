@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import './HomeScreen.css';
 import { FixedCanvas } from '../components/FixedCanvas';
 import { drawerCardColor, drawerIconPlacement, drawerIconUrl } from '../data/drawerStyle';
+import { t, tx } from '../i18n';
 
 // #3 홈 / #6 홈 편집 모드, drawn from real data. The approved artwork for
 // both was a flat 390x844 image with hotspots laid over it; that can't show
@@ -109,19 +110,19 @@ export function HomeScreen({
     <FixedCanvas height={750}>
       <div className="hs-screen">
         <img className="hs-brand" src="/assets/brand/brand_lockup_horizontal.webp" alt="Drawary" draggable={false} />
-        <p className="hs-tagline">나만의 소중한 것들을, 더 특별하게</p>
-        <div className="hs-counts" aria-label="요약">
-          <span>내 서랍 <b>{drawers.length}개</b></span>
-          <span>보관품 <b>{totalRecords}개</b></span>
+        <p className="hs-tagline">{t('나만의 소중한 것들을, 더 특별하게')}</p>
+        <div className="hs-counts" aria-label={t('요약')}>
+          <span>{tx('내 서랍 {n}', { n: <b>{t('{n}개', { n: drawers.length })}</b> })}</span>
+          <span>{tx('보관품 {n}', { n: <b>{t('{n}개', { n: totalRecords })}</b> })}</span>
         </div>
 
-        <h1 className="hs-heading">내 서랍</h1>
+        <h1 className="hs-heading">{t('내 서랍')}</h1>
         {editing ? (
-          <button type="button" className="hs-done" onClick={onDone}>완료</button>
+          <button type="button" className="hs-done" onClick={onDone}>{t('완료')}</button>
         ) : (
-          <button type="button" className="hs-edit" onClick={onEdit} aria-label="편집">
+          <button type="button" className="hs-edit" onClick={onEdit} aria-label={t('편집')}>
             <img src="/assets/ui-icons/icon_edit.webp" alt="" draggable={false} />
-            <span>편집</span>
+            <span>{t('편집')}</span>
           </button>
         )}
 
@@ -136,20 +137,20 @@ export function HomeScreen({
                   type="button"
                   className="hs-card"
                   style={{ background: drawerCardColor(drawer.colorKey) }}
-                  aria-label={`${drawer.name} 서랍`}
+                  aria-label={t('{name} 서랍', { name: drawer.name })}
                   disabled={editing}
                   onClick={() => onOpenDrawer?.(drawer.id)}
                 >
                   <img className="hs-card-icon" src={drawerIconUrl(drawer.iconKey)} style={drawerIconPlacement(drawer.iconKey)} alt="" draggable={false} />
                   <span className="hs-card-name">{drawer.name}</span>
-                  <span className="hs-card-count">보관품 {drawer.recordCount}개<i aria-hidden="true" /></span>
+                  <span className="hs-card-count">{t('보관품 {n}개', { n: drawer.recordCount })}<i aria-hidden="true" /></span>
                 </button>
                 {editing && (
                   <>
                     <button
                       type="button"
                       className="hs-action hs-action--delete"
-                      aria-label={`${drawer.name} 서랍 삭제`}
+                      aria-label={t('{name} 서랍 삭제', { name: drawer.name })}
                       onClick={() => onDeleteDrawer?.(drawer.id)}
                     >
                       <img src="/assets/ui-icons/icon_delete.webp" alt="" draggable={false} />
@@ -157,7 +158,7 @@ export function HomeScreen({
                     <button
                       type="button"
                       className="hs-action hs-action--reorder"
-                      aria-label={`${drawer.name} 서랍 순서 변경`}
+                      aria-label={t('{name} 서랍 순서 변경', { name: drawer.name })}
                       onPointerDown={startDrag(drawer.id)}
                     >
                       <img src="/assets/ui-icons/icon_reorder.svg" alt="" width={20} height={20} draggable={false} />
@@ -166,9 +167,9 @@ export function HomeScreen({
                 )}
               </div>
             ))}
-            <button type="button" className="hs-card hs-card--new" aria-label="새 서랍 만들기" onClick={onCreateDrawer}>
+            <button type="button" className="hs-card hs-card--new" aria-label={t('새 서랍 만들기')} onClick={onCreateDrawer}>
               <span className="hs-plus" aria-hidden="true" />
-              <span className="hs-new-label">새 서랍 만들기</span>
+              <span className="hs-new-label">{t('새 서랍 만들기')}</span>
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { ScreenHeader } from '../components/ScreenHeader';
 import './RestoreSuccessScreen.css';
+import { t } from '../i18n';
 
 export interface RestoreSuccessScreenProps {
   recordCount: string;
@@ -18,20 +19,20 @@ export interface RestoreSuccessScreenProps {
  */
 export function RestoreSuccessScreen({ recordCount, photoCount, settingsStatus, onBack, onConfirm }: RestoreSuccessScreenProps) {
   return (
-    <main className="rs52-screen" aria-label="복원 완료 화면">
-      <ScreenHeader title="복원 완료" onBack={onBack} height={91} />
-      <section className="rs52-panel" aria-label="복원 완료 결과">
+    <main className="rs52-screen" aria-label={t('복원 완료 화면')}>
+      <ScreenHeader title={t('복원 완료')} onBack={onBack} height={91} />
+      <section className="rs52-panel" aria-label={t('복원 완료 결과')}>
         <div className="rs52-content">
-          <img className="rs52-art" src="/assets/states/backup/state_restore_success.webp" alt="복원 성공 표시를 든 Drawary 마스코트" />
-          <h1 className="rs52-heading">복원이 완료됐어요!</h1>
-          <p className="rs52-explain">백업 내용을 모두 불러왔어요.</p>
-          <div className="rs52-results" aria-label="복원된 항목">
-            <div className="rs52-result-row"><span className="rs52-result-label">서랍과 기록</span><span className="rs52-result-value">{recordCount}</span></div>
-            <div className="rs52-result-row"><span className="rs52-result-label">사진</span><span className="rs52-result-value">{photoCount}</span></div>
-            <div className="rs52-result-row"><span className="rs52-result-label">설정</span><span className="rs52-result-value">{settingsStatus}</span></div>
+          <img className="rs52-art" src="/assets/states/backup/state_restore_success.webp" alt={t('복원 성공 표시를 든 Drawary 마스코트')} />
+          <h1 className="rs52-heading">{t('복원이 완료됐어요!')}</h1>
+          <p className="rs52-explain">{t('백업 내용을 모두 불러왔어요.')}</p>
+          <div className="rs52-results" aria-label={t('복원된 항목')}>
+            <div className="rs52-result-row"><span className="rs52-result-label">{t('서랍과 기록')}</span><span className="rs52-result-value">{recordCount}</span></div>
+            <div className="rs52-result-row"><span className="rs52-result-label">{t('사진')}</span><span className="rs52-result-value">{photoCount}</span></div>
+            <div className="rs52-result-row"><span className="rs52-result-label">{t('설정')}</span><span className="rs52-result-value">{settingsStatus}</span></div>
           </div>
         </div>
-        <button type="button" className="rs52-confirm" onClick={onConfirm}>확인</button>
+        <button type="button" className="rs52-confirm" onClick={onConfirm}>{t('확인')}</button>
       </section>
     </main>
   );

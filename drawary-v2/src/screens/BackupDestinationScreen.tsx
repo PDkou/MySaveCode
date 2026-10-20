@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './BackupDestinationScreen.css';
+import { t, tl } from '../i18n';
 
 export type BackupDestination = 'device' | 'drive';
 
@@ -33,14 +34,14 @@ export function BackupDestinationScreen({ initialDestination = 'device', onBack,
 
   return (
     <div className="bkd46-screen">
-      <ScreenHeader title="백업하기" onBack={onBack} backLabel="백업 종류 선택으로 돌아가기" height={88} />
+      <ScreenHeader title={t('백업하기')} onBack={onBack} backLabel={t('백업 종류 선택으로 돌아가기')} height={88} />
       <main className="bkd46-panel">
-        <h2 className="bkd46-section-title">저장 위치 선택</h2>
+        <h2 className="bkd46-section-title">{t('저장 위치 선택')}</h2>
         <section className="bkd46-hero">
           <img src="/assets/states/permissions/state_permission_storage.webp" alt="" />
-          <div className="bkd46-copy"><strong>백업 파일은 어디<br />에<br />보관할까요?</strong><span>원하는 저장 위치를<br />선택해 주세요.</span></div>
+          <div className="bkd46-copy"><strong>{tl('백업 파일은 어디\n에\n보관할까요?')}</strong><span>{tl('원하는 저장 위치를\n선택해 주세요.')}</span></div>
         </section>
-        <div className="bkd46-label">저장할 곳</div>
+        <div className="bkd46-label">{t('저장할 곳')}</div>
         <button
           type="button"
           className={`bkd46-option${destination === 'device' ? ' selected' : ''}`}
@@ -49,7 +50,7 @@ export function BackupDestinationScreen({ initialDestination = 'device', onBack,
           onClick={() => setDestination('device')}
         >
           <span className="bkd46-icon-wrap"><img className="bkd46-device" src="/assets/ui-icons/icon_save.webp" alt="" /></span>
-          <span className="bkd46-text"><strong>이 기기에 저장</strong><span>원하는 폴더에<br />백업 파일을 저장해요.</span></span>
+          <span className="bkd46-text"><strong>{t('이 기기에 저장')}</strong><span>{tl('원하는 폴더에\n백업 파일을 저장해요.')}</span></span>
           <span className="bkd46-radio" />
         </button>
         <button
@@ -60,11 +61,11 @@ export function BackupDestinationScreen({ initialDestination = 'device', onBack,
           onClick={() => setDestination('drive')}
         >
           <span className="bkd46-icon-wrap"><img className="bkd46-drive" src="/assets/ui/google_drive_2026.png" alt="" /></span>
-          <span className="bkd46-text"><strong>Google Drive</strong><span>Google Drive에<br />백업 파일을 보관해요.</span></span>
+          <span className="bkd46-text"><strong>Google Drive</strong><span>{tl('Google Drive에\n백업 파일을 보관해요.')}</span></span>
           <span className="bkd46-radio" />
         </button>
-        <div className="bkd46-notice"><img src="/assets/ui-icons/icon_info.webp" alt="" /><span>다음 단계에서 저장할 폴더를 선택해<br />요.</span></div>
-        <button type="button" className="bkd46-btn" onClick={() => onNext?.(destination)}>다음</button>
+        <div className="bkd46-notice"><img src="/assets/ui-icons/icon_info.webp" alt="" /><span>{tl('다음 단계에서 저장할 폴더를 선택해\n요.')}</span></div>
+        <button type="button" className="bkd46-btn" onClick={() => onNext?.(destination)}>{t('다음')}</button>
       </main>
     </div>
   );

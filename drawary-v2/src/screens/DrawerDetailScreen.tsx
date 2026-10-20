@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './DrawerDetailScreen.css';
+import { t } from '../i18n';
 
 export interface DrawerRecordSummary {
   id: string;
@@ -69,7 +70,7 @@ export function DrawerDetailScreen({
       <ScreenHeader
         variant="stacked"
         title={drawerName}
-        subtitle={`보관품 ${recordCount}개`}
+        subtitle={t('보관품 {recordCount}개', { recordCount })}
         onBack={onBack}
         height={109}
         rightSlot={
@@ -79,18 +80,18 @@ export function DrawerDetailScreen({
               type="button"
               onClick={() => setMenuOpen((open) => !open)}
               aria-expanded={menuOpen}
-              aria-label="서랍 메뉴"
+              aria-label={t('서랍 메뉴')}
             >•••</button>
             {menuOpen && (
               <div className="dd-menu-popover" role="menu">
                 <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onOpenTable?.(); }}>
                   <img src="/assets/ui-icons/icon_table.webp" alt="" />
-                  <span>표로 보기</span>
+                  <span>{t('표로 보기')}</span>
                   <b aria-hidden="true">›</b>
                 </button>
                 <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); onOpenManage?.(); }}>
                   <img src="/assets/ui-icons/icon_edit.webp" alt="" />
-                  <span>서랍 관리</span>
+                  <span>{t('서랍 관리')}</span>
                   <b aria-hidden="true">›</b>
                 </button>
               </div>
@@ -104,11 +105,11 @@ export function DrawerDetailScreen({
           <img className="dd-search-icon" src="/assets/ui-icons/icon_search.webp" alt="" aria-hidden="true" />
           <input
             type="search"
-            placeholder="보관품 검색하기"
+            placeholder={t('보관품 검색하기')}
             onChange={(e) => onSearch?.(e.target.value)}
           />
         </label>
-        <button className="dd-filter" type="button" onClick={onFilter} aria-label="필터">
+        <button className="dd-filter" type="button" onClick={onFilter} aria-label={t('필터')}>
           <img src="/assets/ui-icons/icon_filter.webp" alt="" />
         </button>
       </section>
@@ -138,7 +139,7 @@ export function DrawerDetailScreen({
 
       <button className="dd-fill" type="button" onClick={onFillDrawer}>
         <img src="/assets/ui-icons/icon_add.webp" alt="" />
-        <span>서랍 채우기</span>
+        <span>{t('서랍 채우기')}</span>
       </button>
     </main>
   );

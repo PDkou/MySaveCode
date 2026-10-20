@@ -1,5 +1,6 @@
 import type { Field, FieldKind, FieldValue, RecordItem } from '../data/types';
 import { ValidationError, isEmptyValue } from '../data/validation';
+import { getLocale, t, K } from '../i18n';
 
 /**
  * What a form control holds while the user is typing. Text-like kinds keep
@@ -37,8 +38,8 @@ export function draftFromRecord(fields: readonly Field[], record: Pick<RecordIte
 function parseNumber(raw: string, field: Field): number {
   const cleaned = raw.replace(/[,\s]/g, '').replace(/원$/, '');
   const n = Number(cleaned);
-  if (cleaned === '' || !Number.isFinite(n)) throw new ValidationError(`'${field.name}'에는 숫자를 입력해 주세요.`);
-  if (field.kind === 'currency' && !Number.isInteger(n)) throw new ValidationError(`'${field.name}'은(는) 원 단위 정수로 입력해 주세요.`);
+  if (cleaned === '' || !Number.isFinite(n)) throw new ValidationError(t('\'{name}\'에는 숫자를 입력해 주세요.', { name: field.name }));
+  if (field.kind === 'currency' && !Number.isInteger(n)) throw new ValidationError(t('\'{name}\'은(는) 원 단위 정수로 입력해 주세요.', { name: field.name }));
   return n;
 }
 
@@ -75,7 +76,7 @@ export function draftToValues(fields: readonly Field[], draft: RecordDraft): Rec
   return values;
 }
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const WEEKDAYS = [K('일'), K('월'), K('화'), K('수'), K('목'), K('금'), K('토')];
 
 /** 2024-03-12 -> "2024. 03. 12. (화)", the way #16 shows dates. Returns the input unchanged if it is not an ISO date. */
 export function formatDate(iso: string, withWeekday = true): string {
@@ -83,7 +84,7 @@ export function formatDate(iso: string, withWeekday = true): string {
   if (!m) return iso;
   const [, y, mo, d] = m;
   if (!withWeekday) return `${y}. ${mo}. ${d}.`;
-  const wd = WEEKDAYS[new Date(Date.UTC(Number(y), Number(mo) - 1, Number(d))).getUTCDay()];
+  const wd = t(WEEKDAYS[new Date(Date.UTC(Number(y), Number(mo) - 1, Number(d))).getUTCDay()]);
   return `${y}. ${mo}. ${d}. (${wd})`;
 }
 
@@ -93,9 +94,9 @@ export function formatValue(field: Pick<Field, 'kind'>, value: FieldValue | unde
   switch (field.kind) {
     case 'date': return typeof value === 'string' ? formatDate(value) : '';
     case 'currency':
-    case 'number': return typeof value === 'number' ? value.toLocaleString('ko-KR') : String(value);
+    case 'number': return typeof value === 'number' ? value.toLocaleString(getLocale()) : String(value);
     case 'rating': return typeof value === 'number' ? '★'.repeat(value) + '☆'.repeat(5 - value) : '';
-    case 'check': return value === true ? '체크함' : '체크 안 함';
+    case 'check': return value === true ? t('체크함') : t('체크 안 함');
     default: return String(value);
   }
 }
@@ -128,7 +129,7 @@ export function summarizeRecord(fields: readonly Field[], record: Pick<RecordIte
   const created = new Date(record.createdAt);
   const createdIso = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}-${String(created.getDate()).padStart(2, '0')}`;
   return {
-    title: titleField ? formatValue(titleField, record.values[titleField.id]) : '이름 없는 보관품',
+    title: titleField ? formatValue(titleField, record.values[titleField.id]) : t('이름 없는 보관품'),
     subtitle: subtitleField ? formatValue(subtitleField, record.values[subtitleField.id]) : undefined,
     dateLabel: dateField ? formatDate(String(record.values[dateField.id]), false) : formatDate(createdIso, false),
     titleFieldId: titleField?.id,

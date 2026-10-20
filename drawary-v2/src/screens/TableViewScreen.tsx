@@ -7,6 +7,7 @@ import {
   applyView, cellText, searchRows,
   type TableColumn, type TableRowData, type TableViewState,
 } from '../flow/tableQuery';
+import { t, tx } from '../i18n';
 
 interface TableViewScreenProps {
   drawerName?: string;
@@ -87,21 +88,21 @@ export function TableViewScreen({
       <ScreenHeader
         variant="stacked"
         title={drawerName}
-        subtitle="표 보기"
+        subtitle={t('표 보기')}
         onBack={onBack}
         height={103}
         rightSlot={
           <>
-            <button className="tv-export" type="button" onClick={() => setExportOpen((o) => !o)} aria-expanded={exportOpen} aria-label="표 내보내기 메뉴">•••</button>
+            <button className="tv-export" type="button" onClick={() => setExportOpen((o) => !o)} aria-expanded={exportOpen} aria-label={t('표 내보내기 메뉴')}>•••</button>
             {exportOpen && (
               <div className="tv-menu-popover" role="menu">
                 <button type="button" role="menuitem" onClick={() => { setExportOpen(false); onExportCsv?.(rows); }}>
                   <img src="/assets/ui-icons/icon_share.webp" alt="" />
-                  <span>CSV로 내보내기</span>
+                  <span>{t('CSV로 내보내기')}</span>
                 </button>
                 <button type="button" role="menuitem" onClick={() => { setExportOpen(false); onExportPdf?.(rows); }}>
                   <img src="/assets/ui-icons/icon_share.webp" alt="" />
-                  <span>PDF로 내보내기</span>
+                  <span>{t('PDF로 내보내기')}</span>
                 </button>
               </div>
             )}
@@ -113,8 +114,8 @@ export function TableViewScreen({
         <div className="tv-summary-left">
           <img src="/assets/ui-icons/icon_table.webp" alt="" />
           <div>
-            <strong>보관품 {count}개</strong>
-            <small>서랍칸을 표로 한눈에 볼 수 있어요.</small>
+            <strong>{t('보관품 {n}개', { n: count })}</strong>
+            <small>{t('서랍칸을 표로 한눈에 볼 수 있어요.')}</small>
           </div>
         </div>
       </section>
@@ -129,31 +130,31 @@ export function TableViewScreen({
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="표에서 검색하기"
+                placeholder={t('표에서 검색하기')}
               />
               {query && (
-                <button type="button" className="ts-clear" onClick={() => setQuery('')} aria-label="검색어 지우기">
+                <button type="button" className="ts-clear" onClick={() => setQuery('')} aria-label={t('검색어 지우기')}>
                   <img src="/assets/ui-icons/icon_cancel.webp" alt="" />
                 </button>
               )}
             </label>
-            <button type="button" className="ts-cancel" onClick={() => { setSearchOpen(false); setQuery(''); }}>취소</button>
+            <button type="button" className="ts-cancel" onClick={() => { setSearchOpen(false); setQuery(''); }}>{t('취소')}</button>
           </section>
-          <div className="ts-result-count">검색 결과 <strong>{rows.length}개</strong></div>
+          <div className="ts-result-count">{tx('검색 결과 {n}', { n: <strong>{t('{n}개', { n: rows.length })}</strong> })}</div>
         </>
       ) : (
-        <nav className="tv-tools" aria-label="표 도구">
+        <nav className="tv-tools" aria-label={t('표 도구')}>
           <button type="button" onClick={() => setSearchOpen(true)}>
             <img src="/assets/ui-icons/icon_search.webp" alt="" />
-            <span>검색</span>
+            <span>{t('검색')}</span>
           </button>
-          <button type="button" className={sortActive ? 'is-active' : ''} aria-label={sortActive ? '정렬 (적용 중)' : '정렬'} onClick={() => setSortOpen(true)}>
+          <button type="button" className={sortActive ? 'is-active' : ''} aria-label={sortActive ? t('정렬 (적용 중)') : t('정렬')} onClick={() => setSortOpen(true)}>
             <img src="/assets/ui-icons/icon_sort.webp" alt="" />
-            <span>정렬</span>
+            <span>{t('정렬')}</span>
           </button>
-          <button type="button" className={activeFilters > 0 ? 'is-active' : ''} aria-label={activeFilters > 0 ? `필터 (${activeFilters}개 적용 중)` : '필터'} onClick={() => setFilterOpen(true)}>
+          <button type="button" className={activeFilters > 0 ? 'is-active' : ''} aria-label={activeFilters > 0 ? t('필터 ({activeFilters}개 적용 중)', { activeFilters }) : t('필터')} onClick={() => setFilterOpen(true)}>
             <img src="/assets/ui-icons/icon_filter.webp" alt="" />
-            <span>필터</span>
+            <span>{t('필터')}</span>
           </button>
         </nav>
       )}
@@ -185,12 +186,12 @@ export function TableViewScreen({
                   ))}
                 </tr>
               )) : (
-                <tr><td className="ts-empty" colSpan={Math.max(columns.length, 1)}>{allRows.length === 0 ? '아직 담은 보관품이 없어요.' : '검색 결과가 없어요.'}</td></tr>
+                <tr><td className="ts-empty" colSpan={Math.max(columns.length, 1)}>{allRows.length === 0 ? t('아직 담은 보관품이 없어요.') : t('검색 결과가 없어요.')}</td></tr>
               )}
             </tbody>
           </table>
         </div>
-        <div className="tv-scroll-hint" aria-hidden="true">← 옆으로 밀어 더 보기 →</div>
+        <div className="tv-scroll-hint" aria-hidden="true">{t('← 옆으로 밀어 더 보기 →')}</div>
       </section>
 
       {sortOpen && (

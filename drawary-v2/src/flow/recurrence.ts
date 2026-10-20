@@ -1,4 +1,5 @@
 import type { RecurrenceCycle, RecurrenceRule } from '../data/types';
+import { t } from '../i18n';
 
 /** `YYYY-MM-DD` for a local date. */
 export function toISODate(d: Date): string {
@@ -35,7 +36,7 @@ export function firstIndexAfter(baseISO: string, cycle: RecurrenceCycle, interva
   let k = 1;
   while (occurrenceDate(baseISO, cycle, interval, k) <= todayISO) {
     k++;
-    if (k > 20000) throw new Error('반복 주기를 계산할 수 없어요.');
+    if (k > 20000) throw new Error(t('반복 주기를 계산할 수 없어요.'));
   }
   return k;
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { cooldownMessage, failureMessage, type VerifyResult } from '../flow/appLock';
 import { useCooldown } from '../flow/useCooldown';
 import './AppLockScreen.css';
+import { t, tl } from '../i18n';
 
 export interface AppLockScreenProps {
   /** Checks the typed PIN against the saved one. */
@@ -53,7 +54,7 @@ export function AppLockScreen({ verify, lockedUntil = 0, onUnlock }: AppLockScre
         setShake(true);
         setTimeout(() => setShake(false), 240);
       })
-      .catch(() => { setTyped(''); setFeedback('확인하지 못했어요. 다시 시도해 주세요.'); })
+      .catch(() => { setTyped(''); setFeedback(t('확인하지 못했어요. 다시 시도해 주세요.')); })
       .finally(() => setBusy(false));
   };
 
@@ -68,26 +69,26 @@ export function AppLockScreen({ verify, lockedUntil = 0, onUnlock }: AppLockScre
 
   return (
     <div className="al43-screen">
-      <header className="al43-header"><h1>앱 잠금</h1></header>
+      <header className="al43-header"><h1>{t('앱 잠금')}</h1></header>
       <main className="al43-panel">
-        <h2 className="al43-section-title">내 서랍 열기</h2>
-        <section className="al43-pin-hero" aria-label="PIN 안내">
+        <h2 className="al43-section-title">{t('내 서랍 열기')}</h2>
+        <section className="al43-pin-hero" aria-label={t('PIN 안내')}>
           <div className="al43-pin-hero-icon"><img src="/assets/states/permissions/state_permission_lock.webp" alt="" /></div>
           <div>
-            <strong>내 서랍을 열어볼까요?</strong>
-            <small>PIN을 입력하면<br />저장한 기록을 볼 수 있어요.</small>
+            <strong>{t('내 서랍을 열어볼까요?')}</strong>
+            <small>{tl('PIN을 입력하면\n저장한 기록을 볼 수 있어요.')}</small>
           </div>
         </section>
         <div className="al43-step">
-          <strong>{unlocked ? '잠금 해제 완료' : 'PIN 입력'}</strong>
-          <span className="al43-step-badge">{unlocked ? '열림' : '잠금 상태'}</span>
+          <strong>{unlocked ? t('잠금 해제 완료') : t('PIN 입력')}</strong>
+          <span className="al43-step-badge">{unlocked ? t('열림') : t('잠금 상태')}</span>
         </div>
-        <p className="al43-prompt">{unlocked ? '내 서랍을 열었어요.' : '설정한 4자리 PIN을 입력해 주세요.'}</p>
-        <div className={`al43-pin-indicators${shake ? ' error' : ''}`} aria-label="PIN 4자리 입력 상태">
+        <p className="al43-prompt">{unlocked ? t('내 서랍을 열었어요.') : t('설정한 4자리 PIN을 입력해 주세요.')}</p>
+        <div className={`al43-pin-indicators${shake ? ' error' : ''}`} aria-label={t('PIN 4자리 입력 상태')}>
           {[0, 1, 2, 3].map((i) => <span key={i} className={i < typed.length ? 'filled' : ''} />)}
         </div>
         <div className="al43-pin-feedback" aria-live="polite">{shownFeedback}</div>
-        <section className="al43-keypad" aria-label="PIN 숫자 키패드">
+        <section className="al43-keypad" aria-label={t('PIN 숫자 키패드')}>
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
             <button key={d} type="button" className="al43-num" disabled={keysOff} onClick={() => enter(d)}>{d}</button>
           ))}
@@ -96,7 +97,7 @@ export function AppLockScreen({ verify, lockedUntil = 0, onUnlock }: AppLockScre
           <button
             type="button"
             className="al43-num al43-erase"
-            aria-label="마지막 숫자 지우기"
+            aria-label={t('마지막 숫자 지우기')}
             disabled={keysOff}
             onClick={erase}
           >

@@ -1,5 +1,6 @@
 import { ScreenHeader } from '../components/ScreenHeader';
 import './NotificationDateFieldScreen.css';
+import { t } from '../i18n';
 
 export interface DateFieldOption {
   id: string;
@@ -38,22 +39,22 @@ export function NotificationDateFieldScreen({
 
   return (
     <main className="ndf-screen">
-      <ScreenHeader title="알림 추가하기" onBack={onBack} height={88} />
+      <ScreenHeader title={t('알림 추가하기')} onBack={onBack} height={88} />
 
       <section className="ndf-context">
         <div className="ndf-drawer-icon"><img src={drawerIconUri} alt="" /></div>
         <div className="ndf-context-copy">
           <strong>{drawerName}</strong>
-          <span>알림을 추가할 서랍</span>
+          <span>{t('알림을 추가할 서랍')}</span>
         </div>
       </section>
 
       <section className="ndf-intro">
-        <h2>어떤 날짜를 기준으로 알림을 받을까요?</h2>
-        <p>알림 기준으로 사용할 날짜 서랍칸을 선택해 주세요.</p>
+        <h2>{t('어떤 날짜를 기준으로 알림을 받을까요?')}</h2>
+        <p>{t('알림 기준으로 사용할 날짜 서랍칸을 선택해 주세요.')}</p>
       </section>
 
-      <div className="ndf-section-label">날짜 서랍칸</div>
+      <div className="ndf-section-label">{t('날짜 서랍칸')}</div>
 
       {dateFields.map((field) => {
         const active = field.id === effectiveSelectedId;
@@ -65,21 +66,22 @@ export function NotificationDateFieldScreen({
             onClick={() => onSelect?.(field.id)}
           >
             <span className="ndf-field-icon"><img src="/assets/field-types/field_date.webp" alt="" /></span>
-            <span className="ndf-field-copy"><strong>{field.name}</strong><span>날짜</span></span>
-            {active && <span className="ndf-selected" aria-label="선택됨">✓</span>}
+            <span className="ndf-field-copy"><strong>{field.name}</strong><span>{t('날짜')}</span></span>
+            {active && <span className="ndf-selected" aria-label={t('선택됨')}>✓</span>}
           </button>
         );
       })}
 
       <div className="ndf-actions">
-        <button className="ndf-prev" type="button" onClick={onBack}>이전</button>
+        <button className="ndf-prev" type="button" onClick={onBack}>{t('이전')}</button>
         <button
           className="ndf-next"
           type="button"
           disabled={!effectiveSelectedId}
           onClick={() => effectiveSelectedId && onNext?.(effectiveSelectedId)}
         >
-          다음
+          
+          {t('다음')}
         </button>
       </div>
     </main>

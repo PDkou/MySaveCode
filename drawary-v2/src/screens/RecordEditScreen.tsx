@@ -4,6 +4,7 @@ import { RecordFieldControl } from '../components/RecordFieldControl';
 import type { Field } from '../data/types';
 import { hasControl, type RecordDraft } from '../flow/recordForm';
 import './RecordEditScreen.css';
+import { t } from '../i18n';
 
 interface RecordEditScreenProps {
   drawerName?: string;
@@ -74,23 +75,23 @@ export function RecordEditScreen({
 
   return (
     <main className="re-screen">
-      <ScreenHeader variant="stacked" title="보관품 수정" subtitle={`${drawerName} 서랍`} onBack={onBack} height={94} />
+      <ScreenHeader variant="stacked" title={t('보관품 수정')} subtitle={t('{drawerName} 서랍', { drawerName })} onBack={onBack} height={94} />
 
       <section className="re-content">
         {photoUri ? (
           <section className="re-photo-card">
-            <img className="re-photo" src={photoUri} alt="등록한 보관품 사진" />
-            <button className="re-photo-remove" type="button" onClick={onRemovePhoto} aria-label="사진 제거">×</button>
+            <img className="re-photo" src={photoUri} alt={t('등록한 보관품 사진')} />
+            <button className="re-photo-remove" type="button" onClick={onRemovePhoto} aria-label={t('사진 제거')}>×</button>
           </section>
         ) : (
-          <button type="button" className="re-photo-card is-empty" onClick={onPickPhoto} aria-label="사진 선택">
+          <button type="button" className="re-photo-card is-empty" onClick={onPickPhoto} aria-label={t('사진 선택')}>
             <img src="/assets/states/photo/state_photo_empty.webp" alt="" />
           </button>
         )}
 
         <button className="re-photo-change" type="button" onClick={onPickPhoto}>
           <img src="/assets/field-types/field_photo.webp" alt="" />
-          <span>{photoUri ? '사진 바꾸기' : '사진 선택하기'}</span>
+          <span>{photoUri ? t('사진 바꾸기') : t('사진 선택하기')}</span>
         </button>
 
         <div className="re-fields">
@@ -111,7 +112,8 @@ export function RecordEditScreen({
         </div>
 
         <button className="re-save" type="button" disabled={saving} onClick={() => onSave?.(draft)}>
-          수정 완료
+          
+          {t('수정 완료')}
         </button>
       </section>
     </main>

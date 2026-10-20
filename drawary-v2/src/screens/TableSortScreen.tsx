@@ -2,15 +2,16 @@ import { useMemo, useState } from 'react';
 import './TableSortScreen.css';
 
 import type { ColumnType, SortChoice } from '../flow/tableQuery';
+import { t } from '../i18n';
 
 export type SortFieldType = ColumnType;
 export interface SortColumn { id: string; label: string; type: SortFieldType }
 export type { SortChoice };
 
 function sortLabels(type: SortFieldType) {
-  if (type === 'date') return ['오래된순', '최신순'] as const;
-  if (['number', 'currency', 'rating'].includes(type)) return ['낮은순', '높은순'] as const;
-  return ['가나다순', '역순'] as const;
+  if (type === 'date') return [t('오래된순'), t('최신순')] as const;
+  if (['number', 'currency', 'rating'].includes(type)) return [t('낮은순'), t('높은순')] as const;
+  return [t('가나다순'), t('역순')] as const;
 }
 
 export interface TableSortScreenProps {
@@ -75,22 +76,22 @@ export function TableSortScreen({
         {mode === 'sort' ? (
           <>
             <header className="sv3-head">
-              <div><h2>정렬</h2><p>보관품을 어떤 순서로 볼지 정해요.</p></div>
-              <button type="button" className="sv3-reset" onClick={() => onApply?.(null)}>초기화</button>
+              <div><h2>{t('정렬')}</h2><p>{t('보관품을 어떤 순서로 볼지 정해요.')}</p></div>
+              <button type="button" className="sv3-reset" onClick={() => onApply?.(null)}>{t('초기화')}</button>
             </header>
 
             <div className="sv3-section">
-              <strong className="sv3-label">정렬 기준</strong>
+              <strong className="sv3-label">{t('정렬 기준')}</strong>
               <div className="sv3-quick">
                 {quick.map((c) => (
                   <button key={c.id} type="button" className={c.id === selected.id ? 'on' : ''} onClick={() => setField(c.id)}>{c.label}</button>
                 ))}
               </div>
-              <button type="button" className="sv3-more" onClick={() => { setQuery(''); setMode('field'); }}>다른 서랍칸에서 선택 ›</button>
+              <button type="button" className="sv3-more" onClick={() => { setQuery(''); setMode('field'); }}>{t('다른 서랍칸에서 선택 ›')}</button>
             </div>
 
             <div className="sv3-section">
-              <strong className="sv3-label">순서</strong>
+              <strong className="sv3-label">{t('순서')}</strong>
               <div className="sv3-dir">
                 <button type="button" className={direction === 0 ? 'on' : ''} onClick={() => setDirection(0)}><span>{labels[0]}</span><i /></button>
                 <button type="button" className={direction === 1 ? 'on' : ''} onClick={() => setDirection(1)}><span>{labels[1]}</span><i /></button>
@@ -98,19 +99,19 @@ export function TableSortScreen({
             </div>
 
             <div className="sv3-actions">
-              <button type="button" className="sv3-cancel" onClick={onCancel}>취소</button>
-              <button type="button" className="sv3-apply" onClick={() => onApply?.({ columnId: selected.id, direction })}>적용하기</button>
+              <button type="button" className="sv3-cancel" onClick={onCancel}>{t('취소')}</button>
+              <button type="button" className="sv3-apply" onClick={() => onApply?.({ columnId: selected.id, direction })}>{t('적용하기')}</button>
             </div>
           </>
         ) : (
           <>
             <header className="sv3-picker-head">
-              <button type="button" className="sv3-back" onClick={() => setMode('sort')} aria-label="뒤로가기">‹</button>
-              <div><h2>정렬 기준 선택</h2><p>정렬할 서랍칸을 골라주세요.</p></div>
+              <button type="button" className="sv3-back" onClick={() => setMode('sort')} aria-label={t('뒤로가기')}>‹</button>
+              <div><h2>{t('정렬 기준 선택')}</h2><p>{t('정렬할 서랍칸을 골라주세요.')}</p></div>
             </header>
             <label className="sv3-search">
               <img src="/assets/ui-icons/icon_search.webp" alt="" />
-              <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="서랍칸 검색" />
+              <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('서랍칸 검색')} />
               <span />
             </label>
             <div className="sv3-list">

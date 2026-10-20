@@ -1,5 +1,6 @@
 import { ScreenHeader } from '../components/ScreenHeader';
 import './RecurrenceManagementScreen.css';
+import { t, tl } from '../i18n';
 
 export interface RecurrenceRuleSummary {
   id: string;
@@ -52,13 +53,13 @@ export function RecurrenceManagementScreen({
 }: RecurrenceManagementScreenProps) {
   return (
     <main className="rm-screen">
-      <ScreenHeader title="반복 관리" onBack={onBack} height={88} />
+      <ScreenHeader title={t('반복 관리')} onBack={onBack} height={88} />
 
       <section className="rm-context">
         <div className="rm-drawer-icon"><img src={drawerIconUri} alt="" /></div>
         <div className="rm-context-copy">
           <strong>{drawerName}</strong>
-          <span>{fieldCount}개 서랍칸 · {itemCount}개 보관품</span>
+          <span>{t('{fields}개 서랍칸 · {items}개 보관품', { fields: fieldCount, items: itemCount })}</span>
         </div>
       </section>
 
@@ -69,36 +70,36 @@ export function RecurrenceManagementScreen({
           </div>
 
           <section className="rm-message">
-            <h2>다음 보관품을 자동으로 만들어요.</h2>
-            <p>날짜 서랍칸을 기준으로 매주·매달·매년 원하는 주기에 맞춰<br />새 보관품을 만들 수 있어요.</p>
+            <h2>{t('다음 보관품을 자동으로 만들어요.')}</h2>
+            <p>{tl('날짜 서랍칸을 기준으로 매주·매달·매년 원하는 주기에 맞춰\n새 보관품을 만들 수 있어요.')}</p>
           </section>
 
           <button className="rm-primary" type="button" onClick={onAdd}>
-            <span className="rm-plus">＋</span>반복 설정하기
+            <span className="rm-plus">＋</span>{t('반복 설정하기')}
           </button>
 
           <div className="rm-section-head">
-            <span>설정된 반복</span>
-            <span>0개</span>
+            <span>{t('설정된 반복')}</span>
+            <span>{t('0개')}</span>
           </div>
 
           <section className="rm-empty">
             <div className="rm-empty-icon"><img src="/assets/ui-icons/icon_refresh.webp" alt="" /></div>
             <div className="rm-empty-copy">
-              <strong>아직 반복 설정이 없어요.</strong>
-              <span>반복을 설정하면 다음 주기의<br />보관품이 자동으로 만들어져요.</span>
+              <strong>{t('아직 반복 설정이 없어요.')}</strong>
+              <span>{tl('반복을 설정하면 다음 주기의\n보관품이 자동으로 만들어져요.')}</span>
             </div>
           </section>
         </>
       ) : (
         <>
           <button className="rm-primary" type="button" onClick={onAdd}>
-            <span className="rm-plus">＋</span>반복 설정 추가하기
+            <span className="rm-plus">＋</span>{t('반복 설정 추가하기')}
           </button>
 
           <div className="rm-section-head">
-            <span>설정된 반복</span>
-            <span>{rules.length}개</span>
+            <span>{t('설정된 반복')}</span>
+            <span>{t('{n}개', { n: rules.length })}</span>
           </div>
 
           <div className="rm-rule-list">
@@ -111,14 +112,14 @@ export function RecurrenceManagementScreen({
               >
                 <strong>{rule.targetLabel}</strong>
                 <span>{rule.cycleLabel} · {rule.dateFieldName}</span>
-                <em>{rule.statusLabel ?? (rule.enabled ? '사용 중' : '일시 정지')}</em>
+                <em>{rule.statusLabel ?? (rule.enabled ? t('사용 중') : t('일시 정지'))}</em>
               </button>
             ))}
           </div>
         </>
       )}
 
-      <div className="rm-guide">반복 설정은 이 서랍의 보관품에만 적용돼요.</div>
+      <div className="rm-guide">{t('반복 설정은 이 서랍의 보관품에만 적용돼요.')}</div>
     </main>
   );
 }

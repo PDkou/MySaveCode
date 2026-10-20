@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './BackupProgressScreen.css';
+import { t } from '../i18n';
 
 interface BackupProgressScreenProps {
   onBack: () => void;
@@ -29,14 +30,14 @@ export function BackupProgressScreen({ onBack, onComplete }: BackupProgressScree
 
   return (
     <main className="backup-progress-app">
-      <ScreenHeader title="백업하기" onBack={onBack} backLabel="뒤로 가기" height={81} />
-      <section className="backup-progress-panel" aria-label="백업 진행 상태">
+      <ScreenHeader title={t('백업하기')} onBack={onBack} backLabel={t('뒤로 가기')} height={81} />
+      <section className="backup-progress-panel" aria-label={t('백업 진행 상태')}>
         <img
           className="backup-progress-illustration"
           src="/assets/mascot/mascot_backup_progress.webp"
-          alt="노란 폴더를 든 Drawary 마스코트"
+          alt={t('노란 폴더를 든 Drawary 마스코트')}
         />
-        <svg className="backup-progress-ring" viewBox="0 0 50 50" role="status" aria-label="백업 진행 중">
+        <svg className="backup-progress-ring" viewBox="0 0 50 50" role="status" aria-label={t('백업 진행 중')}>
           <circle cx="25" cy="25" r="20" fill="none" stroke="#e5dcfb" strokeWidth="7" />
           <circle
             cx="25" cy="25" r="20" fill="none" stroke="#9260f3" strokeWidth="7"
@@ -44,9 +45,9 @@ export function BackupProgressScreen({ onBack, onComplete }: BackupProgressScree
           />
         </svg>
         <div className="backup-progress-copy" aria-live="polite">
-          <h2>백업하고 있어요</h2>
-          <p>잠시만 기다려주세요.</p>
-          <p>데이터를 안전하게 정리하고 있습니다.</p>
+          <h2>{t('백업하고 있어요')}</h2>
+          <p>{t('잠시만 기다려주세요.')}</p>
+          <p>{t('데이터를 안전하게 정리하고 있습니다.')}</p>
         </div>
       </section>
     </main>

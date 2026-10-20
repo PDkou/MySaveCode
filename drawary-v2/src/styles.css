@@ -36,3 +36,12 @@ main[data-route="create-drawer"] { position: relative; overflow: hidden; }
  * This also wins over legacy per-screen font shorthands and NanumSquare.
  */
 .drawary-app-shell, .drawary-app-shell * { font-family: 'Noto Sans CJK KR', sans-serif !important; }
+
+/* Japanese: draw everything in Noto Sans JP (bundled, public/fonts/noto-sans-jp) so kanji take their Japanese forms;
+   the Korean font stays as the fallback. Korean and English keep the approved stacks. */
+html[lang="ja"] body, html[lang="ja"] body *, html[lang="ja"] .drawary-app-shell * { font-family: 'Noto Sans JP', 'Noto Sans CJK KR', 'Noto Sans KR', sans-serif !important; }
+
+/* English/Japanese words are longer than the Korean ones the 4-column tag grid (#10's "이런 항목은 어때요?") was drawn for:
+   let each tag grow to fit its text instead of letting the text spill out of it. Korean keeps the approved grid. */
+html:not([lang="ko"]) .drawary-suggestion-grid { display: flex; flex-wrap: wrap; }
+html:not([lang="ko"]) .drawary-suggestion-grid button { flex: none; padding: 0 12px; }

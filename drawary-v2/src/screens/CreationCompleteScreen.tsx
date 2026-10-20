@@ -1,4 +1,5 @@
 import './CreationCompleteScreen.css';
+import { t, tl, tx } from '../i18n';
 
 // Ported verbatim from Drawary_12_FINAL_CONFIRMED_CODE's
 // CreationComplete.tsx. Only asset paths changed: the archive's flat
@@ -30,8 +31,8 @@ export function CreationCompleteScreen({
           <img src="/assets/mascot/mascot_celebrate.webp" alt="" />
         </div>
 
-        <h1><span>{drawerName}</span> 서랍을 만들었어요.</h1>
-        <p className="cc-lead">이제 서랍을 채워볼까요?</p>
+        <h1>{tx('{name} 서랍을 만들었어요.', { name: <span>{drawerName}</span> })}</h1>
+        <p className="cc-lead">{t('이제 서랍을 채워볼까요?')}</p>
 
         <article className="cc-drawer-card">
           <div className="cc-icon-wrap">
@@ -39,21 +40,23 @@ export function CreationCompleteScreen({
           </div>
           <div className="cc-card-copy">
             <strong>{drawerName}</strong>
-            <small>서랍칸 {fieldCount}개 준비 완료</small>
+            <small>{t('서랍칸 {n}개 준비 완료', { n: fieldCount })}</small>
           </div>
           <span className="cc-check" aria-hidden="true">✓</span>
         </article>
 
         <p className="cc-note">
-          방금 정한 서랍칸에 맞춰<br />
-          첫 보관품부터 하나씩 담아보세요.
+          
+          {tl('방금 정한 서랍칸에 맞춰\n첫 보관품부터 하나씩 담아보세요.')}
         </p>
 
         <button className="cc-primary" type="button" onClick={onFillDrawer}>
-          서랍 채우기
+          
+          {t('서랍 채우기')}
         </button>
         <button className="cc-secondary" type="button" onClick={onLater}>
-          나중에
+          
+          {t('나중에')}
         </button>
       </section>
     </main>

@@ -1,4 +1,5 @@
 import './SecuritySettingsScreen.css';
+import { t, tl } from '../i18n';
 
 export interface SecuritySettingsScreenProps {
   /** 앱 잠금 is on (a PIN exists and the lock is switched on). */
@@ -35,38 +36,38 @@ export function SecuritySettingsScreen({
 }: SecuritySettingsScreenProps) {
   // The two switches only work with 앱 잠금 on; the line under each says why when they cannot be used.
   const biometricOff = !appLockEnabled || !biometricAvailable;
-  const biometricHint = !appLockEnabled ? '앱 잠금을 먼저 켜 주세요.'
-    : !biometricAvailable ? '이 기기에서는 사용할 수 없어요.'
-    : '지문이나 얼굴 인식으로 잠금을 풀어요.';
+  const biometricHint = !appLockEnabled ? t('앱 잠금을 먼저 켜 주세요.')
+    : !biometricAvailable ? t('이 기기에서는 사용할 수 없어요.')
+    : t('지문이나 얼굴 인식으로 잠금을 풀어요.');
 
   return (
     <div className="sec40-screen">
       <header className="sec40-header">
-        {onBack && <button type="button" className="sec40-back" onClick={onBack} aria-label="설정으로 돌아가기" />}
-        <h1>보안 설정</h1>
+        {onBack && <button type="button" className="sec40-back" onClick={onBack} aria-label={t('설정으로 돌아가기')} />}
+        <h1>{t('보안 설정')}</h1>
       </header>
       <main className="sec40-panel">
-        <h2 className="sec40-section-title">내 서랍 보호하기</h2>
+        <h2 className="sec40-section-title">{t('내 서랍 보호하기')}</h2>
         <section className="sec40-hero">
           <div className="sec40-hero-art"><img src="/assets/states/permissions/state_permission_lock.webp" alt="" /></div>
           <div className="sec40-hero-copy">
-            <strong>소중한 기록을 안전하게</strong>
-            <span>앱을 열 때 잠금을 설정하고<br />내 기록을 보호할 수 있어요.</span>
+            <strong>{t('소중한 기록을 안전하게')}</strong>
+            <span>{tl('앱을 열 때 잠금을 설정하고\n내 기록을 보호할 수 있어요.')}</span>
           </div>
         </section>
-        <section className="sec40-items" aria-label="보안 항목">
-          <button className="sec40-item" type="button" aria-label="앱 잠금 설정 상세로 이동" onClick={onOpenAppLock}>
+        <section className="sec40-items" aria-label={t('보안 항목')}>
+          <button className="sec40-item" type="button" aria-label={t('앱 잠금 설정 상세로 이동')} onClick={onOpenAppLock}>
             <span className="sec40-item-icon"><img src="/assets/ui-icons/icon_lock.webp" alt="" /></span>
-            <span className="sec40-item-copy"><strong>앱 잠금</strong><small>PIN과 잠금 방식을 관리해요.</small></span>
+            <span className="sec40-item-copy"><strong>{t('앱 잠금')}</strong><small>{t('PIN과 잠금 방식을 관리해요.')}</small></span>
             <span className="sec40-right-arrow">›</span>
           </button>
           <div className="sec40-item">
             <span className="sec40-item-icon"><img src="/assets/ui-icons/icon_security_biometric_512.webp" alt="" /></span>
-            <span className="sec40-item-copy"><strong>생체 인증</strong><small>{biometricHint}</small></span>
+            <span className="sec40-item-copy"><strong>{t('생체 인증')}</strong><small>{biometricHint}</small></span>
             <button
               type="button"
               role="switch"
-              aria-label="생체 인증 사용"
+              aria-label={t('생체 인증 사용')}
               aria-checked={biometric}
               className="sec40-switch"
               disabled={biometricOff && !biometric}
@@ -78,11 +79,11 @@ export function SecuritySettingsScreen({
               <img src="/assets/ui-icons/icon_lock.webp" alt="" />
               <span className="sec40-clock-overlay" aria-hidden="true" />
             </span>
-            <span className="sec40-item-copy"><strong>자동 잠금</strong><small>{appLockEnabled ? '앱을 벗어나면 자동으로 잠가요.' : '앱 잠금을 먼저 켜 주세요.'}</small></span>
+            <span className="sec40-item-copy"><strong>{t('자동 잠금')}</strong><small>{appLockEnabled ? t('앱을 벗어나면 자동으로 잠가요.') : t('앱 잠금을 먼저 켜 주세요.')}</small></span>
             <button
               type="button"
               role="switch"
-              aria-label="자동 잠금 사용"
+              aria-label={t('자동 잠금 사용')}
               aria-checked={autoLock}
               className="sec40-switch"
               disabled={!appLockEnabled}
@@ -92,7 +93,7 @@ export function SecuritySettingsScreen({
         </section>
         <div className="sec40-note">
           <img className="sec40-note-icon" src="/assets/ui-icons/icon_info.webp" alt="" />
-          <span>보안 설정은 이 기기에서만 사용돼요.<br />언제든 설정을 바꿀 수 있어요.</span>
+          <span>{tl('보안 설정은 이 기기에서만 사용돼요.\n언제든 설정을 바꿀 수 있어요.')}</span>
         </div>
       </main>
     </div>

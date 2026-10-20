@@ -5,6 +5,7 @@ import {
   filterRows, operatorNeedsValue, operatorsFor, parseDateInput, parseNumberInput, ruleProblem,
   type ColumnType, type FilterRule, type MatchMode, type Operator, type TableColumn, type TableRowData,
 } from '../flow/tableQuery';
+import { getLocale, t, tx, K } from '../i18n';
 
 export type { FilterRule };
 
@@ -20,15 +21,15 @@ interface TableFilterScreenProps {
 }
 
 const OPERATOR_LABEL: Record<Operator, string> = {
-  contains: '포함', equals: '일치', empty: '비어 있음', notEmpty: '비어 있지 않음',
-  gte: '이상', lte: '이하', between: '범위', before: '이전', after: '이후',
-  checked: '체크됨', unchecked: '체크 안 됨', hasPhoto: '사진 있음', noPhoto: '사진 없음',
+  contains: K('포함@op'), equals: K('일치'), empty: K('비어 있음'), notEmpty: K('비어 있지 않음'),
+  gte: K('이상'), lte: K('이하'), between: K('범위'), before: K('이전'), after: K('이후'),
+  checked: K('체크됨'), unchecked: K('체크 안 됨'), hasPhoto: K('사진 있음'), noPhoto: K('사진 없음'),
 };
 
 const shownValue = (raw: string | undefined, type: ColumnType): string => {
   const v = (raw ?? '').trim();
   if (type === 'date') { const iso = parseDateInput(v); return iso ? formatDate(iso, false) : v; }
-  if (['number', 'currency', 'rating'].includes(type)) { const n = parseNumberInput(v); return n === null ? v : n.toLocaleString('ko-KR'); }
+  if (['number', 'currency', 'rating'].includes(type)) { const n = parseNumberInput(v); return n === null ? v : n.toLocaleString(getLocale()); }
   return v;
 };
 
@@ -36,14 +37,14 @@ const labelForRule = (rule: FilterRule, column: TableColumn) => {
   const v = shownValue(rule.value, column.type);
   const v2 = shownValue(rule.value2, column.type);
   switch (rule.operator) {
-    case 'contains': return `'${v}' 포함`;
-    case 'equals': return `'${v}'와 일치`;
-    case 'gte': return `${v} 이상`;
-    case 'lte': return `${v} 이하`;
+    case 'contains': return t('\'{v}\' 포함', { v });
+    case 'equals': return t('\'{v}\'와 일치', { v });
+    case 'gte': return t('{v} 이상', { v });
+    case 'lte': return t('{v} 이하', { v });
     case 'between': return `${v} ~ ${v2}`;
-    case 'before': return `${v} 이전`;
-    case 'after': return `${v} 이후`;
-    default: return OPERATOR_LABEL[rule.operator];
+    case 'before': return t('{v} 이전', { v });
+    case 'after': return t('{v} 이후', { v });
+    default: return t(OPERATOR_LABEL[rule.operator]);
   }
 };
 
@@ -126,14 +127,14 @@ export function TableFilterScreen({
           <>
             <header className="tf-header">
               <div>
-                <h2>필터</h2>
-                <p>조건에 맞는 보관품만 골라서 볼 수 있어요.</p>
+                <h2>{t('필터')}</h2>
+                <p>{t('조건에 맞는 보관품만 골라서 볼 수 있어요.')}</p>
               </div>
-              <button type="button" className="tf-reset" onClick={() => setRules([])}>초기화</button>
+              <button type="button" className="tf-reset" onClick={() => setRules([])}>{t('초기화')}</button>
             </header>
 
             <div className="tf-section">
-              <strong className="tf-label">적용 중인 필터</strong>
+              <strong className="tf-label">{t('적용 중인 필터')}</strong>
               {rules.length ? (
                 <div className="tf-active-list">
                   {rules.map((rule) => {
@@ -145,7 +146,7 @@ export function TableFilterScreen({
                           <strong>{column.label}</strong>
                           <span>{labelForRule(rule, column)}</span>
                         </div>
-                        <button type="button" onClick={() => removeRule(rule.id)} aria-label={`${column.label} 필터 삭제`}>
+                        <button type="button" onClick={() => removeRule(rule.id)} aria-label={t('{label} 필터 삭제', { label: column.label })}>
                           <img src="/assets/ui-icons/icon_cancel.webp" alt="" />
                         </button>
                       </div>
@@ -153,36 +154,36 @@ export function TableFilterScreen({
                   })}
                 </div>
               ) : (
-                <div className="tf-empty">아직 적용된 필터가 없어요.</div>
+                <div className="tf-empty">{t('아직 적용된 필터가 없어요.')}</div>
               )}
             </div>
 
             {rules.length >= 2 && (
               <div className="tf-section">
-                <strong className="tf-label">조건을 어떻게 살펴볼까요?</strong>
+                <strong className="tf-label">{t('조건을 어떻게 살펴볼까요?')}</strong>
                 <div className="tf-match-mode">
                   <button
                     type="button"
                     className={matchMode === 'all' ? 'is-selected' : ''}
                     onClick={() => setMatchMode('all')}
                   >
-                    <strong>모두 맞는 보관품</strong>
-                    <span>모든 조건에 맞는 것만 봐요.</span>
+                    <strong>{t('모두 맞는 보관품')}</strong>
+                    <span>{t('모든 조건에 맞는 것만 봐요.')}</span>
                   </button>
                   <button
                     type="button"
                     className={matchMode === 'any' ? 'is-selected' : ''}
                     onClick={() => setMatchMode('any')}
                   >
-                    <strong>하나라도 맞는 보관품</strong>
-                    <span>조건 중 하나라도 맞으면 봐요.</span>
+                    <strong>{t('하나라도 맞는 보관품')}</strong>
+                    <span>{t('조건 중 하나라도 맞으면 봐요.')}</span>
                   </button>
                 </div>
               </div>
             )}
 
             <div className="tf-section">
-              <strong className="tf-label">빠르게 추가</strong>
+              <strong className="tf-label">{t('빠르게 추가')}</strong>
               <div className="tf-quick">
                 {quickFields.map((column) => (
                   <button key={column.id} type="button" onClick={() => openCondition(column)}>{column.label}</button>
@@ -191,16 +192,17 @@ export function TableFilterScreen({
               <button type="button" className="tf-more" onClick={() => {
                 setQuery('');
                 setMode('field');
-              }}>다른 서랍칸에서 선택 ›</button>
+              }}>{t('다른 서랍칸에서 선택 ›')}</button>
             </div>
 
             <div className="tf-result-preview">
-              조건에 맞는 보관품 <strong>{matchCount}개</strong>
+              
+              {tx('조건에 맞는 보관품{n}', { n: <strong>{t('{n}개', { n: matchCount })}</strong> })}
             </div>
 
             <div className="tf-actions">
-              <button type="button" className="tf-cancel" onClick={onCancel}>취소</button>
-              <button type="button" className="tf-apply" onClick={() => onApply?.(rules, matchMode)}>적용하기</button>
+              <button type="button" className="tf-cancel" onClick={onCancel}>{t('취소')}</button>
+              <button type="button" className="tf-apply" onClick={() => onApply?.(rules, matchMode)}>{t('적용하기')}</button>
             </div>
           </>
         )}
@@ -208,16 +210,16 @@ export function TableFilterScreen({
         {mode === 'field' && (
           <>
             <header className="tf-picker-header">
-              <button type="button" className="tf-back" onClick={() => setMode('main')} aria-label="뒤로가기">‹</button>
+              <button type="button" className="tf-back" onClick={() => setMode('main')} aria-label={t('뒤로가기')}>‹</button>
               <div>
-                <h2>필터할 서랍칸 선택</h2>
-                <p>조건을 걸 서랍칸을 골라주세요.</p>
+                <h2>{t('필터할 서랍칸 선택')}</h2>
+                <p>{t('조건을 걸 서랍칸을 골라주세요.')}</p>
               </div>
             </header>
 
             <label className="tf-search">
               <img src="/assets/ui-icons/icon_search.webp" alt="" />
-              <input autoFocus value={query} placeholder="서랍칸 검색" onChange={(e) => setQuery(e.target.value)} />
+              <input autoFocus value={query} placeholder={t('서랍칸 검색')} onChange={(e) => setQuery(e.target.value)} />
             </label>
 
             <div className="tf-field-list">
@@ -226,7 +228,7 @@ export function TableFilterScreen({
                   <span>{column.label}</span><b>›</b>
                 </button>
               ))}
-              {!visibleColumns.length && <div className="tf-empty-list">검색 결과가 없어요.</div>}
+              {!visibleColumns.length && <div className="tf-empty-list">{t('검색 결과가 없어요.')}</div>}
             </div>
           </>
         )}
@@ -234,42 +236,43 @@ export function TableFilterScreen({
         {mode === 'condition' && selectedColumn && (
           <>
             <header className="tf-picker-header">
-              <button type="button" className="tf-back" onClick={() => setMode('main')} aria-label="뒤로가기">‹</button>
+              <button type="button" className="tf-back" onClick={() => setMode('main')} aria-label={t('뒤로가기')}>‹</button>
               <div>
-                <h2>{selectedColumn.label} 필터</h2>
-                <p>이 서랍칸에 적용할 조건을 정해요.</p>
+                <h2>{t('{name} 필터', { name: selectedColumn.label })}</h2>
+                <p>{t('이 서랍칸에 적용할 조건을 정해요.')}</p>
               </div>
             </header>
 
             <div className="tf-condition-card">
-              <strong>조건</strong>
+              <strong>{t('조건')}</strong>
               <div className="tf-condition-pills">
                 {operatorsFor(selectedColumn.type).map((op) => (
                   <button key={op} type="button" className={op === operator ? 'on' : ''} aria-pressed={op === operator} onClick={() => setOperator(op)}>
-                    {OPERATOR_LABEL[op]}
+                    {t(OPERATOR_LABEL[op])}
                   </button>
                 ))}
               </div>
               {operatorNeedsValue(operator) && (
                 selectedColumn.type === 'date' ? (
                   <>
-                    <label><span>{operator === 'between' ? '시작 날짜' : '날짜'}</span><input type="date" value={parseDateInput(value) ?? value} onChange={(e) => setValue(e.target.value)} /></label>
-                    {operator === 'between' && <label><span>끝 날짜</span><input type="date" value={parseDateInput(value2) ?? value2} onChange={(e) => setValue2(e.target.value)} /></label>}
+                    <label><span>{operator === 'between' ? t('시작 날짜') : t('날짜')}</span><input type="date" value={parseDateInput(value) ?? value} onChange={(e) => setValue(e.target.value)} /></label>
+                    {operator === 'between' && <label><span>{t('끝 날짜')}</span><input type="date" value={parseDateInput(value2) ?? value2} onChange={(e) => setValue2(e.target.value)} /></label>}
                   </>
                 ) : ['number', 'currency', 'rating'].includes(selectedColumn.type) ? (
                   <>
-                    <label><span>{operator === 'between' ? '작은 값' : '값'}</span><input inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} /></label>
-                    {operator === 'between' && <label><span>큰 값</span><input inputMode="decimal" value={value2} onChange={(e) => setValue2(e.target.value)} /></label>}
+                    <label><span>{operator === 'between' ? t('작은 값') : t('값')}</span><input inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} /></label>
+                    {operator === 'between' && <label><span>{t('큰 값')}</span><input inputMode="decimal" value={value2} onChange={(e) => setValue2(e.target.value)} /></label>}
                   </>
                 ) : (
-                  <label><span>내용</span><input autoFocus value={value} onChange={(e) => setValue(e.target.value)} /></label>
+                  <label><span>{t('내용')}</span><input autoFocus value={value} onChange={(e) => setValue(e.target.value)} /></label>
                 )
               )}
               {draftProblem && (value.trim() !== '' || value2.trim() !== '') && <p className="tf-condition-error" role="alert">{draftProblem}</p>}
             </div>
 
             <button type="button" className="tf-condition-apply" disabled={!!draftProblem} onClick={() => addRule(selectedColumn)}>
-              이 조건 추가
+              
+              {t('이 조건 추가')}
             </button>
           </>
         )}

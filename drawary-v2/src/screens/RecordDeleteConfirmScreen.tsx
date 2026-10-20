@@ -1,4 +1,5 @@
 import './RecordDeleteConfirmScreen.css';
+import { t, tx } from '../i18n';
 
 interface RecordDeleteConfirmScreenProps {
   recordTitle?: string;
@@ -42,17 +43,16 @@ export function RecordDeleteConfirmScreen({
           <img src="/assets/ui-icons/icon_delete.webp" alt="" />
         </div>
 
-        <h2 id="record-delete-title">이 보관품을 삭제할까요?</h2>
+        <h2 id="record-delete-title">{t('이 보관품을 삭제할까요?')}</h2>
 
         <p>
-          <strong>&lsquo;{recordTitle}&rsquo;</strong> 보관품과<br />
-          입력한 내용이 서랍에서 삭제돼요.
-          <span className="rdc-warning">삭제한 뒤에는 되돌릴 수 없어요.</span>
+          {tx('{title} 보관품과\n입력한 내용이 서랍에서 삭제돼요.', { title: <strong>&lsquo;{recordTitle}&rsquo;</strong> })}
+          <span className="rdc-warning">{t('삭제한 뒤에는 되돌릴 수 없어요.')}</span>
         </p>
 
         <div className="rdc-actions">
-          <button type="button" className="rdc-cancel" onClick={onCancel}>취소</button>
-          <button type="button" className="rdc-delete" onClick={onDelete}>삭제하기</button>
+          <button type="button" className="rdc-cancel" onClick={onCancel}>{t('취소')}</button>
+          <button type="button" className="rdc-delete" onClick={onDelete}>{t('삭제하기')}</button>
         </div>
       </section>
     </div>

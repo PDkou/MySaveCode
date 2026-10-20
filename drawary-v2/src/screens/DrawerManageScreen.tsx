@@ -7,6 +7,7 @@ import { TableFilterScreen } from './TableFilterScreen';
 import type { TableColumn, TableRowData, TableViewState } from '../flow/tableQuery';
 import { EMPTY_VIEW } from '../flow/tableQuery';
 import { DrawerDeleteConfirmScreen } from './DrawerDeleteConfirmScreen';
+import { t } from '../i18n';
 
 interface DrawerManageRow {
   key: string;
@@ -89,25 +90,25 @@ export function DrawerManageScreen({
 
   const groups: DrawerManageRow[][] = [
     [
-      { key: 'rename', label: '서랍 이름 / 아이콘 변경', icon: '/assets/ui-icons/icon_edit.webp', onClick: onRenameDrawer },
-      { key: 'fields', label: '서랍칸 편집', icon: '/assets/ui-icons/icon_grid.webp', onClick: onEditFields },
-      { key: 'sort-filter', label: '정렬 / 필터 설정', icon: '/assets/ui-icons/icon_sort.webp', onClick: () => setSortFilterOpen(true) },
+      { key: 'rename', label: t('서랍 이름 / 아이콘 변경'), icon: '/assets/ui-icons/icon_edit.webp', onClick: onRenameDrawer },
+      { key: 'fields', label: t('서랍칸 편집'), icon: '/assets/ui-icons/icon_grid.webp', onClick: onEditFields },
+      { key: 'sort-filter', label: t('정렬 / 필터 설정'), icon: '/assets/ui-icons/icon_sort.webp', onClick: () => setSortFilterOpen(true) },
     ],
     [
-      { key: 'notifications', label: '알림 설정', icon: '/assets/ui-icons/icon_notification.webp', onClick: onNotificationSettings },
-      { key: 'recurrence', label: '반복 관리', icon: '/assets/ui-icons/icon_refresh.webp', onClick: onRecurrenceManage },
+      { key: 'notifications', label: t('알림 설정'), icon: '/assets/ui-icons/icon_notification.webp', onClick: onNotificationSettings },
+      { key: 'recurrence', label: t('반복 관리'), icon: '/assets/ui-icons/icon_refresh.webp', onClick: onRecurrenceManage },
     ],
     [
-      { key: 'backup', label: '백업 / 내보내기', icon: '/assets/ui-icons/icon_share.webp', onClick: onBackupExport },
+      { key: 'backup', label: t('백업 / 내보내기'), icon: '/assets/ui-icons/icon_share.webp', onClick: onBackupExport },
     ],
     [
-      { key: 'delete', label: '서랍 삭제', icon: '/assets/ui-icons/icon_delete.webp', danger: true, onClick: () => setDeleteConfirmOpen(true) },
+      { key: 'delete', label: t('서랍 삭제'), icon: '/assets/ui-icons/icon_delete.webp', danger: true, onClick: () => setDeleteConfirmOpen(true) },
     ],
   ];
 
   return (
     <main className="dm-screen">
-      <ScreenHeader title="서랍 관리" onBack={onBack} height={61} />
+      <ScreenHeader title={t('서랍 관리')} onBack={onBack} height={61} />
 
       <section className="dm-summary">
         <div className="dm-summary-icon">
@@ -115,7 +116,7 @@ export function DrawerManageScreen({
         </div>
         <div className="dm-summary-copy">
           <strong>{drawerName}</strong>
-          <span>{fieldCount}개 서랍칸 · {recordCount}개 보관품</span>
+          <span>{t('{fields}개 서랍칸 · {items}개 보관품', { fields: fieldCount, items: recordCount })}</span>
         </div>
       </section>
 

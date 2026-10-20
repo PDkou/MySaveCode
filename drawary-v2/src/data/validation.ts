@@ -1,5 +1,6 @@
 import type { Field, FieldValue } from './types';
 import { MAX_DRAWER_NAME_LENGTH, MAX_FIELD_NAME_LENGTH } from './types';
+import { t } from '../i18n';
 
 export class ValidationError extends Error {
   constructor(message: string) {
@@ -10,19 +11,19 @@ export class ValidationError extends Error {
 
 export function cleanName(raw: string, label: string, max: number): string {
   const name = raw.trim();
-  if (!name) throw new ValidationError(`${label} 이름을 입력해 주세요.`);
-  if (name.length > max) throw new ValidationError(`${label} 이름은 ${max}자까지 입력할 수 있어요.`);
+  if (!name) throw new ValidationError(t('{label} 이름을 입력해 주세요.', { label }));
+  if (name.length > max) throw new ValidationError(t('{label} 이름은 {max}자까지 입력할 수 있어요.', { label, max }));
   return name;
 }
 
-export const cleanDrawerName = (raw: string) => cleanName(raw, '서랍', MAX_DRAWER_NAME_LENGTH);
-export const cleanFieldName = (raw: string) => cleanName(raw, '서랍 칸', MAX_FIELD_NAME_LENGTH);
+export const cleanDrawerName = (raw: string) => cleanName(raw, t('서랍'), MAX_DRAWER_NAME_LENGTH);
+export const cleanFieldName = (raw: string) => cleanName(raw, t('서랍 칸'), MAX_FIELD_NAME_LENGTH);
 
 /** Two fields in one drawer may not share a name (they would be indistinguishable in the table and CSV). */
 export function assertUniqueFieldName(siblings: readonly Pick<Field, 'id' | 'name'>[], name: string, exceptId?: string): void {
   const key = name.trim().toLowerCase();
   if (siblings.some((f) => f.id !== exceptId && f.name.trim().toLowerCase() === key)) {
-    throw new ValidationError(`'${name}' 서랍 칸이 이미 있어요.`);
+    throw new ValidationError(t('\'{name}\' 서랍 칸이 이미 있어요.', { name }));
   }
 }
 
@@ -46,7 +47,7 @@ export function validateValue(field: Field, value: FieldValue | undefined, ignor
 
   if (isEmptyValue(value)) {
     // A checkbox is never "empty": unchecked is a valid answer.
-    if (field.required && field.kind !== 'check' && !ignoreRequired) return `'${field.name}'을(를) 입력해 주세요.`;
+    if (field.required && field.kind !== 'check' && !ignoreRequired) return t('\'{name}\'을(를) 입력해 주세요.', { name: field.name });
     return null;
   }
 
@@ -54,22 +55,22 @@ export function validateValue(field: Field, value: FieldValue | undefined, ignor
     case 'text':
     case 'long_text':
     case 'link':
-      return typeof value === 'string' ? null : `'${field.name}'에는 글자를 입력해 주세요.`;
+      return typeof value === 'string' ? null : t('\'{name}\'에는 글자를 입력해 주세요.', { name: field.name });
     case 'number':
     case 'currency':
-      if (typeof value !== 'number' || !Number.isFinite(value)) return `'${field.name}'에는 숫자를 입력해 주세요.`;
-      if (field.kind === 'currency' && !Number.isInteger(value)) return `'${field.name}'은(는) 원 단위 정수로 입력해 주세요.`;
+      if (typeof value !== 'number' || !Number.isFinite(value)) return t('\'{name}\'에는 숫자를 입력해 주세요.', { name: field.name });
+      if (field.kind === 'currency' && !Number.isInteger(value)) return t('\'{name}\'은(는) 원 단위 정수로 입력해 주세요.', { name: field.name });
       return null;
     case 'date':
-      return typeof value === 'string' && isRealDate(value) ? null : `'${field.name}'의 날짜를 확인해 주세요.`;
+      return typeof value === 'string' && isRealDate(value) ? null : t('\'{name}\'의 날짜를 확인해 주세요.', { name: field.name });
     case 'select':
-      return typeof value === 'string' && field.options.includes(value) ? null : `'${field.name}'에서 목록에 있는 항목을 골라 주세요.`;
+      return typeof value === 'string' && field.options.includes(value) ? null : t('\'{name}\'에서 목록에 있는 항목을 골라 주세요.', { name: field.name });
     case 'check':
-      return typeof value === 'boolean' ? null : `'${field.name}'은(는) 켜기/끄기 값이어야 해요.`;
+      return typeof value === 'boolean' ? null : t('\'{name}\'은(는) 켜기/끄기 값이어야 해요.', { name: field.name });
     case 'rating':
       return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 5
         ? null
-        : `'${field.name}'의 별점은 0~5 사이여야 해요.`;
+        : t('\'{name}\'의 별점은 0~5 사이여야 해요.', { name: field.name });
   }
 }
 
@@ -77,7 +78,7 @@ export function validateValue(field: Field, value: FieldValue | undefined, ignor
 export function validateRecordValues(fields: readonly Field[], values: Record<string, FieldValue>, ignoreRequired = false): void {
   const known = new Set(fields.map((f) => f.id));
   for (const key of Object.keys(values)) {
-    if (!known.has(key)) throw new ValidationError('이 서랍에 없는 서랍 칸이에요.');
+    if (!known.has(key)) throw new ValidationError(t('이 서랍에 없는 서랍 칸이에요.'));
   }
   for (const field of fields) {
     const message = validateValue(field, values[field.id], ignoreRequired);

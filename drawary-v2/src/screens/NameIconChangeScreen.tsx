@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './NameIconChangeScreen.css';
+import { t, K } from '../i18n';
 
 export interface DrawerIconOption {
   id: string;
@@ -20,30 +21,30 @@ export interface NameIconChangeScreenProps {
 const ICON_DIR = '/assets/drawer-icons/';
 
 export const DEFAULT_DRAWER_ICON_OPTIONS: DrawerIconOption[] = [
-  ['cosmetics', 'drawer_icon_cosmetics.webp', '화장품'],
-  ['books', 'drawer_icon_books.webp', '책'],
-  ['plants', 'drawer_icon_plants.webp', '식물'],
-  ['travel', 'drawer_icon_travel.webp', '여행'],
-  ['clothes', 'drawer_icon_clothes.webp', '옷'],
-  ['cafe', 'drawer_icon_cafe.webp', '카페'],
-  ['camera', 'drawer_icon_camera.webp', '사진'],
-  ['pets', 'drawer_icon_pets.webp', '반려동물'],
-  ['home', 'drawer_icon_home.webp', '집'],
-  ['food', 'drawer_icon_food.webp', '음식'],
-  ['finance', 'drawer_icon_finance.webp', '금융'],
-  ['electronics', 'drawer_icon_electronics.webp', '전자제품'],
-  ['games', 'drawer_icon_games.webp', '게임'],
-  ['music', 'drawer_icon_music.webp', '음악'],
-  ['gifts', 'drawer_icon_gifts.webp', '선물'],
-  ['health', 'drawer_icon_health.webp', '건강'],
-  ['fitness', 'drawer_icon_fitness.webp', '운동'],
-  ['car', 'drawer_icon_car.webp', '자동차'],
-  ['documents', 'drawer_icon_documents.webp', '문서'],
-  ['shopping', 'drawer_icon_shopping.webp', '쇼핑'],
-  ['movies', 'drawer_icon_movies.webp', '영화'],
-  ['hobby', 'drawer_icon_hobby.webp', '취미'],
-  ['baby', 'drawer_icon_baby.webp', '육아'],
-  ['misc', 'drawer_icon_misc.webp', '기타'],
+  ['cosmetics', 'drawer_icon_cosmetics.webp', K('화장품')],
+  ['books', 'drawer_icon_books.webp', K('책')],
+  ['plants', 'drawer_icon_plants.webp', K('식물')],
+  ['travel', 'drawer_icon_travel.webp', K('여행')],
+  ['clothes', 'drawer_icon_clothes.webp', K('옷')],
+  ['cafe', 'drawer_icon_cafe.webp', K('카페')],
+  ['camera', 'drawer_icon_camera.webp', K('사진')],
+  ['pets', 'drawer_icon_pets.webp', K('반려동물')],
+  ['home', 'drawer_icon_home.webp', K('집')],
+  ['food', 'drawer_icon_food.webp', K('음식')],
+  ['finance', 'drawer_icon_finance.webp', K('금융')],
+  ['electronics', 'drawer_icon_electronics.webp', K('전자제품')],
+  ['games', 'drawer_icon_games.webp', K('게임')],
+  ['music', 'drawer_icon_music.webp', K('음악')],
+  ['gifts', 'drawer_icon_gifts.webp', K('선물')],
+  ['health', 'drawer_icon_health.webp', K('건강')],
+  ['fitness', 'drawer_icon_fitness.webp', K('운동')],
+  ['car', 'drawer_icon_car.webp', K('자동차')],
+  ['documents', 'drawer_icon_documents.webp', K('문서')],
+  ['shopping', 'drawer_icon_shopping.webp', K('쇼핑')],
+  ['movies', 'drawer_icon_movies.webp', K('영화')],
+  ['hobby', 'drawer_icon_hobby.webp', K('취미')],
+  ['baby', 'drawer_icon_baby.webp', K('육아')],
+  ['misc', 'drawer_icon_misc.webp', K('기타')],
 ].map(([id, asset, label]) => ({ id, asset, label }));
 
 /**
@@ -79,36 +80,36 @@ export function NameIconChangeScreen({
 
   return (
     <main className="nic-page">
-      <ScreenHeader title="서랍 이름 / 아이콘 변경" onBack={onBack} height={61} />
+      <ScreenHeader title={t('서랍 이름 / 아이콘 변경')} onBack={onBack} height={61} />
 
-      <section className="nic-preview" aria-label="변경 미리보기">
+      <section className="nic-preview" aria-label={t('변경 미리보기')}>
         <div className="nic-preview-icon">
           <img src={`${ICON_DIR}${selected.asset}`} alt="" />
         </div>
         <div>
-          <span>변경 미리보기</span>
-          <strong>{trimmed || '서랍 이름'}</strong>
+          <span>{t('변경 미리보기')}</span>
+          <strong>{trimmed || t('서랍 이름')}</strong>
         </div>
       </section>
 
       <section className="nic-section">
         <div className="nic-section-title">
-          <strong>서랍 이름</strong>
+          <strong>{t('서랍 이름')}</strong>
           <span>{name.length} / {maxNameLength}</span>
         </div>
         <input
           className="nic-name-input"
           value={name}
           maxLength={maxNameLength}
-          placeholder="서랍 이름을 입력해주세요."
+          placeholder={t('서랍 이름을 입력해주세요.')}
           onChange={(e) => setName(e.target.value)}
         />
       </section>
 
       <section className="nic-section nic-icon-section">
         <div className="nic-section-title">
-          <strong>아이콘</strong>
-          <span>하나를 골라주세요.</span>
+          <strong>{t('아이콘')}</strong>
+          <span>{t('하나를 골라주세요.')}</span>
         </div>
         <div className="nic-icon-grid">
           {icons.map((icon) => (
@@ -117,7 +118,7 @@ export function NameIconChangeScreen({
               key={icon.id}
               className={`nic-icon-option${icon.id === selected.id ? ' is-selected' : ''}`}
               onClick={() => setIconId(icon.id)}
-              aria-label={icon.label}
+              aria-label={t(icon.label)}
               aria-pressed={icon.id === selected.id}
             >
               <img src={`${ICON_DIR}${icon.asset}`} alt="" />
@@ -128,14 +129,15 @@ export function NameIconChangeScreen({
       </section>
 
       <div className="nic-actions">
-        <button type="button" className="nic-cancel" onClick={onBack}>취소</button>
+        <button type="button" className="nic-cancel" onClick={onBack}>{t('취소')}</button>
         <button
           type="button"
           className="nic-save"
           disabled={!canSave}
           onClick={() => canSave && onSave?.({ name: trimmed, iconId })}
         >
-          저장
+          
+          {t('저장')}
         </button>
       </div>
     </main>

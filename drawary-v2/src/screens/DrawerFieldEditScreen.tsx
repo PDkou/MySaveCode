@@ -3,6 +3,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import './DrawerFieldEditScreen.css';
 import type { FieldKind } from '../data/types';
 import { FIELD_TYPES } from './NewFieldScreen';
+import { t, tl, tx, K } from '../i18n';
 
 // Ported from Drawary_11_FINAL_CONFIRMED_CODE (CONFIRMED.md: 행 전체 탭 →
 // 수정 / 손잡이 → 순서 변경 전용 / 숨겨진 스와이프 액션 사용 안 함).
@@ -28,13 +29,13 @@ import { FIELD_TYPES } from './NewFieldScreen';
 // literal `\n` escape sequences embedded as text in the source file
 // (a mechanical corruption, not a design choice).
 const FIELDS = [
-  { id: 'product', name: '제품명', type: '글자', icon: '/assets/field-types/field_text.webp' },
-  { id: 'brand', name: '브랜드', type: '글자', icon: '/assets/field-types/field_text.webp' },
-  { id: 'category', name: '카테고리', type: '선택', icon: '/assets/field-types/field_select.webp' },
-  { id: 'purchase', name: '구매일', type: '날짜', icon: '/assets/field-types/field_date.webp' },
-  { id: 'price', name: '가격', type: '금액', icon: '/assets/field-types/field_currency.webp' },
-  { id: 'rating', name: '별점', type: '별점', icon: '/assets/field-types/field_rating.webp' },
-  { id: 'memo', name: '메모', type: '긴 글', icon: '/assets/field-types/field_edit_note.webp' },
+  { id: 'product', name: K('제품명'), type: K('글자'), icon: '/assets/field-types/field_text.webp' },
+  { id: 'brand', name: K('브랜드'), type: K('글자'), icon: '/assets/field-types/field_text.webp' },
+  { id: 'category', name: K('카테고리'), type: K('선택'), icon: '/assets/field-types/field_select.webp' },
+  { id: 'purchase', name: K('구매일'), type: K('날짜'), icon: '/assets/field-types/field_date.webp' },
+  { id: 'price', name: K('가격'), type: K('금액'), icon: '/assets/field-types/field_currency.webp' },
+  { id: 'rating', name: K('별점'), type: K('별점'), icon: '/assets/field-types/field_rating.webp' },
+  { id: 'memo', name: K('메모'), type: K('긴 글'), icon: '/assets/field-types/field_edit_note.webp' },
 ];
 
 export interface EditableField {
@@ -61,35 +62,35 @@ export interface DrawerFieldEditScreenProps {
 
 export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: DrawerFieldEditScreenProps) {
   const [mode, setMode] = useState<'list' | 'edit'>(field ? 'edit' : 'list');
-  const [name, setName] = useState(field?.name ?? '카테고리');
+  const [name, setName] = useState(field?.name ?? t('카테고리'));
   const [required, setRequired] = useState(field?.required ?? false);
-  const [options, setOptions] = useState(field ? field.options : ['스킨케어', '메이크업', '향수']);
+  const [options, setOptions] = useState(field ? field.options : [t('스킨케어'), t('메이크업'), t('향수')]);
   const kind: FieldKind = field?.kind ?? 'select';
   const kindInfo = FIELD_TYPES.find((t) => t.kind === kind)!;
-  const savedName = field?.name ?? '카테고리';
+  const savedName = field?.name ?? t('카테고리');
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (mode === 'list') {
     return (
       <main className="df-screen">
-        <ScreenHeader variant="stacked" title="서랍칸 정하기" onBack={onBack} height={93} />
+        <ScreenHeader variant="stacked" title={t('서랍칸 정하기')} onBack={onBack} height={93} />
         <section className="df-content">
-          <p className="df-intro">이 서랍에 어떤 내용을 기록할까요?<br />원하는 서랍칸을 직접 정할 수 있어요.</p>
-          <p className="df-list-help"><b>서랍칸</b>을 누르면 수정할 수 있고,<br />오른쪽 <b>손잡이</b>를 끌면 순서를 바꿀 수 있어요.</p>
+          <p className="df-intro">{tl('이 서랍에 어떤 내용을 기록할까요?\n원하는 서랍칸을 직접 정할 수 있어요.')}</p>
+          <p className="df-list-help">{tx('{field}을 누르면 수정할 수 있고,\n오른쪽 {handle}를 끌면 순서를 바꿀 수 있어요.', { field: <b>{t('서랍칸')}</b>, handle: <b>{t('손잡이')}</b> })}</p>
           <div className="df-list">
             {FIELDS.map((field) => (
               <div className="df-row is-editable" key={field.id}>
-                <button className="df-row-tap" aria-label={`${field.name} 수정`} onClick={() => setMode('edit')} />
+                <button className="df-row-tap" aria-label={t('{name} 수정', { name: field.name })} onClick={() => setMode('edit')} />
                 <div className="df-main"><img src={field.icon} alt="" /><strong>{field.name}</strong></div>
-                <span className="df-type">{field.type}</span>
+                <span className="df-type">{t(field.type)}</span>
                 <span className="df-row-edit-hint" aria-hidden="true">›</span>
                 <i className="df-divider" />
-                <button className="df-handle" aria-label={`${field.name} 순서 변경`}><b /><b /><b /></button>
+                <button className="df-handle" aria-label={t('{name} 순서 변경', { name: field.name })}><b /><b /><b /></button>
               </div>
             ))}
           </div>
-          <button className="df-add">＋ 서랍칸 추가</button>
-          <button className="df-complete">서랍 만들기 완료하기</button>
+          <button className="df-add">{t('＋ 서랍칸 추가')}</button>
+          <button className="df-complete">{t('서랍 만들기 완료하기')}</button>
         </section>
       </main>
     );
@@ -97,15 +98,15 @@ export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: Drawe
 
   return (
     <main className="df-screen">
-      <ScreenHeader variant="stacked" title="서랍칸 수정" onBack={field ? onBack : () => setMode('list')} height={93} />
+      <ScreenHeader variant="stacked" title={t('서랍칸 수정')} onBack={field ? onBack : () => setMode('list')} height={93} />
       <section className="df-edit-content">
-        <label className="df-label" htmlFor="field-name">서랍칸 이름</label>
+        <label className="df-label" htmlFor="field-name">{t('서랍칸 이름')}</label>
         <div className="df-input-wrap">
           <input id="field-name" value={name} onChange={(e) => setName(e.target.value.slice(0, 20))} />
           <span>{name.length}/20</span>
         </div>
 
-        <span className="df-label">서랍칸 종류</span>
+        <span className="df-label">{t('서랍칸 종류')}</span>
         {/* A field's kind is fixed once created (its saved values would stop matching), so this row only shows it. */}
         <button className="df-selected-type" type="button" tabIndex={field ? -1 : 0} style={field ? { cursor: 'default' } : undefined}>
           <span className="df-type-icon"><img src={kindInfo.icon} alt="" /></span>
@@ -114,7 +115,7 @@ export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: Drawe
         </button>
 
         {kind === 'select' && <section className="df-options">
-          <h2>선택 옵션</h2>
+          <h2>{t('선택 옵션')}</h2>
           <div className="df-option-list">
             {options.map((option, index) => (
               <div className="df-option-row" key={index}>
@@ -123,27 +124,27 @@ export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: Drawe
               </div>
             ))}
           </div>
-          <button className="df-add-option" onClick={() => setOptions([...options, `옵션 ${options.length + 1}`])}>＋ 옵션 추가</button>
+          <button className="df-add-option" onClick={() => setOptions([...options, t('옵션 {n}', { n: options.length + 1 })])}>{t('＋ 옵션 추가')}</button>
         </section>}
 
         <div className="df-required">
-          <div><strong>필수로 채우기</strong><small>보관품을 담을 때 꼭 채워야 하는 서랍칸이에요.</small></div>
-          <button className={`df-switch${required ? ' is-on' : ''}`} aria-pressed={required} aria-label="필수 입력" onClick={() => setRequired(!required)}><span /></button>
+          <div><strong>{t('필수로 채우기')}</strong><small>{t('보관품을 담을 때 꼭 채워야 하는 서랍칸이에요.')}</small></div>
+          <button className={`df-switch${required ? ' is-on' : ''}`} aria-pressed={required} aria-label={t('필수 입력')} onClick={() => setRequired(!required)}><span /></button>
         </div>
 
-        <button className="df-save" onClick={() => onSave?.({ name, required, options })}>저장하기</button>
-        <button className="df-delete" onClick={() => setDeleteOpen(true)}><img src="/assets/ui-icons/icon_delete.webp" alt="" /> 서랍칸 삭제</button>
-        <p className="df-edit-danger-note">삭제한 서랍칸의 기존 입력값은 함께 사라져요.</p>
+        <button className="df-save" onClick={() => onSave?.({ name, required, options })}>{t('저장하기')}</button>
+        <button className="df-delete" onClick={() => setDeleteOpen(true)}><img src="/assets/ui-icons/icon_delete.webp" alt="" /> {t('서랍칸 삭제')}</button>
+        <p className="df-edit-danger-note">{t('삭제한 서랍칸의 기존 입력값은 함께 사라져요.')}</p>
         {deleteOpen && (
           <div className="df-modal-backdrop">
-            <section className="df-confirm-sheet" role="dialog" aria-modal="true" aria-label="서랍칸 삭제 확인">
+            <section className="df-confirm-sheet" role="dialog" aria-modal="true" aria-label={t('서랍칸 삭제 확인')}>
               <div className="df-sheet-handle" />
               <div className="df-confirm-icon"><img src="/assets/ui-icons/icon_delete.webp" alt="" /></div>
-              <h2>이 서랍칸을 삭제할까요?</h2>
-              <p>'{savedName}' 서랍칸과 여기에 담긴 입력값이 함께 삭제돼요.<br />삭제한 뒤에는 되돌릴 수 없어요.</p>
+              <h2>{t('이 서랍칸을 삭제할까요?')}</h2>
+              <p>{tl("'{name}' 서랍칸과 여기에 담긴 입력값이 함께 삭제돼요.\n삭제한 뒤에는 되돌릴 수 없어요.", { name: savedName })}</p>
               <div className="df-confirm-actions">
-                <button className="df-cancel" onClick={() => setDeleteOpen(false)}>취소</button>
-                <button className="df-confirm-delete" onClick={onDelete}>삭제하기</button>
+                <button className="df-cancel" onClick={() => setDeleteOpen(false)}>{t('취소')}</button>
+                <button className="df-confirm-delete" onClick={onDelete}>{t('삭제하기')}</button>
               </div>
             </section>
           </div>

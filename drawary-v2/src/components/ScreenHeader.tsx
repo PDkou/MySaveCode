@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import './ScreenHeader.css';
+import { K, t } from '../i18n';
 
 export interface ScreenHeaderProps {
   title: ReactNode;
@@ -43,14 +44,14 @@ export interface ScreenHeaderProps {
  * keep their own in-sheet heading, a different UI metaphor from a
  * stack-navigation app-bar.
  */
-export function ScreenHeader({ title, subtitle, onBack, backLabel = '이전 화면', rightSlot, variant = 'center', height, style: styleOverride }: ScreenHeaderProps) {
+export function ScreenHeader({ title, subtitle, onBack, backLabel = K('이전 화면'), rightSlot, variant = 'center', height, style: styleOverride }: ScreenHeaderProps) {
   const style = height || styleOverride ? { ...(height ? { height } : null), ...styleOverride } : undefined;
 
   if (variant === 'stacked') {
     return (
       <header className="uf-header uf-header--stacked" style={style}>
         {onBack && (
-          <button type="button" className="uf-back" aria-label={backLabel} onClick={onBack} />
+          <button type="button" className="uf-back" aria-label={t(backLabel)} onClick={onBack} />
         )}
         <div className="uf-stacked-text">
           <h1>{title}</h1>
@@ -64,7 +65,7 @@ export function ScreenHeader({ title, subtitle, onBack, backLabel = '이전 화�
   return (
     <header className="uf-header uf-header--center" style={style}>
       {onBack ? (
-        <button type="button" className="uf-back" aria-label={backLabel} onClick={onBack} />
+        <button type="button" className="uf-back" aria-label={t(backLabel)} onClick={onBack} />
       ) : (
         <span className="uf-header-spacer" aria-hidden="true" />
       )}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './InfoScreen.css';
+import { t, tl } from '../i18n';
 
 export type InfoDestination = 'privacy' | 'terms' | 'licenses';
 
@@ -32,41 +33,41 @@ export function InfoScreen({ onBack, onNavigate }: InfoScreenProps) {
   }, [dialogOpen]);
 
   return (
-    <main className="info58-screen" aria-label="Drawary 정보 화면">
+    <main className="info58-screen" aria-label={t('Drawary 정보 화면')}>
       <header className="info58-appbar">
-        {onBack && <button className="info58-back" type="button" aria-label="이전 화면" onClick={onBack} />}
-        <span className="info58-appbar-title">정보</span>
+        {onBack && <button className="info58-back" type="button" aria-label={t('이전 화면')} onClick={onBack} />}
+        <span className="info58-appbar-title">{t('정보')}</span>
       </header>
-      <section className="info58-brand" aria-label="Drawary 브랜드 소개">
-        <img className="info58-flower" src="/assets/brand/brand_symbol_flower_small.webp" alt="Drawary 꽃 로고" />
+      <section className="info58-brand" aria-label={t('Drawary 브랜드 소개')}>
+        <img className="info58-flower" src="/assets/brand/brand_symbol_flower_small.webp" alt={t('Drawary 꽃 로고')} />
         <h1 className="info58-brand-name">Drawary</h1>
-        <p className="info58-tagline">나만의 소중한 것들을,<br />더 특별하게 간직해요.</p>
-        <button className="info58-version-chip" type="button" onClick={() => setDialogOpen(true)}>버전 정보</button>
+        <p className="info58-tagline">{tl('나만의 소중한 것들을,\n더 특별하게 간직해요.')}</p>
+        <button className="info58-version-chip" type="button" onClick={() => setDialogOpen(true)}>{t('버전 정보')}</button>
       </section>
       <div className="info58-content">
-        <h2 className="info58-section-label">앱 정보</h2>
-        <section className="info58-card" aria-label="앱 정보 메뉴">
-          <div className="info58-row"><span className="info58-item-name">현재 버전</span><span className="info58-current-version">앱 빌드 정보에서 표시</span></div>
+        <h2 className="info58-section-label">{t('앱 정보')}</h2>
+        <section className="info58-card" aria-label={t('앱 정보 메뉴')}>
+          <div className="info58-row"><span className="info58-item-name">{t('현재 버전')}</span><span className="info58-current-version">{t('앱 빌드 정보에서 표시')}</span></div>
           <button className="info58-row info58-row-action" type="button" onClick={() => onNavigate?.('privacy')}>
-            <span className="info58-item-name">개인정보 처리방침</span><span className="info58-chevron" aria-hidden="true" />
+            <span className="info58-item-name">{t('개인정보 처리방침')}</span><span className="info58-chevron" aria-hidden="true" />
           </button>
           <button className="info58-row info58-row-action" type="button" onClick={() => onNavigate?.('terms')}>
-            <span className="info58-item-name">이용약관</span><span className="info58-chevron" aria-hidden="true" />
+            <span className="info58-item-name">{t('이용약관')}</span><span className="info58-chevron" aria-hidden="true" />
           </button>
           <button className="info58-row info58-row-action" type="button" onClick={() => onNavigate?.('licenses')}>
-            <span className="info58-item-name">오픈소스 라이선스</span><span className="info58-chevron" aria-hidden="true" />
+            <span className="info58-item-name">{t('오픈소스 라이선스')}</span><span className="info58-chevron" aria-hidden="true" />
           </button>
         </section>
-        <h2 className="info58-section-label info58-about-label">Drawary 소개</h2>
-        <section className="info58-about-card">Drawary는 내가 필요한 방식으로 서랍을 만들고, 원하는 정보들을 자유롭게 기록할 수 있는 개인 정리 앱이에요.</section>
+        <h2 className="info58-section-label info58-about-label">{t('Drawary 소개')}</h2>
+        <section className="info58-about-card">{t('Drawary는 내가 필요한 방식으로 서랍을 만들고, 원하는 정보들을 자유롭게 기록할 수 있는 개인 정리 앱이에요.')}</section>
         <p className="info58-credit">Made by Howling Creative Studio</p>
       </div>
       {dialogOpen && (
         <div className="info58-overlay" onClick={(e) => { if (e.target === e.currentTarget) setDialogOpen(false); }}>
           <section className="info58-dialog" role="dialog" aria-modal="true">
-            <h2>버전 정보</h2>
-            <p>실제 앱에서 빌드 버전을 표시해요.</p>
-            <button type="button" onClick={() => setDialogOpen(false)}>확인</button>
+            <h2>{t('버전 정보')}</h2>
+            <p>{t('실제 앱에서 빌드 버전을 표시해요.')}</p>
+            <button type="button" onClick={() => setDialogOpen(false)}>{t('확인')}</button>
           </section>
         </div>
       )}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import './ThemeSettingsScreen.css';
 
 import type { ThemeId } from '../flow/theme';
+import { t, K } from '../i18n';
 export type { ThemeId };
 
 export interface ThemeSettingsScreenProps {
@@ -11,11 +12,11 @@ export interface ThemeSettingsScreenProps {
 }
 
 const THEMES: { id: ThemeId; label: string; flower: string; alt: string }[] = [
-  { id: 'lavender', label: '라벤더', flower: 'theme_flower_lavender.webp', alt: '보라색 둥근 꽃' },
-  { id: 'coral', label: '코랄', flower: 'theme_flower_coral.webp', alt: '코랄색 튤립 꽃' },
-  { id: 'sage', label: '세이지', flower: 'theme_flower_sage.webp', alt: '연녹색 꽃과 잎' },
-  { id: 'mustard', label: '머스타드', flower: 'theme_flower_mustard.webp', alt: '노란색 데이지 꽃' },
-  { id: 'sky', label: '스카이', flower: 'theme_flower_sky.webp', alt: '하늘색 종 모양 꽃' },
+  { id: 'lavender', label: K('라벤더'), flower: 'theme_flower_lavender.webp', alt: K('보라색 둥근 꽃') },
+  { id: 'coral', label: K('코랄'), flower: 'theme_flower_coral.webp', alt: K('코랄색 튤립 꽃') },
+  { id: 'sage', label: K('세이지'), flower: 'theme_flower_sage.webp', alt: K('연녹색 꽃과 잎') },
+  { id: 'mustard', label: K('머스타드'), flower: 'theme_flower_mustard.webp', alt: K('노란색 데이지 꽃') },
+  { id: 'sky', label: K('스카이'), flower: 'theme_flower_sky.webp', alt: K('하늘색 종 모양 꽃') },
 ];
 
 /**
@@ -41,31 +42,31 @@ export function ThemeSettingsScreen({ initialTheme = 'lavender', onBack, onTheme
   return (
     <main className="ts39-screen">
       <header className="ts39-header">
-        {onBack && <button type="button" className="ts39-back" onClick={onBack} aria-label="설정으로 돌아가기" />}
-        <h1 className="ts39-title">테마</h1>
+        {onBack && <button type="button" className="ts39-back" onClick={onBack} aria-label={t('설정으로 돌아가기')} />}
+        <h1 className="ts39-title">{t('테마')}</h1>
       </header>
-      <section className="ts39-panel" aria-label="테마 설정">
-        <h2 className="ts39-section-heading">테마 스타일</h2>
-        <div className="ts39-themes" aria-label="테마 선택">
-          {THEMES.map((t) => (
+      <section className="ts39-panel" aria-label={t('테마 설정')}>
+        <h2 className="ts39-section-heading">{t('테마 스타일')}</h2>
+        <div className="ts39-themes" aria-label={t('테마 선택')}>
+          {THEMES.map((th) => (
             <button
-              key={t.id}
+              key={th.id}
               type="button"
               className="ts39-theme"
-              data-theme={t.id}
-              aria-pressed={t.id === theme}
-              onClick={() => select(t.id)}
+              data-theme={th.id}
+              aria-pressed={th.id === theme}
+              onClick={() => select(th.id)}
             >
               <span className="ts39-theme-preview">
-                <img className="ts39-theme-flower" src={`/assets/theme/${t.flower}`} alt={t.alt} />
+                <img className="ts39-theme-flower" src={`/assets/theme/${th.flower}`} alt={t(th.alt)} />
                 <span className="ts39-accent-bar" />
                 <span className="ts39-preview-field" />
               </span>
-              <span className="ts39-theme-name">{t.label}</span>
+              <span className="ts39-theme-name">{t(th.label)}</span>
             </button>
           ))}
         </div>
-        <p className="ts39-theme-note">선택한 테마는 앱 전체의 주요 색상과 장식에 적용됩니다.</p>
+        <p className="ts39-theme-note">{t('선택한 테마는 앱 전체의 주요 색상과 장식에 적용됩니다.')}</p>
       </section>
     </main>
   );

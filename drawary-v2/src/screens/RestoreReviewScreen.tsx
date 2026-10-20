@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './RestoreReviewScreen.css';
+import { t, tl } from '../i18n';
 
 export interface RestoreReviewScreenProps {
   fileName: string;
@@ -41,51 +42,51 @@ export function RestoreReviewScreen({
   }, [dialogOpen]);
 
   return (
-    <main className="rr50-screen" aria-label="복원 내용 확인 화면">
+    <main className="rr50-screen" aria-label={t('복원 내용 확인 화면')}>
       <header className="rr50-header">
-        {onBack && <button className="rr50-back" type="button" onClick={onBack} aria-label="이전 화면" />}
-        <h1 className="rr50-title">복원 내용 확인</h1>
+        {onBack && <button className="rr50-back" type="button" onClick={onBack} aria-label={t('이전 화면')} />}
+        <h1 className="rr50-title">{t('복원 내용 확인')}</h1>
       </header>
-      <section className="rr50-panel" aria-label="백업 파일에 포함된 내용">
-        <div className="rr50-file-card" aria-label="선택된 백업 파일">
+      <section className="rr50-panel" aria-label={t('백업 파일에 포함된 내용')}>
+        <div className="rr50-file-card" aria-label={t('선택된 백업 파일')}>
           <div className="rr50-file-main">
             <strong className="rr50-file-name">{fileName}</strong>
             <div className="rr50-file-sub">{fileDetails}</div>
           </div>
-          {hasPhotos && <span className="rr50-badge">사진 포함</span>}
+          {hasPhotos && <span className="rr50-badge">{t('사진 포함')}</span>}
         </div>
-        <h1 className="rr50-section-label">복원할 내용</h1>
-        <div className="rr50-summary" role="list" aria-label="복원 예정 항목">
+        <h1 className="rr50-section-label">{t('복원할 내용')}</h1>
+        <div className="rr50-summary" role="list" aria-label={t('복원 예정 항목')}>
           <div className="rr50-summary-row" role="listitem">
             <span className="rr50-image-wrap"><img src="/assets/ui-icons/ui_grid.webp" alt="" /></span>
-            <div className="rr50-item-copy"><div className="rr50-item-name">서랍과 기록</div></div>
+            <div className="rr50-item-copy"><div className="rr50-item-name">{t('서랍과 기록')}</div></div>
             <span className="rr50-item-value">{recordSummary}</span>
           </div>
           <div className="rr50-summary-row" role="listitem">
             <span className="rr50-image-wrap rr50-photo-bg"><img className="rr50-photo" src="/assets/field-types/field_photo.webp" alt="" /></span>
-            <div className="rr50-item-copy"><div className="rr50-item-name">사진</div></div>
+            <div className="rr50-item-copy"><div className="rr50-item-name">{t('사진')}</div></div>
             <span className="rr50-item-value">{photoSummary}</span>
           </div>
           <div className="rr50-summary-row" role="listitem">
             <span className="rr50-image-wrap"><img src="/assets/ui-icons/ui_settings.webp" alt="" /></span>
-            <div className="rr50-item-copy"><div className="rr50-item-name">설정</div></div>
-            <span className="rr50-item-value">포함</span>
+            <div className="rr50-item-copy"><div className="rr50-item-name">{t('설정')}</div></div>
+            <span className="rr50-item-value">{t('포함')}</span>
           </div>
         </div>
         <div className="rr50-info-box">
           <img className="rr50-info-icon" src="/assets/ui-icons/icon_info.webp" alt="" />
-          <div><strong>복원 전에 내용을 한 번 더 확인해 주세요</strong><span>중요한 데이터가 있다면 복원 전에<br />먼저 백업해 두는 것을 권장해요.</span></div>
+          <div><strong>{t('복원 전에 내용을 한 번 더 확인해 주세요')}</strong><span>{tl('중요한 데이터가 있다면 복원 전에\n먼저 백업해 두는 것을 권장해요.')}</span></div>
         </div>
-        <button className="rr50-confirm" type="button" onClick={() => setDialogOpen(true)}>복원 시작</button>
+        <button className="rr50-confirm" type="button" onClick={() => setDialogOpen(true)}>{t('복원 시작')}</button>
       </section>
       {dialogOpen && (
         <div className="rr50-overlay" onClick={(e) => { if (e.target === e.currentTarget) setDialogOpen(false); }}>
           <div className="rr50-dialog" role="dialog" aria-modal="true">
-            <h2>복원을 시작할까요?</h2>
-            <p>선택한 백업 파일의 내용을 불러옵니다.<br />복원 전 중요한 데이터는 먼저 백업해 주세요.</p>
+            <h2>{t('복원을 시작할까요?')}</h2>
+            <p>{tl('선택한 백업 파일의 내용을 불러옵니다.\n복원 전 중요한 데이터는 먼저 백업해 주세요.')}</p>
             <div className="rr50-dialog-buttons">
-              <button className="rr50-cancel" type="button" onClick={() => setDialogOpen(false)}>취소</button>
-              <button className="rr50-proceed" type="button" onClick={() => { setDialogOpen(false); onConfirmRestore?.(); }}>계속</button>
+              <button className="rr50-cancel" type="button" onClick={() => setDialogOpen(false)}>{t('취소')}</button>
+              <button className="rr50-proceed" type="button" onClick={() => { setDialogOpen(false); onConfirmRestore?.(); }}>{t('계속')}</button>
             </div>
           </div>
         </div>

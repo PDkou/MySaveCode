@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_DRAFT_FIELDS, addDraftField, moveDraftField, removeDraftField, updateDraftField } from './drawerDraft';
+import { defaultDraftFields, addDraftField, moveDraftField, removeDraftField, updateDraftField } from './drawerDraft';
 
-const base = [...DEFAULT_DRAFT_FIELDS];
+const base = defaultDraftFields();
 
 describe('create-drawer draft fields', () => {
   it('appends a trimmed field and rejects an empty, over-long or repeated name', () => {
