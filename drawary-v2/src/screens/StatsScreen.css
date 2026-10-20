@@ -334,3 +334,4 @@
   padding-bottom: 9px;
 }
 
+.stats-empty { margin: 4px 0 2px; color: var(--tc-8d8dae,#8d8dae); font-size: 12.5px; line-height: 18px; }

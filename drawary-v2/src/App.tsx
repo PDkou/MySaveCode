@@ -21,6 +21,7 @@ import { CreationCompleteScreen } from './screens/CreationCompleteScreen';
 import { FillDrawerScreen } from './screens/FillDrawerScreen';
 import { BackupProgressScreen } from './screens/BackupProgressScreen';
 import { StatsScreen } from './screens/StatsScreen';
+import { computeStats } from './flow/stats';
 import { NewDrawerScreen } from './screens/NewDrawerScreen';
 import { DrawerDetailScreen } from './screens/DrawerDetailScreen';
 import { RecordDetailScreen } from './screens/RecordDetailScreen';
@@ -1390,7 +1391,10 @@ export default function App() {
           // reconstructed from the two approved reference renders -- see
           // StatsScreen.tsx's own header comment. onOpenInsight has no
           // destination screen yet, same reasoning as above.
-          <StatsScreen />
+          <StatsScreen
+            stats={computeStats(store.drawers, store.fields, store.records, new Date(), (d) => new Intl.DateTimeFormat(getLocale(), { month: 'short' }).format(d))}
+            onOpenInsight={(drawerId) => { setCurrentDrawerId(drawerId); navigate('drawer-detail'); }}
+          />
         ) : tabRoute ? (
           <div className="drawary-dev-only">
             <div className="drawary-dev-flag">개발 검수용 · 확정 화면 아님</div>
