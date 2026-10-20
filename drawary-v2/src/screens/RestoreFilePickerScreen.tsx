@@ -39,7 +39,7 @@ export function RestoreFilePickerScreen({ onBack, onFileSelected }: RestoreFileP
       <section className="rfp49-panel" aria-label={t('복원할 파일 선택')}>
         <div className="rfp49-content">
           <img className="rfp49-art" src="/assets/states/backup/state_restore_available.webp" alt={t('복원을 준비하는 서랍장 마스코트')} />
-          <h1 className="rfp49-heading">{t('복원할 백업 파일을 선택해주세요')}</h1>
+          <h1 className="rfp49-heading">{t('복원할 백업 파일을 선택해 주세요')}</h1>
           <p className="rfp49-description">{tl('Drawary 백업 파일을 불러와\n기록과 설정을 복원할 수 있어요.')}</p>
           <button className="rfp49-pick-card" type="button" aria-label={t('백업 파일 선택')} onClick={openPicker}>
             <span className="rfp49-pick-icon"><img src="/assets/ui-icons/icon_import.webp" alt="" /></span>
@@ -55,7 +55,7 @@ export function RestoreFilePickerScreen({ onBack, onFileSelected }: RestoreFileP
         type="file"
         className="rfp49-file-input"
         accept=".zip,.json,application/zip,application/json"
-        aria-label={t('Drawary 백업 파일을 선택해주세요')}
+        aria-label={t('Drawary 백업 파일을 선택해 주세요')}
         onChange={handleChange}
       />
     </section>

@@ -41,7 +41,7 @@ export const help_pages: Messages = {
   '자주 묻는 질문 분류': { ja: 'よくある質問のカテゴリー', en: 'FAQ categories' },
   '궁금한 내용을 확인해보세요': { ja: '気になる内容を確認しましょう', en: 'Find your answer' },
   '검색하거나 카테고리를 선택해 빠르게 찾을 수 있어요.': { ja: '検索したりカテゴリーを選んで、すばやく見つけられます。', en: 'Search or pick a category to find it quickly.' },
-  '검색 결과가 없어요.\n다른 검색어를 입력해 보세요.': { ja: '検索結果がありません。\n別の言葉で検索してみてください。', en: 'No results.\nTry a different search.' },
+  '검색 결과가 없어요.\n다른 검색어를 입력해보세요.': { ja: '検索結果がありません。\n別の言葉で検索してみてください。', en: 'No results.\nTry a different search.' },
   '검색어와 필터는 함께 사용할 수 있어요.': { ja: '検索ワードとフィルターは一緒に使えます。', en: 'You can use search and filters together.' },
   '개선 제안': { ja: '改善の提案', en: 'Suggestion' },
   '어떤 점이 불편했나요? 이렇게 바뀌면 좋겠다는 생각도 좋아요.': { ja: '不便だった点は何ですか？こう変わったらいいなというご意見も歓迎です。', en: 'What felt inconvenient? Ideas for how it could be better are welcome too.' },

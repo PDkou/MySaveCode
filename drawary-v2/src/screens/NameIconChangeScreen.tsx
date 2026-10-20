@@ -101,7 +101,7 @@ export function NameIconChangeScreen({
           className="nic-name-input"
           value={name}
           maxLength={maxNameLength}
-          placeholder={t('서랍 이름을 입력해주세요.')}
+          placeholder={t('서랍 이름을 입력해 주세요.')}
           onChange={(e) => setName(e.target.value)}
         />
       </section>

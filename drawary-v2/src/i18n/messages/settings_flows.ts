@@ -37,7 +37,7 @@ export const settings_flows: Messages = {
   '육아': { ja: '育児', en: 'Parenting' },
   '변경 미리보기': { ja: '変更プレビュー', en: 'Preview' },
   '서랍 이름': { ja: 'ひきだしの名前', en: 'Drawer name' },
-  '서랍 이름을 입력해주세요.': { ja: 'ひきだしの名前を入力してください。', en: 'Please enter a drawer name.' },
+  '서랍 이름을 입력해 주세요.': { ja: 'ひきだしの名前を入力してください。', en: 'Please enter a drawer name.' },
   '아이콘': { ja: 'アイコン', en: 'Icon' },
   '하나를 골라주세요.': { ja: '1つ選んでください。', en: 'Pick one.' },
   '저장': { ja: '保存', en: 'Save' },

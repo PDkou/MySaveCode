@@ -163,7 +163,7 @@ export function FaqScreen({ initialTopic, onBack }: FaqScreenProps) {
             );
           })}
           {visibleCount === 0 && (
-            <div className="faq56-empty">{tl('검색 결과가 없어요.\n다른 검색어를 입력해 보세요.')}</div>
+            <div className="faq56-empty">{tl('검색 결과가 없어요.\n다른 검색어를 입력해보세요.')}</div>
           )}
           {visibleCount > 0 && <p className="faq56-footnote">{t('검색어와 필터는 함께 사용할 수 있어요.')}</p>}
         </div>
