@@ -20,7 +20,7 @@ Every text block, icon and the dashed card now sit within 1-3px of the approved 
 
 ## #6 edit mode
 
-Same geometry as #3, `편집` becomes `완료`, each card gets a delete badge (left) and a reorder badge (right), as the previous implementation did. The `06_Home_Edit_USER_APPROVED_2026-10-15.png` reference is a full-phone screenshot with a more compact header and 167x150 cards, so it does **not** match #3's geometry; this build follows #3. Which one wins is a product decision that has not been made.
+Same geometry as #3, `편집` becomes `완료`, each card gets a delete badge (left) and a reorder badge (right). The `06_Home_Edit_USER_APPROVED_2026-10-15.png` reference is a full-phone screenshot with a more compact header and 167x150 cards, so it does not match #3's geometry. **Decision (user, 2026-10-20): keep #3 geometry in edit mode**, so tapping `편집` does not move or resize the cards. The #06 image is therefore followed for the badges and the `완료` text only, not for layout.
 
 ## Interactions that are new (not shown in any approved image)
 
