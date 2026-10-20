@@ -1,7 +1,9 @@
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './DrawerFieldsScreen.css';
+import type { FieldKind } from '../data/types';
+import { FIELD_TYPES } from './NewFieldScreen';
 
 // Ported from Drawary_09_FIELD_SETUP_FINAL_CONFIRMED_CODE's
 // DrawerFieldsConfirmed.tsx (화면 상태/코드 상태 모두 확정). This is a real
@@ -12,14 +14,20 @@ import './DrawerFieldsScreen.css';
 // per App.tsx's existing convention sub-flow screens show no bottom nav.
 // Only the icon asset paths changed, from the archive's relative
 // `./icons/field_*.webp` to this app's `/assets/field-types/` convention.
-export type DrawerFieldKind = 'text' | 'date' | 'currency';
+export type DrawerFieldKind = FieldKind;
 
 export interface DrawerFieldItem {
   id: string;
   name: string;
   kind: DrawerFieldKind;
-  typeLabel: '글자' | '날짜' | '금액';
+  /** Korean label of the kind (글자, 날짜, 금액, ...); see FIELD_TYPES. */
+  typeLabel: string;
 }
+
+const TYPE_BY_KIND = new Map(FIELD_TYPES.map((t) => [t.kind, t]));
+/** Builds the list row for a field, taking the kind's label from the same table #10 uses. */
+export const toFieldItem = (f: { id: string; name: string; kind: FieldKind }): DrawerFieldItem =>
+  ({ id: f.id, name: f.name, kind: f.kind, typeLabel: TYPE_BY_KIND.get(f.kind)?.label ?? '글자' });
 
 export interface DrawerFieldsScreenProps {
   fields?: DrawerFieldItem[];
@@ -52,11 +60,7 @@ const QUICK_SUGGESTIONS = [
   '카테고리', '색상', '용량', '한줄평',
 ] as const;
 
-const ICON_BY_KIND: Record<DrawerFieldKind, string> = {
-  text: '/assets/field-types/field_text.webp',
-  date: '/assets/field-types/field_date.webp',
-  currency: '/assets/field-types/field_currency.webp',
-};
+const iconOf = (kind: DrawerFieldKind): string => TYPE_BY_KIND.get(kind)?.icon ?? '/assets/field-types/field_text.webp';
 
 export function DrawerFieldsScreen({
   fields = DEFAULT_DRAWER_FIELDS,
@@ -72,28 +76,46 @@ export function DrawerFieldsScreen({
 }: DrawerFieldsScreenProps) {
   const [dragging, setDragging] = useState<number | null>(null);
   const rowRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const draggingRef = useRef<number | null>(null);
+  const onReorderRef = useRef(onReorder);
+  onReorderRef.current = onReorder;
 
   const startDrag = (index: number, event: ReactPointerEvent<HTMLButtonElement>) => {
     if (!onReorder) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+    draggingRef.current = index;
     setDragging(index);
   };
 
-  const moveDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (dragging == null || !onReorder) return;
-    const y = event.clientY;
-    const overIndex = rowRefs.current.findIndex((node) => {
-      if (!node) return false;
-      const rect = node.getBoundingClientRect();
-      return y >= rect.top && y <= rect.bottom;
-    });
-    if (overIndex >= 0 && overIndex !== dragging) {
-      onReorder(dragging, overIndex);
-      setDragging(overIndex);
-    }
-  };
-
-  const endDrag = () => setDragging(null);
+  // Moving a row reorders DOM nodes, which drops element-level pointer
+  // capture mid-drag, so move/up are followed on window while dragging.
+  useEffect(() => {
+    if (dragging == null) return;
+    const move = (event: PointerEvent) => {
+      const from = draggingRef.current;
+      if (from == null) return;
+      const y = event.clientY;
+      const over = rowRefs.current.findIndex((node) => {
+        if (!node) return false;
+        const rect = node.getBoundingClientRect();
+        return y >= rect.top && y <= rect.bottom;
+      });
+      if (over >= 0 && over !== from) {
+        onReorderRef.current?.(from, over);
+        draggingRef.current = over;
+        setDragging(over);
+      }
+    };
+    const end = () => { draggingRef.current = null; setDragging(null); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+    };
+  }, [dragging != null]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <main className="drawary-field-screen" aria-label={title}>
@@ -127,7 +149,7 @@ export function DrawerFieldsScreen({
                 onClick={() => onEditField?.(field)}
                 aria-label={`${field.name} 수정`}
               >
-                <img className="drawary-field-icon" src={ICON_BY_KIND[field.kind]} alt="" aria-hidden="true" />
+                <img className="drawary-field-icon" src={iconOf(field.kind)} alt="" aria-hidden="true" />
                 <span className="drawary-field-name">{field.name}</span>
               </button>
               <span className="drawary-field-type">{field.typeLabel}</span>
@@ -137,9 +159,6 @@ export function DrawerFieldsScreen({
                 className="drawary-drag-handle"
                 aria-label={`${field.name} 순서 변경`}
                 onPointerDown={(e) => startDrag(index, e)}
-                onPointerMove={moveDrag}
-                onPointerUp={endDrag}
-                onPointerCancel={endDrag}
               >
                 <i /><i /><i />
               </button>

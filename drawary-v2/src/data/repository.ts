@@ -1,7 +1,7 @@
 import { STORES, req, withTx } from './db';
 import type { Drawer, DrawerInput, Field, FieldInput, FieldValue, RecordItem } from './types';
 import { MAX_RECORD_PHOTOS } from './types';
-import { ValidationError, cleanDrawerName, cleanFieldName, validateRecordValues } from './validation';
+import { ValidationError, assertUniqueFieldName, cleanDrawerName, cleanFieldName, validateRecordValues } from './validation';
 
 export function newId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -51,6 +51,34 @@ export async function createDrawer(input: DrawerInput): Promise<Drawer> {
   });
 }
 
+/**
+ * The create-drawer flow's final step: the drawer and all of its fields are
+ * written in one transaction, so a bad field leaves nothing behind and a
+ * double tap can never produce half a drawer.
+ */
+export async function createDrawerWithFields(input: DrawerInput, fieldInputs: readonly FieldInput[]): Promise<{ drawer: Drawer; fields: Field[] }> {
+  const name = cleanDrawerName(input.name);
+  if (fieldInputs.length === 0) throw new ValidationError('서랍 칸을 하나 이상 만들어 주세요.');
+  const norms = fieldInputs.map(normalizeField);
+  norms.forEach((n, i) => assertUniqueFieldName(norms.slice(0, i).map((m, j) => ({ id: String(j), name: m.name })), n.name));
+  return withTx([STORES.drawers, STORES.fields], 'readwrite', async (s) => {
+    const existing = await req(s.drawers.getAll() as IDBRequest<Drawer[]>);
+    const now = Date.now();
+    const drawer: Drawer = {
+      id: newId(), name, iconKey: input.iconKey, colorKey: input.colorKey,
+      order: nextOrder(existing), createdAt: now, updatedAt: now,
+    };
+    await req(s.drawers.add(drawer));
+    const fields: Field[] = [];
+    for (let i = 0; i < norms.length; i++) {
+      const field: Field = { id: newId(), drawerId: drawer.id, ...norms[i], order: i };
+      await req(s.fields.add(field));
+      fields.push(field);
+    }
+    return { drawer, fields };
+  });
+}
+
 export async function updateDrawer(id: string, patch: Partial<DrawerInput>): Promise<Drawer> {
   return withTx([STORES.drawers], 'readwrite', async (s) => {
     const current = (await req(s.drawers.get(id))) as Drawer | undefined;
@@ -97,19 +125,22 @@ export async function deleteDrawer(id: string): Promise<void> {
 
 // ----------------------------------------------------------------- fields
 
-export async function addField(drawerId: string, input: FieldInput): Promise<Field> {
+/** Validates one field definition and returns its stored shape (without id/order). */
+function normalizeField(input: FieldInput): Pick<Field, 'name' | 'kind' | 'required' | 'options'> {
   const name = cleanFieldName(input.name);
   const options = (input.options ?? []).map((o) => o.trim()).filter(Boolean);
   if (input.kind === 'select' && options.length < 2) throw new ValidationError('선택 항목은 2개 이상 필요해요.');
+  if (input.kind === 'select' && new Set(options).size !== options.length) throw new ValidationError('같은 선택 항목이 여러 개 있어요.');
+  return { name, kind: input.kind, required: input.required ?? false, options: input.kind === 'select' ? options : [] };
+}
+
+export async function addField(drawerId: string, input: FieldInput): Promise<Field> {
+  const norm = normalizeField(input);
   return withTx([STORES.drawers, STORES.fields], 'readwrite', async (s) => {
     if (!(await req(s.drawers.get(drawerId)))) throw new ValidationError('서랍을 찾을 수 없어요.');
     const siblings = await req(s.fields.index('drawerId').getAll(drawerId) as IDBRequest<Field[]>);
-    const field: Field = {
-      id: newId(), drawerId, name, kind: input.kind,
-      required: input.required ?? false,
-      options: input.kind === 'select' ? options : [],
-      order: nextOrder(siblings),
-    };
+    assertUniqueFieldName(siblings, norm.name);
+    const field: Field = { id: newId(), drawerId, ...norm, order: nextOrder(siblings) };
     await req(s.fields.add(field));
     return field;
   });
@@ -122,9 +153,12 @@ export async function updateField(id: string, patch: Partial<Pick<Field, 'name' 
     if (!current) throw new ValidationError('서랍 칸을 찾을 수 없어요.');
     const options = patch.options ? patch.options.map((o) => o.trim()).filter(Boolean) : current.options;
     if (current.kind === 'select' && options.length < 2) throw new ValidationError('선택 항목은 2개 이상 필요해요.');
+    if (current.kind === 'select' && new Set(options).size !== options.length) throw new ValidationError('같은 선택 항목이 여러 개 있어요.');
+    const name = patch.name !== undefined ? cleanFieldName(patch.name) : current.name;
+    assertUniqueFieldName(await req(s.fields.index('drawerId').getAll(current.drawerId) as IDBRequest<Field[]>), name, id);
     const next: Field = {
       ...current,
-      name: patch.name !== undefined ? cleanFieldName(patch.name) : current.name,
+      name,
       required: patch.required ?? current.required,
       options: current.kind === 'select' ? options : [],
     };

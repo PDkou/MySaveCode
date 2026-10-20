@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './NewFieldScreen.css';
+import type { FieldKind } from '../data/types';
 
 // Ported verbatim from Drawary_10_FINAL_CONFIRMED_CODE's NewFieldFlow.tsx
 // (source_code_verification: RECOVERED_ORIGINAL_WITH_CODE). Nothing
 // changed -- the archive's own icon paths already use this app's
 // `/assets/field-types/...` convention, so no translation was needed.
 // No footer: sub-flow screen, same as #09.
-export type FieldKind =
-  | 'text' | 'long_text' | 'number' | 'currency' | 'date'
-  | 'photo' | 'select' | 'check' | 'rating' | 'link';
+export type { FieldKind } from '../data/types';
 
 export interface FieldTypeItem {
   kind: FieldKind;

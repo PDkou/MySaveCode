@@ -7,12 +7,16 @@ import './CreationCompleteScreen.css';
 // layout. No footer: sub-flow screen, same as #09/#10/#11.
 interface CreationCompleteScreenProps {
   drawerName?: string;
+  iconKey?: string;
+  fieldCount?: number;
   onFillDrawer?: () => void;
   onLater?: () => void;
 }
 
 export function CreationCompleteScreen({
   drawerName = '화장품',
+  iconKey = 'cosmetics',
+  fieldCount = 7,
   onFillDrawer,
   onLater,
 }: CreationCompleteScreenProps) {
@@ -31,11 +35,11 @@ export function CreationCompleteScreen({
 
         <article className="cc-drawer-card">
           <div className="cc-icon-wrap">
-            <img src="/assets/drawer-icons/drawer_icon_cosmetics.webp" alt="" />
+            <img src={`/assets/drawer-icons/drawer_icon_${iconKey}.webp`} alt="" />
           </div>
           <div className="cc-card-copy">
             <strong>{drawerName}</strong>
-            <small>서랍칸 7개 준비 완료</small>
+            <small>서랍칸 {fieldCount}개 준비 완료</small>
           </div>
           <span className="cc-check" aria-hidden="true">✓</span>
         </article>

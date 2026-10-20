@@ -4,12 +4,16 @@ import type { BottomNavTab } from './components/BottomNav_FINAL_CONFIRMED';
 import { SplashScreen } from './screens/SplashScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
 import { HomeScreen, type HomeDrawerCard } from './screens/HomeScreen';
-import { actions, drawerById, recordsOf, useStore } from './data/store';
+import { actions, drawerById, fieldsOf, recordsOf, useStore } from './data/store';
 import { HomeEmptyScreen } from './screens/HomeEmptyScreen';
 import { GlobalSearchScreen } from './screens/GlobalSearchScreen';
 import { MOCK_SEARCH_RECORDS } from './mockData';
 import { SettingsHomeScreen } from './screens/SettingsHomeScreen';
-import { DrawerFieldsScreen, DEFAULT_DRAWER_FIELDS } from './screens/DrawerFieldsScreen';
+import { DrawerFieldsScreen, DEFAULT_DRAWER_FIELDS, toFieldItem } from './screens/DrawerFieldsScreen';
+import {
+  DEFAULT_DRAFT_FIELDS, QUICK_ADD_KINDS, addDraftField, moveDraftField, removeDraftField, updateDraftField,
+  type DraftField,
+} from './flow/drawerDraft';
 import { NewFieldScreen } from './screens/NewFieldScreen';
 import { DrawerFieldEditScreen } from './screens/DrawerFieldEditScreen';
 import { NameIconChangeScreen } from './screens/NameIconChangeScreen';
@@ -84,6 +88,39 @@ export default function App() {
   const lastTabRef = useRef<BottomNavTab>('home');
   const store = useStore();
   const [currentDrawerId, setCurrentDrawerId] = useState<string | null>(null);
+
+  // Create-drawer flow (#08 -> #09 -> #10/#11 -> #12). Everything the user
+  // enters lives here until "서랍 만들기 완료하기", which saves the drawer and
+  // all its fields in one transaction; backing out saves nothing.
+  const [createDraft, setCreateDraft] = useState<{ name: string; icon: string; color: string } | null>(null);
+  const [draftFields, setDraftFields] = useState<DraftField[] | null>(null);
+  const [editingDraftFieldId, setEditingDraftFieldId] = useState<string | null>(null);
+  const creatingRef = useRef(false);
+  const fieldsDraft: DraftField[] = draftFields ?? [...DEFAULT_DRAFT_FIELDS];
+  const editingDraftField = fieldsDraft.find((f) => f.id === editingDraftFieldId);
+  const alertError = (e: unknown) => window.alert(e instanceof Error ? e.message : '저장하지 못했어요.');
+  const resetCreateFlow = () => { setCreateDraft(null); setDraftFields(null); setEditingDraftFieldId(null); };
+  const tryDraft = (next: () => DraftField[]): boolean => {
+    try { setDraftFields(next()); return true; } catch (e) { alertError(e); return false; }
+  };
+  const completeCreate = async () => {
+    if (creatingRef.current) return;
+    if (!createDraft) { window.alert('서랍 이름을 먼저 정해 주세요.'); navigate('create-drawer'); return; }
+    creatingRef.current = true;
+    try {
+      const { drawer } = await actions.createDrawerWithFields(
+        { name: createDraft.name, iconKey: createDraft.icon, colorKey: createDraft.color },
+        fieldsDraft.map(({ name, kind, required, options }) => ({ name, kind, required, options })),
+      );
+      setCurrentDrawerId(drawer.id);
+      resetCreateFlow();
+      navigate('creation-complete');
+    } catch (e) {
+      alertError(e);
+    } finally {
+      creatingRef.current = false;
+    }
+  };
   const currentDrawer = currentDrawerId ? drawerById(store, currentDrawerId) : undefined;
   const drawerDetailName = currentDrawer?.name ?? '';
   const homeCards: HomeDrawerCard[] = store.drawers.map((d) => ({
@@ -230,31 +267,26 @@ export default function App() {
     </main>;
   }
   if (route === 'new-field') {
-    // #10 QA route. Reachable from #09's "서랍 칸 추가" for now; returns to
-    // #09 on both back and add. Not yet wired to actually append the new
-    // field back into #09's list -- that needs shared create-drawer state
-    // across these still-independent screens (V2-12 territory), so this
-    // is a real navigable step, not yet a real round-trip of data.
+    // #10: reached from #09's "서랍 칸 추가". "추가하기" appends to the
+    // create-flow draft (a rejected name/options stays here with a message).
     return <main className="drawary-app-shell" data-route="new-field">
-      <FixedCanvas height={844}><NewFieldScreen onBack={() => navigate('drawer-fields')} onAdd={() => navigate('drawer-fields')} /></FixedCanvas>
+      <FixedCanvas height={844}><NewFieldScreen onBack={() => navigate('drawer-fields')} onAdd={(data) => { if (tryDraft(() => addDraftField(fieldsDraft, data))) navigate('drawer-fields'); }} /></FixedCanvas>
     </main>;
   }
   if (route === 'drawer-fields') {
-    // #09: the real screen, now chained to the real #10/#11/#12 screens,
-    // and reachable only after #08's name/icon/color step (below). Back
-    // returns to #08 rather than all the way to the previous tab, since
-    // #08 -> #09 is the real forward step in this flow.
-    // onQuickAdd/onReorder still have no real behavior -- #09's own
-    // fields list is local demo state, not yet backed by shared
-    // create-drawer state (V2-12), so a quick-add chip or a drag-reorder
-    // has nothing to actually mutate yet.
+    // #09: the real screen, chained to #10/#11/#12 and reachable only after
+    // #08's name/icon/color step. Its list is the create-flow draft held
+    // above; nothing is saved until "서랍 만들기 완료하기". Back returns to #08.
     return <main className="drawary-app-shell" data-route="drawer-fields">
       <FixedCanvas height={844}>
         <DrawerFieldsScreen
+          fields={fieldsDraft.map(toFieldItem)}
           onBack={() => navigate('create-drawer')}
           onAddField={() => navigate('new-field')}
-          onEditField={() => navigate('field-edit')}
-          onComplete={() => navigate('creation-complete')}
+          onEditField={(field) => { setEditingDraftFieldId(field.id); navigate('field-edit'); }}
+          onQuickAdd={(label) => { tryDraft(() => addDraftField(fieldsDraft, { name: label, kind: QUICK_ADD_KINDS[label] ?? 'text', required: false, options: [] })); }}
+          onReorder={(from, to) => setDraftFields((prev) => moveDraftField(prev ?? [...DEFAULT_DRAFT_FIELDS], from, to))}
+          onComplete={() => { void completeCreate(); }}
         />
       </FixedCanvas>
     </main>;
@@ -262,35 +294,51 @@ export default function App() {
   if (route === 'create-drawer') {
     // #08 새 서랍 만들기 (name/icon/color) -- the real first step of this
     // flow, reached from the home "+" action / bottom-nav "+" / empty
-    // state / edit mode, all of which already call onCreateDrawer. No
-    // approved source exists (STATUS.md: NO_FINAL_CODE_IMAGE_ONLY);
-    // reconstructed as a bottom sheet over a dimmed Home -- see
-    // NewDrawerScreen.tsx's own header comment. The draft name/icon/color
-    // aren't persisted anywhere yet (no shared create-drawer state until
-    // V2-12), so "다음" just advances to #09 without carrying them.
+    // state / edit mode. Reconstructed as a bottom sheet over a dimmed Home
+    // (no approved source; see NewDrawerScreen.tsx). What is typed is kept
+    // in the create-flow draft, so coming back from #09 shows it again.
     return <main className="drawary-app-shell" data-route="create-drawer">
       <section className="drawary-route-panel drawary-dimmed-home" aria-hidden="true">
         <HomeScreen drawers={homeCards} totalRecords={store.records.length} />
       </section>
-      <NewDrawerScreen onNext={() => navigate('drawer-fields')} onDismiss={returnToTab} />
+      <NewDrawerScreen
+        initial={createDraft ?? undefined}
+        onNext={(draft) => { setCreateDraft(draft); navigate('drawer-fields'); }}
+        onDismiss={() => { resetCreateFlow(); returnToTab(); }}
+      />
     </main>;
   }
   if (route === 'field-edit') {
-    // #11 QA route, reachable from #09's "서랍 칸 수정". Same caveat as
-    // #10: its own internal field list/edit state is independent of #09's,
-    // not yet unified. Back now actually returns to #09 -- the archive's
-    // own back button had no onClick at all (found while adding the
-    // #26 reuse's field-edit-manage route, which needed the same prop).
+    // #11: reached by tapping a row in #09, opening straight on that field's
+    // edit view. Without a selected field (direct URL) it shows the archive's
+    // demo list as before. A field's kind cannot be changed here.
     return <main className="drawary-app-shell" data-route="field-edit">
-      <FixedCanvas height={844}><DrawerFieldEditScreen onBack={() => navigate('drawer-fields')} /></FixedCanvas>
+      <FixedCanvas height={844}>
+        {editingDraftField ? (
+          <DrawerFieldEditScreen
+            key={editingDraftField.id}
+            field={editingDraftField}
+            onBack={() => navigate('drawer-fields')}
+            onSave={(patch) => { if (tryDraft(() => updateDraftField(fieldsDraft, editingDraftField.id, patch))) navigate('drawer-fields'); }}
+            onDelete={() => { setDraftFields(removeDraftField(fieldsDraft, editingDraftField.id)); setEditingDraftFieldId(null); navigate('drawer-fields'); }}
+          />
+        ) : (
+          <DrawerFieldEditScreen onBack={() => navigate('drawer-fields')} />
+        )}
+      </FixedCanvas>
     </main>;
   }
   if (route === 'creation-complete') {
-    // #12 QA route, reachable from #09's "서랍 만들기 완료하기". "서랍 채우기"
-    // chains to the real #13; "나중에" has nowhere more specific to land
-    // than the previous tab, since there's no real drawer yet to return to.
+    // #12: shows the drawer just saved from #09. "서랍 채우기" chains to #13;
+    // "나중에" returns to the tab the flow started from.
     return <main className="drawary-app-shell" data-route="creation-complete">
-      <FixedCanvas height={844}><CreationCompleteScreen onFillDrawer={() => navigate('fill-drawer')} onLater={returnToTab} /></FixedCanvas>
+      <FixedCanvas height={844}><CreationCompleteScreen
+        drawerName={currentDrawer?.name}
+        iconKey={currentDrawer?.iconKey}
+        fieldCount={currentDrawer ? fieldsOf(store, currentDrawer.id).length : undefined}
+        onFillDrawer={() => navigate('fill-drawer')}
+        onLater={returnToTab}
+      /></FixedCanvas>
     </main>;
   }
   if (route === 'fill-drawer') {

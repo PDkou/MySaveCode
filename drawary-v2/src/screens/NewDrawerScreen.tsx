@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './NewDrawerScreen.css';
+import { MAX_DRAWER_NAME_LENGTH } from '../data/types';
 
 interface DrawerIconOption {
   key: string;
@@ -29,6 +30,8 @@ const COLOR_OPTIONS = [
 ] as const;
 
 interface NewDrawerScreenProps {
+  /** Values to start from, so coming back from #09 keeps what was typed. */
+  initial?: { name: string; icon: string; color: string };
   onNext: (draft: { name: string; icon: string; color: string }) => void;
   onDismiss: () => void;
 }
@@ -55,10 +58,10 @@ interface NewDrawerScreenProps {
  * "다음" button is `disabled={!name.trim()}`. Applied the same guard
  * below -- it was missing here.
  */
-export function NewDrawerScreen({ onNext, onDismiss }: NewDrawerScreenProps) {
-  const [name, setName] = useState('');
-  const [icon, setIcon] = useState(ICON_OPTIONS[9].key);
-  const [color, setColor] = useState<typeof COLOR_OPTIONS[number]['key']>('pink');
+export function NewDrawerScreen({ initial, onNext, onDismiss }: NewDrawerScreenProps) {
+  const [name, setName] = useState(initial?.name ?? '');
+  const [icon, setIcon] = useState(initial?.icon ?? ICON_OPTIONS[9].key);
+  const [color, setColor] = useState<string>(initial?.color ?? 'pink');
 
   return (
     <div className="new-drawer-overlay">
@@ -75,6 +78,7 @@ export function NewDrawerScreen({ onNext, onDismiss }: NewDrawerScreenProps) {
           type="text"
           placeholder="예: 화장품"
           value={name}
+          maxLength={MAX_DRAWER_NAME_LENGTH}
           onChange={(e) => setName(e.target.value)}
         />
 
@@ -113,7 +117,7 @@ export function NewDrawerScreen({ onNext, onDismiss }: NewDrawerScreenProps) {
           type="button"
           className="new-drawer-next"
           disabled={!name.trim()}
-          onClick={() => onNext({ name, icon, color })}
+          onClick={() => onNext({ name: name.trim(), icon, color })}
         >
           다음
         </button>

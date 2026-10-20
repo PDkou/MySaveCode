@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DB_NAME, DB_VERSION, STORES, closeDB, openDB } from './db';
 import {
-  addField, createDrawer, createRecord, deleteDrawer, deleteField, deleteRecord, getPhotos,
+  addField, createDrawer, createDrawerWithFields, createRecord, deleteDrawer, deleteField, deleteRecord, getPhotos,
   getSetting, loadAll, reorderDrawers, reorderFields, resetAllData, setPhotos, setSetting,
   updateDrawer, updateField, updateRecord,
 } from './repository';
@@ -141,6 +141,47 @@ describe('fields', () => {
     expect(snap.records.find((r) => r.id === r1.id)!.values).toEqual({ [name.id]: 'n1' });
     expect(snap.records.find((r) => r.id === r2.id)!.values).toEqual({ [otherField.id]: 'untouched' });
     expect(snap.fields.map((f) => f.id)).not.toContain(memo.id);
+  });
+});
+
+describe('creating a drawer with its fields', () => {
+  it('writes the drawer and every field together, in order', async () => {
+    const { drawer, fields } = await createDrawerWithFields(
+      { name: ' 책 ', iconKey: 'books', colorKey: 'lavender' },
+      [{ name: '제목', kind: 'text', required: true }, { name: '읽은 날', kind: 'date' }, { name: '분류', kind: 'select', options: ['소설', '시'] }],
+    );
+    expect(drawer.name).toBe('책');
+    expect(fields.map((f) => [f.name, f.order])).toEqual([['제목', 0], ['읽은 날', 1], ['분류', 2]]);
+    const snap = await loadAll();
+    expect(snap.drawers).toHaveLength(1);
+    expect(snap.fields.map((f) => f.drawerId)).toEqual([drawer.id, drawer.id, drawer.id]);
+  });
+
+  it('leaves nothing behind when any field is invalid, or there are no fields', async () => {
+    const input = { name: '책', iconKey: 'books', colorKey: 'lavender' };
+    await expect(createDrawerWithFields(input, [])).rejects.toBeInstanceOf(ValidationError);
+    await expect(createDrawerWithFields(input, [{ name: '제목', kind: 'text' }, { name: '분류', kind: 'select', options: ['하나'] }])).rejects.toBeInstanceOf(ValidationError);
+    await expect(createDrawerWithFields(input, [{ name: '제목', kind: 'text' }, { name: ' 제목 ', kind: 'text' }])).rejects.toBeInstanceOf(ValidationError);
+    await expect(createDrawerWithFields({ ...input, name: '  ' }, [{ name: '제목', kind: 'text' }])).rejects.toBeInstanceOf(ValidationError);
+    const snap = await loadAll();
+    expect(snap.drawers).toHaveLength(0);
+    expect(snap.fields).toHaveLength(0);
+  });
+
+  it('rejects a field name already used in the same drawer (also on rename), but allows it in another drawer', async () => {
+    const a = await makeDrawer('A');
+    const b = await makeDrawer('B');
+    const f = await addField(a.id, { name: '메모', kind: 'text' });
+    await addField(a.id, { name: '가격', kind: 'currency' });
+    await expect(addField(a.id, { name: '메모', kind: 'long_text' })).rejects.toBeInstanceOf(ValidationError);
+    await expect(updateField(f.id, { name: '가격' })).rejects.toBeInstanceOf(ValidationError);
+    await expect(updateField(f.id, { name: '메모', required: true })).resolves.toMatchObject({ required: true });
+    await expect(addField(b.id, { name: '메모', kind: 'text' })).resolves.toBeTruthy();
+  });
+
+  it('rejects repeated select options', async () => {
+    const a = await makeDrawer();
+    await expect(addField(a.id, { name: '분류', kind: 'select', options: ['가', '가'] })).rejects.toBeInstanceOf(ValidationError);
   });
 });
 

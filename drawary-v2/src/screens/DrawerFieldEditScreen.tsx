@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './DrawerFieldEditScreen.css';
+import type { FieldKind } from '../data/types';
+import { FIELD_TYPES } from './NewFieldScreen';
 
 // Ported from Drawary_11_FINAL_CONFIRMED_CODE (CONFIRMED.md: 행 전체 탭 →
 // 수정 / 손잡이 → 순서 변경 전용 / 숨겨진 스와이프 액션 사용 안 함).
@@ -35,7 +37,21 @@ const FIELDS = [
   { id: 'memo', name: '메모', type: '긴 글', icon: '/assets/field-types/field_edit_note.webp' },
 ];
 
+export interface EditableField {
+  name: string;
+  kind: FieldKind;
+  required: boolean;
+  options: string[];
+}
+
 export interface DrawerFieldEditScreenProps {
+  // A real field to edit. When given, the screen opens straight on the
+  // edit view (#11's second state) for that field; without it the
+  // archive's own demo list + demo field are shown (#26's manage route
+  // still uses that until it is wired to a real drawer).
+  field?: EditableField;
+  onSave?: (patch: { name: string; required: boolean; options: string[] }) => void;
+  onDelete?: () => void;
   // The archive's own TSX never wires this back button at all (see the
   // reconstruction note above) -- added so this screen can actually
   // return to whichever list screen reached it (#09's own `drawer-fields`
@@ -43,11 +59,14 @@ export interface DrawerFieldEditScreenProps {
   onBack?: () => void;
 }
 
-export function DrawerFieldEditScreen({ onBack }: DrawerFieldEditScreenProps) {
-  const [mode, setMode] = useState<'list' | 'edit'>('list');
-  const [name, setName] = useState('카테고리');
-  const [required, setRequired] = useState(false);
-  const [options, setOptions] = useState(['스킨케어', '메이크업', '향수']);
+export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: DrawerFieldEditScreenProps) {
+  const [mode, setMode] = useState<'list' | 'edit'>(field ? 'edit' : 'list');
+  const [name, setName] = useState(field?.name ?? '카테고리');
+  const [required, setRequired] = useState(field?.required ?? false);
+  const [options, setOptions] = useState(field ? field.options : ['스킨케어', '메이크업', '향수']);
+  const kind: FieldKind = field?.kind ?? 'select';
+  const kindInfo = FIELD_TYPES.find((t) => t.kind === kind)!;
+  const savedName = field?.name ?? '카테고리';
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (mode === 'list') {
@@ -78,7 +97,7 @@ export function DrawerFieldEditScreen({ onBack }: DrawerFieldEditScreenProps) {
 
   return (
     <main className="df-screen">
-      <ScreenHeader variant="stacked" title="서랍칸 수정" onBack={() => setMode('list')} height={93} />
+      <ScreenHeader variant="stacked" title="서랍칸 수정" onBack={field ? onBack : () => setMode('list')} height={93} />
       <section className="df-edit-content">
         <label className="df-label" htmlFor="field-name">서랍칸 이름</label>
         <div className="df-input-wrap">
@@ -87,13 +106,14 @@ export function DrawerFieldEditScreen({ onBack }: DrawerFieldEditScreenProps) {
         </div>
 
         <span className="df-label">서랍칸 종류</span>
-        <button className="df-selected-type">
-          <span className="df-type-icon"><img src="/assets/field-types/field_select.webp" alt="" /></span>
-          <span className="df-type-copy"><strong>선택</strong><small>여러 옵션 중 하나를 선택</small></span>
+        {/* A field's kind is fixed once created (its saved values would stop matching), so this row only shows it. */}
+        <button className="df-selected-type" type="button" tabIndex={field ? -1 : 0} style={field ? { cursor: 'default' } : undefined}>
+          <span className="df-type-icon"><img src={kindInfo.icon} alt="" /></span>
+          <span className="df-type-copy"><strong>{kindInfo.label}</strong><small>{kindInfo.description}</small></span>
           <span className="df-chevron">›</span>
         </button>
 
-        <section className="df-options">
+        {kind === 'select' && <section className="df-options">
           <h2>선택 옵션</h2>
           <div className="df-option-list">
             {options.map((option, index) => (
@@ -104,14 +124,14 @@ export function DrawerFieldEditScreen({ onBack }: DrawerFieldEditScreenProps) {
             ))}
           </div>
           <button className="df-add-option" onClick={() => setOptions([...options, `옵션 ${options.length + 1}`])}>＋ 옵션 추가</button>
-        </section>
+        </section>}
 
         <div className="df-required">
           <div><strong>필수로 채우기</strong><small>보관품을 담을 때 꼭 채워야 하는 서랍칸이에요.</small></div>
-          <button className={`df-switch${required ? ' is-on' : ''}`} onClick={() => setRequired(!required)}><span /></button>
+          <button className={`df-switch${required ? ' is-on' : ''}`} aria-pressed={required} aria-label="필수 입력" onClick={() => setRequired(!required)}><span /></button>
         </div>
 
-        <button className="df-save">저장하기</button>
+        <button className="df-save" onClick={() => onSave?.({ name, required, options })}>저장하기</button>
         <button className="df-delete" onClick={() => setDeleteOpen(true)}><img src="/assets/ui-icons/icon_delete.webp" alt="" /> 서랍칸 삭제</button>
         <p className="df-edit-danger-note">삭제한 서랍칸의 기존 입력값은 함께 사라져요.</p>
         {deleteOpen && (
@@ -120,10 +140,10 @@ export function DrawerFieldEditScreen({ onBack }: DrawerFieldEditScreenProps) {
               <div className="df-sheet-handle" />
               <div className="df-confirm-icon"><img src="/assets/ui-icons/icon_delete.webp" alt="" /></div>
               <h2>이 서랍칸을 삭제할까요?</h2>
-              <p>'카테고리' 서랍칸과 여기에 담긴 입력값이 함께 삭제돼요.<br />삭제한 뒤에는 되돌릴 수 없어요.</p>
+              <p>'{savedName}' 서랍칸과 여기에 담긴 입력값이 함께 삭제돼요.<br />삭제한 뒤에는 되돌릴 수 없어요.</p>
               <div className="df-confirm-actions">
                 <button className="df-cancel" onClick={() => setDeleteOpen(false)}>취소</button>
-                <button className="df-confirm-delete">삭제하기</button>
+                <button className="df-confirm-delete" onClick={onDelete}>삭제하기</button>
               </div>
             </section>
           </div>

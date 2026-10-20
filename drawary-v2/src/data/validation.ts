@@ -18,6 +18,14 @@ export function cleanName(raw: string, label: string, max: number): string {
 export const cleanDrawerName = (raw: string) => cleanName(raw, '서랍', MAX_DRAWER_NAME_LENGTH);
 export const cleanFieldName = (raw: string) => cleanName(raw, '서랍 칸', MAX_FIELD_NAME_LENGTH);
 
+/** Two fields in one drawer may not share a name (they would be indistinguishable in the table and CSV). */
+export function assertUniqueFieldName(siblings: readonly Pick<Field, 'id' | 'name'>[], name: string, exceptId?: string): void {
+  const key = name.trim().toLowerCase();
+  if (siblings.some((f) => f.id !== exceptId && f.name.trim().toLowerCase() === key)) {
+    throw new ValidationError(`'${name}' 서랍 칸이 이미 있어요.`);
+  }
+}
+
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 function isRealDate(iso: string): boolean {

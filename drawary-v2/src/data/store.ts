@@ -59,6 +59,7 @@ function write<T>(op: () => Promise<T>): Promise<T> {
 
 export const actions = {
   createDrawer: (input: DrawerInput) => write(() => repo.createDrawer(input)),
+  createDrawerWithFields: (input: DrawerInput, fields: readonly FieldInput[]) => write(() => repo.createDrawerWithFields(input, fields)),
   updateDrawer: (id: string, patch: Partial<DrawerInput>) => write(() => repo.updateDrawer(id, patch)),
   reorderDrawers: (ids: readonly string[]) => write(() => repo.reorderDrawers(ids)),
   deleteDrawer: (id: string) => write(() => repo.deleteDrawer(id)),
