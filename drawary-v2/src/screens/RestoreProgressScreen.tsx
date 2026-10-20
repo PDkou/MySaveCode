@@ -13,13 +13,9 @@ export interface RestoreProgressScreenProps {
  * `Drawary_51_RESTORE_PROGRESS_CANDIDATE_2026-10-14`'s `index.html` --
  * same CSS-only rotating spinner (not an image), `prefers-reduced-
  * motion` support, no mock percentage, matching README.md exactly.
- * The archive's own comment: "Existing restore engine calls onComplete
- * ... No mock progress percentage" -- there is no real restore engine
- * here, so `onComplete` fires after a fixed demo delay instead of
- * staying permanently static (same pattern added to #47's
- * BackupProgressScreen in this same batch), disclosed rather than
- * claimed as a real restore. Reached from #50's confirm dialog;
- * completes -> #52.
+ * V2-12 step 5: the real restore runs in App.tsx (one all-or-nothing write) and moves on to #52 itself, so this
+ * screen is just the waiting view; `onComplete` is no longer used by the app (kept for the standalone QA route's demo
+ * delay). Reached from #50's confirm dialog.
  */
 export function RestoreProgressScreen({ onBack, onComplete }: RestoreProgressScreenProps) {
   useEffect(() => {

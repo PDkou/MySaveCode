@@ -87,6 +87,7 @@ export const actions = {
   setSetting: (key: string, value: unknown) => write(() => repo.setSetting(key, value)),
   setSettings: (entries: Record<string, unknown>) => write(() => repo.setSettings(entries)),
   resetAllData: () => write(() => repo.resetAllData()),
+  replaceAllData: (snapshot: Parameters<typeof repo.replaceAllData>[0]) => write(() => repo.replaceAllData(snapshot)),
 };
 
 export function getState(): StoreState {

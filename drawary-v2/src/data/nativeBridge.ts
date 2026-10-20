@@ -1,4 +1,6 @@
 import type { PlannedNotification } from '../flow/notificationPlan';
+import { saveBlob } from './fileSave';
+import { t } from '../i18n';
 
 /**
  * What the Android WebView shell is expected to expose as `window.DrawaryNative`.
@@ -20,6 +22,13 @@ export interface DrawaryNativeApi {
    * its callback-based Android BiometricPrompt into this promise.
    */
   authenticateBiometric?: () => Promise<boolean>;
+  /**
+   * Saves a backup file on the phone (the shell chooses/asks for the place) and resolves with where it went, for #48.
+   * `base64` is the whole file. Rejects when the person cancels or it cannot be saved.
+   */
+  saveBackupFile?: (fileName: string, base64: string) => Promise<string>;
+  /** Same, to the person's Google Drive (sign-in and permission are the shell's job). Resolves with the place to show. */
+  saveBackupToDrive?: (fileName: string, base64: string) => Promise<string>;
 }
 
 declare global {
@@ -47,4 +56,28 @@ export async function authenticateBiometric(): Promise<boolean> {
   if (!hasNativeBiometric()) return false;
   try { return (await window.DrawaryNative!.authenticateBiometric!()) === true; }
   catch { return false; }
+}
+
+export const hasNativeDriveBackup = (): boolean => typeof window !== 'undefined' && typeof window.DrawaryNative?.saveBackupToDrive === 'function';
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(binary);
+}
+
+/**
+ * Hands a finished backup file to the person. Android shell: its own save (device) or Drive upload. Plain browser:
+ * an ordinary download (device); Drive needs the shell and says so. Resolves with the place to show on #48.
+ */
+export async function deliverBackup(destination: 'device' | 'drive', fileName: string, blob: Blob): Promise<string> {
+  const native = typeof window === 'undefined' ? undefined : window.DrawaryNative;
+  if (destination === 'drive') {
+    if (typeof native?.saveBackupToDrive !== 'function') throw new Error(t('Google Drive 백업은 안드로이드 앱에서 사용할 수 있어요.'));
+    return native.saveBackupToDrive(fileName, await blobToBase64(blob));
+  }
+  if (typeof native?.saveBackupFile === 'function') return native.saveBackupFile(fileName, await blobToBase64(blob));
+  saveBlob(blob, fileName);
+  return 'Download';
 }

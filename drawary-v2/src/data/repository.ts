@@ -461,6 +461,38 @@ export async function setSettings(entries: Record<string, unknown>): Promise<voi
   });
 }
 
+// ------------------------------------------------------- backup / restore
+
+/** Every saved photo set (recordId -> photos), for a backup. */
+export async function loadAllPhotos(): Promise<Map<string, Blob[]>> {
+  return withTx([STORES.photos], 'readonly', async (s) => {
+    const rows = (await req(s.photos.getAll() as IDBRequest<{ recordId: string; photos: Blob[] }[]>));
+    return new Map(rows.map((r) => [r.recordId, r.photos]));
+  });
+}
+
+/**
+ * Replaces everything on the device with a restored backup, in ONE transaction: if anything fails, nothing
+ * changes. The PIN and lock settings (`security.*`) are not part of a backup and are kept as they are.
+ */
+export async function replaceAllData(snapshot: {
+  drawers: Drawer[]; fields: Field[]; records: RecordItem[]; notificationRules: NotificationRule[]; recurrenceRules: RecurrenceRule[];
+  settings: Record<string, unknown>; photos: Map<string, Blob[]>;
+}): Promise<void> {
+  await withTx(Object.values(STORES), 'readwrite', async (s) => {
+    for (const name of [STORES.drawers, STORES.fields, STORES.records, STORES.photos, STORES.notifications, STORES.recurrences] as const) await req(s[name].clear());
+    const old = (await req(s.settings.getAllKeys())) as string[];
+    for (const key of old) if (!key.startsWith('security.')) await req(s.settings.delete(key));
+    for (const d of snapshot.drawers) await req(s.drawers.put(d));
+    for (const f of snapshot.fields) await req(s.fields.put(f));
+    for (const r of snapshot.records) await req(s.records.put(r));
+    for (const [recordId, photos] of snapshot.photos) await req(s.photos.put({ recordId, photos }));
+    for (const n of snapshot.notificationRules) await req(s.notifications.put(n));
+    for (const r of snapshot.recurrenceRules) await req(s.recurrences.put(r));
+    for (const [key, value] of Object.entries(snapshot.settings)) if (!key.startsWith('security.')) await req(s.settings.put({ key, value }));
+  });
+}
+
 // ------------------------------------------------------------------ reset
 
 /** "데이터 초기화": removes every drawer, field, record, photo and setting. */

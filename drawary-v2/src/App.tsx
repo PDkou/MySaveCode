@@ -50,7 +50,9 @@ import { RecordPickerSheet } from './screens/RecordPickerSheet';
 import { NotificationCommonSettingsScreen } from './screens/NotificationCommonSettingsScreen';
 import { NOTIFY_COMMON_KEY, readNotifyCommon } from './flow/notifySettings';
 import { computeNotificationPlan } from './flow/notificationPlan';
-import { hasNativeBiometric, authenticateBiometric, syncNotificationPlan } from './data/nativeBridge';
+import { hasNativeBiometric, authenticateBiometric, deliverBackup, syncNotificationPlan } from './data/nativeBridge';
+import * as repo from './data/repository';
+import { createBackup, readBackup, type ParsedBackup } from './backup/backupFile';
 import { useAppLock } from './flow/useAppLock';
 import { applyTheme, readTheme, THEME_KEY } from './flow/theme';
 import { LANGUAGE_KEY, readLanguage, setLang } from './i18n';
@@ -319,7 +321,76 @@ export default function App() {
   // #44-#53 백업/복원/초기화.
   const [backupMode, setBackupMode] = useState<BackupMode>('include');
   const [backupDestination, setBackupDestination] = useState<BackupDestination>('device');
-  const [restoreFileName, setRestoreFileName] = useState<string | null>(null);
+  // #45-#53 run for real: the file that was just written (#48), the backup file that was chosen to restore (#50-#52).
+  const [backupResult, setBackupResult] = useState<{ fileName: string; location: string; includesPhotos: boolean } | null>(null);
+  const [restorePlan, setRestorePlan] = useState<{ fileName: string; parsed: ParsedBackup } | null>(null);
+  const [restoreDone, setRestoreDone] = useState<ParsedBackup['summary'] | null>(null);
+  // Restoring and resetting replace everything, so with the lock on they ask for the PIN first.
+  const [pinGate, setPinGate] = useState<'restore' | 'reset' | null>(null);
+
+  // #47: make the backup file and hand it over, then #48. The short wait is only so the progress screen is not a flash.
+  useEffect(() => {
+    if (route !== 'backup-progress' || store.status !== 'ready') return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const started = Date.now();
+          const include = backupMode === 'include';
+          const made = await createBackup({ ...(await repo.loadAll()), photos: await repo.loadAllPhotos() }, include);
+          const location = await deliverBackup(backupDestination, made.fileName, made.blob);
+          await new Promise((r) => window.setTimeout(r, Math.max(0, 1200 - (Date.now() - started))));
+          if (cancelled) return;
+          setBackupResult({ fileName: made.fileName, location, includesPhotos: include });
+          navigate('backup-success');
+        } catch (e) {
+          if (cancelled) return;
+          alertError(e);
+          navigate('backup-destination');
+        }
+      })();
+    }, 0);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route, store.status]);
+
+  // #51: replace everything with the chosen backup (one all-or-nothing write), then #52.
+  useEffect(() => {
+    if (route !== 'restore-progress' || store.status !== 'ready' || !restorePlan) return;
+    let cancelled = false;
+    const plan = restorePlan;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const started = Date.now();
+          await actions.replaceAllData(plan.parsed.snapshot);
+          await new Promise((r) => window.setTimeout(r, Math.max(0, 1200 - (Date.now() - started))));
+          if (cancelled) return;
+          setRestoreDone(plan.parsed.summary);
+          setCurrentDrawerId(null); setRecordDetailId(null);
+          navigate('restore-success');
+        } catch (e) {
+          if (cancelled) return;
+          alertError(e);
+          navigate('restore-review');
+        }
+      })();
+    }, 0);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route, store.status, restorePlan]);
+
+  // #53: erase everything on this device and start like a fresh install.
+  const resetEverything = () => {
+    void actions.resetAllData()
+      .then(() => {
+        try { localStorage.removeItem('drawary_onboarding_done'); localStorage.removeItem('drawary.theme'); } catch { /* storage unavailable */ }
+        resetCreateFlow(); setCurrentDrawerId(null); setRecordDetailId(null); setRestorePlan(null); setRestoreDone(null); setBackupResult(null);
+        setPinGate(null);
+        navigate('home');
+      })
+      .catch(alertError);
+  };
 
   // #54-#59 언어/도움말/FAQ/가이드/정보/피드백.
   const [faqTopic, setFaqTopic] = useState<string | undefined>(undefined);
@@ -348,6 +419,7 @@ export default function App() {
     if ((route === 'drawer-detail' || route === 'fill-drawer' || route === 'table-view' || recordRoute || manageRoute) && !currentDrawer) navigate('home');
     else if (route === 'field-edit-manage' && !manageField) navigate('drawer-fields-manage');
     else if (recordRoute && !selectedRecord) navigate('drawer-detail');
+    else if ((route === 'restore-review' || route === 'restore-progress') && !restorePlan) navigate('restore-file-picker');
   }, [route, store.status, currentDrawer, selectedRecord, manageField, navigate]);
 
   // Nothing is drawn until the saved data (and with it the lock setting) has loaded.
@@ -947,18 +1019,14 @@ export default function App() {
     </main>;
   }
   if (route === 'backup-success') {
-    // #48 백업 완료, reachable from #47's auto-complete. No back
-    // button (decorative arrow only, matching the archive exactly).
-    // "확인" -> #44. Sample filename/location are the archive's own
-    // displayed values -- there's no real backup engine to report
-    // real ones yet (same caveat as every other backup/restore screen
-    // in this batch).
-    const description = backupMode === 'include' ? t('사진 포함 백업') : t('사진 제외 백업');
+    // #48 백업 완료, reached from #47 once the file is written. No back button (decorative arrow only, matching the
+    // archive exactly). "확인" -> #44. The file name and place are the real ones.
+    const description = backupResult?.includesPhotos ?? backupMode === 'include' ? t('사진 포함 백업') : t('사진 제외 백업');
     return <main className="drawary-app-shell" data-route="backup-success">
       <FixedCanvas height={844}>
         <BackupSuccessScreen
-          fileName="Drawary_Backup_2026-10-05.zip"
-          location={backupDestination === 'device' ? 'Download/Drawary' : 'Google Drive'}
+          fileName={backupResult?.fileName ?? ''}
+          location={backupResult?.location ?? (backupDestination === 'device' ? 'Download' : 'Google Drive')}
           description={description}
           onConfirm={() => navigate('data-management')}
         />
@@ -966,59 +1034,73 @@ export default function App() {
     </main>;
   }
   if (route === 'restore-file-picker') {
-    // #49 복원 파일 선택, reachable from #44's "복원하기" row. Back
-    // returns to #44. Selecting a valid .zip/.json file -> #50.
+    // #49 복원 파일 선택, reachable from #44's "복원하기" row. Back returns to #44. The chosen file is read and
+    // checked completely first (nothing on the device is touched yet); a file that is not a Drawary backup is
+    // refused with a message and the person stays here. A good one -> #50.
     return <main className="drawary-app-shell" data-route="restore-file-picker">
       <FixedCanvas height={844}>
         <RestoreFilePickerScreen
           onBack={() => navigate('data-management')}
-          onFileSelected={(file) => { setRestoreFileName(file.name); navigate('restore-review'); }}
+          onFileSelected={(file) => {
+            void readBackup(file)
+              .then((parsed) => { setRestorePlan({ fileName: file.name, parsed }); navigate('restore-review'); })
+              .catch((e: unknown) => alertError(e));
+          }}
         />
       </FixedCanvas>
     </main>;
   }
   if (route === 'restore-review') {
-    // #50 복원 내용 확인, reachable from #49's file selection. Back
-    // returns to #49. "계속" in the confirm dialog -> #51. Summary
-    // figures (5개 서랍 · 128개 기록 / 42장) are the archive's own
-    // displayed sample values -- there's no real backup-file parser to
-    // report real ones yet.
+    // #50 복원 내용 확인, reachable from #49. Back returns to #49. The figures are counted from the chosen file.
+    // "계속" in the confirm dialog -> #51 (with the lock on, the PIN is asked first).
+    if (!restorePlan) return <main className="drawary-app-shell" data-route="restore-review" />;
+    if (pinGate === 'restore') {
+      return <main className="drawary-app-shell" data-route="restore-review">
+        <FixedCanvas height={844}>
+          <PinSetupScreen
+            mode="verify" purpose="restore" verify={verifyPin} lockedUntil={sec.attempts.lockedUntil}
+            onBack={() => setPinGate(null)}
+            onVerified={() => { setPinGate(null); navigate('restore-progress'); }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    const sum = restorePlan.parsed.summary;
+    const d = new Date(sum.createdAt);
+    const two = (n: number) => String(n).padStart(2, '0');
+    const when = sum.createdAt ? `${d.getFullYear()}.${two(d.getMonth() + 1)}.${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}` : '';
     return <main className="drawary-app-shell" data-route="restore-review">
       <FixedCanvas height={844}>
         <RestoreReviewScreen
-          fileName={restoreFileName ?? 'Drawary_Backup_2026-10-05.zip'}
-          fileDetails={t('2026.10.05 14:58 · 백업 파일 1개')}
-          hasPhotos
-          recordSummary={t('5개 서랍 · 128개 기록')}
-          photoSummary={t('42장')}
+          fileName={restorePlan.fileName}
+          fileDetails={t('{date} · 백업 파일 1개', { date: when })}
+          hasPhotos={sum.includesPhotos}
+          recordSummary={t('{drawers}개 서랍 · {records}개 기록', { drawers: sum.drawers, records: sum.records })}
+          photoSummary={t('{n}장', { n: sum.photos })}
           onBack={() => navigate('restore-file-picker')}
-          onConfirmRestore={() => navigate('restore-progress')}
+          onConfirmRestore={() => { if (sec.appLock) setPinGate('restore'); else navigate('restore-progress'); }}
         />
       </FixedCanvas>
     </main>;
   }
   if (route === 'restore-progress') {
-    // #51 복원 진행, reachable from #50's confirm dialog. Back returns
-    // to #50. Auto-completes (see RestoreProgressScreen.tsx's own
-    // header comment) -> #52.
+    // #51 복원 진행, reachable from #50's confirm dialog. Back returns to #50. The restore itself runs in the
+    // effect above; when it is done -> #52.
     return <main className="drawary-app-shell" data-route="restore-progress">
       <FixedCanvas height={844}>
-        <RestoreProgressScreen
-          onBack={() => navigate('restore-review')}
-          onComplete={() => navigate('restore-success')}
-        />
+        <RestoreProgressScreen onBack={() => navigate('restore-review')} />
       </FixedCanvas>
     </main>;
   }
   if (route === 'restore-success') {
-    // #52 복원 완료, reachable from #51's auto-complete. Back and
-    // "확인" both return to #44 -- going back to the review screen
+    // #52 복원 완료, reached from #51. Back and "확인" both return to #44 -- going back to the review screen
     // after a completed restore doesn't make sense.
+    const sum = restoreDone;
     return <main className="drawary-app-shell" data-route="restore-success">
       <FixedCanvas height={844}>
         <RestoreSuccessScreen
-          recordCount={t('5개 서랍 · 128개 기록')}
-          photoCount={t('42장')}
+          recordCount={t('{drawers}개 서랍 · {records}개 기록', { drawers: sum?.drawers ?? 0, records: sum?.records ?? 0 })}
+          photoCount={t('{n}장', { n: sum?.photos ?? 0 })}
           settingsStatus={t('복원 완료')}
           onBack={() => navigate('data-management')}
           onConfirm={() => navigate('data-management')}
@@ -1027,16 +1109,25 @@ export default function App() {
     </main>;
   }
   if (route === 'data-reset-confirm') {
-    // #53 데이터 초기화 확인, reachable from #44's "데이터 초기화" row.
-    // "취소"/뒤로가기 and "데이터 초기화" both return to #44 -- no real
-    // deletion happens anywhere (see DataResetConfirmScreen.tsx's own
-    // header comment and README.md's explicit "실제 앱 내 비가역 초기화
-    // 연결 금지").
+    // #53 데이터 초기화 확인, reachable from #44's "데이터 초기화" row. "취소"/뒤로가기 return to #44. Confirming (with the
+    // lock on: after the PIN) erases drawers, items, photos, notification/repeat rules and all settings on this device,
+    // then starts like a fresh install. Files that were backed up outside the app are not touched.
+    if (pinGate === 'reset') {
+      return <main className="drawary-app-shell" data-route="data-reset-confirm">
+        <FixedCanvas height={844}>
+          <PinSetupScreen
+            mode="verify" purpose="reset" verify={verifyPin} lockedUntil={sec.attempts.lockedUntil}
+            onBack={() => setPinGate(null)}
+            onVerified={resetEverything}
+          />
+        </FixedCanvas>
+      </main>;
+    }
     return <main className="drawary-app-shell" data-route="data-reset-confirm">
       <FixedCanvas height={844}>
         <DataResetConfirmScreen
           onCancel={() => navigate('data-management')}
-          onResetConfirmed={() => navigate('data-management')}
+          onResetConfirmed={() => { if (sec.appLock) setPinGate('reset'); else resetEverything(); }}
         />
       </FixedCanvas>
     </main>;
@@ -1296,13 +1387,9 @@ export default function App() {
     </main>;
   }
   if (route === 'backup-progress') {
-    // #47, now actually chained into the real #45->#46->#47->#48 backup
-    // flow (V2-10-45~53 batch) instead of being a standalone-only QA
-    // route reachable solely from Settings. Back returns to #46;
-    // auto-completes (see BackupProgressScreen.tsx's own header
-    // comment on the added onComplete) -> #48.
+    // #47 백업 진행: the backup file is made and handed over by the effect above, then -> #48. Back returns to #46.
     return <main className="drawary-app-shell" data-route="backup-progress">
-      <BackupProgressScreen onBack={() => navigate('backup-destination')} onComplete={() => navigate('backup-success')} />
+      <BackupProgressScreen onBack={() => navigate('backup-destination')} />
     </main>;
   }
   if (route === 'home-edit') {

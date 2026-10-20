@@ -10,6 +10,8 @@ export interface PinSetupScreenProps {
    * PIN first. `verify`: only asks for the current PIN (to turn the lock off).
    */
   mode?: 'set' | 'change' | 'verify';
+  /** What the PIN is asked for in `verify` mode (changes two lines of copy): turning the lock off (default), restoring, resetting. */
+  purpose?: 'unlock' | 'restore' | 'reset';
   /** Checks the current PIN (change and verify). */
   verify?: (pin: string) => Promise<VerifyResult>;
   /** Epoch ms until which entering a PIN is paused after too many wrong tries. */
@@ -58,7 +60,7 @@ const PROMPT: Record<Phase, string> = {
  * counts the seconds down.
  */
 
-export function PinSetupScreen({ mode = 'set', verify, lockedUntil = 0, onBack, onComplete, onVerified }: PinSetupScreenProps) {
+export function PinSetupScreen({ mode = 'set', purpose = 'unlock', verify, lockedUntil = 0, onBack, onComplete, onVerified }: PinSetupScreenProps) {
   const [phase, setPhase] = useState<Phase>(mode === 'set' ? 'new' : 'current');
   const [first, setFirst] = useState('');
   const [typed, setTyped] = useState('');
@@ -132,7 +134,7 @@ export function PinSetupScreen({ mode = 'set', verify, lockedUntil = 0, onBack, 
           {isVerify ? (
             <div>
               <strong>{t('본인이 맞는지 확인해요')}</strong>
-              <small>{tl('지금 쓰는 PIN을 입력하면\n앱 잠금을 끌 수 있어요.')}</small>
+              <small>{purpose === 'restore' ? tl('지금 쓰는 PIN을 입력하면\n복원을 계속할 수 있어요.') : purpose === 'reset' ? tl('지금 쓰는 PIN을 입력하면\n초기화를 계속할 수 있어요.') : tl('지금 쓰는 PIN을 입력하면\n앱 잠금을 끌 수 있어요.')}</small>
             </div>
           ) : (
             <div>

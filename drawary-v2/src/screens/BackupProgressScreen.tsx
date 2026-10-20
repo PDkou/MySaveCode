@@ -16,11 +16,8 @@ interface BackupProgressScreenProps {
  * the approved mascot binary now committed to this repo at
  * `public/assets/mascot/mascot_backup_progress.webp` (commit 7f5574e).
  *
- * `onComplete` is new, added when this screen was wired into the real
- * #45->#46->#47->#48 backup flow (V2-10-45~53 batch): there is no real
- * backup engine to call it, so it fires after a fixed demo delay instead
- * of staying permanently static -- disclosed, not a claim that backup
- * actually runs. */
+ * V2-12 step 5: the backup file is really made and handed over by App.tsx, which moves on to #48 itself; `onComplete`
+ * (a fixed demo delay) is no longer used by the app and stays only for the standalone QA route. */
 export function BackupProgressScreen({ onBack, onComplete }: BackupProgressScreenProps) {
   useEffect(() => {
     if (!onComplete) return;
