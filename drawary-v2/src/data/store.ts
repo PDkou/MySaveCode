@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import * as repo from './repository';
-import type { Drawer, DrawerInput, Field, FieldInput, FieldValue, RecordItem } from './types';
+import type { Drawer, DrawerInput, Field, FieldInput, FieldValue, NotificationRule, RecordItem, RecurrenceRule } from './types';
 
 /**
  * In-memory mirror of the on-device database. Screens read from this
@@ -13,10 +13,12 @@ export interface StoreState {
   drawers: Drawer[];
   fields: Field[];
   records: RecordItem[];
+  notificationRules: NotificationRule[];
+  recurrenceRules: RecurrenceRule[];
   settings: Record<string, unknown>;
 }
 
-const INITIAL: StoreState = { status: 'loading', error: null, drawers: [], fields: [], records: [], settings: {} };
+const INITIAL: StoreState = { status: 'loading', error: null, drawers: [], fields: [], records: [], notificationRules: [], recurrenceRules: [], settings: {} };
 
 let state: StoreState = INITIAL;
 const listeners = new Set<() => void>();
@@ -74,6 +76,13 @@ export const actions = {
   deleteRecord: (id: string) => write(() => repo.deleteRecord(id)),
 
   setPhotos: (recordId: string, photos: readonly Blob[]) => write(() => repo.setPhotos(recordId, photos)),
+  addNotificationRule: (drawerId: string, input: Parameters<typeof repo.addNotificationRule>[1]) => write(() => repo.addNotificationRule(drawerId, input)),
+  deleteNotificationRule: (id: string) => write(() => repo.deleteNotificationRule(id)),
+  addRecurrenceRule: (drawerId: string, input: repo.RecurrenceInput, todayISO: string) => write(() => repo.addRecurrenceRule(drawerId, input, todayISO)),
+  deleteRecurrenceRule: (id: string) => write(() => repo.deleteRecurrenceRule(id)),
+  /** Makes any records that recurrence rules say are due; returns how many. */
+  runRecurrences: (todayISO: string) => write(() => repo.runRecurrences(todayISO)),
+
   setSetting: (key: string, value: unknown) => write(() => repo.setSetting(key, value)),
   resetAllData: () => write(() => repo.resetAllData()),
 };

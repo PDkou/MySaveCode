@@ -45,6 +45,10 @@ import { NotificationDateFieldScreen } from './screens/NotificationDateFieldScre
 import { NotificationTimingScreen } from './screens/NotificationTimingScreen';
 import { NotificationCompleteScreen } from './screens/NotificationCompleteScreen';
 import { RecurrenceManagementScreen, type RecurrenceRuleSummary } from './screens/RecurrenceManagementScreen';
+import { RecordPickerSheet } from './screens/RecordPickerSheet';
+import { computeNotificationPlan } from './flow/notificationPlan';
+import { syncNotificationPlan } from './data/nativeBridge';
+import { toISODate } from './flow/recurrence';
 import { RecurrenceTargetDateScreen } from './screens/RecurrenceTargetDateScreen';
 import { RecurrenceCycleScreen, type RecurrenceCycle, cycleLabel } from './screens/RecurrenceCycleScreen';
 import { RecurrenceEndConditionScreen, type RecurrenceEndCondition, endConditionLabel } from './screens/RecurrenceEndConditionScreen';
@@ -246,12 +250,46 @@ export default function App() {
   // nowhere else in the app, even though CONFIRMED.md's own illustrative
   // example happens to use that name.
   const recurrenceTargets = currentRecords.map((r) => ({ id: r.id, title: summarizeRecord(currentFields, r).title }));
-  const [recurrenceRules, setRecurrenceRules] = useState<RecurrenceRuleSummary[]>([]);
+  const [targetPickerOpen, setTargetPickerOpen] = useState(false);
   const [recurrenceTargetId, setRecurrenceTargetId] = useState<string | undefined>(undefined);
   const [recurrenceDateFieldId, setRecurrenceDateFieldId] = useState<string | undefined>(undefined);
   const [recurrenceCycle, setRecurrenceCycle] = useState<RecurrenceCycle>('monthly');
   const [recurrenceInterval, setRecurrenceInterval] = useState(1);
   const [recurrenceEndCondition, setRecurrenceEndCondition] = useState<RecurrenceEndCondition>({ kind: 'never' });
+  const drawerNotifRules = currentDrawer ? store.notificationRules.filter((n) => n.drawerId === currentDrawer.id) : [];
+  const recurrenceRules: RecurrenceRuleSummary[] = currentDrawer
+    ? store.recurrenceRules.filter((r) => r.drawerId === currentDrawer.id).map((r) => ({
+        id: r.id,
+        targetLabel: r.targetLabel,
+        dateFieldName: currentFields.find((f) => f.id === r.fieldId)?.name ?? '',
+        cycleLabel: cycleLabel(r.cycle, r.interval),
+        enabled: !r.finished,
+        statusLabel: r.finished ? '끝남' : r.createdCount > 0 ? `${r.createdCount}개 만듦` : undefined,
+      }))
+    : [];
+
+  // Recurrence: make the records that have come due (each period once), when the app opens,
+  // comes back to the foreground, and every few minutes while it is open.
+  useEffect(() => {
+    if (store.status !== 'ready') return;
+    const run = () => { void actions.runRecurrences(toISODate(new Date())).catch((e: unknown) => console.error('반복 보관품을 만들지 못했어요', e)); };
+    run();
+    const onVisible = () => { if (document.visibilityState === 'visible') run(); };
+    document.addEventListener('visibilitychange', onVisible);
+    const timer = window.setInterval(run, 10 * 60 * 1000);
+    return () => { document.removeEventListener('visibilitychange', onVisible); window.clearInterval(timer); };
+  }, [store.status]);
+
+  // Notifications: hand the upcoming list to the Android shell (when there is one) after every change.
+  useEffect(() => {
+    if (store.status !== 'ready') return;
+    const timer = window.setTimeout(() => {
+      syncNotificationPlan(computeNotificationPlan({
+        rules: store.notificationRules, drawers: store.drawers, fields: store.fields, records: store.records, now: Date.now(),
+      }));
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [store.status, store.notificationRules, store.drawers, store.fields, store.records]);
 
   // #40-#43 보안/잠금. pinValue is the real PIN #42's flow commits (not
   // the archive's own hardcoded demo PIN); appLockEnabled can only be
@@ -498,6 +536,18 @@ export default function App() {
       <FixedCanvas height={844}>
         <NotificationSettingsScreen
           drawerName={drawerDetailName}
+          rules={drawerNotifRules.map((n) => ({
+            id: n.id,
+            fieldName: currentFields.find((f) => f.id === n.fieldId)?.name ?? '',
+            when: `${n.daysBefore === 0 ? '당일' : `${n.daysBefore}일 전`} · ${n.time}`,
+          }))}
+          onOpenRule={(id) => {
+            const n = drawerNotifRules.find((x) => x.id === id);
+            const field = currentFields.find((f) => f.id === n?.fieldId);
+            if (n && window.confirm(`'${field?.name ?? ''}' ${n.daysBefore === 0 ? '당일' : `${n.daysBefore}일 전`} ${n.time} 알림을 삭제할까요?`)) {
+              void actions.deleteNotificationRule(id).catch(alertError);
+            }
+          }}
           fieldCount={currentFields.length}
           recordCount={currentRecords.length}
           drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
@@ -541,9 +591,10 @@ export default function App() {
           drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
           onBack={() => navigate('notification-date-field')}
           onSubmit={({ daysBefore, time }) => {
-            setNotifDaysBefore(daysBefore);
-            setNotifTime(time);
-            navigate('notification-complete');
+            if (!currentDrawer || !dateField) return;
+            void actions.addNotificationRule(currentDrawer.id, { fieldId: dateField.id, daysBefore, time })
+              .then(() => { setNotifDaysBefore(daysBefore); setNotifTime(time); navigate('notification-complete'); })
+              .catch(alertError);
           }}
         />
       </FixedCanvas>
@@ -583,7 +634,12 @@ export default function App() {
           drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
           onBack={() => navigate('drawer-manage')}
           onAdd={() => navigate('recurrence-target-date')}
-          onOpenRule={() => {}}
+          onOpenRule={(id) => {
+            const r = store.recurrenceRules.find((x) => x.id === id);
+            if (r && window.confirm(`'${r.targetLabel}' 반복 설정을 삭제할까요?\n이미 만들어진 보관품은 그대로 남아요.`)) {
+              void actions.deleteRecurrenceRule(id).catch(alertError);
+            }
+          }}
         />
       </FixedCanvas>
     </main>;
@@ -606,18 +662,32 @@ export default function App() {
           selectedDateFieldId={recurrenceDateFieldId}
           drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
           onBack={() => navigate('recurrence-management')}
-          onSelectTarget={() => {
-            const ids = recurrenceTargets.map((t) => t.id);
-            const current = recurrenceTargetId ? ids.indexOf(recurrenceTargetId) : -1;
-            setRecurrenceTargetId(ids[(current + 1) % ids.length]);
-          }}
+          onSelectTarget={() => setTargetPickerOpen(true)}
           onSelectDateField={(fieldId) => setRecurrenceDateFieldId(fieldId)}
           onNext={({ targetId, dateFieldId }) => {
+            const rec = currentRecords.find((r) => r.id === targetId);
+            const df = currentFields.find((f) => f.id === dateFieldId);
+            if (!rec || typeof rec.values[dateFieldId] !== 'string') {
+              window.alert(`이 보관품에는 '${df?.name ?? '날짜'}' 날짜가 없어요. 날짜를 먼저 채워 주세요.`);
+              return;
+            }
             setRecurrenceTargetId(targetId);
             setRecurrenceDateFieldId(dateFieldId);
             navigate('recurrence-cycle');
           }}
         />
+        {targetPickerOpen && (
+          <RecordPickerSheet
+            title="반복할 보관품 선택"
+            records={currentRecords.map((r) => {
+              const sum = summarizeRecord(currentFields, r);
+              return { id: r.id, title: sum.title, detail: sum.dateLabel };
+            })}
+            selectedId={recurrenceTargetId}
+            onPick={(id) => { setRecurrenceTargetId(id); setTargetPickerOpen(false); }}
+            onClose={() => setTargetPickerOpen(false)}
+          />
+        )}
       </FixedCanvas>
     </main>;
   }
@@ -660,20 +730,15 @@ export default function App() {
           initial={recurrenceEndCondition}
           onBack={() => navigate('recurrence-cycle')}
           onSubmit={(condition) => {
-            setRecurrenceEndCondition(condition);
-            if (target && dateField) {
-              setRecurrenceRules((rules) => [
-                ...rules,
-                {
-                  id: `${target.id}-${Date.now()}`,
-                  targetLabel: target.title,
-                  dateFieldName: dateField.name,
-                  cycleLabel: label,
-                  enabled: true,
-                },
-              ]);
-            }
-            navigate('recurrence-complete');
+            if (!currentDrawer || !target || !dateField) return;
+            void actions.addRecurrenceRule(currentDrawer.id, {
+              targetRecordId: target.id, fieldId: dateField.id, cycle: recurrenceCycle, interval: recurrenceInterval,
+              end: condition.kind === 'never' ? { kind: 'never' } : condition.kind === 'count'
+                ? { kind: 'count', count: condition.count } : { kind: 'date', endDate: condition.endDate },
+              targetLabel: target.title,
+            }, toISODate(new Date()))
+              .then(() => { setRecurrenceEndCondition(condition); navigate('recurrence-complete'); })
+              .catch(alertError);
           }}
         />
       </FixedCanvas>

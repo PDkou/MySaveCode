@@ -1,6 +1,9 @@
 import { STORES, req, withTx } from './db';
-import type { Drawer, DrawerInput, Field, FieldInput, FieldValue, RecordItem } from './types';
-import { MAX_RECORD_PHOTOS } from './types';
+import type {
+  Drawer, DrawerInput, Field, FieldInput, FieldValue, NotificationRule, RecordItem, RecurrenceCycle, RecurrenceEnd, RecurrenceRule,
+} from './types';
+import { MAX_NOTIFY_DAYS_BEFORE, MAX_RECORD_PHOTOS } from './types';
+import { firstIndexAfter, isFinishedAfter, dueOccurrences } from '../flow/recurrence';
 import { ValidationError, assertUniqueFieldName, cleanDrawerName, cleanFieldName, validateRecordValues } from './validation';
 
 export function newId(): string {
@@ -15,21 +18,27 @@ export interface Snapshot {
   drawers: Drawer[];
   fields: Field[];
   records: RecordItem[];
+  notificationRules: NotificationRule[];
+  recurrenceRules: RecurrenceRule[];
   settings: Record<string, unknown>;
 }
 
 export async function loadAll(): Promise<Snapshot> {
-  return withTx([STORES.drawers, STORES.fields, STORES.records, STORES.settings], 'readonly', async (s) => {
-    const [drawers, fields, records, settingRows] = await Promise.all([
+  return withTx([STORES.drawers, STORES.fields, STORES.records, STORES.notifications, STORES.recurrences, STORES.settings], 'readonly', async (s) => {
+    const [drawers, fields, records, notificationRules, recurrenceRules, settingRows] = await Promise.all([
       req(s.drawers.getAll() as IDBRequest<Drawer[]>),
       req(s.fields.getAll() as IDBRequest<Field[]>),
       req(s.records.getAll() as IDBRequest<RecordItem[]>),
+      req(s.notifications.getAll() as IDBRequest<NotificationRule[]>),
+      req(s.recurrences.getAll() as IDBRequest<RecurrenceRule[]>),
       req(s.settings.getAll() as IDBRequest<{ key: string; value: unknown }[]>),
     ]);
     return {
       drawers: drawers.sort(byOrder),
       fields: fields.sort(byOrder),
       records: records.sort((a, b) => b.createdAt - a.createdAt),
+      notificationRules: notificationRules.sort((a, b) => a.createdAt - b.createdAt),
+      recurrenceRules: recurrenceRules.sort((a, b) => a.createdAt - b.createdAt),
       settings: Object.fromEntries(settingRows.map((row) => [row.key, row.value])),
     };
   });
@@ -111,8 +120,10 @@ export async function reorderDrawers(idsInOrder: readonly string[]): Promise<voi
 
 /** Deletes a drawer together with all of its fields, records and photos. */
 export async function deleteDrawer(id: string): Promise<void> {
-  await withTx([STORES.drawers, STORES.fields, STORES.records, STORES.photos, STORES.settings], 'readwrite', async (s) => {
+  await withTx([STORES.drawers, STORES.fields, STORES.records, STORES.photos, STORES.settings, STORES.notifications, STORES.recurrences], 'readwrite', async (s) => {
     await req(s.settings.delete(`tableview.${id}`));
+    for (const key of await req(s.notifications.index('drawerId').getAllKeys(id))) await req(s.notifications.delete(key));
+    for (const key of await req(s.recurrences.index('drawerId').getAllKeys(id))) await req(s.recurrences.delete(key));
     const fieldKeys = await req(s.fields.index('drawerId').getAllKeys(id));
     const recordKeys = await req(s.records.index('drawerId').getAllKeys(id));
     for (const key of fieldKeys) await req(s.fields.delete(key));
@@ -196,9 +207,14 @@ export async function reorderFields(drawerId: string, idsInOrder: readonly strin
 
 /** Deleting a field also removes its value from every record in that drawer. */
 export async function deleteField(id: string): Promise<void> {
-  await withTx([STORES.fields, STORES.records], 'readwrite', async (s) => {
+  await withTx([STORES.fields, STORES.records, STORES.notifications, STORES.recurrences], 'readwrite', async (s) => {
     const field = (await req(s.fields.get(id))) as Field | undefined;
     if (!field) return;
+    // Rules that counted on this date field go with it.
+    const notifs = await req(s.notifications.index('drawerId').getAll(field.drawerId) as IDBRequest<NotificationRule[]>);
+    for (const n of notifs) if (n.fieldId === id) await req(s.notifications.delete(n.id));
+    const recs = await req(s.recurrences.index('drawerId').getAll(field.drawerId) as IDBRequest<RecurrenceRule[]>);
+    for (const r of recs) if (r.fieldId === id) await req(s.recurrences.delete(r.id));
     const siblings = await req(s.fields.index('drawerId').getAll(field.drawerId) as IDBRequest<Field[]>);
     if (siblings.length <= 1) throw new ValidationError('서랍 칸은 최소 1개 있어야 해요.');
     const records = await req(s.records.index('drawerId').getAll(field.drawerId) as IDBRequest<RecordItem[]>);
@@ -280,6 +296,148 @@ export async function setPhotos(recordId: string, photos: readonly Blob[]): Prom
   });
 }
 
+// ------------------------------------------------------------ notifications
+
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** Adds "N days before the date in this field, at this time". The same rule cannot be added twice. */
+export async function addNotificationRule(
+  drawerId: string,
+  input: { fieldId: string; daysBefore: number; time: string },
+): Promise<NotificationRule> {
+  if (!Number.isInteger(input.daysBefore) || input.daysBefore < 0 || input.daysBefore > MAX_NOTIFY_DAYS_BEFORE) {
+    throw new ValidationError(`알림 시점은 당일부터 ${MAX_NOTIFY_DAYS_BEFORE}일 전까지 정할 수 있어요.`);
+  }
+  if (!TIME_RE.test(input.time)) throw new ValidationError('알림 시간을 확인해 주세요.');
+  return withTx([STORES.drawers, STORES.fields, STORES.notifications], 'readwrite', async (s) => {
+    if (!(await req(s.drawers.get(drawerId)))) throw new ValidationError('서랍을 찾을 수 없어요.');
+    const field = (await req(s.fields.get(input.fieldId))) as Field | undefined;
+    if (!field || field.drawerId !== drawerId || field.kind !== 'date') throw new ValidationError('날짜 서랍칸을 골라 주세요.');
+    const existing = await req(s.notifications.index('drawerId').getAll(drawerId) as IDBRequest<NotificationRule[]>);
+    if (existing.some((n) => n.fieldId === input.fieldId && n.daysBefore === input.daysBefore && n.time === input.time)) {
+      throw new ValidationError('같은 알림이 이미 있어요.');
+    }
+    const rule: NotificationRule = { id: newId(), drawerId, fieldId: input.fieldId, daysBefore: input.daysBefore, time: input.time, createdAt: Date.now() };
+    await req(s.notifications.add(rule));
+    return rule;
+  });
+}
+
+export async function deleteNotificationRule(id: string): Promise<void> {
+  await withTx([STORES.notifications], 'readwrite', async (s) => { await req(s.notifications.delete(id)); });
+}
+
+// --------------------------------------------------------------- recurrence
+
+const isISODate = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+export interface RecurrenceInput {
+  targetRecordId: string;
+  fieldId: string;
+  cycle: RecurrenceCycle;
+  interval: number;
+  end: RecurrenceEnd;
+  /** Shown in the rule list (the target's title at the time). */
+  targetLabel: string;
+}
+
+/**
+ * Adds "make a new record every N weeks/months/years". Periods are counted
+ * from the target's date in `fieldId`; only periods after `todayISO` are
+ * ever made (earlier ones are history). Nothing is created here, and the
+ * target is never changed.
+ */
+export async function addRecurrenceRule(drawerId: string, input: RecurrenceInput, todayISO: string): Promise<RecurrenceRule> {
+  if (!['weekly', 'monthly', 'yearly'].includes(input.cycle)) throw new ValidationError('반복 주기를 골라 주세요.');
+  if (!Number.isInteger(input.interval) || input.interval < 1 || input.interval > 99) throw new ValidationError('반복 간격은 1 이상으로 정해 주세요.');
+  if (input.end.kind === 'count' && (!Number.isInteger(input.end.count) || input.end.count < 1 || input.end.count > 999)) {
+    throw new ValidationError('만들 횟수는 1 이상으로 정해 주세요.');
+  }
+  if (input.end.kind === 'date' && (!isISODate(input.end.endDate) || input.end.endDate <= todayISO)) {
+    throw new ValidationError('종료 날짜는 오늘 이후로 정해 주세요.');
+  }
+  return withTx([STORES.drawers, STORES.fields, STORES.records, STORES.recurrences], 'readwrite', async (s) => {
+    if (!(await req(s.drawers.get(drawerId)))) throw new ValidationError('서랍을 찾을 수 없어요.');
+    const field = (await req(s.fields.get(input.fieldId))) as Field | undefined;
+    if (!field || field.drawerId !== drawerId || field.kind !== 'date') throw new ValidationError('기준이 될 날짜 서랍칸을 골라 주세요.');
+    const target = (await req(s.records.get(input.targetRecordId))) as RecordItem | undefined;
+    if (!target || target.drawerId !== drawerId) throw new ValidationError('반복할 보관품을 찾을 수 없어요.');
+    const baseDate = target.values[input.fieldId];
+    if (!isISODate(baseDate)) throw new ValidationError(`이 보관품에는 '${field.name}' 날짜가 없어요. 날짜를 먼저 채워 주세요.`);
+    const existing = await req(s.recurrences.index('drawerId').getAll(drawerId) as IDBRequest<RecurrenceRule[]>);
+    if (existing.some((r) => !r.finished && r.targetRecordId === input.targetRecordId && r.fieldId === input.fieldId && r.cycle === input.cycle && r.interval === input.interval)) {
+      throw new ValidationError('같은 반복 설정이 이미 있어요.');
+    }
+    const startIndex = firstIndexAfter(baseDate, input.cycle, input.interval, todayISO);
+    const rule: RecurrenceRule = {
+      id: newId(), drawerId, fieldId: input.fieldId, targetRecordId: target.id, targetLabel: input.targetLabel,
+      template: { ...target.values }, baseDate, cycle: input.cycle, interval: input.interval, end: input.end,
+      startIndex, nextIndex: startIndex, createdCount: 0,
+      finished: isFinishedAfter({ baseDate, cycle: input.cycle, interval: input.interval, end: input.end }, startIndex, 0),
+      createdAt: Date.now(),
+    };
+    await req(s.recurrences.add(rule));
+    return rule;
+  });
+}
+
+/** Removes the rule only: records it already made stay. */
+export async function deleteRecurrenceRule(id: string): Promise<void> {
+  await withTx([STORES.recurrences], 'readwrite', async (s) => { await req(s.recurrences.delete(id)); });
+}
+
+/**
+ * Makes every record that is due by `todayISO` (at most `cap` per rule per
+ * call). Each record and the rule's progress are written in one transaction,
+ * so running this twice, or from two tabs, never makes the same period twice.
+ * The copy is made from the target as it is now (or from the saved copy if the
+ * target was deleted); only the rule's date field changes, and photos are not
+ * copied. Returns how many records were made.
+ */
+export async function runRecurrences(todayISO: string, cap = 60): Promise<number> {
+  const rules = await withTx([STORES.recurrences], 'readonly', async (s) => req(s.recurrences.getAll() as IDBRequest<RecurrenceRule[]>));
+  let made = 0;
+  for (const listed of rules) {
+    if (listed.finished) continue;
+    for (let n = 0; n < cap; n++) {
+      const created = await withTx([STORES.drawers, STORES.fields, STORES.records, STORES.recurrences], 'readwrite', async (s) => {
+        const rule = (await req(s.recurrences.get(listed.id))) as RecurrenceRule | undefined;
+        if (!rule || rule.finished) return false;
+        const [due] = dueOccurrences(rule, todayISO, 1);
+        if (!due) {
+          // Nothing due now; remember if the end condition has been reached.
+          if (isFinishedAfter(rule, rule.nextIndex, rule.createdCount)) await req(s.recurrences.put({ ...rule, finished: true }));
+          return false;
+        }
+        const fields = await fieldsOf(s, rule.drawerId);
+        const field = fields.find((f) => f.id === rule.fieldId);
+        if (!(await req(s.drawers.get(rule.drawerId))) || !field || field.kind !== 'date') {
+          await req(s.recurrences.put({ ...rule, finished: true }));
+          return false;
+        }
+        const target = (await req(s.records.get(rule.targetRecordId))) as RecordItem | undefined;
+        const base = target ? target.values : rule.template;
+        const values: Record<string, FieldValue> = {};
+        for (const f of fields) if (f.id in base && base[f.id] !== undefined) values[f.id] = base[f.id];
+        values[rule.fieldId] = due.date;
+        validateRecordValues(fields, values, true);
+        const now = Date.now();
+        await req(s.records.add({ id: newId(), drawerId: rule.drawerId, values, createdAt: now, updatedAt: now } satisfies RecordItem));
+        const createdCount = rule.createdCount + 1;
+        const nextIndex = due.index + 1;
+        await req(s.recurrences.put({
+          ...rule, template: { ...base }, nextIndex, createdCount,
+          finished: isFinishedAfter(rule, nextIndex, createdCount),
+        }));
+        return true;
+      });
+      if (!created) break;
+      made++;
+    }
+  }
+  return made;
+}
+
 // --------------------------------------------------------------- settings
 
 export async function getSetting<T>(key: string): Promise<T | undefined> {
@@ -299,7 +457,7 @@ export async function setSetting(key: string, value: unknown): Promise<void> {
 
 /** "데이터 초기화": removes every drawer, field, record, photo and setting. */
 export async function resetAllData(): Promise<void> {
-  await withTx([STORES.drawers, STORES.fields, STORES.records, STORES.photos, STORES.settings], 'readwrite', async (s) => {
+  await withTx(Object.values(STORES), 'readwrite', async (s) => {
     for (const store of Object.values(s)) await req(store.clear());
   });
 }

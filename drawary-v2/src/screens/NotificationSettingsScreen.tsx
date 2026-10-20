@@ -1,8 +1,19 @@
 import { ScreenHeader } from '../components/ScreenHeader';
 import './NotificationSettingsScreen.css';
 
+export interface NotificationRuleRow {
+  id: string;
+  /** Name of the date 서랍칸 the notification counts from. */
+  fieldName: string;
+  /** e.g. "7일 전 · 09:00". */
+  when: string;
+}
+
 export interface NotificationSettingsScreenProps {
   drawerName: string;
+  /** This drawer's notifications; tapping a row lets the caller offer to delete it. */
+  rules?: NotificationRuleRow[];
+  onOpenRule?: (ruleId: string) => void;
   fieldCount: number;
   recordCount: number;
   drawerIconUri?: string;
@@ -24,11 +35,17 @@ export interface NotificationSettingsScreenProps {
  * "알림 추가하기" button's icon -- that filter assumes a flat
  * single-color glyph, but this app's actual `icon_add.webp` is already
  * a complete colored badge (purple circle + white plus), and inverting
- * it collapses the plus into a solid white blob. #15 (`DrawerDetailScreen`)
+ * it collapses the plus into a solid white blob.
+ *
+ * V2-12 step 3: the "이 서랍의 알림" section now lists this drawer's saved
+ * notifications (rows drawn like the 알림 공통 설정 card below them; no approved
+ * design shows them) -- tap one to delete it. #15 (`DrawerDetailScreen`)
  * already uses the same asset unfiltered; matched that precedent.
  */
 export function NotificationSettingsScreen({
   drawerName,
+  rules = [],
+  onOpenRule,
   fieldCount,
   recordCount,
   drawerIconUri = '/assets/drawer-icons/drawer_icon_cosmetics.webp',
@@ -63,6 +80,16 @@ export function NotificationSettingsScreen({
       </button>
 
       <div className="ns-section-label">이 서랍의 알림</div>
+      {rules.map((rule) => (
+        <button className="ns-rule-card" type="button" key={rule.id} onClick={() => onOpenRule?.(rule.id)}>
+          <div className="ns-common-icon"><img src="/assets/ui-icons/icon_notification.webp" alt="" /></div>
+          <div className="ns-common-copy">
+            <strong>{rule.fieldName}</strong>
+            <span>{rule.when}</span>
+          </div>
+          <div className="ns-chev">›</div>
+        </button>
+      ))}
       <button className="ns-common-card" type="button" onClick={onOpenCommonSettings}>
         <div className="ns-common-icon"><img src="/assets/ui-icons/icon_notification.webp" alt="" /></div>
         <div className="ns-common-copy">

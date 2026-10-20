@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DB_NAME, DB_VERSION, STORES, closeDB, openDB } from './db';
 import {
+  addNotificationRule, addRecurrenceRule, deleteNotificationRule, deleteRecurrenceRule, runRecurrences,
   addField, createDrawer, createDrawerWithFields, createRecord, deleteDrawer, deleteField, deleteRecord, getPhotos,
   getSetting, loadAll, reorderDrawers, reorderFields, resetAllData, setPhotos, setSetting,
   updateDrawer, updateField, updateRecord,
@@ -361,10 +362,204 @@ describe('settings and reset', () => {
     const r = await createRecord(d.id, { [f.id]: 'x' });
     await setPhotos(r.id, [png()]);
     await setSetting('language', 'en');
+    const dateField = await addField(d.id, { name: '구매일', kind: 'date' });
+    await addNotificationRule(d.id, { fieldId: dateField.id, daysBefore: 7, time: '09:00' });
+    const dated = await createRecord(d.id, { [f.id]: 'y', [dateField.id]: '2024-03-12' });
+    await addRecurrenceRule(d.id, { targetRecordId: dated.id, fieldId: dateField.id, cycle: 'monthly', interval: 1, end: { kind: 'never' }, targetLabel: 'y' }, '2024-04-01');
 
     await resetAllData();
 
-    expect(await loadAll()).toEqual({ drawers: [], fields: [], records: [], settings: {} });
+    expect(await loadAll()).toEqual({ drawers: [], fields: [], records: [], notificationRules: [], recurrenceRules: [], settings: {} });
     expect(await getPhotos(r.id)).toBeNull();
+  });
+});
+
+
+describe('upgrading from the first database version', () => {
+  it('keeps existing data and adds the notification and recurrence stores', async () => {
+    await closeDB();
+    await new Promise<void>((resolve, reject) => {
+      const r = indexedDB.deleteDatabase(DB_NAME); r.onsuccess = () => resolve(); r.onerror = () => reject(r.error);
+    });
+    // A database exactly as version 1 left it, with one drawer in it.
+    await new Promise<void>((resolve, reject) => {
+      const open = indexedDB.open(DB_NAME, 1);
+      open.onupgradeneeded = () => {
+        const db = open.result;
+        db.createObjectStore('drawers', { keyPath: 'id' });
+        db.createObjectStore('fields', { keyPath: 'id' }).createIndex('drawerId', 'drawerId');
+        db.createObjectStore('records', { keyPath: 'id' }).createIndex('drawerId', 'drawerId');
+        db.createObjectStore('photos', { keyPath: 'recordId' });
+        db.createObjectStore('settings', { keyPath: 'key' });
+      };
+      open.onsuccess = () => {
+        const tx = open.result.transaction('drawers', 'readwrite');
+        tx.objectStore('drawers').add({ id: 'old', name: '옛 서랍', iconKey: 'books', colorKey: 'pink', order: 0, createdAt: 1, updatedAt: 1 });
+        tx.oncomplete = () => { open.result.close(); resolve(); };
+        tx.onerror = () => reject(tx.error);
+      };
+      open.onerror = () => reject(open.error);
+    });
+    const snap = await loadAll();
+    expect(snap.drawers.map((d) => d.name)).toEqual(['옛 서랍']);
+    expect(snap.notificationRules).toEqual([]);
+    expect(snap.recurrenceRules).toEqual([]);
+    const db = await openDB();
+    expect(db.version).toBe(DB_VERSION);
+    expect(DB_VERSION).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('notification rules', () => {
+  async function setup() {
+    const { drawer, fields } = await createDrawerWithFields({ name: '화장품', iconKey: 'cosmetics', colorKey: 'pink' }, [
+      { name: '제품명', kind: 'text' }, { name: '구매일', kind: 'date' }, { name: '가격', kind: 'currency' },
+    ]);
+    return { drawer, name: fields[0], date: fields[1], price: fields[2] };
+  }
+
+  it('stores "N days before at this time" for a date field, and refuses the same rule twice', async () => {
+    const { drawer, date } = await setup();
+    const rule = await addNotificationRule(drawer.id, { fieldId: date.id, daysBefore: 7, time: '09:00' });
+    expect((await loadAll()).notificationRules).toEqual([rule]);
+    await expect(addNotificationRule(drawer.id, { fieldId: date.id, daysBefore: 7, time: '09:00' })).rejects.toThrow('이미');
+    await expect(addNotificationRule(drawer.id, { fieldId: date.id, daysBefore: 0, time: '09:00' })).resolves.toBeTruthy();
+    await deleteNotificationRule(rule.id);
+    expect((await loadAll()).notificationRules).toHaveLength(1);
+  });
+
+  it('only accepts a date field of that drawer, a sane time and 0-90 days', async () => {
+    const { drawer, name, price } = await setup();
+    const other = await makeDrawer('다른 서랍'); const otherDate = await addField(other.id, { name: '날', kind: 'date' });
+    await expect(addNotificationRule(drawer.id, { fieldId: name.id, daysBefore: 1, time: '09:00' })).rejects.toBeInstanceOf(ValidationError);
+    await expect(addNotificationRule(drawer.id, { fieldId: price.id, daysBefore: 1, time: '09:00' })).rejects.toBeInstanceOf(ValidationError);
+    await expect(addNotificationRule(drawer.id, { fieldId: otherDate.id, daysBefore: 1, time: '09:00' })).rejects.toBeInstanceOf(ValidationError);
+    const date = (await loadAll()).fields.find((f) => f.drawerId === drawer.id && f.kind === 'date')!;
+    for (const bad of [{ daysBefore: -1, time: '09:00' }, { daysBefore: 91, time: '09:00' }, { daysBefore: 1.5, time: '09:00' }, { daysBefore: 1, time: '24:00' }, { daysBefore: 1, time: '9:00' }]) {
+      await expect(addNotificationRule(drawer.id, { fieldId: date.id, ...bad })).rejects.toBeInstanceOf(ValidationError);
+    }
+  });
+
+  it('is removed with its date field or its drawer, and nothing else', async () => {
+    const { drawer, date } = await setup();
+    const extra = await addField(drawer.id, { name: '만료일', kind: 'date' });
+    await addNotificationRule(drawer.id, { fieldId: date.id, daysBefore: 7, time: '09:00' });
+    await addNotificationRule(drawer.id, { fieldId: extra.id, daysBefore: 1, time: '10:00' });
+    await deleteField(date.id);
+    expect((await loadAll()).notificationRules.map((n) => n.fieldId)).toEqual([extra.id]);
+    await deleteDrawer(drawer.id);
+    expect((await loadAll()).notificationRules).toEqual([]);
+  });
+});
+
+describe('recurrence rules make NEW records and never touch the original', () => {
+  async function setup() {
+    const { drawer, fields } = await createDrawerWithFields({ name: '화장품', iconKey: 'cosmetics', colorKey: 'pink' }, [
+      { name: '제품명', kind: 'text', required: true }, { name: '구매일', kind: 'date' }, { name: '가격', kind: 'currency' },
+    ]);
+    const [name, date, price] = fields;
+    const original = await createRecord(drawer.id, { [name.id]: '선크림', [date.id]: '2026-08-15', [price.id]: 15000 }, [png()]);
+    const input = (over = {}) => ({ targetRecordId: original.id, fieldId: date.id, cycle: 'monthly' as const, interval: 1, end: { kind: 'never' as const }, targetLabel: '선크림', ...over });
+    return { drawer, name, date, price, original, input };
+  }
+  const records = async (drawerId: string) => (await loadAll()).records.filter((r) => r.drawerId === drawerId);
+
+  it('creates nothing when the rule is added and only counts periods after today', async () => {
+    const { drawer, input } = await setup();
+    const rule = await addRecurrenceRule(drawer.id, input(), '2026-10-20');
+    expect(rule.startIndex).toBe(3); // 2026-09-15 and 2026-10-15 are history, 2026-11-15 is the first
+    expect(rule.createdCount).toBe(0);
+    expect(await records(drawer.id)).toHaveLength(1);
+  });
+
+  it('makes a new record when a period arrives, copying the others and leaving the original and its photos alone', async () => {
+    const { drawer, name, date, price, original, input } = await setup();
+    await addRecurrenceRule(drawer.id, input(), '2026-10-20');
+    expect(await runRecurrences('2026-11-14')).toBe(0);
+    expect(await runRecurrences('2026-11-15')).toBe(1);
+    const all = await records(drawer.id);
+    expect(all).toHaveLength(2);
+    const made = all.find((r) => r.id !== original.id)!;
+    expect(made.values).toEqual({ [name.id]: '선크림', [date.id]: '2026-11-15', [price.id]: 15000 });
+    const same = all.find((r) => r.id === original.id)!;
+    expect(same.values[date.id]).toBe('2026-08-15');
+    expect(same.updatedAt).toBe(original.updatedAt);
+    expect(await getPhotos(made.id)).toBeNull();
+    expect((await getPhotos(original.id))?.length).toBe(1);
+  });
+
+  it('is idempotent: running again the same day, or twice at once, never repeats a period', async () => {
+    const { drawer, input } = await setup();
+    await addRecurrenceRule(drawer.id, input(), '2026-10-20');
+    await Promise.all([runRecurrences('2026-11-15'), runRecurrences('2026-11-15')]);
+    expect(await runRecurrences('2026-11-15')).toBe(0);
+    expect(await records(drawer.id)).toHaveLength(2);
+  });
+
+  it('catches up after a long absence, in order, without making the periods before the rule existed', async () => {
+    const { drawer, date, input } = await setup();
+    await addRecurrenceRule(drawer.id, input(), '2026-10-20');
+    expect(await runRecurrences('2027-02-20')).toBe(4); // Nov 15, Dec 15, Jan 15, Feb 15
+    const dates = (await records(drawer.id)).map((r) => r.values[date.id]).sort();
+    expect(dates).toEqual(['2026-08-15', '2026-11-15', '2026-12-15', '2027-01-15', '2027-02-15']);
+  });
+
+  it('stops after the chosen number of NEW records (the original does not count)', async () => {
+    const { drawer, input } = await setup();
+    const rule = await addRecurrenceRule(drawer.id, input({ end: { kind: 'count', count: 2 } }), '2026-10-20');
+    expect(await runRecurrences('2030-01-01')).toBe(2);
+    expect(await records(drawer.id)).toHaveLength(3);
+    const after = (await loadAll()).recurrenceRules.find((r) => r.id === rule.id)!;
+    expect(after.finished).toBe(true);
+    expect(after.createdCount).toBe(2);
+    expect(await runRecurrences('2031-01-01')).toBe(0);
+  });
+
+  it('stops at the end date, inclusive', async () => {
+    const { drawer, date, input } = await setup();
+    await addRecurrenceRule(drawer.id, input({ end: { kind: 'date', endDate: '2027-01-15' } }), '2026-10-20');
+    expect(await runRecurrences('2030-01-01')).toBe(3); // Nov 15, Dec 15, Jan 15
+    const dates = (await records(drawer.id)).map((r) => r.values[date.id]).sort();
+    expect(dates.at(-1)).toBe('2027-01-15');
+    expect((await loadAll()).recurrenceRules[0].finished).toBe(true);
+  });
+
+  it('keeps going from its saved copy if the original is deleted, and survives a later required field', async () => {
+    const { drawer, name, date, original, input } = await setup();
+    await addRecurrenceRule(drawer.id, input(), '2026-10-20');
+    const { deleteRecord } = await import('./repository');
+    await deleteRecord(original.id);
+    const memo = await addField(drawer.id, { name: '메모', kind: 'text', required: true });
+    expect(await runRecurrences('2026-11-15')).toBe(1);
+    const made = (await records(drawer.id))[0];
+    expect(made.values[name.id]).toBe('선크림');
+    expect(made.values[date.id]).toBe('2026-11-15');
+    expect(made.values[memo.id]).toBeUndefined(); // generated records are not blocked by a required field added later
+  });
+
+  it('refuses a target without a date, other drawers, bad intervals and bad end conditions, and duplicates', async () => {
+    const { drawer, name, date, input } = await setup();
+    const undated = await createRecord(drawer.id, { [name.id]: '날짜 없음' });
+    await expect(addRecurrenceRule(drawer.id, input({ targetRecordId: undated.id }), '2026-10-20')).rejects.toThrow('날짜가 없어요');
+    await expect(addRecurrenceRule(drawer.id, input({ fieldId: name.id }), '2026-10-20')).rejects.toBeInstanceOf(ValidationError);
+    await expect(addRecurrenceRule(drawer.id, input({ interval: 0 }), '2026-10-20')).rejects.toBeInstanceOf(ValidationError);
+    await expect(addRecurrenceRule(drawer.id, input({ end: { kind: 'count', count: 0 } }), '2026-10-20')).rejects.toBeInstanceOf(ValidationError);
+    await expect(addRecurrenceRule(drawer.id, input({ end: { kind: 'date', endDate: '2026-10-01' } }), '2026-10-20')).rejects.toThrow('오늘 이후');
+    const other = await makeDrawer('다른'); 
+    await expect(addRecurrenceRule(other.id, input(), '2026-10-20')).rejects.toBeInstanceOf(ValidationError);
+    await addRecurrenceRule(drawer.id, input(), '2026-10-20');
+    await expect(addRecurrenceRule(drawer.id, input(), '2026-10-20')).rejects.toThrow('이미');
+    expect(date.kind).toBe('date');
+  });
+
+  it('is removed with its date field or drawer; deleting just the rule keeps the records it made', async () => {
+    const { drawer, date, input } = await setup();
+    const rule = await addRecurrenceRule(drawer.id, input(), '2026-10-20');
+    await runRecurrences('2026-11-15');
+    await deleteRecurrenceRule(rule.id);
+    expect(await records(drawer.id)).toHaveLength(2);
+    await addRecurrenceRule(drawer.id, input({ interval: 2 }), '2026-10-20');
+    await deleteField(date.id);
+    expect((await loadAll()).recurrenceRules).toEqual([]);
   });
 });

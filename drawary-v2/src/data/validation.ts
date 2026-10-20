@@ -40,13 +40,13 @@ export function isEmptyValue(value: FieldValue | undefined): boolean {
 }
 
 /** Returns an error message for a bad value, or null when it is acceptable. */
-export function validateValue(field: Field, value: FieldValue | undefined): string | null {
+export function validateValue(field: Field, value: FieldValue | undefined, ignoreRequired = false): string | null {
   // Photos are stored separately, never as a record value.
   if (field.kind === 'photo') return null;
 
   if (isEmptyValue(value)) {
     // A checkbox is never "empty": unchecked is a valid answer.
-    if (field.required && field.kind !== 'check') return `'${field.name}'을(를) 입력해 주세요.`;
+    if (field.required && field.kind !== 'check' && !ignoreRequired) return `'${field.name}'을(를) 입력해 주세요.`;
     return null;
   }
 
@@ -73,14 +73,14 @@ export function validateValue(field: Field, value: FieldValue | undefined): stri
   }
 }
 
-/** Throws ValidationError for the first problem found across all fields. */
-export function validateRecordValues(fields: readonly Field[], values: Record<string, FieldValue>): void {
+/** Throws ValidationError for the first problem found across all fields. `ignoreRequired` is for records the app makes itself (recurrence). */
+export function validateRecordValues(fields: readonly Field[], values: Record<string, FieldValue>, ignoreRequired = false): void {
   const known = new Set(fields.map((f) => f.id));
   for (const key of Object.keys(values)) {
     if (!known.has(key)) throw new ValidationError('이 서랍에 없는 서랍 칸이에요.');
   }
   for (const field of fields) {
-    const message = validateValue(field, values[field.id]);
+    const message = validateValue(field, values[field.id], ignoreRequired);
     if (message) throw new ValidationError(message);
   }
 }

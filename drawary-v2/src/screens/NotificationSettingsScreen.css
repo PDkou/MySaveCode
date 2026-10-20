@@ -44,3 +44,9 @@ button{font:inherit}
 
 /* #29 approved common-setting label is left-aligned inside its grid cell. */
 .ns-common-card { text-align:left; }
+
+/* A saved notification row: same card as 알림 공통 설정, a little lower so a few fit above it. */
+.ns-rule-card{
+  width:350px;box-sizing:border-box;margin:0 20px 9px;height:70px;border:1px solid #eadbc9;border-radius:18px;background:#fffdf8;
+  display:grid;grid-template-columns:52px 1fr 22px;align-items:center;padding:0 14px;text-align:left
+}

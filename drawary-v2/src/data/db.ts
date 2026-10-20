@@ -12,6 +12,8 @@ export const STORES = {
   records: 'records',
   photos: 'photos',
   settings: 'settings',
+  notifications: 'notifications',
+  recurrences: 'recurrences',
 } as const;
 export type StoreName = (typeof STORES)[keyof typeof STORES];
 
@@ -29,6 +31,11 @@ const MIGRATIONS: ReadonlyArray<(db: IDBDatabase) => void> = [
     records.createIndex('drawerId', 'drawerId');
     db.createObjectStore(STORES.photos, { keyPath: 'recordId' });
     db.createObjectStore(STORES.settings, { keyPath: 'key' });
+  },
+  // v2: notification rules (#29-#32) and recurrence rules (#33-#37).
+  (db) => {
+    db.createObjectStore(STORES.notifications, { keyPath: 'id' }).createIndex('drawerId', 'drawerId');
+    db.createObjectStore(STORES.recurrences, { keyPath: 'id' }).createIndex('drawerId', 'drawerId');
   },
 ];
 

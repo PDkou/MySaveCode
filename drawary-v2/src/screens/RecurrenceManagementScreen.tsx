@@ -7,6 +7,8 @@ export interface RecurrenceRuleSummary {
   dateFieldName: string;
   cycleLabel: string;
   enabled: boolean;
+  /** Shown instead of 사용 중 / 일시 정지 when set (e.g. a rule whose end condition was reached). */
+  statusLabel?: string;
 }
 
 export interface RecurrenceManagementScreenProps {
@@ -109,7 +111,7 @@ export function RecurrenceManagementScreen({
               >
                 <strong>{rule.targetLabel}</strong>
                 <span>{rule.cycleLabel} · {rule.dateFieldName}</span>
-                <em>{rule.enabled ? '사용 중' : '일시 정지'}</em>
+                <em>{rule.statusLabel ?? (rule.enabled ? '사용 중' : '일시 정지')}</em>
               </button>
             ))}
           </div>

@@ -60,3 +60,62 @@ export type FieldInput = Pick<Field, 'name' | 'kind'> & Partial<Pick<Field, 'req
 export const MAX_RECORD_PHOTOS = 3;
 export const MAX_FIELD_NAME_LENGTH = 20;
 export const MAX_DRAWER_NAME_LENGTH = 20;
+
+// ------------------------------------------------- notifications & recurrence
+
+/**
+ * "Tell me N days before the date in this field, at this time" (#29-#32).
+ * One rule covers every record of the drawer that has a date in that field.
+ * Notifications are separate from recurrence: they only read dates.
+ */
+export interface NotificationRule {
+  id: string;
+  drawerId: string;
+  /** A field of kind `date` in this drawer. */
+  fieldId: string;
+  /** 0 = the day itself. */
+  daysBefore: number;
+  /** Local time, `HH:MM`. */
+  time: string;
+  createdAt: number;
+}
+
+export type RecurrenceCycle = 'weekly' | 'monthly' | 'yearly';
+export type RecurrenceEnd =
+  | { kind: 'never' }
+  /** Number of NEW records to create (the original is not counted). */
+  | { kind: 'count'; count: number }
+  /** Create new records only up to this date (`YYYY-MM-DD`, inclusive). */
+  | { kind: 'date'; endDate: string };
+
+/**
+ * "Make a new 보관품 every N weeks/months/years" (#33-#37). A rule never
+ * edits the record it was made from: each due period adds a NEW record
+ * copied from it, with the chosen date field moved to that period.
+ */
+export interface RecurrenceRule {
+  id: string;
+  drawerId: string;
+  /** The date field the periods are counted from (kind `date`). */
+  fieldId: string;
+  /** The record that is copied. Its values are kept in `template` in case it is deleted. */
+  targetRecordId: string;
+  targetLabel: string;
+  template: Record<string, FieldValue>;
+  /** The target's date when the rule was made (`YYYY-MM-DD`); fixed so later edits do not shift the series. */
+  baseDate: string;
+  cycle: RecurrenceCycle;
+  interval: number;
+  end: RecurrenceEnd;
+  /** Period number (1 = one interval after baseDate) of the first record this rule makes. */
+  startIndex: number;
+  /** Period number of the next record to make. */
+  nextIndex: number;
+  /** How many records it has made so far. */
+  createdCount: number;
+  /** True once the end condition is reached (or its date field is gone). */
+  finished: boolean;
+  createdAt: number;
+}
+
+export const MAX_NOTIFY_DAYS_BEFORE = 90;
