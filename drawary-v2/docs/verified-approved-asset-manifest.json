@@ -30,5 +30,15 @@
   "unexpectedChangesSincePreUploadCommit": 0,
   "baselineCommitBeforeUpload": "f2128743b4debfa9fcba4cb96cfea4f29dc60b63",
   "uploadCommit": "6597ff41485ff941707df317e3aa4814546588f7",
-  "limitation": "This manifest records a verified whole-tree digest, rather than 294 individual SHA-256 digests; the original ZIP includes the individual approved asset bytes."
+  "limitation": "This manifest records a verified whole-tree digest, rather than 294 individual SHA-256 digests; the original ZIP includes the individual approved asset bytes.",
+  "updates": [
+    {
+      "date": "2026-10-20",
+      "group": "drawer-icons",
+      "files": 24,
+      "change": "Replaced all 24 drawer_icon_*.webp (60-77px) with sharper art cut from the user-provided icon sheet (1254x1254 PNG, transparent background, 5x5 grid, alphabetical key order). Each new file keeps the old glyph size and position inside its canvas, so no screen layout moves; canvases are now ~210-330px.",
+      "approval": "User said the sheet is 'probably final' (2026-10-20); revert by restoring the 24 files from the commit before this update.",
+      "note": "expectedAssetGitTreeSha1 above describes the original 294-file import and no longer matches this group."
+    }
+  ]
 }

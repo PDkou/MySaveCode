@@ -13,7 +13,7 @@ Positions were measured off the approved #3 render and the result pixel-diffed a
 
 Every text block, icon and the dashed card now sit within 1-3px of the approved render (`meas.py` bbox comparison). The remaining difference is **not geometry**; it is:
 
-- **Icon artwork.** The approved render used sharper icon art that is not in `public/assets` (the shared nav package has separate 3-4x `cosmetics/books/travel/other.webp`, none for plants). The 24 approved `drawer-icons/*.webp` already in the repo are used instead, sized so each glyph fits the same ~56px box as the approved cards. Not imported: copying the extra files would mean adding assets outside the verified 294.
+- **Icon artwork. [Resolved 2026-10-20, see V2_12_07_DRAWER_ICONS.md]** The approved render used sharper icon art that is not in `public/assets` (the shared nav package has separate 3-4x `cosmetics/books/travel/other.webp`, none for plants). The 24 approved `drawer-icons/*.webp` already in the repo are used instead, sized so each glyph fits the same ~56px box as the approved cards. Not imported: copying the extra files would mean adding assets outside the verified 294.
 - **Brand lockup.** Every lockup in `public/assets/brand` has a faint white sticker outline; the approved render has none. Not substituted.
 - **Font.** The sandbox has no Korean font installed, so text weight/face differ from the approved render. The stack (`Noto Sans CJK KR`, ...) is what a device will resolve.
 - **Blue card tint** (`#e1edfa`) is derived; no approved home render shows a blue card.
