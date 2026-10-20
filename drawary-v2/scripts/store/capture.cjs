@@ -16,21 +16,21 @@ const L = {
   KR: { locale: 'ko-KR', drawers: ['화장품', '책', '여행', '식물', '선물', '문서'],
     fields: ['제품명', '브랜드', '구매일', '가격', '별점', '메모'], memo: '발색이 자연스럽고 지속력이 좋아요.',
     items: [['립 틴트', '롬앤 쥬시래스팅 틴트', '2024-03-12'], ['쿠션 파운데이션', '클리오 킬커버 쿠션', '2024-02-28'], ['아이섀도우 팔레트', '데이지크 섀도우 팔레트', '2024-01-20'], ['향수', '샤넬 코코 마드모아젤', '2023-12-10']],
-    query: '발색', newName: '화장품', home: '화장품 서랍', other: '책 서랍' },
+    others: [[], ['어린 왕자', '데미안', '작은 아씨들'], ['제주도 여행', '교토 3박 4일', '도쿄 맛집 지도'], ['몬스테라', '올리브나무', '스투키'], ['생일 선물 아이디어', '기념일 선물'], ['여권 사본', '보험 증권']], query: '발색', newName: '화장품', home: '화장품 서랍', other: '책 서랍' },
   JP: { locale: 'ja-JP', drawers: ['コスメ', '本', '旅行', '植物', 'ギフト', '書類'],
     fields: ['商品名', 'ブランド', '購入日', '価格', '評価', 'メモ'], memo: '発色が自然で、持ちも良いです。',
     items: [['リップティント', 'ロムアンド ジューシーラスティングティント', '2024-03-12'], ['クッションファンデ', 'クリオ キルカバー クッション', '2024-02-28'], ['アイシャドウパレット', 'デイジーク シャドウパレット', '2024-01-20'], ['香水', 'シャネル ココ マドモアゼル', '2023-12-10']],
-    query: '発色', newName: 'コスメ' },
+    others: [[], ['星の王子さま', 'デミアン', '若草物語'], ['済州島旅行', '京都3泊4日', '東京グルメマップ'], ['モンステラ', 'オリーブの木', 'サンスベリア'], ['誕生日ギフトのアイデア', '記念日のプレゼント'], ['パスポートのコピー', '保険証券']], query: '発色', newName: 'コスメ' },
   EN: { locale: 'en-US', drawers: ['Cosmetics', 'Books', 'Travel', 'Plants', 'Gifts', 'Documents'],
     fields: ['Product', 'Brand', 'Bought on', 'Price', 'Rating', 'Notes'], memo: 'Natural colour and it lasts all day.',
     items: [['Lip tint', 'rom&nd Juicy Lasting Tint', '2024-03-12'], ['Cushion foundation', 'Clio Kill Cover Cushion', '2024-02-28'], ['Eyeshadow palette', 'Dasique Shadow Palette', '2024-01-20'], ['Perfume', 'Chanel Coco Mademoiselle', '2023-12-10']],
-    query: 'colour', newName: 'Cosmetics' },
+    others: [[], ['The Little Prince', 'Demian', 'Little Women'], ['Jeju trip', 'Kyoto, 4 days', 'Tokyo food map'], ['Monstera', 'Olive tree', 'Snake plant'], ['Birthday gift ideas', 'Anniversary gift'], ['Passport copy', 'Insurance policy']], query: 'colour', newName: 'Cosmetics' },
 };
 const STYLE = [['cosmetics', 'pink'], ['books', 'blue'], ['travel', 'yellow'], ['plants', 'green'], ['gifts', 'peach'], ['documents', 'lavender']];
 const COUNTS = [4, 12, 6, 8, 3, 5];
 const PHOTOS = ['sample_lip', 'sample_cushion', 'sample_palette', 'sample_perfume'];
 
-const seed = async ({ c: { drawers, fields, memo, items }, STYLE, COUNTS, PHOTOS }) => {
+const seed = async ({ c: { drawers, fields, memo, items, others }, STYLE, COUNTS, PHOTOS }) => {
   const db = await new Promise((res, rej) => { const r = indexedDB.open('drawary-v2'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
   const blobs = await Promise.all(PHOTOS.map(async (p) => (await fetch(`/fixtures/${p}.webp`)).blob()));
   const tx = db.transaction(['drawers', 'fields', 'records', 'photos'], 'readwrite');
@@ -40,7 +40,7 @@ const seed = async ({ c: { drawers, fields, memo, items }, STYLE, COUNTS, PHOTOS
     const kinds = ['text', 'text', 'date', 'currency', 'rating', 'long_text'];
     fields.forEach((f, k) => tx.objectStore('fields').put({ id: `f${i}_${k}`, drawerId: 'd' + i, name: f, kind: kinds[k], required: k === 0, options: [], order: k }));
     for (let r = 0; r < COUNTS[i]; r++) {
-      const base = i === 0 && r < 4 ? items[r] : [`${name} ${r + 1}`, '', `2024-0${1 + (r % 9)}-1${r % 9}`];
+      const base = i === 0 && r < 4 ? items[r] : [(others[i] || [])[r] || `${name} ${r + 1}`, '', `2024-0${1 + (r % 9)}-1${r % 9}`];
       const values = { [`f${i}_0`]: base[0], [`f${i}_1`]: base[1], [`f${i}_2`]: base[2], [`f${i}_3`]: 12000 + r * 3500, [`f${i}_4`]: 4, [`f${i}_5`]: memo };
       const id = `r${i}_${r}`;
       tx.objectStore('records').put({ id, drawerId: 'd' + i, values, createdAt: now - r * 1000, updatedAt: now - r * 1000 });
