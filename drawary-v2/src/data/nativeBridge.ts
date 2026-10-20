@@ -1,5 +1,5 @@
 import type { PlannedNotification } from '../flow/notificationPlan';
-import { saveBlob } from './fileSave';
+import { saveBlob, blobToBase64 } from './fileSave';
 import { t } from '../i18n';
 
 /**
@@ -23,10 +23,19 @@ export interface DrawaryNativeApi {
    */
   authenticateBiometric?: () => Promise<boolean>;
   /**
-   * Saves a backup file on the phone (the shell chooses/asks for the place) and resolves with where it went, for #48.
-   * `base64` is the whole file. Rejects when the person cancels or it cannot be saved.
+   * Saves any generated file (backup, CSV, ...) in the phone's Download folder and resolves with the place to
+   * show (e.g. "Download/Drawary"). `base64` is the whole file. Rejects when it cannot be saved.
    */
-  saveBackupFile?: (fileName: string, base64: string) => Promise<string>;
+  saveFile?: (fileName: string, mimeType: string, base64: string) => Promise<string>;
+  /** Opens the system print / "save as PDF" dialog for the page (a WebView cannot do `window.print()` itself). */
+  printPage?: () => void;
+  /** True = the screen must not be captured or shown in the recent-apps list (the app lock is on). */
+  setSecureScreen?: (secure: boolean) => void;
+  /**
+   * Hands a finished feedback message to the person's mail app (To: the support address the shell was built
+   * with). JSON of {@link NativeFeedback}. Resolves true when a mail app was opened, false when there is none.
+   */
+  sendFeedback?: (json: string) => Promise<boolean>;
   /** Same, to the person's Google Drive (sign-in and permission are the shell's job). Resolves with the place to show. */
   saveBackupToDrive?: (fileName: string, base64: string) => Promise<string>;
 }
@@ -58,14 +67,38 @@ export async function authenticateBiometric(): Promise<boolean> {
   catch { return false; }
 }
 
-export const hasNativeDriveBackup = (): boolean => typeof window !== 'undefined' && typeof window.DrawaryNative?.saveBackupToDrive === 'function';
-
-async function blobToBase64(blob: Blob): Promise<string> {
-  const bytes = new Uint8Array(await blob.arrayBuffer());
-  let binary = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(binary);
+export interface NativeFeedback {
+  type: string;
+  message: string;
+  email: string;
+  /** Screenshot for an error report, base64 without the data: prefix. */
+  attachmentBase64?: string;
+  attachmentName?: string;
+  attachmentMime?: string;
 }
+
+export const hasNativeSave = (): boolean => typeof window !== 'undefined' && typeof window.DrawaryNative?.saveFile === 'function';
+export const hasNativePrint = (): boolean => typeof window !== 'undefined' && typeof window.DrawaryNative?.printPage === 'function';
+export const hasNativeFeedback = (): boolean => typeof window !== 'undefined' && typeof window.DrawaryNative?.sendFeedback === 'function';
+
+export function setSecureScreen(secure: boolean): void {
+  try { window.DrawaryNative?.setSecureScreen?.(secure); } catch (e) { console.error('화면 보호를 바꾸지 못했어요', e); }
+}
+
+/** Opens the mail app with the feedback. False when the shell cannot (no mail app) or this is a plain browser. */
+export async function sendNativeFeedback(f: Omit<NativeFeedback, 'attachmentBase64' | 'attachmentName' | 'attachmentMime'> & { attachment: File | null }): Promise<boolean> {
+  if (!hasNativeFeedback()) return false;
+  const payload: NativeFeedback = { type: f.type, message: f.message, email: f.email };
+  if (f.attachment) {
+    payload.attachmentBase64 = await blobToBase64(f.attachment);
+    payload.attachmentName = f.attachment.name;
+    payload.attachmentMime = f.attachment.type;
+  }
+  try { return (await window.DrawaryNative!.sendFeedback!(JSON.stringify(payload))) === true; }
+  catch { return false; }
+}
+
+export const hasNativeDriveBackup = (): boolean => typeof window !== 'undefined' && typeof window.DrawaryNative?.saveBackupToDrive === 'function';
 
 /**
  * Hands a finished backup file to the person. Android shell: its own save (device) or Drive upload. Plain browser:
@@ -77,7 +110,5 @@ export async function deliverBackup(destination: 'device' | 'drive', fileName: s
     if (typeof native?.saveBackupToDrive !== 'function') throw new Error(t('Google Drive 백업은 안드로이드 앱에서 사용할 수 있어요.'));
     return native.saveBackupToDrive(fileName, await blobToBase64(blob));
   }
-  if (typeof native?.saveBackupFile === 'function') return native.saveBackupFile(fileName, await blobToBase64(blob));
-  saveBlob(blob, fileName);
-  return 'Download';
+  return saveBlob(blob, fileName);
 }

@@ -62,7 +62,6 @@ export const help_pages: Messages = {
   '이미지 파일은 8MB 이하로 선택해 주세요.': { ja: '画像ファイルは8MB以下のものを選んでください。', en: 'Image files must be 8MB or less.' },
   '피드백 내용을 입력해 주세요.': { ja: 'フィードバックの内容を入力してください。', en: 'Please enter your feedback.' },
   '이메일 주소를 확인해 주세요.': { ja: 'メールアドレスを確認してください。', en: 'Please check the email address.' },
-  '피드백을 보내주셔서 감사해요.': { ja: 'フィードバックをお寄せいただきありがとうございます。', en: 'Thank you for your feedback.' },
   '현재 미리보기에서는 전송되지 않아요. 실제 앱 연결이 필요해요.': { ja: '現在のプレビューでは送信されません。実際のアプリとの接続が必要です。', en: 'It isn\'t sent in this preview. It needs to be connected in the real app.' },
   'Drawary 피드백 화면': { ja: 'Drawaryフィードバック画面', en: 'Drawary feedback' },
   '피드백': { ja: 'フィードバック', en: 'Feedback' },

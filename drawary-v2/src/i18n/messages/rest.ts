@@ -264,4 +264,7 @@ export const rest: Messages = {
   '{date} · 백업 파일 1개': { ja: '{date} · バックアップファイル1件', en: '{date} · 1 backup file' },
   '{drawers}개 서랍 · {records}개 기록': { ja: 'ひきだし{drawers}個 · 記録{records}件', en: '{drawers} {drawers:drawer|drawers} · {records} {records:record|records}' },
   '{n}장': { ja: '{n}枚', en: '{n} {n:photo|photos}' },
+  '{place}에 저장했어요.': { ja: '{place}に保存しました。', en: 'Saved to {place}.' },
+  '메일 앱을 열었어요. 보내기를 누르면 전달돼요.': { ja: 'メールアプリを開きました。送信を押すと届きます。', en: 'The mail app is open. Tap send to deliver it.' },
+  '메일 앱을 열지 못했어요. 메일 앱이 있는지 확인해 주세요.': { ja: 'メールアプリを開けませんでした。メールアプリがあるか確認してください。', en: 'Couldn\'t open a mail app. Please check that one is installed.' },
 };

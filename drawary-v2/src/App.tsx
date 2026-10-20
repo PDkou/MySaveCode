@@ -50,7 +50,7 @@ import { RecordPickerSheet } from './screens/RecordPickerSheet';
 import { NotificationCommonSettingsScreen } from './screens/NotificationCommonSettingsScreen';
 import { NOTIFY_COMMON_KEY, readNotifyCommon } from './flow/notifySettings';
 import { computeNotificationPlan } from './flow/notificationPlan';
-import { hasNativeBiometric, authenticateBiometric, deliverBackup, syncNotificationPlan } from './data/nativeBridge';
+import { hasNativeBiometric, authenticateBiometric, deliverBackup, syncNotificationPlan, hasNativeFeedback, hasNativeSave, sendNativeFeedback, setSecureScreen } from './data/nativeBridge';
 import * as repo from './data/repository';
 import { createBackup, readBackup, type ParsedBackup } from './backup/backupFile';
 import { useAppLock } from './flow/useAppLock';
@@ -99,17 +99,23 @@ const parseRoute = (): Route => {
   return 'home';
 };
 
-/** V2-09-01/02: user-approved splash and onboarding components are available
- * at #/splash and #/onboarding for parity QA, and onboarding's "시작하기"/
- * "건너뛰기" both route to #/home as confirmed.
- * NOT yet wired: an automatic splash -> onboarding handoff on first cold
- * start. No approved source specifies the splash's auto-dismiss duration,
- * and CLAUDE.md explicitly forbids inventing one -- this is flagged as an
- * open product decision, not guessed at.
+/** V2-09-01/02: the approved splash and onboarding are also reachable at #/splash and #/onboarding for parity QA.
+ * First-run flow (step 6): a cold start with no `#/...` in the address shows the splash, then the onboarding when the
+ * person has not seen it (and has no drawers yet, e.g. after restoring a backup), otherwise the home screen.
+ * ASSUMPTION (no approved source gives a duration): the splash stays BOOT_SPLASH_MS and fades for the last
+ * BOOT_FADE_MS; it never ends before the saved data has loaded.
  * All other routes remain the developer-only V2-08 harness, not finished product screens.
  */
+const BOOT_SPLASH_MS = 1600;
+const BOOT_FADE_MS = 250;
+const onboardingSeen = (): boolean => {
+  try { return localStorage.getItem('drawary_onboarding_done') === '1'; } catch { return false; }
+};
 export default function App() {
   const [route, setRoute] = useState<Route>(parseRoute);
+  // 'splash' only on a cold start without a route in the address; 'fading' is its last moments.
+  const [boot, setBoot] = useState<'splash' | 'fading' | 'done'>(() => (window.location.hash === '' || window.location.hash === '#' ? 'splash' : 'done'));
+  const [bootTimeUp, setBootTimeUp] = useState(false);
   const lastTabRef = useRef<BottomNavTab>('home');
   const store = useStore();
   const [currentDrawerId, setCurrentDrawerId] = useState<string | null>(null);
@@ -187,7 +193,12 @@ export default function App() {
   // "•••" -> CSV / PDF: exactly the rows the table shows right now (filter, sort and search applied).
   const exportTable = (kind: 'csv' | 'pdf', shown: ReturnType<typeof toRows>) => {
     if (!currentDrawer) return;
-    if (kind === 'csv') saveBlob(new Blob([buildCsv(tableColumns, shown)], { type: 'text/csv;charset=utf-8' }), exportFileName(currentDrawer.name, 'csv'));
+    if (kind === 'csv') {
+      void saveBlob(new Blob([buildCsv(tableColumns, shown)], { type: 'text/csv;charset=utf-8' }), exportFileName(currentDrawer.name, 'csv'))
+        // A browser shows its own download bar; the Android app says where the file went.
+        .then((place) => { if (hasNativeSave()) window.alert(t('{place}에 저장했어요.', { place })); })
+        .catch(alertError);
+    }
     else printHtml(buildPrintHtml(currentDrawer.name, tableColumns, shown, new Date().toLocaleDateString(getLocale())));
   };
   const saveTableView = (view: TableViewState) => {
@@ -306,6 +317,8 @@ export default function App() {
   // `lock` says whether the lock screen must cover the app right now.
   const lock = useAppLock(store.status !== 'loading', store.settings);
   const sec = lock.security;
+  // With the lock on, the Android app hides the screen from screenshots and the recent-apps list.
+  useEffect(() => { if (store.status === 'ready') setSecureScreen(sec.appLock); }, [store.status, sec.appLock]);
   // "앱 잠금 사용" switched off asks for the current PIN first.
   const [confirmLockOff, setConfirmLockOff] = useState(false);
 
@@ -409,6 +422,23 @@ export default function App() {
     setRoute(to);
   }, []);
   const returnToTab = useCallback(() => navigate(lastTabRef.current), [navigate]);
+
+  // First-run flow: splash (at least BOOT_SPLASH_MS, and until the saved data has loaded) -> onboarding or home.
+  useEffect(() => {
+    if (boot !== 'splash') return;
+    const timer = window.setTimeout(() => setBootTimeUp(true), BOOT_SPLASH_MS - BOOT_FADE_MS);
+    return () => window.clearTimeout(timer);
+  }, [boot]);
+  useEffect(() => { if (boot === 'splash' && bootTimeUp && store.status !== 'loading') setBoot('fading'); }, [boot, bootTimeUp, store.status]);
+  const hasDrawers = store.drawers.length > 0;
+  useEffect(() => {
+    if (boot !== 'fading') return;
+    const timer = window.setTimeout(() => {
+      setBoot('done');
+      navigate(onboardingSeen() || hasDrawers ? 'home' : 'onboarding');
+    }, BOOT_FADE_MS);
+    return () => window.clearTimeout(timer);
+  }, [boot, hasDrawers, navigate]);
   // Record screens need an open drawer (and #16/#17/#19 a record). A direct URL or a
   // deleted record sends the user back to where there is something to show.
   useEffect(() => {
@@ -422,6 +452,9 @@ export default function App() {
     else if ((route === 'restore-review' || route === 'restore-progress') && !restorePlan) navigate('restore-file-picker');
   }, [route, store.status, currentDrawer, selectedRecord, manageField, navigate]);
 
+  if (boot !== 'done') {
+    return <main className="drawary-app-shell drawary-splash-route" data-route="boot-splash"><SplashScreen fadingOut={boot === 'fading'} /></main>;
+  }
   // Nothing is drawn until the saved data (and with it the lock setting) has loaded.
   if (store.status === 'loading') return <main className="drawary-app-shell" data-route="loading" />;
   if (lock.locked) {
@@ -1203,7 +1236,12 @@ export default function App() {
     // returns to #38.
     return <main className="drawary-app-shell" data-route="feedback">
       <FixedCanvas height={844}>
-        <FeedbackScreen onBack={returnToTab} onSubmit={() => setTimeout(returnToTab, 1200)} />
+        <FeedbackScreen onBack={returnToTab} onSubmit={async (draft) => {
+          if (!hasNativeFeedback()) return 'unavailable';
+          const opened = await sendNativeFeedback(draft);
+          if (opened) window.setTimeout(returnToTab, 2500);
+          return opened ? 'opened' : 'no-mail';
+        }} />
       </FixedCanvas>
     </main>;
   }

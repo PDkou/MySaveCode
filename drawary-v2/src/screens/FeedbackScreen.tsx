@@ -13,8 +13,14 @@ export interface FeedbackDraft {
 
 export interface FeedbackScreenProps {
   onBack?: () => void;
-  onSubmit?: (draft: FeedbackDraft) => void;
+  /**
+   * Sends the feedback. 'opened' = the phone's mail app is open with the message (the person still presses send),
+   * 'no-mail' = the app shell has no mail app to open, 'unavailable' = nothing can send from here (plain browser).
+   */
+  onSubmit?: (draft: FeedbackDraft) => Promise<FeedbackResult>;
 }
+
+export type FeedbackResult = 'opened' | 'no-mail' | 'unavailable';
 
 const TYPE_CONFIG: Record<FeedbackType, { name: string; icon: string; iconClass?: string; placeholder: string; hint: string }> = {
   improvement: { name: K('개선 제안'), icon: '/assets/decor/decor_sprout_01.webp', placeholder: K('어떤 점이 불편했나요? 이렇게 바뀌면 좋겠다는 생각도 좋아요.'), hint: K('어떤 화면에서 느낀 점인지 알려주시면 도움이 돼요.') },
@@ -42,8 +48,9 @@ const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
  * two type icons and the hero decorations reuse this app's existing
  * `decor_sprout_01.webp`/`decor_flower_01.webp`/`mascot_lean_on_drawer
  * .webp`. Per the source's own fallback ("현재 미리보기에서는 전송되지
- * 않아요"), there's no real submission backend -- submitting shows a
- * status banner and returns to #55, it does not claim to send anything.
+ * 않아요"): the app has no server. On Android the shell opens the phone's
+ * mail app with the message (DrawaryNative.sendFeedback) and the banner says
+ * so; in a browser nothing can be sent and the banner says that instead.
  */
 export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
   const [type, setType] = useState<FeedbackType>('improvement');
@@ -92,8 +99,10 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
     setAttachCaption(file.name);
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const sendingRef = useRef(false);
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (sendingRef.current) return;
     const trimmedMessage = message.trim();
     const trimmedEmail = email.trim();
     if (!trimmedMessage) {
@@ -107,17 +116,19 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
       return;
     }
     const draft: FeedbackDraft = { type, message: trimmedMessage, email: trimmedEmail, attachment: type === 'bug' ? attachment : null };
-    if (onSubmit) {
-      // Real integration addition beyond the source: the archive's own
-      // "else" branch only fires when no onSubmit is wired at all, so
-      // it never shows a success message for a real submission. Since
-      // App.tsx does wire a real onSubmit (no backend, but a real
-      // "received" acknowledgment), show one here instead of silently
-      // calling the callback with no feedback to the user.
-      inform(t('피드백을 보내주셔서 감사해요.'));
-      onSubmit(draft);
-    } else {
+    if (!onSubmit) {
       inform(t('현재 미리보기에서는 전송되지 않아요. 실제 앱 연결이 필요해요.'));
+      return;
+    }
+    // Only said "thank you" when something really happened: the app shell opened the mail app with the message.
+    sendingRef.current = true;
+    try {
+      const result = await onSubmit(draft);
+      if (result === 'opened') inform(t('메일 앱을 열었어요. 보내기를 누르면 전달돼요.'));
+      else if (result === 'no-mail') inform(t('메일 앱을 열지 못했어요. 메일 앱이 있는지 확인해 주세요.'));
+      else inform(t('현재 미리보기에서는 전송되지 않아요. 실제 앱 연결이 필요해요.'));
+    } finally {
+      sendingRef.current = false;
     }
   };
 
