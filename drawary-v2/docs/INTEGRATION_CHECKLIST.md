@@ -67,22 +67,23 @@
 - [x] 45–53 Backup, restore and reset
 - [x] 54–59 Language, help, FAQ, guide, about and feedback — all React-integrated, QA-verified (final batch; see note above on which parts are navigation/UI-only vs. real functionality)
 
-## Platform behavior
-- [ ] Local persistence and error handling
-- [ ] Android photo picker / persistable URIs / reconnect flow
-- [ ] Storage Access Framework backup import/export
-- [ ] Google Drive auth and file workflow (not yet implemented)
-- [ ] User-choice merge/replace backup semantics and clear warnings
-- [ ] OS notification scheduling & recurrence item-creation semantics
-- [ ] PIN/biometrics security
-- [ ] Full application navigation and responsive orientation/foldable handling (V2-08 foundation done; deep routes and device QA pending)
-- [ ] KR/JP/EN text and common typography
-- [ ] Feedback delivery and accurate send/cancel status
-- [ ] Accessibility, state recovery, empty/error states
+## Platform behavior (status 2026-10-20; "device" = Android verified on a phone, still **no** for everything Android-side)
+- [x] Local persistence and error handling (IndexedDB, serialized writes; `V2_12_00_DATA_LAYER.md`)
+- [x] Photos: system image chooser, stored in the on-device DB (browser-QA'd). Android file chooser wired in the shell; **device: no**
+- [x] Backup import/export: custom ZIP/JSON, strict validation, all-or-nothing restore (`V2_12_14_BACKUP_RESTORE.md`). Android saves to `Download/Drawary` via MediaStore; **device: no**
+- [ ] Google Drive auth and file workflow (not implemented; optional, last; needs a Google Cloud OAuth client and the INTERNET permission)
+- [x] Backup/restore semantics: restore replaces everything after a strict check and the PIN (when the lock is on); backup is not encrypted by owner decision
+- [x] Notification scheduling & recurrence semantics (web logic + tests; Android alarms built in the shell, CI-built, **device: no**)
+- [x] PIN / biometrics (PBKDF2 PIN, limiter, auto-lock; biometrics through the shell, **device: no**)
+- [x] Navigation / responsive: all routes smoke-tested in Chromium; orientation/foldable on a real device: no
+- [x] KR/JP/EN text and common typography (`V2_12_12_I18N.md`)
+- [x] Feedback delivery: opens the mail app (db5704@gmail.com) with the message, says so honestly; browser says it cannot send; **device: no**
+- [x] Accessibility audit (axe): structure fixed, text contrast fixed (3 button/label nodes left as approved); TalkBack not run (`V2_12_16_ACCESSIBILITY.md`)
+- [x] First-run flow (splash 1.6 s — my assumption — → onboarding → home), Android system splash = app icon
 
 ## Final QA
 - [ ] 59-screen approved-image vs real-React-screen comparison
 - [ ] Entire app punctuation / whitespace consistency sweep
 - [ ] Large white outer panel usage audit
-- [ ] Browser release build, Android integration, real-device QA
+- [x] Browser release build; Android integration built by CI (debug APK + minified release-test APK) — **real-device QA: not done** (see `android/README.md` for the first things to check)
 - [ ] Only after parity verification, discuss replacing or archiving old Drawary code
