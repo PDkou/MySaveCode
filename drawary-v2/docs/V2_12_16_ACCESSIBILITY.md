@@ -18,7 +18,7 @@ Small secondary texts (hints, sub-lines, counters) were 2.0–4.3 : 1 against th
 untouched). Audit: 146 failing text nodes → 3. A `var(--tc-x,#x)` text colour keeps its variable, so the other colour themes keep
 their own recoloured value — **the audit and this change cover the default (lavender) theme only; coral/sage/mustard/sky not re-checked.**
 Still below 4.5 : 1 (not text colours, so not touched): white text on the purple buttons "적용" (3.86) and the FAQ tab (3.92), and the
-"라벤더" name in the theme picker (4.23).
+"라벤더" name in the theme picker (4.23). Owner decision 2026-10-20: leave these as approved (no darker buttons).
 
 ## Not an issue / noted
 

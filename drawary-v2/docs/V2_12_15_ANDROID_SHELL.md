@@ -30,5 +30,6 @@ Android back button never returns to the splash/onboarding. Data reset clears th
 - Back button = browser-style history (screens push history entries).
 - Screenshot protection (`FLAG_SECURE`) follows the app-lock setting, also applied before the first frame on a cold start.
 - Application id `com.howlingcreativestudio.drawary` (same as the earlier wrapper), `minSdk 29`, `targetSdk 36`.
+- App icon and Play Store icon: on hold (owner 2026-10-20), kept as is until a larger original is available.
 - Icon art comes from the approved Android assets; they are small (≈ 160–340 px), so the 432 px adaptive layers and the
   Play Store 512 px icon are upscaled and slightly soft. A larger original would fix that.
