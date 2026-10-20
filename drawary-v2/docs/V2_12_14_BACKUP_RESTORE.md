@@ -26,7 +26,7 @@
 - Not translated/changed: the screens' copy. New copy: the PIN screen's two purpose lines, the error messages, "Google Drive 백업은 안드로이드 앱에서 사용할 수 있어요."
 
 ## Android shell contract (step 6)
-`window.DrawaryNative.saveBackupFile(fileName, base64) -> Promise<string place>` and `saveBackupToDrive(fileName, base64) -> Promise<string place>` (sign-in/permission are the shell's job; Drive is optional and last). The restore file chooser is the normal `<input type=file>` the shell must support.
+`window.DrawaryNative.saveFile(fileName, mime, base64) -> Promise<string place>` (Download/Drawary) and `saveBackupToDrive(fileName, base64) -> Promise<string place>` (the phone's own save window; the person picks Google Drive in it; rejects with message `cancelled` when closed — see V2_12_15). The restore file chooser is the normal `<input type=file>` the shell must support.
 
 ## Not done / open
 - Google Drive upload itself (needs a Google sign-in client in the shell). In a browser the Drive choice explains that and stays on #46.
