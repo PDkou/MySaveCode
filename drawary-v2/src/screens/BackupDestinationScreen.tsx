@@ -20,14 +20,13 @@ export interface BackupDestinationScreenProps {
  * now actually chained into this flow instead of being a standalone
  * QA route).
  *
- * The archive's own `assets/drive_logo_from_11-3_exact.png` (the real
- * Google Drive logo) is missing from this handoff package entirely --
- * a real `BLOCKED_SOURCE_MISSING` case, not something to approximate by
- * redrawing Google's trademark. Substituted the app's existing generic
- * `icon_upload.webp` (a plain cloud-upload illustration, not a lookalike
- * logo) for the Google Drive row instead, disclosed here and in the QA
- * doc -- consistent with Google Drive backend integration itself not
- * being implemented anywhere in this app yet either.
+ * The archive's own `assets/drive_logo_from_11-3_exact.png` (the original
+ * Google Drive logo) is not in any handoff package. The Drive row uses
+ * `public/assets/ui/google_drive_2026.png` (128px), added upstream in commit
+ * bb69c5a ("match approved #46 Drive logo"). It has NOT been checked against
+ * the original approval (2026-10-20 resource package says the same), so treat
+ * it as a stand-in until the original file turns up. Google Drive backup
+ * itself is not implemented anywhere in this app yet.
  */
 export function BackupDestinationScreen({ initialDestination = 'device', onBack, onNext }: BackupDestinationScreenProps) {
   const [destination, setDestination] = useState<BackupDestination>(initialDestination);
