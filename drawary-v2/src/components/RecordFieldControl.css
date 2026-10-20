@@ -23,9 +23,9 @@
 .rfc-check { display: flex; align-items: center; gap: 10px; text-align: left; cursor: pointer; font: inherit; color: #2f4c84; font-weight: 600; }
 .rfc-check-box {
   flex: none; width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center;
-  border: 1.5px solid #cdc0ea; background: #fff; color: #fff; font-size: 14px; font-weight: 800; line-height: 1;
+  border: 1.5px solid var(--tc-cdc0ea, #cdc0ea); background: #fff; color: #fff; font-size: 14px; font-weight: 800; line-height: 1;
 }
 .rfc-check.is-on .rfc-check-box { background: var(--tc-7d58e8, #7d58e8); border-color: var(--tc-7d58e8, #7d58e8); }
 .rfc-rating { display: flex; align-items: center; gap: 2px; padding: 0 8px; }
-.rfc-rating button { border: 0; background: transparent; padding: 3px 4px; font-size: 26px; line-height: 1; color: #d6cbec; cursor: pointer; border-radius: 8px; }
+.rfc-rating button { border: 0; background: transparent; padding: 3px 4px; font-size: 26px; line-height: 1; color: var(--tc-d6cbec, #d6cbec); cursor: pointer; border-radius: 8px; }
 .rfc-rating button.is-on { color: #f4b73c; }
