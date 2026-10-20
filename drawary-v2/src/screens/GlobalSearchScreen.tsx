@@ -25,10 +25,15 @@ export interface GlobalSearchRecord {
 interface GlobalSearchScreenProps {
   records: GlobalSearchRecord[];
   onOpenRecord: (recordId: string, drawerId: string) => void;
+  /** Optional: keep the typed query outside, so it is still there after opening a result and coming back. */
+  query?: string;
+  onQueryChange?: (query: string) => void;
 }
 
-export function GlobalSearchScreen({ records, onOpenRecord }: GlobalSearchScreenProps) {
-  const [query, setQuery] = useState('');
+export function GlobalSearchScreen({ records, onOpenRecord, query: controlledQuery, onQueryChange }: GlobalSearchScreenProps) {
+  const [ownQuery, setOwnQuery] = useState('');
+  const query = controlledQuery ?? ownQuery;
+  const setQuery = (value: string) => { setOwnQuery(value); onQueryChange?.(value); };
   const q = query.trim().toLocaleLowerCase();
 
   const results = useMemo(() => {

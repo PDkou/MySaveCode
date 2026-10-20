@@ -52,6 +52,12 @@ describe('record display', () => {
     expect(s).toMatchObject({ title: '쥬시 틴트', subtitle: '롬앤', dateLabel: '2024. 03. 12.', titleFieldId: 'name' });
   });
 
+  it('prefers short text over a long note for the title and subtitle', () => {
+    const s = summarizeRecord(fields, { values: { memo: '아주 긴 메모', name: '립', brand: '롬앤' }, createdAt: 0 });
+    expect(s).toMatchObject({ title: '립', subtitle: '롬앤' });
+    expect(summarizeRecord(fields, { values: { memo: '메모만' }, createdAt: 0 }).title).toBe('메모만');
+  });
+
   it('skips empty fields when naming, falls back to a number, then to a placeholder title', () => {
     expect(summarizeRecord(fields, { values: { brand: '롬앤' }, createdAt: 0 }).title).toBe('롬앤');
     expect(summarizeRecord(fields, { values: { qty: 3 }, createdAt: 0 }).title).toBe('3');

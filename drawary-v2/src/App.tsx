@@ -7,7 +7,7 @@ import { HomeScreen, type HomeDrawerCard } from './screens/HomeScreen';
 import { actions, drawerById, fieldsOf, recordsOf, useStore } from './data/store';
 import { HomeEmptyScreen } from './screens/HomeEmptyScreen';
 import { GlobalSearchScreen } from './screens/GlobalSearchScreen';
-import { MOCK_SEARCH_RECORDS } from './mockData';
+import type { GlobalSearchRecord } from './screens/GlobalSearchScreen';
 import { SettingsHomeScreen } from './screens/SettingsHomeScreen';
 import { DrawerFieldsScreen, toFieldItem } from './screens/DrawerFieldsScreen';
 import {
@@ -27,10 +27,13 @@ import { RecordDetailScreen } from './screens/RecordDetailScreen';
 import { RecordEditScreen } from './screens/RecordEditScreen';
 import { PhotoViewerScreen } from './screens/PhotoViewerScreen';
 import { pickRecordPhotos } from './data/recordPhotos';
-import { useFirstPhotoUrls, useObjectUrls, useRecordPhotos } from './data/photoHooks';
+import { useFirstPhotoUrls, useObjectUrls, usePhotoCounts, useRecordPhotos } from './data/photoHooks';
+import { columnsOf, EMPTY_VIEW, toRows, type TableViewState } from './flow/tableQuery';
+import { buildCsv, buildPrintHtml, exportFileName } from './flow/exportTable';
+import { printHtml, saveBlob } from './data/fileSave';
 import { MAX_RECORD_PHOTOS } from './data/types';
 import {
-  draftFromRecord, draftToValues, formatValue, hasControl, recordMatches, summarizeRecord,
+  draftFromRecord, draftToValues, formatValue, hasControl, recordMatches, recordSearchText, summarizeRecord,
   type RecordDraft,
 } from './flow/recordForm';
 import type { RecordFieldType, RecordFieldValue } from './screens/RecordDetailScreen';
@@ -152,8 +155,42 @@ export default function App() {
   // Bumped after photos change so the readers below load them again.
   const [photoVersion, setPhotoVersion] = useState(0);
   const [recordQuery, setRecordQuery] = useState('');
+  // Where #16 was opened from, so back / delete return there (#15, the search tab, or the table).
+  const [recordBack, setRecordBack] = useState<'drawer-detail' | 'search' | 'table-view'>('drawer-detail');
+  const [globalQuery, setGlobalQuery] = useState('');
+  const openRecord = (id: string, from: 'drawer-detail' | 'search' | 'table-view') => {
+    setRecordDetailId(id); setRecordBack(from); navigate('record-detail');
+  };
   const recordThumbs = useFirstPhotoUrls(currentRecords.map((r) => r.id), photoVersion);
   const selectedPhotos = useRecordPhotos(selectedRecord?.id ?? null, photoVersion);
+  // The drawer's table (#20): typed columns and rows, plus the sort/filter it opens with,
+  // remembered per drawer in the on-device settings.
+  const photoCounts = usePhotoCounts(currentRecords.map((r) => r.id), photoVersion);
+  const tableColumns = columnsOf(currentFields);
+  const tableRows = toRows(currentRecords, photoCounts);
+  const savedView = currentDrawer ? (store.settings[`tableview.${currentDrawer.id}`] as TableViewState | undefined) : undefined;
+  const tableView: TableViewState = savedView && Array.isArray(savedView.rules) ? savedView : EMPTY_VIEW;
+  // "•••" -> CSV / PDF: exactly the rows the table shows right now (filter, sort and search applied).
+  const exportTable = (kind: 'csv' | 'pdf', shown: ReturnType<typeof toRows>) => {
+    if (!currentDrawer) return;
+    if (kind === 'csv') saveBlob(new Blob([buildCsv(tableColumns, shown)], { type: 'text/csv;charset=utf-8' }), exportFileName(currentDrawer.name, 'csv'));
+    else printHtml(buildPrintHtml(currentDrawer.name, tableColumns, shown, new Date().toLocaleDateString('ko-KR')));
+  };
+  const saveTableView = (view: TableViewState) => {
+    if (currentDrawer) void actions.setSetting(`tableview.${currentDrawer.id}`, view).catch(alertError);
+  };
+  // #05 search index: every record of every drawer (store.records is newest first).
+  const searchRecords: GlobalSearchRecord[] = store.records.flatMap((r) => {
+    const drawer = drawerById(store, r.drawerId);
+    if (!drawer) return [];
+    const fields = fieldsOf(store, drawer.id);
+    const sum = summarizeRecord(fields, r);
+    return [{
+      id: r.id, drawerId: drawer.id, drawerName: drawer.name, drawerIcon: `drawer_icon_${drawer.iconKey}.webp`,
+      title: sum.title, meta: [sum.subtitle, sum.dateLabel].filter(Boolean).join(' · '),
+      searchableText: recordSearchText(fields, r),
+    }];
+  });
 
   // #13/#14 fill form: photos picked so far, where "back" returns to, and a counter
   // that remounts the form empty each time it is opened.
@@ -253,7 +290,7 @@ export default function App() {
     const recordRoute = route === 'record-detail' || route === 'record-edit' || route === 'photo-viewer';
     const manageRoute = route === 'drawer-manage' || route === 'name-icon-change' || route === 'drawer-fields-manage'
       || route === 'new-field-manage' || route === 'field-edit-manage';
-    if ((route === 'drawer-detail' || route === 'fill-drawer' || recordRoute || manageRoute) && !currentDrawer) navigate('home');
+    if ((route === 'drawer-detail' || route === 'fill-drawer' || route === 'table-view' || recordRoute || manageRoute) && !currentDrawer) navigate('home');
     else if (route === 'field-edit-manage' && !manageField) navigate('drawer-fields-manage');
     else if (recordRoute && !selectedRecord) navigate('drawer-detail');
   }, [route, store.status, currentDrawer, selectedRecord, manageField, navigate]);
@@ -387,7 +424,7 @@ export default function App() {
           onBack={() => { setRecordQuery(''); returnToTab(); }}
           onSearch={setRecordQuery}
           onFillDrawer={() => startFill('drawer-detail')}
-          onOpenRecord={(id) => { setRecordDetailId(id); navigate('record-detail'); }}
+          onOpenRecord={(id) => openRecord(id, 'drawer-detail')}
           onOpenTable={() => navigate('table-view')}
           onOpenManage={() => navigate('drawer-manage')}
         />
@@ -395,20 +432,24 @@ export default function App() {
     </main>;
   }
   if (route === 'table-view') {
-    // #20 표 보기, reachable from #15's "•••" menu's "표로 보기".
-    // #21/#22/#23 (search/sort/filter) are built into TableViewScreen
-    // itself as internal states -- see its own header comment. CSV/PDF
-    // export (the "•••" menu) has no destination yet. Clicking a row
-    // opens #16 for that row -- demo rows don't map back to #15's own
-    // DEFAULT_RECORDS (different sample data sets), so this always
-    // opens the "lip" record; real per-row linking needs V2-12.
+    // #20 표 보기, reachable from #15's "•••" menu's "표로 보기": the drawer's 서랍 칸
+    // as columns (first one stays put while the rest scroll sideways) and its 보관품
+    // as rows. #21 search, #22 sort and #23 filter are states of this screen; the
+    // chosen sort/filter is kept per drawer. A row opens #16 and back returns here.
+    if (!currentDrawer) return <main className="drawary-app-shell" data-route="table-view" />;
     return <main className="drawary-app-shell" data-route="table-view">
       <FixedCanvas height={844}>
         <TableViewScreen
           drawerName={drawerDetailName}
+          recordCount={currentRecords.length}
+          columns={tableColumns}
+          rows={tableRows}
+          view={tableView}
+          onViewChange={saveTableView}
           onBack={() => navigate('drawer-detail')}
-          onExport={() => {}}
-          onOpenRecord={() => { const first = currentRecords[0]; if (first) { setRecordDetailId(first.id); navigate('record-detail'); } }}
+          onExportCsv={(shown) => exportTable('csv', shown)}
+          onExportPdf={(shown) => exportTable('pdf', shown)}
+          onOpenRecord={(id) => openRecord(id, 'table-view')}
         />
       </FixedCanvas>
     </main>;
@@ -430,6 +471,10 @@ export default function App() {
           drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
           fieldCount={currentFields.length}
           recordCount={currentRecords.length}
+          tableColumns={tableColumns}
+          tableRows={tableRows}
+          tableView={tableView}
+          onTableViewChange={saveTableView}
           onBack={() => navigate('drawer-detail')}
           onRenameDrawer={() => navigate('name-icon-change')}
           onEditFields={() => navigate('drawer-fields-manage')}
@@ -1057,13 +1102,13 @@ export default function App() {
           photoUri={selectedPhotos.urls[0] ?? ''}
           photoLoading={selectedPhotos.blobs === null}
           fields={rows}
-          onBack={() => navigate('drawer-detail')}
+          onBack={() => navigate(recordBack)}
           onEdit={() => { setEditPhotos(null); setEditKey((k) => k + 1); navigate('record-edit'); }}
           onDelete={() => { void guardedSave(async () => {
             const id = selectedRecord.id;
             await actions.deleteRecord(id);
             setRecordDetailId(null);
-            navigate('drawer-detail');
+            navigate(recordBack);
           }); }}
           onOpenPhoto={() => navigate('photo-viewer')}
         />
@@ -1188,10 +1233,13 @@ export default function App() {
             />
           )
         ) : route === 'search' ? (
-          // #05: open-record has no destination screen yet (drawer/item
-          // detail aren't built) -- intentional no-op, same reasoning as
-          // HomeScreen's open-* actions above.
-          <GlobalSearchScreen records={MOCK_SEARCH_RECORDS} onOpenRecord={() => {}} />
+          // #05: every drawer's 보관품; a result opens #16 and back returns here.
+          <GlobalSearchScreen
+            records={searchRecords}
+            query={globalQuery}
+            onQueryChange={setGlobalQuery}
+            onOpenRecord={(recordId, drawerId) => { setCurrentDrawerId(drawerId); openRecord(recordId, 'search'); }}
+          />
         ) : route === 'settings' ? (
           // #38: 테마->#39, 보안->#40, 데이터->#44, 언어->#54, 도움말->
           // #55, 정보->#58, 피드백->#59 -- all real routes now (final

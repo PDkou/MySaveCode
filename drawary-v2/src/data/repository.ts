@@ -111,7 +111,8 @@ export async function reorderDrawers(idsInOrder: readonly string[]): Promise<voi
 
 /** Deletes a drawer together with all of its fields, records and photos. */
 export async function deleteDrawer(id: string): Promise<void> {
-  await withTx([STORES.drawers, STORES.fields, STORES.records, STORES.photos], 'readwrite', async (s) => {
+  await withTx([STORES.drawers, STORES.fields, STORES.records, STORES.photos, STORES.settings], 'readwrite', async (s) => {
+    await req(s.settings.delete(`tableview.${id}`));
     const fieldKeys = await req(s.fields.index('drawerId').getAllKeys(id));
     const recordKeys = await req(s.records.index('drawerId').getAllKeys(id));
     for (const key of fieldKeys) await req(s.fields.delete(key));

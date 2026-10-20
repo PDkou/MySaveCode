@@ -4,7 +4,8 @@ import './DrawerManageScreen.css';
 import { TableSortFilterEntryScreen } from './TableSortFilterEntryScreen';
 import { TableSortScreen } from './TableSortScreen';
 import { TableFilterScreen } from './TableFilterScreen';
-import { DEFAULT_TABLE_COLUMNS, DEFAULT_TABLE_ROWS } from './TableViewScreen';
+import type { TableColumn, TableRowData, TableViewState } from '../flow/tableQuery';
+import { EMPTY_VIEW } from '../flow/tableQuery';
 import { DrawerDeleteConfirmScreen } from './DrawerDeleteConfirmScreen';
 
 interface DrawerManageRow {
@@ -20,6 +21,11 @@ interface DrawerManageScreenProps {
   drawerIconUri?: string;
   fieldCount?: number;
   recordCount?: number;
+  /** The drawer's table (#20): what #27's sort/filter sheets edit. */
+  tableColumns?: TableColumn[];
+  tableRows?: TableRowData[];
+  tableView?: TableViewState;
+  onTableViewChange?: (view: TableViewState) => void;
   onBack?: () => void;
   onRenameDrawer?: () => void;
   onEditFields?: () => void;
@@ -28,8 +34,6 @@ interface DrawerManageScreenProps {
   onBackupExport?: () => void;
   onDeleteDrawer?: () => void;
 }
-
-const SORT_FILTER_COLUMNS = DEFAULT_TABLE_COLUMNS.map((c) => ({ id: c.id, label: c.label, type: c.type ?? 'text' }));
 
 /**
  * #24 서랍 관리 메인. No separate TSX/CSS exists for this screen, only
@@ -54,7 +58,8 @@ const SORT_FILTER_COLUMNS = DEFAULT_TABLE_COLUMNS.map((c) => ({ id: c.id, label:
  * entry-selection sheet into the already-built #22/#23
  * (TableSortScreen/TableFilterScreen), fed this screen's own demo table
  * data since there's no real per-drawer table data yet (V2-12
- * territory, same caveat as #20's own table). #28 reuses #18's
+ * territory, same caveat as #20's own table). [Step 2: these sheets now edit
+ * the drawer's real table view -- the same sort/filter #20 opens with.] #28 reuses #18's
  * delete-sheet pattern; confirming calls the caller's onDeleteDrawer,
  * which per CONFIRMED.md ("삭제 후 홈 복귀") is responsible for the
  * actual navigate-home. #29/#33/backup still have no destination screen,
@@ -65,6 +70,10 @@ export function DrawerManageScreen({
   drawerIconUri = '/assets/drawer-icons/drawer_icon_cosmetics.webp',
   fieldCount = 4,
   recordCount = 24,
+  tableColumns = [],
+  tableRows = [],
+  tableView = EMPTY_VIEW,
+  onTableViewChange,
   onBack,
   onRenameDrawer,
   onEditFields,
@@ -137,18 +146,23 @@ export function DrawerManageScreen({
 
       {sortOpen && (
         <TableSortScreen
-          columns={SORT_FILTER_COLUMNS}
+          columns={tableColumns}
+          initial={tableView.sort ?? undefined}
+          lastUsedIds={tableView.sort ? [tableView.sort.columnId] : []}
           onCancel={() => setSortOpen(false)}
-          onApply={() => setSortOpen(false)}
+          onApply={(choice) => { onTableViewChange?.({ ...tableView, sort: choice }); setSortOpen(false); }}
         />
       )}
 
       {filterOpen && (
         <TableFilterScreen
-          columns={SORT_FILTER_COLUMNS}
-          rows={DEFAULT_TABLE_ROWS}
+          columns={tableColumns}
+          rows={tableRows}
+          initialRules={tableView.rules}
+          initialMatchMode={tableView.matchMode}
+          recentFieldIds={[...tableView.rules].reverse().map((r) => r.columnId)}
           onCancel={() => setFilterOpen(false)}
-          onApply={() => setFilterOpen(false)}
+          onApply={(rules, matchMode) => { onTableViewChange?.({ ...tableView, rules, matchMode }); setFilterOpen(false); }}
         />
       )}
 

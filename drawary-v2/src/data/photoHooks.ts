@@ -54,3 +54,22 @@ export function useFirstPhotoUrls(recordIds: readonly string[], version = 0): Re
   }, [key, version]);
   return urls;
 }
+
+/** How many photos each record has (for the table's 사진 column and filter). */
+export function usePhotoCounts(recordIds: readonly string[], version = 0): Record<string, number> {
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const key = recordIds.join('|');
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const next: Record<string, number> = {};
+      for (const id of recordIds) {
+        try { next[id] = (await getPhotos(id))?.length ?? 0; } catch { next[id] = 0; }
+      }
+      if (!cancelled) setCounts(next);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, version]);
+  return counts;
+}

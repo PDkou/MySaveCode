@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import './TableSortScreen.css';
 
-export type SortFieldType = 'text' | 'note' | 'number' | 'currency' | 'date' | 'select' | 'rating' | 'link' | 'checkbox' | 'photo';
+import type { ColumnType, SortChoice } from '../flow/tableQuery';
+
+export type SortFieldType = ColumnType;
 export interface SortColumn { id: string; label: string; type: SortFieldType }
-export interface SortChoice { columnId: string; direction: 0 | 1 }
+export type { SortChoice };
 
 function sortLabels(type: SortFieldType) {
   if (type === 'date') return ['오래된순', '최신순'] as const;
@@ -11,12 +13,13 @@ function sortLabels(type: SortFieldType) {
   return ['가나다순', '역순'] as const;
 }
 
-interface TableSortScreenProps {
+export interface TableSortScreenProps {
   columns: SortColumn[];
   lastUsedIds?: string[];
   initial?: SortChoice;
   onCancel?: () => void;
-  onApply?: (choice: SortChoice) => void;
+  /** null = no sort (the 초기화 button). */
+  onApply?: (choice: SortChoice | null) => void;
 }
 
 /**
@@ -73,7 +76,7 @@ export function TableSortScreen({
           <>
             <header className="sv3-head">
               <div><h2>정렬</h2><p>보관품을 어떤 순서로 볼지 정해요.</p></div>
-              <button type="button" className="sv3-reset" onClick={() => setDirection(1)}>초기화</button>
+              <button type="button" className="sv3-reset" onClick={() => onApply?.(null)}>초기화</button>
             </header>
 
             <div className="sv3-section">

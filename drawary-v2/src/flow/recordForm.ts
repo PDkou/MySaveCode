@@ -112,12 +112,16 @@ const TEXT_KINDS: readonly FieldKind[] = ['text', 'long_text', 'select', 'link']
 
 /**
  * How a record is named in lists: the first filled text-like field is the
- * title, the second is the subtitle, the first date is the date line (falling
+ * title, the second is the subtitle (long notes only when nothing shorter exists), the first date is the date line (falling
  * back to when it was added).
  */
 export function summarizeRecord(fields: readonly Field[], record: Pick<RecordItem, 'values' | 'createdAt'>): RecordSummary {
   const filled = (f: Field) => !isEmptyValue(record.values[f.id]);
-  const textFields = fields.filter((f) => TEXT_KINDS.includes(f.kind) && filled(f));
+  // Short text first (in field order); a long note only if nothing shorter can be the title/subtitle.
+  const textFields = [
+    ...fields.filter((f) => TEXT_KINDS.includes(f.kind) && f.kind !== 'long_text' && filled(f)),
+    ...fields.filter((f) => f.kind === 'long_text' && filled(f)),
+  ];
   const titleField = textFields[0] ?? fields.find((f) => hasControl(f.kind) && f.kind !== 'check' && filled(f));
   const subtitleField = textFields.find((f) => f !== titleField);
   const dateField = fields.find((f) => f.kind === 'date' && filled(f));
@@ -131,12 +135,24 @@ export function summarizeRecord(fields: readonly Field[], record: Pick<RecordIte
   };
 }
 
+/**
+ * Everything searchable in a record, as one lowercase string: each value as shown
+ * and, for text/dates, as stored (so "2024-03" and "2024. 03" both find a date).
+ */
+export function recordSearchText(fields: readonly Field[], record: Pick<RecordItem, 'values'>): string {
+  const parts: string[] = [];
+  for (const f of fields) {
+    const v = record.values[f.id];
+    if (v === undefined || v === null || !hasControl(f.kind)) continue;
+    parts.push(formatValue(f, v));
+    if (typeof v === 'string') parts.push(v);
+  }
+  return parts.join(' ').toLowerCase();
+}
+
 /** Case-insensitive match against every filled value of a record (the #15 search box). */
 export function recordMatches(fields: readonly Field[], record: Pick<RecordItem, 'values'>, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  return fields.some((f) => {
-    const v = record.values[f.id];
-    return v !== undefined && v !== null && formatValue(f, v).toLowerCase().includes(q);
-  });
+  return recordSearchText(fields, record).includes(q);
 }

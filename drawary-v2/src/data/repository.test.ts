@@ -280,6 +280,17 @@ describe('editing the fields of an existing drawer', () => {
   });
 });
 
+describe('a drawer\'s saved table view', () => {
+  it('is removed together with the drawer', async () => {
+    const a = await makeDrawer('A'); const b = await makeDrawer('B');
+    await setSetting(`tableview.${a.id}`, { sort: null, rules: [], matchMode: 'all' });
+    await setSetting(`tableview.${b.id}`, { sort: null, rules: [], matchMode: 'any' });
+    await deleteDrawer(a.id);
+    expect(await getSetting(`tableview.${a.id}`)).toBeUndefined();
+    expect(await getSetting(`tableview.${b.id}`)).toBeTruthy();
+  });
+});
+
 describe('records saved together with their photos', () => {
   it('creates a record and its photos atomically, and writes nothing for a bad photo', async () => {
     const d = await makeDrawer(); const name = await addField(d.id, { name: '제품명', kind: 'text', required: true });

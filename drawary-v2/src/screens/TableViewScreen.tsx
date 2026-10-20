@@ -1,48 +1,27 @@
 import { useMemo, useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './TableViewScreen.css';
-import { TableSortScreen, type SortChoice } from './TableSortScreen';
-import { TableFilterScreen, type FilterRule } from './TableFilterScreen';
-
-export type TableColumnType = 'text' | 'note' | 'number' | 'currency' | 'date' | 'select' | 'rating' | 'link' | 'checkbox' | 'photo';
-
-export interface TableColumn {
-  id: string;
-  label: string;
-  width?: number;
-  type?: TableColumnType;
-}
-
-export type TableRow = Record<string, string>;
+import { TableSortScreen } from './TableSortScreen';
+import { TableFilterScreen } from './TableFilterScreen';
+import {
+  applyView, cellText, searchRows,
+  type TableColumn, type TableRowData, type TableViewState,
+} from '../flow/tableQuery';
 
 interface TableViewScreenProps {
   drawerName?: string;
   recordCount?: number;
-  columns?: TableColumn[];
-  rows?: TableRow[];
+  columns: TableColumn[];
+  /** Every record of the drawer; the screen filters, sorts and searches them. */
+  rows: TableRowData[];
+  /** Sort and filter in effect; changes are reported (and saved by the caller) so the table opens the same way next time. */
+  view: TableViewState;
+  onViewChange?: (view: TableViewState) => void;
   onBack?: () => void;
-  onExport?: () => void;
-  onOpenRecord?: (rowIndex: number) => void;
-}
-
-export const DEFAULT_TABLE_COLUMNS: TableColumn[] = [
-  { id: 'name', label: '제품명', width: 160, type: 'text' },
-  { id: 'date', label: '구매일', width: 150, type: 'date' },
-  { id: 'price', label: '가격', width: 110, type: 'currency' },
-];
-
-export const DEFAULT_TABLE_ROWS: TableRow[] = [
-  { name: '롬앤 쥬시래스팅 틴트', date: '2024. 03. 12.', price: '13,000' },
-  { name: '클리오 킬커버 쿠션', date: '2024. 02. 28.', price: '32,000' },
-  { name: '데이지크 새도우 팔레트', date: '2024. 01. 20.', price: '28,000' },
-  { name: '샤넬 코코 마드모아젤', date: '2023. 12. 10.', price: '145,000' },
-  { name: '에뛰드 픽싱 틴트', date: '2023. 11. 02.', price: '12,000' },
-];
-
-function toSortKey(type: TableColumnType | undefined, raw: string): number | string {
-  if (type === 'date') return Number(raw.replace(/[^0-9]/g, '')) || 0;
-  if (type === 'number' || type === 'currency' || type === 'rating') return Number(raw.replace(/[^0-9.-]/g, '')) || 0;
-  return raw.toLocaleLowerCase('ko-KR');
+  /** Called with the rows on screen right now (filter, sort and search applied). */
+  onExportCsv?: (rows: TableRowData[]) => void;
+  onExportPdf?: (rows: TableRowData[]) => void;
+  onOpenRecord?: (recordId: string) => void;
 }
 
 /**
@@ -66,50 +45,39 @@ function toSortKey(type: TableColumnType | undefined, raw: string): number | str
  * displayed `rows` state here (not just cosmetic) -- though this is
  * still local demo state, not written back to a real per-drawer data
  * model (V2-12 territory, same caveat as #09's quick-add/reorder).
+ *
+ * V2-12 step 2: columns/rows are the drawer's real 서랍 칸 and 보관품, and
+ * search/sort/filter run on the typed values (src/flow/tableQuery.ts), not on
+ * display strings. The chosen sort and filter are kept per drawer by the
+ * caller. Tapping a row opens that record. The "•••" menu exports the rows
+ * currently shown (after filter, sort and search) as CSV or PDF; the menu is
+ * drawn like #15's "•••" menu (no approved design exists for it).
  */
 export function TableViewScreen({
   drawerName = '화장품',
-  recordCount = 24,
-  columns = DEFAULT_TABLE_COLUMNS,
-  rows: initialRows = DEFAULT_TABLE_ROWS,
+  recordCount,
+  columns,
+  rows: allRows,
+  view,
+  onViewChange,
   onBack,
-  onExport,
+  onExportCsv,
+  onExportPdf,
   onOpenRecord,
 }: TableViewScreenProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [sortChoice, setSortChoice] = useState<SortChoice | null>(null);
-  const [filterRules, setFilterRules] = useState<FilterRule[]>([]);
-  // The authoritative filtered result TableFilterScreen itself computed
-  // and reported via onApply's 2nd argument -- not recomputed here, so
-  // there's exactly one place that implements the filter predicates.
-  const [filteredRows, setFilteredRows] = useState<TableRow[] | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
-  const searched = useMemo(() => {
-    const base = filteredRows ?? initialRows;
-    if (!searchOpen || !query.trim()) return base;
-    const keyword = query.trim().toLocaleLowerCase('ko-KR');
-    return base.filter((row) => columns.some((c) => String(row[c.id] ?? '').toLocaleLowerCase('ko-KR').includes(keyword)));
-  }, [initialRows, filteredRows, searchOpen, query, columns]);
+  // Filter, then sort, then (when the search row is open) search what is left.
+  const rows = useMemo(() => {
+    const viewed = applyView(allRows, columns, view);
+    return searchOpen ? searchRows(viewed, columns, query) : viewed;
+  }, [allRows, columns, view, searchOpen, query]);
 
-  const sorted = useMemo(() => {
-    if (!sortChoice) return searched;
-    const column = columns.find((c) => c.id === sortChoice.columnId);
-    const copy = [...searched];
-    copy.sort((a, b) => {
-      const ka = toSortKey(column?.type, String(a[sortChoice.columnId] ?? ''));
-      const kb = toSortKey(column?.type, String(b[sortChoice.columnId] ?? ''));
-      const cmp = ka < kb ? -1 : ka > kb ? 1 : 0;
-      // direction 0 = labels[0] (낮은순/오래된순/가나다순, ascending);
-      // direction 1 = labels[1] (높은순/최신순/역순, descending).
-      return sortChoice.direction === 0 ? cmp : -cmp;
-    });
-    return copy;
-  }, [searched, sortChoice, columns]);
-
-  const rows = sorted;
+  const count = recordCount ?? allRows.length;
 
   return (
     <main className="tv-screen">
@@ -119,14 +87,30 @@ export function TableViewScreen({
         subtitle="표 보기"
         onBack={onBack}
         height={103}
-        rightSlot={<button className="tv-export" type="button" onClick={onExport} aria-label="표 내보내기 메뉴">•••</button>}
+        rightSlot={
+          <>
+            <button className="tv-export" type="button" onClick={() => setExportOpen((o) => !o)} aria-expanded={exportOpen} aria-label="표 내보내기 메뉴">•••</button>
+            {exportOpen && (
+              <div className="tv-menu-popover" role="menu">
+                <button type="button" role="menuitem" onClick={() => { setExportOpen(false); onExportCsv?.(rows); }}>
+                  <img src="/assets/ui-icons/icon_share.webp" alt="" />
+                  <span>CSV로 내보내기</span>
+                </button>
+                <button type="button" role="menuitem" onClick={() => { setExportOpen(false); onExportPdf?.(rows); }}>
+                  <img src="/assets/ui-icons/icon_share.webp" alt="" />
+                  <span>PDF로 내보내기</span>
+                </button>
+              </div>
+            )}
+          </>
+        }
       />
 
       <section className="tv-summary">
         <div className="tv-summary-left">
           <img src="/assets/ui-icons/icon_table.webp" alt="" />
           <div>
-            <strong>보관품 {recordCount}개</strong>
+            <strong>보관품 {count}개</strong>
             <small>서랍칸을 표로 한눈에 볼 수 있어요.</small>
           </div>
         </div>
@@ -189,16 +173,16 @@ export function TableViewScreen({
               </tr>
             </thead>
             <tbody>
-              {rows.length ? rows.map((row, rowIndex) => (
-                <tr key={rowIndex} onClick={() => onOpenRecord?.(rowIndex)}>
+              {rows.length ? rows.map((row) => (
+                <tr key={row.id} onClick={() => onOpenRecord?.(row.id)}>
                   {columns.map((column, columnIndex) => (
                     <td key={column.id} className={columnIndex === 0 ? 'is-sticky' : ''}>
-                      {row[column.id] ?? ''}
+                      {cellText(column, row)}
                     </td>
                   ))}
                 </tr>
               )) : (
-                <tr><td className="ts-empty" colSpan={columns.length}>검색 결과가 없어요.</td></tr>
+                <tr><td className="ts-empty" colSpan={Math.max(columns.length, 1)}>{allRows.length === 0 ? '아직 담은 보관품이 없어요.' : '검색 결과가 없어요.'}</td></tr>
               )}
             </tbody>
           </table>
@@ -208,20 +192,23 @@ export function TableViewScreen({
 
       {sortOpen && (
         <TableSortScreen
-          columns={columns.map((c) => ({ id: c.id, label: c.label, type: c.type ?? 'text' }))}
-          initial={sortChoice ?? undefined}
+          columns={columns}
+          initial={view.sort ?? undefined}
+          lastUsedIds={view.sort ? [view.sort.columnId] : []}
           onCancel={() => setSortOpen(false)}
-          onApply={(choice) => { setSortChoice(choice); setSortOpen(false); }}
+          onApply={(choice) => { onViewChange?.({ ...view, sort: choice }); setSortOpen(false); }}
         />
       )}
 
       {filterOpen && (
         <TableFilterScreen
-          columns={columns.map((c) => ({ id: c.id, label: c.label, type: c.type ?? 'text' }))}
-          rows={initialRows}
-          initialRules={filterRules}
+          columns={columns}
+          rows={allRows}
+          initialRules={view.rules}
+          initialMatchMode={view.matchMode}
+          recentFieldIds={[...view.rules].reverse().map((r) => r.columnId)}
           onCancel={() => setFilterOpen(false)}
-          onApply={(rules, rows) => { setFilterRules(rules); setFilteredRows(rules.length ? rows : null); setFilterOpen(false); }}
+          onApply={(rules, matchMode) => { onViewChange?.({ ...view, rules, matchMode }); setFilterOpen(false); }}
         />
       )}
     </main>

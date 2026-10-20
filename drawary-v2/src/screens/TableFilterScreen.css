@@ -45,3 +45,9 @@
 }
 .tf-match-mode button.is-selected strong{color:#674fbd}
 .tf-match-mode button.is-selected span{color:#8577ac}
+
+/* Real condition editor (step 2): inline message for an unusable value, and a dimmed add button. */
+.tf-condition-error { margin: 8px 2px 0; color: #d66d72; font-size: 12px; font-weight: 600; }
+.tf-condition-apply:disabled { opacity: .45; cursor: default; }
+.tf-condition-card label + label { margin-top: 8px; }
+.tf-condition-card input[type="date"] { font: inherit; }

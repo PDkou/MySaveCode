@@ -1,88 +1,51 @@
 import { useMemo, useState } from 'react';
 import './TableFilterScreen.css';
+import { formatDate } from '../flow/recordForm';
+import {
+  filterRows, operatorNeedsValue, operatorsFor, parseDateInput, parseNumberInput, ruleProblem,
+  type ColumnType, type FilterRule, type MatchMode, type Operator, type TableColumn, type TableRowData,
+} from '../flow/tableQuery';
 
-export type FilterFieldType =
-  | 'text' | 'note' | 'number' | 'currency' | 'date'
-  | 'select' | 'rating' | 'link' | 'checkbox' | 'photo';
-
-export interface FilterColumn {
-  id: string;
-  label: string;
-  type: FilterFieldType;
-}
-
-export type TableRow = Record<string, string>;
-
-export interface FilterRule {
-  id: string;
-  columnId: string;
-  operator: string;
-  value?: string;
-  value2?: string;
-}
+export type { FilterRule };
 
 interface TableFilterScreenProps {
-  columns: FilterColumn[];
-  rows: TableRow[];
+  columns: TableColumn[];
+  /** Every row of the drawer, so the "조건에 맞는 보관품 N개" preview is exact. */
+  rows: TableRowData[];
   initialRules?: FilterRule[];
+  initialMatchMode?: MatchMode;
   recentFieldIds?: string[];
   onCancel?: () => void;
-  onApply?: (rules: FilterRule[], filteredRows: TableRow[]) => void;
+  onApply?: (rules: FilterRule[], matchMode: MatchMode) => void;
 }
 
-const labelForRule = (rule: FilterRule, column: FilterColumn) => {
-  const v = rule.value ?? '';
-  const v2 = rule.value2 ?? '';
-  const map: Record<string, string> = {
-    contains: `'${v}' 포함`,
-    equals: `'${v}'와 일치`,
-    empty: '비어 있음',
-    notEmpty: '비어 있지 않음',
-    gte: `${v} 이상`,
-    lte: `${v} 이하`,
-    between: `${v} ~ ${v2}`,
-    before: `${v} 이전`,
-    after: `${v} 이후`,
-    checked: '체크됨',
-    unchecked: '체크 안 됨',
-    hasPhoto: '사진 있음',
-    noPhoto: '사진 없음',
-  };
-  return map[rule.operator] ?? column.label;
+const OPERATOR_LABEL: Record<Operator, string> = {
+  contains: '포함', equals: '일치', empty: '비어 있음', notEmpty: '비어 있지 않음',
+  gte: '이상', lte: '이하', between: '범위', before: '이전', after: '이후',
+  checked: '체크됨', unchecked: '체크 안 됨', hasPhoto: '사진 있음', noPhoto: '사진 없음',
 };
 
-function cleanNumber(v: string) {
-  const n = Number(v.replace(/[^0-9.-]/g, ''));
-  return Number.isFinite(n) ? n : 0;
-}
-function cleanDate(v: string) {
-  return Number(v.replace(/[^0-9]/g, '')) || 0;
-}
+const shownValue = (raw: string | undefined, type: ColumnType): string => {
+  const v = (raw ?? '').trim();
+  if (type === 'date') { const iso = parseDateInput(v); return iso ? formatDate(iso, false) : v; }
+  if (['number', 'currency', 'rating'].includes(type)) { const n = parseNumberInput(v); return n === null ? v : n.toLocaleString('ko-KR'); }
+  return v;
+};
 
-function matches(row: TableRow, rule: FilterRule, column: FilterColumn) {
-  const raw = String(row[column.id] ?? '');
-  const value = rule.value ?? '';
-  const value2 = rule.value2 ?? '';
-
+const labelForRule = (rule: FilterRule, column: TableColumn) => {
+  const v = shownValue(rule.value, column.type);
+  const v2 = shownValue(rule.value2, column.type);
   switch (rule.operator) {
-    case 'contains': return raw.toLocaleLowerCase('ko-KR').includes(value.toLocaleLowerCase('ko-KR'));
-    case 'equals': return raw.toLocaleLowerCase('ko-KR') === value.toLocaleLowerCase('ko-KR');
-    case 'empty': return raw.trim() === '';
-    case 'notEmpty': return raw.trim() !== '';
-    case 'gte': return cleanNumber(raw) >= cleanNumber(value);
-    case 'lte': return cleanNumber(raw) <= cleanNumber(value);
-    case 'between':
-      if (column.type === 'date') return cleanDate(raw) >= cleanDate(value) && cleanDate(raw) <= cleanDate(value2);
-      return cleanNumber(raw) >= cleanNumber(value) && cleanNumber(raw) <= cleanNumber(value2);
-    case 'before': return cleanDate(raw) < cleanDate(value);
-    case 'after': return cleanDate(raw) > cleanDate(value);
-    case 'checked': return /^(true|1|yes|checked|체크|완료)$/i.test(raw.trim());
-    case 'unchecked': return !/^(true|1|yes|checked|체크|완료)$/i.test(raw.trim());
-    case 'hasPhoto': return raw.trim() !== '';
-    case 'noPhoto': return raw.trim() === '';
-    default: return true;
+    case 'contains': return `'${v}' 포함`;
+    case 'equals': return `'${v}'와 일치`;
+    case 'gte': return `${v} 이상`;
+    case 'lte': return `${v} 이하`;
+    case 'between': return `${v} ~ ${v2}`;
+    case 'before': return `${v} 이전`;
+    case 'after': return `${v} 이후`;
+    default: return OPERATOR_LABEL[rule.operator];
   }
-}
+};
 
 /**
  * #23 표 보기 - 필터 상태. Ported near-verbatim from
@@ -101,15 +64,19 @@ export function TableFilterScreen({
   columns,
   rows,
   initialRules = [],
+  initialMatchMode = 'all',
   recentFieldIds = [],
   onCancel,
   onApply,
 }: TableFilterScreenProps) {
   const [rules, setRules] = useState<FilterRule[]>(initialRules);
   const [mode, setMode] = useState<'main' | 'field' | 'condition'>('main');
-  const [matchMode, setMatchMode] = useState<'all' | 'any'>('all');
+  const [matchMode, setMatchMode] = useState<MatchMode>(initialMatchMode);
   const [query, setQuery] = useState('');
   const [draftColumnId, setDraftColumnId] = useState(columns[0]?.id ?? '');
+  const [operator, setOperator] = useState<Operator>('contains');
+  const [value, setValue] = useState('');
+  const [value2, setValue2] = useState('');
 
   const quickFields = useMemo(() => {
     const ordered: string[] = [];
@@ -125,31 +92,28 @@ export function TableFilterScreen({
     return columns.filter((c) => c.label.toLocaleLowerCase('ko-KR').includes(keyword));
   }, [columns, query]);
 
-  const filteredRows = useMemo(() => {
-    if (!rules.length) return rows;
-    return rows.filter((row) => {
-      const results = rules.map((rule) => {
-        const column = columns.find((c) => c.id === rule.columnId);
-        return column ? matches(row, rule, column) : true;
-      });
-      return matchMode === 'all' ? results.every(Boolean) : results.some(Boolean);
-    });
-  }, [rows, rules, columns, matchMode]);
+  const matchCount = useMemo(() => filterRows(rows, columns, rules, matchMode).length, [rows, columns, rules, matchMode]);
 
   const selectedColumn = columns.find((c) => c.id === draftColumnId) ?? columns[0];
 
+  const openCondition = (column: TableColumn) => {
+    setDraftColumnId(column.id);
+    setOperator(operatorsFor(column.type)[0]);
+    setValue(''); setValue2('');
+    setMode('condition');
+  };
+
   const removeRule = (id: string) => setRules((current) => current.filter((r) => r.id !== id));
 
-  const addExampleRuleForType = (column: FilterColumn) => {
-    const base = { id: `${column.id}-${Date.now()}`, columnId: column.id };
-    let next: FilterRule;
-    if (column.type === 'date') next = { ...base, operator: 'after', value: '2024. 01. 01.' };
-    else if (column.type === 'number' || column.type === 'currency' || column.type === 'rating')
-      next = { ...base, operator: 'lte', value: '30,000' };
-    else if (column.type === 'checkbox') next = { ...base, operator: 'checked' };
-    else if (column.type === 'photo') next = { ...base, operator: 'hasPhoto' };
-    else next = { ...base, operator: 'contains', value: '롬앤' };
-    setRules((current) => [...current, next]);
+  const draftProblem = selectedColumn ? ruleProblem({ operator, value, value2 }, selectedColumn.type) : null;
+  const addRule = (column: TableColumn) => {
+    if (ruleProblem({ operator, value, value2 }, column.type)) return;
+    const rule: FilterRule = {
+      id: `${column.id}-${Date.now()}`, columnId: column.id, operator,
+      ...(operatorNeedsValue(operator) ? { value: value.trim() } : null),
+      ...(operator === 'between' ? { value2: value2.trim() } : null),
+    };
+    setRules((current) => [...current, rule]);
     setMode('main');
   };
 
@@ -221,10 +185,7 @@ export function TableFilterScreen({
               <strong className="tf-label">빠르게 추가</strong>
               <div className="tf-quick">
                 {quickFields.map((column) => (
-                  <button key={column.id} type="button" onClick={() => {
-                    setDraftColumnId(column.id);
-                    setMode('condition');
-                  }}>{column.label}</button>
+                  <button key={column.id} type="button" onClick={() => openCondition(column)}>{column.label}</button>
                 ))}
               </div>
               <button type="button" className="tf-more" onClick={() => {
@@ -234,12 +195,12 @@ export function TableFilterScreen({
             </div>
 
             <div className="tf-result-preview">
-              조건에 맞는 보관품 <strong>{filteredRows.length}개</strong>
+              조건에 맞는 보관품 <strong>{matchCount}개</strong>
             </div>
 
             <div className="tf-actions">
               <button type="button" className="tf-cancel" onClick={onCancel}>취소</button>
-              <button type="button" className="tf-apply" onClick={() => onApply?.(rules, filteredRows)}>적용하기</button>
+              <button type="button" className="tf-apply" onClick={() => onApply?.(rules, matchMode)}>적용하기</button>
             </div>
           </>
         )}
@@ -261,10 +222,7 @@ export function TableFilterScreen({
 
             <div className="tf-field-list">
               {visibleColumns.map((column) => (
-                <button key={column.id} type="button" onClick={() => {
-                  setDraftColumnId(column.id);
-                  setMode('condition');
-                }}>
+                <button key={column.id} type="button" onClick={() => openCondition(column)}>
                   <span>{column.label}</span><b>›</b>
                 </button>
               ))}
@@ -284,38 +242,33 @@ export function TableFilterScreen({
             </header>
 
             <div className="tf-condition-card">
-              {(selectedColumn.type === 'number' || selectedColumn.type === 'currency' || selectedColumn.type === 'rating') ? (
-                <>
-                  <strong>조건</strong>
-                  <div className="tf-condition-pills"><button type="button">이상</button><button type="button" className="on">이하</button><button type="button">범위</button></div>
-                  <label><span>값</span><input value="30,000" readOnly /></label>
-                </>
-              ) : selectedColumn.type === 'date' ? (
-                <>
-                  <strong>조건</strong>
-                  <div className="tf-condition-pills"><button type="button">이전</button><button type="button" className="on">이후</button><button type="button">범위</button></div>
-                  <label><span>날짜</span><input value="2024. 01. 01." readOnly /></label>
-                </>
-              ) : selectedColumn.type === 'checkbox' ? (
-                <>
-                  <strong>조건</strong>
-                  <div className="tf-condition-pills"><button type="button" className="on">체크됨</button><button type="button">체크 안 됨</button></div>
-                </>
-              ) : selectedColumn.type === 'photo' ? (
-                <>
-                  <strong>조건</strong>
-                  <div className="tf-condition-pills"><button type="button" className="on">사진 있음</button><button type="button">사진 없음</button></div>
-                </>
-              ) : (
-                <>
-                  <strong>조건</strong>
-                  <div className="tf-condition-pills"><button type="button" className="on">포함</button><button type="button">일치</button><button type="button">비어 있음</button></div>
-                  <label><span>내용</span><input value="롬앤" readOnly /></label>
-                </>
+              <strong>조건</strong>
+              <div className="tf-condition-pills">
+                {operatorsFor(selectedColumn.type).map((op) => (
+                  <button key={op} type="button" className={op === operator ? 'on' : ''} aria-pressed={op === operator} onClick={() => setOperator(op)}>
+                    {OPERATOR_LABEL[op]}
+                  </button>
+                ))}
+              </div>
+              {operatorNeedsValue(operator) && (
+                selectedColumn.type === 'date' ? (
+                  <>
+                    <label><span>{operator === 'between' ? '시작 날짜' : '날짜'}</span><input type="date" value={parseDateInput(value) ?? value} onChange={(e) => setValue(e.target.value)} /></label>
+                    {operator === 'between' && <label><span>끝 날짜</span><input type="date" value={parseDateInput(value2) ?? value2} onChange={(e) => setValue2(e.target.value)} /></label>}
+                  </>
+                ) : ['number', 'currency', 'rating'].includes(selectedColumn.type) ? (
+                  <>
+                    <label><span>{operator === 'between' ? '작은 값' : '값'}</span><input inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} /></label>
+                    {operator === 'between' && <label><span>큰 값</span><input inputMode="decimal" value={value2} onChange={(e) => setValue2(e.target.value)} /></label>}
+                  </>
+                ) : (
+                  <label><span>내용</span><input autoFocus value={value} onChange={(e) => setValue(e.target.value)} /></label>
+                )
               )}
+              {draftProblem && (value.trim() !== '' || value2.trim() !== '') && <p className="tf-condition-error" role="alert">{draftProblem}</p>}
             </div>
 
-            <button type="button" className="tf-condition-apply" onClick={() => addExampleRuleForType(selectedColumn)}>
+            <button type="button" className="tf-condition-apply" disabled={!!draftProblem} onClick={() => addRule(selectedColumn)}>
               이 조건 추가
             </button>
           </>
