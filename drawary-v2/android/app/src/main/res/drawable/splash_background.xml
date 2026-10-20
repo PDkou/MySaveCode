@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 10-11 (no system splash screen): the same cream page colour with the flower in the middle. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/drawary_cream" />
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/splash_symbol" />
+    </item>
+</layer-list>

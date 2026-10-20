@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ひきだし帳</string>
+    <string name="channel_reminders">通知</string>
+    <string name="channel_reminders_desc">ひきだしに決めた日付をお知らせします</string>
+    <string name="biometric_title">ひきだし帳</string>
+    <string name="biometric_subtitle">指紋または顔で開きます</string>
+    <string name="biometric_use_pin">PINを使う</string>
+    <string name="feedback_subject">ひきだし帳へのフィードバック</string>
+    <string name="feedback_chooser">フィードバックを送る</string>
+    <string name="print_job">ひきだし帳の表</string>
+</resources>

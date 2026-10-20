@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Drawary</string>
+    <string name="channel_reminders">Reminders</string>
+    <string name="channel_reminders_desc">Reminders for the dates you set in your drawers</string>
+    <string name="biometric_title">Drawary</string>
+    <string name="biometric_subtitle">Unlock with your fingerprint or face</string>
+    <string name="biometric_use_pin">Use PIN</string>
+    <string name="feedback_subject">Drawary feedback</string>
+    <string name="feedback_chooser">Send feedback</string>
+    <string name="print_job">Drawary table</string>
+</resources>

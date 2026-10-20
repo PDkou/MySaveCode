@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">나만의 서랍장</string>
+    <string name="channel_reminders">알림</string>
+    <string name="channel_reminders_desc">서랍에 정해 둔 날짜를 알려 줘요</string>
+    <string name="biometric_title">나만의 서랍장</string>
+    <string name="biometric_subtitle">지문이나 얼굴로 열어요</string>
+    <string name="biometric_use_pin">PIN으로 열기</string>
+    <string name="feedback_subject">나만의 서랍장 피드백</string>
+    <string name="feedback_chooser">피드백 보내기</string>
+    <string name="print_job">나만의 서랍장 표</string>
+</resources>

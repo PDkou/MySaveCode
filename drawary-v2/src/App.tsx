@@ -414,11 +414,14 @@ export default function App() {
     return () => window.removeEventListener('hashchange', update);
   }, []);
 
-  const navigate = useCallback((to: Route) => {
+  // `replace` swaps the current history entry instead of adding one, so the Android back button never returns to
+  // the splash / the onboarding it just left.
+  const navigate = useCallback((to: Route, replace = false) => {
     if (isTab(to)) lastTabRef.current = to;
     const next = `#/${to}`;
     if (window.location.hash === next) { setRoute(to); return; }
-    window.location.hash = next;
+    if (replace) window.history.replaceState(null, '', next);
+    else window.location.hash = next;
     setRoute(to);
   }, []);
   const returnToTab = useCallback(() => navigate(lastTabRef.current), [navigate]);
@@ -435,7 +438,7 @@ export default function App() {
     if (boot !== 'fading') return;
     const timer = window.setTimeout(() => {
       setBoot('done');
-      navigate(onboardingSeen() || hasDrawers ? 'home' : 'onboarding');
+      navigate(onboardingSeen() || hasDrawers ? 'home' : 'onboarding', true);
     }, BOOT_FADE_MS);
     return () => window.clearTimeout(timer);
   }, [boot, hasDrawers, navigate]);
@@ -470,7 +473,7 @@ export default function App() {
   }
   if (route === 'onboarding') {
     return <main className="drawary-app-shell drawary-onboarding-route" data-route="onboarding">
-      <OnboardingScreen onDone={() => navigate('home')} />
+      <OnboardingScreen onDone={() => navigate('home', true)} />
     </main>;
   }
   if (route === 'new-field') {

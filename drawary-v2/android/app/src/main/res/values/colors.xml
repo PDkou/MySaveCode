@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The app's page colour (styles.css :root background), shown behind the web page and in the system-bar areas. -->
+    <color name="drawary_cream">#FFFAF2</color>
+</resources>

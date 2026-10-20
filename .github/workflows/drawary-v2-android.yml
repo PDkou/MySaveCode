@@ -1,0 +1,67 @@
+name: Drawary V2 Android build
+
+# Builds the Android WebView app in drawary-v2/android/ (the web app is built first and packed into the APK).
+# Result: an installable debug APK and a minified (R8) release-test APK, as downloadable artifacts of the run.
+# The release-test APK is signed with the debug key unless android/keystore.properties exists, so it is NOT for the store.
+# Optional repository variable DRAWARY_FEEDBACK_EMAIL = the address "피드백 보내기" mails to.
+on:
+  push:
+    paths:
+      - 'drawary-v2/android/**'
+      - 'drawary-v2/src/**'
+      - 'drawary-v2/public/**'
+      - 'drawary-v2/package.json'
+      - '.github/workflows/drawary-v2-android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build the web app
+        working-directory: drawary-v2
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build debug and minified release-test APKs
+        working-directory: drawary-v2/android
+        env:
+          FEEDBACK_EMAIL: ${{ vars.DRAWARY_FEEDBACK_EMAIL }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon -PfeedbackEmail="$FEEDBACK_EMAIL" assembleDebug assembleRelease lintRelease
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawary-debug-apk
+          path: drawary-v2/android/app/build/outputs/apk/debug/*.apk
+
+      - name: Upload release-test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawary-release-test-apk
+          path: drawary-v2/android/app/build/outputs/apk/release/*.apk
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawary-lint-report
+          path: drawary-v2/android/app/build/reports/lint-results-release.html
+          if-no-files-found: ignore
