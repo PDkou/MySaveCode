@@ -15,12 +15,12 @@ button,input{font:inherit}
 .red-summary-icon{width:36px;height:36px;border-radius:11px;background:var(--tc-f3ecff,#f3ecff);display:grid;place-items:center}
 .red-summary-icon img{width:25px;height:25px;object-fit:contain}
 .red-summary-copy strong{display:block;color:#315a96;font-size:13.5px;font-weight:900}
-.red-summary-copy span{display:block;margin-top:3px;color:#9995a3;font-size:10.2px;font-weight:700}
+.red-summary-copy span{display:block;margin-top:3px;color:#767182;font-size:10.2px;font-weight:700}
 .red-summary-tag{font-size:10px;font-weight:850;color:var(--tc-7866a8,#7866a8);background:var(--tc-f6f1fd,#f6f1fd);border-radius:999px;padding:6px 9px}
 
 .red-intro{margin:28px 18px 0;text-align:center}
 .red-intro h2{margin:0;color:#294f91;font-size:18px;line-height:1.35;font-weight:900;letter-spacing:-.7px}
-.red-intro p{margin:8px auto 0;color:#8d8999;font-size:11.2px;line-height:1.5;font-weight:650}
+.red-intro p{margin:8px auto 0;color:#747082;font-size:11.2px;line-height:1.5;font-weight:650}
 
 .red-options{margin:24px 20px 0;display:grid;gap:10px}
 .red-option{
@@ -31,7 +31,7 @@ button,input{font:inherit}
 .red-opt-icon{width:40px;height:40px;border-radius:12px;background:var(--tc-f3ecff,#f3ecff);display:grid;place-items:center}
 .red-opt-icon img{width:27px;height:27px;object-fit:contain}
 .red-opt-copy strong{display:block;color:#315a96;font-size:13.8px;font-weight:900}
-.red-opt-copy span{display:block;margin-top:4px;color:#9995a3;font-size:10.2px;line-height:1.4;font-weight:700}
+.red-opt-copy span{display:block;margin-top:4px;color:#767182;font-size:10.2px;line-height:1.4;font-weight:700}
 .red-radio{width:25px;height:25px;border-radius:50%;border:2px solid var(--tc-c8bfd8,#c8bfd8);display:grid;place-items:center}
 .red-option.selected .red-radio{border-color:var(--tc-8a67ee,#8a67ee);background:var(--tc-8a67ee,#8a67ee);color:#fff;font-size:14px;font-weight:900}
 

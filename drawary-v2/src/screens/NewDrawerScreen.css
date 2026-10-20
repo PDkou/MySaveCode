@@ -32,7 +32,7 @@
   margin: 0 auto 16px;
 }
 .new-drawer-sheet h1 { margin: 0; font-size: 19px; font-weight: 800; color: #2d396c; letter-spacing: -0.4px; }
-.new-drawer-subtitle { margin: 6px 0 18px; font-size: 12.5px; color: #8d8798; font-weight: 600; }
+.new-drawer-subtitle { margin: 6px 0 18px; font-size: 12.5px; color: #716b7c; font-weight: 600; }
 .new-drawer-label { display: block; font-size: 12.5px; font-weight: 700; color: #2d396c; margin-bottom: 8px; }
 .new-drawer-input {
   width: 100%;
@@ -115,5 +115,5 @@
 .new-drawer-count {
   position: absolute; right: 14px; top: 0; height: 46px;
   display: flex; align-items: center;
-  font-size: 11px; color: #a0a7b7; pointer-events: none;
+  font-size: 11px; color: #6a748c; pointer-events: none;
 }

@@ -9,9 +9,9 @@ button{font:inherit}
 .guide57-scroll{height:calc(100% - 66px);overflow-y:auto;scrollbar-width:none;overscroll-behavior:contain;padding:0 14px 16px}
 .guide57-scroll::-webkit-scrollbar{display:none}
 .guide57-hero{height:163px;background:var(--tc-f2ebff,#f2ebff);border-radius:23px;overflow:hidden;position:relative;padding:24px 15px}
-.guide57-hero small{font-size:12px;font-weight:800;color:var(--tc-805eed,#805eed);letter-spacing:-.4px;display:block;margin-bottom:3px}
+.guide57-hero small{font-size:12px;font-weight:800;color:var(--tc-805eed,#724ceb);letter-spacing:-.4px;display:block;margin-bottom:3px}
 .guide57-hero h1{font-size:19px;font-weight:900;letter-spacing:-.85px;color:#1c2c63;line-height:1.33;margin:0}
-.guide57-hero p{font-size:11.5px;font-weight:620;line-height:1.55;color:#8594b5;letter-spacing:-.2px;margin:7px 0 0}
+.guide57-hero p{font-size:11.5px;font-weight:620;line-height:1.55;color:#596b92;letter-spacing:-.2px;margin:7px 0 0}
 .guide57-hero img{position:absolute;width:123px;height:130px;object-fit:contain;right:12px;bottom:12px}
 .guide57-steps{display:flex;flex-direction:column;gap:10px;margin-top:13px;padding-bottom:12px}
 .guide57-step{height:144px;min-height:144px;width:100%;background:#fff;border:1px solid #e9e3dd;border-radius:22px;display:flex;position:relative;overflow:hidden;color:inherit;text-align:left;cursor:pointer;font:inherit;padding:0}
@@ -22,8 +22,8 @@ button{font:inherit}
 .guide57-step-number{position:absolute;top:9px;left:8px;width:29px;height:29px;background:var(--tc-8560f2,#8560f2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:850;z-index:2}
 .guide57-step-copy{flex:1;min-width:0;padding:13px 13px 11px 14px}
 .guide57-step-copy h2{font-size:17px;font-weight:900;color:#1b2f68;letter-spacing:-.65px;line-height:1.45;margin:0 0 4px}
-.guide57-step-copy p{font-size:11.8px;font-weight:620;color:#8999b8;letter-spacing:-.37px;line-height:1.43;margin:0}
-.guide57-step-path{margin-top:9px;display:inline-block;background:var(--tc-f2ebff,#f2ebff);border-radius:13px;color:var(--tc-865fee,#865fee);padding:8px 11px;font-size:10.8px;font-weight:780;line-height:1.35;letter-spacing:-.35px;max-width:100%;white-space:normal}
+.guide57-step-copy p{font-size:11.8px;font-weight:620;color:#60759f;letter-spacing:-.37px;line-height:1.43;margin:0}
+.guide57-step-path{margin-top:9px;display:inline-block;background:var(--tc-f2ebff,#f2ebff);border-radius:13px;color:var(--tc-865fee,#7548ec);padding:8px 11px;font-size:10.8px;font-weight:780;line-height:1.35;letter-spacing:-.35px;max-width:100%;white-space:normal}
 .guide57-step-1-visual{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:radial-gradient(circle at 52% 47%,var(--tc-f6efff,#f6efff) 0%,#fffaf4 64%)}
 .guide57-plus-halo{width:83px;height:83px;border-radius:26px;display:flex;align-items:center;justify-content:center;background:var(--tc-f0e6ff,#f0e6ff);border:1px solid var(--tc-e7d8ff,#e7d8ff)}
 .guide57-plus-halo img{width:72px;height:72px;object-fit:contain;display:block}

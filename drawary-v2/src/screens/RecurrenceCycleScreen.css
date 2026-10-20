@@ -13,12 +13,12 @@ button{font:inherit}
 .rc-summary-icon{width:36px;height:36px;border-radius:11px;background:var(--tc-f3ecff,#f3ecff);display:grid;place-items:center}
 .rc-summary-icon img{width:25px;height:25px;object-fit:contain}
 .rc-summary-copy strong{display:block;color:#315a96;font-size:13.5px;font-weight:900}
-.rc-summary-copy span{display:block;margin-top:3px;color:#9995a3;font-size:10.2px;font-weight:700}
+.rc-summary-copy span{display:block;margin-top:3px;color:#767182;font-size:10.2px;font-weight:700}
 .rc-summary-tag{font-size:10px;font-weight:850;color:var(--tc-7866a8,#7866a8);background:var(--tc-f6f1fd,#f6f1fd);border-radius:999px;padding:6px 9px}
 
 .rc-intro{margin:27px 18px 0;text-align:center}
 .rc-intro h2{margin:0;color:#294f91;font-size:18px;line-height:1.35;font-weight:900;letter-spacing:-.7px}
-.rc-intro p{margin:8px auto 0;color:#8d8999;font-size:11.2px;line-height:1.5;font-weight:650}
+.rc-intro p{margin:8px auto 0;color:#747082;font-size:11.2px;line-height:1.5;font-weight:650}
 
 .rc-cycle-grid{margin:22px 20px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 .rc-cycle{
@@ -28,7 +28,7 @@ button{font:inherit}
 .rc-cycle.selected{border:2px solid var(--tc-8a67ee,#8a67ee);background:var(--tc-f7f2ff,#f7f2ff);box-shadow:0 6px 14px rgba(var(--tr-120-89-184,120,89,184),.08)}
 .rc-cycle img{width:92px;height:64px;object-fit:contain;margin-bottom:3px}
 .rc-cycle strong{display:block;color:#315a96;font-size:13.5px;font-weight:900}
-.rc-cycle span{display:block;color:#9995a3;font-size:9.5px;font-weight:700;margin-top:3px}
+.rc-cycle span{display:block;color:#767182;font-size:9.5px;font-weight:700;margin-top:3px}
 .rc-check{
   position:absolute;right:7px;top:7px;width:22px;height:22px;border-radius:50%;background:var(--tc-8a67ee,#8a67ee);
   display:grid;place-items:center;color:#fff;font-size:13px;font-weight:900
@@ -40,7 +40,7 @@ button{font:inherit}
   display:grid;grid-template-columns:1fr auto;align-items:center;padding:0 14px
 }
 .rc-interval-copy strong{display:block;color:#315a96;font-size:13.5px;font-weight:900}
-.rc-interval-copy span{display:block;margin-top:4px;color:#9a95a2;font-size:10.4px;font-weight:700}
+.rc-interval-copy span{display:block;margin-top:4px;color:#777181;font-size:10.4px;font-weight:700}
 .rc-stepper{display:grid;grid-template-columns:34px 54px 34px;align-items:center;gap:4px}
 .rc-stepper button{
   width:34px;height:34px;border:1px solid var(--tc-ddd3e9,#ddd3e9);border-radius:10px;background:var(--tc-f6f1fd,#f6f1fd);color:var(--tc-6f50d1,#6f50d1);font-size:18px;font-weight:900

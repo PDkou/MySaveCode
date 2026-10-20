@@ -40,16 +40,16 @@ button{font:inherit}
   box-shadow:0 3px 10px rgba(66,47,29,.045);padding:0;
 }
 .rd-photo img{width:100%;height:100%;display:block;object-fit:cover}
-.rd-photo-empty{width:100%;height:100%;display:grid;place-items:center;color:#9b95a0;font-size:13px}
+.rd-photo-empty{width:100%;height:100%;display:grid;place-items:center;color:#69636f;font-size:13px}
 .rd-heading{padding:17px 2px 14px;border-bottom:1px solid #eadfd3}
-.rd-heading small{display:block;color:var(--tc-7f75a2,#7f75a2);font-size:11.5px;font-weight:700;margin-bottom:4px}
+.rd-heading small{display:block;color:var(--tc-7f75a2,#756a9b);font-size:11.5px;font-weight:700;margin-bottom:4px}
 .rd-heading h2{margin:0;font-size:22px;line-height:30px;font-weight:800;letter-spacing:-.7px}
 .rd-fields{margin:0;padding:0}
 .rd-field-row{
   min-height:58px;display:grid;grid-template-columns:132px 1fr;align-items:center;border-bottom:1px solid #eadfd3;
 }
 .rd-field-row dt{
-  margin:0;display:flex;align-items:center;gap:9px;color:#7180a3;
+  margin:0;display:flex;align-items:center;gap:9px;color:#617196;
   font-size:12.5px;font-weight:700;letter-spacing:-.15px;
 }
 .rd-field-icon{

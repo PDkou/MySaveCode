@@ -40,7 +40,7 @@
   border: 1px solid var(--tc-eadff7,#eadff7);
 }
 .settings-home-hero h2 { margin: 0; color: #315a96; font-size: 16px; font-weight: 900; letter-spacing: -.4px; }
-.settings-home-hero p { margin: 6px 0 0; color: #8d8798; font-size: 10.8px; line-height: 1.45; font-weight: 650; }
+.settings-home-hero p { margin: 6px 0 0; color: #716b7c; font-size: 10.8px; line-height: 1.45; font-weight: 650; }
 
 .settings-home-list {
   margin: 16px 20px 0;
@@ -76,7 +76,7 @@
 .settings-home-copy span {
   display: block;
   margin-top: 4px;
-  color: #9a95a3;
+  color: #777182;
   font-size: 9.8px;
   font-weight: 650;
   white-space: nowrap;

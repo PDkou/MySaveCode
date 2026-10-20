@@ -13,14 +13,14 @@ button{font:inherit}
 .ns-drawer-icon img{width:34px;height:34px;object-fit:contain}
 .ns-context-copy{margin-left:12px;min-width:0}
 .ns-context-copy strong{display:block;font-size:16px;font-weight:900;color:#265b9f;letter-spacing:-.3px}
-.ns-context-copy span{display:block;margin-top:4px;font-size:11.5px;color:#8e8da0;font-weight:700}
+.ns-context-copy span{display:block;margin-top:4px;font-size:11.5px;color:#737288;font-weight:700}
 .ns-hero{
   margin:15px 20px 0;padding:16px 16px 17px;border-radius:22px;background:var(--tc-fbf5ff,#fbf5ff);
   text-align:center;border:1px solid var(--tc-eee2fa,#eee2fa);
 }
 .ns-hero-art{display:block;width:190px;height:106px;object-fit:contain;margin:0 auto 5px}
 .ns-hero h2{margin:0;font-size:18px;line-height:1.32;color:#254f94;font-weight:900;letter-spacing:-.55px}
-.ns-hero p{margin:8px auto 0;max-width:305px;font-size:11.4px;line-height:1.55;color:#858399;font-weight:650}
+.ns-hero p{margin:8px auto 0;max-width:305px;font-size:11.4px;line-height:1.55;color:#706e85;font-weight:650}
 .ns-add-btn{
   margin:15px 20px 0;width:350px;height:54px;border:0;border-radius:28px;
   background:var(--tc-7a55ed,#7a55ed);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;
@@ -35,9 +35,9 @@ button{font:inherit}
 .ns-common-icon{width:42px;height:42px;border-radius:13px;background:var(--tc-f2eafe,#f2eafe);display:grid;place-items:center}
 .ns-common-icon img{width:27px;height:27px;object-fit:contain}
 .ns-common-copy strong{display:block;color:#315a96;font-size:14px;font-weight:900;letter-spacing:-.25px}
-.ns-common-copy span{display:block;margin-top:4px;color:#9995a3;font-size:10.8px;font-weight:650}
+.ns-common-copy span{display:block;margin-top:4px;color:#767182;font-size:10.8px;font-weight:650}
 .ns-chev{color:#a3a8b3;font-size:26px;line-height:1;text-align:right}
-.ns-tip{margin:12px 22px 0;color:#aaa5ae;font-size:10.5px;line-height:1.5;text-align:center;font-weight:650}
+.ns-tip{margin:12px 22px 0;color:#766f7b;font-size:10.5px;line-height:1.5;text-align:center;font-weight:650}
 
 /* #29 approved CTA depicts the simple white mark, not the purple badge. */
 .ns-screen .ns-add-btn img { filter:brightness(0) invert(1); }

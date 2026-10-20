@@ -14,14 +14,14 @@ button{font:inherit}
 .lang54-card .lang54-art{width:183px;height:123px;flex:0 0 183px;border-radius:15px;object-fit:cover;display:block;overflow:hidden}
 .lang54-card-copy{flex:1;min-width:0;padding-left:16px;padding-right:2px}
 .lang54-card-copy strong{display:block;font-size:20px;line-height:1.25;font-weight:850;color:#141519;letter-spacing:-.4px;white-space:nowrap}
-.lang54-card-copy span{display:block;margin-top:9px;font-size:11.4px;line-height:1.45;font-weight:550;color:#8397bc;letter-spacing:-.25px;overflow-wrap:break-word}
+.lang54-card-copy span{display:block;margin-top:9px;font-size:11.4px;line-height:1.45;font-weight:550;color:#536c9a;letter-spacing:-.25px;overflow-wrap:break-word}
 .lang54-check{display:none;position:absolute;right:15px;top:13px;width:30px;height:30px;border-radius:50%;background:var(--tc-9167f3,#9167f3);align-items:center;justify-content:center}
 .lang54-card.is-selected .lang54-check{display:flex}
 .lang54-check svg{width:21px;height:21px}
-.lang54-footer-note{margin:13px 0 0;text-align:center;color:#8c9fc2;font-size:11px;line-height:1.6;letter-spacing:-.2px;font-weight:600;white-space:nowrap}
+.lang54-footer-note{margin:13px 0 0;text-align:center;color:#5773a5;font-size:11px;line-height:1.6;letter-spacing:-.2px;font-weight:600;white-space:nowrap}
 .lang54-actions{margin-top:0;display:flex;gap:9px;width:100%;height:48px}
 .lang54-actions button{height:48px;flex:1;border-radius:16px;font-size:14px;font-weight:750;cursor:pointer}
-.lang54-cancel{border:1px solid var(--tc-d5c1ff,#d5c1ff);background:#fff;color:#8187aa}
+.lang54-cancel{border:1px solid var(--tc-d5c1ff,#d5c1ff);background:#fff;color:#6c739c}
 .lang54-apply{border:1px solid var(--tc-9468ec,#9468ec);background:var(--tc-9666ee,#9666ee);color:#fff}
 @media(max-width:380px){.lang54-card .lang54-art{width:48%;flex-basis:48%}.lang54-card-copy{padding-left:12px}}
 

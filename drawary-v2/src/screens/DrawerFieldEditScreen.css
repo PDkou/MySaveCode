@@ -6,8 +6,8 @@
    width uncovered so both documented interactions (tap row -> edit, drag
    handle -> reorder) actually work side by side. */
 :root{
-  --bg:#fffaf0; --navy:#123f96; --copy:#5d76b0; --purple:var(--tc-7d58e8,#7d58e8);
-  --border:#e5ded3; --card:#fffdfa; --muted:#747b94; --danger:#d86a73;
+  --bg:#fffaf0; --navy:#123f96; --copy:#5670ad; --purple:var(--tc-7d58e8,#7d58e8);
+  --border:#e5ded3; --card:#fffdfa; --muted:#6c738d; --danger:#d86a73;
 }
 *{box-sizing:border-box}button,input{font:inherit}
 .df-screen{width:390px;height:844px;overflow:hidden;background:var(--bg);color:var(--navy);
@@ -28,10 +28,10 @@ font-family:"Noto Sans CJK KR","Noto Sans KR","Apple SD Gothic Neo",sans-serif;-
 .df-complete{width:100%;height:54px;margin-top:18px;border:0;border-radius:28px;background:linear-gradient(90deg,var(--tc-7a55e7,#7a55e7),var(--tc-835fe9,#835fe9));color:#fff;font-size:16px;font-weight:700;box-shadow:0 7px 12px rgba(var(--tr-112-75-218,112,75,218),.18)}
 .df-label{display:block;margin:5px 0 9px;color:#304e8e;font-size:14px;font-weight:700;letter-spacing:-.25px}
 .df-input-wrap{height:54px;border:1px solid var(--border);border-radius:13px;background:var(--card);display:grid;grid-template-columns:1fr 46px;align-items:center;margin-bottom:21px;overflow:hidden}
-.df-input-wrap input{height:100%;border:0;background:transparent;padding:0 14px;color:#304e8e;outline:none;font-size:14px}.df-input-wrap span{justify-self:center;color:#a0a7b7;font-size:11px}
+.df-input-wrap input{height:100%;border:0;background:transparent;padding:0 14px;color:#304e8e;outline:none;font-size:14px}.df-input-wrap span{justify-self:center;color:#6a748c;font-size:11px}
 .df-selected-type{width:100%;height:68px;padding:0 14px;margin-bottom:21px;border:1px solid var(--border);background:var(--card);color:inherit;border-radius:13px;display:grid;grid-template-columns:46px 1fr 24px;align-items:center;text-align:left;box-shadow:0 2px 7px rgba(66,47,29,.045)}
 .df-type-icon{width:38px;height:38px;display:grid;place-items:center}.df-type-icon img{width:38px;height:38px;object-fit:contain}
-.df-type-copy{display:flex;flex-direction:column;gap:2px}.df-type-copy strong{font-size:14px}.df-type-copy small{font-size:11px;color:#7c86a0}.df-chevron{justify-self:end;color:#9aa2b9;font:300 28px Arial}
+.df-type-copy{display:flex;flex-direction:column;gap:2px}.df-type-copy strong{font-size:14px}.df-type-copy small{font-size:11px;color:#687390}.df-chevron{justify-self:end;color:#9aa2b9;font:300 28px Arial}
 .df-options h2{margin:0 0 9px;color:#304e8e;font-size:14px}.df-option-list{display:grid;gap:8px}
 .df-option-row{height:47px;border:1px solid var(--border);border-radius:12px;background:var(--card);display:grid;grid-template-columns:1fr 43px;overflow:hidden}
 .df-option-row input{border:0;background:transparent;padding:0 13px;outline:none;color:#43577e;font-size:13px}.df-option-row button{border:0;border-left:1px solid #eee6db;background:#fff8f6;color:#d66d72;font-size:21px}

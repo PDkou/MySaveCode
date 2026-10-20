@@ -28,7 +28,7 @@
 .stats-tagline {
   margin: -3px 0 0 40px;
   font-size: 11px;
-  color: var(--tc-9b95af,#9b95af);
+  color: var(--tc-9b95af,#6e6687);
   font-weight: 500;
   margin-top: -10px;
 }
@@ -101,7 +101,7 @@
 
 .stats-kpi-sub {
   font-size: 11px;
-  color: var(--tc-9b95af,#9b95af);
+  color: var(--tc-9b95af,#6e6687);
   font-weight: 500;
   line-height: 17px;
 }
@@ -125,7 +125,7 @@
 .stats-card-sub {
   margin: 3px 0 8px;
   font-size: 11.5px;
-  color: var(--tc-9b95af,#9b95af);
+  color: var(--tc-9b95af,#6e6687);
   font-weight: 500;
   line-height: 16px;
 }
@@ -167,7 +167,7 @@
 .stats-bar-label {
   margin-top: 5px;
   font-size: 10px;
-  color: var(--tc-9b95af,#9b95af);
+  color: var(--tc-9b95af,#6e6687);
   font-weight: 600;
 }
 
@@ -228,7 +228,7 @@
   flex: 0 0 auto;
   background: var(--tc-f2eeff,#f2eeff);
   border: 1px solid var(--tc-e6dfff,#e6dfff);
-  color: var(--tc-7657e8,#7657e8);
+  color: var(--tc-7657e8,#7150e7);
   font-size: 11px;
   font-weight: 600;
   border-radius: 999px;
@@ -274,7 +274,7 @@
   flex: 0 0 116px;
   background: var(--tc-fbf9ff,#fbf9ff);
   border: 1px solid var(--tc-e6dfff,#e6dfff);
-  color: var(--tc-7657e8,#7657e8);
+  color: var(--tc-7657e8,#7150e7);
   font-size: 10.5px;
   font-weight: 500;
   border-radius: 999px;

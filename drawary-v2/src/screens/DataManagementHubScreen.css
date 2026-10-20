@@ -12,7 +12,7 @@ button{font:inherit}
 .dmh44-hero-art{width:104px;height:79px;border-radius:20px;background:rgba(255,255,255,.5);display:grid;place-items:center;flex:none;box-shadow:0 3px 12px rgba(var(--tr-205-185-242,205,185,242),0.11)}
 .dmh44-hero-art img{width:102px;height:78px;object-fit:contain;object-position:center center}
 .dmh44-hero-copy strong{display:block;color:var(--tc-4d4a89,#4d4a89);font-size:14px;font-weight:900;letter-spacing:-.5px;white-space:nowrap}
-.dmh44-hero-copy span{display:block;color:#8d879d;margin-top:7px;font-size:10.8px;line-height:1.7;font-weight:650;letter-spacing:-.35px;white-space:normal}
+.dmh44-hero-copy span{display:block;color:#78718a;margin-top:7px;font-size:10.8px;line-height:1.7;font-weight:650;letter-spacing:-.35px;white-space:normal}
 .dmh44-items{margin:0 1px;border:1px solid #ece5da;border-radius:18px;overflow:hidden;background:#fffdf9}
 .dmh44-item{height:90px;width:100%;display:flex;align-items:center;padding:10px 12px;position:relative;gap:11px;border:0;background:transparent;text-align:left;cursor:pointer;color:inherit}
 .dmh44-item + .dmh44-item{border-top:1px solid #efe8df}
@@ -20,13 +20,13 @@ button{font:inherit}
 .dmh44-item-icon img{display:block;width:39px;height:39px;object-fit:contain}
 .dmh44-item-copy{flex:1;min-width:0}
 .dmh44-item-copy strong{font-size:14px;font-weight:900;color:#304f82;letter-spacing:-.45px;display:block;line-height:20px}
-.dmh44-item-copy small{display:block;margin-top:4px;font-size:11px;color:#9290a2;line-height:16px;font-weight:650;letter-spacing:-.4px;white-space:nowrap}
+.dmh44-item-copy small{display:block;margin-top:4px;font-size:11px;color:#737187;line-height:16px;font-weight:650;letter-spacing:-.4px;white-space:nowrap}
 .dmh44-right-arrow{font-size:0;position:relative;width:16px;flex:none}
 .dmh44-right-arrow:after{content:'';position:absolute;top:-3px;right:1px;width:8px;height:8px;border-top:2px solid var(--tc-afa6bb,#afa6bb);border-right:2px solid var(--tc-afa6bb,#afa6bb);transform:rotate(45deg);border-radius:1px}
 .dmh44-secondary-section{margin:22px 0 0}
-.dmh44-secondary-title{font-size:13px;letter-spacing:-.4px;color:#857e97;font-weight:850;margin:0 0 12px 9px}
+.dmh44-secondary-title{font-size:13px;letter-spacing:-.4px;color:#78708b;font-weight:850;margin:0 0 12px 9px}
 .dmh44-danger .dmh44-item-icon{background:#fff2f3}
 .dmh44-danger .dmh44-item-copy strong{color:#ab5860}
-.dmh44-danger .dmh44-item-copy small{color:#9d909a}
+.dmh44-danger .dmh44-item-copy small{color:#7e6f7b}
 .dmh44-danger-items{border-color:#f2e4e1}
 .dmh44-screen button:focus-visible{outline:3px solid var(--tc-b79aff,#b79aff);outline-offset:-3px}

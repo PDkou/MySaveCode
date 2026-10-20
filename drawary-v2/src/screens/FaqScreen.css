@@ -17,23 +17,23 @@ button,input{font:inherit}
 .faq56-clear{border:0;background:var(--tc-f3effb,#f3effb);color:var(--tc-7c69b4,#7c69b4);border-radius:50%;width:21px;height:21px;flex:none;cursor:pointer;font-size:14px;line-height:21px;text-align:center}
 .faq56-tabs{margin-top:10px;display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;white-space:nowrap}
 .faq56-tabs::-webkit-scrollbar{display:none}
-.faq56-tab{height:31px;padding:0 13px;border-radius:18px;background:#fff;border:1px solid var(--tc-e6def4,#e6def4);flex:none;font-size:12px;font-weight:700;color:var(--tc-7778a3,#7778a3);cursor:pointer;letter-spacing:-.3px}
+.faq56-tab{height:31px;padding:0 13px;border-radius:18px;background:#fff;border:1px solid var(--tc-e6def4,#e6def4);flex:none;font-size:12px;font-weight:700;color:var(--tc-7778a3,#6f709e);cursor:pointer;letter-spacing:-.3px}
 .faq56-tab[aria-selected=true]{color:#fff;background:var(--tc-9068ea,#9068ea);border-color:var(--tc-9068ea,#9068ea)}
 .faq56-intro{display:flex;align-items:center;gap:12px;padding:14px 16px 8px}
 .faq56-intro-icon{background:var(--tc-f0eaff,#f0eaff);border-radius:13px;width:42px;height:42px;flex:none;display:flex;align-items:center;justify-content:center}
 .faq56-intro-icon img{width:34px;height:34px;object-fit:contain}
 .faq56-intro strong{font-weight:900;letter-spacing:-.55px;color:#1a2d64;font-size:15.7px;line-height:1.4;display:block}
-.faq56-intro span{font-size:11.5px;color:#96a2bd;display:block;font-weight:650;letter-spacing:-.28px;line-height:1.5}
+.faq56-intro span{font-size:11.5px;color:#607299;display:block;font-weight:650;letter-spacing:-.28px;line-height:1.5}
 .faq56-content{padding:0 16px 34px}
 .faq56-category{padding-top:11px;margin:0}
-.faq56-category h2{font-size:11.8px;margin:0 3px 8px;font-weight:750;color:var(--tc-8171ad,#8171ad);letter-spacing:-.2px}
+.faq56-category h2{font-size:11.8px;margin:0 3px 8px;font-weight:750;color:var(--tc-8171ad,#7867a7);letter-spacing:-.2px}
 .faq56-list{border-radius:18px;border:1px solid var(--tc-e9e3f5,#e9e3f5);background:#fff;overflow:hidden}
 .faq56-item+.faq56-item{border-top:1px solid var(--tc-eae6f0,#eae6f0)}
 .faq56-question{width:100%;min-height:56px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;text-align:left;gap:8px;padding:14px 15px;color:#1a2d65;font-size:12.9px;letter-spacing:-.55px;font-weight:850;line-height:1.45}
 .faq56-question span:first-child{flex:1}
 .faq56-arrow{width:7px;height:7px;display:block;border-top:2px solid var(--tc-afa3cc,#afa3cc);border-right:2px solid var(--tc-afa3cc,#afa3cc);transform:rotate(45deg);margin-right:8px;flex:none}
 .faq56-question[aria-expanded=true] .faq56-arrow{border-color:var(--tc-8b63eb,#8b63eb);transform:rotate(135deg);margin-top:-4px}
-.faq56-answer{margin:0 14px 14px;background:var(--tc-f6f1ff,#f6f1ff);border:1px solid var(--tc-e9dfff,#e9dfff);border-radius:14px;padding:13px 14px 13px;color:#637297;font-size:11.6px;font-weight:550;line-height:1.62;letter-spacing:-.18px}
+.faq56-answer{margin:0 14px 14px;background:var(--tc-f6f1ff,#f6f1ff);border:1px solid var(--tc-e9dfff,#e9dfff);border-radius:14px;padding:13px 14px 13px;color:#5f6d91;font-size:11.6px;font-weight:550;line-height:1.62;letter-spacing:-.18px}
 .faq56-empty{text-align:center;color:#9aa3b6;padding:62px 12px;font-size:13px;line-height:1.8}
 .faq56-footnote{text-align:center;margin:25px 0 8px;color:var(--tc-b1adc3,#b1adc3);font-size:10.6px;font-weight:550}
 @media(max-width:370px){.faq56-intro strong{font-size:14.6px}.faq56-question{font-size:12px}.faq56-tab{padding:0 11px}}

@@ -10,11 +10,11 @@ button{font:inherit}
 .al43-pin-hero-icon{height:83px;width:126px;flex:none;display:flex;align-items:center;justify-content:center}
 .al43-pin-hero-icon img{height:83px;width:126px;object-fit:contain}
 .al43-pin-hero strong{display:block;color:var(--tc-4d4a89,#4d4a89);font-size:14px;font-weight:900;letter-spacing:-.58px;white-space:normal;word-break:keep-all}
-.al43-pin-hero small{display:block;color:#8d879d;margin-top:8px;font-size:11.2px;line-height:1.7;font-weight:650;letter-spacing:-.3px;white-space:normal;word-break:keep-all}
+.al43-pin-hero small{display:block;color:#78718a;margin-top:8px;font-size:11.2px;line-height:1.7;font-weight:650;letter-spacing:-.3px;white-space:normal;word-break:keep-all}
 .al43-step{margin:2px 7px 12px;display:flex;align-items:center;justify-content:space-between}
 .al43-step strong{font-size:13.5px;color:#304f82;letter-spacing:-.45px}
-.al43-step-badge{font-size:11px;color:var(--tc-8d67df,#8d67df);border:1px solid var(--tc-e9defe,#e9defe);background:var(--tc-f8f3ff,#f8f3ff);padding:6px 12px;border-radius:99px;font-weight:800}
-.al43-prompt{font-size:12.5px;color:#8d879d;margin:0 7px 15px;letter-spacing:-.35px;line-height:1.6}
+.al43-step-badge{font-size:11px;color:var(--tc-8d67df,#7d52db);border:1px solid var(--tc-e9defe,#e9defe);background:var(--tc-f8f3ff,#f8f3ff);padding:6px 12px;border-radius:99px;font-weight:800}
+.al43-prompt{font-size:12.5px;color:#78718a;margin:0 7px 15px;letter-spacing:-.35px;line-height:1.6}
 .al43-pin-indicators{height:48px;display:flex;align-items:center;justify-content:center;gap:17px;margin:0 7px 13px;border:1px solid var(--tc-f0e6fc,#f0e6fc);border-radius:17px;background:var(--tc-fcfaff,#fcfaff)}
 .al43-pin-indicators.error{animation:al43-shake .24s ease-in-out}
 @keyframes al43-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}

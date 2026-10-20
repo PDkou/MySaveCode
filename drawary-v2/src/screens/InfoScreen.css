@@ -9,20 +9,20 @@ button{font:inherit}
 .info58-brand{display:flex;align-items:center;flex-direction:column;padding-top:26px}
 .info58-flower{width:56px;height:59px;object-fit:contain;display:block}
 .info58-brand-name{margin:16px 0 4px;font-size:25px;line-height:1.2;font-weight:900;letter-spacing:-.9px;color:var(--tc-8354e4,#8354e4)}
-.info58-tagline{margin:0;font-size:11.4px;line-height:1.45;font-weight:650;letter-spacing:-.18px;text-align:center;color:#8f9bc2}
-.info58-version-chip{border:0;border-radius:999px;background:var(--tc-efe9ff,#efe9ff);color:var(--tc-8061e9,#8061e9);padding:6px 17px;margin-top:11px;font-size:12.2px;font-weight:850;line-height:1.55;cursor:pointer}
+.info58-tagline{margin:0;font-size:11.4px;line-height:1.45;font-weight:650;letter-spacing:-.18px;text-align:center;color:#5f70a8}
+.info58-version-chip{border:0;border-radius:999px;background:var(--tc-efe9ff,#efe9ff);color:var(--tc-8061e9,#6e4be6);padding:6px 17px;margin-top:11px;font-size:12.2px;font-weight:850;line-height:1.55;cursor:pointer}
 .info58-content{padding:0 16px}
-.info58-section-label{font-size:12.2px;font-weight:800;line-height:1.45;color:var(--tc-8075a5,#8075a5);letter-spacing:-.15px;margin:31px 4px 8px}
+.info58-section-label{font-size:12.2px;font-weight:800;line-height:1.45;color:var(--tc-8075a5,#766a9e);letter-spacing:-.15px;margin:31px 4px 8px}
 .info58-card{background:#fff;border:1px solid var(--tc-e6e3f2,#e6e3f2);border-radius:19px;overflow:hidden}
 .info58-row{height:56px;width:100%;padding:0 15px;display:flex;align-items:center;gap:10px;background:none;border:0;text-align:left;color:#1d316b}
 .info58-row+.info58-row{border-top:1px solid var(--tc-eeedf1,#eeedf1)}
 .info58-item-name{font-size:13.5px;font-weight:850;letter-spacing:-.4px;line-height:1.4;white-space:nowrap}
-.info58-current-version{margin-left:auto;color:#8996b8;line-height:1.35;font-size:11.7px;font-weight:720;letter-spacing:-.2px}
+.info58-current-version{margin-left:auto;color:#6374a1;line-height:1.35;font-size:11.7px;font-weight:720;letter-spacing:-.2px}
 .info58-row-action{cursor:pointer}
 .info58-chevron{width:7px;height:7px;border-right:1.8px solid var(--tc-aa9fc6,#aa9fc6);border-top:1.8px solid var(--tc-aa9fc6,#aa9fc6);transform:rotate(45deg);margin-left:auto;margin-right:3px;flex:none}
 .info58-about-label{margin:17px 4px 8px}
-.info58-about-card{padding:14px 15px 13px;background:white;border:1px solid var(--tc-e6e3f2,#e6e3f2);border-radius:18px;color:#7584ab;font-size:11.2px;font-weight:600;line-height:1.65;letter-spacing:-.28px}
-.info58-credit{text-align:center;color:#a5abc6;font-size:10.4px;font-weight:550;letter-spacing:-.18px;margin:17px auto 0}
+.info58-about-card{padding:14px 15px 13px;background:white;border:1px solid var(--tc-e6e3f2,#e6e3f2);border-radius:18px;color:#62739f;font-size:11.2px;font-weight:600;line-height:1.65;letter-spacing:-.28px}
+.info58-credit{text-align:center;color:#656f9d;font-size:10.4px;font-weight:550;letter-spacing:-.18px;margin:17px auto 0}
 .info58-overlay{position:absolute;inset:0;background:rgba(var(--tr-36-32-55,36,32,55),0.361);z-index:5;display:flex;align-items:center;justify-content:center;padding:28px}
 .info58-dialog{width:100%;background:#fff;border-radius:22px;padding:22px 18px 18px;box-shadow:0 20px 48px rgba(var(--tr-69-52-99,69,52,99),0.169);text-align:center}
 .info58-dialog h2{margin:0 0 11px;color:#27385e;font-size:17px}

@@ -2,12 +2,12 @@
 :root{
   --drawary-bg:#fffaf0;
   --drawary-navy:#123f96;
-  --drawary-copy:#5d76b0;
+  --drawary-copy:#5670ad;
   --drawary-purple:var(--tc-7d58e8,#7d58e8);
   --drawary-purple-dark:var(--tc-6e4ede,#6e4ede);
   --drawary-border:#e5ded3;
   --drawary-card:#fffdfa;
-  --drawary-muted:#747b94;
+  --drawary-muted:#6c738d;
 }
 *{box-sizing:border-box}
 button,input{font:inherit}
@@ -48,14 +48,14 @@ button,input{font:inherit}
 }
 .nf-type-copy{min-width:0;display:flex;flex-direction:column;gap:2px}
 .nf-type-copy strong{font-size:14px;line-height:18px;font-weight:700;letter-spacing:-.25px}
-.nf-type-copy small{font-size:11px;line-height:14px;color:#7c86a0;font-weight:400;letter-spacing:-.15px}
+.nf-type-copy small{font-size:11px;line-height:14px;color:#687390;font-weight:400;letter-spacing:-.15px}
 .nf-chevron{justify-self:end;color:#9aa2b9;font-family:Arial,sans-serif;font-size:28px;font-weight:300;transform:translateY(-1px)}
 .nf-label{display:block;margin:5px 0 9px;color:#304e8e;font-size:14px;font-weight:700;letter-spacing:-.25px}
 .nf-input-wrap{height:54px;border:1px solid var(--drawary-border);border-radius:13px;background:var(--drawary-card);
   display:grid;grid-template-columns:1fr 46px;align-items:center;margin-bottom:21px;overflow:hidden}
 .nf-input-wrap input{height:100%;border:0;background:transparent;padding:0 14px;color:#304e8e;outline:none;font-size:14px}
-.nf-input-wrap input::placeholder{color:#a0a7b7}
-.nf-input-wrap span{justify-self:center;color:#a0a7b7;font-size:11px}
+.nf-input-wrap input::placeholder{color:#6a748c}
+.nf-input-wrap span{justify-self:center;color:#6a748c;font-size:11px}
 .nf-options{margin-top:0}
 .nf-options h2{margin:0 0 9px;color:#304e8e;font-size:14px;font-weight:700}
 .nf-option-list{display:grid;gap:8px}

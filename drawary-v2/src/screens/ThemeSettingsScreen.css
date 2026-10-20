@@ -1,6 +1,6 @@
 /* Byte-identical values to the confirmed archive's index.html inline
    style block, classes renamed to this file's ts39- prefix. */
-:root{--ts39-paper:#fff9f1;--ts39-ink:#2c4d7d;--ts39-muted:#9ba9c0;--ts39-lavender:#8051ff}
+:root{--ts39-paper:#fff9f1;--ts39-ink:#2c4d7d;--ts39-muted:#607598;--ts39-lavender:#8051ff}
 button{font:inherit;cursor:pointer}
 .ts39-screen{position:relative;width:390px;height:844px;margin:0 auto;background:var(--ts39-paper);overflow:hidden;font-family:'NanumSquare','Noto Sans CJK KR','Noto Sans KR',sans-serif}
 .ts39-header{height:85px;display:flex;align-items:center;justify-content:center;position:relative;padding-top:14px}

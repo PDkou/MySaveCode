@@ -39,7 +39,7 @@
   margin: 5px 0 0;
   font-size: 12px;
   line-height: 1.45;
-  color: #7b83a5;
+  color: #677198;
 }
 
 .global-search-box {
@@ -126,7 +126,7 @@
 }
 .global-search-empty img { width: 150px; height: 150px; object-fit: contain; }
 .global-search-empty strong { margin-top: 10px; color: #17275f; font-size: 18px; }
-.global-search-empty span { margin-top: 7px; color: #7b83a5; font-size: 13px; line-height: 1.5; }
+.global-search-empty span { margin-top: 7px; color: #677198; font-size: 13px; line-height: 1.5; }
 
 .global-search-result-head {
   display: flex;
@@ -135,7 +135,7 @@
   margin: 2px 2px 10px;
 }
 .global-search-result-head strong { font-size: 14px; color: #17275f; }
-.global-search-result-head span { font-size: 11px; color: #7b83a5; }
+.global-search-result-head span { font-size: 11px; color: #677198; }
 
 .global-search-result-list { display: flex; flex-direction: column; gap: 10px; }
 .global-search-result-card {
@@ -174,7 +174,7 @@
 }
 .global-search-result-body span {
   font-size: 11px;
-  color: #7b83a5;
+  color: #677198;
   margin-top: 5px;
   white-space: nowrap;
   overflow: hidden;
