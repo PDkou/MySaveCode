@@ -159,7 +159,7 @@ export function RecordDetailScreen({
             <img src={photoUri} alt={t('{title} 사진', { title })} />
           </button>
         ) : (
-          <div className="rd-photo"><div className="rd-photo-empty">{t('사진 없음')}</div></div>
+          <div className={`rd-photo${embedded ? ' is-empty' : ''}`}><div className="rd-photo-empty">{t('사진 없음')}</div></div>
         )}
 
         <div className="rd-heading">

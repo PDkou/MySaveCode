@@ -103,3 +103,5 @@
 .wide-app--land .tv-screen--fill .tv-table th, .wide-app--land .tv-screen--fill .tv-table td { height: 38px; }
 .wide-app--land .tv-screen--fill .tv-table-shell { margin-bottom: 6px; }
 .wd-detail .rd-content { max-width: 760px; }
+/* no photo: a slim placeholder, so the item's fields start higher instead of under a big empty box */
+.rd-screen--embedded .rd-photo.is-empty { height: 88px; }
