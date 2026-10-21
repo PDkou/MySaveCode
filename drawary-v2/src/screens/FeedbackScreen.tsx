@@ -24,9 +24,9 @@ export type FeedbackResult = 'opened' | 'no-mail' | 'unavailable';
 
 const TYPE_CONFIG: Record<FeedbackType, { name: string; icon: string; iconClass?: string; placeholder: string; hint: string }> = {
   improvement: { name: K('개선 제안'), icon: '/assets/decor/decor_sprout_01.webp', placeholder: K('어떤 점이 불편했나요? 이렇게 바뀌면 좋겠다는 생각도 좋아요.'), hint: K('어떤 화면에서 느낀 점인지 알려주시면 도움이 돼요.') },
-  bug: { name: K('오류 제보'), icon: '/assets/ui-icons/feedback_error_from_approved.png', iconClass: 'fb59-approved-crop', placeholder: K('어느 화면에서 어떤 문제가 있었나요? 발생한 순서대로 적어주세요.'), hint: K('오류가 난 화면과 동작을 적어주시면 확인에 도움이 돼요.') },
+  bug: { name: K('오류 제보'), icon: '/assets/ui-icons/feedback_error_from_approved.webp', iconClass: 'fb59-approved-crop', placeholder: K('어느 화면에서 어떤 문제가 있었나요? 발생한 순서대로 적어주세요.'), hint: K('오류가 난 화면과 동작을 적어주시면 확인에 도움이 돼요.') },
   feature: { name: K('기능 요청'), icon: '/assets/decor/decor_flower_01.webp', placeholder: K('어떤 기능이 있으면 좋을까요? 사용하는 상황도 알려주세요.'), hint: K('어떤 상황에서 필요한지 함께 알려주시면 좋아요.') },
-  other: { name: K('기타'), icon: '/assets/ui-icons/feedback_other_from_approved.png', iconClass: 'fb59-approved-crop', placeholder: K('하고 싶은 이야기를 자유롭게 남겨주세요.'), hint: K('칭찬, 질문, 다른 의견도 모두 환영해요.') },
+  other: { name: K('기타'), icon: '/assets/ui-icons/feedback_other_from_approved.webp', iconClass: 'fb59-approved-crop', placeholder: K('하고 싶은 이야기를 자유롭게 남겨주세요.'), hint: K('칭찬, 질문, 다른 의견도 모두 환영해요.') },
 };
 
 const TYPES: FeedbackType[] = ['improvement', 'bug', 'feature', 'other'];
@@ -42,8 +42,8 @@ const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
  * file-type (.png/.jpg/.webp) and size (8MB) validation on attachment
  * selection; character counter (max 1000); submit validates a
  * non-empty message and, only if filled in, a well-formed email before
- * calling `onSubmit`. New `feedback_error_from_approved.png`/
- * `feedback_other_from_approved.png` assets copied in (the archive's
+ * calling `onSubmit`. New `feedback_error_from_approved.webp`/
+ * `feedback_other_from_approved.webp` assets copied in (the archive's
  * own files, kept as `.png` since that's what was given); the other
  * two type icons and the hero decorations reuse this app's existing
  * `decor_sprout_01.webp`/`decor_flower_01.webp`/`mascot_lean_on_drawer

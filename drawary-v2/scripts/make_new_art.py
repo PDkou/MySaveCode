@@ -1,6 +1,6 @@
 """Fits the owner's new high-resolution mascot pictures (2026-10-21 zip) into the app's existing picture slots.
 Each is trimmed to its visible area, scaled to about 3x the size it is shown at (crisp on 3x phones), and saved as WebP.
-Usage: python3 scripts/make_new_art.py <folder holding 1.png ... 9.png>"""
+Usage: python3 scripts/make_new_art.py <folder holding 1.png ... 9.png> [<second folder holding 1.png ... 4.png>]"""
 import sys
 import numpy as np
 from PIL import Image
@@ -58,3 +58,20 @@ cw, ch = (g.width, round(g.width / r)) if g.width / g.height < r else (round(g.h
 canvas = Image.new('RGBA', (cw, ch), (255, 249, 234, 255))
 canvas.alpha_composite(g, ((cw - g.width) // 2, (ch - g.height) // 2))
 save(canvas.resize((724, 552), Image.LANCZOS).convert('RGB'), 'guide/guide_step3_focus.webp')
+
+# second delivery (same day): 1 warning triangle, 2 pink speech bubble (feedback icons), 3 guide step 2, 4 guide step 4
+if len(sys.argv) > 2:
+    SRC2 = sys.argv[2]
+    def load2(n):
+        return Image.open(f'{SRC2}/{n}.png').convert('RGBA')
+    save(fit(trim(load2(1), 2), 160, 160), 'ui-icons/feedback_error_from_approved.webp', 94)
+    save(fit(trim(load2(2), 2), 160, 160), 'ui-icons/feedback_other_from_approved.webp', 94)
+    def step(n, shown_w, shown_h, bgc, out):
+        g = trim(load2(n), 4)
+        r = shown_w / shown_h
+        cw, ch = (g.width, round(g.width / r)) if g.width / g.height < r else (round(g.height * r), g.height)
+        cv = Image.new('RGBA', (cw, ch), bgc + (255,))
+        cv.alpha_composite(g, ((cw - g.width) // 2, (ch - g.height) // 2))
+        save(cv.resize((round(shown_w * 4), round(shown_h * 4)), Image.LANCZOS).convert('RGB'), out)
+    step(3, 180, 132, (255, 253, 248), 'guide/guide_step2_focus.webp')
+    step(4, 186, 130, (255, 250, 245), 'guide/guide_step4_focus.webp')

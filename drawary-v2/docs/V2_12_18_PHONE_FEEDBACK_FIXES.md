@@ -109,5 +109,6 @@ Theme: the flower in the logo is the theme's own flower (owner request). The in-
 
 The owner supplied nine new pictures (1254 px; one 1448x1086). Applied with `scripts/make_new_art.py` (trim, scale to ~3x the shown size, WebP):
 onboarding `intro` (1), empty home mascot `home_empty_art` (2; the baked logo is now the real themed logo image, mascot on flat cream) and `mascot_lean_on_drawer` (2, also used by the guide and feedback heroes), `mascot_help_approved` (3), `mascot_celebrate` (5), `state_generic_warning` (6), `guide_step3_focus` (7), `ui_add` (8), `mascot_backup_progress` (9: now the cloud mascot instead of the folder one — owner-supplied).
-Not applied (no matching slot): picture 4 (heart speech bubble) — the feedback screen needs a matching pair (오류 제보 warning + 기타), so both icons wait for a warning icon in the same style. Still soft and waiting for originals: `guide_step2_focus`, `guide_step4_focus`, `feedback_error/other_from_approved`.
+Second delivery (same day, applied too): warning triangle and pink speech bubble as the feedback icons (`feedback_error/other_from_approved.webp`, replacing the 44 px PNGs), and new guide step 2 / step 4 pictures. The heart speech bubble (first delivery, picture 4) stays unused.
+All twelve soft pictures from the sharpness audit are now replaced by high-resolution art.
 Also fixed: the feedback hero card clipped its last text line (fixed height 145 px -> min-height).
