@@ -18,8 +18,6 @@
 .wide-drawer-row--all { cursor: default; }
 .wide-drawer-row.is-active { background: var(--tc-f7f1ff,#f7f1ff); color: var(--tc-6c51db,#6c51db); }
 .wide-drawer-row.is-active b { color: var(--tc-6c51db,#6c51db); }
-.wide-new-drawer { flex: 0 0 auto; height: 44px; border: 1px dashed var(--tc-c4b6ec,#c4b6ec); border-radius: 14px; background: transparent; color: var(--tc-6c51db,#6c51db); font-size: 13.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.wide-new-drawer span { font-size: 20px; font-weight: 400; line-height: 1; }
 
 /* ---- home ---- */
 .wide-home { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 22px 28px 24px; }

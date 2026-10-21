@@ -565,7 +565,7 @@ export default function App() {
   const renderLandscape = (route: Route, kind: 'land' | 'wide'): ReactElement | null => {
     const nav = <ResponsiveBottomNav active={lastTabRef.current} onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />;
     const sidebar = (activeId: string | null, onSelect: (id: string) => void) => kind === 'wide'
-      ? <DrawerSidebar drawers={homeCards} totalRecords={store.records.length} activeId={activeId} onSelect={onSelect} onCreate={() => navigate('create-drawer')} />
+      ? <DrawerSidebar drawers={homeCards} totalRecords={store.records.length} activeId={activeId} onSelect={onSelect} />
       : undefined;
     if (route === 'home') {
       return <WideFrame kind={kind} route="home" nav={nav} sidebar={sidebar(null, (id) => { setCurrentDrawerId(id); navigate('drawer-detail'); })}>

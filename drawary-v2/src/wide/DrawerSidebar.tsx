@@ -2,14 +2,13 @@ import { drawerIconUrl } from '../data/drawerStyle';
 import type { HomeDrawerCard } from '../screens/HomeScreen';
 import { t } from '../i18n';
 
-/** The drawer list beside the home and the table in wide windows: every drawer with its item count, and "새 서랍 만들기". */
-export function DrawerSidebar({ drawers, totalRecords, activeId, onSelect, onCreate }: {
+/** The drawer list beside the home and the table in wide windows: every drawer with its item count (a new drawer is made with the nav's + button). */
+export function DrawerSidebar({ drawers, totalRecords, activeId, onSelect }: {
   drawers: HomeDrawerCard[];
   totalRecords: number;
   /** The drawer shown on the right; null on the home (nothing open yet). */
   activeId: string | null;
   onSelect: (id: string) => void;
-  onCreate: () => void;
 }) {
   return (
     <aside className="wide-sidebar" aria-label={t('서랍 목록')}>
@@ -36,9 +35,6 @@ export function DrawerSidebar({ drawers, totalRecords, activeId, onSelect, onCre
           </button>
         ))}
       </nav>
-      <button type="button" className="wide-new-drawer" onClick={onCreate}>
-        <span aria-hidden="true">+</span>{t('새 서랍 만들기')}
-      </button>
     </aside>
   );
 }
