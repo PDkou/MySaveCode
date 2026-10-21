@@ -65,6 +65,49 @@ def recolor(img, theme):
     res = np.concatenate([out, alpha[..., None]], -1)
     return Image.fromarray(np.round(np.clip(res, 0, 1) * 255).astype(np.uint8), 'RGBA')
 
+def compose_logo(base, theme, symbol_only=False):
+    """The in-app logo in a theme: the wordmark recoloured, and the lavender flower replaced by that theme's own approved flower
+    (assets/theme/theme_flower_<theme>.webp) with the same white sticker outline. symbol_only: just the flower (brand_symbol_flower_small)."""
+    from PIL import ImageFilter
+    base = base.convert('RGBA')
+    W, H = base.size
+    alpha = np.asarray(base)[..., 3]
+    flower = Image.open(f'public/assets/theme/theme_flower_{theme}.webp').convert('RGBA')
+    flower = flower.crop(flower.getchannel('A').point(lambda v: 255 if v > 20 else 0).getbbox())
+    if symbol_only:
+        x0 = W
+    else:
+        cols = (alpha > 20).sum(0)
+        lo, hi = int(W * 0.12), int(W * 0.34)
+        x0 = lo + int(np.argmin(cols[lo:hi]))        # the gap between the flower and the "D"
+    ys, xs = np.where(alpha[:, :x0] > 20)
+    bx0, bx1, by0, by1 = xs.min(), xs.max(), ys.min(), ys.max()
+    halo = max(2, round(0.075 * H)) if not symbol_only else max(2, round(0.07 * H))
+    box_w, box_h = bx1 - bx0 + 1 - 2 * halo, by1 - by0 + 1 - 2 * halo
+    k = min(box_w / flower.width, box_h / flower.height)
+    fw, fh = max(1, round(flower.width * k)), max(1, round(flower.height * k))
+    flower = flower.resize((fw, fh), Image.LANCZOS)
+    cx, cy = (bx0 + bx1) // 2, (by0 + by1) // 2
+    px, py = cx - fw // 2, cy - fh // 2
+    # white outline = the flower's shape grown by `halo`, softened
+    mask = Image.new('L', (W, H), 0)
+    mask.paste(flower.getchannel('A'), (px, py))
+    grown = mask.filter(ImageFilter.MaxFilter(2 * halo + 1)).filter(ImageFilter.GaussianBlur(1.5))
+    sticker = Image.new('RGBA', (W, H), (255, 255, 255, 0))
+    sticker.putalpha(grown)
+    sticker = Image.merge('RGBA', (Image.new('L', (W, H), 255),) * 3 + (grown,))
+    layer = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    layer.paste(flower, (px, py))
+    if symbol_only:
+        out = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    else:
+        out = recolor(base, theme)
+        arr = np.asarray(out).copy(); arr[:, :x0, 3] = 0       # drop the old flower, keep the wordmark and its outline
+        out = Image.fromarray(arr, 'RGBA')
+    out.alpha_composite(sticker)
+    out.alpha_composite(layer)
+    return out
+
 if __name__ == '__main__':
     n = 0
     for d in DIRS:
@@ -83,6 +126,6 @@ if __name__ == '__main__':
         for theme in THEMES:
             dst = f'public/assets-theme/{theme}/{d}/{name}'
             os.makedirs(os.path.dirname(dst), exist_ok=True)
-            recolor(src, theme).save(dst, 'WEBP', lossless=True, method=6)
+            compose_logo(src, theme, symbol_only=name.startswith('brand_symbol')).save(dst, 'WEBP', lossless=True, method=6)
             n += 1
     print(n, 'files')
