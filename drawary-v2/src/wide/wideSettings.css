@@ -225,17 +225,3 @@
 .wide-sd .uf-header--center .uf-title, .pane-magnifier-inner .uf-header--center .uf-title { font-size: 21px !important; font-weight: 850 !important; letter-spacing: -.5px !important; color: #1b2d65 !important; line-height: 1.25 !important; }
 .wide-sd .uf-header--center .uf-back, .pane-magnifier-inner .uf-header--center .uf-back { position: static !important; left: auto !important; top: auto !important; width: 44px !important; height: 44px !important; margin: 0 !important; padding: 0 !important; transform: none !important; }
 .wide-sd .lang54-title { color: #1b2d65; font-weight: 850; }
-
-/* ---- theme (#39): one large preview of the chosen theme above the five choices ---- */
-.ts39-big { display: none; }
-.wide-sd .ts39-big { display: block; position: relative; width: 100%; max-width: 560px; height: 250px; margin: 4px auto 22px; border-radius: 26px; border: 1px solid var(--preview-border); background: var(--preview-background); box-shadow: 0 6px 20px rgba(65, 50, 90, .07); overflow: hidden; }
-.wide-sd .ts39-big[data-theme="lavender"] { --preview-background: #f5efff; --preview-border: #e6ddfb; --theme-primary: #8051ff; }
-.wide-sd .ts39-big[data-theme="coral"] { --preview-background: #fff1f1; --preview-border: #ffe2e1; --theme-primary: #f4898a; }
-.wide-sd .ts39-big[data-theme="sage"] { --preview-background: #f2faf1; --preview-border: #e6f1e5; --theme-primary: #80b58c; }
-.wide-sd .ts39-big[data-theme="mustard"] { --preview-background: #fff9ef; --preview-border: #f8edd7; --theme-primary: #e9b440; }
-.wide-sd .ts39-big[data-theme="sky"] { --preview-background: #eff7ff; --preview-border: #e0ecfa; --theme-primary: #79b8ea; }
-.wide-sd .ts39-big-flower { position: absolute; left: 28px; top: 20px; height: 104px; width: auto; max-width: 130px; object-fit: contain; }
-.wide-sd .ts39-big-bar { position: absolute; right: 34px; top: 52px; width: 120px; height: 28px; border-radius: 99px; background: var(--theme-primary); opacity: .69; }
-.wide-sd .ts39-big-field { position: absolute; left: 28px; right: 28px; bottom: 74px; height: 56px; border-radius: 18px; background: #fff; box-shadow: 0 2px 9px rgba(100, 100, 100, .05); }
-.wide-sd .ts39-big-field--short { bottom: 22px; right: 42%; height: 40px; }
-.wide-sd .ts39-big-name { position: absolute; right: 30px; bottom: 26px; font-size: 22px; font-weight: 900; letter-spacing: -.4px; color: var(--theme-primary); }
