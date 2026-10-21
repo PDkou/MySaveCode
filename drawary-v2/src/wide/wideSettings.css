@@ -9,7 +9,6 @@
 .wide-sd .sec40-screen, .wide-sd .dmh44-screen, .wide-sd .ts39-screen, .wide-sd .lang54-screen, .wide-sd .help55-screen, .wide-sd .info58-screen, .wide-sd .fb59-screen {
   position: relative; width: 100%; max-width: 1000px; height: auto; min-height: 0; margin: 0 auto; overflow: visible; background: transparent;
 }
-.wide-sd .help55-screen, .wide-sd .info58-screen, .wide-sd .fb59-screen { max-width: 920px; }
 
 /* ---- security (#40) and data management (#44): hero across, the option rows as three cards ---- */
 .wide-sd .sec40-panel, .wide-sd .dmh44-panel {
@@ -75,7 +74,7 @@
 .wide-sd .sec40-screen, .wide-sd .dmh44-screen, .wide-sd .ts39-screen, .wide-sd .lang54-screen, .wide-sd .help55-screen, .wide-sd .info58-screen { display: flex; flex-direction: column; flex: 1 1 auto; }
 .wide-sd .sec40-panel, .wide-sd .dmh44-panel { flex: 1 1 auto; margin-bottom: 24px; }
 .wide-sd .ts39-panel { flex: 0 0 auto; margin-bottom: 24px; }
-.wide-sd .ts39-screen { justify-content: center; }
+.wide-sd .ts39-panel { margin-top: auto; margin-bottom: auto; }
 .wide-sd .sec40-panel { grid-template-rows: auto auto minmax(150px, 1fr) auto; }
 .wide-sd .dmh44-panel { grid-template-rows: auto auto minmax(150px, 1fr); }
 /* the option cards become tall tiles: icon above, text below, the switch or arrow underneath */
@@ -95,4 +94,148 @@
 .wide-sd .lang54-form { flex: 1 1 auto; grid-template-rows: minmax(0, 1fr) auto auto; align-content: stretch; max-height: 640px; }
 .wide-sd .lang54-card .lang54-art { flex: 1 1 auto; height: auto; min-height: 150px; }
 /* help and info: short pages are centred vertically */
-.wide-sd .help55-screen, .wide-sd .info58-screen { justify-content: center; }
+.wide-sd .help55-content { margin-top: auto; margin-bottom: auto; }
+.wide-sd .info58-brand { margin-top: auto; }
+.wide-sd .info58-credit { margin-bottom: auto; }
+
+/* ---- one header and one back arrow for every settings screen (same as the app's shared ScreenHeader: 72 px bar, centred 21 px title, 44 px chevron button) ---- */
+.wide-sd .sec40-header,
+.wide-sd .dmh44-header,
+.wide-sd .ts39-header,
+.wide-sd .ld41-header,
+.wide-sd .ps42-header,
+.wide-sd .bkt45-header,
+.wide-sd .rr50-header,
+.wide-sd .help55-appbar,
+.wide-sd .info58-appbar,
+.wide-sd .guide57-appbar,
+.wide-sd .faq56-appbar,
+.wide-sd .fb59-appbar,
+.pane-magnifier-inner .sec40-header,
+.pane-magnifier-inner .dmh44-header,
+.pane-magnifier-inner .ts39-header,
+.pane-magnifier-inner .ld41-header,
+.pane-magnifier-inner .ps42-header,
+.pane-magnifier-inner .bkt45-header,
+.pane-magnifier-inner .rr50-header,
+.pane-magnifier-inner .help55-appbar,
+.pane-magnifier-inner .info58-appbar,
+.pane-magnifier-inner .guide57-appbar,
+.pane-magnifier-inner .faq56-appbar,
+.pane-magnifier-inner .fb59-appbar { position: relative; height: 72px; margin: 0; padding: 0; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; justify-content: normal; flex: none; }
+.wide-sd .sec40-header h1,
+.wide-sd .dmh44-header h1,
+.wide-sd .ts39-title,
+.wide-sd .ld41-header h1,
+.wide-sd .ps42-header h1,
+.wide-sd .bkt45-header h1,
+.wide-sd .rr50-title,
+.wide-sd .help55-appbar-title,
+.wide-sd .info58-appbar-title,
+.wide-sd .guide57-appbar-title,
+.wide-sd .faq56-appbar h1,
+.wide-sd .fb59-appbar h1,
+.pane-magnifier-inner .sec40-header h1,
+.pane-magnifier-inner .dmh44-header h1,
+.pane-magnifier-inner .ts39-title,
+.pane-magnifier-inner .ld41-header h1,
+.pane-magnifier-inner .ps42-header h1,
+.pane-magnifier-inner .bkt45-header h1,
+.pane-magnifier-inner .rr50-title,
+.pane-magnifier-inner .help55-appbar-title,
+.pane-magnifier-inner .info58-appbar-title,
+.pane-magnifier-inner .guide57-appbar-title,
+.pane-magnifier-inner .faq56-appbar h1,
+.pane-magnifier-inner .fb59-appbar h1 { grid-column: 2; margin: 0; text-align: center; font-size: 21px; line-height: 1.25; font-weight: 850; letter-spacing: -.5px; color: #1b2d65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wide-sd .sec40-back,
+.wide-sd .dmh44-back,
+.wide-sd .ts39-back,
+.wide-sd .ld41-back,
+.wide-sd .ps42-back,
+.wide-sd .bkt45-back,
+.wide-sd .rr50-back,
+.wide-sd .help55-back,
+.wide-sd .info58-back,
+.wide-sd .guide57-back,
+.wide-sd .faq56-back,
+.wide-sd .fb59-back,
+.pane-magnifier-inner .sec40-back,
+.pane-magnifier-inner .dmh44-back,
+.pane-magnifier-inner .ts39-back,
+.pane-magnifier-inner .ld41-back,
+.pane-magnifier-inner .ps42-back,
+.pane-magnifier-inner .bkt45-back,
+.pane-magnifier-inner .rr50-back,
+.pane-magnifier-inner .help55-back,
+.pane-magnifier-inner .info58-back,
+.pane-magnifier-inner .guide57-back,
+.pane-magnifier-inner .faq56-back,
+.pane-magnifier-inner .fb59-back { position: static; grid-column: 1; grid-row: 1; left: auto; top: auto; width: 44px; height: 44px; margin: 0; padding: 0; border: 0; background: transparent; transform: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.wide-sd .sec40-back::before,
+.wide-sd .dmh44-back::before,
+.wide-sd .ts39-back::before,
+.wide-sd .ld41-back::before,
+.wide-sd .ps42-back::before,
+.wide-sd .bkt45-back::before,
+.wide-sd .rr50-back::before,
+.wide-sd .help55-back::before,
+.wide-sd .info58-back::before,
+.wide-sd .guide57-back::before,
+.wide-sd .faq56-back::before,
+.wide-sd .fb59-back::before,
+.pane-magnifier-inner .sec40-back::before,
+.pane-magnifier-inner .dmh44-back::before,
+.pane-magnifier-inner .ts39-back::before,
+.pane-magnifier-inner .ld41-back::before,
+.pane-magnifier-inner .ps42-back::before,
+.pane-magnifier-inner .bkt45-back::before,
+.pane-magnifier-inner .rr50-back::before,
+.pane-magnifier-inner .help55-back::before,
+.pane-magnifier-inner .info58-back::before,
+.pane-magnifier-inner .guide57-back::before,
+.pane-magnifier-inner .faq56-back::before,
+.pane-magnifier-inner .fb59-back::before { content: ''; display: block; position: static; width: 11px; height: 11px; margin: 0; border: 0; border-left: 3px solid var(--tc-7a5cf0,#7a5cf0); border-bottom: 3px solid var(--tc-7a5cf0,#7a5cf0); border-radius: 1px; transform: rotate(45deg); }
+.wide-sd .sec40-back::after,
+.wide-sd .dmh44-back::after,
+.wide-sd .ts39-back::after,
+.wide-sd .ld41-back::after,
+.wide-sd .ps42-back::after,
+.wide-sd .bkt45-back::after,
+.wide-sd .rr50-back::after,
+.wide-sd .help55-back::after,
+.wide-sd .info58-back::after,
+.wide-sd .guide57-back::after,
+.wide-sd .faq56-back::after,
+.wide-sd .fb59-back::after,
+.pane-magnifier-inner .sec40-back::after,
+.pane-magnifier-inner .dmh44-back::after,
+.pane-magnifier-inner .ts39-back::after,
+.pane-magnifier-inner .ld41-back::after,
+.pane-magnifier-inner .ps42-back::after,
+.pane-magnifier-inner .bkt45-back::after,
+.pane-magnifier-inner .rr50-back::after,
+.pane-magnifier-inner .help55-back::after,
+.pane-magnifier-inner .info58-back::after,
+.pane-magnifier-inner .guide57-back::after,
+.pane-magnifier-inner .faq56-back::after,
+.pane-magnifier-inner .fb59-back::after { content: none; display: none; }
+
+/* the shared ScreenHeader screens (language, restore, reset, ...) take the same values, over their per-screen restore rules */
+.wide-sd .uf-header--center, .pane-magnifier-inner .uf-header--center { position: relative !important; top: auto !important; height: 72px !important; margin: 0 !important; padding: 0 !important; }
+.wide-sd .uf-header--center .uf-title, .pane-magnifier-inner .uf-header--center .uf-title { font-size: 21px !important; font-weight: 850 !important; letter-spacing: -.5px !important; color: #1b2d65 !important; line-height: 1.25 !important; }
+.wide-sd .uf-header--center .uf-back, .pane-magnifier-inner .uf-header--center .uf-back { position: static !important; left: auto !important; top: auto !important; width: 44px !important; height: 44px !important; margin: 0 !important; padding: 0 !important; transform: none !important; }
+.wide-sd .lang54-title { color: #1b2d65; font-weight: 850; }
+
+/* ---- theme (#39): one large preview of the chosen theme above the five choices ---- */
+.ts39-big { display: none; }
+.wide-sd .ts39-big { display: block; position: relative; width: 100%; max-width: 560px; height: 250px; margin: 4px auto 22px; border-radius: 26px; border: 1px solid var(--preview-border); background: var(--preview-background); box-shadow: 0 6px 20px rgba(65, 50, 90, .07); overflow: hidden; }
+.wide-sd .ts39-big[data-theme="lavender"] { --preview-background: #f5efff; --preview-border: #e6ddfb; --theme-primary: #8051ff; }
+.wide-sd .ts39-big[data-theme="coral"] { --preview-background: #fff1f1; --preview-border: #ffe2e1; --theme-primary: #f4898a; }
+.wide-sd .ts39-big[data-theme="sage"] { --preview-background: #f2faf1; --preview-border: #e6f1e5; --theme-primary: #80b58c; }
+.wide-sd .ts39-big[data-theme="mustard"] { --preview-background: #fff9ef; --preview-border: #f8edd7; --theme-primary: #e9b440; }
+.wide-sd .ts39-big[data-theme="sky"] { --preview-background: #eff7ff; --preview-border: #e0ecfa; --theme-primary: #79b8ea; }
+.wide-sd .ts39-big-flower { position: absolute; left: 28px; top: 20px; height: 104px; width: auto; max-width: 130px; object-fit: contain; }
+.wide-sd .ts39-big-bar { position: absolute; right: 34px; top: 52px; width: 120px; height: 28px; border-radius: 99px; background: var(--theme-primary); opacity: .69; }
+.wide-sd .ts39-big-field { position: absolute; left: 28px; right: 28px; bottom: 74px; height: 56px; border-radius: 18px; background: #fff; box-shadow: 0 2px 9px rgba(100, 100, 100, .05); }
+.wide-sd .ts39-big-field--short { bottom: 22px; right: 42%; height: 40px; }
+.wide-sd .ts39-big-name { position: absolute; right: 30px; bottom: 26px; font-size: 22px; font-weight: 900; letter-spacing: -.4px; color: var(--theme-primary); }
