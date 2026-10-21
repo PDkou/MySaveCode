@@ -10,18 +10,23 @@ export const setAppScale = (s: number): void => { current = s; };
 /** Android's own tablet breakpoint: the shorter side is at least 600 dp. */
 export const isTabletWindow = (w: number = window.innerWidth, h: number = window.innerHeight): boolean => Math.min(w, h) >= 600;
 
-/** Two phone-width columns side by side, with the divider between them. */
-export const PANE_WIDTH = 430;
-export const PANE_GAP = 24;
-export const WIDE_CONTENT_WIDTH = PANE_WIDTH * 2 + PANE_GAP;
+/** The narrowest layout width of the wide (sidebar) layouts; the window is magnified from this reference like the single column is from 430. */
+export const WIDE_CONTENT_WIDTH = 800;
 
-/** A landscape tablet / unfolded foldable: wide enough for two columns and clearly wider than tall (a near-square window stays a single, fitted column). */
+/** A landscape tablet / unfolded foldable in landscape: room for a sidebar and a content area, clearly wider than tall (a near-square window stays a single, fitted column). */
 export const isWideWindow = (w: number = window.innerWidth, h: number = window.innerHeight): boolean =>
-  isTabletWindow(w, h) && w >= WIDE_CONTENT_WIDTH && w / h >= 1.2;
+  isTabletWindow(w, h) && w >= WIDE_CONTENT_WIDTH && w / h >= 1.15;
+
+/** A landscape phone: too short for the phone layout, wide enough for more columns (no sidebar). */
+export const isLandPhoneWindow = (w: number = window.innerWidth, h: number = window.innerHeight): boolean =>
+  !isTabletWindow(w, h) && w > h && w >= 640;
+
+export type LayoutKind = 'single' | 'land' | 'wide';
+export const layoutKindFor = (w: number, h: number): LayoutKind => (isWideWindow(w, h) ? 'wide' : isLandPhoneWindow(w, h) ? 'land' : 'single');
 
 /** The magnification for a window: 1 on phones; on tablets as large as fits the width of the column(s) and the 844 px screen height, at most 2. */
 export function appScaleFor(w: number, h: number): number {
   if (!isTabletWindow(w, h)) return 1;
-  const s = Math.min(w / (isWideWindow(w, h) ? WIDE_CONTENT_WIDTH : PANE_WIDTH), h / 844, 2);
+  const s = Math.min(w / (isWideWindow(w, h) ? WIDE_CONTENT_WIDTH : 430), h / 844, 2);
   return s < 1.05 ? 1 : Math.round(s * 100) / 100;
 }

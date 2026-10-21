@@ -23,6 +23,8 @@ interface TableViewScreenProps {
   onExportCsv?: (rows: TableRowData[]) => void;
   onExportPdf?: (rows: TableRowData[]) => void;
   onOpenRecord?: (recordId: string) => void;
+  /** Landscape windows: fills the space it is given (instead of the fixed 390 x 844 screen) and uses a shorter header. */
+  fill?: boolean;
 }
 
 /**
@@ -65,6 +67,7 @@ export function TableViewScreen({
   onExportCsv,
   onExportPdf,
   onOpenRecord,
+  fill = false,
 }: TableViewScreenProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
@@ -84,13 +87,13 @@ export function TableViewScreen({
   const activeFilters = view.rules.filter((r) => columns.some((c) => c.id === r.columnId)).length;
 
   return (
-    <section className="tv-screen">
+    <section className={`tv-screen${fill ? ' tv-screen--fill' : ''}`}>
       <ScreenHeader
         variant="stacked"
         title={drawerName}
         subtitle={t('표 보기')}
         onBack={onBack}
-        height={103}
+        height={fill ? 76 : 103}
         rightSlot={
           <>
             <button className="tv-export" type="button" onClick={() => setExportOpen((o) => !o)} aria-expanded={exportOpen} aria-label={t('표 내보내기 메뉴')}>•••</button>

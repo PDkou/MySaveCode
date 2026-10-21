@@ -53,6 +53,8 @@ interface RecordDetailScreenProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onOpenPhoto?: () => void;
+  /** Drawn inside the landscape drawer view's right-hand pane: no header or back arrow, just the "•••" menu above the same content. */
+  embedded?: boolean;
 }
 
 /**
@@ -96,12 +98,32 @@ export function RecordDetailScreen({
   onEdit,
   onDelete,
   onOpenPhoto,
+  embedded = false,
 }: RecordDetailScreenProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   return (
-    <section className="rd-screen">
+    <section className={`rd-screen${embedded ? ' rd-screen--embedded' : ''}`}>
+      {embedded ? (
+        <div className="rd-embedded-bar">
+          <button
+            className="rd-menu"
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-expanded={menuOpen}
+            aria-label={t('보관품 메뉴')}
+          >•••</button>
+          {menuOpen && (
+            <div className="rd-menu-popover" role="menu">
+              <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setDeleteConfirmOpen(true); }}>
+                <img src="/assets/ui-icons/icon_delete.webp" alt="" />
+                <span>{t('보관품 삭제')}</span>
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
       <ScreenHeader
         variant="stacked"
         title={t('보관품 상세')}
@@ -127,6 +149,7 @@ export function RecordDetailScreen({
           </>
         }
       />
+      )}
 
       <section className="rd-content">
         {photoLoading ? (

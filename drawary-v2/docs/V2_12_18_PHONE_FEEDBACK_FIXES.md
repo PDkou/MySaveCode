@@ -46,17 +46,24 @@ or needs scrolling, but there are wide empty sides; a real wide layout (two pane
 moves things by pixels divides by the scale (photo pan; the home reorder already measured its own scale). Keyboard open: the scale is
 frozen so the screen does not jump. Tested in Chromium only (hit-testing and clicks work under the transform); real tablet: not tested.
 
-## 6. Wide windows: two columns (landscape tablets, unfolded foldables) — PREVIEW, awaiting owner approval
+## 6. Landscape layouts (landscape phones, landscape tablets, unfolded foldables) — PREVIEW, awaiting owner approval
 
-Why: section 5 left landscape tablets with one fitted phone screen and empty sides. The owner asked for a real wide layout.
+Why: section 5 left landscape windows with one fitted phone screen. The owner asked for a real wide layout and supplied three
+reference proposals (home, drawer list, table view; non-final, not approved sources). This is my reading of them.
 
-What it is (no approved screen is redrawn):
-- A window at least 600 dp on the short side, at least 884 dp wide and at least 1.2 times wider than tall (`isWideWindow`) shows two phone-width (430) columns with a thin divider.
-- Left column = the tab the person is on (home / search / stats / settings) with the approved bottom nav, exactly as on a phone.
-- Right column = whatever they opened from it (drawer, item, theme settings, ...). With nothing open it shows one quiet hint line (new text, KR/JA/EN: "왼쪽에서 고르면 여기에 열려요.").
-- Splash, onboarding, PIN screens and the backup/restore progress screens stay full width.
-- The two columns are magnified as one piece on big tablets (`WIDE_CONTENT_WIDTH` = 884), same as section 5.
-- Phones, portrait tablets and near-square windows are unchanged (still one column). `App.tsx` now picks screens through `renderRoute(route)`; with one column it returns exactly what it returned before.
+Window classes (`src/components/appScale.ts`, `layoutKindFor`):
+- `single` — phones in portrait, portrait tablets, near-square windows: unchanged (48 captures at 390x844, 320x640, 430x932 and 800x1280 are pixel-identical to the previous build apart from sub-threshold render noise).
+- `land` — a phone turned sideways (short side < 600 dp, width >= 640): no sidebar.
+- `wide` — a tablet / unfolded foldable in landscape (short side >= 600 dp, width >= 800 dp, width >= 1.15 x height): sidebar layouts, magnified as one piece from 800 dp wide / 844 dp tall like section 5.
 
-Preview images: `docs/preview/wide/` (Chromium 1280×800 and 1920×1200, sample data).
-Not decided / not verified: the hint line and divider are my additions (not from an approved design); the bottom nav keeps its white band, which shows as a pale strip against the cream background; nothing here was run on a real tablet.
+What each class gets (home, drawer #15 and table #20 only; every other screen keeps its phone screen, in `wide` next to the tab screen as in the first preview):
+- Home: the approved drawer cards (same 165 x 158 card, art and colours) in as many columns as fit. `wide` adds a drawer sidebar (every drawer with its count, "모든 서랍", "새 서랍 만들기"); `land` puts the brand and counts in the top row and shrinks the grid to 80%.
+- Drawer: left column = back arrow, drawer name and count, 카드 보기 / 표 보기, filter chips. Right = search + "•••" (표로 보기 / 서랍 관리, as in #15). `wide`: list (#15's own row design) beside the chosen item (#16's content, embedded); `land`: grid of item cards, tapping one opens #16 as on a phone.
+- Table: the approved table fills the window; `wide` adds the same drawer sidebar (switching drawer keeps the table open). Sort / filter sheets are the approved ones.
+- The approved bottom nav stays at the bottom (390 artwork centered); in these three screens it is shown on a landscape window although on phones it is hidden there (the proposals show it).
+
+Decisions taken as recommended and approved by the owner in chat: filter chips come from the drawer's first select field (none when it has none; the "전체" chip clears); no gear icon in the header (settings is a tab), no card/list toggle on the home (no list design exists), no "칼럼 설정" button (no such feature).
+
+Added by me, not from an approved design: sidebar, chip column, 카드 보기 / 표 보기 switch, item card for `land`, the hint texts (new KR/JA/EN strings), the divider lines, spacing and sizes.
+Preview images: `docs/preview/wide/` (Chromium; sample data; 1280x800, 1920x1200, 844x390 landscape phone, 837x697 foldable).
+Not verified: real devices; `land` is cramped (the approved nav alone is 94 of ~390 px), so the lists scroll.

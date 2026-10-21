@@ -84,7 +84,11 @@ import { InfoScreen } from './screens/InfoScreen';
 import { FeedbackScreen } from './screens/FeedbackScreen';
 import { FixedCanvas } from './components/FixedCanvas';
 import { WideSplit } from './components/WideSplit';
-import { useAppWide } from './components/appLayout';
+import { useAppLayout } from './components/appLayout';
+import { WideFrame } from './wide/WideFrame';
+import { DrawerSidebar } from './wide/DrawerSidebar';
+import { WideHome } from './wide/WideHome';
+import { WideDrawer } from './wide/WideDrawer';
 import { getLocale, t, K } from './i18n';
 import { closeOpenOverlay } from './flow/overlayBack';
 
@@ -120,7 +124,7 @@ export default function App() {
   const [boot, setBoot] = useState<'splash' | 'fading' | 'done'>(() => (window.location.hash === '' || window.location.hash === '#' ? 'splash' : 'done'));
   const [bootTimeUp, setBootTimeUp] = useState(false);
   const lastTabRef = useRef<BottomNavTab>('home');
-  const wide = useAppWide();
+  const layout = useAppLayout();
   const store = useStore();
   const [currentDrawerId, setCurrentDrawerId] = useState<string | null>(null);
 
@@ -179,6 +183,13 @@ export default function App() {
   // Bumped after photos change so the readers below load them again.
   const [photoVersion, setPhotoVersion] = useState(0);
   const [recordQuery, setRecordQuery] = useState('');
+  // Landscape drawer view: the first select field's values are filter chips (none when the drawer has no select field).
+  const [chipSel, setChipSel] = useState<{ drawerId: string; key: string } | null>(null);
+  const chipField = currentFields.find((f) => f.kind === 'select' && f.options.length > 0);
+  const activeChip = chipField && currentDrawer && chipSel?.drawerId === currentDrawer.id && chipField.options.includes(chipSel.key) ? chipSel.key : null;
+  const visibleRecords = currentRecords
+    .filter((r) => recordMatches(currentFields, r, recordQuery))
+    .filter((r) => !chipField || activeChip === null || r.values[chipField.id] === activeChip);
   // Where #16 was opened from, so back / delete return there (#15, the search tab, or the table).
   const [recordBack, setRecordBack] = useState<'drawer-detail' | 'search' | 'table-view'>('drawer-detail');
   const [globalQuery, setGlobalQuery] = useState('');
@@ -460,6 +471,18 @@ export default function App() {
     else if ((route === 'restore-review' || route === 'restore-progress') && !restorePlan) navigate('restore-file-picker');
   }, [route, store.status, currentDrawer, selectedRecord, manageField, navigate]);
 
+  // Wide windows show an item next to its list, so the single-item screen (#16) is skipped when it was reached from that list
+  // (back from editing or from the photo viewer lands on the drawer, with the same item chosen).
+  useEffect(() => {
+    if (layout === 'wide' && route === 'record-detail' && recordBack === 'drawer-detail' && store.drawers.length > 0) navigate('drawer-detail', true);
+  }, [layout, route, recordBack, store.drawers.length, navigate]);
+  // Wide drawer view: the right-hand pane always shows an item of the list (the first one until another is picked).
+  useEffect(() => {
+    if (layout !== 'wide' || route !== 'drawer-detail' || store.status !== 'ready') return;
+    const first = visibleRecords[0]?.id ?? null;
+    if (recordDetailId === null ? first !== null : !visibleRecords.some((r) => r.id === recordDetailId)) setRecordDetailId(first);
+  });
+
   // The phone's back button (Android shell): does what the screen's own back arrow does. Anything open on top (dialog,
   // menu, PIN gate) closes first; on Home (or the lock screen) it returns false and the shell leaves the app.
   const hardwareBack = (): boolean => {
@@ -528,9 +551,104 @@ export default function App() {
     </main>;
   }
 
+  // Landscape windows (see components/appScale.ts): the home, the drawer (#15) and the table (#20) get their own layouts, built
+  // from the same data, handlers and approved pieces as the phone screens. Everything else keeps the phone screens.
+  const recordFieldRows = (rec: (typeof store.records)[number]): RecordFieldValue[] => {
+    const sum = summarizeRecord(currentFields, rec);
+    return currentFields
+      .filter((f) => hasControl(f.kind) && f.id !== sum.titleFieldId && (f.kind === 'check' || rec.values[f.id] != null))
+      .map((f) => ({
+        id: f.id, label: f.name, value: formatValue(f, rec.values[f.id]),
+        type: (f.kind === 'long_text' ? 'note' : f.kind === 'check' ? 'checkbox' : f.kind) as RecordFieldType,
+      }));
+  };
+  const renderLandscape = (route: Route, kind: 'land' | 'wide'): ReactElement | null => {
+    const nav = <ResponsiveBottomNav active={lastTabRef.current} onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />;
+    const sidebar = (activeId: string | null, onSelect: (id: string) => void) => kind === 'wide'
+      ? <DrawerSidebar drawers={homeCards} totalRecords={store.records.length} activeId={activeId} onSelect={onSelect} onCreate={() => navigate('create-drawer')} />
+      : undefined;
+    if (route === 'home') {
+      return <WideFrame kind={kind} route="home" nav={nav} sidebar={sidebar(null, (id) => { setCurrentDrawerId(id); navigate('drawer-detail'); })}>
+        <WideHome
+          drawers={homeCards}
+          totalRecords={store.records.length}
+          withBrand={kind === 'land'}
+          onOpenDrawer={(id) => { setCurrentDrawerId(id); navigate('drawer-detail'); }}
+          onCreateDrawer={() => navigate('create-drawer')}
+          onEdit={() => navigate('home-edit')}
+        />
+      </WideFrame>;
+    }
+    if (route === 'drawer-detail' && currentDrawer) {
+      const summaries: DrawerRecordSummary[] = visibleRecords.map((r) => {
+        const sum = summarizeRecord(currentFields, r);
+        return { id: r.id, title: sum.title, subtitle: sum.subtitle, dateLabel: sum.dateLabel, thumbnailUri: recordThumbs[r.id] };
+      });
+      const paneRecord = selectedRecord && selectedRecord.drawerId === currentDrawer.id ? selectedRecord : undefined;
+      const detail = kind === 'wide' ? (paneRecord ? (
+        <RecordDetailScreen
+          key={paneRecord.id}
+          embedded
+          drawerName={currentDrawer.name}
+          title={summarizeRecord(currentFields, paneRecord).title}
+          photoUri={selectedPhotos.urls[0] ?? ''}
+          photoLoading={selectedPhotos.blobs === null}
+          fields={recordFieldRows(paneRecord)}
+          onEdit={() => { setRecordBack('drawer-detail'); setEditPhotos(null); setEditKey((k) => k + 1); navigate('record-edit'); }}
+          onDelete={() => { void guardedSave(async () => { await actions.deleteRecord(paneRecord.id); setRecordDetailId(null); }); }}
+          onOpenPhoto={() => { setRecordBack('drawer-detail'); navigate('photo-viewer'); }}
+        />
+      ) : <p className="wd-detail-empty">{t('보관품을 고르면 여기에 보여요.')}</p>) : undefined;
+      return <WideFrame kind={kind} route="drawer-detail" nav={nav}>
+        <WideDrawer
+          kind={kind}
+          drawerName={currentDrawer.name}
+          recordCount={currentRecords.length}
+          fallbackIconKey={currentDrawer.iconKey}
+          records={summaries}
+          chipsLabel={chipField?.name}
+          chips={chipField ? chipField.options.map((o) => ({ key: o, label: o })) : []}
+          activeChip={activeChip}
+          onChip={(key) => setChipSel(key === null ? null : { drawerId: currentDrawer.id, key })}
+          query={recordQuery}
+          onSearch={setRecordQuery}
+          selectedId={paneRecord?.id ?? null}
+          onSelect={(id) => { if (kind === 'wide') setRecordDetailId(id); else openRecord(id, 'drawer-detail'); }}
+          detail={detail}
+          onBack={() => { setRecordQuery(''); returnToTab(); }}
+          onOpenTable={() => navigate('table-view')}
+          onOpenManage={() => navigate('drawer-manage')}
+          onFillDrawer={() => startFill('drawer-detail')}
+        />
+      </WideFrame>;
+    }
+    if (route === 'table-view' && currentDrawer) {
+      return <WideFrame kind={kind} route="table-view" nav={nav} sidebar={sidebar(currentDrawer.id, (id) => setCurrentDrawerId(id))}>
+        <TableViewScreen
+          fill
+          key={currentDrawer.id}
+          drawerName={drawerDetailName}
+          recordCount={currentRecords.length}
+          columns={tableColumns}
+          rows={tableRows}
+          view={tableView}
+          onViewChange={saveTableView}
+          onBack={() => navigate('drawer-detail')}
+          onExportCsv={(shown) => exportTable('csv', shown)}
+          onExportPdf={(shown) => exportTable('pdf', shown)}
+          onOpenRecord={(id) => openRecord(id, 'table-view')}
+        />
+      </WideFrame>;
+    }
+    return null;
+  };
   // Every screen's markup, picked by route. Phones and portrait tablets draw just one of them; a wide window (landscape tablet,
   // unfolded foldable) draws two side by side (see WideSplit), so this is a function of the route instead of the open route.
-  const renderRoute = (route: Route): ReactElement => {
+  const renderRoute = (route: Route, phoneOnly = false): ReactElement => {
+    if (!phoneOnly && layout !== 'single' && store.drawers.length > 0) {
+      const landscape = renderLandscape(route, layout);
+      if (landscape) return landscape;
+    }
     if (route === 'splash') {
       return <main className="drawary-app-shell drawary-splash-route" data-route="splash"><SplashScreen fadingOut={false}/></main>;
     }
@@ -1416,12 +1534,7 @@ export default function App() {
       // returns to #15. Tapping the photo opens #19.
       if (!selectedRecord || !currentDrawer) return <main className="drawary-app-shell" data-route="record-detail" />;
       const sum = summarizeRecord(currentFields, selectedRecord);
-      const rows: RecordFieldValue[] = currentFields
-        .filter((f) => hasControl(f.kind) && f.id !== sum.titleFieldId && (f.kind === 'check' || selectedRecord.values[f.id] != null))
-        .map((f) => ({
-          id: f.id, label: f.name, value: formatValue(f, selectedRecord.values[f.id]),
-          type: (f.kind === 'long_text' ? 'note' : f.kind === 'check' ? 'checkbox' : f.kind) as RecordFieldType,
-        }));
+      const rows = recordFieldRows(selectedRecord);
       return <main className="drawary-app-shell" data-route="record-detail">
         <FixedCanvas height={844}>
           <RecordDetailScreen
@@ -1600,12 +1713,14 @@ export default function App() {
       </main>
     );
   };
-  // A wide window keeps the tab screen (home, search, ...) on the left and opens everything else on the right, so a drawer
-  // opens beside the drawer list instead of replacing it. Splash, onboarding and the PIN screens stay full width.
-  const fullWidth = route === 'splash' || route === 'onboarding' || route === 'app-lock' || route === 'backup-progress' || route === 'restore-progress';
-  if (wide && !fullWidth) {
+  // A wide window keeps the tab screen (search, stats, settings) on the left and opens everything else on the right, so a screen
+  // opens beside the one it came from. The home, the drawer and the table have their own wide layouts (renderLandscape); splash,
+  // onboarding, the PIN and progress screens and the home editor stay full width.
+  const fullWidth = route === 'splash' || route === 'onboarding' || route === 'app-lock' || route === 'backup-progress' || route === 'restore-progress' || route === 'home-edit';
+  const ownLayout = store.drawers.length > 0 && (route === 'home' || route === 'drawer-detail' || route === 'table-view');
+  if (layout === 'wide' && !fullWidth && !ownLayout) {
     const tab = isTab(route) ? route : lastTabRef.current;
-    return <WideSplit left={renderRoute(tab)} right={isTab(route) ? null : renderRoute(route)} />;
+    return <WideSplit left={renderRoute(tab, true)} right={isTab(route) ? null : renderRoute(route, true)} />;
   }
   return renderRoute(route);
 }

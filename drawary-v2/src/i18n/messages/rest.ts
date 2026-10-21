@@ -271,4 +271,8 @@ export const rest: Messages = {
   'Google Drive에 저장하지 못했어요.': { ja: 'Google Driveに保存できませんでした。', en: 'Couldn\'t save to Google Drive.' },
   '아니요': { ja: 'いいえ', en: 'No' },
   '왼쪽에서 고르면 여기에 열려요.': { ja: '左で選ぶと、ここに開きます。', en: 'Pick something on the left and it opens here.' },
+  '보관품을 고르면 여기에 보여요.': { ja: 'アイテムを選ぶと、ここに表示されます。', en: 'Pick an item and it shows up here.' },
+  '서랍 목록': { ja: 'ひきだし一覧', en: 'Drawer list' },
+  '모든 서랍': { ja: 'すべてのひきだし', en: 'All drawers' },
+  '카드 보기': { ja: 'カード表示', en: 'Cards' },
 };
