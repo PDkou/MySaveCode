@@ -432,7 +432,7 @@ export default function App() {
   const [faqTopic, setFaqTopic] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    const update = () => setRoute(parseRoute());
+    const update = () => { const next = parseRoute(); if (isTab(next)) lastTabRef.current = next; setRoute(next); };
     window.addEventListener('hashchange', update);
     return () => window.removeEventListener('hashchange', update);
   }, []);
@@ -588,7 +588,9 @@ export default function App() {
     );
   };
   const renderLandscape = (route: Route, kind: 'land' | 'wide'): ReactElement | null => {
-    const nav = <ResponsiveBottomNav active={lastTabRef.current} onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />;
+    // The tab that is lit: the tab screen itself, the settings tab for every settings screen, else the tab this was opened from.
+    const activeTab: BottomNavTab = isTab(route) ? route : SETTINGS_PANES[route] ? 'settings' : lastTabRef.current;
+    const nav = <ResponsiveBottomNav active={activeTab} onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />;
     const sidebar = (activeId: string | null, onSelect: (id: string) => void) => kind === 'wide'
       ? <DrawerSidebar drawers={homeCards} totalRecords={store.records.length} activeId={activeId} onSelect={onSelect} />
       : undefined;
