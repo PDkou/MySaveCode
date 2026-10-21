@@ -27,7 +27,8 @@
   flex: 0 0 auto;
   padding: 30px 22px 0;
 }
-.global-search-brand { width: 151px; height: auto; display: block; }
+.global-search-brand { width: var(--brand-w); height: auto; display: block; margin: calc(var(--brand-top) - 38px) 0 0 calc(var(--brand-left) - 22px); }
+.global-search-header .global-search-tagline { margin: calc(var(--brand-tag-y) - var(--brand-w) * .296) 0 0 calc(var(--brand-left) + var(--brand-tag-x) - 22px); font-size: 10.5px; line-height: 14px; font-weight: 500; color: #828dae; }
 .global-search-header h1 {
   margin: 15px 0 0;
   font-size: 22px;

@@ -19,18 +19,18 @@
 
 .stats-brand {
   display: block;
-  height: 58px;
-  width: auto;
-  margin-left: -16px;
-  margin-top: -5px;
+  width: var(--brand-w);
+  height: auto;
+  margin-left: calc(var(--brand-left) - 20px);
+  margin-top: calc(var(--brand-top) - 35px);
 }
 
 .stats-tagline {
-  margin: -3px 0 0 40px;
-  font-size: 11px;
+  margin: calc(var(--brand-tag-y) - var(--brand-w) * .296) 0 0 calc(var(--brand-left) + var(--brand-tag-x) - 20px);
+  font-size: 10.5px;
+  line-height: 14px;
   color: var(--tc-9b95af,#6e6687);
   font-weight: 500;
-  margin-top: -10px;
 }
 
 .stats-header-counts {

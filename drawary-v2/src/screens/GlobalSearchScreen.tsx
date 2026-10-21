@@ -50,7 +50,8 @@ export function GlobalSearchScreen({ records, onOpenRecord, query: controlledQue
     <FixedCanvas height={750}>
     <div className="global-search-screen">
       <header className="global-search-header">
-        <img className="global-search-brand" src="/assets/global-search-approved/brand.webp" alt="Drawary" />
+        <img className="global-search-brand" src="/assets/brand/brand_lockup_horizontal.webp" alt="Drawary" />
+        <p className="global-search-tagline">{t('나만의 소중한 것들을, 더 특별하게')}</p>
         <h1>{t('검색')}</h1>
         <p>{t('모든 서랍의 보관품을 한 번에 찾아보세요.')}</p>
       </header>

@@ -1,4 +1,15 @@
 /* Developer harness only — not a replacement for the 59 approved screen designs. */
+/* The logo at the top of the tab screens (home, search, stats): one size and one place everywhere. The logo picture has a little
+   empty margin round the drawing (ink starts at 9.7 % of its width and 2.9 % of its width from the top), so its box is placed
+   from where the drawing should start. Landscape phones are short, so the logo is smaller and higher there. */
+:root {
+  --brand-w: 196px; --brand-ink-left: 24px; --brand-ink-top: 36px;
+  --brand-left: calc(var(--brand-ink-left) - var(--brand-w) * .097);
+  --brand-top: calc(var(--brand-ink-top) - var(--brand-w) * .029);
+  --brand-tag-x: calc(var(--brand-w) * .291);
+  --brand-tag-y: calc(var(--brand-w) * .248);
+}
+:root[data-layout-kind="land"] { --brand-w: 130px; --brand-ink-top: 12px; }
 :root { font-family: 'Noto Sans CJK KR', 'Noto Sans KR', 'Malgun Gothic', sans-serif; color: #26385e; background: #fffaf2; font-synthesis: none; }
 * { box-sizing: border-box; }
 html, body, #root { width: 100%; min-height: 100%; margin: 0; }

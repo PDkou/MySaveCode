@@ -36,8 +36,8 @@
   -webkit-font-smoothing: antialiased;
 }
 .hs-screen button { font: inherit; }
-.hs-brand { position: absolute; left: 5px; top: 31px; width: 196px; height: auto; user-select: none; }
-.hs-tagline { position: absolute; left: 62px; top: 79px; margin: 0; font-size: 10.5px; font-weight: 500; line-height: 14px; color: #828dae; letter-spacing: 0; white-space: nowrap; }
+.hs-brand { position: absolute; left: var(--brand-left); top: var(--brand-top); width: var(--brand-w); height: auto; user-select: none; }
+.hs-tagline { position: absolute; left: calc(var(--brand-left) + var(--brand-tag-x)); top: calc(var(--brand-top) + var(--brand-tag-y)); margin: 0; font-size: 10.5px; font-weight: 500; line-height: 14px; color: #828dae; letter-spacing: 0; white-space: nowrap; }
 .hs-counts { position: absolute; right: 22px; top: 49px; display: flex; flex-direction: column; align-items: flex-end; font-size: 14px; line-height: 22px; font-weight: 600; color: var(--tc-5f5486,#5f5486); letter-spacing: -.5px; }
 .hs-counts b { color: var(--tc-7657df,#7657df); font-weight: 700; }
 .hs-heading { position: absolute; left: 22px; top: 109px; margin: 0; font-size: 17px; line-height: 26px; font-weight: 600; color: #13265f; letter-spacing: 0; }

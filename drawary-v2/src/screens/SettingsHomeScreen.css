@@ -18,18 +18,17 @@
 .settings-home-screen button { font: inherit; }
 
 .settings-home-header {
-  height: 86px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px 20px 0;
+  padding: 30px 20px 0;
 }
+.settings-home-brand { display: block; width: var(--brand-w); height: auto; margin: calc(var(--brand-top) - 30px) 0 0 calc(var(--brand-left) - 20px); }
+.settings-home-header .settings-home-tagline { margin: calc(var(--brand-tag-y) - var(--brand-w) * .296) 0 0 calc(var(--brand-left) + var(--brand-tag-x) - 20px); font-size: 10.5px; line-height: 14px; font-weight: 500; color: #828dae; }
 .settings-home-title {
-  text-align: center;
-  font-size: 21px;
-  font-weight: 900;
-  letter-spacing: -.65px;
-  color: #1959a6;
+  margin: 10px 0 0;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+  color: #28396d;
 }
 
 .settings-home-hero {

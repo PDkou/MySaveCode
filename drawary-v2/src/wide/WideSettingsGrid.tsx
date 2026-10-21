@@ -13,6 +13,10 @@ export function WideSettingsGrid(props: SettingsHomeAction) {
   return (
     <section className="wsg">
       <header className="wsg-head">
+        <div className="wsg-brand">
+          <img src="/assets/brand/brand_lockup_horizontal.webp" alt="Drawary" draggable={false} />
+          <p>{t('나만의 소중한 것들을, 더 특별하게')}</p>
+        </div>
         <h1>{t('설정')}</h1>
         <div className="wsg-hero">
           <h2>{t('Drawary 설정')}</h2>

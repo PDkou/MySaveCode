@@ -57,7 +57,9 @@ export function SettingsHomeScreen(props: SettingsHomeAction) {
     <FixedCanvas height={750}>
       <div className="settings-home-screen">
         <header className="settings-home-header">
-          <div className="settings-home-title">{t('설정')}</div>
+          <img className="settings-home-brand" src="/assets/brand/brand_lockup_horizontal.webp" alt="Drawary" draggable={false} />
+          <p className="settings-home-tagline">{t('나만의 소중한 것들을, 더 특별하게')}</p>
+          <h1 className="settings-home-title">{t('설정')}</h1>
         </header>
 
         <section className="settings-home-hero">

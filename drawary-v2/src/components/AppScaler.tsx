@@ -27,7 +27,7 @@ export function AppScaler({ children }: { children: ReactNode }) {
   const s = appScaleFor(size.w, size.h);
   setAppScale(s);
   const layout = layoutKindFor(size.w, size.h);
-  useEffect(() => { setAppLayout(layout); }, [layout]);
+  useEffect(() => { setAppLayout(layout); document.documentElement.dataset.layoutKind = layout; }, [layout]);
   if (s === 1) return <>{children}</>;
   return (
     <div className="drawary-scaler" style={{ width: size.w / s, height: size.h / s, transform: `scale(${s})` }}>

@@ -113,3 +113,9 @@ Second delivery (same day, applied too): warning triangle and pink speech bubble
 All twelve soft pictures from the sharpness audit are now replaced by high-resolution art.
 Also fixed: the feedback hero card clipped its last text line (fixed height 145 px -> min-height).
 Feedback screen (owner idea, approved): a fifth type "응원 메시지" with the heart speech bubble (first delivery, picture 4 -> `feedback_cheer.webp`; mail type key `cheer`); "기타" now sits alone on the last row. A "store review" link was tried inside that tab and removed: the owner wants it in Settings instead, on hold until the app is on Google Play (store URL would be `https://play.google.com/store/apps/details?id=com.howlingcreativestudio.drawary`; the app shell opens external links on the phone).
+
+### 8.2 Top logo of the tab screens, one size and one place (owner request)
+
+Measured before: phone home/stats 196 px wide but search 151 px (other file, lower and further right, no tagline); landscape phone home 120 / search 151 / stats 196; tablet sidebar 152; settings had no logo.
+Now: the logo size and place come from CSS variables in `styles.css` (`--brand-w`, `--brand-ink-left/-top`, derived box position and tagline offset, because the logo picture has an empty margin round the drawing). 196 px on phones and in the wide panes, 170 px above the tablet drawer list, 130 px and higher on landscape phones (`:root[data-layout-kind="land"]`, set by `AppScaler`). Home, search, stats and settings (new: logo + tagline + left-aligned title like search/stats; its title colour now matches) use the same lockup picture; search no longer uses `global-search-approved/brand.webp`. In the wide panes the drawing lines up with the content's left edge.
+
