@@ -84,14 +84,8 @@ def compose_logo(base, theme, symbol_only=False):
     bx0, bx1, by0, by1 = xs.min(), xs.max(), ys.min(), ys.max()
     halo = max(2, round(0.075 * H)) if not symbol_only else max(2, round(0.07 * H))
     box_w, box_h = bx1 - bx0 + 1 - 2 * halo, by1 - by0 + 1 - 2 * halo
-    # the same visual size for every flower: equal area (not equal bounding box), as large as the box allows
-    area = lambda im: float((np.asarray(im.getchannel('A')) / 255.0).sum())
-    ref = Image.open('public/assets/theme/theme_flower_lavender.webp').convert('RGBA')
-    ref = ref.crop(ref.getchannel('A').point(lambda v: 255 if v > 20 else 0).getbbox())
-    k_ref = min(box_w / ref.width, box_h / ref.height)
-    target = area(ref) * k_ref * k_ref
-    k = (target / area(flower)) ** 0.5
-    k = min(k, box_w / flower.width, box_h / flower.height)
+    # the same footprint as the lavender flower it replaces: as tall as its box, or as wide as the gap before the "D" allows
+    k = min(box_h / flower.height, (box_w + halo) / flower.width)
     fw, fh = max(1, round(flower.width * k)), max(1, round(flower.height * k))
     flower = flower.resize((fw, fh), Image.LANCZOS)
     cx, cy = (bx0 + bx1) // 2, (by0 + by1) // 2

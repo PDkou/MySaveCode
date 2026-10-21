@@ -97,3 +97,20 @@
   top: 0;
   height: 94px;
 }
+
+/* The footer picture's "+" is a 1x picture (soft on phone screens); the same button, drawn from the approved add icon at 4x, sits exactly over it
+   (see scripts/make_nav_hires.py). */
+.drawary-dynamic-bottom-nav__plus { position: absolute; left: 165px; top: 13px; width: 61px; height: 61px; display: block; pointer-events: none; user-select: none; }
+
+/* Pressing a tab: a soft disc grows under the finger; the "+" dips like a real button. */
+.drawary-dynamic-bottom-nav__hotspot { transition: none; }
+.drawary-dynamic-bottom-nav__hotspot:not(.drawary-dynamic-bottom-nav__hotspot--add)::after {
+  content: ''; position: absolute; left: 50%; top: 12px; width: 62px; height: 62px; margin-left: -31px; border-radius: 50%;
+  background: rgba(var(--tr-118-87-232,118,87,232), .14); opacity: 0; scale: .7; transition: opacity .14s ease, scale .14s ease; pointer-events: none;
+}
+.drawary-dynamic-bottom-nav__hotspot:not(.drawary-dynamic-bottom-nav__hotspot--add):active::after { opacity: 1; scale: 1; }
+.drawary-dynamic-bottom-nav__plus { transition: scale .12s ease; }
+.drawary-dynamic-bottom-nav:has(.drawary-dynamic-bottom-nav__hotspot--add:active) .drawary-dynamic-bottom-nav__plus { scale: .92; }
+@media (prefers-reduced-motion: reduce) {
+  .drawary-dynamic-bottom-nav__hotspot::after, .drawary-dynamic-bottom-nav__plus { transition: none; }
+}

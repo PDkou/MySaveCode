@@ -119,10 +119,12 @@ export function WideDrawer(p: WideDrawerProps) {
           </div>
         )}
 
-        <button className="dd-fill wd-fill" type="button" onClick={p.onFillDrawer}>
-          <img src="/assets/ui-icons/icon_add.webp" alt="" />
-          <span>{t('서랍 채우기')}</span>
-        </button>
+        <div className="wd-fillbar">
+          <button className="dd-fill wd-fill" type="button" onClick={p.onFillDrawer}>
+            <img src="/assets/ui-icons/icon_add.webp" alt="" />
+            <span>{t('서랍 채우기')}</span>
+          </button>
+        </div>
       </div>
     </section>
   );

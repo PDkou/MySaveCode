@@ -56,6 +56,12 @@ export function BottomNavFinalConfirmed({
         alt=""
         draggable={false}
       />
+      <img
+        className="drawary-dynamic-bottom-nav__plus"
+        src={`${assetRoot}/plus_button_hires.png`}
+        alt=""
+        draggable={false}
+      />
 
       <span
         className="drawary-dynamic-bottom-nav__active-pill"

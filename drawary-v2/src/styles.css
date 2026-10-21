@@ -64,3 +64,15 @@ html[lang="ja"] body, html[lang="ja"] body *, html[lang="ja"] .drawary-app-shell
    let each tag grow to fit its text instead of letting the text spill out of it. Korean keeps the approved grid. */
 html:not([lang="ko"]) .drawary-suggestion-grid { display: flex; flex-wrap: wrap; }
 html:not([lang="ko"]) .drawary-suggestion-grid button { flex: none; padding: 0 12px; }
+
+/* A press feels like a press: every button dips a little while it is held and eases back. `scale` is its own property, so it never
+   disturbs a button's `transform` (positioning); :where() keeps it at zero specificity, so a screen's own transition or press look wins. */
+:where(button) { transition: scale .12s ease; }
+:where(button:not(:disabled)):active { scale: .96; }
+:where(button.hs-card, button.dd-record, button.wd-row, button.wd-card, button.wsg-card, button.global-search-result-card, button.settings-home-row, button.help55-menu-card, button.help55-quick-item, button.info58-row-action) { transition: scale .12s ease; }
+:where(button.dd-record, button.wd-row, button.help55-quick-item, button.info58-row-action, button.settings-home-row):active { scale: .985; }
+:where(button.sec40-switch, button.ld41-switch):active { scale: .92; }
+@media (prefers-reduced-motion: reduce) {
+  :where(button) { transition: none; }
+  :where(button:not(:disabled)):active { scale: 1; }
+}
