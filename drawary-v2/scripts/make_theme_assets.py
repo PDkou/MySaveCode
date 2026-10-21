@@ -4,7 +4,8 @@ icons, bottom-nav parts): public/assets-theme/<theme>/<dir>/<file>.
 Only pixels in the lavender hue family change (feathered at the edges), so
 white, pink, yellow, skin and outlines stay exactly as approved. The originals
 are never touched. The mascot, status illustrations, drawer category icons,
-splash and brand logo are NOT recoloured (character / category colour / brand).
+splash, app icon and store images are NOT recoloured (character / category colour / brand identity). The in-app header
+logo (brand_lockup_horizontal, brand_symbol_flower_small, the search screen's brand.webp) is, at the owner's request.
 Run from drawary-v2/:  python3 scripts/make_theme_assets.py
 """
 import glob, os, sys
@@ -14,6 +15,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 from theme_colors import THEMES
 
 DIRS = ['ui-icons', 'field-types', 'nav']
+# in-app header logos only: (folder, file)
+SINGLE = [('brand', 'brand_lockup_horizontal.webp'), ('brand', 'brand_symbol_flower_small.webp'), ('global-search-approved', 'brand.webp')]
 HUE_LO, HUE_HI, FEATHER = 235.0, 300.0, 14.0
 
 def rgb_to_hls(rgb):
@@ -75,4 +78,11 @@ if __name__ == '__main__':
                 if dst.endswith('.webp'): out.save(dst, 'WEBP', lossless=True, method=6)
                 else: out.save(dst, 'PNG', optimize=True)
                 n += 1
+    for d, name in SINGLE:
+        src = Image.open(f'public/assets/{d}/{name}')
+        for theme in THEMES:
+            dst = f'public/assets-theme/{theme}/{d}/{name}'
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            recolor(src, theme).save(dst, 'WEBP', lossless=True, method=6)
+            n += 1
     print(n, 'files')

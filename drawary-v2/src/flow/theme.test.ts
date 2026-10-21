@@ -24,6 +24,13 @@ describe('themed pictures', () => {
     expect(themedSrc('./assets/nav/footer_background_plus_only.webp', 'sage')).toBe('./assets-theme/sage/nav/footer_background_plus_only.webp');
     expect(themedSrc('/assets/field-types/field_text.webp', 'mustard')).toBe('/assets-theme/mustard/field-types/field_text.webp');
   });
+  it('themes the in-app header logos but not the other brand artwork', () => {
+    expect(themedSrc('/assets/brand/brand_lockup_horizontal.webp', 'coral')).toBe('/assets-theme/coral/brand/brand_lockup_horizontal.webp');
+    expect(themedSrc('/assets/brand/brand_symbol_flower_small.webp', 'sky')).toBe('/assets-theme/sky/brand/brand_symbol_flower_small.webp');
+    expect(themedSrc('/assets/global-search-approved/brand.webp', 'sage')).toBe('/assets-theme/sage/global-search-approved/brand.webp');
+    expect(themedSrc('/assets-theme/sage/brand/brand_lockup_horizontal.webp', 'lavender')).toBe('/assets/brand/brand_lockup_horizontal.webp');
+    for (const f of ['icon_app_512.webp', 'brand_icon_mark.webp', 'brand_lockup_stacked.webp']) expect(themedSrc(`/assets/brand/${f}`, 'coral')).toBeNull();
+  });
   it('leaves artwork that is not themed alone (mascot, brand, drawer icons, photos)', () => {
     for (const s of ['/assets/mascot/x.webp', '/assets/brand/brand_wordmark.webp', '/assets/drawer-icons/drawer_icon_plants.webp', 'blob:http://x/1', 'data:image/png;base64,AA']) {
       expect(themedSrc(s, 'coral')).toBeNull();

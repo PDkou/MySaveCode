@@ -1,17 +1,23 @@
 import { currentTheme, DEFAULT_THEME, isThemeId, onThemeApplied, type ThemeId } from '../flow/theme';
 
 /**
- * The accent-coloured artwork (UI icons, field-type icons, bottom-nav parts) exists in one
+ * The accent-coloured artwork (UI icons, field-type icons, bottom-nav parts, the in-app header logos) exists in one
  * extra version per theme under /assets-theme/<theme>/ (public/assets stays the approved
  * lavender originals). Screens keep pointing at the originals; this swaps the picture on
  * every <img> that shows one, now and whenever one appears or changes its `src`.
  */
-const PATH = /^(.*?)assets(?:-theme\/(?:coral|sage|mustard|sky))?\/(ui-icons|field-types|nav)\/(.+)$/;
+const PATH = /^(.*?)assets(?:-theme\/(?:coral|sage|mustard|sky))?\/(ui-icons|field-types|nav|brand|global-search-approved)\/(.+)$/;
+/** Folders where only some pictures are themed: the in-app header logos (the app icon, splash and store images stay lavender). */
+const ONLY: Record<string, readonly string[]> = {
+  brand: ['brand_lockup_horizontal.webp', 'brand_symbol_flower_small.webp'],
+  'global-search-approved': ['brand.webp'],
+};
 
 export function themedSrc(src: string, theme: ThemeId): string | null {
   const m = PATH.exec(src);
   if (!m) return null;
   const [, base, dir, file] = m;
+  if (ONLY[dir] && !ONLY[dir].includes(file)) return null;
   return theme === DEFAULT_THEME ? `${base}assets/${dir}/${file}` : `${base}assets-theme/${theme}/${dir}/${file}`;
 }
 

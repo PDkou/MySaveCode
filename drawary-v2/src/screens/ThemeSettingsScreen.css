@@ -34,6 +34,6 @@ button{font:inherit;cursor:pointer}
 /* Wide windows: a live preview of the app in the chosen theme (see ThemeLivePreview.tsx), above five compact choices. */
 .ts39-live { display: none; }
 .wide-sd .ts39-live { display: block; position: relative; margin: 4px auto 18px; border: 1px solid #e9e1d6; border-radius: 22px; overflow: hidden; background: #fffaf2; box-shadow: 0 6px 20px rgba(65, 50, 90, .08); pointer-events: none; user-select: none; }
-.ts39-live-phone { position: absolute; top: 0; left: 0; width: 390px; transform-origin: top left; background: #fffaf2; }
+.ts39-live-phone { position: absolute; top: 0; left: 0; width: 390px; transform-origin: top left; background: var(--theme-bg, #fffaf2); }
 .ts39-live-top { height: 300px; overflow: hidden; position: relative; }
 .ts39-live-nav { background: #fefdf9; border-top: 1px solid rgba(97, 78, 140, .1); }
