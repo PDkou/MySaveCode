@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import './FixedCanvas.css';
+import { getAppScale, isTabletWindow } from './appScale';
 
 const REFERENCE_WIDTH = 390;
 /** Canvases at least this tall are whole screens (the 844 px ones); shorter ones are parts of a tab screen that scrolls. */
@@ -28,10 +29,12 @@ export function FixedCanvas({ height, children }: { height: number; children: Re
       const active = document.activeElement;
       const typing = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || active instanceof HTMLSelectElement;
       if (typing) return;
-      const byWidth = host.getBoundingClientRect().width / REFERENCE_WIDTH;
+      const app = getAppScale(); // on-screen pixels -> layout pixels when a tablet magnifies the app
+      const byWidth = host.offsetWidth / REFERENCE_WIDTH;
       const portrait = window.innerHeight >= window.innerWidth;
-      const fitsHeight = height >= FULL_SCREEN_MIN_HEIGHT && portrait;
-      const byHeight = fitsHeight ? (window.innerHeight - host.getBoundingClientRect().top) / height : Infinity;
+      // landscape phones scroll instead (shrinking would make everything tiny); tablets are big enough to fit in any orientation
+      const fitsHeight = height >= FULL_SCREEN_MIN_HEIGHT && (portrait || isTabletWindow());
+      const byHeight = fitsHeight ? (window.innerHeight / app - host.getBoundingClientRect().top / app) / height : Infinity;
       setScale(Math.max(MIN_SCALE, Math.min(1, byWidth, byHeight)));
     };
     update();

@@ -3,6 +3,9 @@
 * { box-sizing: border-box; }
 html, body, #root { width: 100%; min-height: 100%; margin: 0; }
 body { overflow-x: hidden; }
+/* Tablet magnification (AppScaler): the wrapper is the window size / scale, anchored top left. */
+.drawary-scaler { transform-origin: 0 0; overflow: hidden; }
+.drawary-scaler .drawary-app-shell, .drawary-scaler .backup-progress-app { height: 100%; }
 .drawary-app-shell { display: flex; flex-direction: column; height: 100dvh; overflow-y: auto; min-height: 320px; max-width: 430px; margin: 0 auto; padding-top: env(safe-area-inset-top, 0px); background: #fffaf2; }
 .drawary-route-panel { min-height: 0; flex: 1 1 auto; overflow-y: auto; }
 /* #08's dimmed Home behind the new-drawer sheet: inert, not interactive. */

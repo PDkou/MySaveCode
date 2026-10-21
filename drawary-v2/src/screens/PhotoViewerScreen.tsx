@@ -1,3 +1,4 @@
+import { getAppScale } from '../components/appScale';
 import { useRef, useState } from 'react';
 import './PhotoViewerScreen.css';
 import { t } from '../i18n';
@@ -105,8 +106,8 @@ export function PhotoViewerScreen({
 
     if (scale > 1) {
       setOffset((currentOffset) => ({
-        x: currentOffset.x + (current.x - previous.x),
-        y: currentOffset.y + (current.y - previous.y),
+        x: currentOffset.x + (current.x - previous.x) / getAppScale(),
+        y: currentOffset.y + (current.y - previous.y) / getAppScale(),
       }));
     }
   };

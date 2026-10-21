@@ -34,7 +34,14 @@ Tested 844×390 (landscape), 393×780 and 360×640 (phone minus its bars), 345×
 status/navigation bars) the bottom buttons (save, next, send, the PIN keypad's last row) were cut off and nothing scrolled, so e.g.
 the PIN could not be typed in landscape. Now: the app shell scrolls when a screen is taller than the window (landscape), and in
 portrait a full screen scales down proportionally to fit the height (never below 0.6; not while a text field has the keyboard
-open). At 390×844 nothing changes (58 captured screens pixel-identical before/after). Wide windows (tablet, fold inner screen) keep the
-390 px column centred — everything is usable and nothing is cut, but it is not enlarged: the approved bottom nav is fixed at 390 px
-above that width by the design lock, so scaling the rest up would mismatch it. If a bigger layout on tablets is wanted, it needs a
-decision (and designs) from the owner.
+open). At 390×844 nothing changes (58 captured screens pixel-identical before/after). Wide windows: see §5.
+
+## 5. Tablets (2026-10-21)
+`AppScaler` (src/components/AppScaler.tsx): on a window whose shorter side is >= 600 dp (Android's tablet line) the app is laid out
+exactly as on a phone and magnified **as one piece** with a transform (wrapper = window / scale), so every approved screen, the bottom nav
+and the sheets keep their proportions: portrait tablets get scale min(width/430, height/844), at most 2 (800×1280 → 1.52, 834×1194 → 1.41).
+Phones get no wrapper at all (58 screens at 390×844 compared before/after: identical). Landscape tablets and near-square foldables
+(1280×800, 690×829) are limited by height: the whole 844 px screen is fitted to the height (≈0.95–0.98) and centred — nothing is cut
+or needs scrolling, but there are wide empty sides; a real wide layout (two panes) needs designs from the owner. Pointer maths that
+moves things by pixels divides by the scale (photo pan; the home reorder already measured its own scale). Keyboard open: the scale is
+frozen so the screen does not jump. Tested in Chromium only (hit-testing and clicks work under the transform); real tablet: not tested.
