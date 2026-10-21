@@ -2,7 +2,7 @@
    (its manage- and drawer-summary classes), renamed to this file's dm-
    prefix; values unchanged. */
 .dm-screen{
-  width:390px;height:844px;overflow:hidden;margin:0 auto;background:#fff9ed;padding:28px 20px 30px;
+  width:390px;height:844px;overflow:hidden;margin:0 auto;background:#fff9ed;padding:0 20px 30px;
   color:#234f9b;font-family:"Noto Sans CJK KR","Noto Sans KR","Apple SD Gothic Neo",sans-serif;
   box-sizing:border-box;
 }
@@ -47,3 +47,5 @@
 .dm-row.danger .dm-row-label{color:#e65058}
 .dm-row.danger .dm-chevron{color:#e97980}
 .dm-row.danger .dm-row-icon img{opacity:.95}
+
+html body .dm-screen > .uf-header{margin:0 -20px}

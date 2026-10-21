@@ -40,14 +40,14 @@ export function CreationCompleteScreen({
           </div>
           <div className="cc-card-copy">
             <strong>{drawerName}</strong>
-            <small>{t('서랍칸 {n}개 준비 완료', { n: fieldCount })}</small>
+            <small>{t('서랍 칸 {n}개 준비 완료', { n: fieldCount })}</small>
           </div>
           <span className="cc-check" aria-hidden="true">✓</span>
         </article>
 
         <p className="cc-note">
           
-          {tl('방금 정한 서랍칸에 맞춰\n첫 보관품부터 하나씩 담아보세요.')}
+          {tl('방금 정한 서랍 칸에 맞춰\n첫 보관품부터 하나씩 담아보세요.')}
         </p>
 
         <button className="cc-primary" type="button" onClick={onFillDrawer}>

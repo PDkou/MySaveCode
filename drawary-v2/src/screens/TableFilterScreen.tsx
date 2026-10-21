@@ -192,7 +192,7 @@ export function TableFilterScreen({
               <button type="button" className="tf-more" onClick={() => {
                 setQuery('');
                 setMode('field');
-              }}>{t('다른 서랍칸에서 선택 ›')}</button>
+              }}>{t('다른 서랍 칸에서 선택 ›')}</button>
             </div>
 
             <div className="tf-result-preview">
@@ -212,14 +212,14 @@ export function TableFilterScreen({
             <header className="tf-picker-header">
               <button type="button" className="tf-back" onClick={() => setMode('main')} aria-label={t('뒤로가기')}>‹</button>
               <div>
-                <h2>{t('필터할 서랍칸 선택')}</h2>
-                <p>{t('조건을 걸 서랍칸을 골라주세요.')}</p>
+                <h2>{t('필터할 서랍 칸 선택')}</h2>
+                <p>{t('조건을 걸 서랍 칸을 골라주세요.')}</p>
               </div>
             </header>
 
             <label className="tf-search">
               <img src="/assets/ui-icons/icon_search.webp" alt="" />
-              <input autoFocus value={query} placeholder={t('서랍칸 검색')} onChange={(e) => setQuery(e.target.value)} />
+              <input autoFocus value={query} placeholder={t('서랍 칸 검색')} onChange={(e) => setQuery(e.target.value)} />
             </label>
 
             <div className="tf-field-list">
@@ -239,7 +239,7 @@ export function TableFilterScreen({
               <button type="button" className="tf-back" onClick={() => setMode('main')} aria-label={t('뒤로가기')}>‹</button>
               <div>
                 <h2>{t('{name} 필터', { name: selectedColumn.label })}</h2>
-                <p>{t('이 서랍칸에 적용할 조건을 정해요.')}</p>
+                <p>{t('이 서랍 칸에 적용할 조건을 정해요.')}</p>
               </div>
             </header>
 

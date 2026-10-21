@@ -32,7 +32,7 @@ export const toFieldItem = (f: { id: string; name: string; kind: FieldKind }): D
 
 export interface DrawerFieldsScreenProps {
   fields?: DrawerFieldItem[];
-  // #26 서랍칸 편집 (REUSE_MAPPING.md) reuses this exact screen against an
+  // #26 서랍 칸 편집 (REUSE_MAPPING.md) reuses this exact screen against an
   // existing drawer instead of the new-drawer-creation flow -- title,
   // completeLabel and contextLabel let the caller swap the creation-flow's
   // own copy/destination for that context without a second component.

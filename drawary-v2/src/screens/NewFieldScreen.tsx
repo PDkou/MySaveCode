@@ -48,12 +48,12 @@ export function NewFieldScreen({ onBack, onAdd }: Props) {
   if (step === 'type') {
     return (
       <section className="nf-screen">
-        <ScreenHeader variant="stacked" title={t('서랍칸 종류 선택')} onBack={onBack} height={93} />
+        <ScreenHeader variant="stacked" title={t('서랍 칸 종류 선택')} onBack={onBack} height={93} />
 
         <section className="nf-content nf-type-content">
           <p className="nf-intro">
             
-            {tl('서랍에 담아둘 내용에 맞는\n서랍칸 종류를 골라주세요.')}
+            {tl('서랍에 담아둘 내용에 맞는\n서랍 칸 종류를 골라주세요.')}
           </p>
 
           <div className="nf-type-list">
@@ -80,10 +80,10 @@ export function NewFieldScreen({ onBack, onAdd }: Props) {
 
   return (
     <section className="nf-screen">
-      <ScreenHeader variant="stacked" title={t('서랍칸 추가')} onBack={() => setStep('type')} backLabel={t('이전 단계')} height={93} />
+      <ScreenHeader variant="stacked" title={t('서랍 칸 추가')} onBack={() => setStep('type')} backLabel={t('이전 단계')} height={93} />
 
       <section className="nf-content nf-detail-content">
-        <label className="nf-label" htmlFor="field-name">{t('서랍칸 이름')}</label>
+        <label className="nf-label" htmlFor="field-name">{t('서랍 칸 이름')}</label>
         <div className="nf-input-wrap">
           <input
             id="field-name"
@@ -94,7 +94,7 @@ export function NewFieldScreen({ onBack, onAdd }: Props) {
           <span>{name.length}/20</span>
         </div>
 
-        <span className="nf-label">{t('서랍칸 종류')}</span>
+        <span className="nf-label">{t('서랍 칸 종류')}</span>
         <button className="nf-selected-type" type="button" onClick={() => setStep('type')}>
           <span className="nf-type-icon" aria-hidden="true"><img src={selected.icon} alt="" /></span>
           <span className="nf-type-copy">
@@ -133,7 +133,7 @@ export function NewFieldScreen({ onBack, onAdd }: Props) {
         <div className="nf-required">
           <div>
             <strong>{t('필수로 채우기')}</strong>
-            <small>{t('보관품을 담을 때 꼭 채워야 하는 서랍칸이에요.')}</small>
+            <small>{t('보관품을 담을 때 꼭 채워야 하는 서랍 칸이에요.')}</small>
           </div>
           <button
             type="button"

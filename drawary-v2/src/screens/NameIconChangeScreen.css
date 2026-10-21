@@ -1,6 +1,6 @@
 /* Byte-identical to the confirmed archive's name-icon-change.css. */
 button{font:inherit}
-.nic-page{width:390px;height:844px;overflow:hidden;margin:0 auto;background:#fff9ed;padding:28px 20px 24px}
+.nic-page{width:390px;height:844px;overflow:hidden;margin:0 auto;background:#fff9ed;padding:0 20px 24px}
 .nic-header{height:61px;display:grid;grid-template-columns:42px 1fr 42px;align-items:center;margin-bottom:12px}
 .nic-header h1{margin:0;text-align:center;color:#174d9f;font-size:20px;font-weight:900;letter-spacing:-.55px;white-space:nowrap}
 .nic-back{border:0;background:transparent;color:#1f58ad;width:42px;height:42px;padding:0;font:300 38px/38px Arial;text-align:left}
@@ -27,3 +27,5 @@ button{font:inherit}
 .nic-cancel{border:1px solid #e5ddd3;background:#fffdfa;color:#687896}
 .nic-save{border:0;background:var(--tc-7d58e8,#7d58e8);color:#fff}
 .nic-save:disabled{background:var(--tc-d9d2e8,#d9d2e8);color:var(--tc-f8f6fb,#f8f6fb)}
+
+html body .nic-page > .uf-header{margin:0 -20px}

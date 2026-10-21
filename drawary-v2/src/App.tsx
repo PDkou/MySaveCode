@@ -91,6 +91,7 @@ import { WideHome } from './wide/WideHome';
 import { WideSettingsGrid } from './wide/WideSettingsGrid';
 import { PaneMagnifier } from './wide/PaneMagnifier';
 import './wide/wideSettings.css';
+import './screens/UnifiedHeader.css';
 import { WideDrawer } from './wide/WideDrawer';
 import { getLocale, t, K } from './i18n';
 import { closeOpenOverlay } from './flow/overlayBack';
@@ -264,7 +265,7 @@ export default function App() {
   const editUrls = useObjectUrls(editPhotos);
   const [editKey, setEditKey] = useState(0);
 
-  // #26 서랍칸 편집 on an existing drawer: edits are saved straight away (no draft).
+  // #26 서랍 칸 편집 on an existing drawer: edits are saved straight away (no draft).
   // `manageOrder` holds the order while a row is being dragged, saved on release.
   const [manageFieldId, setManageFieldId] = useState<string | null>(null);
   const manageField = currentFields.find((f) => f.id === manageFieldId);
@@ -284,7 +285,7 @@ export default function App() {
   // DEFAULT_DRAWER_FIELDS filtered to kind==='date' (the same demo
   // drawer fields #09/#26 already use) -- for this drawer that's
   // exactly one field (구매일), matching CONFIRMED.md's own "날짜
-  // 서랍칸이 1개뿐이면 기본 선택" case.
+  // 서랍 칸이 1개뿐이면 기본 선택" case.
   const dateFields = currentFields.filter((f) => f.kind === 'date').map((f) => ({ id: f.id, name: f.name }));
   const [notifDateFieldId, setNotifDateFieldId] = useState<string | undefined>(undefined);
   const [notifDaysBefore, setNotifDaysBefore] = useState(7);
@@ -877,7 +878,7 @@ export default function App() {
     }
     if (route === 'drawer-manage') {
       // #24 서랍 관리 메인, reachable from #15's "•••" menu's "서랍 관리"
-      // (previously a no-op). 이름/아이콘 변경 -> #25, 서랍칸 편집 -> #26
+      // (previously a no-op). 이름/아이콘 변경 -> #25, 서랍 칸 편집 -> #26
       // (both real routes below). 정렬/필터 설정(#27) and 서랍 삭제(#28) are
       // handled as local overlays inside DrawerManageScreen itself now --
       // deleting calls this onDeleteDrawer, which per #28's CONFIRMED.md
@@ -1518,7 +1519,7 @@ export default function App() {
       </main>;
     }
     if (route === 'drawer-fields-manage') {
-      // #26 서랍칸 편집. Per REUSE_MAPPING.md this is NOT a new screen --
+      // #26 서랍 칸 편집. Per REUSE_MAPPING.md this is NOT a new screen --
       // it reuses #09's DrawerFieldsScreen verbatim, only swapping the
       // creation-flow's own title/copy/destination for an edit-mode
       // context (진입점: #24, 완료/뒤로가기: #24로 복귀, 신규 생성 플로우용
@@ -1530,9 +1531,9 @@ export default function App() {
       return <main className="drawary-app-shell" data-route="drawer-fields-manage">
         <FixedCanvas height={844} grow>
           <DrawerFieldsScreen
-            title={t('서랍칸 편집')}
+            title={t('서랍 칸 편집')}
             completeLabel={t('완료')}
-            contextLabel={{ name: drawerDetailName, detail: t('{length}개 서랍칸', { length: currentFields.length }) }}
+            contextLabel={{ name: drawerDetailName, detail: t('{length}개 서랍 칸', { length: currentFields.length }) }}
             fields={manageList.map(toFieldItem)}
             onBack={() => navigate('drawer-manage')}
             onAddField={() => navigate('new-field-manage')}

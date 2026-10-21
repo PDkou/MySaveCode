@@ -87,7 +87,7 @@ export function TableSortScreen({
                   <button key={c.id} type="button" className={c.id === selected.id ? 'on' : ''} onClick={() => setField(c.id)}>{c.label}</button>
                 ))}
               </div>
-              <button type="button" className="sv3-more" onClick={() => { setQuery(''); setMode('field'); }}>{t('다른 서랍칸에서 선택 ›')}</button>
+              <button type="button" className="sv3-more" onClick={() => { setQuery(''); setMode('field'); }}>{t('다른 서랍 칸에서 선택 ›')}</button>
             </div>
 
             <div className="sv3-section">
@@ -107,11 +107,11 @@ export function TableSortScreen({
           <>
             <header className="sv3-picker-head">
               <button type="button" className="sv3-back" onClick={() => setMode('sort')} aria-label={t('뒤로가기')}>‹</button>
-              <div><h2>{t('정렬 기준 선택')}</h2><p>{t('정렬할 서랍칸을 골라주세요.')}</p></div>
+              <div><h2>{t('정렬 기준 선택')}</h2><p>{t('정렬할 서랍 칸을 골라주세요.')}</p></div>
             </header>
             <label className="sv3-search">
               <img src="/assets/ui-icons/icon_search.webp" alt="" />
-              <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('서랍칸 검색')} />
+              <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('서랍 칸 검색')} />
               <span />
             </label>
             <div className="sv3-list">

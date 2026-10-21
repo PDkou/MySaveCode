@@ -20,7 +20,7 @@ interface RecordPickerSheetProps {
 /**
  * Picks one 보관품 from a searchable list (#34's "반복할 보관품"). None of
  * the 59 approved designs is a record picker, so this reuses the approved
- * bottom-sheet look of #22's 서랍칸 picker (same handle, header, search box
+ * bottom-sheet look of #22's 서랍 칸 picker (same handle, header, search box
  * and list classes). The caller places it inside the screen's own canvas.
  */
 export function RecordPickerSheet({ title = K('보관품 선택'), records, selectedId, onPick, onClose }: RecordPickerSheetProps) {

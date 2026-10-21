@@ -73,10 +73,10 @@ export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: Drawe
   if (mode === 'list') {
     return (
       <section className="df-screen">
-        <ScreenHeader variant="stacked" title={t('서랍칸 정하기')} onBack={onBack} height={93} />
+        <ScreenHeader variant="stacked" title={t('서랍 칸 정하기')} onBack={onBack} height={93} />
         <section className="df-content">
-          <p className="df-intro">{tl('이 서랍에 어떤 내용을 기록할까요?\n원하는 서랍칸을 직접 정할 수 있어요.')}</p>
-          <p className="df-list-help">{tx('{field}을 누르면 수정할 수 있고,\n오른쪽 {handle}를 끌면 순서를 바꿀 수 있어요.', { field: <b>{t('서랍칸')}</b>, handle: <b>{t('손잡이')}</b> })}</p>
+          <p className="df-intro">{tl('이 서랍에 어떤 내용을 기록할까요?\n원하는 서랍 칸을 직접 정할 수 있어요.')}</p>
+          <p className="df-list-help">{tx('{field}을 누르면 수정할 수 있고,\n오른쪽 {handle}를 끌면 순서를 바꿀 수 있어요.', { field: <b>{t('서랍 칸')}</b>, handle: <b>{t('손잡이')}</b> })}</p>
           <div className="df-list">
             {FIELDS.map((field) => (
               <div className="df-row is-editable" key={field.id}>
@@ -89,7 +89,7 @@ export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: Drawe
               </div>
             ))}
           </div>
-          <button className="df-add">{t('＋ 서랍칸 추가')}</button>
+          <button className="df-add">{t('＋ 서랍 칸 추가')}</button>
           <button className="df-complete">{t('서랍 만들기 완료하기')}</button>
         </section>
       </section>
@@ -98,15 +98,15 @@ export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: Drawe
 
   return (
     <section className="df-screen">
-      <ScreenHeader variant="stacked" title={t('서랍칸 수정')} onBack={field ? onBack : () => setMode('list')} height={93} />
+      <ScreenHeader variant="stacked" title={t('서랍 칸 수정')} onBack={field ? onBack : () => setMode('list')} height={93} />
       <section className="df-edit-content">
-        <label className="df-label" htmlFor="field-name">{t('서랍칸 이름')}</label>
+        <label className="df-label" htmlFor="field-name">{t('서랍 칸 이름')}</label>
         <div className="df-input-wrap">
           <input id="field-name" value={name} onChange={(e) => setName(e.target.value.slice(0, 20))} />
           <span>{name.length}/20</span>
         </div>
 
-        <span className="df-label">{t('서랍칸 종류')}</span>
+        <span className="df-label">{t('서랍 칸 종류')}</span>
         {/* A field's kind is fixed once created (its saved values would stop matching), so this row only shows it. */}
         <button className="df-selected-type" type="button" tabIndex={field ? -1 : 0} style={field ? { cursor: 'default' } : undefined}>
           <span className="df-type-icon"><img src={kindInfo.icon} alt="" /></span>
@@ -128,20 +128,20 @@ export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: Drawe
         </section>}
 
         <div className="df-required">
-          <div><strong>{t('필수로 채우기')}</strong><small>{t('보관품을 담을 때 꼭 채워야 하는 서랍칸이에요.')}</small></div>
+          <div><strong>{t('필수로 채우기')}</strong><small>{t('보관품을 담을 때 꼭 채워야 하는 서랍 칸이에요.')}</small></div>
           <button className={`df-switch${required ? ' is-on' : ''}`} aria-pressed={required} aria-label={t('필수 입력')} onClick={() => setRequired(!required)}><span /></button>
         </div>
 
         <button className="df-save" onClick={() => onSave?.({ name, required, options })}>{t('저장하기')}</button>
-        <button className="df-delete" onClick={() => setDeleteOpen(true)}><img src="/assets/ui-icons/icon_delete.webp" alt="" /> {t('서랍칸 삭제')}</button>
-        <p className="df-edit-danger-note">{t('삭제한 서랍칸의 기존 입력값은 함께 사라져요.')}</p>
+        <button className="df-delete" onClick={() => setDeleteOpen(true)}><img src="/assets/ui-icons/icon_delete.webp" alt="" /> {t('서랍 칸 삭제')}</button>
+        <p className="df-edit-danger-note">{t('삭제한 서랍 칸의 기존 입력값은 함께 사라져요.')}</p>
         {deleteOpen && (
           <div className="df-modal-backdrop">
-            <section className="df-confirm-sheet" role="dialog" aria-modal="true" aria-label={t('서랍칸 삭제 확인')}>
+            <section className="df-confirm-sheet" role="dialog" aria-modal="true" aria-label={t('서랍 칸 삭제 확인')}>
               <div className="df-sheet-handle" />
               <div className="df-confirm-icon"><img src="/assets/ui-icons/icon_delete.webp" alt="" /></div>
-              <h2>{t('이 서랍칸을 삭제할까요?')}</h2>
-              <p>{tl("'{name}' 서랍칸과 여기에 담긴 입력값이 함께 삭제돼요.\n삭제한 뒤에는 되돌릴 수 없어요.", { name: savedName })}</p>
+              <h2>{t('이 서랍 칸을 삭제할까요?')}</h2>
+              <p>{tl("'{name}' 서랍 칸과 여기에 담긴 입력값이 함께 삭제돼요.\n삭제한 뒤에는 되돌릴 수 없어요.", { name: savedName })}</p>
               <div className="df-confirm-actions">
                 <button className="df-cancel" onClick={() => setDeleteOpen(false)}>{t('취소')}</button>
                 <button className="df-confirm-delete" onClick={onDelete}>{t('삭제하기')}</button>

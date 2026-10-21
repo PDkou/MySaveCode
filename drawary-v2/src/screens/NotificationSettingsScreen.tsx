@@ -4,7 +4,7 @@ import { t, tl } from '../i18n';
 
 export interface NotificationRuleRow {
   id: string;
-  /** Name of the date 서랍칸 the notification counts from. */
+  /** Name of the date 서랍 칸 the notification counts from. */
   fieldName: string;
   /** e.g. "7일 전 · 09:00". */
   when: string;
@@ -62,7 +62,7 @@ export function NotificationSettingsScreen({
         <div className="ns-drawer-icon"><img src={drawerIconUri} alt="" /></div>
         <div className="ns-context-copy">
           <strong>{drawerName}</strong>
-          <span>{t('{fields}개 서랍칸 · {items}개 보관품', { fields: fieldCount, items: recordCount })}</span>
+          <span>{t('{fields}개 서랍 칸 · {items}개 보관품', { fields: fieldCount, items: recordCount })}</span>
         </div>
       </section>
 
@@ -71,7 +71,7 @@ export function NotificationSettingsScreen({
         <h2>{tl('설정한 날짜가 다가오면\n알려드려요.')}</h2>
         <p>
           
-          {tl('이 서랍에 있는 날짜 서랍칸을 기준으로\n필요한 시점에 알림을 받을 수 있어요.')}
+          {tl('이 서랍에 있는 날짜 서랍 칸을 기준으로\n필요한 시점에 알림을 받을 수 있어요.')}
         </p>
       </section>
 
@@ -101,7 +101,7 @@ export function NotificationSettingsScreen({
         <div className="ns-chev">›</div>
       </button>
 
-      <div className="ns-tip">{t('알림 추가하기를 누르면 먼저 날짜 서랍칸을 선택해요.')}</div>
+      <div className="ns-tip">{t('알림 추가하기를 누르면 먼저 날짜 서랍 칸을 선택해요.')}</div>
     </section>
   );
 }

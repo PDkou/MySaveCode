@@ -313,7 +313,7 @@ export async function addNotificationRule(
   return withTx([STORES.drawers, STORES.fields, STORES.notifications], 'readwrite', async (s) => {
     if (!(await req(s.drawers.get(drawerId)))) throw new ValidationError(t('서랍을 찾을 수 없어요.'));
     const field = (await req(s.fields.get(input.fieldId))) as Field | undefined;
-    if (!field || field.drawerId !== drawerId || field.kind !== 'date') throw new ValidationError(t('날짜 서랍칸을 골라 주세요.'));
+    if (!field || field.drawerId !== drawerId || field.kind !== 'date') throw new ValidationError(t('날짜 서랍 칸을 골라 주세요.'));
     const existing = await req(s.notifications.index('drawerId').getAll(drawerId) as IDBRequest<NotificationRule[]>);
     if (existing.some((n) => n.fieldId === input.fieldId && n.daysBefore === input.daysBefore && n.time === input.time)) {
       throw new ValidationError(t('같은 알림이 이미 있어요.'));
@@ -360,7 +360,7 @@ export async function addRecurrenceRule(drawerId: string, input: RecurrenceInput
   return withTx([STORES.drawers, STORES.fields, STORES.records, STORES.recurrences], 'readwrite', async (s) => {
     if (!(await req(s.drawers.get(drawerId)))) throw new ValidationError(t('서랍을 찾을 수 없어요.'));
     const field = (await req(s.fields.get(input.fieldId))) as Field | undefined;
-    if (!field || field.drawerId !== drawerId || field.kind !== 'date') throw new ValidationError(t('기준이 될 날짜 서랍칸을 골라 주세요.'));
+    if (!field || field.drawerId !== drawerId || field.kind !== 'date') throw new ValidationError(t('기준이 될 날짜 서랍 칸을 골라 주세요.'));
     const target = (await req(s.records.get(input.targetRecordId))) as RecordItem | undefined;
     if (!target || target.drawerId !== drawerId) throw new ValidationError(t('반복할 보관품을 찾을 수 없어요.'));
     const baseDate = target.values[input.fieldId];

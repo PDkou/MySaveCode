@@ -118,7 +118,7 @@ export function TableViewScreen({
           <img src="/assets/ui-icons/icon_table.webp" alt="" />
           <div>
             <strong>{t('보관품 {n}개', { n: count })}</strong>
-            <small>{t('서랍칸을 표로 한눈에 볼 수 있어요.')}</small>
+            <small>{t('서랍 칸을 표로 한눈에 볼 수 있어요.')}</small>
           </div>
         </div>
       </section>

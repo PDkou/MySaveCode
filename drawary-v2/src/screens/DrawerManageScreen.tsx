@@ -49,7 +49,7 @@ interface DrawerManageScreenProps {
  * -- verified by opening each candidate asset directly, not guessed
  * from filenames alone.
  *
- * CONFIRMED.md's destinations: 이름/아이콘 변경 -> #25, 서랍칸 편집 ->
+ * CONFIRMED.md's destinations: 이름/아이콘 변경 -> #25, 서랍 칸 편집 ->
  * #26, 정렬/필터 설정 -> #27, 알림 설정 -> #29, 반복 관리 -> #33,
  * 백업/내보내기 -> existing data-management flow, 서랍 삭제 -> #28.
  * #25/#26 are real routes (caller's own onRenameDrawer/onEditFields).
@@ -91,7 +91,7 @@ export function DrawerManageScreen({
   const groups: DrawerManageRow[][] = [
     [
       { key: 'rename', label: t('서랍 이름 / 아이콘 변경'), icon: '/assets/ui-icons/icon_edit.webp', onClick: onRenameDrawer },
-      { key: 'fields', label: t('서랍칸 편집'), icon: '/assets/ui-icons/icon_grid.webp', onClick: onEditFields },
+      { key: 'fields', label: t('서랍 칸 편집'), icon: '/assets/ui-icons/icon_grid.webp', onClick: onEditFields },
       { key: 'sort-filter', label: t('정렬 / 필터 설정'), icon: '/assets/ui-icons/icon_sort.webp', onClick: () => setSortFilterOpen(true) },
     ],
     [
@@ -108,7 +108,7 @@ export function DrawerManageScreen({
 
   return (
     <section className="dm-screen">
-      <ScreenHeader title={t('서랍 관리')} onBack={onBack} height={61} />
+      <ScreenHeader title={t('서랍 관리')} onBack={onBack} height={89} />
 
       <section className="dm-summary">
         <div className="dm-summary-icon">
@@ -116,7 +116,7 @@ export function DrawerManageScreen({
         </div>
         <div className="dm-summary-copy">
           <strong>{drawerName}</strong>
-          <span>{t('{fields}개 서랍칸 · {items}개 보관품', { fields: fieldCount, items: recordCount })}</span>
+          <span>{t('{fields}개 서랍 칸 · {items}개 보관품', { fields: fieldCount, items: recordCount })}</span>
         </div>
       </section>
 

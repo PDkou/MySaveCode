@@ -1,0 +1,85 @@
+/* One header for every screen with a back arrow (owner request, 2026-10-21): a 72 px bar, a centred 21 px title, a 44 px back button
+   with the same chevron. Before this, each screen had its own title size (20-24 px), weight (700-900), navy/blue shade, height and
+   arrow position. This file is loaded after the per-screen styles and is more specific than they are, so it decides. The wide
+   settings panes already used these values (wideSettings.css). */
+:root { --hdr-bar: 72px; --hdr-title: #28396d; }
+html body .drawary-app-shell .sec40-header,
+html body .drawary-app-shell .dmh44-header,
+html body .drawary-app-shell .ts39-header,
+html body .drawary-app-shell .ld41-header,
+html body .drawary-app-shell .ps42-header,
+html body .drawary-app-shell .bkt45-header,
+html body .drawary-app-shell .rr50-header,
+html body .drawary-app-shell .help55-appbar,
+html body .drawary-app-shell .info58-appbar,
+html body .drawary-app-shell .guide57-appbar,
+html body .drawary-app-shell .faq56-appbar,
+html body .drawary-app-shell .fb59-appbar,
+html body .drawary-app-shell .uf-header--center { position: relative; top: auto; box-sizing: border-box; margin: 0; min-height: var(--hdr-bar); padding: 14px 0 0; display: grid; grid-template-columns: 44px 1fr 44px; grid-template-rows: 44px; align-content: start; align-items: center; justify-content: normal; flex: none; }
+html body .drawary-app-shell .sec40-header h1,
+html body .drawary-app-shell .dmh44-header h1,
+html body .drawary-app-shell .ts39-title,
+html body .drawary-app-shell .ld41-header h1,
+html body .drawary-app-shell .ps42-header h1,
+html body .drawary-app-shell .bkt45-header h1,
+html body .drawary-app-shell .rr50-title,
+html body .drawary-app-shell .help55-appbar-title,
+html body .drawary-app-shell .info58-appbar-title,
+html body .drawary-app-shell .guide57-appbar-title,
+html body .drawary-app-shell .faq56-appbar h1,
+html body .drawary-app-shell .fb59-appbar h1,
+html body .drawary-app-shell .uf-header--center .uf-title,
+html body .drawary-app-shell .lang54-title { grid-column: 2; margin: 0; text-align: center; font-size: 21px; line-height: 1.25; font-weight: 800; letter-spacing: -.5px; color: var(--hdr-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body .drawary-app-shell .sec40-back,
+html body .drawary-app-shell .dmh44-back,
+html body .drawary-app-shell .ts39-back,
+html body .drawary-app-shell .ld41-back,
+html body .drawary-app-shell .ps42-back,
+html body .drawary-app-shell .bkt45-back,
+html body .drawary-app-shell .rr50-back,
+html body .drawary-app-shell .help55-back,
+html body .drawary-app-shell .info58-back,
+html body .drawary-app-shell .guide57-back,
+html body .drawary-app-shell .faq56-back,
+html body .drawary-app-shell .fb59-back,
+html body .drawary-app-shell .uf-header--center .uf-back { position: static; grid-column: 1; grid-row: 1; left: auto; top: auto; width: 44px; height: 44px; margin: 0; padding: 0; border: 0; background: transparent; transform: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+html body .drawary-app-shell .sec40-back::before,
+html body .drawary-app-shell .dmh44-back::before,
+html body .drawary-app-shell .ts39-back::before,
+html body .drawary-app-shell .ld41-back::before,
+html body .drawary-app-shell .ps42-back::before,
+html body .drawary-app-shell .bkt45-back::before,
+html body .drawary-app-shell .rr50-back::before,
+html body .drawary-app-shell .help55-back::before,
+html body .drawary-app-shell .info58-back::before,
+html body .drawary-app-shell .guide57-back::before,
+html body .drawary-app-shell .faq56-back::before,
+html body .drawary-app-shell .fb59-back::before,
+html body .drawary-app-shell .uf-header--center .uf-back::before { content: ''; display: block; position: static; width: 11px; height: 11px; margin: 0; border: 0; border-left: 3px solid var(--tc-7a5cf0,#7a5cf0); border-bottom: 3px solid var(--tc-7a5cf0,#7a5cf0); border-radius: 1px; transform: rotate(45deg); }
+html body .drawary-app-shell .sec40-back::after,
+html body .drawary-app-shell .dmh44-back::after,
+html body .drawary-app-shell .ts39-back::after,
+html body .drawary-app-shell .ld41-back::after,
+html body .drawary-app-shell .ps42-back::after,
+html body .drawary-app-shell .bkt45-back::after,
+html body .drawary-app-shell .rr50-back::after,
+html body .drawary-app-shell .help55-back::after,
+html body .drawary-app-shell .info58-back::after,
+html body .drawary-app-shell .guide57-back::after,
+html body .drawary-app-shell .faq56-back::after,
+html body .drawary-app-shell .fb59-back::after { content: none; display: none; }
+/* the empty slot on the right keeps the title in the middle */
+html body .drawary-app-shell .uf-header--center > .uf-header-spacer:last-child { grid-column: 3; grid-row: 1; }
+
+/* headers with the drawer name and a line under it (drawer, table, item, fields) */
+html body .drawary-app-shell .uf-header--stacked { position: relative; top: auto; box-sizing: border-box; min-height: var(--hdr-bar); padding: 14px 0 0; display: grid; grid-template-columns: 44px 1fr 44px; grid-template-rows: 44px; align-content: start; align-items: start; flex: none; }
+html body .drawary-app-shell .uf-header--stacked .uf-stacked-text { grid-column: 2; grid-row: 1; position: static; min-width: 0; margin: 9px 0 0; padding: 0; text-align: center; }
+html body .drawary-app-shell .uf-header--stacked .uf-stacked-text h1 { margin: 0; text-align: center; font-size: 21px; line-height: 1.25; font-weight: 800; letter-spacing: -.5px; color: var(--hdr-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body .drawary-app-shell .uf-header--stacked .uf-subtitle { display: block; margin: 2px 0 0; text-align: center; font-size: 12.5px; line-height: 16px; font-weight: 650; color: #8a92b3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body .drawary-app-shell .uf-header--stacked .uf-back { position: static; grid-column: 1; grid-row: 1; align-self: start; left: auto; top: auto; bottom: auto; width: 44px; height: 44px; margin: 0; padding: 0; transform: none; display: flex; align-items: center; justify-content: center; }
+html body .drawary-app-shell .uf-header--stacked .uf-back::before { content: ''; display: block; position: static; width: 11px; height: 11px; margin: 0; border: 0; border-left: 3px solid var(--tc-7a5cf0,#7a5cf0); border-bottom: 3px solid var(--tc-7a5cf0,#7a5cf0); border-radius: 1px; transform: rotate(45deg); }
+html body .drawary-app-shell .uf-header--stacked .uf-right-slot { grid-column: 3; grid-row: 1; align-self: start; height: 44px; margin: 0; justify-content: center; }
+
+/* the "•••" button of the drawer, item and table headers sits in the header's right slot like the title row, and its pop-up menu hangs just under it */
+html body .drawary-app-shell .uf-header--stacked .uf-right-slot > button { position: static; right: auto; bottom: auto; width: 44px; height: 44px; margin: 0; }
+html body .drawary-app-shell .uf-header--stacked :is(.dd-menu-popover, .rd-menu-popover, .tv-menu-popover) { top: 60px; }

@@ -10,7 +10,7 @@ interface RecordDeleteConfirmScreenProps {
 /**
  * #18 보관품 삭제 확인. Ported verbatim from
  * `Drawary_18_FINAL_CONFIRMED_CODE`'s `RecordDeleteConfirm.tsx`/
- * `record-delete-confirm.css` (CONFIRMED.md: "11번 서랍칸 삭제 확인의
+ * `record-delete-confirm.css` (CONFIRMED.md: "11번 서랍 칸 삭제 확인의
  * 바텀시트 패턴 재사용" -- confirmed by direct comparison: same handle
  * size/color, icon box, button heights/radii/colors as #11C's
  * `.df-modal-backdrop`/`.df-confirm-sheet`). Its own README says
