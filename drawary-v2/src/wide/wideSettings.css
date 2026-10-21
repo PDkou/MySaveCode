@@ -88,8 +88,6 @@
 /* theme: the five cards grow with the page */
 .wide-sd .ts39-panel { display: flex; flex-direction: column; }
 .wide-sd .ts39-themes { flex: 0 0 auto; }
-.wide-sd .ts39-theme { height: 182px; min-height: 0; }
-.wide-sd .ts39-theme-preview { flex: none; height: 113px; }
 /* language: cards share the height with the note and buttons */
 .wide-sd .lang54-form { flex: 1 1 auto; grid-template-rows: minmax(0, 1fr) auto auto; align-content: stretch; max-height: 640px; }
 .wide-sd .lang54-card .lang54-art { flex: 1 1 auto; height: auto; min-height: 150px; }
@@ -223,3 +221,9 @@
 .wide-sd .uf-header--center .uf-title, .pane-magnifier-inner .uf-header--center .uf-title { font-size: 21px !important; font-weight: 850 !important; letter-spacing: -.5px !important; color: #1b2d65 !important; line-height: 1.25 !important; }
 .wide-sd .uf-header--center .uf-back, .pane-magnifier-inner .uf-header--center .uf-back { position: static !important; left: auto !important; top: auto !important; width: 44px !important; height: 44px !important; margin: 0 !important; padding: 0 !important; transform: none !important; }
 .wide-sd .lang54-title { color: #1b2d65; font-weight: 850; }
+
+/* theme choices next to the live preview: just the flower, the accent bar and the name */
+.wide-sd .ts39-theme { height: auto; padding: 12px 8px 12px; }
+.wide-sd .ts39-theme-preview { height: 60px; }
+.wide-sd .ts39-preview-field { display: none; }
+.wide-sd .ts39-theme-name { margin-top: 8px; }

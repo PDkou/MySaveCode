@@ -31,17 +31,9 @@ button{font:inherit;cursor:pointer}
 .ts39-theme[data-theme="sky"]{--card-background:#f2f8fd;--preview-background:#eff7ff;--preview-border:#e0ecfa;--theme-primary:#79b8ea}
 .ts39-theme-note{position:absolute;left:16px;right:16px;bottom:32px;margin:0;color:var(--ts39-muted);font-size:11.5px;line-height:18px;letter-spacing:-.35px;font-weight:700;text-align:center;white-space:nowrap}
 
-/* Wide windows: one large preview of the chosen theme above the five choices (the previews keep each theme's own colours, like the cards above). */
-.ts39-big { display: none; }
-.wide-sd .ts39-big { display: block; position: relative; width: 100%; max-width: 560px; height: clamp(100px, calc(100dvh - 530px), 250px); margin: 4px auto 22px; border-radius: 26px; border: 1px solid var(--preview-border); background: var(--preview-background); box-shadow: 0 6px 20px rgba(65, 50, 90, .07); overflow: hidden; container-type: size; }
-.wide-sd .ts39-big[data-theme="lavender"] { --preview-background: #f5efff; --preview-border: #e6ddfb; --theme-primary: #8051ff; }
-.wide-sd .ts39-big[data-theme="coral"] { --preview-background: #fff1f1; --preview-border: #ffe2e1; --theme-primary: #f4898a; }
-.wide-sd .ts39-big[data-theme="sage"] { --preview-background: #f2faf1; --preview-border: #e6f1e5; --theme-primary: #80b58c; }
-.wide-sd .ts39-big[data-theme="mustard"] { --preview-background: #fff9ef; --preview-border: #f8edd7; --theme-primary: #e9b440; }
-.wide-sd .ts39-big[data-theme="sky"] { --preview-background: #eff7ff; --preview-border: #e0ecfa; --theme-primary: #79b8ea; }
-/* the pieces scale with the preview's height */
-.wide-sd .ts39-big-flower { position: absolute; left: 5%; top: 8%; height: 42%; width: auto; max-width: 25%; object-fit: contain; }
-.wide-sd .ts39-big-bar { position: absolute; right: 6%; top: 21%; width: 21%; height: 11%; border-radius: 99px; background: var(--theme-primary); opacity: .69; }
-.wide-sd .ts39-big-field { position: absolute; left: 5%; right: 5%; bottom: 30%; height: 22%; border-radius: 18px; background: #fff; box-shadow: 0 2px 9px rgba(100, 100, 100, .05); }
-.wide-sd .ts39-big-field--short { bottom: 9%; right: 42%; height: 16%; }
-.wide-sd .ts39-big-name { position: absolute; right: 5%; bottom: 10%; font-size: clamp(16px, 9cqh, 22px); font-weight: 900; letter-spacing: -.4px; color: var(--theme-primary); }
+/* Wide windows: a live preview of the app in the chosen theme (see ThemeLivePreview.tsx), above five compact choices. */
+.ts39-live { display: none; }
+.wide-sd .ts39-live { display: block; position: relative; margin: 4px auto 18px; border: 1px solid #e9e1d6; border-radius: 22px; overflow: hidden; background: #fffaf2; box-shadow: 0 6px 20px rgba(65, 50, 90, .08); pointer-events: none; user-select: none; }
+.ts39-live-phone { position: absolute; top: 0; left: 0; width: 390px; transform-origin: top left; background: #fffaf2; }
+.ts39-live-top { height: 300px; overflow: hidden; position: relative; }
+.ts39-live-nav { background: #fefdf9; border-top: 1px solid rgba(97, 78, 140, .1); }

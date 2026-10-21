@@ -2,6 +2,8 @@ import { useState } from 'react';
 import './ThemeSettingsScreen.css';
 
 import type { ThemeId } from '../flow/theme';
+import { ThemeLivePreview } from './ThemeLivePreview';
+import type { HomeDrawerCard } from './HomeScreen';
 import { t, K } from '../i18n';
 export type { ThemeId };
 
@@ -11,6 +13,8 @@ export interface ThemeSettingsScreenProps {
   onThemeChange?: (theme: ThemeId) => void;
   /** Wide windows: the chosen theme is also shown as one large preview above the five choices. */
   bigPreview?: boolean;
+  /** The person's own drawers for the live preview (sample drawers when there are none). */
+  previewDrawers?: HomeDrawerCard[];
 }
 
 const THEMES: { id: ThemeId; label: string; flower: string; alt: string }[] = [
@@ -33,7 +37,7 @@ const THEMES: { id: ThemeId; label: string; flower: string; alt: string }[] = [
  * the archive into a new `assets/theme/` directory (verified by
  * opening each one directly, not guessed from filenames).
  */
-export function ThemeSettingsScreen({ initialTheme = 'lavender', onBack, onThemeChange, bigPreview = false }: ThemeSettingsScreenProps) {
+export function ThemeSettingsScreen({ initialTheme = 'lavender', onBack, onThemeChange, bigPreview = false, previewDrawers = [] }: ThemeSettingsScreenProps) {
   const [theme, setTheme] = useState<ThemeId>(initialTheme);
 
   const select = (id: ThemeId) => {
@@ -49,15 +53,7 @@ export function ThemeSettingsScreen({ initialTheme = 'lavender', onBack, onTheme
       </header>
       <section className="ts39-panel" aria-label={t('테마 설정')}>
         <h2 className="ts39-section-heading">{t('테마 스타일')}</h2>
-        {bigPreview && (
-          <div className="ts39-big" data-theme={theme} aria-hidden="true">
-            <img className="ts39-big-flower" src={`/assets/theme/${THEMES.find((x) => x.id === theme)!.flower}`} alt="" />
-            <span className="ts39-big-bar" />
-            <span className="ts39-big-field" />
-            <span className="ts39-big-field ts39-big-field--short" />
-            <span className="ts39-big-name">{t(THEMES.find((x) => x.id === theme)!.label)}</span>
-          </div>
-        )}
+        {bigPreview && <ThemeLivePreview key={theme} theme={theme} drawers={previewDrawers} />}
         <div className="ts39-themes" aria-label={t('테마 선택')}>
           {THEMES.map((th) => (
             <button

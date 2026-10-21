@@ -1170,7 +1170,7 @@ export default function App() {
       // ThemeSettingsScreen.tsx's own header comment. Back returns to #38.
       return <main className="drawary-app-shell" data-route="theme-settings">
         <FixedCanvas height={844}>
-          <ThemeSettingsScreen bigPreview={layout === 'wide'} initialTheme={theme} onBack={returnToTab} onThemeChange={(id) => { void actions.setSetting(THEME_KEY, id).catch(alertError); }} />
+          <ThemeSettingsScreen bigPreview={layout === 'wide'} previewDrawers={homeCards} initialTheme={theme} onBack={returnToTab} onThemeChange={(id) => { void actions.setSetting(THEME_KEY, id).catch(alertError); }} />
         </FixedCanvas>
       </main>;
     }

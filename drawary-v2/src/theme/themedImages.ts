@@ -1,4 +1,4 @@
-import { currentTheme, DEFAULT_THEME, onThemeApplied, type ThemeId } from '../flow/theme';
+import { currentTheme, DEFAULT_THEME, isThemeId, onThemeApplied, type ThemeId } from '../flow/theme';
 
 /**
  * The accent-coloured artwork (UI icons, field-type icons, bottom-nav parts) exists in one
@@ -18,7 +18,9 @@ export function themedSrc(src: string, theme: ThemeId): string | null {
 function retheme(img: HTMLImageElement, theme: ThemeId) {
   const src = img.getAttribute('src');
   if (!src) return;
-  const next = themedSrc(src, theme);
+  // a piece of the page drawn in another theme (the live preview in the theme settings) keeps that theme's pictures
+  const previewTheme = img.closest('[data-preview-theme]')?.getAttribute('data-preview-theme');
+  const next = themedSrc(src, isThemeId(previewTheme) ? previewTheme : theme);
   if (next && next !== src) img.setAttribute('src', next);
 }
 
