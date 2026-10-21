@@ -115,7 +115,7 @@
 /* ---- stats (#07) in two columns ---- */
 .stats-screen--wide { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 22px; align-content: start; width: 100%; max-width: 1100px; margin: 0 auto; padding: 24px 32px 28px; min-height: 0; }
 .stats-screen--wide > .stats-header, .stats-screen--wide > .stats-title, .stats-screen--wide > .stats-kpis { grid-column: 1 / -1; }
-.stats-screen--wide > .stats-header { margin-bottom: 0; }
+.stats-screen--wide > .stats-header { margin-bottom: 0; min-height: 0; }
 /* in the wide panes the content has its own padding: the logo's drawing lines up with the content's edge */
 .stats-screen--wide .stats-brand { margin: calc(var(--brand-w) * -.029) 0 0 calc(var(--brand-w) * -.097); }
 .stats-screen--wide .stats-tagline { margin-left: calc(var(--brand-w) * .194); }
@@ -134,10 +134,10 @@
 
 
 /* ---- settings (#38): card grid, and the opened screen magnified ---- */
-.wsg { max-width: 1040px; margin: 0 auto; padding: 22px 32px 28px; }
+.wsg { max-width: 1040px; margin: 0 auto; padding: 24px 32px 28px; }
 .wsg-brand img { display: block; width: var(--brand-w); height: auto; margin: calc(var(--brand-w) * -.029) 0 0 calc(var(--brand-w) * -.097); }
 .wsg-brand p { margin: calc(var(--brand-w) * -.048) 0 0 calc(var(--brand-w) * .194); font-size: 10.5px; line-height: 14px; font-weight: 500; color: #828dae; }
-.wsg-head h1 { margin: 10px 0 14px; text-align: left; font-size: 22px; font-weight: 850; color: #1b2d65; }
+.wsg-head h1 { margin: 14px 0 14px; text-align: left; font-size: 20px; line-height: 26px; font-weight: 800; letter-spacing: -.5px; color: #28396d; }
 .wsg-hero { margin-bottom: 18px; padding: 16px 20px; border: 1px solid var(--tc-e5ddec,#e5ddec); border-radius: 18px; background: var(--tc-f7f1ff,#f7f1ff); }
 .wsg-hero h2 { margin: 0; color: #315a96; font-size: 17px; font-weight: 900; letter-spacing: -.4px; }
 .wsg-hero p { margin: 6px 0 0; color: #716b7c; font-size: 12.5px; line-height: 1.45; font-weight: 650; }
@@ -149,7 +149,7 @@
 .wsg-copy strong { color: #304f82; font-size: 15px; font-weight: 900; }
 .wsg-copy span { color: #7a7585; font-size: 12px; font-weight: 600; line-height: 1.4; }
 .wsg-chev { color: #a49cad; font-size: 24px; line-height: 1; text-align: right; }
-.wide-app--land .wsg { padding: 10px 22px 18px; }
+.wide-app--land .wsg { padding: 14px 22px 18px; }
 .wide-app--land .wsg-head h1 { margin-bottom: 8px; }
 .wide-app--land .wsg-hero { padding: 10px 16px; margin-bottom: 12px; }
 
