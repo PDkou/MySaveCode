@@ -3,7 +3,7 @@
    scoped under .wide-sd (see App.tsx), so the phone screens are untouched. Their own FixedCanvas (a 390 px canvas) is switched
    off here and each screen's root is let free of its fixed 390 x 844 size. */
 .wide-sd { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-.wide-sd > .drawary-app-shell { max-width: none; height: auto; min-height: 100%; overflow: visible; background: transparent; padding-top: 0; display: block; }
+.wide-sd > .drawary-app-shell { max-width: none; width: 100%; margin: 0; height: auto; min-height: 100%; overflow: visible; background: transparent; padding-top: 0; display: block; }
 .wide-sd .drawary-fixed-canvas-host { height: auto !important; overflow: visible; }
 .wide-sd .drawary-fixed-canvas-scale { position: static; width: auto; height: auto !important; transform: none !important; }
 .wide-sd .sec40-screen, .wide-sd .dmh44-screen, .wide-sd .ts39-screen, .wide-sd .lang54-screen, .wide-sd .help55-screen, .wide-sd .info58-screen, .wide-sd .fb59-screen {
@@ -28,7 +28,7 @@
 
 /* ---- theme (#39): the five styles in one row ---- */
 .wide-sd .ts39-panel { position: static; margin: 0 20px 28px; padding: 22px 22px 24px; }
-.wide-sd .ts39-themes { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.wide-sd .ts39-themes { grid-template-columns: repeat(5, minmax(0, 176px)); justify-content: center; gap: 16px; }
 .wide-sd .ts39-theme[data-theme="sky"] { grid-column: auto; width: auto; justify-self: stretch; }
 .wide-sd .ts39-theme-note { position: static; margin: 20px 0 0; white-space: normal; }
 
@@ -68,3 +68,31 @@
 .wide-sd .fb59-bottom { position: static; padding: 8px 20px 28px; background: none; }
 .wide-sd .fb59-send { max-width: 520px; margin: 0 auto; display: block; }
 .wide-sd .fb59-status { position: static; margin: 0 20px 20px; }
+
+/* ---- fill the height: the first-level screens stretch their cards (or centre their content) instead of leaving the bottom empty ---- */
+.wide-sd { display: flex; flex-direction: column; }
+.wide-sd > .drawary-app-shell, .wide-sd .drawary-fixed-canvas-host, .wide-sd .drawary-fixed-canvas-scale { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.wide-sd .sec40-screen, .wide-sd .dmh44-screen, .wide-sd .ts39-screen, .wide-sd .lang54-screen, .wide-sd .help55-screen, .wide-sd .info58-screen { display: flex; flex-direction: column; flex: 1 1 auto; }
+.wide-sd .sec40-panel, .wide-sd .dmh44-panel { flex: 1 1 auto; margin-bottom: 24px; }
+.wide-sd .ts39-panel { flex: 0 0 auto; margin-bottom: 24px; }
+.wide-sd .ts39-screen { justify-content: center; }
+.wide-sd .sec40-panel { grid-template-rows: auto auto minmax(150px, 1fr) auto; }
+.wide-sd .dmh44-panel { grid-template-rows: auto auto minmax(150px, 1fr); }
+/* the option cards become tall tiles: icon above, text below, the switch or arrow underneath */
+.wide-sd .sec40-item, .wide-sd .dmh44-item { flex-direction: column; justify-content: center; text-align: center; gap: 12px; padding: 22px 16px; }
+.wide-sd .sec40-item-copy, .wide-sd .dmh44-item-copy { flex: 0 0 auto; }
+.wide-sd .sec40-item-icon, .wide-sd .dmh44-item-icon { width: 62px; height: 62px; border-radius: 19px; }
+.wide-sd .sec40-item-icon img, .wide-sd .dmh44-item-icon img { width: 50px; height: 50px; }
+.wide-sd .dmh44-right-arrow { display: none; }
+.wide-sd .sec40-item-copy strong, .wide-sd .dmh44-item-copy strong { font-size: 16px; }
+.wide-sd .sec40-item-copy small, .wide-sd .dmh44-item-copy small { font-size: 12px; }
+/* theme: the five cards grow with the page */
+.wide-sd .ts39-panel { display: flex; flex-direction: column; }
+.wide-sd .ts39-themes { flex: 0 0 auto; }
+.wide-sd .ts39-theme { height: 182px; min-height: 0; }
+.wide-sd .ts39-theme-preview { flex: none; height: 113px; }
+/* language: cards share the height with the note and buttons */
+.wide-sd .lang54-form { flex: 1 1 auto; grid-template-rows: minmax(0, 1fr) auto auto; align-content: stretch; max-height: 640px; }
+.wide-sd .lang54-card .lang54-art { flex: 1 1 auto; height: auto; min-height: 150px; }
+/* help and info: short pages are centred vertically */
+.wide-sd .help55-screen, .wide-sd .info58-screen { justify-content: center; }
