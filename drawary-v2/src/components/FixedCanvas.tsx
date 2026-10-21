@@ -15,9 +15,21 @@ const MIN_SCALE = 0.6;
  * 320px-wide device shows the whole confirmed layout, scaled down, rather
  * than cropping the right/bottom edge. Width < 390 scales down; width >=
  * 390 renders at the approved 1:1 size. */
-export function FixedCanvas({ height, children }: { height: number; children: ReactNode }) {
+export function FixedCanvas({ height, grow = false, children }: { height: number; /** For screens whose content can be longer than the canvas (many fields, many items): the canvas grows with it instead of clipping it. */ grow?: boolean; children: ReactNode }) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [contentHeight, setContentHeight] = useState(height);
+  useEffect(() => {
+    const inner = innerRef.current;
+    if (!grow || !inner) return;
+    const measure = () => setContentHeight(Math.max(height, inner.scrollHeight));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(inner);
+    for (const child of Array.from(inner.children)) observer.observe(child);
+    return () => observer.disconnect();
+  }, [grow, height]);
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
@@ -45,8 +57,8 @@ export function FixedCanvas({ height, children }: { height: number; children: Re
   }, [height]);
 
   return (
-    <div className="drawary-fixed-canvas-host" ref={hostRef} style={{ height: height * scale }}>
-      <div className="drawary-fixed-canvas-scale" style={{ height, transform: `translateX(-50%) scale(${scale})` }}>
+    <div className={`drawary-fixed-canvas-host${grow ? ' is-grow' : ''}`} ref={hostRef} style={{ height: (grow ? contentHeight : height) * scale, ['--fc-h' as string]: `${height}px` }}>
+      <div className="drawary-fixed-canvas-scale" ref={innerRef} style={grow ? { minHeight: height, transform: `translateX(-50%) scale(${scale})` } : { height, transform: `translateX(-50%) scale(${scale})` }}>
         {children}
       </div>
     </div>

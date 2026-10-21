@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 const COLUMN = 430;
+const FIT_HEIGHT = 800;
 
 /**
  * Shows a phone-width screen larger inside a wide window, as one piece (like the tablet magnification in AppScaler): the screen is
@@ -14,7 +15,8 @@ export function PaneMagnifier({ children, max = 1.35 }: { children: ReactNode; m
     const host = hostRef.current;
     if (!host) return;
     const measure = () => {
-      const k = Math.max(1, Math.min(max, (host.clientWidth - 32) / COLUMN));
+      // as wide as the pane allows, but never so large that a whole phone screen (about 800 px tall) no longer fits the pane's height
+      const k = Math.max(1, Math.min(max, (host.clientWidth - 32) / COLUMN, host.clientHeight / FIT_HEIGHT));
       setBox({ k, h: host.clientHeight });
     };
     measure();

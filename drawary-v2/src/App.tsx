@@ -736,7 +736,7 @@ export default function App() {
       // #08's name/icon/color step. Its list is the create-flow draft held
       // above; nothing is saved until "서랍 만들기 완료하기". Back returns to #08.
       return <main className="drawary-app-shell" data-route="drawer-fields">
-        <FixedCanvas height={844}>
+        <FixedCanvas height={844} grow>
           <DrawerFieldsScreen
             fields={fieldsDraft.map(toFieldItem)}
             onBack={() => navigate('create-drawer')}
@@ -771,7 +771,7 @@ export default function App() {
       // edit view. Without a selected field (direct URL) it shows the archive's
       // demo list as before. A field's kind cannot be changed here.
       return <main className="drawary-app-shell" data-route="field-edit">
-        <FixedCanvas height={844}>
+        <FixedCanvas height={844} grow>
           {editingDraftField ? (
             <DrawerFieldEditScreen
               key={editingDraftField.id}
@@ -805,7 +805,7 @@ export default function App() {
       // #12 or #15, whichever opened it.
       if (!currentDrawer) return <main className="drawary-app-shell" data-route="fill-drawer" />;
       return <main className="drawary-app-shell" data-route="fill-drawer">
-        <FixedCanvas height={844}>
+        <FixedCanvas height={844} grow>
           <FillDrawerScreen
             key={fillKey}
             drawerName={currentDrawer.name}
@@ -836,7 +836,7 @@ export default function App() {
           return { id: r.id, title: sum.title, subtitle: sum.subtitle, dateLabel: sum.dateLabel, thumbnailUri: recordThumbs[r.id] };
         });
       return <main className="drawary-app-shell" data-route="drawer-detail">
-        <FixedCanvas height={844}>
+        <FixedCanvas height={844} grow>
           <DrawerDetailScreen
             drawerName={currentDrawer.name}
             recordCount={currentRecords.length}
@@ -886,7 +886,7 @@ export default function App() {
       // has no destination screen among #25-#37, so that one row stays an
       // intentional no-op.
       return <main className="drawary-app-shell" data-route="drawer-manage">
-        <FixedCanvas height={844}>
+        <FixedCanvas height={844} grow>
           <DrawerManageScreen
             drawerName={drawerDetailName}
             drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
@@ -1528,7 +1528,7 @@ export default function App() {
       // baseline, centered as a group.
       if (!currentDrawer) return <main className="drawary-app-shell" data-route="drawer-fields-manage" />;
       return <main className="drawary-app-shell" data-route="drawer-fields-manage">
-        <FixedCanvas height={844}>
+        <FixedCanvas height={844} grow>
           <DrawerFieldsScreen
             title={t('서랍칸 편집')}
             completeLabel={t('완료')}
@@ -1560,7 +1560,7 @@ export default function App() {
       // options stays here with a message).
       if (!currentDrawer) return <main className="drawary-app-shell" data-route="new-field-manage" />;
       return <main className="drawary-app-shell" data-route="new-field-manage">
-        <FixedCanvas height={844}>
+        <FixedCanvas height={844} grow>
           <NewFieldScreen
             onBack={() => navigate('drawer-fields-manage')}
             onAdd={(data) => { void actions.addField(currentDrawer.id, data).then(() => navigate('drawer-fields-manage')).catch(alertError); }}
@@ -1575,7 +1575,7 @@ export default function App() {
       // every record, and the last remaining field cannot be deleted.
       if (!manageField) return <main className="drawary-app-shell" data-route="field-edit-manage" />;
       return <main className="drawary-app-shell" data-route="field-edit-manage">
-        <FixedCanvas height={844}>
+        <FixedCanvas height={844} grow>
           <DrawerFieldEditScreen
             key={manageField.id}
             field={manageField}
@@ -1603,7 +1603,7 @@ export default function App() {
       const sum = summarizeRecord(currentFields, selectedRecord);
       const rows = recordFieldRows(selectedRecord);
       return <main className="drawary-app-shell" data-route="record-detail">
-        <FixedCanvas height={844}>
+        <FixedCanvas height={844} grow>
           <RecordDetailScreen
             drawerName={currentDrawer.name}
             title={sum.title}
@@ -1646,7 +1646,7 @@ export default function App() {
         ? (editPhotos.length ? (editUrls[0] ?? selectedPhotos.urls[0] ?? '') : '')
         : (selectedPhotos.urls[0] ?? '');
       return <main className="drawary-app-shell" data-route="record-edit">
-        <FixedCanvas height={844}>
+        <FixedCanvas height={844} grow>
           <RecordEditScreen
             key={`${selectedRecord.id}:${editKey}`}
             drawerName={currentDrawer.name}

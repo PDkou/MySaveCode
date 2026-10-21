@@ -2,6 +2,9 @@
   position: relative;
   width: 100%;
   overflow: hidden;
+  /* A canvas keeps its own height: when the window is shorter, the app shell around it scrolls. Without this the host shrank to the shell's
+     height (it is a flex item) and the part below was clipped with nothing to scroll. */
+  flex: none;
 }
 .drawary-fixed-canvas-scale {
   position: absolute;
@@ -10,3 +13,6 @@
   width: 390px;
   transform-origin: top center;
 }
+
+/* grow: the screen's own fixed height becomes a minimum, so a long form or list shows in full (the app shell around scrolls) */
+.drawary-fixed-canvas-host.is-grow > .drawary-fixed-canvas-scale > * { height: auto !important; min-height: var(--fc-h); overflow: visible !important; }
