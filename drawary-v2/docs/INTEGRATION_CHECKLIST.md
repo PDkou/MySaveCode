@@ -75,7 +75,7 @@
 - [x] Backup/restore semantics: restore replaces everything after a strict check and the PIN (when the lock is on); backup is not encrypted by owner decision
 - [x] Notification scheduling & recurrence semantics (web logic + tests; Android alarms built in the shell, CI-built, **device: no**)
 - [x] PIN / biometrics (PBKDF2 PIN, limiter, auto-lock; biometrics through the shell, **device: no**)
-- [x] Navigation / responsive: all routes smoke-tested in Chromium; orientation/foldable on a real device: no
+- [x] Navigation / responsive: all routes smoke-tested in Chromium; landscape, short windows and foldable sizes tested in Chromium and a landscape cut-off bug fixed (V2_12_18 §4); real device: no
 - [x] KR/JP/EN text and common typography (`V2_12_12_I18N.md`)
 - [x] Feedback delivery: opens the mail app (db5704@gmail.com) with the message, says so honestly; browser says it cannot send; **device: no**
 - [x] Accessibility audit (axe): structure fixed, text contrast fixed (3 button/label nodes left as approved); TalkBack not run (`V2_12_16_ACCESSIBILITY.md`)

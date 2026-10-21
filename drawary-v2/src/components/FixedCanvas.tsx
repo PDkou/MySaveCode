@@ -2,6 +2,9 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import './FixedCanvas.css';
 
 const REFERENCE_WIDTH = 390;
+/** Canvases at least this tall are whole screens (the 844 px ones); shorter ones are parts of a tab screen that scrolls. */
+const FULL_SCREEN_MIN_HEIGHT = 800;
+const MIN_SCALE = 0.6;
 
 /** Several confirmed screens (so far: #03/#04 home) are shipped as a fixed
  * 390px-wide image with absolute-positioned hotspots, the same shape as the
@@ -17,12 +20,26 @@ export function FixedCanvas({ height, children }: { height: number; children: Re
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    const observer = new ResizeObserver(([entry]) => {
-      setScale(Math.min(1, entry.contentRect.width / REFERENCE_WIDTH));
-    });
+    // A full screen (844 tall) must be reachable on every phone: narrower than 390 it scales down by width; in portrait with
+    // less than 844 px of height (a phone minus its status and navigation bars) it scales down by height too, so the buttons
+    // at the bottom are not cut off. While a text field has the keyboard open the window is shorter on purpose, so the scale
+    // is left alone. In landscape the screen keeps its size and the app shell scrolls (see styles.css).
+    const update = () => {
+      const active = document.activeElement;
+      const typing = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || active instanceof HTMLSelectElement;
+      if (typing) return;
+      const byWidth = host.getBoundingClientRect().width / REFERENCE_WIDTH;
+      const portrait = window.innerHeight >= window.innerWidth;
+      const fitsHeight = height >= FULL_SCREEN_MIN_HEIGHT && portrait;
+      const byHeight = fitsHeight ? (window.innerHeight - host.getBoundingClientRect().top) / height : Infinity;
+      setScale(Math.max(MIN_SCALE, Math.min(1, byWidth, byHeight)));
+    };
+    update();
+    const observer = new ResizeObserver(update);
     observer.observe(host);
-    return () => observer.disconnect();
-  }, []);
+    window.addEventListener('resize', update);
+    return () => { observer.disconnect(); window.removeEventListener('resize', update); };
+  }, [height]);
 
   return (
     <div className="drawary-fixed-canvas-host" ref={hostRef} style={{ height: height * scale }}>

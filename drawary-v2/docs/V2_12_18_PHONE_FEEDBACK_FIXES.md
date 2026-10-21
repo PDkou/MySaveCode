@@ -27,3 +27,14 @@ zero-specificity baseline ring (`:where`) for fields that draw nothing; boxes wi
 sort search, field name and option rows, item form date/number/notes) take the ring themselves — violet border + soft halo, the same
 look everywhere. The item form's star / on-off / select controls had no styling at all (browser defaults); styled to match
 (no approved design exists for these three).
+
+## 4. Landscape, short screens, foldables (found by testing sizes, 2026-10-21)
+Tested 844×390 (landscape), 393×780 and 360×640 (phone minus its bars), 345×882 (fold cover), 690×829 (fold inner), tablets.
+**Real bug:** whole screens are 844 px tall designs; whenever the window was shorter (landscape, or a phone's window after the
+status/navigation bars) the bottom buttons (save, next, send, the PIN keypad's last row) were cut off and nothing scrolled, so e.g.
+the PIN could not be typed in landscape. Now: the app shell scrolls when a screen is taller than the window (landscape), and in
+portrait a full screen scales down proportionally to fit the height (never below 0.6; not while a text field has the keyboard
+open). At 390×844 nothing changes (58 captured screens pixel-identical before/after). Wide windows (tablet, fold inner screen) keep the
+390 px column centred — everything is usable and nothing is cut, but it is not enlarged: the approved bottom nav is fixed at 390 px
+above that width by the design lock, so scaling the rest up would mismatch it. If a bigger layout on tablets is wanted, it needs a
+decision (and designs) from the owner.
