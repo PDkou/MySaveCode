@@ -81,3 +81,12 @@ Later changes to the wide settings pages (owner requests in chat):
 - Cards of security / data management / language fill the page height (tiles); short pages (help, info, theme) are centred.
 - Theme: one large preview of the chosen theme (the approved card preview's pieces enlarged: flower, accent bar, fields, name) above the five approved cards.
 - One header and one back arrow for every settings screen in wide windows (the shared ScreenHeader look: 72 px bar, centred 21 px title #1b2d65, 44 px chevron button), applied by CSS over the twelve screens that had their own header markup, and over the restore-style ScreenHeader screens (`wide/wideSettings.css`). Phone screens are unchanged.
+
+## 7. Correction: screens that could not be scrolled to the end (found while checking the wide settings screens)
+
+What was wrong (it affected phones too, not only the wide layouts):
+- The landscape fix of section 4 was verified with `scrollIntoView`, which also scrolls `overflow:hidden` boxes, so it passed although a finger could not scroll there. In fact `FixedCanvas`'s host was a flex item that shrank to the app shell's height and clipped what was below it, with nothing to scroll: in a landscape phone the lower part of full screens (PIN keypad rows, "피드백 보내기", ...) could not be reached. Fix: the host keeps its height (`flex: none`), so the app shell scrolls.
+- Fixed 844 px screens clipped long content in every orientation: "담기" in the fill form, "수정 완료" in the item editor, "완료" in the field editors, and the last items of a long drawer list (found with an 8-field / 8-item sample drawer on a 360 x 640 and a 390 x 844 phone). Fix: `FixedCanvas grow` (the screen's own height becomes a minimum) for the forms and field screens; the drawer list (#15) scrolls inside its screen so the header, search and "서랍 채우기" stay put.
+- The wide settings pane's magnification no longer exceeds the pane's height (a whole phone screen has to fit).
+
+How it was checked this time: for each screen at 844x390, 837x697, 360x640, 390x844, 1280x800 and 1920x1200, real mouse-wheel scrolling (no scripted scrolling), then whether every button / input of the screen is inside the visible area. Result: no unreachable control, except the create-drawer sheet's "다음", which scrolls inside the sheet itself (a false alarm of the check). Not yet checked on a real device.

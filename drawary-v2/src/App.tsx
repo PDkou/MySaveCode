@@ -836,7 +836,7 @@ export default function App() {
           return { id: r.id, title: sum.title, subtitle: sum.subtitle, dateLabel: sum.dateLabel, thumbnailUri: recordThumbs[r.id] };
         });
       return <main className="drawary-app-shell" data-route="drawer-detail">
-        <FixedCanvas height={844} grow>
+        <FixedCanvas height={844}>
           <DrawerDetailScreen
             drawerName={currentDrawer.name}
             recordCount={currentRecords.length}

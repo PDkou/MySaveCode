@@ -134,3 +134,9 @@ button,input{font:inherit}
   color:#a4a7b5;
   font:300 24px/1 Arial;
 }
+
+/* A long list scrolls inside the screen (header, search and the "서랍 채우기" button stay put); with few items nothing changes. */
+.dd-screen{display:flex;flex-direction:column}
+.dd-screen > .uf-header,.dd-screen > .dd-toolbar{flex:none}
+.dd-list{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:none}
+.dd-list::-webkit-scrollbar{display:none}
