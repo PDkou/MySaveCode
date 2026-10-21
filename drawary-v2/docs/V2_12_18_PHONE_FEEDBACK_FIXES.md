@@ -46,7 +46,7 @@ or needs scrolling, but there are wide empty sides; a real wide layout (two pane
 moves things by pixels divides by the scale (photo pan; the home reorder already measured its own scale). Keyboard open: the scale is
 frozen so the screen does not jump. Tested in Chromium only (hit-testing and clicks work under the transform); real tablet: not tested.
 
-## 6. Landscape layouts (landscape phones, landscape tablets, unfolded foldables) — PREVIEW, awaiting owner approval
+## 6. Landscape layouts (landscape phones, landscape tablets, unfolded foldables) — layout approved by the owner in chat; real-device check pending
 
 Why: section 5 left landscape windows with one fitted phone screen. The owner asked for a real wide layout and supplied three
 reference proposals (home, drawer list, table view; non-final, not approved sources). This is my reading of them.
