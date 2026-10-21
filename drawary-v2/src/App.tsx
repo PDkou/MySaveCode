@@ -90,6 +90,7 @@ import { DrawerSidebar } from './wide/DrawerSidebar';
 import { WideHome } from './wide/WideHome';
 import { WideSettingsGrid } from './wide/WideSettingsGrid';
 import { PaneMagnifier } from './wide/PaneMagnifier';
+import './wide/wideSettings.css';
 import { WideDrawer } from './wide/WideDrawer';
 import { getLocale, t, K } from './i18n';
 import { closeOpenOverlay } from './flow/overlayBack';
@@ -107,6 +108,8 @@ const SETTINGS_PANES: Partial<Record<Route, string>> = {
   'data-management': 'data', 'backup-type': 'data', 'backup-destination': 'data', 'backup-success': 'data', 'restore-file-picker': 'data', 'restore-review': 'data', 'restore-success': 'data', 'data-reset-confirm': 'data',
   'language-settings': 'language', 'help-main': 'help', faq: 'help', guide: 'help', info: 'info', feedback: 'feedback',
 };
+/** The first-level settings screens that get their own wide arrangement (wide/wideSettings.css); the screens they lead to are shown magnified. */
+const WIDE_SETTINGS_PAGES: readonly Route[] = ['theme-settings', 'security-settings', 'data-management', 'language-settings', 'help-main', 'info', 'feedback'];
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
 const STANDALONE_ROUTES: readonly Route[] = ['notification-common', 'splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm', 'language-settings', 'help-main', 'faq', 'guide', 'info', 'feedback'];
 const parseRoute = (): Route => {
@@ -683,7 +686,8 @@ export default function App() {
               onFeedback={() => navigate('feedback')}
             />
           </div>
-        ) : <PaneMagnifier>{renderRoute(route, true)}</PaneMagnifier>}
+        ) : WIDE_SETTINGS_PAGES.includes(route) ? <div className="wide-sd">{renderRoute(route, true)}</div>
+          : <PaneMagnifier>{renderRoute(route, true)}</PaneMagnifier>}
       </WideFrame>;
     }
     if (kind !== 'wide') return null;

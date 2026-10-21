@@ -1,0 +1,70 @@
+/* The seven first-level settings screens (theme, security, data, language, help, info, feedback) laid out for a wide window:
+   same pieces, texts and colours as the approved phone screens, re-arranged into columns inside a wider page. Everything is
+   scoped under .wide-sd (see App.tsx), so the phone screens are untouched. Their own FixedCanvas (a 390 px canvas) is switched
+   off here and each screen's root is let free of its fixed 390 x 844 size. */
+.wide-sd { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.wide-sd > .drawary-app-shell { max-width: none; height: auto; min-height: 100%; overflow: visible; background: transparent; padding-top: 0; display: block; }
+.wide-sd .drawary-fixed-canvas-host { height: auto !important; overflow: visible; }
+.wide-sd .drawary-fixed-canvas-scale { position: static; width: auto; height: auto !important; transform: none !important; }
+.wide-sd .sec40-screen, .wide-sd .dmh44-screen, .wide-sd .ts39-screen, .wide-sd .lang54-screen, .wide-sd .help55-screen, .wide-sd .info58-screen, .wide-sd .fb59-screen {
+  position: relative; width: 100%; max-width: 1000px; height: auto; min-height: 0; margin: 0 auto; overflow: visible; background: transparent;
+}
+.wide-sd .help55-screen, .wide-sd .info58-screen, .wide-sd .fb59-screen { max-width: 920px; }
+
+/* ---- security (#40) and data management (#44): hero across, the option rows as three cards ---- */
+.wide-sd .sec40-panel, .wide-sd .dmh44-panel {
+  position: static; margin: 0 20px 28px; padding: 22px 22px 24px;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch;
+}
+.wide-sd .sec40-section-title, .wide-sd .sec40-hero, .wide-sd .sec40-note,
+.wide-sd .dmh44-section-title, .wide-sd .dmh44-hero { grid-column: 1 / -1; margin: 0; }
+.wide-sd .sec40-items, .wide-sd .dmh44-items, .wide-sd .dmh44-secondary-section { display: contents; }
+.wide-sd .sec40-item, .wide-sd .dmh44-item { height: auto; min-height: 112px; margin: 0; padding: 14px 16px; border: 1px solid #ece5da; border-radius: 18px; background: #fffdf9; }
+.wide-sd .sec40-item + .sec40-item, .wide-sd .dmh44-item + .dmh44-item { border-top: 1px solid #ece5da; }
+.wide-sd .dmh44-danger { border-color: #f2e4e1; }
+.wide-sd .sec40-item-copy small, .wide-sd .dmh44-item-copy small { white-space: normal; }
+.wide-sd .dmh44-secondary-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); } /* kept for screen readers */
+.wide-sd .sec40-note { margin-top: 2px; }
+
+/* ---- theme (#39): the five styles in one row ---- */
+.wide-sd .ts39-panel { position: static; margin: 0 20px 28px; padding: 22px 22px 24px; }
+.wide-sd .ts39-themes { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.wide-sd .ts39-theme[data-theme="sky"] { grid-column: auto; width: auto; justify-self: stretch; }
+.wide-sd .ts39-theme-note { position: static; margin: 20px 0 0; white-space: normal; }
+
+/* ---- language (#54): the three language cards side by side ---- */
+.wide-sd .lang54-header { position: static; height: auto; }
+.wide-sd .lang54-screen .uf-header { position: relative !important; top: auto !important; }
+.wide-sd .lang54-form { position: static !important; margin: 12px 20px 28px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.wide-sd .lang54-card { flex-direction: column; align-items: stretch; height: auto; min-height: 0; padding: 12px; }
+.wide-sd .lang54-card .lang54-art { width: 100%; height: 150px; flex: 0 0 auto; }
+.wide-sd .lang54-card-copy { padding: 14px 4px 4px; }
+.wide-sd .lang54-footer-note { grid-column: 1 / -1; white-space: normal; margin: 4px 0 0; }
+.wide-sd .lang54-actions { grid-column: 1 / -1; width: 100%; max-width: 480px; margin: 0 auto; }
+
+/* ---- help (#55): hero across, the two main cards side by side, quick help in two columns ---- */
+.wide-sd .help55-content { padding: 0 20px 28px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; align-items: start; }
+.wide-sd .help55-hero, .wide-sd .help55-quick-label, .wide-sd .help55-quick-list, .wide-sd .help55-footnote { grid-column: 1 / -1; margin-top: 0; margin-bottom: 0; }
+.wide-sd .help55-main-options { display: contents; }
+.wide-sd .help55-quick-label { margin-top: 6px; }
+.wide-sd .help55-quick-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.wide-sd .help55-quick-item + .help55-quick-item { border-top: 0; }
+.wide-sd .help55-quick-item:nth-child(n+3) { border-top: 1px solid #ebe5df; }
+.wide-sd .help55-quick-item:nth-child(even) { border-left: 1px solid #ebe5df; }
+
+/* ---- info (#58): brand across, the rows in two columns ---- */
+.wide-sd .info58-content { padding: 0 20px 28px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; align-content: start; }
+.wide-sd .info58-section-label { margin-top: 24px; }
+.wide-sd .info58-section-label:not(.info58-about-label) { grid-column: 1; grid-row: 1; }
+.wide-sd .info58-card { grid-column: 1; grid-row: 2; align-self: start; }
+.wide-sd .info58-about-label { grid-column: 2; grid-row: 1; margin-top: 24px; }
+.wide-sd .info58-about-card { grid-column: 2; grid-row: 2; align-self: start; }
+.wide-sd .info58-credit { grid-column: 1 / -1; grid-row: 3; }
+
+/* ---- feedback (#59): the kinds in one row, the message wider, the bar below the form ---- */
+.wide-sd .fb59-main { height: auto; overflow: visible; padding: 1px 20px 12px; }
+.wide-sd .fb59-types { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.wide-sd #fb59-message { height: 150px; }
+.wide-sd .fb59-bottom { position: static; padding: 8px 20px 28px; background: none; }
+.wide-sd .fb59-send { max-width: 520px; margin: 0 auto; display: block; }
+.wide-sd .fb59-status { position: static; margin: 0 20px 20px; }
