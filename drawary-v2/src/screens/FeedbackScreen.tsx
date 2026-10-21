@@ -2,7 +2,7 @@ import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import './FeedbackScreen.css';
 import { t, tl, K } from '../i18n';
 
-export type FeedbackType = 'improvement' | 'bug' | 'feature' | 'other';
+export type FeedbackType = 'improvement' | 'bug' | 'feature' | 'cheer' | 'other';
 
 export interface FeedbackDraft {
   type: FeedbackType;
@@ -26,10 +26,13 @@ const TYPE_CONFIG: Record<FeedbackType, { name: string; icon: string; iconClass?
   improvement: { name: K('개선 제안'), icon: '/assets/decor/decor_sprout_01.webp', placeholder: K('어떤 점이 불편했나요? 이렇게 바뀌면 좋겠다는 생각도 좋아요.'), hint: K('어떤 화면에서 느낀 점인지 알려주시면 도움이 돼요.') },
   bug: { name: K('오류 제보'), icon: '/assets/ui-icons/feedback_error_from_approved.webp', iconClass: 'fb59-approved-crop', placeholder: K('어느 화면에서 어떤 문제가 있었나요? 발생한 순서대로 적어주세요.'), hint: K('오류가 난 화면과 동작을 적어주시면 확인에 도움이 돼요.') },
   feature: { name: K('기능 요청'), icon: '/assets/decor/decor_flower_01.webp', placeholder: K('어떤 기능이 있으면 좋을까요? 사용하는 상황도 알려주세요.'), hint: K('어떤 상황에서 필요한지 함께 알려주시면 좋아요.') },
+  cheer: { name: K('응원 메시지'), icon: '/assets/ui-icons/feedback_cheer.webp', iconClass: 'fb59-approved-crop', placeholder: K('Drawary에게 응원의 한마디를 남겨주세요.'), hint: K('남겨주신 응원은 Drawary를 만드는 큰 힘이 돼요.') },
   other: { name: K('기타'), icon: '/assets/ui-icons/feedback_other_from_approved.webp', iconClass: 'fb59-approved-crop', placeholder: K('하고 싶은 이야기를 자유롭게 남겨주세요.'), hint: K('칭찬, 질문, 다른 의견도 모두 환영해요.') },
 };
 
-const TYPES: FeedbackType[] = ['improvement', 'bug', 'feature', 'other'];
+const TYPES: FeedbackType[] = ['improvement', 'bug', 'feature', 'cheer', 'other'];
+// Where a review can be left (opens the Play Store app from the app shell; it only works once the app is published).
+const REVIEW_URL = 'https://play.google.com/store/apps/details?id=com.howlingcreativestudio.drawary';
 const DEFAULT_ATTACH_CAPTION = K('오류 화면이 있다면 첨부해 주세요. (선택)');
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
@@ -192,6 +195,13 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
               <span className="fb59-attach-copy"><strong>{t('화면 사진 첨부')}</strong><span>{attachCaption === DEFAULT_ATTACH_CAPTION ? t(attachCaption) : attachCaption}</span></span>
               <span className="fb59-attach-right" aria-hidden="true">›</span>
             </label>
+          )}
+          {type === 'cheer' && (
+            <a className="fb59-attach" href={REVIEW_URL} target="_blank" rel="noopener noreferrer">
+              <span className="fb59-attach-icon" aria-hidden="true">★</span>
+              <span className="fb59-attach-copy"><strong>{t('스토어에 리뷰 남기기')}</strong><span>{t('마음에 드셨다면 별점과 한 줄 리뷰도 부탁드려요.')}</span></span>
+              <span className="fb59-attach-right" aria-hidden="true">›</span>
+            </a>
           )}
           <input
             type="file"

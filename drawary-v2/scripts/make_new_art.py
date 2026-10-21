@@ -75,3 +75,7 @@ if len(sys.argv) > 2:
         save(cv.resize((round(shown_w * 4), round(shown_h * 4)), Image.LANCZOS).convert('RGB'), out)
     step(3, 180, 132, (255, 253, 248), 'guide/guide_step2_focus.webp')
     step(4, 186, 130, (255, 250, 245), 'guide/guide_step4_focus.webp')
+
+# first delivery picture 4 (heart speech bubble) -> the feedback "응원 메시지" icon
+im4 = fit(trim(load(4), 2), 160, 160)
+save(im4, 'ui-icons/feedback_cheer.webp', 94)
