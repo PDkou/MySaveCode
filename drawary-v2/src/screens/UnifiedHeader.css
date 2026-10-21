@@ -83,3 +83,10 @@ html body .drawary-app-shell .uf-header--stacked .uf-right-slot { grid-column: 3
 /* the "•••" button of the drawer, item and table headers sits in the header's right slot like the title row, and its pop-up menu hangs just under it */
 html body .drawary-app-shell .uf-header--stacked .uf-right-slot > button { position: static; right: auto; bottom: auto; width: 44px; height: 44px; margin: 0; }
 html body .drawary-app-shell .uf-header--stacked :is(.dd-menu-popover, .rd-menu-popover, .tv-menu-popover) { top: 60px; }
+
+/* the finished-backup screen has no back button, only the arrow drawn for the picture: same place and look as everywhere else */
+html body .drawary-app-shell .bks48-back { position: absolute; left: 0; top: 14px; width: 44px; height: 44px; border: 0; transform: none; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+html body .drawary-app-shell .bks48-back::before { content: ''; display: block; width: 11px; height: 11px; border-left: 3px solid var(--tc-7a5cf0,#7a5cf0); border-bottom: 3px solid var(--tc-7a5cf0,#7a5cf0); border-radius: 1px; transform: rotate(45deg); }
+
+/* these two pages have 20 px side padding of their own: the header reaches out to the screen edge like on every other screen */
+html body .drawary-app-shell .dm-screen > .uf-header, html body .drawary-app-shell .nic-page > .uf-header { margin: 0 -20px; }

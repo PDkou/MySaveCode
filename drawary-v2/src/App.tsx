@@ -92,6 +92,7 @@ import { WideSettingsGrid } from './wide/WideSettingsGrid';
 import { PaneMagnifier } from './wide/PaneMagnifier';
 import './wide/wideSettings.css';
 import './screens/UnifiedHeader.css';
+import './screens/UnifiedButtons.css';
 import { WideDrawer } from './wide/WideDrawer';
 import { getLocale, t, K } from './i18n';
 import { closeOpenOverlay } from './flow/overlayBack';
