@@ -42,7 +42,7 @@ const ROWS = [
   { key: 'feedback', icon: 'icon_edit.webp', title: K('피드백'), desc: K('개선 제안이나 오류를 알려주세요.') },
 ] as const;
 
-export function SettingsHomeScreen(props: SettingsHomeAction) {
+export function SettingsHomeScreen(props: SettingsHomeAction & { /** Landscape windows: the row whose screen is open on the right. */ activeKey?: string }) {
   const handlers: Record<(typeof ROWS)[number]['key'], (() => void) | undefined> = {
     theme: props.onTheme,
     security: props.onSecurity,
@@ -67,7 +67,7 @@ export function SettingsHomeScreen(props: SettingsHomeAction) {
 
         <section className="settings-home-list">
           {ROWS.map(row => (
-            <button className="settings-home-row" type="button" key={row.key} onClick={handlers[row.key]}>
+            <button className={`settings-home-row${props.activeKey === row.key ? ' is-active' : ''}`} type="button" key={row.key} aria-current={props.activeKey === row.key ? 'true' : undefined} onClick={handlers[row.key]}>
               <span className="settings-home-iconbox"><img src={`/assets/ui-icons/${row.icon}`} alt="" /></span>
               <span className="settings-home-copy"><strong>{t(row.title)}</strong><span>{t(row.desc)}</span></span>
               <span className="settings-home-chev">›</span>

@@ -6,6 +6,8 @@ import type { StatsData } from '../flow/stats';
 interface StatsScreenProps {
   stats: StatsData;
   onOpenInsight?: (drawerId: string) => void;
+  /** Landscape windows: the same cards, laid out in two columns. */
+  wide?: boolean;
 }
 
 const BAR_TINTS = ['orange', 'green', 'purple', 'pink', 'teal', 'tan'] as const;
@@ -29,12 +31,12 @@ const BAR_TINTS = ['orange', 'green', 'purple', 'pink', 'teal', 'tan'] as const;
  * The small texts under the lists for the "nothing yet" cases are new copy.
  * A drawer's row opens that drawer.
  */
-export function StatsScreen({ stats, onOpenInsight }: StatsScreenProps) {
+export function StatsScreen({ stats, onOpenInsight, wide = false }: StatsScreenProps) {
   const { drawerCount, itemCount, monthlyAdded, monthlyDelta, upcomingCount, nearestUpcomingDays, monthly, upcoming, insights } = stats;
   const maxCount = Math.max(1, ...monthly.map((m) => m.count));
 
   return (
-    <div className="stats-screen">
+    <div className={`stats-screen${wide ? ' stats-screen--wide' : ''}`}>
       <header className="stats-header">
         <img className="stats-brand" src="/assets/brand/brand_lockup_horizontal.webp" alt="Drawary" />
         <p className="stats-tagline">{t('나만의 소중한 것들을, 더 특별하게')}</p>

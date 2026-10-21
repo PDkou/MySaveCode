@@ -67,3 +67,12 @@ Decisions taken as recommended and approved by the owner in chat: filter chips c
 Added by me, not from an approved design: sidebar, chip column, 카드 보기 / 표 보기 switch, item card for `land`, the hint texts (new KR/JA/EN strings), the divider lines, spacing and sizes.
 Preview images: `docs/preview/wide/` (Chromium; sample data; 1280x800, 1920x1200, 844x390 landscape phone, 837x697 foldable).
 Not verified: real devices; `land` is cramped (the approved nav alone is 94 of ~390 px), so the lists scroll.
+
+### 6.1 Tab screens: search, stats, settings (added after the home / drawer / table were approved) — PREVIEW, awaiting owner approval
+
+The first audit of all screens in landscape found only those three had their own layout. Added (same approved pieces, nothing redrawn):
+- Stats (`wide` and `land`): the approved cards in two columns (KPI cards across the top, chart and upcoming events side by side, per-drawer insights below in two columns).
+- Search (`wide`): the approved search screen as a 430 column on the left; the chosen result opens beside it as the item pane (same "수정하기" / "삭제하기" as the drawer view).
+- Settings (`wide`): the approved settings list on the left (the open row highlighted); the chosen settings screen opens on the right. Every screen of a settings family (security > lock > PIN, data > backup / restore / reset, help > FAQ / guide, ...) stays in that right pane. With nothing chosen, the right pane shows the theme settings. The settings screens keep their own back arrow, which returns to that default.
+- Also fixed: the two-pane fallback overflowed sideways on 837 dp-wide windows (panes now shrink).
+Preview images: `docs/preview/wide/*_s*_*.png`. Not verified: real devices. Every other screen (forms and flows) still shows as the phone screen: beside the home list in `wide`, as a centered column in `land`.

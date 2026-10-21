@@ -98,6 +98,13 @@ const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
 const NAMES: Record<Exclude<Route, StandaloneRoute>, string> = {
   home: K('홈'), search: K('검색'), stats: K('통계'), settings: K('설정'), 'create-drawer': K('새 서랍 만들기'),
 };
+/** Which row of the settings list each settings-family screen belongs to (wide windows show the list beside the open screen). */
+const SETTINGS_PANES: Partial<Record<Route, string>> = {
+  settings: 'theme', 'theme-settings': 'theme',
+  'security-settings': 'security', 'lock-detail': 'security', 'pin-setup': 'security',
+  'data-management': 'data', 'backup-type': 'data', 'backup-destination': 'data', 'backup-success': 'data', 'restore-file-picker': 'data', 'restore-review': 'data', 'restore-success': 'data', 'data-reset-confirm': 'data',
+  'language-settings': 'language', 'help-main': 'help', faq: 'help', guide: 'help', info: 'info', feedback: 'feedback',
+};
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
 const STANDALONE_ROUTES: readonly Route[] = ['notification-common', 'splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm', 'language-settings', 'help-main', 'faq', 'guide', 'info', 'feedback'];
 const parseRoute = (): Route => {
@@ -474,7 +481,7 @@ export default function App() {
   // Wide windows show an item next to its list, so the single-item screen (#16) is skipped when it was reached from that list
   // (back from editing or from the photo viewer lands on the drawer, with the same item chosen).
   useEffect(() => {
-    if (layout === 'wide' && route === 'record-detail' && recordBack === 'drawer-detail' && store.drawers.length > 0) navigate('drawer-detail', true);
+    if (layout === 'wide' && route === 'record-detail' && (recordBack === 'drawer-detail' || recordBack === 'search') && store.drawers.length > 0) navigate(recordBack, true);
   }, [layout, route, recordBack, store.drawers.length, navigate]);
   // Wide drawer view: the right-hand pane always shows an item of the list (the first one until another is picked).
   useEffect(() => {
@@ -562,12 +569,31 @@ export default function App() {
         type: (f.kind === 'long_text' ? 'note' : f.kind === 'check' ? 'checkbox' : f.kind) as RecordFieldType,
       }));
   };
+  // The chosen item shown beside its list (drawer view and search, wide windows); "수정하기" / "삭제하기" work as in #16.
+  const recordPane = (rec: (typeof store.records)[number] | undefined, back: 'drawer-detail' | 'search', hint: string): ReactElement => {
+    if (!rec || !currentDrawer || rec.drawerId !== currentDrawer.id) return <p className="wd-detail-empty">{hint}</p>;
+    return (
+      <RecordDetailScreen
+        key={rec.id}
+        embedded
+        drawerName={currentDrawer.name}
+        title={summarizeRecord(currentFields, rec).title}
+        photoUri={selectedPhotos.urls[0] ?? ''}
+        photoLoading={selectedPhotos.blobs === null}
+        fields={recordFieldRows(rec)}
+        onEdit={() => { setRecordBack(back); setEditPhotos(null); setEditKey((k) => k + 1); navigate('record-edit'); }}
+        onDelete={() => { void guardedSave(async () => { await actions.deleteRecord(rec.id); setRecordDetailId(null); }); }}
+        onOpenPhoto={() => { setRecordBack(back); navigate('photo-viewer'); }}
+      />
+    );
+  };
   const renderLandscape = (route: Route, kind: 'land' | 'wide'): ReactElement | null => {
     const nav = <ResponsiveBottomNav active={lastTabRef.current} onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />;
     const sidebar = (activeId: string | null, onSelect: (id: string) => void) => kind === 'wide'
       ? <DrawerSidebar drawers={homeCards} totalRecords={store.records.length} activeId={activeId} onSelect={onSelect} />
       : undefined;
-    if (route === 'home') {
+    const hasDrawers = store.drawers.length > 0;
+    if (route === 'home' && hasDrawers) {
       return <WideFrame kind={kind} route="home" nav={nav} sidebar={sidebar(null, (id) => { setCurrentDrawerId(id); navigate('drawer-detail'); })}>
         <WideHome
           drawers={homeCards}
@@ -585,20 +611,7 @@ export default function App() {
         return { id: r.id, title: sum.title, subtitle: sum.subtitle, dateLabel: sum.dateLabel, thumbnailUri: recordThumbs[r.id] };
       });
       const paneRecord = selectedRecord && selectedRecord.drawerId === currentDrawer.id ? selectedRecord : undefined;
-      const detail = kind === 'wide' ? (paneRecord ? (
-        <RecordDetailScreen
-          key={paneRecord.id}
-          embedded
-          drawerName={currentDrawer.name}
-          title={summarizeRecord(currentFields, paneRecord).title}
-          photoUri={selectedPhotos.urls[0] ?? ''}
-          photoLoading={selectedPhotos.blobs === null}
-          fields={recordFieldRows(paneRecord)}
-          onEdit={() => { setRecordBack('drawer-detail'); setEditPhotos(null); setEditKey((k) => k + 1); navigate('record-edit'); }}
-          onDelete={() => { void guardedSave(async () => { await actions.deleteRecord(paneRecord.id); setRecordDetailId(null); }); }}
-          onOpenPhoto={() => { setRecordBack('drawer-detail'); navigate('photo-viewer'); }}
-        />
-      ) : <p className="wd-detail-empty">{t('보관품을 고르면 여기에 보여요.')}</p>) : undefined;
+      const detail = kind === 'wide' ? recordPane(paneRecord, 'drawer-detail', t('보관품을 고르면 여기에 보여요.')) : undefined;
       return <WideFrame kind={kind} route="drawer-detail" nav={nav}>
         <WideDrawer
           kind={kind}
@@ -640,12 +653,61 @@ export default function App() {
         />
       </WideFrame>;
     }
+    if (route === 'stats') {
+      return <WideFrame kind={kind} route="stats" nav={nav}>
+        <div className="wide-scroll">
+          <StatsScreen
+            wide
+            stats={computeStats(store.drawers, store.fields, store.records, new Date(), (d) => new Intl.DateTimeFormat(getLocale(), { month: 'short' }).format(d))}
+            onOpenInsight={(drawerId) => { setCurrentDrawerId(drawerId); navigate('drawer-detail'); }}
+          />
+        </div>
+      </WideFrame>;
+    }
+    if (kind !== 'wide') return null;
+    if (route === 'search') {
+      const paneRecord = selectedRecord && selectedRecord.drawerId === currentDrawer?.id ? selectedRecord : undefined;
+      return <WideFrame kind={kind} route="search" nav={nav}>
+        <div className="wide-two">
+          <div className="wide-two-list">
+            <GlobalSearchScreen
+              records={searchRecords}
+              query={globalQuery}
+              onQueryChange={setGlobalQuery}
+              onOpenRecord={(recordId, drawerId) => { setCurrentDrawerId(drawerId); setRecordDetailId(recordId); }}
+            />
+          </div>
+          <div className="wide-two-detail">{recordPane(paneRecord, 'search', t('왼쪽에서 고르면 여기에 열려요.'))}</div>
+        </div>
+      </WideFrame>;
+    }
+    const settingsKey = SETTINGS_PANES[route];
+    if (settingsKey) {
+      const right = route === 'settings' ? 'theme-settings' : route;
+      return <WideFrame kind={kind} route={route} nav={nav}>
+        <div className="wide-two">
+          <div className="wide-two-list">
+            <SettingsHomeScreen
+              activeKey={settingsKey}
+              onTheme={() => navigate('theme-settings')}
+              onSecurity={() => navigate('security-settings')}
+              onData={() => navigate('data-management')}
+              onLanguage={() => navigate('language-settings')}
+              onHelp={() => navigate('help-main')}
+              onInfo={() => navigate('info')}
+              onFeedback={() => navigate('feedback')}
+            />
+          </div>
+          <div className="wide-settings-detail">{renderRoute(right, true)}</div>
+        </div>
+      </WideFrame>;
+    }
     return null;
   };
   // Every screen's markup, picked by route. Phones and portrait tablets draw just one of them; a wide window (landscape tablet,
   // unfolded foldable) draws two side by side (see WideSplit), so this is a function of the route instead of the open route.
   const renderRoute = (route: Route, phoneOnly = false): ReactElement => {
-    if (!phoneOnly && layout !== 'single' && store.drawers.length > 0) {
+    if (!phoneOnly && layout !== 'single') {
       const landscape = renderLandscape(route, layout);
       if (landscape) return landscape;
     }
@@ -1717,7 +1779,8 @@ export default function App() {
   // opens beside the one it came from. The home, the drawer and the table have their own wide layouts (renderLandscape); splash,
   // onboarding, the PIN and progress screens and the home editor stay full width.
   const fullWidth = route === 'splash' || route === 'onboarding' || route === 'app-lock' || route === 'backup-progress' || route === 'restore-progress' || route === 'home-edit';
-  const ownLayout = store.drawers.length > 0 && (route === 'home' || route === 'drawer-detail' || route === 'table-view');
+  const ownLayout = (store.drawers.length > 0 && (route === 'home' || route === 'drawer-detail' || route === 'table-view'))
+    || route === 'stats' || (layout === 'wide' && (route === 'search' || SETTINGS_PANES[route] !== undefined));
   if (layout === 'wide' && !fullWidth && !ownLayout) {
     const tab = isTab(route) ? route : lastTabRef.current;
     return <WideSplit left={renderRoute(tab, true)} right={isTab(route) ? null : renderRoute(route, true)} />;
