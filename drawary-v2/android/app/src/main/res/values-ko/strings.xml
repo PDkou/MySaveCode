@@ -11,4 +11,5 @@
     <string name="print_job">나만의 서랍장 표</string>
     <string name="place_phone">내 폰</string>
     <string name="place_chosen">선택한 위치</string>
+    <string name="place_drive_sent">Google Drive로 보냄</string>
 </resources>

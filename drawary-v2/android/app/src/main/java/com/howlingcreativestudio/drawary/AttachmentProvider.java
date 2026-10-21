@@ -16,28 +16,35 @@ import java.io.IOException;
 import java.util.Locale;
 
 /**
- * Lets the mail app read the one screenshot that goes with a feedback mail (read-only, only files in cache/feedback/,
+ * Lets the mail app read the one screenshot that goes with a feedback mail (read-only, only files in cache/feedback/ and cache/backup/,
  * and only for apps the send intent explicitly grants).
  */
 public class AttachmentProvider extends ContentProvider {
-    static final String DIR = "feedback";
+    /** The two places a file can be handed out from: a feedback screenshot, a backup on its way to Google Drive. */
+    static final String FEEDBACK = "feedback";
+    static final String BACKUP = "backup";
 
-    static Uri uriFor(Context context, File file) {
+    static Uri uriFor(Context context, String dir, File file) {
         return new Uri.Builder().scheme("content").authority(context.getPackageName() + ".attachments")
-                .appendPath(DIR).appendPath(file.getName()).build();
+                .appendPath(dir).appendPath(file.getName()).build();
     }
 
-    static File dir(Context context) {
-        File d = new File(context.getCacheDir(), DIR);
+    /** The folder (emptied of earlier files when `fresh`). */
+    static File dir(Context context, String name, boolean fresh) {
+        File d = new File(context.getCacheDir(), name);
         if (!d.exists()) d.mkdirs();
+        if (fresh) {
+            File[] old = d.listFiles();
+            if (old != null) for (File o : old) o.delete();
+        }
         return d;
     }
 
     private File resolve(Uri uri) throws FileNotFoundException {
         java.util.List<String> segments = uri.getPathSegments();
-        if (segments.size() != 2 || !DIR.equals(segments.get(0))) throw new FileNotFoundException();
+        if (segments.size() != 2 || !(FEEDBACK.equals(segments.get(0)) || BACKUP.equals(segments.get(0)))) throw new FileNotFoundException();
         try {
-            File base = dir(getContext()).getCanonicalFile();
+            File base = dir(getContext(), segments.get(0), false).getCanonicalFile();
             File file = new File(base, segments.get(1)).getCanonicalFile();
             if (!base.equals(file.getParentFile()) || !file.isFile()) throw new FileNotFoundException();
             return file;
@@ -67,6 +74,8 @@ public class AttachmentProvider extends ContentProvider {
     @Override
     public String getType(Uri uri) {
         String name = uri.getLastPathSegment() == null ? "" : uri.getLastPathSegment().toLowerCase(Locale.ROOT);
+        if (name.endsWith(".zip")) return "application/zip";
+        if (name.endsWith(".json")) return "application/json";
         if (name.endsWith(".png")) return "image/png";
         if (name.endsWith(".webp")) return "image/webp";
         if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";

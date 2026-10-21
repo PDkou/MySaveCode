@@ -142,17 +142,29 @@ final class NativeBridge {
         });
     }
 
-    /** The phone's own "save to" window (Google Drive is one of its places); see MainActivity.startDriveSave. */
+    /**
+     * "Google Drive" backup: the backup file is handed straight to the Google Drive app's "save to Drive" screen; without
+     * the Drive app the phone's own save window opens instead (see MainActivity.startDriveSave).
+     */
     @JavascriptInterface
     public void saveBackupToDrive(final int id, final String fileName, final String base64) {
         worker.execute(() -> {
             try {
                 final byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
-                main.post(() -> activity.startDriveSave(id, fileName, bytes));
-            } catch (IllegalArgumentException e) {
+                java.io.File file = new java.io.File(AttachmentProvider.dir(activity, AttachmentProvider.BACKUP, true), FileSaver.safeName(fileName));
+                try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
+                    out.write(bytes);
+                }
+                main.post(() -> activity.startDriveSave(id, fileName, bytes, file));
+            } catch (IllegalArgumentException | java.io.IOException e) {
                 reject(id, "failed");
             }
         });
+    }
+
+    /** The Drive app's save screen is open with the file (we cannot see whether the person finishes it). */
+    void sentToDrive(int id) {
+        resolve(id, JSONObject.quote(AppLocale.str(activity, R.string.place_drive_sent)));
     }
 
     /** Called by the activity once the person picked a place: write the backup there. */

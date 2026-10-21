@@ -11,6 +11,7 @@
 
     <!-- Mail apps are looked up for "피드백 보내기"; Android 11+ package visibility needs these. -->
     <queries>
+        <package android:name="com.google.android.apps.docs" />
         <intent>
             <action android:name="android.intent.action.SENDTO" />
             <data android:scheme="mailto" />

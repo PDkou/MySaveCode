@@ -22,7 +22,7 @@ Feedback address: `feedbackEmail` in `android/gradle.properties` (db5704@gmail.c
 | `assets/native_shim.js` | Turns the Java object `__DrawaryAndroid` into `window.DrawaryNative` (the contract in `src/data/nativeBridge.ts`), wrapping the calls that finish later in Promises. |
 | `NativeBridge.java` | The Java side of that contract: reminders, fingerprint/face, save file, print, screen protection, feedback mail. |
 | `NotificationScheduler.java` + `ReminderReceiver` + `BootReceiver` | Reminders while the app is closed (see below). |
-| `MainActivity.startDriveSave` + `NativeBridge.saveBackupToDrive` | "Google Drive" backup: opens the phone's own save window (Google Drive is one of the places in it when the Drive app is installed); the Drive app does the upload. No sign-in, OAuth client or network permission in this app. The place shown on #48 comes from what the person picked (Google Drive / Download / phone / chosen place). Restore from Drive: the file chooser of the restore screen lists Drive as well. |
+| `MainActivity.startDriveSave` + `NativeBridge.saveBackupToDrive` | "Google Drive" backup: the file goes straight to the Google Drive app's own "save to Drive" screen (account and folder chosen there); without the Drive app the phone's own save window opens. No sign-in, OAuth client or network permission in this app. The Drive screen gives no result, so #48 says "sent to Google Drive", not "saved". Restore from Drive: the restore screen's file chooser lists Drive as well. |
 | `FileSaver.java` | Backup / CSV to `Download/Drawary` through MediaStore (no storage permission). |
 | `FeedbackMailer.java` + `AttachmentProvider.java` | Opens the mail app with the message (and the screenshot of an error report). |
 | `MainActivity.java` | Hosts the WebView: back button, insets/keyboard, photo chooser, alert/confirm dialogs, FLAG_SECURE, external links. |
@@ -41,5 +41,5 @@ a restart, app update or clock change. Android 13+: the notification permission 
 CI proves it **compiles, packs and minifies**. Nothing here has been run on a device or emulator yet (the build sandbox has
 no Android SDK). Things to look at first on a phone: the WebView shows the app (not a white screen — if it does, check
 `chrome://inspect` and whether the missing INTERNET permission blocks the virtual address), fingerprint prompt, the back
-button, keyboard not covering inputs, backup lands in `Download/Drawary`, "Google Drive" backup (the save window opens; pick Drive in it; the file shows up in Drive), restore from Drive, reminders ring, print/PDF dialog, no screenshot
+button, keyboard not covering inputs, backup lands in `Download/Drawary`, "Google Drive" backup (Drive's save screen opens with the file; save; the file shows up in Drive; also try with the Drive app disabled), restore from Drive, reminders ring, print/PDF dialog, no screenshot
 when the app lock is on.

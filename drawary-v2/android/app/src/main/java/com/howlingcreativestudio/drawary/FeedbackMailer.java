@@ -41,14 +41,12 @@ final class FeedbackMailer {
         Uri attachment = null;
         String attachmentBase64 = f.optString("attachmentBase64");
         if (!attachmentBase64.isEmpty()) {
-            File dir = AttachmentProvider.dir(context);
-            File[] old = dir.listFiles();
-            if (old != null) for (File o : old) o.delete();
+            File dir = AttachmentProvider.dir(context, AttachmentProvider.FEEDBACK, true);
             File file = new File(dir, FileSaver.safeName(f.optString("attachmentName", "screenshot.png")));
             try (FileOutputStream out = new FileOutputStream(file)) {
                 out.write(Base64.decode(attachmentBase64, Base64.DEFAULT));
             }
-            attachment = AttachmentProvider.uriFor(context, file);
+            attachment = AttachmentProvider.uriFor(context, AttachmentProvider.FEEDBACK, file);
         }
 
         Intent intent;

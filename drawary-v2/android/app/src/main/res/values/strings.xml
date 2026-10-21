@@ -11,4 +11,5 @@
     <string name="print_job">Drawary table</string>
     <string name="place_phone">Phone</string>
     <string name="place_chosen">Chosen place</string>
+    <string name="place_drive_sent">Sent to Google Drive</string>
 </resources>

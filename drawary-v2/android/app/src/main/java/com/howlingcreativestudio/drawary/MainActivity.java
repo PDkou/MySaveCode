@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
     static final int REQ_FILE_CHOOSER = 1001;
     static final int REQ_NOTIFICATIONS = 1002;
     static final int REQ_DRIVE_SAVE = 1003;
+    private static final String DRIVE_PACKAGE = "com.google.android.apps.docs";
 
     private WebView webView;
     private NativeBridge bridge;
@@ -176,18 +177,34 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * "Google Drive" backup: opens the phone's own save window (title = the backup's name). Google Drive is one of the
-     * places listed there when the Drive app is installed; the Drive app does the upload, so this app needs no sign-in
-     * and no network permission. Main thread.
+     * "Google Drive" backup, main thread. First choice: hand the file to the Google Drive app's own "save to Drive" screen
+     * (the person picks account and folder there). Without the Drive app: the phone's own save window (Google Drive is one
+     * of its places when installed). Either way this app needs no sign-in and no network permission.
      */
-    void startDriveSave(int id, String fileName, byte[] bytes) {
+    void startDriveSave(int id, String fileName, byte[] bytes, java.io.File file) {
         if (drivePendingBytes != null) {
             bridge.failed(id);
             return;
         }
+        String mime = fileName.toLowerCase(java.util.Locale.ROOT).endsWith(".json") ? "application/json" : "application/zip";
+        Uri uri = AttachmentProvider.uriFor(this, AttachmentProvider.BACKUP, file);
+        Intent send = new Intent(Intent.ACTION_SEND)
+                .setType(mime)
+                .setPackage(DRIVE_PACKAGE)
+                .putExtra(Intent.EXTRA_STREAM, uri)
+                .putExtra(Intent.EXTRA_SUBJECT, file.getName())
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        send.setClipData(android.content.ClipData.newRawUri("", uri));
+        try {
+            startActivity(send);
+            bridge.sentToDrive(id);
+            return;
+        } catch (ActivityNotFoundException | SecurityException e) {
+            // no Google Drive app: the phone's own save window below
+        }
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)
-                .setType(fileName.toLowerCase(java.util.Locale.ROOT).endsWith(".json") ? "application/json" : "application/zip")
+                .setType(mime)
                 .putExtra(Intent.EXTRA_TITLE, FileSaver.safeName(fileName));
         drivePendingId = id;
         drivePendingBytes = bytes;

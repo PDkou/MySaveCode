@@ -11,4 +11,5 @@
     <string name="print_job">ひきだし帳の表</string>
     <string name="place_phone">このスマートフォン</string>
     <string name="place_chosen">選んだ場所</string>
+    <string name="place_drive_sent">Google Driveへ送信</string>
 </resources>

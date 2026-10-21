@@ -15,16 +15,16 @@ Code: `android/` (see `android/README.md`). CI: `.github/workflows/drawary-v2-an
 `printPage()`, `setSecureScreen(bool)`, `sendFeedback(json)`; `saveBackupToDrive(name, base64)` opens the phone's own save window and the person picks Google Drive in it (see below). Every call is optional in the page: a plain browser still works (downloads, `window.print()`,
 the feedback screen says it cannot send).
 
-## Google Drive backup (built 2026-10-20)
+## Google Drive backup (built 2026-10-20, changed the same day to "send straight to Drive")
 
-Not an OAuth/REST upload: that needs a Google Cloud OAuth client (package + signing SHA-1), the Play Services library and the
-INTERNET permission, and could not be tested here. Instead `saveBackupToDrive` opens Android's own "save to" window (title = the
-backup file name). **Google Drive appears in it when the Drive app is installed and the person taps it**; the Drive app uploads
-the file. The app itself keeps no account and no network access. After saving, #48 shows where the file went (Google Drive /
-Download / phone / chosen place, from the provider that was picked). Closing the window without saving → "저장을 취소했어요."
-and back to #46. Auto-lock is paused (2 min) while the window is open. Restore from Drive: the restore screen's file chooser
-(`onShowFileChooser`) lists Drive too. Limits: the person must choose Drive themselves (the window cannot be pre-selected
-reliably); without the Drive app the window offers other places. **Device: not tested.**
+Not an OAuth/REST upload (needs a Google Cloud OAuth client, Play Services and the INTERNET permission; could not be tested here;
+decided against by the owner after weighing it, can be added later). `saveBackupToDrive` hands the backup file (a read-only
+`content://` URI from `AttachmentProvider`, `cache/backup/`) to the **Google Drive app's own "save to Drive" screen**
+(`ACTION_SEND` to `com.google.android.apps.docs`); the person picks account and folder there and saves. The app keeps no account and
+has no network access. Without the Drive app, the phone's own save window opens instead (`ACTION_CREATE_DOCUMENT`, Drive is one of
+its places when installed; closing it → "저장을 취소했어요."). **The Drive screen gives no result, so the app cannot know whether the
+person finished saving**: #48 therefore shows "저장 위치: Google Drive로 보냄" (sent), not "saved". Auto-lock is paused while away.
+Restore from Drive: the restore screen's file chooser (`onShowFileChooser`) lists Drive too. **Device: not tested.**
 
 ## First-run flow
 

@@ -40,9 +40,10 @@ export interface DrawaryNativeApi {
    */
   sendFeedback?: (json: string) => Promise<boolean>;
   /**
-   * Saves a backup where the person picks in the phone's own "save to" window (Google Drive is one of its places, when the
-   * Drive app is installed): no sign-in or network code in this app. Resolves with the place to show ("Google Drive",
-   * "Download", ...); rejects with message 'cancelled' when the window is closed without saving.
+   * Hands a backup to Google Drive: the Drive app's own "save to Drive" screen opens with the file (without the Drive app, the
+   * phone's save window opens instead). No sign-in or network code in this app. Resolves with the text to show as the place
+   * ("Sent to Google Drive" — whether the person finishes in Drive cannot be seen — or where the save window put it);
+   * rejects with message 'cancelled' when the save window is closed without saving.
    */
   saveBackupToDrive?: (fileName: string, base64: string) => Promise<string>;
 }
@@ -123,14 +124,15 @@ export async function deliverBackup(destination: 'device' | 'drive', fileName: s
   const native = typeof window === 'undefined' ? undefined : window.DrawaryNative;
   if (destination === 'drive') {
     if (typeof native?.saveBackupToDrive !== 'function') throw new Error(t('Google Drive 백업은 안드로이드 앱에서 사용할 수 있어요.'));
-    // The phone's save window takes the app to the background for as long as the person needs.
+    // The Drive app (or the phone's save window) takes this app to the background for as long as the person needs.
     suspendAutoLock(120_000);
     try {
-      return await native.saveBackupToDrive(fileName, await blobToBase64(blob));
+      const place = await native.saveBackupToDrive(fileName, await blobToBase64(blob));
+      endAutoLockSuspension(20_000); // still away in Drive for a moment: no PIN right as it opens
+      return place;
     } catch (e) {
-      throw new Error(e instanceof Error && e.message === 'cancelled' ? t('저장을 취소했어요.') : t('Google Drive에 저장하지 못했어요.'));
-    } finally {
       endAutoLockSuspension();
+      throw new Error(e instanceof Error && e.message === 'cancelled' ? t('저장을 취소했어요.') : t('Google Drive에 저장하지 못했어요.'));
     }
   }
   return saveBlob(blob, fileName);
