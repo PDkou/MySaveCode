@@ -45,3 +45,18 @@ Phones get no wrapper at all (58 screens at 390×844 compared before/after: iden
 or needs scrolling, but there are wide empty sides; a real wide layout (two panes) needs designs from the owner. Pointer maths that
 moves things by pixels divides by the scale (photo pan; the home reorder already measured its own scale). Keyboard open: the scale is
 frozen so the screen does not jump. Tested in Chromium only (hit-testing and clicks work under the transform); real tablet: not tested.
+
+## 6. Wide windows: two columns (landscape tablets, unfolded foldables) — PREVIEW, awaiting owner approval
+
+Why: section 5 left landscape tablets with one fitted phone screen and empty sides. The owner asked for a real wide layout.
+
+What it is (no approved screen is redrawn):
+- A window at least 600 dp on the short side, at least 884 dp wide and at least 1.2 times wider than tall (`isWideWindow`) shows two phone-width (430) columns with a thin divider.
+- Left column = the tab the person is on (home / search / stats / settings) with the approved bottom nav, exactly as on a phone.
+- Right column = whatever they opened from it (drawer, item, theme settings, ...). With nothing open it shows one quiet hint line (new text, KR/JA/EN: "왼쪽에서 고르면 여기에 열려요.").
+- Splash, onboarding, PIN screens and the backup/restore progress screens stay full width.
+- The two columns are magnified as one piece on big tablets (`WIDE_CONTENT_WIDTH` = 884), same as section 5.
+- Phones, portrait tablets and near-square windows are unchanged (still one column). `App.tsx` now picks screens through `renderRoute(route)`; with one column it returns exactly what it returned before.
+
+Preview images: `docs/preview/wide/` (Chromium 1280×800 and 1920×1200, sample data).
+Not decided / not verified: the hint line and divider are my additions (not from an approved design); the bottom nav keeps its white band, which shows as a pale strip against the cream background; nothing here was run on a real tablet.

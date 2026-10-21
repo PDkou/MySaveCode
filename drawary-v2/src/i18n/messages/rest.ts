@@ -270,4 +270,5 @@ export const rest: Messages = {
   '저장을 취소했어요.': { ja: '保存をキャンセルしました。', en: 'Saving was cancelled.' },
   'Google Drive에 저장하지 못했어요.': { ja: 'Google Driveに保存できませんでした。', en: 'Couldn\'t save to Google Drive.' },
   '아니요': { ja: 'いいえ', en: 'No' },
+  '왼쪽에서 고르면 여기에 열려요.': { ja: '左で選ぶと、ここに開きます。', en: 'Pick something on the left and it opens here.' },
 };

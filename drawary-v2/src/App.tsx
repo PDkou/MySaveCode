@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactElement } from 'react';
 import { ResponsiveBottomNav } from './components/ResponsiveBottomNav';
 import type { BottomNavTab } from './components/BottomNav_FINAL_CONFIRMED';
 import { SplashScreen } from './screens/SplashScreen';
@@ -83,6 +83,8 @@ import { GuideScreen, type GuideRoute } from './screens/GuideScreen';
 import { InfoScreen } from './screens/InfoScreen';
 import { FeedbackScreen } from './screens/FeedbackScreen';
 import { FixedCanvas } from './components/FixedCanvas';
+import { WideSplit } from './components/WideSplit';
+import { useAppWide } from './components/appLayout';
 import { getLocale, t, K } from './i18n';
 import { closeOpenOverlay } from './flow/overlayBack';
 
@@ -118,6 +120,7 @@ export default function App() {
   const [boot, setBoot] = useState<'splash' | 'fading' | 'done'>(() => (window.location.hash === '' || window.location.hash === '#' ? 'splash' : 'done'));
   const [bootTimeUp, setBootTimeUp] = useState(false);
   const lastTabRef = useRef<BottomNavTab>('home');
+  const wide = useAppWide();
   const store = useStore();
   const [currentDrawerId, setCurrentDrawerId] = useState<string | null>(null);
 
@@ -525,1072 +528,1084 @@ export default function App() {
     </main>;
   }
 
-  if (route === 'splash') {
-    return <main className="drawary-app-shell drawary-splash-route" data-route="splash"><SplashScreen fadingOut={false}/></main>;
-  }
-  if (route === 'onboarding') {
-    return <main className="drawary-app-shell drawary-onboarding-route" data-route="onboarding">
-      <OnboardingScreen onDone={() => navigate('home', true)} />
-    </main>;
-  }
-  if (route === 'new-field') {
-    // #10: reached from #09's "서랍 칸 추가". "추가하기" appends to the
-    // create-flow draft (a rejected name/options stays here with a message).
-    return <main className="drawary-app-shell" data-route="new-field">
-      <FixedCanvas height={844}><NewFieldScreen onBack={() => navigate('drawer-fields')} onAdd={(data) => { if (tryDraft(() => addDraftField(fieldsDraft, data))) navigate('drawer-fields'); }} /></FixedCanvas>
-    </main>;
-  }
-  if (route === 'drawer-fields') {
-    // #09: the real screen, chained to #10/#11/#12 and reachable only after
-    // #08's name/icon/color step. Its list is the create-flow draft held
-    // above; nothing is saved until "서랍 만들기 완료하기". Back returns to #08.
-    return <main className="drawary-app-shell" data-route="drawer-fields">
-      <FixedCanvas height={844}>
-        <DrawerFieldsScreen
-          fields={fieldsDraft.map(toFieldItem)}
-          onBack={() => navigate('create-drawer')}
-          onAddField={() => navigate('new-field')}
-          onEditField={(field) => { setEditingDraftFieldId(field.id); navigate('field-edit'); }}
-          onQuickAdd={(label) => { tryDraft(() => addDraftField(fieldsDraft, { name: t(label), kind: QUICK_ADD_KINDS[label] ?? 'text', required: false, options: [] })); }}
-          onReorder={(from, to) => setDraftFields((prev) => moveDraftField(prev ?? defaultDraftFields(), from, to))}
-          onComplete={() => { void completeCreate(); }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'create-drawer') {
-    // #08 새 서랍 만들기 (name/icon/color) -- the real first step of this
-    // flow, reached from the home "+" action / bottom-nav "+" / empty
-    // state / edit mode. Reconstructed as a bottom sheet over a dimmed Home
-    // (no approved source; see NewDrawerScreen.tsx). What is typed is kept
-    // in the create-flow draft, so coming back from #09 shows it again.
-    return <main className="drawary-app-shell" data-route="create-drawer">
-      <section className="drawary-route-panel drawary-dimmed-home" aria-hidden="true">
-        <HomeScreen drawers={homeCards} totalRecords={store.records.length} />
-      </section>
-      <NewDrawerScreen
-        initial={createDraft ?? undefined}
-        onNext={(draft) => { setCreateDraft(draft); navigate('drawer-fields'); }}
-        onDismiss={() => { resetCreateFlow(); returnToTab(); }}
-      />
-    </main>;
-  }
-  if (route === 'field-edit') {
-    // #11: reached by tapping a row in #09, opening straight on that field's
-    // edit view. Without a selected field (direct URL) it shows the archive's
-    // demo list as before. A field's kind cannot be changed here.
-    return <main className="drawary-app-shell" data-route="field-edit">
-      <FixedCanvas height={844}>
-        {editingDraftField ? (
-          <DrawerFieldEditScreen
-            key={editingDraftField.id}
-            field={editingDraftField}
-            onBack={() => navigate('drawer-fields')}
-            onSave={(patch) => { if (tryDraft(() => updateDraftField(fieldsDraft, editingDraftField.id, patch))) navigate('drawer-fields'); }}
-            onDelete={() => { setDraftFields(removeDraftField(fieldsDraft, editingDraftField.id)); setEditingDraftFieldId(null); navigate('drawer-fields'); }}
+  // Every screen's markup, picked by route. Phones and portrait tablets draw just one of them; a wide window (landscape tablet,
+  // unfolded foldable) draws two side by side (see WideSplit), so this is a function of the route instead of the open route.
+  const renderRoute = (route: Route): ReactElement => {
+    if (route === 'splash') {
+      return <main className="drawary-app-shell drawary-splash-route" data-route="splash"><SplashScreen fadingOut={false}/></main>;
+    }
+    if (route === 'onboarding') {
+      return <main className="drawary-app-shell drawary-onboarding-route" data-route="onboarding">
+        <OnboardingScreen onDone={() => navigate('home', true)} />
+      </main>;
+    }
+    if (route === 'new-field') {
+      // #10: reached from #09's "서랍 칸 추가". "추가하기" appends to the
+      // create-flow draft (a rejected name/options stays here with a message).
+      return <main className="drawary-app-shell" data-route="new-field">
+        <FixedCanvas height={844}><NewFieldScreen onBack={() => navigate('drawer-fields')} onAdd={(data) => { if (tryDraft(() => addDraftField(fieldsDraft, data))) navigate('drawer-fields'); }} /></FixedCanvas>
+      </main>;
+    }
+    if (route === 'drawer-fields') {
+      // #09: the real screen, chained to #10/#11/#12 and reachable only after
+      // #08's name/icon/color step. Its list is the create-flow draft held
+      // above; nothing is saved until "서랍 만들기 완료하기". Back returns to #08.
+      return <main className="drawary-app-shell" data-route="drawer-fields">
+        <FixedCanvas height={844}>
+          <DrawerFieldsScreen
+            fields={fieldsDraft.map(toFieldItem)}
+            onBack={() => navigate('create-drawer')}
+            onAddField={() => navigate('new-field')}
+            onEditField={(field) => { setEditingDraftFieldId(field.id); navigate('field-edit'); }}
+            onQuickAdd={(label) => { tryDraft(() => addDraftField(fieldsDraft, { name: t(label), kind: QUICK_ADD_KINDS[label] ?? 'text', required: false, options: [] })); }}
+            onReorder={(from, to) => setDraftFields((prev) => moveDraftField(prev ?? defaultDraftFields(), from, to))}
+            onComplete={() => { void completeCreate(); }}
           />
-        ) : (
-          <DrawerFieldEditScreen onBack={() => navigate('drawer-fields')} />
-        )}
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'creation-complete') {
-    // #12: shows the drawer just saved from #09. "서랍 채우기" chains to #13;
-    // "나중에" returns to the tab the flow started from.
-    return <main className="drawary-app-shell" data-route="creation-complete">
-      <FixedCanvas height={844}><CreationCompleteScreen
-        drawerName={currentDrawer?.name}
-        iconKey={currentDrawer?.iconKey}
-        fieldCount={currentDrawer ? fieldsOf(store, currentDrawer.id).length : undefined}
-        onFillDrawer={() => startFill('creation-complete')}
-        onLater={returnToTab}
-      /></FixedCanvas>
-    </main>;
-  }
-  if (route === 'fill-drawer') {
-    // #13/#14: the form follows the open drawer's 서랍 칸; "담기" saves the record
-    // and its photos in one transaction and shows it in #15. Back returns to
-    // #12 or #15, whichever opened it.
-    if (!currentDrawer) return <main className="drawary-app-shell" data-route="fill-drawer" />;
-    return <main className="drawary-app-shell" data-route="fill-drawer">
-      <FixedCanvas height={844}>
-        <FillDrawerScreen
-          key={fillKey}
-          drawerName={currentDrawer.name}
-          fields={currentFields}
-          photoUris={fillUrls}
-          saving={recordSaving}
-          onBack={() => navigate(fillBack)}
-          onPickPhotos={() => { void pickMorePhotos(fillPhotos, setFillPhotos); }}
-          onRemovePhoto={(i) => setFillPhotos((prev) => prev.filter((_, j) => j !== i))}
-          onSave={(draft) => { void guardedSave(async () => {
-            await actions.createRecord(currentDrawer.id, draftToValues(currentFields, draft), fillPhotos);
-            setPhotoVersion((v) => v + 1);
-            setFillPhotos([]);
-            navigate('drawer-detail');
-          }); }}
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'create-drawer') {
+      // #08 새 서랍 만들기 (name/icon/color) -- the real first step of this
+      // flow, reached from the home "+" action / bottom-nav "+" / empty
+      // state / edit mode. Reconstructed as a bottom sheet over a dimmed Home
+      // (no approved source; see NewDrawerScreen.tsx). What is typed is kept
+      // in the create-flow draft, so coming back from #09 shows it again.
+      return <main className="drawary-app-shell" data-route="create-drawer">
+        <section className="drawary-route-panel drawary-dimmed-home" aria-hidden="true">
+          <HomeScreen drawers={homeCards} totalRecords={store.records.length} />
+        </section>
+        <NewDrawerScreen
+          initial={createDraft ?? undefined}
+          onNext={(draft) => { setCreateDraft(draft); navigate('drawer-fields'); }}
+          onDismiss={() => { resetCreateFlow(); returnToTab(); }}
         />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'drawer-detail') {
-    // #15: this drawer's real 보관품, newest first. The search box filters them by
-    // any value; "표로 보기" -> #20, "서랍 관리" -> #24.
-    if (!currentDrawer) return <main className="drawary-app-shell" data-route="drawer-detail" />;
-    const summaries: DrawerRecordSummary[] = currentRecords
-      .filter((r) => recordMatches(currentFields, r, recordQuery))
-      .map((r) => {
-        const sum = summarizeRecord(currentFields, r);
-        return { id: r.id, title: sum.title, subtitle: sum.subtitle, dateLabel: sum.dateLabel, thumbnailUri: recordThumbs[r.id] };
-      });
-    return <main className="drawary-app-shell" data-route="drawer-detail">
-      <FixedCanvas height={844}>
-        <DrawerDetailScreen
-          drawerName={currentDrawer.name}
-          recordCount={currentRecords.length}
-          fallbackIconKey={currentDrawer.iconKey}
-          records={summaries}
-          onBack={() => { setRecordQuery(''); returnToTab(); }}
-          onSearch={setRecordQuery}
-          onFillDrawer={() => startFill('drawer-detail')}
-          onOpenRecord={(id) => openRecord(id, 'drawer-detail')}
-          onOpenTable={() => navigate('table-view')}
-          onOpenManage={() => navigate('drawer-manage')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'table-view') {
-    // #20 표 보기, reachable from #15's "•••" menu's "표로 보기": the drawer's 서랍 칸
-    // as columns (first one stays put while the rest scroll sideways) and its 보관품
-    // as rows. #21 search, #22 sort and #23 filter are states of this screen; the
-    // chosen sort/filter is kept per drawer. A row opens #16 and back returns here.
-    if (!currentDrawer) return <main className="drawary-app-shell" data-route="table-view" />;
-    return <main className="drawary-app-shell" data-route="table-view">
-      <FixedCanvas height={844}>
-        <TableViewScreen
-          drawerName={drawerDetailName}
-          recordCount={currentRecords.length}
-          columns={tableColumns}
-          rows={tableRows}
-          view={tableView}
-          onViewChange={saveTableView}
-          onBack={() => navigate('drawer-detail')}
-          onExportCsv={(shown) => exportTable('csv', shown)}
-          onExportPdf={(shown) => exportTable('pdf', shown)}
-          onOpenRecord={(id) => openRecord(id, 'table-view')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'drawer-manage') {
-    // #24 서랍 관리 메인, reachable from #15's "•••" menu's "서랍 관리"
-    // (previously a no-op). 이름/아이콘 변경 -> #25, 서랍칸 편집 -> #26
-    // (both real routes below). 정렬/필터 설정(#27) and 서랍 삭제(#28) are
-    // handled as local overlays inside DrawerManageScreen itself now --
-    // deleting calls this onDeleteDrawer, which per #28's CONFIRMED.md
-    // ("삭제 후 홈 복귀") returns all the way to the home tab. 알림 설정
-    // -> #29, 반복 관리 -> #33 (both real routes below). 백업/내보내기
-    // has no destination screen among #25-#37, so that one row stays an
-    // intentional no-op.
-    return <main className="drawary-app-shell" data-route="drawer-manage">
-      <FixedCanvas height={844}>
-        <DrawerManageScreen
-          drawerName={drawerDetailName}
-          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
-          fieldCount={currentFields.length}
-          recordCount={currentRecords.length}
-          tableColumns={tableColumns}
-          tableRows={tableRows}
-          tableView={tableView}
-          onTableViewChange={saveTableView}
-          onBack={() => navigate('drawer-detail')}
-          onRenameDrawer={() => navigate('name-icon-change')}
-          onEditFields={() => navigate('drawer-fields-manage')}
-          onNotificationSettings={() => navigate('notification-settings')}
-          onRecurrenceManage={() => navigate('recurrence-management')}
-          onBackupExport={() => {}}
-          onDeleteDrawer={() => { if (!currentDrawer) return; void guardedSave(async () => {
-            await actions.deleteDrawer(currentDrawer.id);
-            setCurrentDrawerId(null); setRecordDetailId(null); setRecordQuery('');
-            navigate('home');
-          }); }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'notification-settings') {
-    // #29 알림 설정, reachable from #24's "알림 설정" row. "알림 추가하기"
-    // -> #30. "알림 공통 설정" has no destination among #25-#37, so it
-    // stays an intentional no-op.
-    return <main className="drawary-app-shell" data-route="notification-settings">
-      <FixedCanvas height={844}>
-        <NotificationSettingsScreen
-          drawerName={drawerDetailName}
-          rules={drawerNotifRules.map((n) => ({
-            id: n.id,
-            fieldName: currentFields.find((f) => f.id === n.fieldId)?.name ?? '',
-            when: `${n.daysBefore === 0 ? t('당일') : t('{daysBefore}일 전', { daysBefore: n.daysBefore })} · ${n.time}`,
-          }))}
-          onOpenRule={(id) => {
-            const n = drawerNotifRules.find((x) => x.id === id);
-            const field = currentFields.find((f) => f.id === n?.fieldId);
-            if (n && window.confirm(t("'{field}' {when} {time} 알림을 삭제할까요?", { field: field?.name ?? '', when: n.daysBefore === 0 ? t('당일') : t('{daysBefore}일 전', { daysBefore: n.daysBefore }), time: n.time }))) {
-              void actions.deleteNotificationRule(id).catch(alertError);
-            }
-          }}
-          fieldCount={currentFields.length}
-          recordCount={currentRecords.length}
-          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
-          onBack={() => navigate('drawer-manage')}
-          onAddNotification={() => { setNotifTime(readNotifyCommon(store.settings).defaultTime); navigate('notification-date-field'); }}
-          onOpenCommonSettings={() => navigate('notification-common')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'notification-common') {
-    // 알림 공통 설정 (default time + 알림 쉬는 시간), opened from #29's "알림 공통 설정" row (the user asked for it to be linked, 2026-10-20).
-    return <main className="drawary-app-shell" data-route="notification-common">
-      <FixedCanvas height={844}>
-        <NotificationCommonSettingsScreen
-          value={readNotifyCommon(store.settings)}
-          onChange={(next) => { void actions.setSetting(NOTIFY_COMMON_KEY, next).catch(alertError); }}
-          onBack={() => navigate('notification-settings')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'notification-date-field') {
-    // #30 날짜 칸 선택, reachable from #29's "알림 추가하기". Back returns
-    // to #29. "다음" -> #31.
-    return <main className="drawary-app-shell" data-route="notification-date-field">
-      <FixedCanvas height={844}>
-        <NotificationDateFieldScreen
-          drawerName={drawerDetailName}
-          dateFields={dateFields}
-          selectedId={notifDateFieldId}
-          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
-          onSelect={(fieldId) => setNotifDateFieldId(fieldId)}
-          onBack={() => navigate('notification-settings')}
-          onNext={(fieldId) => { setNotifDateFieldId(fieldId); navigate('notification-timing'); }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'notification-timing') {
-    // #31 알림 시점 / 시간 설정. No separate TSX exists in the archive for
-    // this screen -- see NotificationTimingScreen.tsx's own header
-    // comment for what was built fresh vs. ported. Back returns to #30.
-    // "알림 설정하기" -> #32.
-    const dateField = dateFields.find((f) => f.id === notifDateFieldId) ?? dateFields[0];
-    return <main className="drawary-app-shell" data-route="notification-timing">
-      <FixedCanvas height={844}>
-        <NotificationTimingScreen
-          drawerName={drawerDetailName}
-          dateFieldName={dateField?.name ?? ''}
-          initialDaysBefore={notifDaysBefore}
-          initialTime={notifTime}
-          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
-          onBack={() => navigate('notification-date-field')}
-          onSubmit={({ daysBefore, time }) => {
-            if (!currentDrawer || !dateField) return;
-            void actions.addNotificationRule(currentDrawer.id, { fieldId: dateField.id, daysBefore, time })
-              .then(() => { setNotifDaysBefore(daysBefore); setNotifTime(time); navigate('notification-complete'); })
-              .catch(alertError);
-          }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'notification-complete') {
-    // #32 알림 완료, reachable from #31's "알림 설정하기". "알림 더
-    // 추가하기" -> #30. "확인" -> #24.
-    const dateField = dateFields.find((f) => f.id === notifDateFieldId) ?? dateFields[0];
-    return <main className="drawary-app-shell" data-route="notification-complete">
-      <FixedCanvas height={844}>
-        <NotificationCompleteScreen
-          drawerName={drawerDetailName}
-          itemCount={currentRecords.length}
-          dateFieldName={dateField?.name ?? ''}
-          daysBefore={notifDaysBefore}
-          time={notifTime}
-          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
-          onAddAnother={() => navigate('notification-date-field')}
-          onDone={() => navigate('drawer-manage')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'recurrence-management') {
-    // #33 반복 관리, reachable from #24's "반복 관리" row. "반복
-    // 설정하기"/"반복 설정 추가하기" -> #34. Row taps on an existing rule
-    // have no destination (CONFIRMED.md only asks for display, not
-    // edit), so those stay an intentional no-op.
-    return <main className="drawary-app-shell" data-route="recurrence-management">
-      <FixedCanvas height={844}>
-        <RecurrenceManagementScreen
-          drawerName={drawerDetailName}
-          fieldCount={currentFields.length}
-          itemCount={currentRecords.length}
-          rules={recurrenceRules}
-          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
-          onBack={() => navigate('drawer-manage')}
-          onAdd={() => navigate('recurrence-target-date')}
-          onOpenRule={(id) => {
-            const r = store.recurrenceRules.find((x) => x.id === id);
-            if (r && window.confirm(t('\'{targetLabel}\' 반복 설정을 삭제할까요?\n이미 만들어진 보관품은 그대로 남아요.', { targetLabel: r.targetLabel }))) {
-              void actions.deleteRecurrenceRule(id).catch(alertError);
-            }
-          }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'recurrence-target-date') {
-    // #34 반복 대상 / 날짜 칸, reachable from #33's "반복 설정하기"/"반복
-    // 설정 추가하기". `onSelectTarget` cycles through the demo target
-    // list -- see RecurrenceTargetDateScreen.tsx's own header comment on
-    // why (no dedicated item-picker screen exists among the 59 approved
-    // designs). Back returns to #33. "다음" -> #35.
-    return <main className="drawary-app-shell" data-route="recurrence-target-date">
-      <FixedCanvas height={844}>
-        <RecurrenceTargetDateScreen
-          drawerName={drawerDetailName}
-          fieldCount={currentFields.length}
-          itemCount={currentRecords.length}
-          targets={recurrenceTargets}
-          dateFields={dateFields}
-          selectedTargetId={recurrenceTargetId}
-          selectedDateFieldId={recurrenceDateFieldId}
-          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
-          onBack={() => navigate('recurrence-management')}
-          onSelectTarget={() => setTargetPickerOpen(true)}
-          onSelectDateField={(fieldId) => setRecurrenceDateFieldId(fieldId)}
-          onNext={({ targetId, dateFieldId }) => {
-            const rec = currentRecords.find((r) => r.id === targetId);
-            const df = currentFields.find((f) => f.id === dateFieldId);
-            if (!rec || typeof rec.values[dateFieldId] !== 'string') {
-              window.alert(t("이 보관품에는 '{field}' 날짜가 없어요. 날짜를 먼저 채워 주세요.", { field: df?.name ?? t('날짜') }));
-              return;
-            }
-            setRecurrenceTargetId(targetId);
-            setRecurrenceDateFieldId(dateFieldId);
-            navigate('recurrence-cycle');
-          }}
-        />
-        {targetPickerOpen && (
-          <RecordPickerSheet
-            title={t('반복할 보관품 선택')}
-            records={currentRecords.map((r) => {
-              const sum = summarizeRecord(currentFields, r);
-              return { id: r.id, title: sum.title, detail: sum.dateLabel };
-            })}
-            selectedId={recurrenceTargetId}
-            onPick={(id) => { setRecurrenceTargetId(id); setTargetPickerOpen(false); }}
-            onClose={() => setTargetPickerOpen(false)}
+      </main>;
+    }
+    if (route === 'field-edit') {
+      // #11: reached by tapping a row in #09, opening straight on that field's
+      // edit view. Without a selected field (direct URL) it shows the archive's
+      // demo list as before. A field's kind cannot be changed here.
+      return <main className="drawary-app-shell" data-route="field-edit">
+        <FixedCanvas height={844}>
+          {editingDraftField ? (
+            <DrawerFieldEditScreen
+              key={editingDraftField.id}
+              field={editingDraftField}
+              onBack={() => navigate('drawer-fields')}
+              onSave={(patch) => { if (tryDraft(() => updateDraftField(fieldsDraft, editingDraftField.id, patch))) navigate('drawer-fields'); }}
+              onDelete={() => { setDraftFields(removeDraftField(fieldsDraft, editingDraftField.id)); setEditingDraftFieldId(null); navigate('drawer-fields'); }}
+            />
+          ) : (
+            <DrawerFieldEditScreen onBack={() => navigate('drawer-fields')} />
+          )}
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'creation-complete') {
+      // #12: shows the drawer just saved from #09. "서랍 채우기" chains to #13;
+      // "나중에" returns to the tab the flow started from.
+      return <main className="drawary-app-shell" data-route="creation-complete">
+        <FixedCanvas height={844}><CreationCompleteScreen
+          drawerName={currentDrawer?.name}
+          iconKey={currentDrawer?.iconKey}
+          fieldCount={currentDrawer ? fieldsOf(store, currentDrawer.id).length : undefined}
+          onFillDrawer={() => startFill('creation-complete')}
+          onLater={returnToTab}
+        /></FixedCanvas>
+      </main>;
+    }
+    if (route === 'fill-drawer') {
+      // #13/#14: the form follows the open drawer's 서랍 칸; "담기" saves the record
+      // and its photos in one transaction and shows it in #15. Back returns to
+      // #12 or #15, whichever opened it.
+      if (!currentDrawer) return <main className="drawary-app-shell" data-route="fill-drawer" />;
+      return <main className="drawary-app-shell" data-route="fill-drawer">
+        <FixedCanvas height={844}>
+          <FillDrawerScreen
+            key={fillKey}
+            drawerName={currentDrawer.name}
+            fields={currentFields}
+            photoUris={fillUrls}
+            saving={recordSaving}
+            onBack={() => navigate(fillBack)}
+            onPickPhotos={() => { void pickMorePhotos(fillPhotos, setFillPhotos); }}
+            onRemovePhoto={(i) => setFillPhotos((prev) => prev.filter((_, j) => j !== i))}
+            onSave={(draft) => { void guardedSave(async () => {
+              await actions.createRecord(currentDrawer.id, draftToValues(currentFields, draft), fillPhotos);
+              setPhotoVersion((v) => v + 1);
+              setFillPhotos([]);
+              navigate('drawer-detail');
+            }); }}
           />
-        )}
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'recurrence-cycle') {
-    // #35 매주 / 매월 / 매년 설정, reachable from #34's "다음". Back
-    // returns to #34. "다음" -> #36.
-    const target = recurrenceTargets.find((t) => t.id === recurrenceTargetId);
-    const dateField = dateFields.find((f) => f.id === recurrenceDateFieldId);
-    return <main className="drawary-app-shell" data-route="recurrence-cycle">
-      <FixedCanvas height={844}>
-        <RecurrenceCycleScreen
-          targetName={target?.title ?? ''}
-          dateFieldName={dateField?.name ?? ''}
-          initialCycle={recurrenceCycle}
-          initialInterval={recurrenceInterval}
-          onBack={() => navigate('recurrence-target-date')}
-          onNext={({ cycle, interval }) => {
-            setRecurrenceCycle(cycle);
-            setRecurrenceInterval(interval);
-            navigate('recurrence-end-condition');
-          }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'recurrence-end-condition') {
-    // #36 반복 종료 조건, reachable from #35's "다음". Back returns to
-    // #35. "반복 설정하기" both commits the new rule into
-    // `recurrenceRules` (this is the last step with user input before
-    // the #37 summary screen) and navigates to #37.
-    const target = recurrenceTargets.find((t) => t.id === recurrenceTargetId);
-    const dateField = dateFields.find((f) => f.id === recurrenceDateFieldId);
-    const label = cycleLabel(recurrenceCycle, recurrenceInterval);
-    return <main className="drawary-app-shell" data-route="recurrence-end-condition">
-      <FixedCanvas height={844}>
-        <RecurrenceEndConditionScreen
-          targetName={target?.title ?? ''}
-          dateFieldName={dateField?.name ?? ''}
-          cycleLabel={label}
-          initial={recurrenceEndCondition}
-          onBack={() => navigate('recurrence-cycle')}
-          onSubmit={(condition) => {
-            if (!currentDrawer || !target || !dateField) return;
-            void actions.addRecurrenceRule(currentDrawer.id, {
-              targetRecordId: target.id, fieldId: dateField.id, cycle: recurrenceCycle, interval: recurrenceInterval,
-              end: condition.kind === 'never' ? { kind: 'never' } : condition.kind === 'count'
-                ? { kind: 'count', count: condition.count } : { kind: 'date', endDate: condition.endDate },
-              targetLabel: target.title,
-            }, toISODate(new Date()))
-              .then(() => { setRecurrenceEndCondition(condition); navigate('recurrence-complete'); })
-              .catch(alertError);
-          }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'recurrence-complete') {
-    // #37 반복 완료, reachable from #36's "반복 설정하기". "반복 더
-    // 추가하기" -> #34 (clearing the target/date selection so the next
-    // pass starts fresh). "확인" -> #24.
-    const target = recurrenceTargets.find((t) => t.id === recurrenceTargetId);
-    const dateField = dateFields.find((f) => f.id === recurrenceDateFieldId);
-    return <main className="drawary-app-shell" data-route="recurrence-complete">
-      <FixedCanvas height={844}>
-        <RecurrenceCompleteScreen
-          drawerName={drawerDetailName}
-          targetName={target?.title ?? ''}
-          dateFieldName={dateField?.name ?? ''}
-          cycleLabel={cycleLabel(recurrenceCycle, recurrenceInterval)}
-          endLabel={endConditionLabel(recurrenceEndCondition)}
-          drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
-          onAddAnother={() => {
-            setRecurrenceTargetId(undefined);
-            setRecurrenceDateFieldId(undefined);
-            navigate('recurrence-target-date');
-          }}
-          onDone={() => navigate('drawer-manage')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'theme-settings') {
-    // #39 테마 설정, reachable from #38's "테마 설정" row. No approved
-    // TSX exists, only a self-contained `index.html` -- see
-    // ThemeSettingsScreen.tsx's own header comment. Back returns to #38.
-    return <main className="drawary-app-shell" data-route="theme-settings">
-      <FixedCanvas height={844}>
-        <ThemeSettingsScreen initialTheme={theme} onBack={returnToTab} onThemeChange={(id) => { void actions.setSetting(THEME_KEY, id).catch(alertError); }} />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'security-settings') {
-    // #40 보안 설정, reachable from #38's "보안 설정" row. Back returns
-    // to #38. "앱 잠금" row -> #41. 생체 인증 is turned on only after the
-    // phone's own prompt has been passed once (so it is known to work).
-    return <main className="drawary-app-shell" data-route="security-settings">
-      <FixedCanvas height={844}>
-        <SecuritySettingsScreen
-          appLockEnabled={sec.appLock}
-          autoLock={sec.autoLock}
-          biometric={sec.biometric}
-          biometricAvailable={hasNativeBiometric()}
-          onBack={returnToTab}
-          onOpenAppLock={() => navigate('lock-detail')}
-          onToggleAutoLock={() => { void setAutoLock(!sec.autoLock).catch(alertError); }}
-          onToggleBiometric={() => {
-            if (sec.biometric) { void setBiometric(false).catch(alertError); return; }
-            void authenticateBiometric()
-              .then((ok) => (ok ? setBiometric(true) : window.alert(t('지문/얼굴 인식을 확인하지 못했어요. 다시 시도해 주세요.'))))
-              .catch(alertError);
-          }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'lock-detail') {
-    // #41 잠금 설정 상세, reachable from #40's "앱 잠금" row. Back
-    // returns to #40. "PIN 설정 / 변경" -> #42. The "앱 잠금 사용" switch
-    // is only enabled once a PIN exists; turning it OFF asks for the
-    // current PIN first (the #42 screen in its "verify" mode).
-    if (confirmLockOff) {
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'drawer-detail') {
+      // #15: this drawer's real 보관품, newest first. The search box filters them by
+      // any value; "표로 보기" -> #20, "서랍 관리" -> #24.
+      if (!currentDrawer) return <main className="drawary-app-shell" data-route="drawer-detail" />;
+      const summaries: DrawerRecordSummary[] = currentRecords
+        .filter((r) => recordMatches(currentFields, r, recordQuery))
+        .map((r) => {
+          const sum = summarizeRecord(currentFields, r);
+          return { id: r.id, title: sum.title, subtitle: sum.subtitle, dateLabel: sum.dateLabel, thumbnailUri: recordThumbs[r.id] };
+        });
+      return <main className="drawary-app-shell" data-route="drawer-detail">
+        <FixedCanvas height={844}>
+          <DrawerDetailScreen
+            drawerName={currentDrawer.name}
+            recordCount={currentRecords.length}
+            fallbackIconKey={currentDrawer.iconKey}
+            records={summaries}
+            onBack={() => { setRecordQuery(''); returnToTab(); }}
+            onSearch={setRecordQuery}
+            onFillDrawer={() => startFill('drawer-detail')}
+            onOpenRecord={(id) => openRecord(id, 'drawer-detail')}
+            onOpenTable={() => navigate('table-view')}
+            onOpenManage={() => navigate('drawer-manage')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'table-view') {
+      // #20 표 보기, reachable from #15's "•••" menu's "표로 보기": the drawer's 서랍 칸
+      // as columns (first one stays put while the rest scroll sideways) and its 보관품
+      // as rows. #21 search, #22 sort and #23 filter are states of this screen; the
+      // chosen sort/filter is kept per drawer. A row opens #16 and back returns here.
+      if (!currentDrawer) return <main className="drawary-app-shell" data-route="table-view" />;
+      return <main className="drawary-app-shell" data-route="table-view">
+        <FixedCanvas height={844}>
+          <TableViewScreen
+            drawerName={drawerDetailName}
+            recordCount={currentRecords.length}
+            columns={tableColumns}
+            rows={tableRows}
+            view={tableView}
+            onViewChange={saveTableView}
+            onBack={() => navigate('drawer-detail')}
+            onExportCsv={(shown) => exportTable('csv', shown)}
+            onExportPdf={(shown) => exportTable('pdf', shown)}
+            onOpenRecord={(id) => openRecord(id, 'table-view')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'drawer-manage') {
+      // #24 서랍 관리 메인, reachable from #15's "•••" menu's "서랍 관리"
+      // (previously a no-op). 이름/아이콘 변경 -> #25, 서랍칸 편집 -> #26
+      // (both real routes below). 정렬/필터 설정(#27) and 서랍 삭제(#28) are
+      // handled as local overlays inside DrawerManageScreen itself now --
+      // deleting calls this onDeleteDrawer, which per #28's CONFIRMED.md
+      // ("삭제 후 홈 복귀") returns all the way to the home tab. 알림 설정
+      // -> #29, 반복 관리 -> #33 (both real routes below). 백업/내보내기
+      // has no destination screen among #25-#37, so that one row stays an
+      // intentional no-op.
+      return <main className="drawary-app-shell" data-route="drawer-manage">
+        <FixedCanvas height={844}>
+          <DrawerManageScreen
+            drawerName={drawerDetailName}
+            drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+            fieldCount={currentFields.length}
+            recordCount={currentRecords.length}
+            tableColumns={tableColumns}
+            tableRows={tableRows}
+            tableView={tableView}
+            onTableViewChange={saveTableView}
+            onBack={() => navigate('drawer-detail')}
+            onRenameDrawer={() => navigate('name-icon-change')}
+            onEditFields={() => navigate('drawer-fields-manage')}
+            onNotificationSettings={() => navigate('notification-settings')}
+            onRecurrenceManage={() => navigate('recurrence-management')}
+            onBackupExport={() => {}}
+            onDeleteDrawer={() => { if (!currentDrawer) return; void guardedSave(async () => {
+              await actions.deleteDrawer(currentDrawer.id);
+              setCurrentDrawerId(null); setRecordDetailId(null); setRecordQuery('');
+              navigate('home');
+            }); }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'notification-settings') {
+      // #29 알림 설정, reachable from #24's "알림 설정" row. "알림 추가하기"
+      // -> #30. "알림 공통 설정" has no destination among #25-#37, so it
+      // stays an intentional no-op.
+      return <main className="drawary-app-shell" data-route="notification-settings">
+        <FixedCanvas height={844}>
+          <NotificationSettingsScreen
+            drawerName={drawerDetailName}
+            rules={drawerNotifRules.map((n) => ({
+              id: n.id,
+              fieldName: currentFields.find((f) => f.id === n.fieldId)?.name ?? '',
+              when: `${n.daysBefore === 0 ? t('당일') : t('{daysBefore}일 전', { daysBefore: n.daysBefore })} · ${n.time}`,
+            }))}
+            onOpenRule={(id) => {
+              const n = drawerNotifRules.find((x) => x.id === id);
+              const field = currentFields.find((f) => f.id === n?.fieldId);
+              if (n && window.confirm(t("'{field}' {when} {time} 알림을 삭제할까요?", { field: field?.name ?? '', when: n.daysBefore === 0 ? t('당일') : t('{daysBefore}일 전', { daysBefore: n.daysBefore }), time: n.time }))) {
+                void actions.deleteNotificationRule(id).catch(alertError);
+              }
+            }}
+            fieldCount={currentFields.length}
+            recordCount={currentRecords.length}
+            drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+            onBack={() => navigate('drawer-manage')}
+            onAddNotification={() => { setNotifTime(readNotifyCommon(store.settings).defaultTime); navigate('notification-date-field'); }}
+            onOpenCommonSettings={() => navigate('notification-common')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'notification-common') {
+      // 알림 공통 설정 (default time + 알림 쉬는 시간), opened from #29's "알림 공통 설정" row (the user asked for it to be linked, 2026-10-20).
+      return <main className="drawary-app-shell" data-route="notification-common">
+        <FixedCanvas height={844}>
+          <NotificationCommonSettingsScreen
+            value={readNotifyCommon(store.settings)}
+            onChange={(next) => { void actions.setSetting(NOTIFY_COMMON_KEY, next).catch(alertError); }}
+            onBack={() => navigate('notification-settings')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'notification-date-field') {
+      // #30 날짜 칸 선택, reachable from #29's "알림 추가하기". Back returns
+      // to #29. "다음" -> #31.
+      return <main className="drawary-app-shell" data-route="notification-date-field">
+        <FixedCanvas height={844}>
+          <NotificationDateFieldScreen
+            drawerName={drawerDetailName}
+            dateFields={dateFields}
+            selectedId={notifDateFieldId}
+            drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+            onSelect={(fieldId) => setNotifDateFieldId(fieldId)}
+            onBack={() => navigate('notification-settings')}
+            onNext={(fieldId) => { setNotifDateFieldId(fieldId); navigate('notification-timing'); }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'notification-timing') {
+      // #31 알림 시점 / 시간 설정. No separate TSX exists in the archive for
+      // this screen -- see NotificationTimingScreen.tsx's own header
+      // comment for what was built fresh vs. ported. Back returns to #30.
+      // "알림 설정하기" -> #32.
+      const dateField = dateFields.find((f) => f.id === notifDateFieldId) ?? dateFields[0];
+      return <main className="drawary-app-shell" data-route="notification-timing">
+        <FixedCanvas height={844}>
+          <NotificationTimingScreen
+            drawerName={drawerDetailName}
+            dateFieldName={dateField?.name ?? ''}
+            initialDaysBefore={notifDaysBefore}
+            initialTime={notifTime}
+            drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+            onBack={() => navigate('notification-date-field')}
+            onSubmit={({ daysBefore, time }) => {
+              if (!currentDrawer || !dateField) return;
+              void actions.addNotificationRule(currentDrawer.id, { fieldId: dateField.id, daysBefore, time })
+                .then(() => { setNotifDaysBefore(daysBefore); setNotifTime(time); navigate('notification-complete'); })
+                .catch(alertError);
+            }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'notification-complete') {
+      // #32 알림 완료, reachable from #31's "알림 설정하기". "알림 더
+      // 추가하기" -> #30. "확인" -> #24.
+      const dateField = dateFields.find((f) => f.id === notifDateFieldId) ?? dateFields[0];
+      return <main className="drawary-app-shell" data-route="notification-complete">
+        <FixedCanvas height={844}>
+          <NotificationCompleteScreen
+            drawerName={drawerDetailName}
+            itemCount={currentRecords.length}
+            dateFieldName={dateField?.name ?? ''}
+            daysBefore={notifDaysBefore}
+            time={notifTime}
+            drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+            onAddAnother={() => navigate('notification-date-field')}
+            onDone={() => navigate('drawer-manage')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'recurrence-management') {
+      // #33 반복 관리, reachable from #24's "반복 관리" row. "반복
+      // 설정하기"/"반복 설정 추가하기" -> #34. Row taps on an existing rule
+      // have no destination (CONFIRMED.md only asks for display, not
+      // edit), so those stay an intentional no-op.
+      return <main className="drawary-app-shell" data-route="recurrence-management">
+        <FixedCanvas height={844}>
+          <RecurrenceManagementScreen
+            drawerName={drawerDetailName}
+            fieldCount={currentFields.length}
+            itemCount={currentRecords.length}
+            rules={recurrenceRules}
+            drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+            onBack={() => navigate('drawer-manage')}
+            onAdd={() => navigate('recurrence-target-date')}
+            onOpenRule={(id) => {
+              const r = store.recurrenceRules.find((x) => x.id === id);
+              if (r && window.confirm(t('\'{targetLabel}\' 반복 설정을 삭제할까요?\n이미 만들어진 보관품은 그대로 남아요.', { targetLabel: r.targetLabel }))) {
+                void actions.deleteRecurrenceRule(id).catch(alertError);
+              }
+            }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'recurrence-target-date') {
+      // #34 반복 대상 / 날짜 칸, reachable from #33's "반복 설정하기"/"반복
+      // 설정 추가하기". `onSelectTarget` cycles through the demo target
+      // list -- see RecurrenceTargetDateScreen.tsx's own header comment on
+      // why (no dedicated item-picker screen exists among the 59 approved
+      // designs). Back returns to #33. "다음" -> #35.
+      return <main className="drawary-app-shell" data-route="recurrence-target-date">
+        <FixedCanvas height={844}>
+          <RecurrenceTargetDateScreen
+            drawerName={drawerDetailName}
+            fieldCount={currentFields.length}
+            itemCount={currentRecords.length}
+            targets={recurrenceTargets}
+            dateFields={dateFields}
+            selectedTargetId={recurrenceTargetId}
+            selectedDateFieldId={recurrenceDateFieldId}
+            drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+            onBack={() => navigate('recurrence-management')}
+            onSelectTarget={() => setTargetPickerOpen(true)}
+            onSelectDateField={(fieldId) => setRecurrenceDateFieldId(fieldId)}
+            onNext={({ targetId, dateFieldId }) => {
+              const rec = currentRecords.find((r) => r.id === targetId);
+              const df = currentFields.find((f) => f.id === dateFieldId);
+              if (!rec || typeof rec.values[dateFieldId] !== 'string') {
+                window.alert(t("이 보관품에는 '{field}' 날짜가 없어요. 날짜를 먼저 채워 주세요.", { field: df?.name ?? t('날짜') }));
+                return;
+              }
+              setRecurrenceTargetId(targetId);
+              setRecurrenceDateFieldId(dateFieldId);
+              navigate('recurrence-cycle');
+            }}
+          />
+          {targetPickerOpen && (
+            <RecordPickerSheet
+              title={t('반복할 보관품 선택')}
+              records={currentRecords.map((r) => {
+                const sum = summarizeRecord(currentFields, r);
+                return { id: r.id, title: sum.title, detail: sum.dateLabel };
+              })}
+              selectedId={recurrenceTargetId}
+              onPick={(id) => { setRecurrenceTargetId(id); setTargetPickerOpen(false); }}
+              onClose={() => setTargetPickerOpen(false)}
+            />
+          )}
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'recurrence-cycle') {
+      // #35 매주 / 매월 / 매년 설정, reachable from #34's "다음". Back
+      // returns to #34. "다음" -> #36.
+      const target = recurrenceTargets.find((t) => t.id === recurrenceTargetId);
+      const dateField = dateFields.find((f) => f.id === recurrenceDateFieldId);
+      return <main className="drawary-app-shell" data-route="recurrence-cycle">
+        <FixedCanvas height={844}>
+          <RecurrenceCycleScreen
+            targetName={target?.title ?? ''}
+            dateFieldName={dateField?.name ?? ''}
+            initialCycle={recurrenceCycle}
+            initialInterval={recurrenceInterval}
+            onBack={() => navigate('recurrence-target-date')}
+            onNext={({ cycle, interval }) => {
+              setRecurrenceCycle(cycle);
+              setRecurrenceInterval(interval);
+              navigate('recurrence-end-condition');
+            }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'recurrence-end-condition') {
+      // #36 반복 종료 조건, reachable from #35's "다음". Back returns to
+      // #35. "반복 설정하기" both commits the new rule into
+      // `recurrenceRules` (this is the last step with user input before
+      // the #37 summary screen) and navigates to #37.
+      const target = recurrenceTargets.find((t) => t.id === recurrenceTargetId);
+      const dateField = dateFields.find((f) => f.id === recurrenceDateFieldId);
+      const label = cycleLabel(recurrenceCycle, recurrenceInterval);
+      return <main className="drawary-app-shell" data-route="recurrence-end-condition">
+        <FixedCanvas height={844}>
+          <RecurrenceEndConditionScreen
+            targetName={target?.title ?? ''}
+            dateFieldName={dateField?.name ?? ''}
+            cycleLabel={label}
+            initial={recurrenceEndCondition}
+            onBack={() => navigate('recurrence-cycle')}
+            onSubmit={(condition) => {
+              if (!currentDrawer || !target || !dateField) return;
+              void actions.addRecurrenceRule(currentDrawer.id, {
+                targetRecordId: target.id, fieldId: dateField.id, cycle: recurrenceCycle, interval: recurrenceInterval,
+                end: condition.kind === 'never' ? { kind: 'never' } : condition.kind === 'count'
+                  ? { kind: 'count', count: condition.count } : { kind: 'date', endDate: condition.endDate },
+                targetLabel: target.title,
+              }, toISODate(new Date()))
+                .then(() => { setRecurrenceEndCondition(condition); navigate('recurrence-complete'); })
+                .catch(alertError);
+            }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'recurrence-complete') {
+      // #37 반복 완료, reachable from #36's "반복 설정하기". "반복 더
+      // 추가하기" -> #34 (clearing the target/date selection so the next
+      // pass starts fresh). "확인" -> #24.
+      const target = recurrenceTargets.find((t) => t.id === recurrenceTargetId);
+      const dateField = dateFields.find((f) => f.id === recurrenceDateFieldId);
+      return <main className="drawary-app-shell" data-route="recurrence-complete">
+        <FixedCanvas height={844}>
+          <RecurrenceCompleteScreen
+            drawerName={drawerDetailName}
+            targetName={target?.title ?? ''}
+            dateFieldName={dateField?.name ?? ''}
+            cycleLabel={cycleLabel(recurrenceCycle, recurrenceInterval)}
+            endLabel={endConditionLabel(recurrenceEndCondition)}
+            drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
+            onAddAnother={() => {
+              setRecurrenceTargetId(undefined);
+              setRecurrenceDateFieldId(undefined);
+              navigate('recurrence-target-date');
+            }}
+            onDone={() => navigate('drawer-manage')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'theme-settings') {
+      // #39 테마 설정, reachable from #38's "테마 설정" row. No approved
+      // TSX exists, only a self-contained `index.html` -- see
+      // ThemeSettingsScreen.tsx's own header comment. Back returns to #38.
+      return <main className="drawary-app-shell" data-route="theme-settings">
+        <FixedCanvas height={844}>
+          <ThemeSettingsScreen initialTheme={theme} onBack={returnToTab} onThemeChange={(id) => { void actions.setSetting(THEME_KEY, id).catch(alertError); }} />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'security-settings') {
+      // #40 보안 설정, reachable from #38's "보안 설정" row. Back returns
+      // to #38. "앱 잠금" row -> #41. 생체 인증 is turned on only after the
+      // phone's own prompt has been passed once (so it is known to work).
+      return <main className="drawary-app-shell" data-route="security-settings">
+        <FixedCanvas height={844}>
+          <SecuritySettingsScreen
+            appLockEnabled={sec.appLock}
+            autoLock={sec.autoLock}
+            biometric={sec.biometric}
+            biometricAvailable={hasNativeBiometric()}
+            onBack={returnToTab}
+            onOpenAppLock={() => navigate('lock-detail')}
+            onToggleAutoLock={() => { void setAutoLock(!sec.autoLock).catch(alertError); }}
+            onToggleBiometric={() => {
+              if (sec.biometric) { void setBiometric(false).catch(alertError); return; }
+              void authenticateBiometric()
+                .then((ok) => (ok ? setBiometric(true) : window.alert(t('지문/얼굴 인식을 확인하지 못했어요. 다시 시도해 주세요.'))))
+                .catch(alertError);
+            }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'lock-detail') {
+      // #41 잠금 설정 상세, reachable from #40's "앱 잠금" row. Back
+      // returns to #40. "PIN 설정 / 변경" -> #42. The "앱 잠금 사용" switch
+      // is only enabled once a PIN exists; turning it OFF asks for the
+      // current PIN first (the #42 screen in its "verify" mode).
+      if (confirmLockOff) {
+        return <main className="drawary-app-shell" data-route="lock-detail">
+          <FixedCanvas height={844}>
+            <PinSetupScreen
+              mode="verify"
+              verify={verifyPin}
+              lockedUntil={sec.attempts.lockedUntil}
+              onBack={() => setConfirmLockOff(false)}
+              onVerified={() => { void setAppLock(false).then(() => setConfirmLockOff(false)).catch(alertError); }}
+            />
+          </FixedCanvas>
+        </main>;
+      }
       return <main className="drawary-app-shell" data-route="lock-detail">
         <FixedCanvas height={844}>
+          <LockDetailScreen
+            hasPin={sec.pin !== null}
+            appLockEnabled={sec.appLock}
+            onBack={() => navigate('security-settings')}
+            onToggleAppLock={() => {
+              if (sec.appLock) setConfirmLockOff(true);
+              else void setAppLock(true).catch(alertError);
+            }}
+            onOpenPinSetup={() => navigate('pin-setup')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'pin-setup') {
+      // #42 PIN 설정 / 변경, reachable from #41's "PIN 설정 / 변경" row.
+      // Back returns to #41. With a PIN already saved, the current PIN is
+      // asked first. Completing the flow saves the new PIN's hash and returns
+      // to #41.
+      return <main className="drawary-app-shell" data-route="pin-setup">
+        <FixedCanvas height={844}>
           <PinSetupScreen
-            mode="verify"
+            mode={sec.pin ? 'change' : 'set'}
             verify={verifyPin}
             lockedUntil={sec.attempts.lockedUntil}
-            onBack={() => setConfirmLockOff(false)}
-            onVerified={() => { void setAppLock(false).then(() => setConfirmLockOff(false)).catch(alertError); }}
+            onBack={() => navigate('lock-detail')}
+            onComplete={(pin) => { void savePin(pin).then(() => navigate('lock-detail')).catch(alertError); }}
           />
         </FixedCanvas>
       </main>;
     }
-    return <main className="drawary-app-shell" data-route="lock-detail">
-      <FixedCanvas height={844}>
-        <LockDetailScreen
-          hasPin={sec.pin !== null}
-          appLockEnabled={sec.appLock}
-          onBack={() => navigate('security-settings')}
-          onToggleAppLock={() => {
-            if (sec.appLock) setConfirmLockOff(true);
-            else void setAppLock(true).catch(alertError);
-          }}
-          onOpenPinSetup={() => navigate('pin-setup')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'pin-setup') {
-    // #42 PIN 설정 / 변경, reachable from #41's "PIN 설정 / 변경" row.
-    // Back returns to #41. With a PIN already saved, the current PIN is
-    // asked first. Completing the flow saves the new PIN's hash and returns
-    // to #41.
-    return <main className="drawary-app-shell" data-route="pin-setup">
-      <FixedCanvas height={844}>
-        <PinSetupScreen
-          mode={sec.pin ? 'change' : 'set'}
-          verify={verifyPin}
-          lockedUntil={sec.attempts.lockedUntil}
-          onBack={() => navigate('lock-detail')}
-          onComplete={(pin) => { void savePin(pin).then(() => navigate('lock-detail')).catch(alertError); }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'app-lock') {
-    // #43 앱 잠금 화면 (fullscreen PIN gate, no back button -- matches
-    // the archive exactly). The real gate is shown above, before any route,
-    // whenever the lock is on and the app is locked. This route stays as a
-    // QA preview of the same screen: it checks the real saved PIN and goes
-    // home when it is right (with no PIN saved there is nothing to check).
-    return <main className="drawary-app-shell" data-route="app-lock">
-      <FixedCanvas height={844}>
-        <AppLockScreen verify={verifyPin} lockedUntil={sec.attempts.lockedUntil} onUnlock={() => navigate('home')} />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'data-management') {
-    // #44 데이터 관리 허브, reachable from #38's "데이터 관리" row. Back
-    // returns to #38. 백업 -> #45, 복원 -> #49, 초기화 -> #53 (all real
-    // routes now).
-    return <main className="drawary-app-shell" data-route="data-management">
-      <FixedCanvas height={844}>
-        <DataManagementHubScreen
-          onBack={returnToTab}
-          onBackup={() => navigate('backup-type')}
-          onRestore={() => navigate('restore-file-picker')}
-          onReset={() => navigate('data-reset-confirm')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'backup-type') {
-    // #45 백업 시작 / 종류 선택, reachable from #44's "백업하기" row.
-    // Back returns to #44. "다음" -> #46.
-    return <main className="drawary-app-shell" data-route="backup-type">
-      <FixedCanvas height={844}>
-        <BackupTypeScreen
-          initialMode={backupMode}
-          onBack={() => navigate('data-management')}
-          onNext={(mode) => { setBackupMode(mode); navigate('backup-destination'); }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'backup-destination') {
-    // #46 저장 위치 선택, reachable from #45's "다음". Back returns to
-    // #45. "다음" -> #47 (backup progress, now actually chained into
-    // this flow instead of being a standalone QA route).
-    return <main className="drawary-app-shell" data-route="backup-destination">
-      <FixedCanvas height={844}>
-        <BackupDestinationScreen
-          initialDestination={backupDestination}
-          onBack={() => navigate('backup-type')}
-          onNext={(destination) => { setBackupDestination(destination); navigate('backup-progress'); }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'backup-success') {
-    // #48 백업 완료, reached from #47 once the file is written. No back button (decorative arrow only, matching the
-    // archive exactly). "확인" -> #44. The file name and place are the real ones.
-    const description = backupResult?.includesPhotos ?? backupMode === 'include' ? t('사진 포함 백업') : t('사진 제외 백업');
-    return <main className="drawary-app-shell" data-route="backup-success">
-      <FixedCanvas height={844}>
-        <BackupSuccessScreen
-          fileName={backupResult?.fileName ?? ''}
-          location={backupResult?.location ?? (backupDestination === 'device' ? 'Download' : 'Google Drive')}
-          description={description}
-          onConfirm={() => navigate('data-management')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'restore-file-picker') {
-    // #49 복원 파일 선택, reachable from #44's "복원하기" row. Back returns to #44. The chosen file is read and
-    // checked completely first (nothing on the device is touched yet); a file that is not a Drawary backup is
-    // refused with a message and the person stays here. A good one -> #50.
-    return <main className="drawary-app-shell" data-route="restore-file-picker">
-      <FixedCanvas height={844}>
-        <RestoreFilePickerScreen
-          onBack={() => navigate('data-management')}
-          onFileSelected={(file) => {
-            void readBackup(file)
-              .then((parsed) => { setRestorePlan({ fileName: file.name, parsed }); navigate('restore-review'); })
-              .catch((e: unknown) => alertError(e));
-          }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'restore-review') {
-    // #50 복원 내용 확인, reachable from #49. Back returns to #49. The figures are counted from the chosen file.
-    // "계속" in the confirm dialog -> #51 (with the lock on, the PIN is asked first).
-    if (!restorePlan) return <main className="drawary-app-shell" data-route="restore-review" />;
-    if (pinGate === 'restore') {
+    if (route === 'app-lock') {
+      // #43 앱 잠금 화면 (fullscreen PIN gate, no back button -- matches
+      // the archive exactly). The real gate is shown above, before any route,
+      // whenever the lock is on and the app is locked. This route stays as a
+      // QA preview of the same screen: it checks the real saved PIN and goes
+      // home when it is right (with no PIN saved there is nothing to check).
+      return <main className="drawary-app-shell" data-route="app-lock">
+        <FixedCanvas height={844}>
+          <AppLockScreen verify={verifyPin} lockedUntil={sec.attempts.lockedUntil} onUnlock={() => navigate('home')} />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'data-management') {
+      // #44 데이터 관리 허브, reachable from #38's "데이터 관리" row. Back
+      // returns to #38. 백업 -> #45, 복원 -> #49, 초기화 -> #53 (all real
+      // routes now).
+      return <main className="drawary-app-shell" data-route="data-management">
+        <FixedCanvas height={844}>
+          <DataManagementHubScreen
+            onBack={returnToTab}
+            onBackup={() => navigate('backup-type')}
+            onRestore={() => navigate('restore-file-picker')}
+            onReset={() => navigate('data-reset-confirm')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'backup-type') {
+      // #45 백업 시작 / 종류 선택, reachable from #44's "백업하기" row.
+      // Back returns to #44. "다음" -> #46.
+      return <main className="drawary-app-shell" data-route="backup-type">
+        <FixedCanvas height={844}>
+          <BackupTypeScreen
+            initialMode={backupMode}
+            onBack={() => navigate('data-management')}
+            onNext={(mode) => { setBackupMode(mode); navigate('backup-destination'); }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'backup-destination') {
+      // #46 저장 위치 선택, reachable from #45's "다음". Back returns to
+      // #45. "다음" -> #47 (backup progress, now actually chained into
+      // this flow instead of being a standalone QA route).
+      return <main className="drawary-app-shell" data-route="backup-destination">
+        <FixedCanvas height={844}>
+          <BackupDestinationScreen
+            initialDestination={backupDestination}
+            onBack={() => navigate('backup-type')}
+            onNext={(destination) => { setBackupDestination(destination); navigate('backup-progress'); }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'backup-success') {
+      // #48 백업 완료, reached from #47 once the file is written. No back button (decorative arrow only, matching the
+      // archive exactly). "확인" -> #44. The file name and place are the real ones.
+      const description = backupResult?.includesPhotos ?? backupMode === 'include' ? t('사진 포함 백업') : t('사진 제외 백업');
+      return <main className="drawary-app-shell" data-route="backup-success">
+        <FixedCanvas height={844}>
+          <BackupSuccessScreen
+            fileName={backupResult?.fileName ?? ''}
+            location={backupResult?.location ?? (backupDestination === 'device' ? 'Download' : 'Google Drive')}
+            description={description}
+            onConfirm={() => navigate('data-management')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'restore-file-picker') {
+      // #49 복원 파일 선택, reachable from #44's "복원하기" row. Back returns to #44. The chosen file is read and
+      // checked completely first (nothing on the device is touched yet); a file that is not a Drawary backup is
+      // refused with a message and the person stays here. A good one -> #50.
+      return <main className="drawary-app-shell" data-route="restore-file-picker">
+        <FixedCanvas height={844}>
+          <RestoreFilePickerScreen
+            onBack={() => navigate('data-management')}
+            onFileSelected={(file) => {
+              void readBackup(file)
+                .then((parsed) => { setRestorePlan({ fileName: file.name, parsed }); navigate('restore-review'); })
+                .catch((e: unknown) => alertError(e));
+            }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'restore-review') {
+      // #50 복원 내용 확인, reachable from #49. Back returns to #49. The figures are counted from the chosen file.
+      // "계속" in the confirm dialog -> #51 (with the lock on, the PIN is asked first).
+      if (!restorePlan) return <main className="drawary-app-shell" data-route="restore-review" />;
+      if (pinGate === 'restore') {
+        return <main className="drawary-app-shell" data-route="restore-review">
+          <FixedCanvas height={844}>
+            <PinSetupScreen
+              mode="verify" purpose="restore" verify={verifyPin} lockedUntil={sec.attempts.lockedUntil}
+              onBack={() => setPinGate(null)}
+              onVerified={() => { setPinGate(null); navigate('restore-progress'); }}
+            />
+          </FixedCanvas>
+        </main>;
+      }
+      const sum = restorePlan.parsed.summary;
+      const d = new Date(sum.createdAt);
+      const two = (n: number) => String(n).padStart(2, '0');
+      const when = sum.createdAt ? `${d.getFullYear()}.${two(d.getMonth() + 1)}.${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}` : '';
       return <main className="drawary-app-shell" data-route="restore-review">
         <FixedCanvas height={844}>
-          <PinSetupScreen
-            mode="verify" purpose="restore" verify={verifyPin} lockedUntil={sec.attempts.lockedUntil}
-            onBack={() => setPinGate(null)}
-            onVerified={() => { setPinGate(null); navigate('restore-progress'); }}
+          <RestoreReviewScreen
+            fileName={restorePlan.fileName}
+            fileDetails={t('{date} · 백업 파일 1개', { date: when })}
+            hasPhotos={sum.includesPhotos}
+            recordSummary={t('{drawers}개 서랍 · {records}개 기록', { drawers: sum.drawers, records: sum.records })}
+            photoSummary={t('{n}장', { n: sum.photos })}
+            onBack={() => navigate('restore-file-picker')}
+            onConfirmRestore={() => { if (sec.appLock) setPinGate('restore'); else navigate('restore-progress'); }}
           />
         </FixedCanvas>
       </main>;
     }
-    const sum = restorePlan.parsed.summary;
-    const d = new Date(sum.createdAt);
-    const two = (n: number) => String(n).padStart(2, '0');
-    const when = sum.createdAt ? `${d.getFullYear()}.${two(d.getMonth() + 1)}.${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}` : '';
-    return <main className="drawary-app-shell" data-route="restore-review">
-      <FixedCanvas height={844}>
-        <RestoreReviewScreen
-          fileName={restorePlan.fileName}
-          fileDetails={t('{date} · 백업 파일 1개', { date: when })}
-          hasPhotos={sum.includesPhotos}
-          recordSummary={t('{drawers}개 서랍 · {records}개 기록', { drawers: sum.drawers, records: sum.records })}
-          photoSummary={t('{n}장', { n: sum.photos })}
-          onBack={() => navigate('restore-file-picker')}
-          onConfirmRestore={() => { if (sec.appLock) setPinGate('restore'); else navigate('restore-progress'); }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'restore-progress') {
-    // #51 복원 진행, reachable from #50's confirm dialog. Back returns to #50. The restore itself runs in the
-    // effect above; when it is done -> #52.
-    return <main className="drawary-app-shell" data-route="restore-progress">
-      <FixedCanvas height={844}>
-        <RestoreProgressScreen onBack={() => navigate('restore-review')} />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'restore-success') {
-    // #52 복원 완료, reached from #51. Back and "확인" both return to #44 -- going back to the review screen
-    // after a completed restore doesn't make sense.
-    const sum = restoreDone;
-    return <main className="drawary-app-shell" data-route="restore-success">
-      <FixedCanvas height={844}>
-        <RestoreSuccessScreen
-          recordCount={t('{drawers}개 서랍 · {records}개 기록', { drawers: sum?.drawers ?? 0, records: sum?.records ?? 0 })}
-          photoCount={t('{n}장', { n: sum?.photos ?? 0 })}
-          settingsStatus={t('복원 완료')}
-          onBack={() => navigate('data-management')}
-          onConfirm={() => navigate('data-management')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'data-reset-confirm') {
-    // #53 데이터 초기화 확인, reachable from #44's "데이터 초기화" row. "취소"/뒤로가기 return to #44. Confirming (with the
-    // lock on: after the PIN) erases drawers, items, photos, notification/repeat rules and all settings on this device,
-    // then starts like a fresh install. Files that were backed up outside the app are not touched.
-    if (pinGate === 'reset') {
+    if (route === 'restore-progress') {
+      // #51 복원 진행, reachable from #50's confirm dialog. Back returns to #50. The restore itself runs in the
+      // effect above; when it is done -> #52.
+      return <main className="drawary-app-shell" data-route="restore-progress">
+        <FixedCanvas height={844}>
+          <RestoreProgressScreen onBack={() => navigate('restore-review')} />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'restore-success') {
+      // #52 복원 완료, reached from #51. Back and "확인" both return to #44 -- going back to the review screen
+      // after a completed restore doesn't make sense.
+      const sum = restoreDone;
+      return <main className="drawary-app-shell" data-route="restore-success">
+        <FixedCanvas height={844}>
+          <RestoreSuccessScreen
+            recordCount={t('{drawers}개 서랍 · {records}개 기록', { drawers: sum?.drawers ?? 0, records: sum?.records ?? 0 })}
+            photoCount={t('{n}장', { n: sum?.photos ?? 0 })}
+            settingsStatus={t('복원 완료')}
+            onBack={() => navigate('data-management')}
+            onConfirm={() => navigate('data-management')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'data-reset-confirm') {
+      // #53 데이터 초기화 확인, reachable from #44's "데이터 초기화" row. "취소"/뒤로가기 return to #44. Confirming (with the
+      // lock on: after the PIN) erases drawers, items, photos, notification/repeat rules and all settings on this device,
+      // then starts like a fresh install. Files that were backed up outside the app are not touched.
+      if (pinGate === 'reset') {
+        return <main className="drawary-app-shell" data-route="data-reset-confirm">
+          <FixedCanvas height={844}>
+            <PinSetupScreen
+              mode="verify" purpose="reset" verify={verifyPin} lockedUntil={sec.attempts.lockedUntil}
+              onBack={() => setPinGate(null)}
+              onVerified={resetEverything}
+            />
+          </FixedCanvas>
+        </main>;
+      }
       return <main className="drawary-app-shell" data-route="data-reset-confirm">
         <FixedCanvas height={844}>
-          <PinSetupScreen
-            mode="verify" purpose="reset" verify={verifyPin} lockedUntil={sec.attempts.lockedUntil}
-            onBack={() => setPinGate(null)}
-            onVerified={resetEverything}
+          <DataResetConfirmScreen
+            onCancel={() => navigate('data-management')}
+            onResetConfirmed={() => { if (sec.appLock) setPinGate('reset'); else resetEverything(); }}
           />
         </FixedCanvas>
       </main>;
     }
-    return <main className="drawary-app-shell" data-route="data-reset-confirm">
-      <FixedCanvas height={844}>
-        <DataResetConfirmScreen
-          onCancel={() => navigate('data-management')}
-          onResetConfirmed={() => { if (sec.appLock) setPinGate('reset'); else resetEverything(); }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'language-settings') {
-    // #54 언어 설정, reachable from #38's "언어 설정" row. Both "취소"
-    // and "적용" return to #38 -- the archive's own source never
-    // navigates on its own, only resets/commits the selection.
-    return <main className="drawary-app-shell" data-route="language-settings">
-      <FixedCanvas height={844}>
-        <LanguageSettingsScreen
-          savedLanguage={language}
-          onBack={returnToTab}
-          onCancel={returnToTab}
-          onApply={(code) => { void actions.setSetting(LANGUAGE_KEY, code).then(returnToTab).catch(alertError); }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'help-main') {
-    // #55 도움말 메인, reachable from #38's "도움말" row. Back returns
-    // to #38. "자주 묻는 질문" card / quick-help rows -> #56 (quick-help
-    // rows pass a specific topic deep-link); "사용 가이드" card -> #57.
-    return <main className="drawary-app-shell" data-route="help-main">
-      <FixedCanvas height={844}>
-        <HelpMainScreen
-          onBack={returnToTab}
-          onOpenFaq={(topic) => { setFaqTopic(topic); navigate('faq'); }}
-          onOpenGuide={() => navigate('guide')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'faq') {
-    // #56 자주 묻는 질문, reachable from #55. Back returns to #55.
-    return <main className="drawary-app-shell" data-route="faq">
-      <FixedCanvas height={844}>
-        <FaqScreen initialTopic={faqTopic} onBack={() => navigate('help-main')} />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'guide') {
-    // #57 사용 가이드, reachable from #55. Back returns to #55. Each
-    // step navigates to the real existing screen it names (see
-    // GuideScreen.tsx's own header comment) -- a genuine integration,
-    // not a no-op.
-    const guideRoutes: Record<GuideRoute, Route> = {
-      new_drawer: 'create-drawer',
-      drawer_fields: 'drawer-fields',
-      record_add: 'fill-drawer',
-      table_view: 'table-view',
-    };
-    return <main className="drawary-app-shell" data-route="guide">
-      <FixedCanvas height={844}>
-        <GuideScreen onBack={() => navigate('help-main')} onNavigate={(step) => navigate(guideRoutes[step])} />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'info') {
-    // #58 정보, reachable from #38's "정보" row. Back returns to #38.
-    // 개인정보 처리방침/이용약관/오픈소스 라이선스 have no destination
-    // among the 59 approved screens, so those three stay no-ops.
-    return <main className="drawary-app-shell" data-route="info">
-      <FixedCanvas height={844}>
-        <InfoScreen onBack={returnToTab} onNavigate={() => {}} />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'feedback') {
-    // #59 피드백, reachable from #38's "피드백" row. Back returns to
-    // #38. Submitting has no real backend (see FeedbackScreen.tsx's
-    // own header comment) -- shows a real local acknowledgment, then
-    // returns to #38.
-    return <main className="drawary-app-shell" data-route="feedback">
-      <FixedCanvas height={844}>
-        <FeedbackScreen onBack={returnToTab} onSubmit={async (draft) => {
-          if (!hasNativeFeedback()) return 'unavailable';
-          const opened = await sendNativeFeedback(draft);
-          if (opened) window.setTimeout(returnToTab, 2500);
-          return opened ? 'opened' : 'no-mail';
-        }} />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'name-icon-change') {
-    // #25 서랍 이름 / 아이콘 변경, reachable from #24's "서랍 이름 / 아이콘
-    // 변경" row. Saving updates the shared drawerDetailName/drawerIconId
-    // state and returns to #24, whose header re-renders from that same
-    // state -- the "상단 정보 즉시 갱신" CONFIRMED.md asks for.
-    return <main className="drawary-app-shell" data-route="name-icon-change">
-      <FixedCanvas height={844}>
-        <NameIconChangeScreen
-          initialName={drawerDetailName}
-          initialIconId={drawerIconId}
-          onBack={() => navigate('drawer-manage')}
-          onSave={({ name, iconId }) => {
-            if (!currentDrawer) return;
-            actions.updateDrawer(currentDrawer.id, { name, iconKey: iconId })
-              .then(() => navigate('drawer-manage'))
-              .catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('저장하지 못했어요.')));
-          }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'drawer-fields-manage') {
-    // #26 서랍칸 편집. Per REUSE_MAPPING.md this is NOT a new screen --
-    // it reuses #09's DrawerFieldsScreen verbatim, only swapping the
-    // creation-flow's own title/copy/destination for an edit-mode
-    // context (진입점: #24, 완료/뒤로가기: #24로 복귀, 신규 생성 플로우용
-    // 문구 미사용) via the title/completeLabel/contextLabel props added
-    // for this reuse. contextLabel renders the REUSE_MAPPING's own
-    // approved visual refinement: drawer name + field count on one
-    // baseline, centered as a group.
-    if (!currentDrawer) return <main className="drawary-app-shell" data-route="drawer-fields-manage" />;
-    return <main className="drawary-app-shell" data-route="drawer-fields-manage">
-      <FixedCanvas height={844}>
-        <DrawerFieldsScreen
-          title={t('서랍칸 편집')}
-          completeLabel={t('완료')}
-          contextLabel={{ name: drawerDetailName, detail: t('{length}개 서랍칸', { length: currentFields.length }) }}
-          fields={manageList.map(toFieldItem)}
-          onBack={() => navigate('drawer-manage')}
-          onAddField={() => navigate('new-field-manage')}
-          onEditField={(field) => { setManageFieldId(field.id); navigate('field-edit-manage'); }}
-          onQuickAdd={(label) => { void actions.addField(currentDrawer.id, { name: t(label), kind: QUICK_ADD_KINDS[label] ?? 'text' }).catch(alertError); }}
-          onReorder={(from, to) => setManageOrder((prev) => {
-            const ids = prev ?? currentFields.map((f) => f.id);
-            if (from === to || from < 0 || to < 0 || from >= ids.length || to >= ids.length) return ids;
-            const next = [...ids]; const [moved] = next.splice(from, 1); next.splice(to, 0, moved); return next;
-          })}
-          onReorderEnd={() => {
-            const ids = manageOrderRef.current;
-            if (ids && ids.some((id, i) => id !== currentFields[i]?.id)) {
-              void actions.reorderFields(currentDrawer.id, ids).catch(alertError).finally(() => setManageOrder(null));
-            } else setManageOrder(null);
-          }}
-          onComplete={() => navigate('drawer-manage')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'new-field-manage') {
-    // #26's reuse of #10 (NewFieldScreen), entered only from drawer-fields-manage;
-    // "추가하기" adds the field to the drawer straight away (a rejected name or
-    // options stays here with a message).
-    if (!currentDrawer) return <main className="drawary-app-shell" data-route="new-field-manage" />;
-    return <main className="drawary-app-shell" data-route="new-field-manage">
-      <FixedCanvas height={844}>
-        <NewFieldScreen
-          onBack={() => navigate('drawer-fields-manage')}
-          onAdd={(data) => { void actions.addField(currentDrawer.id, data).then(() => navigate('drawer-fields-manage')).catch(alertError); }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'field-edit-manage') {
-    // #26's reuse of #11, opened on the tapped field. Saving applies at once. Taking
-    // away a choice that records already use clears it from those records, after a
-    // confirmation; deleting a field (its own confirm sheet) removes its values from
-    // every record, and the last remaining field cannot be deleted.
-    if (!manageField) return <main className="drawary-app-shell" data-route="field-edit-manage" />;
-    return <main className="drawary-app-shell" data-route="field-edit-manage">
-      <FixedCanvas height={844}>
-        <DrawerFieldEditScreen
-          key={manageField.id}
-          field={manageField}
-          onBack={() => navigate('drawer-fields-manage')}
-          onSave={(patch) => {
-            const kept = new Set(patch.options.map((o) => o.trim()).filter(Boolean));
-            const removed = manageField.options.filter((o) => !kept.has(o));
-            const affected = manageField.kind === 'select'
-              ? currentRecords.filter((r) => typeof r.values[manageField.id] === 'string' && removed.includes(r.values[manageField.id] as string)).length
-              : 0;
-            if (affected > 0 && !window.confirm(t('없애는 선택 항목을 쓰고 있는 보관품 {affected}개의 값이 지워져요. 계속할까요?', { affected }))) return;
-            void actions.updateField(manageField.id, patch).then(() => navigate('drawer-fields-manage')).catch(alertError);
-          }}
-          onDelete={() => { void actions.deleteField(manageField.id).then(() => { setManageFieldId(null); navigate('drawer-fields-manage'); }).catch(alertError); }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'record-detail') {
-    // #16: the saved record. Its first text field is the heading; the other filled
-    // fields are listed below (money as stored, dates with weekday). "수정하기" -> #17;
-    // "보관품 삭제" confirms in #18, then deletes the record and its photos and
-    // returns to #15. Tapping the photo opens #19.
-    if (!selectedRecord || !currentDrawer) return <main className="drawary-app-shell" data-route="record-detail" />;
-    const sum = summarizeRecord(currentFields, selectedRecord);
-    const rows: RecordFieldValue[] = currentFields
-      .filter((f) => hasControl(f.kind) && f.id !== sum.titleFieldId && (f.kind === 'check' || selectedRecord.values[f.id] != null))
-      .map((f) => ({
-        id: f.id, label: f.name, value: formatValue(f, selectedRecord.values[f.id]),
-        type: (f.kind === 'long_text' ? 'note' : f.kind === 'check' ? 'checkbox' : f.kind) as RecordFieldType,
-      }));
-    return <main className="drawary-app-shell" data-route="record-detail">
-      <FixedCanvas height={844}>
-        <RecordDetailScreen
-          drawerName={currentDrawer.name}
-          title={sum.title}
-          photoUri={selectedPhotos.urls[0] ?? ''}
-          photoLoading={selectedPhotos.blobs === null}
-          fields={rows}
-          onBack={() => navigate(recordBack)}
-          onEdit={() => { setEditPhotos(null); setEditKey((k) => k + 1); navigate('record-edit'); }}
-          onDelete={() => { void guardedSave(async () => {
-            const id = selectedRecord.id;
-            await actions.deleteRecord(id);
-            setRecordDetailId(null);
-            navigate(recordBack);
-          }); }}
-          onOpenPhoto={() => navigate('photo-viewer')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'photo-viewer') {
-    // #19: this record's photos only; the approved viewer/gestures are untouched.
-    if (!selectedRecord || selectedPhotos.urls.length === 0) {
-      return <main className="drawary-app-shell" data-route="photo-viewer" />;
+    if (route === 'language-settings') {
+      // #54 언어 설정, reachable from #38's "언어 설정" row. Both "취소"
+      // and "적용" return to #38 -- the archive's own source never
+      // navigates on its own, only resets/commits the selection.
+      return <main className="drawary-app-shell" data-route="language-settings">
+        <FixedCanvas height={844}>
+          <LanguageSettingsScreen
+            savedLanguage={language}
+            onBack={returnToTab}
+            onCancel={returnToTab}
+            onApply={(code) => { void actions.setSetting(LANGUAGE_KEY, code).then(returnToTab).catch(alertError); }}
+          />
+        </FixedCanvas>
+      </main>;
     }
-    return <main className="drawary-app-shell" data-route="photo-viewer">
-      <FixedCanvas height={844}>
-        <PhotoViewerScreen
-          key={selectedRecord.id}
-          photoUris={selectedPhotos.urls}
-          onClose={() => navigate('record-detail')}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'record-edit') {
-    // #17: edits every field of the record; photos are staged until "수정 완료"
-    // (back discards). One set of up to 3: "사진 바꾸기" replaces it, × removes it.
-    if (!selectedRecord || !currentDrawer) return <main className="drawary-app-shell" data-route="record-edit" />;
-    const shownPhoto = editPhotos !== null
-      ? (editPhotos.length ? (editUrls[0] ?? selectedPhotos.urls[0] ?? '') : '')
-      : (selectedPhotos.urls[0] ?? '');
-    return <main className="drawary-app-shell" data-route="record-edit">
-      <FixedCanvas height={844}>
-        <RecordEditScreen
-          key={`${selectedRecord.id}:${editKey}`}
-          drawerName={currentDrawer.name}
-          fields={currentFields}
-          initialDraft={draftFromRecord(currentFields, selectedRecord)}
-          photoUri={shownPhoto}
-          saving={recordSaving}
-          onBack={() => { setEditPhotos(null); navigate('record-detail'); }}
-          onPickPhoto={() => { void (async () => {
-            const files = await pickRecordPhotos();
-            if (files.length) setEditPhotos(files);
-          })(); }}
-          onRemovePhoto={() => setEditPhotos([])}
-          onSave={(draft: RecordDraft) => { void guardedSave(async () => {
-            await actions.updateRecord(selectedRecord.id, draftToValues(currentFields, draft), editPhotos ?? undefined);
-            setPhotoVersion((v) => v + 1);
-            setEditPhotos(null);
-            navigate('record-detail');
-          }); }}
-        />
-      </FixedCanvas>
-    </main>;
-  }
-  if (route === 'backup-progress') {
-    // #47 백업 진행: the backup file is made and handed over by the effect above, then -> #48. Back returns to #46.
-    return <main className="drawary-app-shell" data-route="backup-progress">
-      <BackupProgressScreen onBack={() => navigate('backup-destination')} />
-    </main>;
-  }
-  if (route === 'home-edit') {
-    // #6 홈 편집 모드: same grid as #3 with delete / reorder controls on
-    // each card. Delete here asks first (a drawer takes its fields, items
-    // and photos with it); reorder is a drag on the card's handle.
-    return <main className="drawary-app-shell" data-route="home-edit">
-      <section className="drawary-route-panel">
-        <HomeScreen
-          mode="edit"
-          drawers={homeCards}
-          totalRecords={store.records.length}
-          onDone={() => navigate('home')}
-          onCreateDrawer={() => navigate('create-drawer')}
-          onDeleteDrawer={(id) => {
-            const target = drawerById(store, id);
-            if (!target) return;
-            const count = recordsOf(store, id).length;
-            const detail = count > 0 ? t('\n보관품 {count}개와 사진도 함께 삭제돼요.', { count }) : '';
-            if (window.confirm(t('\'{name}\' 서랍을 삭제할까요?{detail}\n삭제한 내용은 되돌릴 수 없어요.', { name: target.name, detail }))) {
-              actions.deleteDrawer(id).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('삭제하지 못했어요.')));
-            }
-          }}
-          onReorder={(ids) => { actions.reorderDrawers(ids).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('순서를 바꾸지 못했어요.'))); }}
-        />
-      </section>
-      <footer className="drawary-shell-footer">
-        <ResponsiveBottomNav active="home" onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />
-      </footer>
-    </main>;
-  }
-  if (route === 'home-empty') {
-    // V2-09-04 QA route: the confirmed empty state isn't wired as the live
-    // '#/home' conditional yet -- that needs a real drawer count from the
-    // V2-12 data layer. Standalone here so it can be reviewed/tested now.
-    return <main className="drawary-app-shell" data-route="home-empty">
-      <section className="drawary-route-panel"><HomeEmptyScreen onCreateDrawer={() => navigate('create-drawer')} /></section>
-      <footer className="drawary-shell-footer">
-        <ResponsiveBottomNav active="home" onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />
-      </footer>
-    </main>;
-  }
-  const tabRoute = isTab(route);
-  return (
-    <main className="drawary-app-shell" data-route={route}>
-      <section className="drawary-route-panel" aria-labelledby={route === 'home' || route === 'search' || route === 'settings' || route === 'stats' ? undefined : 'drawary-dev-screen-title'}>
-        {route === 'home' ? (
-          // #3 / #4: the empty state is shown whenever there are no drawers.
-          // The whole app waits for the saved data (see the loading gate
-          // above), so a returning user never sees a flash of the empty screen.
-          store.drawers.length === 0 ? (
-            <HomeEmptyScreen onCreateDrawer={() => navigate('create-drawer')} />
-          ) : (
-            <HomeScreen
-              drawers={homeCards}
-              totalRecords={store.records.length}
-              onOpenDrawer={(id) => { setCurrentDrawerId(id); navigate('drawer-detail'); }}
-              onCreateDrawer={() => navigate('create-drawer')}
-              onEdit={() => navigate('home-edit')}
+    if (route === 'help-main') {
+      // #55 도움말 메인, reachable from #38's "도움말" row. Back returns
+      // to #38. "자주 묻는 질문" card / quick-help rows -> #56 (quick-help
+      // rows pass a specific topic deep-link); "사용 가이드" card -> #57.
+      return <main className="drawary-app-shell" data-route="help-main">
+        <FixedCanvas height={844}>
+          <HelpMainScreen
+            onBack={returnToTab}
+            onOpenFaq={(topic) => { setFaqTopic(topic); navigate('faq'); }}
+            onOpenGuide={() => navigate('guide')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'faq') {
+      // #56 자주 묻는 질문, reachable from #55. Back returns to #55.
+      return <main className="drawary-app-shell" data-route="faq">
+        <FixedCanvas height={844}>
+          <FaqScreen initialTopic={faqTopic} onBack={() => navigate('help-main')} />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'guide') {
+      // #57 사용 가이드, reachable from #55. Back returns to #55. Each
+      // step navigates to the real existing screen it names (see
+      // GuideScreen.tsx's own header comment) -- a genuine integration,
+      // not a no-op.
+      const guideRoutes: Record<GuideRoute, Route> = {
+        new_drawer: 'create-drawer',
+        drawer_fields: 'drawer-fields',
+        record_add: 'fill-drawer',
+        table_view: 'table-view',
+      };
+      return <main className="drawary-app-shell" data-route="guide">
+        <FixedCanvas height={844}>
+          <GuideScreen onBack={() => navigate('help-main')} onNavigate={(step) => navigate(guideRoutes[step])} />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'info') {
+      // #58 정보, reachable from #38's "정보" row. Back returns to #38.
+      // 개인정보 처리방침/이용약관/오픈소스 라이선스 have no destination
+      // among the 59 approved screens, so those three stay no-ops.
+      return <main className="drawary-app-shell" data-route="info">
+        <FixedCanvas height={844}>
+          <InfoScreen onBack={returnToTab} onNavigate={() => {}} />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'feedback') {
+      // #59 피드백, reachable from #38's "피드백" row. Back returns to
+      // #38. Submitting has no real backend (see FeedbackScreen.tsx's
+      // own header comment) -- shows a real local acknowledgment, then
+      // returns to #38.
+      return <main className="drawary-app-shell" data-route="feedback">
+        <FixedCanvas height={844}>
+          <FeedbackScreen onBack={returnToTab} onSubmit={async (draft) => {
+            if (!hasNativeFeedback()) return 'unavailable';
+            const opened = await sendNativeFeedback(draft);
+            if (opened) window.setTimeout(returnToTab, 2500);
+            return opened ? 'opened' : 'no-mail';
+          }} />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'name-icon-change') {
+      // #25 서랍 이름 / 아이콘 변경, reachable from #24's "서랍 이름 / 아이콘
+      // 변경" row. Saving updates the shared drawerDetailName/drawerIconId
+      // state and returns to #24, whose header re-renders from that same
+      // state -- the "상단 정보 즉시 갱신" CONFIRMED.md asks for.
+      return <main className="drawary-app-shell" data-route="name-icon-change">
+        <FixedCanvas height={844}>
+          <NameIconChangeScreen
+            initialName={drawerDetailName}
+            initialIconId={drawerIconId}
+            onBack={() => navigate('drawer-manage')}
+            onSave={({ name, iconId }) => {
+              if (!currentDrawer) return;
+              actions.updateDrawer(currentDrawer.id, { name, iconKey: iconId })
+                .then(() => navigate('drawer-manage'))
+                .catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('저장하지 못했어요.')));
+            }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'drawer-fields-manage') {
+      // #26 서랍칸 편집. Per REUSE_MAPPING.md this is NOT a new screen --
+      // it reuses #09's DrawerFieldsScreen verbatim, only swapping the
+      // creation-flow's own title/copy/destination for an edit-mode
+      // context (진입점: #24, 완료/뒤로가기: #24로 복귀, 신규 생성 플로우용
+      // 문구 미사용) via the title/completeLabel/contextLabel props added
+      // for this reuse. contextLabel renders the REUSE_MAPPING's own
+      // approved visual refinement: drawer name + field count on one
+      // baseline, centered as a group.
+      if (!currentDrawer) return <main className="drawary-app-shell" data-route="drawer-fields-manage" />;
+      return <main className="drawary-app-shell" data-route="drawer-fields-manage">
+        <FixedCanvas height={844}>
+          <DrawerFieldsScreen
+            title={t('서랍칸 편집')}
+            completeLabel={t('완료')}
+            contextLabel={{ name: drawerDetailName, detail: t('{length}개 서랍칸', { length: currentFields.length }) }}
+            fields={manageList.map(toFieldItem)}
+            onBack={() => navigate('drawer-manage')}
+            onAddField={() => navigate('new-field-manage')}
+            onEditField={(field) => { setManageFieldId(field.id); navigate('field-edit-manage'); }}
+            onQuickAdd={(label) => { void actions.addField(currentDrawer.id, { name: t(label), kind: QUICK_ADD_KINDS[label] ?? 'text' }).catch(alertError); }}
+            onReorder={(from, to) => setManageOrder((prev) => {
+              const ids = prev ?? currentFields.map((f) => f.id);
+              if (from === to || from < 0 || to < 0 || from >= ids.length || to >= ids.length) return ids;
+              const next = [...ids]; const [moved] = next.splice(from, 1); next.splice(to, 0, moved); return next;
+            })}
+            onReorderEnd={() => {
+              const ids = manageOrderRef.current;
+              if (ids && ids.some((id, i) => id !== currentFields[i]?.id)) {
+                void actions.reorderFields(currentDrawer.id, ids).catch(alertError).finally(() => setManageOrder(null));
+              } else setManageOrder(null);
+            }}
+            onComplete={() => navigate('drawer-manage')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'new-field-manage') {
+      // #26's reuse of #10 (NewFieldScreen), entered only from drawer-fields-manage;
+      // "추가하기" adds the field to the drawer straight away (a rejected name or
+      // options stays here with a message).
+      if (!currentDrawer) return <main className="drawary-app-shell" data-route="new-field-manage" />;
+      return <main className="drawary-app-shell" data-route="new-field-manage">
+        <FixedCanvas height={844}>
+          <NewFieldScreen
+            onBack={() => navigate('drawer-fields-manage')}
+            onAdd={(data) => { void actions.addField(currentDrawer.id, data).then(() => navigate('drawer-fields-manage')).catch(alertError); }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'field-edit-manage') {
+      // #26's reuse of #11, opened on the tapped field. Saving applies at once. Taking
+      // away a choice that records already use clears it from those records, after a
+      // confirmation; deleting a field (its own confirm sheet) removes its values from
+      // every record, and the last remaining field cannot be deleted.
+      if (!manageField) return <main className="drawary-app-shell" data-route="field-edit-manage" />;
+      return <main className="drawary-app-shell" data-route="field-edit-manage">
+        <FixedCanvas height={844}>
+          <DrawerFieldEditScreen
+            key={manageField.id}
+            field={manageField}
+            onBack={() => navigate('drawer-fields-manage')}
+            onSave={(patch) => {
+              const kept = new Set(patch.options.map((o) => o.trim()).filter(Boolean));
+              const removed = manageField.options.filter((o) => !kept.has(o));
+              const affected = manageField.kind === 'select'
+                ? currentRecords.filter((r) => typeof r.values[manageField.id] === 'string' && removed.includes(r.values[manageField.id] as string)).length
+                : 0;
+              if (affected > 0 && !window.confirm(t('없애는 선택 항목을 쓰고 있는 보관품 {affected}개의 값이 지워져요. 계속할까요?', { affected }))) return;
+              void actions.updateField(manageField.id, patch).then(() => navigate('drawer-fields-manage')).catch(alertError);
+            }}
+            onDelete={() => { void actions.deleteField(manageField.id).then(() => { setManageFieldId(null); navigate('drawer-fields-manage'); }).catch(alertError); }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'record-detail') {
+      // #16: the saved record. Its first text field is the heading; the other filled
+      // fields are listed below (money as stored, dates with weekday). "수정하기" -> #17;
+      // "보관품 삭제" confirms in #18, then deletes the record and its photos and
+      // returns to #15. Tapping the photo opens #19.
+      if (!selectedRecord || !currentDrawer) return <main className="drawary-app-shell" data-route="record-detail" />;
+      const sum = summarizeRecord(currentFields, selectedRecord);
+      const rows: RecordFieldValue[] = currentFields
+        .filter((f) => hasControl(f.kind) && f.id !== sum.titleFieldId && (f.kind === 'check' || selectedRecord.values[f.id] != null))
+        .map((f) => ({
+          id: f.id, label: f.name, value: formatValue(f, selectedRecord.values[f.id]),
+          type: (f.kind === 'long_text' ? 'note' : f.kind === 'check' ? 'checkbox' : f.kind) as RecordFieldType,
+        }));
+      return <main className="drawary-app-shell" data-route="record-detail">
+        <FixedCanvas height={844}>
+          <RecordDetailScreen
+            drawerName={currentDrawer.name}
+            title={sum.title}
+            photoUri={selectedPhotos.urls[0] ?? ''}
+            photoLoading={selectedPhotos.blobs === null}
+            fields={rows}
+            onBack={() => navigate(recordBack)}
+            onEdit={() => { setEditPhotos(null); setEditKey((k) => k + 1); navigate('record-edit'); }}
+            onDelete={() => { void guardedSave(async () => {
+              const id = selectedRecord.id;
+              await actions.deleteRecord(id);
+              setRecordDetailId(null);
+              navigate(recordBack);
+            }); }}
+            onOpenPhoto={() => navigate('photo-viewer')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'photo-viewer') {
+      // #19: this record's photos only; the approved viewer/gestures are untouched.
+      if (!selectedRecord || selectedPhotos.urls.length === 0) {
+        return <main className="drawary-app-shell" data-route="photo-viewer" />;
+      }
+      return <main className="drawary-app-shell" data-route="photo-viewer">
+        <FixedCanvas height={844}>
+          <PhotoViewerScreen
+            key={selectedRecord.id}
+            photoUris={selectedPhotos.urls}
+            onClose={() => navigate('record-detail')}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'record-edit') {
+      // #17: edits every field of the record; photos are staged until "수정 완료"
+      // (back discards). One set of up to 3: "사진 바꾸기" replaces it, × removes it.
+      if (!selectedRecord || !currentDrawer) return <main className="drawary-app-shell" data-route="record-edit" />;
+      const shownPhoto = editPhotos !== null
+        ? (editPhotos.length ? (editUrls[0] ?? selectedPhotos.urls[0] ?? '') : '')
+        : (selectedPhotos.urls[0] ?? '');
+      return <main className="drawary-app-shell" data-route="record-edit">
+        <FixedCanvas height={844}>
+          <RecordEditScreen
+            key={`${selectedRecord.id}:${editKey}`}
+            drawerName={currentDrawer.name}
+            fields={currentFields}
+            initialDraft={draftFromRecord(currentFields, selectedRecord)}
+            photoUri={shownPhoto}
+            saving={recordSaving}
+            onBack={() => { setEditPhotos(null); navigate('record-detail'); }}
+            onPickPhoto={() => { void (async () => {
+              const files = await pickRecordPhotos();
+              if (files.length) setEditPhotos(files);
+            })(); }}
+            onRemovePhoto={() => setEditPhotos([])}
+            onSave={(draft: RecordDraft) => { void guardedSave(async () => {
+              await actions.updateRecord(selectedRecord.id, draftToValues(currentFields, draft), editPhotos ?? undefined);
+              setPhotoVersion((v) => v + 1);
+              setEditPhotos(null);
+              navigate('record-detail');
+            }); }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'backup-progress') {
+      // #47 백업 진행: the backup file is made and handed over by the effect above, then -> #48. Back returns to #46.
+      return <main className="drawary-app-shell" data-route="backup-progress">
+        <BackupProgressScreen onBack={() => navigate('backup-destination')} />
+      </main>;
+    }
+    if (route === 'home-edit') {
+      // #6 홈 편집 모드: same grid as #3 with delete / reorder controls on
+      // each card. Delete here asks first (a drawer takes its fields, items
+      // and photos with it); reorder is a drag on the card's handle.
+      return <main className="drawary-app-shell" data-route="home-edit">
+        <section className="drawary-route-panel">
+          <HomeScreen
+            mode="edit"
+            drawers={homeCards}
+            totalRecords={store.records.length}
+            onDone={() => navigate('home')}
+            onCreateDrawer={() => navigate('create-drawer')}
+            onDeleteDrawer={(id) => {
+              const target = drawerById(store, id);
+              if (!target) return;
+              const count = recordsOf(store, id).length;
+              const detail = count > 0 ? t('\n보관품 {count}개와 사진도 함께 삭제돼요.', { count }) : '';
+              if (window.confirm(t('\'{name}\' 서랍을 삭제할까요?{detail}\n삭제한 내용은 되돌릴 수 없어요.', { name: target.name, detail }))) {
+                actions.deleteDrawer(id).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('삭제하지 못했어요.')));
+              }
+            }}
+            onReorder={(ids) => { actions.reorderDrawers(ids).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('순서를 바꾸지 못했어요.'))); }}
+          />
+        </section>
+        <footer className="drawary-shell-footer">
+          <ResponsiveBottomNav active="home" onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />
+        </footer>
+      </main>;
+    }
+    if (route === 'home-empty') {
+      // V2-09-04 QA route: the confirmed empty state isn't wired as the live
+      // '#/home' conditional yet -- that needs a real drawer count from the
+      // V2-12 data layer. Standalone here so it can be reviewed/tested now.
+      return <main className="drawary-app-shell" data-route="home-empty">
+        <section className="drawary-route-panel"><HomeEmptyScreen onCreateDrawer={() => navigate('create-drawer')} /></section>
+        <footer className="drawary-shell-footer">
+          <ResponsiveBottomNav active="home" onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />
+        </footer>
+      </main>;
+    }
+    const tabRoute = isTab(route);
+    return (
+      <main className="drawary-app-shell" data-route={route}>
+        <section className="drawary-route-panel" aria-labelledby={route === 'home' || route === 'search' || route === 'settings' || route === 'stats' ? undefined : 'drawary-dev-screen-title'}>
+          {route === 'home' ? (
+            // #3 / #4: the empty state is shown whenever there are no drawers.
+            // The whole app waits for the saved data (see the loading gate
+            // above), so a returning user never sees a flash of the empty screen.
+            store.drawers.length === 0 ? (
+              <HomeEmptyScreen onCreateDrawer={() => navigate('create-drawer')} />
+            ) : (
+              <HomeScreen
+                drawers={homeCards}
+                totalRecords={store.records.length}
+                onOpenDrawer={(id) => { setCurrentDrawerId(id); navigate('drawer-detail'); }}
+                onCreateDrawer={() => navigate('create-drawer')}
+                onEdit={() => navigate('home-edit')}
+              />
+            )
+          ) : route === 'search' ? (
+            // #05: every drawer's 보관품; a result opens #16 and back returns here.
+            <GlobalSearchScreen
+              records={searchRecords}
+              query={globalQuery}
+              onQueryChange={setGlobalQuery}
+              onOpenRecord={(recordId, drawerId) => { setCurrentDrawerId(drawerId); openRecord(recordId, 'search'); }}
             />
-          )
-        ) : route === 'search' ? (
-          // #05: every drawer's 보관품; a result opens #16 and back returns here.
-          <GlobalSearchScreen
-            records={searchRecords}
-            query={globalQuery}
-            onQueryChange={setGlobalQuery}
-            onOpenRecord={(recordId, drawerId) => { setCurrentDrawerId(drawerId); openRecord(recordId, 'search'); }}
-          />
-        ) : route === 'settings' ? (
-          // #38: 테마->#39, 보안->#40, 데이터->#44, 언어->#54, 도움말->
-          // #55, 정보->#58, 피드백->#59 -- all real routes now (final
-          // batch of the 59 screens).
-          <SettingsHomeScreen
-            onTheme={() => navigate('theme-settings')}
-            onSecurity={() => navigate('security-settings')}
-            onData={() => navigate('data-management')}
-            onLanguage={() => navigate('language-settings')}
-            onHelp={() => navigate('help-main')}
-            onInfo={() => navigate('info')}
-            onFeedback={() => navigate('feedback')}
-          />
-        ) : route === 'stats' ? (
-          // #07: no approved source exists (STATUS.md: NO_FINAL_CODE_IMAGE_ONLY),
-          // reconstructed from the two approved reference renders -- see
-          // StatsScreen.tsx's own header comment. onOpenInsight has no
-          // destination screen yet, same reasoning as above.
-          <StatsScreen
-            stats={computeStats(store.drawers, store.fields, store.records, new Date(), (d) => new Intl.DateTimeFormat(getLocale(), { month: 'short' }).format(d))}
-            onOpenInsight={(drawerId) => { setCurrentDrawerId(drawerId); navigate('drawer-detail'); }}
-          />
-        ) : tabRoute ? (
-          <div className="drawary-dev-only">
-            <div className="drawary-dev-flag">개발 검수용 · 확정 화면 아님</div>
-            <h1 id="drawary-dev-screen-title">{t(NAMES[route])}</h1>
-            <p>V2-08 공통 하단바·화면 이동 동작 확인</p>
-            <p className="drawary-dev-detail">이 영역의 실제 확정 화면은 후속 구현 단계에서 연결합니다.</p>
-          </div>
-        ) : null}
-      </section>
-      {tabRoute && <footer className="drawary-shell-footer">
-        <ResponsiveBottomNav active={route} onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />
-      </footer>}
-    </main>
-  );
+          ) : route === 'settings' ? (
+            // #38: 테마->#39, 보안->#40, 데이터->#44, 언어->#54, 도움말->
+            // #55, 정보->#58, 피드백->#59 -- all real routes now (final
+            // batch of the 59 screens).
+            <SettingsHomeScreen
+              onTheme={() => navigate('theme-settings')}
+              onSecurity={() => navigate('security-settings')}
+              onData={() => navigate('data-management')}
+              onLanguage={() => navigate('language-settings')}
+              onHelp={() => navigate('help-main')}
+              onInfo={() => navigate('info')}
+              onFeedback={() => navigate('feedback')}
+            />
+          ) : route === 'stats' ? (
+            // #07: no approved source exists (STATUS.md: NO_FINAL_CODE_IMAGE_ONLY),
+            // reconstructed from the two approved reference renders -- see
+            // StatsScreen.tsx's own header comment. onOpenInsight has no
+            // destination screen yet, same reasoning as above.
+            <StatsScreen
+              stats={computeStats(store.drawers, store.fields, store.records, new Date(), (d) => new Intl.DateTimeFormat(getLocale(), { month: 'short' }).format(d))}
+              onOpenInsight={(drawerId) => { setCurrentDrawerId(drawerId); navigate('drawer-detail'); }}
+            />
+          ) : tabRoute ? (
+            <div className="drawary-dev-only">
+              <div className="drawary-dev-flag">개발 검수용 · 확정 화면 아님</div>
+              <h1 id="drawary-dev-screen-title">{t(NAMES[route])}</h1>
+              <p>V2-08 공통 하단바·화면 이동 동작 확인</p>
+              <p className="drawary-dev-detail">이 영역의 실제 확정 화면은 후속 구현 단계에서 연결합니다.</p>
+            </div>
+          ) : null}
+        </section>
+        {tabRoute && <footer className="drawary-shell-footer">
+          <ResponsiveBottomNav active={route} onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />
+        </footer>}
+      </main>
+    );
+  };
+  // A wide window keeps the tab screen (home, search, ...) on the left and opens everything else on the right, so a drawer
+  // opens beside the drawer list instead of replacing it. Splash, onboarding and the PIN screens stay full width.
+  const fullWidth = route === 'splash' || route === 'onboarding' || route === 'app-lock' || route === 'backup-progress' || route === 'restore-progress';
+  if (wide && !fullWidth) {
+    const tab = isTab(route) ? route : lastTabRef.current;
+    return <WideSplit left={renderRoute(tab)} right={isTab(route) ? null : renderRoute(route)} />;
+  }
+  return renderRoute(route);
 }

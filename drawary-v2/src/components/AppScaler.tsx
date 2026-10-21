@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { appScaleFor, setAppScale } from './appScale';
+import { appScaleFor, isWideWindow, setAppScale } from './appScale';
+import { setAppWide } from './appLayout';
 
 /**
  * On a tablet (shorter side >= 600 dp) the app is laid out as on a phone and magnified as one piece, so it fills the window
@@ -25,6 +26,8 @@ export function AppScaler({ children }: { children: ReactNode }) {
   }, []);
   const s = appScaleFor(size.w, size.h);
   setAppScale(s);
+  const wide = isWideWindow(size.w, size.h);
+  useEffect(() => { setAppWide(wide); }, [wide]);
   if (s === 1) return <>{children}</>;
   return (
     <div className="drawary-scaler" style={{ width: size.w / s, height: size.h / s, transform: `scale(${s})` }}>
