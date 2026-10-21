@@ -58,8 +58,6 @@ export const help_pages: Messages = {
   '응원 메시지': { ja: '応援メッセージ', en: 'Cheer message' },
   'Drawary에게 응원의 한마디를 남겨주세요.': { ja: 'Drawaryへ応援のひとことをお寄せください。', en: 'Leave a few kind words for Drawary.' },
   '남겨주신 응원은 Drawary를 만드는 큰 힘이 돼요.': { ja: 'いただいた応援は、Drawaryをつくる大きな力になります。', en: 'Your kind words give us great strength to keep building Drawary.' },
-  '스토어에 리뷰 남기기': { ja: 'ストアでレビューを書く', en: 'Leave a store review' },
-  '마음에 드셨다면 별점과 한 줄 리뷰도 부탁드려요.': { ja: 'お気に入りいただけたら、星評価と一言レビューもお願いします。', en: 'If you like the app, a star rating and a short review would mean a lot.' },
   '오류 화면이 있다면 첨부해 주세요. (선택)': { ja: '不具合の画面があれば添付してください。（任意）', en: 'Attach a screenshot of the problem if you have one. (optional)' },
   'PNG, JPG, WebP 이미지를 선택해 주세요.': { ja: 'PNG、JPG、WebPの画像を選んでください。', en: 'Please choose a PNG, JPG or WebP image.' },
   '이미지 파일만 첨부할 수 있어요.': { ja: '画像ファイルのみ添付できます。', en: 'Only image files can be attached.' },

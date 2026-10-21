@@ -31,8 +31,6 @@ const TYPE_CONFIG: Record<FeedbackType, { name: string; icon: string; iconClass?
 };
 
 const TYPES: FeedbackType[] = ['improvement', 'bug', 'feature', 'cheer', 'other'];
-// Where a review can be left (opens the Play Store app from the app shell; it only works once the app is published).
-const REVIEW_URL = 'https://play.google.com/store/apps/details?id=com.howlingcreativestudio.drawary';
 const DEFAULT_ATTACH_CAPTION = K('오류 화면이 있다면 첨부해 주세요. (선택)');
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
@@ -195,13 +193,6 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
               <span className="fb59-attach-copy"><strong>{t('화면 사진 첨부')}</strong><span>{attachCaption === DEFAULT_ATTACH_CAPTION ? t(attachCaption) : attachCaption}</span></span>
               <span className="fb59-attach-right" aria-hidden="true">›</span>
             </label>
-          )}
-          {type === 'cheer' && (
-            <a className="fb59-attach" href={REVIEW_URL} target="_blank" rel="noopener noreferrer">
-              <span className="fb59-attach-icon" aria-hidden="true">★</span>
-              <span className="fb59-attach-copy"><strong>{t('스토어에 리뷰 남기기')}</strong><span>{t('마음에 드셨다면 별점과 한 줄 리뷰도 부탁드려요.')}</span></span>
-              <span className="fb59-attach-right" aria-hidden="true">›</span>
-            </a>
           )}
           <input
             type="file"
