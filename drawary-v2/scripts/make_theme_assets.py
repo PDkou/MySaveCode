@@ -67,8 +67,10 @@ def recolor(img, theme):
 
 def compose_logo(base, theme, symbol_only=False):
     """The in-app logo in a theme: the wordmark recoloured, and the lavender flower replaced by that theme's own approved flower
-    (assets/theme/theme_flower_<theme>.webp) with the same white sticker outline. symbol_only: just the flower (brand_symbol_flower_small)."""
-    from PIL import ImageFilter
+    (assets/theme/theme_flower_<theme>.webp). The white sticker behind the flower has the lavender sticker's width and outline thickness for every
+    theme; the flower is sized to that width (94 %).
+    symbol_only: just the flower (brand_symbol_flower_small)."""
+    from scipy import ndimage
     base = base.convert('RGBA')
     W, H = base.size
     alpha = np.asarray(base)[..., 3]
@@ -80,29 +82,30 @@ def compose_logo(base, theme, symbol_only=False):
         cols = (alpha > 20).sum(0)
         lo, hi = int(W * 0.12), int(W * 0.34)
         x0 = lo + int(np.argmin(cols[lo:hi]))        # the gap between the flower and the "D"
-    ys, xs = np.where(alpha[:, :x0] > 20)
+    sil = alpha.copy(); sil[:, x0:] = 0                  # the lavender sticker: flower, stem and its white outline
+    ys, xs = np.where(sil > 20)
     bx0, bx1, by0, by1 = xs.min(), xs.max(), ys.min(), ys.max()
-    halo = max(2, round(0.075 * H)) if not symbol_only else max(2, round(0.07 * H))
-    box_w, box_h = bx1 - bx0 + 1 - 2 * halo, by1 - by0 + 1 - 2 * halo
-    # the same footprint as the lavender flower it replaces: as tall as its box, or as wide as the gap before the "D" allows
-    k = min(box_h / flower.height, (box_w + halo) / flower.width)
+    cx, cy = (bx0 + bx1) // 2, (by0 + by1) // 2
+    halo = max(4, round(0.054 * H))                      # the lavender sticker's outline width
+    # the flower fills the lavender sticker's width (a touch smaller), so its outline ends where lavender's does
+    k = min((bx1 - bx0 + 1 - 2 * halo) / flower.width, (by1 - by0 + 1 - 2 * halo) / flower.height) * 0.94
     fw, fh = max(1, round(flower.width * k)), max(1, round(flower.height * k))
     flower = flower.resize((fw, fh), Image.LANCZOS)
-    cx, cy = (bx0 + bx1) // 2, (by0 + by1) // 2
     px, py = cx - fw // 2, cy - fh // 2
-    # white sticker outline: the flower's shape grown by `halo` with a round (not square) reach, corners softened
-    from scipy import ndimage
-    mask = Image.new('L', (W, H), 0)
-    mask.paste(flower.getchannel('A'), (px, py))
-    solid = np.asarray(mask) > 40
-    dist = ndimage.distance_transform_edt(~solid)
-    grown = np.clip(halo + 0.5 - dist, 0, 1)
-    grown = ndimage.gaussian_filter(grown, halo * 0.3)                  # rounds the corners left by flat-cut artwork
-    grown = np.clip((grown - 0.5) * 3 + 0.5, 0, 1)                       # back to a crisp but anti-aliased edge
-    grown = Image.fromarray(np.round(grown * 255).astype(np.uint8), 'L')
-    sticker = Image.merge('RGBA', (Image.new('L', (W, H), 255),) * 3 + (grown,))
     layer = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     layer.paste(flower, (px, py))
+    # the sticker: a smooth, even white outline round the flower (rounded by closing the gaps between petals and leaves)
+    mask = np.asarray(layer.getchannel('A')) > 40
+    pad = halo * 3
+    big = np.pad(mask, pad)
+    grown = ndimage.distance_transform_edt(~big) <= halo
+    r = halo * 0.9                                       # closing: fills the notches between petals and leaves
+    dilated = ndimage.distance_transform_edt(~grown) <= r
+    closed = ndimage.distance_transform_edt(dilated) > r
+    plate = ndimage.gaussian_filter((grown | closed).astype(float), halo * 0.3)[pad:-pad, pad:-pad]
+    plate = np.clip((plate - 0.5) * 6 + 0.5, 0, 1)       # smooth outline, crisp anti-aliased edge
+    plate = Image.fromarray(np.round(plate * 255).astype(np.uint8), 'L')
+    sticker = Image.merge('RGBA', (Image.new('L', (W, H), 255),) * 3 + (plate,))
     if symbol_only:
         out = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     else:
