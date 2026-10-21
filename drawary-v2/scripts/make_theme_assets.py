@@ -109,9 +109,23 @@ def compose_logo(base, theme, symbol_only=False):
     if symbol_only:
         out = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     else:
-        out = recolor(base, theme)
-        arr = np.asarray(out).copy(); arr[:, :x0, 3] = 0       # drop the old flower, keep the wordmark and its outline
-        out = Image.fromarray(arr, 'RGBA')
+        # the wordmark keeps its own ink, but its white outline is redrawn (same 15 px width) so that it ends in a round edge
+        # instead of the straight cut where the old flower used to be
+        rgb = np.asarray(base).astype(int)
+        ink = (alpha > 200) & ((255 - rgb[..., :3].min(2)) > 40)
+        ink[:, :x0 + 4] = False
+        t = 15 * H / 336
+        tp = int(t * 2)
+        ink_p = np.pad(ink, tp)
+        wp = ndimage.distance_transform_edt(~ink_p) <= t
+        wp = ndimage.gaussian_filter(wp.astype(float), t * 0.12)[tp:-tp, tp:-tp]
+        wp = np.clip((wp - 0.5) * 6 + 0.5, 0, 1)
+        fill = ndimage.binary_dilation(ndimage.binary_fill_holes(ink), iterations=2)
+        recol = np.asarray(recolor(base, theme)).copy()
+        recol[~fill, 3] = 0
+        white = np.dstack([np.full((H, W, 3), 255, np.uint8), np.round(wp * 255).astype(np.uint8)])
+        out = Image.fromarray(white, 'RGBA')
+        out.alpha_composite(Image.fromarray(recol, 'RGBA'))
     out.alpha_composite(sticker)
     out.alpha_composite(layer)
     return out
