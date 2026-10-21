@@ -9,7 +9,7 @@ button{cursor:pointer}
 .fb59-back:before{content:"";width:11px;height:11px;border-left:3px solid var(--tc-8061f1,#8061f1);border-bottom:3px solid var(--tc-8061f1,#8061f1);transform:rotate(45deg)}
 .fb59-main{height:calc(100% - 160px);overflow-y:auto;scrollbar-width:none;padding:1px 16px 17px;overscroll-behavior:contain}
 .fb59-main::-webkit-scrollbar{display:none}
-.fb59-hero{height:145px;width:100%;background:linear-gradient(120deg,var(--tc-f0e7ff,#f0e7ff) 0%,var(--tc-faf0fc,#faf0fc) 100%);border:1px solid var(--tc-eee3fd,#eee3fd);border-radius:22px;position:relative;overflow:hidden;padding:15px 16px}
+.fb59-hero{min-height:145px;width:100%;background:linear-gradient(120deg,var(--tc-f0e7ff,#f0e7ff) 0%,var(--tc-faf0fc,#faf0fc) 100%);border:1px solid var(--tc-eee3fd,#eee3fd);border-radius:22px;position:relative;overflow:hidden;padding:15px 16px 17px}
 .fb59-hero-kicker{display:flex;align-items:center;gap:5px;color:var(--tc-9667ef,#9667ef);font-size:11.4px;font-weight:850;letter-spacing:-.25px;margin:0 0 6px}
 .fb59-hero-kicker:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--tc-ae8bf6,#ae8bf6)}
 .fb59-hero-title{font-size:17.6px;line-height:1.34;letter-spacing:-.55px;color:#243976;font-weight:850;margin:0;position:relative;z-index:1}

@@ -13,8 +13,8 @@ export function HomeEmptyScreen({ onCreateDrawer }: { onCreateDrawer: () => void
   return (
     <FixedCanvas height={750}>
       <div className="home-screen-crop">
-        {/* The approved picture with its four Korean texts wiped out (flat cream behind them, nothing else touched):
-            the texts below are real labels in the same places, so they follow the app language. */}
+        {/* The mascot picture on flat cream (new high-resolution art, 2026-10-21). The logo and the texts below are real,
+            so they follow the theme and the app language. */}
         <img
           src="/assets/home/home_empty_art.webp"
           alt=""
@@ -23,6 +23,7 @@ export function HomeEmptyScreen({ onCreateDrawer }: { onCreateDrawer: () => void
           draggable={false}
           className="home-screen-img"
         />
+        <img className="hs-brand" src="/assets/brand/brand_lockup_horizontal.webp" alt="Drawary" draggable={false} />
         <p className="hs-tagline">{t('나만의 소중한 것들을, 더 특별하게')}</p>
         <h2 className="he-title">{t('아직 만든 서랍이 없어요.')}</h2>
         <p className="he-sub">{tl('정리하고 싶은 것부터\n하나 만들어보세요.')}</p>
