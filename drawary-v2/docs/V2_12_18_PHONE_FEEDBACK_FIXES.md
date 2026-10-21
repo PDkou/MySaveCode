@@ -68,7 +68,7 @@ Added by me, not from an approved design: sidebar, chip column, 카드 보기 / 
 Preview images: `docs/preview/wide/` (Chromium; sample data; 1280x800, 1920x1200, 844x390 landscape phone, 837x697 foldable).
 Not verified: real devices; `land` is cramped (the approved nav alone is 94 of ~390 px), so the lists scroll.
 
-### 6.1 Tab screens: search, stats, settings (added after the home / drawer / table were approved) — PREVIEW, awaiting owner approval
+### 6.1 Tab screens: search, stats, settings (added after the home / drawer / table were approved) — approved by the owner (2026-10-21); still needs browser QA on a real device
 
 The first audit of all screens in landscape found only those three had their own layout. Added (same approved pieces, nothing redrawn):
 - Stats (`wide` and `land`): the approved cards in two columns (KPI cards across the top, chart and upcoming events side by side, per-drawer insights below in two columns).
