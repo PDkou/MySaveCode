@@ -32,7 +32,7 @@ export interface SettingsHomeAction {
   onFeedback?: () => void;
 }
 
-const ROWS = [
+export const SETTINGS_ROWS = [
   { key: 'theme', icon: 'icon_theme.webp', title: K('테마 설정'), desc: K('앱의 분위기와 강조 색상을 바꿔요.') },
   { key: 'security', icon: 'icon_lock.webp', title: K('보안 설정'), desc: K('앱 잠금과 생체 인증을 관리해요.') },
   { key: 'data', icon: 'icon_upload.webp', title: K('데이터 관리'), desc: K('백업, 복원, 데이터 초기화를 관리해요.') },
@@ -42,8 +42,8 @@ const ROWS = [
   { key: 'feedback', icon: 'icon_edit.webp', title: K('피드백'), desc: K('개선 제안이나 오류를 알려주세요.') },
 ] as const;
 
-export function SettingsHomeScreen(props: SettingsHomeAction & { /** Landscape windows: the row whose screen is open on the right. */ activeKey?: string }) {
-  const handlers: Record<(typeof ROWS)[number]['key'], (() => void) | undefined> = {
+export function SettingsHomeScreen(props: SettingsHomeAction) {
+  const handlers: Record<(typeof SETTINGS_ROWS)[number]['key'], (() => void) | undefined> = {
     theme: props.onTheme,
     security: props.onSecurity,
     data: props.onData,
@@ -66,8 +66,8 @@ export function SettingsHomeScreen(props: SettingsHomeAction & { /** Landscape w
         </section>
 
         <section className="settings-home-list">
-          {ROWS.map(row => (
-            <button className={`settings-home-row${props.activeKey === row.key ? ' is-active' : ''}`} type="button" key={row.key} aria-current={props.activeKey === row.key ? 'true' : undefined} onClick={handlers[row.key]}>
+          {SETTINGS_ROWS.map(row => (
+            <button className="settings-home-row" type="button" key={row.key} onClick={handlers[row.key]}>
               <span className="settings-home-iconbox"><img src={`/assets/ui-icons/${row.icon}`} alt="" /></span>
               <span className="settings-home-copy"><strong>{t(row.title)}</strong><span>{t(row.desc)}</span></span>
               <span className="settings-home-chev">›</span>

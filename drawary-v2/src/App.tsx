@@ -88,6 +88,8 @@ import { useAppLayout } from './components/appLayout';
 import { WideFrame } from './wide/WideFrame';
 import { DrawerSidebar } from './wide/DrawerSidebar';
 import { WideHome } from './wide/WideHome';
+import { WideSettingsGrid } from './wide/WideSettingsGrid';
+import { PaneMagnifier } from './wide/PaneMagnifier';
 import { WideDrawer } from './wide/WideDrawer';
 import { getLocale, t, K } from './i18n';
 import { closeOpenOverlay } from './flow/overlayBack';
@@ -666,6 +668,24 @@ export default function App() {
         </div>
       </WideFrame>;
     }
+    if (SETTINGS_PANES[route] !== undefined && (kind === 'wide' || route === 'settings')) {
+      // The settings tab is a card grid; a card opens that settings screen (and the screens it leads to) magnified, and the screen's own back arrow leads back.
+      return <WideFrame kind={kind} route={route} nav={nav}>
+        {route === 'settings' ? (
+          <div className="wide-scroll">
+            <WideSettingsGrid
+              onTheme={() => navigate('theme-settings')}
+              onSecurity={() => navigate('security-settings')}
+              onData={() => navigate('data-management')}
+              onLanguage={() => navigate('language-settings')}
+              onHelp={() => navigate('help-main')}
+              onInfo={() => navigate('info')}
+              onFeedback={() => navigate('feedback')}
+            />
+          </div>
+        ) : <PaneMagnifier>{renderRoute(route, true)}</PaneMagnifier>}
+      </WideFrame>;
+    }
     if (kind !== 'wide') return null;
     if (route === 'search') {
       const paneRecord = selectedRecord && selectedRecord.drawerId === currentDrawer?.id ? selectedRecord : undefined;
@@ -680,27 +700,6 @@ export default function App() {
             />
           </div>
           <div className="wide-two-detail">{recordPane(paneRecord, 'search', t('왼쪽에서 고르면 여기에 열려요.'))}</div>
-        </div>
-      </WideFrame>;
-    }
-    const settingsKey = SETTINGS_PANES[route];
-    if (settingsKey) {
-      const right = route === 'settings' ? 'theme-settings' : route;
-      return <WideFrame kind={kind} route={route} nav={nav}>
-        <div className="wide-two">
-          <div className="wide-two-list">
-            <SettingsHomeScreen
-              activeKey={settingsKey}
-              onTheme={() => navigate('theme-settings')}
-              onSecurity={() => navigate('security-settings')}
-              onData={() => navigate('data-management')}
-              onLanguage={() => navigate('language-settings')}
-              onHelp={() => navigate('help-main')}
-              onInfo={() => navigate('info')}
-              onFeedback={() => navigate('feedback')}
-            />
-          </div>
-          <div className="wide-settings-detail">{renderRoute(right, true)}</div>
         </div>
       </WideFrame>;
     }
