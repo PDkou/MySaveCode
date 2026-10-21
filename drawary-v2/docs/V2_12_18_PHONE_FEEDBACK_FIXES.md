@@ -58,7 +58,7 @@ Window classes (`src/components/appScale.ts`, `layoutKindFor`):
 
 What each class gets (home, drawer #15 and table #20 only; every other screen keeps its phone screen, in `wide` next to the tab screen as in the first preview):
 - Home: the approved drawer cards (same 165 x 158 card, art and colours) in as many columns as fit. `wide` adds a drawer sidebar (every drawer with its count, "모든 서랍"; no "새 서랍 만들기" button there - the nav's + does that); `land` puts the brand and counts in the top row and shrinks the grid to 80%.
-- Drawer: left column = back arrow, drawer name and count, 카드 보기 / 표 보기, filter chips. Right = search + "•••" (표로 보기 / 서랍 관리, as in #15). `wide`: list (#15's own row design) beside the chosen item (#16's content, embedded); `land`: grid of item cards, tapping one opens #16 as on a phone.
+- Drawer (wide): the item pane has "수정하기" and "삭제하기" buttons side by side (no second "•••" menu; the drawer's own "•••" stays by the search box). Left column = back arrow, drawer name and count, 카드 보기 / 표 보기, filter chips. Right = search + "•••" (표로 보기 / 서랍 관리, as in #15). `wide`: list (#15's own row design) beside the chosen item (#16's content, embedded); `land`: grid of item cards, tapping one opens #16 as on a phone.
 - Table: the approved table fills the window; `wide` adds the same drawer sidebar (switching drawer keeps the table open). Sort / filter sheets are the approved ones.
 - The approved bottom nav stays at the bottom (390 artwork centered); in these three screens it is shown on a landscape window although on phones it is hidden there (the proposals show it).
 

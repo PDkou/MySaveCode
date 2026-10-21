@@ -105,50 +105,32 @@ export function RecordDetailScreen({
 
   return (
     <section className={`rd-screen${embedded ? ' rd-screen--embedded' : ''}`}>
-      {embedded ? (
-        <div className="rd-embedded-bar">
-          <button
-            className="rd-menu"
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-expanded={menuOpen}
-            aria-label={t('보관품 메뉴')}
-          >•••</button>
-          {menuOpen && (
-            <div className="rd-menu-popover" role="menu">
-              <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setDeleteConfirmOpen(true); }}>
-                <img src="/assets/ui-icons/icon_delete.webp" alt="" />
-                <span>{t('보관품 삭제')}</span>
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-      <ScreenHeader
-        variant="stacked"
-        title={t('보관품 상세')}
-        onBack={onBack}
-        height={92}
-        rightSlot={
-          <>
-            <button
-              className="rd-menu"
-              type="button"
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-expanded={menuOpen}
-              aria-label={t('보관품 메뉴')}
-            >•••</button>
-            {menuOpen && (
-              <div className="rd-menu-popover" role="menu">
-                <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setDeleteConfirmOpen(true); }}>
-                  <img src="/assets/ui-icons/icon_delete.webp" alt="" />
-                  <span>{t('보관품 삭제')}</span>
-                </button>
-              </div>
-            )}
-          </>
-        }
-      />
+      {!embedded && (
+        <ScreenHeader
+          variant="stacked"
+          title={t('보관품 상세')}
+          onBack={onBack}
+          height={92}
+          rightSlot={
+            <>
+              <button
+                className="rd-menu"
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-expanded={menuOpen}
+                aria-label={t('보관품 메뉴')}
+              >•••</button>
+              {menuOpen && (
+                <div className="rd-menu-popover" role="menu">
+                  <button type="button" role="menuitem" onClick={() => { setMenuOpen(false); setDeleteConfirmOpen(true); }}>
+                    <img src="/assets/ui-icons/icon_delete.webp" alt="" />
+                    <span>{t('보관품 삭제')}</span>
+                  </button>
+                </div>
+              )}
+            </>
+          }
+        />
       )}
 
       <section className="rd-content">
@@ -184,10 +166,23 @@ export function RecordDetailScreen({
           ))}
         </dl>
 
-        <button className="rd-edit" type="button" onClick={onEdit}>
-          <img src="/assets/ui-icons/icon_edit.webp" alt="" />
-          <span>{t('수정하기')}</span>
-        </button>
+        {embedded ? (
+          <div className="rd-actions">
+            <button className="rd-edit" type="button" onClick={onEdit}>
+              <img src="/assets/ui-icons/icon_edit.webp" alt="" />
+              <span>{t('수정하기')}</span>
+            </button>
+            <button className="rd-delete" type="button" onClick={() => setDeleteConfirmOpen(true)}>
+              <img src="/assets/ui-icons/icon_delete.webp" alt="" />
+              <span>{t('삭제하기')}</span>
+            </button>
+          </div>
+        ) : (
+          <button className="rd-edit" type="button" onClick={onEdit}>
+            <img src="/assets/ui-icons/icon_edit.webp" alt="" />
+            <span>{t('수정하기')}</span>
+          </button>
+        )}
       </section>
 
       {deleteConfirmOpen && (
