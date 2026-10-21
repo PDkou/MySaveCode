@@ -84,17 +84,28 @@ def compose_logo(base, theme, symbol_only=False):
     bx0, bx1, by0, by1 = xs.min(), xs.max(), ys.min(), ys.max()
     halo = max(2, round(0.075 * H)) if not symbol_only else max(2, round(0.07 * H))
     box_w, box_h = bx1 - bx0 + 1 - 2 * halo, by1 - by0 + 1 - 2 * halo
-    k = min(box_w / flower.width, box_h / flower.height)
+    # the same visual size for every flower: equal area (not equal bounding box), as large as the box allows
+    area = lambda im: float((np.asarray(im.getchannel('A')) / 255.0).sum())
+    ref = Image.open('public/assets/theme/theme_flower_lavender.webp').convert('RGBA')
+    ref = ref.crop(ref.getchannel('A').point(lambda v: 255 if v > 20 else 0).getbbox())
+    k_ref = min(box_w / ref.width, box_h / ref.height)
+    target = area(ref) * k_ref * k_ref
+    k = (target / area(flower)) ** 0.5
+    k = min(k, box_w / flower.width, box_h / flower.height)
     fw, fh = max(1, round(flower.width * k)), max(1, round(flower.height * k))
     flower = flower.resize((fw, fh), Image.LANCZOS)
     cx, cy = (bx0 + bx1) // 2, (by0 + by1) // 2
     px, py = cx - fw // 2, cy - fh // 2
-    # white outline = the flower's shape grown by `halo`, softened
+    # white sticker outline: the flower's shape grown by `halo` with a round (not square) reach, corners softened
+    from scipy import ndimage
     mask = Image.new('L', (W, H), 0)
     mask.paste(flower.getchannel('A'), (px, py))
-    grown = mask.filter(ImageFilter.MaxFilter(2 * halo + 1)).filter(ImageFilter.GaussianBlur(1.5))
-    sticker = Image.new('RGBA', (W, H), (255, 255, 255, 0))
-    sticker.putalpha(grown)
+    solid = np.asarray(mask) > 40
+    dist = ndimage.distance_transform_edt(~solid)
+    grown = np.clip(halo + 0.5 - dist, 0, 1)
+    grown = ndimage.gaussian_filter(grown, halo * 0.3)                  # rounds the corners left by flat-cut artwork
+    grown = np.clip((grown - 0.5) * 3 + 0.5, 0, 1)                       # back to a crisp but anti-aliased edge
+    grown = Image.fromarray(np.round(grown * 255).astype(np.uint8), 'L')
     sticker = Image.merge('RGBA', (Image.new('L', (W, H), 255),) * 3 + (grown,))
     layer = Image.new('RGBA', (W, H), (0, 0, 0, 0))
     layer.paste(flower, (px, py))
