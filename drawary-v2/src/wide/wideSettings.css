@@ -95,8 +95,7 @@
 .wide-sd .lang54-card .lang54-art { flex: 1 1 auto; height: auto; min-height: 150px; }
 /* help and info: short pages are centred vertically */
 .wide-sd .help55-content { margin-top: auto; margin-bottom: auto; }
-.wide-sd .info58-brand { margin-top: auto; }
-.wide-sd .info58-credit { margin-bottom: auto; }
+.wide-sd .info58-brand { padding-top: 6px; }
 
 /* ---- one header and one back arrow for every settings screen (same as the app's shared ScreenHeader: 72 px bar, centred 21 px title, 44 px chevron button) ---- */
 .wide-sd .sec40-header,
