@@ -47,6 +47,10 @@ jobs:
           # android/gradle.properties holds the default address; the repository variable overrides it when set.
           ./gradlew --no-daemon ${FEEDBACK_EMAIL:+-PfeedbackEmail="$FEEDBACK_EMAIL"} assembleDebug assembleRelease lintRelease
 
+      - name: Check the release APK asks only for the permissions the privacy policy names
+        working-directory: drawary-v2
+        run: bash scripts/check-release-permissions.sh android/app/build/outputs/apk/release/*.apk
+
       - name: Show lint findings
         if: always()
         run: grep -A6 "Error:" drawary-v2/android/app/build/intermediates/lint_intermediate_text_report/release/lintReportRelease/lint-results-release.txt || true
