@@ -14,7 +14,7 @@
 
 | 상품 ID | 이름 | 설명 | 기본 가격 |
 |---|---|---|---|
-| `premium_unlock` | KO `Drawary 프리미엄` / JA `Drawary プレミアム` / EN `Drawary Premium` | KO `서랍 무제한, 테마 5가지, 반복, 표 내보내기가 열려요. 한 번만 결제해요.` / JA `ひきだし無制限、テーマ5種、繰り返し、書き出し。一度きりのお支払いです。` / EN `Unlimited drawers, 5 themes, repeat and export. One-time purchase.` | ¥1,200 |
+| `premium_unlock` | KO `나만의 서랍장 프리미엄` / JA `ひきだし帳 プレミアム` / EN `Drawary Premium` | KO `서랍 무제한, 테마 5가지, 반복, 표 내보내기가 열려요. 한 번만 결제해요.` / JA `ひきだし無制限、テーマ5種、繰り返し、書き出し。一度きりのお支払いです。` / EN `Unlimited drawers, 5 themes, repeat and export. One-time purchase.` | ¥1,200 |
 
 ### 후원 (8개, 몇 번이든 살 수 있어요)
 
