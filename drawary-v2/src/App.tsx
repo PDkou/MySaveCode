@@ -24,6 +24,7 @@ import { StatsScreen } from './screens/StatsScreen';
 import { computeStats } from './flow/stats';
 import { NewDrawerScreen } from './screens/NewDrawerScreen';
 import { TemplatePickerScreen } from './screens/TemplatePickerScreen';
+import { PremiumScreen } from './screens/PremiumScreen';
 import { draftFieldsOf } from './flow/drawerTemplates';
 import { DrawerDetailScreen } from './screens/DrawerDetailScreen';
 import { RecordDetailScreen } from './screens/RecordDetailScreen';
@@ -99,7 +100,7 @@ import { WideDrawer } from './wide/WideDrawer';
 import { getLocale, t, K } from './i18n';
 import { closeOpenOverlay } from './flow/overlayBack';
 
-type StandaloneRoute = 'templates' | 'notification-common' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management' | 'backup-type' | 'backup-destination' | 'backup-success' | 'restore-file-picker' | 'restore-review' | 'restore-progress' | 'restore-success' | 'data-reset-confirm' | 'language-settings' | 'help-main' | 'faq' | 'guide' | 'info' | 'feedback';
+type StandaloneRoute = 'premium' | 'templates' | 'notification-common' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management' | 'backup-type' | 'backup-destination' | 'backup-success' | 'restore-file-picker' | 'restore-review' | 'restore-progress' | 'restore-success' | 'data-reset-confirm' | 'language-settings' | 'help-main' | 'faq' | 'guide' | 'info' | 'feedback';
 type Route = BottomNavTab | 'create-drawer' | StandaloneRoute;
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
 const NAMES: Record<Exclude<Route, StandaloneRoute>, string> = {
@@ -115,7 +116,7 @@ const SETTINGS_PANES: Partial<Record<Route, string>> = {
 /** The first-level settings screens that get their own wide arrangement (wide/wideSettings.css); the screens they lead to are shown magnified. */
 const WIDE_SETTINGS_PAGES: readonly Route[] = ['theme-settings', 'security-settings', 'data-management', 'language-settings', 'help-main', 'info', 'feedback'];
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['templates', 'notification-common', 'splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm', 'language-settings', 'help-main', 'faq', 'guide', 'info', 'feedback'];
+const STANDALONE_ROUTES: readonly Route[] = ['premium', 'templates', 'notification-common', 'splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm', 'language-settings', 'help-main', 'faq', 'guide', 'info', 'feedback'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -520,6 +521,7 @@ export default function App() {
       case 'drawer-fields': case 'field-edit': navigate(route === 'drawer-fields' ? 'create-drawer' : 'drawer-fields'); return true;
       case 'new-field': navigate('drawer-fields'); return true;
       case 'templates': resetCreateFlow(); returnToTab(); return true;
+      case 'premium': returnToTab(); return true;
       case 'creation-complete': case 'theme-settings': case 'security-settings': case 'data-management': case 'language-settings':
       case 'help-main': case 'info': case 'feedback': returnToTab(); return true;
       case 'fill-drawer': navigate(fillBack); return true;
@@ -750,6 +752,20 @@ export default function App() {
             onQuickAdd={(label) => { tryDraft(() => addDraftField(fieldsDraft, { name: t(label), kind: QUICK_ADD_KINDS[label] ?? 'text', required: false, options: [] })); }}
             onReorder={(from, to) => setDraftFields((prev) => moveDraftField(prev ?? defaultDraftFields(), from, to))}
             onComplete={() => { void completeCreate(); }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
+    if (route === 'premium') {
+      // The purchase itself is not connected yet (Google Play billing comes with the Android build); the prices shown are samples.
+      return <main className="drawary-app-shell" data-route="premium">
+        <FixedCanvas height={844} grow>
+          <PremiumScreen
+            prices={{ premium: '¥780', coffee: '¥300', latte: '¥600', cake: '¥1,000' }}
+            onBack={returnToTab}
+            onBuyPremium={() => {}}
+            onRestore={() => {}}
+            onSupport={() => {}}
           />
         </FixedCanvas>
       </main>;

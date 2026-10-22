@@ -131,3 +131,7 @@ Found by measuring every screen at 390x844: back-arrow screens had title sizes 2
 
 Nine ready-made drawers (최애 굿즈, 화장품, 읽은 책, 영화·드라마, 카페·맛집, 식물, 여행 기록, 게임·음반, 가계부) in `src/flow/drawerTemplates.ts`, translated in `src/i18n/messages/templates.ts`. New route `#/templates` (`TemplatePickerScreen`): a card per template, a sheet shows its fields, "이 템플릿으로 시작" fills the create-drawer flow (name, icon, colour, fields) and continues on the field list (#09), where everything can still be changed; nothing is stored until "서랍 만들기 완료하기". Entry points: "템플릿으로 시작" on the empty home and in the new-drawer sheet; "직접 만들기" goes to the empty sheet.
 
+### 8.5 Premium screen (preview awaiting approval; purchase not connected)
+
+`src/screens/PremiumScreen.tsx` at `#/premium`: hero, what Premium includes (unlimited drawers, 5 themes, repeat, table export), one "프리미엄 시작 · price" button, "구매 복원", and the optional "개발자에게 커피 한 잔" support products (coffee / latte / cake). Prices on the screen are samples; Google Play billing is added with the Android build (one-time product for Premium, three consumable products for support). Not yet reachable from Settings and nothing is locked yet (free limits: 5 drawers, Lavender theme only, no repeat, no export).
+
