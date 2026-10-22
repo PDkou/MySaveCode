@@ -12,3 +12,12 @@
 Screens: 1 home, 2 new drawer, 3 search, 4 drawer with photos, 5 data management (backup). Rebuild:
 `npm run build && npx vite preview --port 5301`, then `node scripts/store/capture.cjs <dir>` and `python3 scripts/store/compose.py <dir>`.
 Captions use a deep-violet (#4a33b0 / #6a5bb0) Noto Sans; the caption colour is my choice (the bars were empty).
+
+## App icon (2026-10-22)
+
+The owner's concept 01 ("peek over drawer", `app_icon_source_01_peek_over_drawer.png`, 1254 px, a rounded picture on a white canvas) is the app icon.
+`python3 -I scripts/make_app_icon.py release/store/app_icon_source_01_peek_over_drawer.png` rebuilds everything from it: the Android adaptive-icon
+layers (`android/app/src/main/res/mipmap-nodpi/ic_launcher_*.webp`), the Android 10-11 splash icon, and the Play Store icon
+`play_icon_512.png` (512 x 512, full square). The white corners of the source are replaced by the picture's own colours continued outward.
+The picture is cut a little by a round phone mask (the lower corners of the drawer); a re-render with a full-bleed background and no rounded frame
+would be cleaner (the owner's README says dedicated foreground/background layers can be made after approval).
