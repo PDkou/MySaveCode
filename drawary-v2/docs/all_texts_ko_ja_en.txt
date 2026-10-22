@@ -4673,19 +4673,19 @@
   EN  A latte
 
 [928]
-  KO  커피 말고 맛있는 거 사주기
-  JA  コーヒーより、おいしいものをごちそうする
-  EN  Treat me to something tastier
+  KO  배고픈 개발자에게 밥 사주기
+  JA  おなかをすかせた開発者にごはんを
+  EN  Feed the hungry developer
 
 [929]
-  KO  맛있는 거 사주기
-  JA  おいしいものをごちそうする
-  EN  Treat me to something tasty
+  KO  얼마나 배불리 먹일까요?
+  JA  どのくらい食べさせてくれますか？
+  EN  How big a meal?
 
 [930]
-  KO  마음 가는 만큼 골라 주세요.
-  JA  お気持ちの分だけ選んでください。
-  EN  Pick whatever feels right.
+  KO  배부르면 업데이트가 빨라질지도 몰라요.
+  JA  満腹になると、アップデートが早くなるかも。
+  EN  A full stomach might speed up updates.
 
 [931]
   KO  후원은 몇 번이든 할 수 있어요.
