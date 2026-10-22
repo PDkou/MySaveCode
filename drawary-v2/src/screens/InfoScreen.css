@@ -28,3 +28,11 @@ button{font:inherit}
 .info58-dialog h2{margin:0 0 11px;color:#27385e;font-size:17px}
 .info58-dialog p{margin:0 0 17px;color:#8491aa;font-size:12px;line-height:1.6}
 .info58-dialog button{border:0;border-radius:13px;width:100%;height:43px;color:#fff;background:var(--tc-9165ed,#9165ed);font-weight:800;cursor:pointer}
+.info58-dialog-licenses{display:flex;flex-direction:column;max-height:100%;text-align:left}
+.info58-dialog-licenses h2{text-align:center}
+.info58-license-body{flex:1 1 auto;min-height:0;overflow-y:auto;margin-bottom:14px;padding-right:4px;color:#62739f;font-size:11px;line-height:1.55;overscroll-behavior:contain}
+.info58-license-body p{margin:0 0 12px;text-align:left}
+.info58-license-item{display:flex;flex-direction:column;gap:2px;margin-bottom:11px}
+.info58-license-item strong{color:#27385e;font-size:12px}
+.info58-license-item small{color:#8491aa;font-size:10.4px;overflow-wrap:anywhere}
+.info58-license-body pre{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:10px;color:#8491aa}

@@ -1599,11 +1599,10 @@ function AppScreens() {
     }
     if (route === 'info') {
       // #58 정보, reachable from #38's "정보" row. Back returns to #38.
-      // 개인정보 처리방침/이용약관/오픈소스 라이선스 have no destination
-      // among the 59 approved screens, so those three stay no-ops.
+      // 개인정보 처리방침/이용약관/특정상거래법 표기 open the studio website; 오픈소스 라이선스 is a dialog inside the screen.
       return <main className="drawary-app-shell" data-route="info">
         <FixedCanvas height={844}>
-          <InfoScreen onBack={returnToTab} onNavigate={(destination) => { if (destination !== 'licenses') openLegal(destination, language); }} />
+          <InfoScreen onBack={returnToTab} onNavigate={(destination) => openLegal(destination, language)} />
         </FixedCanvas>
       </main>;
     }

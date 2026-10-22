@@ -156,6 +156,7 @@ export const help_pages: Messages = {
   '현재 버전': { ja: '現在のバージョン', en: 'Current version' },
   '개인정보 처리방침': { ja: 'プライバシーポリシー', en: 'Privacy policy' },
   '이용약관': { ja: '利用規約', en: 'Terms of use' },
+  'Drawary는 아래 오픈소스를 사용해요.': { ja: 'このアプリは、次のオープンソースを使っています。', en: 'This app uses the following open source software.' },
   '오픈소스 라이선스': { ja: 'オープンソースライセンス', en: 'Open source licenses' },
   'Drawary 소개': { ja: 'Drawaryについて', en: 'About Drawary' },
   'Drawary는 서랍을 만들어 좋아하는 것들을 내 방식대로 기록해 두는 개인 정리 앱이에요.': { ja: 'Drawaryは、ひきだしを作って好きなものを自分なりに記録しておく、個人向けの整理アプリです。', en: 'Drawary is a personal organizer: make drawers and keep track of the things you love your own way.' },
