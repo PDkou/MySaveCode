@@ -155,7 +155,7 @@ Nine ready-made drawers (최애 굿즈, 화장품, 읽은 책, 영화·드라마
 
 ### 8.8 Legal pages on the studio website
 
-The privacy policy, terms and the 特定商取引法 notice (`docs/privacy`, `docs/terms`, `docs/tokushoho`) are to be published on the studio website under `https://howlingcreativestudio.jp/drawary/privacy/`, `/terms/` and `/tokushoho/` (path set in `src/data/legalLinks.ts`; change it there if the site uses other paths). The Info screen rows "개인정보 처리방침" and "이용약관" now open them in the phone's browser at the section of the app language (#ko / #en / #ja); Japanese also shows a "特定商取引法に基づく表示" row (always opens #ja). `NativeBridge.openLink` only opens https pages of howlingcreativestudio.jp/.com. "오픈소스 라이선스" still has no page.
+The privacy policy, terms and the 特定商取引法 notice (`docs/privacy`, `docs/terms`, `docs/tokushoho`) are to be published on the studio website under `https://howlingcreativestudio.jp/apps/drawary/privacy/`, `/terms/` and `/tokushoho/` (path set in `src/data/legalLinks.ts`; change it there if the site uses other paths). The Info screen rows "개인정보 처리방침" and "이용약관" now open them in the phone's browser at the section of the app language (#ko / #en / #ja); Japanese also shows a "特定商取引法に基づく表示" row (always opens #ja). `NativeBridge.openLink` only opens https pages of howlingcreativestudio.jp/.com. "오픈소스 라이선스" still has no page.
 
 ### 8.9 Support products switched off for the first release
 
