@@ -25,7 +25,13 @@ describe('record form drafts', () => {
 
   it('rejects text where a number is expected and fractional money', () => {
     expect(() => draftToValues(fields, { ...emptyDraft(fields), price: 'abc' })).toThrow('숫자를 입력해');
-    expect(() => draftToValues(fields, { ...emptyDraft(fields), price: '1.5' })).toThrow('원 단위');
+    expect(() => draftToValues(fields, { ...emptyDraft(fields), price: '1.505' })).toThrow('소수점 둘째 자리');
+  });
+
+  it('takes money with up to two decimals and ignores a currency sign', () => {
+    expect(draftToValues(fields, { ...emptyDraft(fields), price: '12.5' }).price).toBe(12.5);
+    expect(draftToValues(fields, { ...emptyDraft(fields), price: '¥1,200' }).price).toBe(1200);
+    expect(draftToValues(fields, { ...emptyDraft(fields), price: '$3.99' }).price).toBe(3.99);
   });
 
   it('round-trips a stored record back into a draft', () => {

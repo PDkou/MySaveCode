@@ -44,7 +44,7 @@ export function BackupProgressScreen({ onBack, onComplete }: BackupProgressScree
         <div className="backup-progress-copy" aria-live="polite">
           <h2>{t('백업하고 있어요')}</h2>
           <p>{t('잠시만 기다려주세요.')}</p>
-          <p>{t('데이터를 안전하게 정리하고 있습니다.')}</p>
+          <p>{t('데이터를 안전하게 정리하고 있어요.')}</p>
         </div>
       </section>
     </section>

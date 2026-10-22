@@ -118,7 +118,7 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
     }
     const draft: FeedbackDraft = { type, message: trimmedMessage, email: trimmedEmail, attachment: type === 'bug' ? attachment : null };
     if (!onSubmit) {
-      inform(t('현재 미리보기에서는 전송되지 않아요. 실제 앱 연결이 필요해요.'));
+      inform(t('지금은 미리보기라서 보낼 수 없어요.'));
       return;
     }
     // Only said "thank you" when something really happened: the app shell opened the mail app with the message.
@@ -127,7 +127,7 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
       const result = await onSubmit(draft);
       if (result === 'opened') inform(t('메일 앱을 열었어요. 보내기를 누르면 전달돼요.'));
       else if (result === 'no-mail') inform(t('메일 앱을 열지 못했어요. 메일 앱이 있는지 확인해 주세요.'));
-      else inform(t('현재 미리보기에서는 전송되지 않아요. 실제 앱 연결이 필요해요.'));
+      else inform(t('지금은 미리보기라서 보낼 수 없어요.'));
     } finally {
       sendingRef.current = false;
     }
@@ -143,7 +143,7 @@ export function FeedbackScreen({ onBack, onSubmit }: FeedbackScreenProps) {
       </header>
       <div className="fb59-main">
         <section className="fb59-hero" aria-label={t('피드백 안내')}>
-          <p className="fb59-hero-kicker">{t('당신의 의견이 필요해요')}</p>
+          <p className="fb59-hero-kicker">{t('의견을 들려주세요')}</p>
           <h2 className="fb59-hero-title">{tl('작은 의견 하나가\n더 편리한 Drawary를\n만들어요.')}</h2>
           <p className="fb59-hero-desc">{tl('좋았던 점도, 아쉬웠던 점도\n편하게 들려주세요.')}</p>
           <div className="fb59-hero-orb" aria-hidden="true" />

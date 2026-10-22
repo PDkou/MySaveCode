@@ -197,7 +197,7 @@ export function TableFilterScreen({
 
             <div className="tf-result-preview">
               
-              {tx('조건에 맞는 보관품{n}', { n: <strong>{t('{n}개', { n: matchCount })}</strong> })}
+              {tx('조건에 맞는 보관품 {n}', { n: <strong>{t('{n}개', { n: matchCount })}</strong> })}
             </div>
 
             <div className="tf-actions">
@@ -210,7 +210,7 @@ export function TableFilterScreen({
         {mode === 'field' && (
           <>
             <header className="tf-picker-header">
-              <button type="button" className="tf-back" onClick={() => setMode('main')} aria-label={t('뒤로가기')}>‹</button>
+              <button type="button" className="tf-back" onClick={() => setMode('main')} aria-label={t('뒤로 가기')}>‹</button>
               <div>
                 <h2>{t('필터할 서랍 칸 선택')}</h2>
                 <p>{t('조건을 걸 서랍 칸을 골라주세요.')}</p>
@@ -236,7 +236,7 @@ export function TableFilterScreen({
         {mode === 'condition' && selectedColumn && (
           <>
             <header className="tf-picker-header">
-              <button type="button" className="tf-back" onClick={() => setMode('main')} aria-label={t('뒤로가기')}>‹</button>
+              <button type="button" className="tf-back" onClick={() => setMode('main')} aria-label={t('뒤로 가기')}>‹</button>
               <div>
                 <h2>{t('{name} 필터', { name: selectedColumn.label })}</h2>
                 <p>{t('이 서랍 칸에 적용할 조건을 정해요.')}</p>

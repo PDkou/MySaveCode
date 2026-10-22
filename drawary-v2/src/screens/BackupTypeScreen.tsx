@@ -58,7 +58,7 @@ export function BackupTypeScreen({ initialMode = 'include', onBack, onNext }: Ba
         </div>
         <div className="bkt45-select-hint">
           <img src="/assets/ui-icons/icon_info.webp" alt="" />
-          <span>{t('다음 단계에서 저장 위치를 선택할 수 있습니다.')}</span>
+          <span>{t('다음 단계에서 저장 위치를 고를 수 있어요.')}</span>
         </div>
         <button type="button" className="bkt45-bottom-action" onClick={() => onNext?.(mode)}>{t('다음')}</button>
       </section>

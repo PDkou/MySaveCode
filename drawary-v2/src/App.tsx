@@ -316,7 +316,7 @@ export default function App() {
         dateFieldName: currentFields.find((f) => f.id === r.fieldId)?.name ?? '',
         cycleLabel: cycleLabel(r.cycle, r.interval),
         enabled: !r.finished,
-        statusLabel: r.finished ? t('끝남') : r.createdCount > 0 ? t('{createdCount}개 만듦', { createdCount: r.createdCount }) : undefined,
+        statusLabel: r.finished ? t('종료') : r.createdCount > 0 ? t('{createdCount}개 만들었어요', { createdCount: r.createdCount }) : undefined,
       }))
     : [];
 
@@ -1604,7 +1604,7 @@ export default function App() {
               const affected = manageField.kind === 'select'
                 ? currentRecords.filter((r) => typeof r.values[manageField.id] === 'string' && removed.includes(r.values[manageField.id] as string)).length
                 : 0;
-              if (affected > 0 && !window.confirm(t('없애는 선택 항목을 쓰고 있는 보관품 {affected}개의 값이 지워져요. 계속할까요?', { affected }))) return;
+              if (affected > 0 && !window.confirm(t('지우려는 선택 항목을 쓰고 있는 보관품 {affected}개에서 그 값이 사라져요. 계속할까요?', { affected }))) return;
               void actions.updateField(manageField.id, patch).then(() => navigate('drawer-fields-manage')).catch(alertError);
             }}
             onDelete={() => { void actions.deleteField(manageField.id).then(() => { setManageFieldId(null); navigate('drawer-fields-manage'); }).catch(alertError); }}

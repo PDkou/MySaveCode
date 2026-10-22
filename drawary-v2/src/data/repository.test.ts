@@ -213,7 +213,7 @@ describe('records', () => {
   it.each([
     ['missing required text', (f: Awaited<ReturnType<typeof setup>>) => ({ [f.done.id]: false })],
     ['impossible date', (f: Awaited<ReturnType<typeof setup>>) => ({ [f.name.id]: 'x', [f.done.id]: false, [f.date.id]: '2024-02-31' })],
-    ['fractional currency', (f: Awaited<ReturnType<typeof setup>>) => ({ [f.name.id]: 'x', [f.done.id]: false, [f.price.id]: 1.5 })],
+    ['currency with three decimals', (f: Awaited<ReturnType<typeof setup>>) => ({ [f.name.id]: 'x', [f.done.id]: false, [f.price.id]: 1.505 })],
     ['text where a number belongs', (f: Awaited<ReturnType<typeof setup>>) => ({ [f.name.id]: 'x', [f.done.id]: false, [f.price.id]: '비싸요' })],
     ['select value not in options', (f: Awaited<ReturnType<typeof setup>>) => ({ [f.name.id]: 'x', [f.done.id]: false, [f.color.id]: '초록' })],
     ['rating out of range', (f: Awaited<ReturnType<typeof setup>>) => ({ [f.name.id]: 'x', [f.done.id]: false, [f.stars.id]: 6 })],

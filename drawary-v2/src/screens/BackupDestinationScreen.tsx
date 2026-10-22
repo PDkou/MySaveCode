@@ -39,7 +39,7 @@ export function BackupDestinationScreen({ initialDestination = 'device', onBack,
         <h2 className="bkd46-section-title">{t('저장 위치 선택')}</h2>
         <section className="bkd46-hero">
           <img src="/assets/states/permissions/state_permission_storage.webp" alt="" />
-          <div className="bkd46-copy"><strong>{tl('백업 파일은 어디\n에\n보관할까요?')}</strong><span>{tl('원하는 저장 위치를\n선택해 주세요.')}</span></div>
+          <div className="bkd46-copy"><strong>{tl('백업 파일을\n어디에 보관할까요?')}</strong><span>{tl('원하는 저장 위치를\n선택해 주세요.')}</span></div>
         </section>
         <div className="bkd46-label">{t('저장할 곳')}</div>
         <button
@@ -64,7 +64,7 @@ export function BackupDestinationScreen({ initialDestination = 'device', onBack,
           <span className="bkd46-text"><strong>Google Drive</strong><span>{tl('Google Drive에\n백업 파일을 보관해요.')}</span></span>
           <span className="bkd46-radio" />
         </button>
-        <div className="bkd46-notice"><img src="/assets/ui-icons/icon_info.webp" alt="" /><span>{tl('다음 단계에서 저장할 폴더를 선택해\n요.')}</span></div>
+        <div className="bkd46-notice"><img src="/assets/ui-icons/icon_info.webp" alt="" /><span>{tl('다음 단계에서 저장할 폴더를\n고를 수 있어요.')}</span></div>
         <button type="button" className="bkd46-btn" onClick={() => onNext?.(destination)}>{t('다음')}</button>
       </section>
     </div>

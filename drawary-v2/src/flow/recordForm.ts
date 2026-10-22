@@ -1,5 +1,5 @@
 import type { Field, FieldKind, FieldValue, RecordItem } from '../data/types';
-import { ValidationError, isEmptyValue } from '../data/validation';
+import { ValidationError, isEmptyValue, hasAtMostTwoDecimals } from '../data/validation';
 import { getLocale, t, K } from '../i18n';
 
 /**
@@ -36,10 +36,10 @@ export function draftFromRecord(fields: readonly Field[], record: Pick<RecordIte
 }
 
 function parseNumber(raw: string, field: Field): number {
-  const cleaned = raw.replace(/[,\s]/g, '').replace(/원$/, '');
+  const cleaned = raw.replace(/[,\s]/g, '').replace(/(원|円|[¥₩$€])/g, '');
   const n = Number(cleaned);
   if (cleaned === '' || !Number.isFinite(n)) throw new ValidationError(t('\'{name}\'에는 숫자를 입력해 주세요.', { name: field.name }));
-  if (field.kind === 'currency' && !Number.isInteger(n)) throw new ValidationError(t('\'{name}\'은(는) 원 단위 정수로 입력해 주세요.', { name: field.name }));
+  if (field.kind === 'currency' && !hasAtMostTwoDecimals(n)) throw new ValidationError(t('\'{name}\'은(는) 소수점 둘째 자리까지 입력할 수 있어요.', { name: field.name }));
   return n;
 }
 

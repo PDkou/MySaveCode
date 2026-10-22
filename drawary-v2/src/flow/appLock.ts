@@ -67,7 +67,7 @@ const fromB64 = (b64: string): Uint8Array => Uint8Array.from(atob(b64), (c) => c
 
 async function derive(pin: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
   const subtle = globalThis.crypto?.subtle;
-  if (!subtle) throw new Error(t('이 환경에서는 PIN을 안전하게 저장할 수 없어요 (보안 연결이 필요해요).'));
+  if (!subtle) throw new Error(t('이 기기에서는 PIN을 안전하게 저장할 수 없어요.'));
   const key = await subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits']);
   const bits = await subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: salt as BufferSource, iterations }, key, 256);
   return new Uint8Array(bits);

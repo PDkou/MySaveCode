@@ -27,7 +27,7 @@ export function TableSortFilterEntryScreen({ onCancel, onPickSort, onPickFilter 
         <div className="tsf-handle" />
         <header className="tsf-head">
           <h2 id="sort-filter-entry-title">{t('정렬 / 필터 설정')}</h2>
-          <p>{t('원하는 설정을 골라주세요. 기존 표 보기 설정 화면을 그대로 사용해요.')}</p>
+          <p>{t('정렬이나 필터 중에서 골라 주세요.')}</p>
         </header>
 
         <div className="tsf-options">
@@ -49,8 +49,6 @@ export function TableSortFilterEntryScreen({ onCancel, onPickSort, onPickFilter 
             <span className="tsf-chevron" aria-hidden="true">›</span>
           </button>
         </div>
-
-        <p className="tsf-note">{t('정렬은 22번, 필터는 23번 확정 화면을 그대로 불러오는 구조예요.')}</p>
 
         <button type="button" className="tsf-cancel" onClick={onCancel}>{t('취소')}</button>
       </section>

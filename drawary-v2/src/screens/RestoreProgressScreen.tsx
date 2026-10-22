@@ -34,7 +34,7 @@ export function RestoreProgressScreen({ onBack, onComplete }: RestoreProgressScr
           <div className="rp51-copy">
             <h1>{t('복원하고 있어요')}</h1>
             <p className="rp51-wait">{t('잠시만 기다려주세요.')}</p>
-            <p className="rp51-detail">{t('백업 내용을 불러오고 있습니다.')}</p>
+            <p className="rp51-detail">{t('백업 내용을 불러오고 있어요.')}</p>
           </div>
         </div>
       </section>

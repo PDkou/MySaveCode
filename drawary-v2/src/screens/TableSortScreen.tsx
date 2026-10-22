@@ -106,7 +106,7 @@ export function TableSortScreen({
         ) : (
           <>
             <header className="sv3-picker-head">
-              <button type="button" className="sv3-back" onClick={() => setMode('sort')} aria-label={t('뒤로가기')}>‹</button>
+              <button type="button" className="sv3-back" onClick={() => setMode('sort')} aria-label={t('뒤로 가기')}>‹</button>
               <div><h2>{t('정렬 기준 선택')}</h2><p>{t('정렬할 서랍 칸을 골라주세요.')}</p></div>
             </header>
             <label className="sv3-search">

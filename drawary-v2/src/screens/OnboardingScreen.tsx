@@ -23,8 +23,8 @@ const slides = () => [
   { id: 'fill', title: <>{t('소중한 것들을 채워보세요')}</>, body: <>{tl('사진, 메모, 링크 등\n다양한 방식으로 기록할 수 있어요.')}</> },
   { id: 'views', title: <>{t('원하는 방식으로 둘러보세요')}</>, body: <>{tl('카드 보기, 표 보기 등\n나에게 맞는 방식으로 기록을 확인할 수 있어요.')}</> },
   { id: 'reminder', title: <>{t('중요한 일을 놓치지 않도록')}</>, body: <>{tl('원하는 시간에 알림을 설정하고\n소중한 일정을 챙길 수 있어요.')}</> },
-  { id: 'backup', title: <>{t('소중한 기록을 안전하게')}</>, body: <>{tl('클라우드 백업으로\n언제 어디서나 안전하게 보관할 수 있어요.')}</> },
-  { id: 'complete', title: <>{t('이제, 당신의 이야기를 시작해보세요')}</>, body: <>{tl('Drawary가\n언제나 함께할게요.')}</> },
+  { id: 'backup', title: <>{t('소중한 기록을 안전하게')}</>, body: <>{tl('백업 파일을 만들어 두면\n폰을 바꿔도 기록을 옮길 수 있어요.')}</> },
+  { id: 'complete', title: <>{t('이제 나만의 이야기를 시작해 보세요')}</>, body: <>{tl('Drawary가\n언제나 함께할게요.')}</> },
 ];
 
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {

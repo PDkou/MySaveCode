@@ -59,14 +59,14 @@ export function validateValue(field: Field, value: FieldValue | undefined, ignor
     case 'number':
     case 'currency':
       if (typeof value !== 'number' || !Number.isFinite(value)) return t('\'{name}\'에는 숫자를 입력해 주세요.', { name: field.name });
-      if (field.kind === 'currency' && !Number.isInteger(value)) return t('\'{name}\'은(는) 원 단위 정수로 입력해 주세요.', { name: field.name });
+      if (field.kind === 'currency' && !hasAtMostTwoDecimals(value)) return t('\'{name}\'은(는) 소수점 둘째 자리까지 입력할 수 있어요.', { name: field.name });
       return null;
     case 'date':
       return typeof value === 'string' && isRealDate(value) ? null : t('\'{name}\'의 날짜를 확인해 주세요.', { name: field.name });
     case 'select':
       return typeof value === 'string' && field.options.includes(value) ? null : t('\'{name}\'에서 목록에 있는 항목을 골라 주세요.', { name: field.name });
     case 'check':
-      return typeof value === 'boolean' ? null : t('\'{name}\'은(는) 켜기/끄기 값이어야 해요.', { name: field.name });
+      return typeof value === 'boolean' ? null : t('\'{name}\'은(는) 체크하거나 해제만 할 수 있어요.', { name: field.name });
     case 'rating':
       return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 5
         ? null
@@ -84,4 +84,9 @@ export function validateRecordValues(fields: readonly Field[], values: Record<st
     const message = validateValue(field, values[field.id], ignoreRequired);
     if (message) throw new ValidationError(message);
   }
+}
+
+/** Money has no unit of its own: whole amounts (yen, won) or up to two decimals (dollars, euros) are fine. */
+export function hasAtMostTwoDecimals(n: number): boolean {
+  return Math.abs(n * 100 - Math.round(n * 100)) < 1e-6;
 }

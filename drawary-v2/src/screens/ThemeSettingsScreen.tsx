@@ -73,7 +73,7 @@ export function ThemeSettingsScreen({ initialTheme = 'lavender', onBack, onTheme
             </button>
           ))}
         </div>
-        <p className="ts39-theme-note">{t('선택한 테마는 앱 전체의 주요 색상과 장식에 적용됩니다.')}</p>
+        <p className="ts39-theme-note">{t('선택한 테마는 앱 전체의 색과 장식에 적용돼요.')}</p>
       </section>
     </section>
   );

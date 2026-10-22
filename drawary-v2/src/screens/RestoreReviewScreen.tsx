@@ -75,7 +75,7 @@ export function RestoreReviewScreen({
         </div>
         <div className="rr50-info-box">
           <img className="rr50-info-icon" src="/assets/ui-icons/icon_info.webp" alt="" />
-          <div><strong>{t('복원 전에 내용을 한 번 더 확인해 주세요')}</strong><span>{tl('중요한 데이터가 있다면 복원 전에\n먼저 백업해 두는 것을 권장해요.')}</span></div>
+          <div><strong>{t('복원 전에 내용을 한 번 더 확인해 주세요')}</strong><span>{tl('중요한 기록이 있다면 복원 전에\n먼저 백업해 두면 안전해요.')}</span></div>
         </div>
         <button className="rr50-confirm" type="button" onClick={() => setDialogOpen(true)}>{t('복원 시작')}</button>
       </section>
@@ -83,7 +83,7 @@ export function RestoreReviewScreen({
         <div className="rr50-overlay" onClick={(e) => { if (e.target === e.currentTarget) setDialogOpen(false); }}>
           <div className="rr50-dialog" role="dialog" aria-modal="true">
             <h2>{t('복원을 시작할까요?')}</h2>
-            <p>{tl('선택한 백업 파일의 내용을 불러옵니다.\n복원 전 중요한 데이터는 먼저 백업해 주세요.')}</p>
+            <p>{tl('선택한 백업 파일의 내용을 불러와요.\n지금 있는 중요한 기록은 먼저 백업해 두세요.')}</p>
             <div className="rr50-dialog-buttons">
               <button className="rr50-cancel" type="button" onClick={() => setDialogOpen(false)}>{t('취소')}</button>
               <button className="rr50-proceed" type="button" onClick={() => { setDialogOpen(false); onConfirmRestore?.(); }}>{t('계속')}</button>

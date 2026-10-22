@@ -27,19 +27,19 @@ const CATEGORY_LABELS: Record<Exclude<FaqCategory, 'all'>, string> = {
 };
 
 const FAQ_ITEMS: FaqItem[] = [
-  { key: 'make-drawer', category: 'basic', question: K('새 서랍은 어떻게 만들어요?'), answer: K('홈 화면에서 새 서랍 만들기를 선택하고 서랍 이름과 필요한 항목을 설정해 주세요.') },
-  { key: 'edit-columns', category: 'basic', question: K('서랍 칸은 나중에 수정할 수 있나요?'), answer: K('서랍 설정에서 항목 구성을 확인할 수 있어요. 변경 가능한 항목은 편집 화면의 안내를 따라 주세요.') },
-  { key: 'add-collection', category: 'basic', question: K('보관품은 어떻게 추가하나요?'), answer: K('원하는 서랍을 열고 기록 추가를 선택하면 보관품 정보를 입력할 수 있어요.') },
-  { key: 'add-photo', category: 'basic', question: K('사진도 등록할 수 있나요?'), answer: K('서랍에 사진 항목이 있다면 기기의 사진을 선택해 기록에 연결할 수 있어요.') },
-  { key: 'data-storage', category: 'data', question: K('내 데이터는 어디에 저장되나요?'), answer: K('Drawary의 데이터는 기본적으로 이 기기 안에 저장돼요. 백업은 설정의 데이터 관리에서 할 수 있어요.') },
-  { key: 'export', category: 'data', question: K('CSV나 PDF는 어디에서 내보내나요?'), answer: K('내보내기를 지원하는 화면의 메뉴에서 파일 형식을 선택할 수 있어요. 자세한 항목은 해당 화면의 안내를 확인해 주세요.') },
-  { key: 'backup-restore', category: 'data', question: K('백업은 어디에서 하나요?'), answer: K('설정 → 데이터 관리에서 백업을 시작할 수 있어요. 기기에 저장하거나 Google Drive를 선택할 수 있어요.') },
-  { key: 'restore', category: 'data', question: K('백업한 데이터는 어떻게 복원하나요?'), answer: K('설정 → 데이터 관리의 복원 메뉴에서 백업 파일을 선택하고 내용을 확인해 주세요. 복원 전에는 중요한 데이터를 백업하는 것을 권장해요.') },
-  { key: 'notification', category: 'repeat', question: K('알림은 어디에서 설정하나요?'), answer: K('설정에서 알림 메뉴를 열어 알림 사용 여부와 관련 옵션을 확인할 수 있어요.') },
-  { key: 'repeat', category: 'repeat', question: K('반복 설정은 어디에서 하나요?'), answer: K('반복 관리 화면에서 등록된 반복 항목과 설정을 확인할 수 있어요.') },
-  { key: 'language', category: 'settings', question: K('언어는 어디에서 변경하나요?'), answer: K('설정 → 언어 설정에서 한국어, 日本語, English 중 원하는 언어를 선택한 뒤 적용해 주세요.') },
+  { key: 'make-drawer', category: 'basic', question: K('새 서랍은 어떻게 만들어요?'), answer: K('아래 가운데 + 버튼을 누르면 새 서랍을 만들 수 있어요. 이름, 아이콘, 색을 고르고 서랍 칸을 정하면 끝이에요. 템플릿으로 시작해도 돼요.') },
+  { key: 'edit-columns', category: 'basic', question: K('서랍 칸은 나중에 수정할 수 있나요?'), answer: K('서랍을 열고 오른쪽 위 •••에서 서랍 관리 → 서랍 칸 편집으로 가면 칸을 더하거나 이름을 바꾸고 순서를 옮길 수 있어요.') },
+  { key: 'add-collection', category: 'basic', question: K('보관품은 어떻게 추가하나요?'), answer: K('서랍을 열고 아래의 서랍 채우기 버튼을 누르면 보관품을 하나씩 추가할 수 있어요.') },
+  { key: 'add-photo', category: 'basic', question: K('사진도 등록할 수 있나요?'), answer: K('보관품마다 사진을 최대 3장까지 담을 수 있어요. 서랍 채우기에서 사진 추가를 눌러 폰의 사진을 골라 주세요.') },
+  { key: 'data-storage', category: 'data', question: K('내 데이터는 어디에 저장되나요?'), answer: K('Drawary의 기록은 모두 이 폰 안에만 저장돼요. 서버로 보내지 않아요. 백업은 설정 → 데이터 관리에서 직접 만들 수 있어요.') },
+  { key: 'export', category: 'data', question: K('CSV나 PDF는 어디에서 내보내나요?'), answer: K('서랍의 표 보기 화면에서 오른쪽 위 •••를 누르면 CSV나 PDF로 내보낼 수 있어요.') },
+  { key: 'backup-restore', category: 'data', question: K('백업은 어디에서 하나요?'), answer: K('설정 → 데이터 관리 → 백업하기에서 만들 수 있어요. 폰에 저장하거나 Google Drive로 보낼 수 있어요.') },
+  { key: 'restore', category: 'data', question: K('백업한 데이터는 어떻게 복원하나요?'), answer: K('설정 → 데이터 관리 → 복원하기에서 백업 파일을 고르고 내용을 확인한 뒤 복원해요. 지금 있는 기록이 중요하다면 먼저 백업해 두세요.') },
+  { key: 'notification', category: 'repeat', question: K('알림은 어디에서 설정하나요?'), answer: K('서랍을 열고 ••• → 서랍 관리 → 알림 설정에서 날짜 칸을 기준으로 알림을 만들 수 있어요.') },
+  { key: 'repeat', category: 'repeat', question: K('반복 설정은 어디에서 하나요?'), answer: K('서랍을 열고 ••• → 서랍 관리 → 반복 관리에서 날짜 칸을 기준으로 새 보관품을 자동으로 만들 수 있어요.') },
+  { key: 'language', category: 'settings', question: K('언어는 어디에서 변경하나요?'), answer: K('설정 → 언어 설정에서 한국어, 日本語, English 중 하나를 고르고 적용을 누르세요.') },
   { key: 'theme', category: 'settings', question: K('테마는 어디에서 바꾸나요?'), answer: K('설정 → 테마에서 원하는 색상을 선택할 수 있어요.') },
-  { key: 'lock', category: 'settings', question: K('앱 잠금은 어떻게 설정하나요?'), answer: K('설정 → 보안에서 앱 잠금을 설정할 수 있어요. 잠금 방식은 기기와 앱 설정에 따라 달라질 수 있어요.') },
+  { key: 'lock', category: 'settings', question: K('앱 잠금은 어떻게 설정하나요?'), answer: K('설정 → 보안 설정에서 PIN을 만들고 앱 잠금을 켤 수 있어요. 지문이나 얼굴로 여는 것도 함께 켤 수 있어요.') },
 ];
 
 export interface FaqScreenProps {
@@ -135,7 +135,7 @@ export function FaqScreen({ initialTopic, onBack }: FaqScreenProps) {
         {showIntro && (
           <div className="faq56-intro">
             <div className="faq56-intro-icon"><img src="/assets/ui-icons/icon_help.webp" alt="" /></div>
-            <div><strong>{t('궁금한 내용을 확인해보세요')}</strong><span>{t('검색하거나 카테고리를 선택해 빠르게 찾을 수 있어요.')}</span></div>
+            <div><strong>{t('궁금한 내용을 확인해보세요')}</strong><span>{t('검색하거나 분류를 골라 빠르게 찾을 수 있어요.')}</span></div>
           </div>
         )}
         <div className="faq56-content">
