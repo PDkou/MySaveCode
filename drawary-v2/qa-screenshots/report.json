@@ -1,0 +1,516 @@
+{
+  "source": "actual React Vite application",
+  "size": "390x844",
+  "timestamp": "2026-10-22T01:42:30.155Z",
+  "routes": [
+    {
+      "route": "home",
+      "status": 200,
+      "visibleRoute": "home",
+      "textLength": 91,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "search",
+      "status": 200,
+      "visibleRoute": "search",
+      "textLength": 104,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "stats",
+      "status": 200,
+      "visibleRoute": "stats",
+      "textLength": 230,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "settings",
+      "status": 200,
+      "visibleRoute": "settings",
+      "textLength": 273,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "create-drawer",
+      "status": 200,
+      "visibleRoute": "create-drawer",
+      "textLength": 114,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": {
+        "top": 767.484375,
+        "bottom": 821.484375,
+        "left": 20,
+        "right": 370
+      }
+    },
+    {
+      "route": "templates",
+      "status": 200,
+      "visibleRoute": "templates",
+      "textLength": 240,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "notification-common",
+      "status": 200,
+      "visibleRoute": "notification-common",
+      "textLength": 156,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "splash",
+      "status": 200,
+      "visibleRoute": "splash",
+      "textLength": 0,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "onboarding",
+      "status": 200,
+      "visibleRoute": "onboarding",
+      "textLength": 52,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "home-empty",
+      "status": 200,
+      "visibleRoute": "home-empty",
+      "textLength": 91,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "new-field",
+      "status": 200,
+      "visibleRoute": "new-field",
+      "textLength": 224,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "field-edit",
+      "status": 200,
+      "visibleRoute": "field-edit",
+      "textLength": 183,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "creation-complete",
+      "status": 200,
+      "visibleRoute": "creation-complete",
+      "textLength": 103,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "fill-drawer",
+      "status": 200,
+      "visibleRoute": "fill-drawer",
+      "textLength": 27,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "backup-progress",
+      "status": 200,
+      "visibleRoute": "backup-progress",
+      "textLength": 48,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "home-edit",
+      "status": 200,
+      "visibleRoute": "home-edit",
+      "textLength": 74,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "drawer-fields",
+      "status": 200,
+      "visibleRoute": "drawer-fields",
+      "textLength": 145,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "drawer-detail",
+      "status": 200,
+      "visibleRoute": "drawer-detail",
+      "textLength": 42,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "record-detail",
+      "status": 200,
+      "visibleRoute": "drawer-detail",
+      "textLength": 42,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "record-edit",
+      "status": 200,
+      "visibleRoute": "drawer-detail",
+      "textLength": 42,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "photo-viewer",
+      "status": 200,
+      "visibleRoute": "drawer-detail",
+      "textLength": 42,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "table-view",
+      "status": 200,
+      "visibleRoute": "table-view",
+      "textLength": 75,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "drawer-manage",
+      "status": 200,
+      "visibleRoute": "drawer-manage",
+      "textLength": 102,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "name-icon-change",
+      "status": 200,
+      "visibleRoute": "name-icon-change",
+      "textLength": 62,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "drawer-fields-manage",
+      "status": 200,
+      "visibleRoute": "drawer-fields-manage",
+      "textLength": 129,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "new-field-manage",
+      "status": 200,
+      "visibleRoute": "new-field-manage",
+      "textLength": 224,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "field-edit-manage",
+      "status": 200,
+      "visibleRoute": "drawer-fields-manage",
+      "textLength": 129,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "notification-settings",
+      "status": 200,
+      "visibleRoute": "notification-settings",
+      "textLength": 172,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "notification-date-field",
+      "status": 200,
+      "visibleRoute": "notification-date-field",
+      "textLength": 90,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "notification-timing",
+      "status": 200,
+      "visibleRoute": "notification-timing",
+      "textLength": 209,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "notification-complete",
+      "status": 200,
+      "visibleRoute": "notification-complete",
+      "textLength": 142,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "recurrence-management",
+      "status": 200,
+      "visibleRoute": "recurrence-management",
+      "textLength": 190,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "recurrence-target-date",
+      "status": 200,
+      "visibleRoute": "recurrence-target-date",
+      "textLength": 171,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "recurrence-cycle",
+      "status": 200,
+      "visibleRoute": "recurrence-cycle",
+      "textLength": 175,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "recurrence-end-condition",
+      "status": 200,
+      "visibleRoute": "recurrence-end-condition",
+      "textLength": 217,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "recurrence-complete",
+      "status": 200,
+      "visibleRoute": "recurrence-complete",
+      "textLength": 153,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "theme-settings",
+      "status": 200,
+      "visibleRoute": "theme-settings",
+      "textLength": 62,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "security-settings",
+      "status": 200,
+      "visibleRoute": "security-settings",
+      "textLength": 167,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "lock-detail",
+      "status": 200,
+      "visibleRoute": "lock-detail",
+      "textLength": 153,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "pin-setup",
+      "status": 200,
+      "visibleRoute": "pin-setup",
+      "textLength": 151,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "app-lock",
+      "status": 200,
+      "visibleRoute": "app-lock",
+      "textLength": 109,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "data-management",
+      "status": 200,
+      "visibleRoute": "data-management",
+      "textLength": 147,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "backup-type",
+      "status": 200,
+      "visibleRoute": "backup-type",
+      "textLength": 138,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "backup-destination",
+      "status": 200,
+      "visibleRoute": "backup-destination",
+      "textLength": 154,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "backup-success",
+      "status": 200,
+      "visibleRoute": "backup-success",
+      "textLength": 41,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "restore-file-picker",
+      "status": 200,
+      "visibleRoute": "restore-file-picker",
+      "textLength": 126,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "restore-review",
+      "status": 200,
+      "visibleRoute": "restore-file-picker",
+      "textLength": 126,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "restore-progress",
+      "status": 200,
+      "visibleRoute": "restore-file-picker",
+      "textLength": 126,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "restore-success",
+      "status": 200,
+      "visibleRoute": "restore-success",
+      "textLength": 74,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "data-reset-confirm",
+      "status": 200,
+      "visibleRoute": "data-reset-confirm",
+      "textLength": 164,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "language-settings",
+      "status": 200,
+      "visibleRoute": "language-settings",
+      "textLength": 102,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "help-main",
+      "status": 200,
+      "visibleRoute": "help-main",
+      "textLength": 215,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "faq",
+      "status": 200,
+      "visibleRoute": "faq",
+      "textLength": 419,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "guide",
+      "status": 200,
+      "visibleRoute": "guide",
+      "textLength": 300,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "info",
+      "status": 200,
+      "visibleRoute": "info",
+      "textLength": 202,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    },
+    {
+      "route": "feedback",
+      "status": 200,
+      "visibleRoute": "feedback",
+      "textLength": 241,
+      "brokenImages": [],
+      "errors": [],
+      "newDrawerNext": null
+    }
+  ]
+}
