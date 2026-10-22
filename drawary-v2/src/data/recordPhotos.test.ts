@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { withImageType } from './recordPhotos';
+import { collectPhotos, withImageType } from './recordPhotos';
 
 const file = (bytes: number[], type: string, name = 'a') => new File([new Uint8Array(bytes)], name, { type });
 
@@ -22,5 +22,26 @@ describe('withImageType', () => {
     const text = file([0x68, 0x65, 0x6c, 0x6c, 0x6f], 'text/plain');
     expect((await withImageType(text)).type).toBe('text/plain');
     expect((await withImageType(file([0x68, 0x69], ''))).type).toBe('');
+  });
+});
+
+describe('collectPhotos', () => {
+  it('keeps the picture bytes, its type and its name', async () => {
+    const jpeg = file([0xff, 0xd8, 0xff, 1, 2, 3, 4, 5, 6, 7, 8, 9], '', 'IMG_2.jpg');
+    const [photo] = await collectPhotos([jpeg]);
+    expect(photo.type).toBe('image/jpeg');
+    expect(photo.name).toBe('IMG_2.jpg');
+    expect(photo.size).toBe(12);
+  });
+
+  it('says so when nothing came back, nothing could be read, or the files are not pictures', async () => {
+    await expect(collectPhotos([])).rejects.toThrow();
+    await expect(collectPhotos([file([], 'image/jpeg')])).rejects.toThrow();
+    await expect(collectPhotos([file([0x68, 0x69], 'text/plain')])).rejects.toThrow();
+  });
+
+  it('uses the pictures it could read and drops the rest', async () => {
+    const photos = await collectPhotos([file([0x68, 0x69], 'text/plain'), file([1, 2, 3], 'image/png', 'b.png')]);
+    expect(photos.map((p) => p.name)).toEqual(['b.png']);
   });
 });

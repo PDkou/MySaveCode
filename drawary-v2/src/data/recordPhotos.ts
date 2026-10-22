@@ -1,5 +1,6 @@
 import { MAX_RECORD_PHOTOS } from './types';
 import { endAutoLockSuspension, suspendAutoLock } from './appLockGuard';
+import { t } from '../i18n';
 
 const MAGIC: readonly { type: string; test: (b: Uint8Array) => boolean }[] = [
   { type: 'image/jpeg', test: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
@@ -25,14 +26,36 @@ export async function withImageType(file: File): Promise<File> {
 }
 
 /**
+ * Turns what the chooser handed over into pictures held in memory. A chosen file is only a handle to the phone's
+ * gallery: reading it later can fail (a cloud photo, a permission that ended with the chooser), and the page would then show
+ * nothing and say nothing. So the bytes are read right now, and a picture that cannot be read is reported.
+ */
+export async function collectPhotos(files: readonly File[]): Promise<File[]> {
+  if (files.length === 0) throw new Error(t('사진을 가져오지 못했어요. 다시 골라 주세요.'));
+  const photos: File[] = [];
+  let notImages = 0;
+  for (const file of files.slice(0, MAX_RECORD_PHOTOS)) {
+    try {
+      const typed = await withImageType(file);
+      if (!typed.type.startsWith('image/')) { notImages += 1; continue; }
+      const bytes = await typed.arrayBuffer();
+      if (bytes.byteLength > 0) photos.push(new File([bytes], typed.name, { type: typed.type, lastModified: typed.lastModified }));
+    } catch { /* counted below */ }
+  }
+  if (photos.length === 0) throw new Error(notImages === files.length ? t('이미지 파일만 등록할 수 있어요.') : t('사진을 읽지 못했어요. 다른 사진으로 다시 골라 주세요.'));
+  return photos;
+}
+
+/**
  * Opens the system image chooser (multiple, up to MAX_RECORD_PHOTOS) and
- * resolves with the chosen files, or [] if the user cancels. Saved photos
+ * resolves with the chosen pictures, or [] if the user cancels; rejects with a readable message when the choice
+ * could not be used. Saved photos
  * live in the on-device database (`photos` store, keyed by record id); this
  * file only handles picking. On Android the WebView shell must implement the
  * file chooser for this to open anything (V2-13+, Android QA).
  */
 export function pickRecordPhotos(): Promise<File[]> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     suspendAutoLock(60_000); // the chooser can take a while; finish() ends it early below
     const input = document.createElement('input');
     input.type = 'file';
@@ -40,17 +63,18 @@ export function pickRecordPhotos(): Promise<File[]> {
     input.multiple = true;
     input.style.display = 'none';
     let settled = false;
-    const finish = (selected: File[]) => {
+    const finish = (done: () => void) => {
       if (settled) return;
       settled = true;
       endAutoLockSuspension();
       input.remove();
-      resolve(selected.slice(0, MAX_RECORD_PHOTOS));
+      done();
     };
     input.addEventListener('change', () => {
-      void Promise.all(Array.from(input.files ?? []).map(withImageType)).then(finish, () => finish(Array.from(input.files ?? [])));
+      const chosen = Array.from(input.files ?? []);
+      collectPhotos(chosen).then((photos) => finish(() => resolve(photos)), (e: unknown) => finish(() => reject(e)));
     });
-    input.addEventListener('cancel', () => finish([]));
+    input.addEventListener('cancel', () => finish(() => resolve([])));
     document.body.appendChild(input);
     input.click();
   });

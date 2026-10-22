@@ -290,8 +290,10 @@ function AppScreens() {
     setFillPhotos([]); setFillKey((k) => k + 1); setFillBack(from); navigate('fill-drawer');
   };
   const pickMorePhotos = async (current: Blob[], set: (b: Blob[]) => void) => {
-    const files = await pickRecordPhotos();
-    if (files.length) set([...current, ...files].slice(0, MAX_RECORD_PHOTOS));
+    try {
+      const files = await pickRecordPhotos();
+      if (files.length) set([...current, ...files].slice(0, MAX_RECORD_PHOTOS));
+    } catch (e) { alertError(e); }
   };
   // #17 edit form: photos staged until "수정 완료" (null = unchanged, [] = removed).
   const [editPhotos, setEditPhotos] = useState<Blob[] | null>(null);
@@ -1783,8 +1785,10 @@ function AppScreens() {
             saving={recordSaving}
             onBack={() => { setEditPhotos(null); navigate('record-detail'); }}
             onPickPhoto={() => { void (async () => {
-              const files = await pickRecordPhotos();
-              if (files.length) setEditPhotos(files);
+              try {
+                const files = await pickRecordPhotos();
+                if (files.length) setEditPhotos(files);
+              } catch (e) { alertError(e); }
             })(); }}
             onRemovePhoto={() => setEditPhotos([])}
             onSave={(draft: RecordDraft) => { void guardedSave(async () => {
