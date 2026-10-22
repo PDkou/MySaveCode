@@ -11,9 +11,9 @@ export const FREE_DRAWER_LIMIT = 5;
 
 /**
  * The "buy the developer a coffee" support products (they unlock nothing). Google Play's rules for such tips are to be confirmed
- * before release; set this to false to hide the whole support section and ship Premium only.
+ * before release; false hides the whole support section (Premium only). Off for the first release; docs/SUPPORT_TEXTS_TO_RESTORE.md lists what to put back when it is turned on.
  */
-export const SUPPORT_PURCHASES_ENABLED = true;
+export const SUPPORT_PURCHASES_ENABLED = false;
 
 /** What the person tried that Free does not include; the Premium screen says it at the top. */
 export type PremiumReason = 'drawers' | 'theme' | 'repeat' | 'export';
