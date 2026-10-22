@@ -21,8 +21,13 @@
 .pm-coffee-head img { width: 46px; height: 46px; object-fit: contain; flex: none; }
 .pm-coffee-head h3 { margin: 0; font-size: 15.5px; font-weight: 800; letter-spacing: -.3px; }
 .pm-coffee-head p { margin: 3px 0 0; font-size: 11.5px; line-height: 1.45; font-weight: 600; color: #6c7899; }
-.pm-coffee-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.pm-coffee-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 14px; }
 .pm-coffee-row button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 4px; border: 1.5px solid #f0d9ad; border-radius: 13px; background: #fffdfa; color: #35548d; cursor: pointer; }
 .pm-coffee-row span { font-size: 12.5px; font-weight: 700; }
 .pm-coffee-row b { font-size: 14.5px; font-weight: 800; color: #b9762c; }
 .pm-coffee small { display: block; margin-top: 10px; text-align: center; font-size: 11px; font-weight: 600; color: #a1855d; }
+
+.pm-coffee-row .pm-other-toggle { grid-column: 1 / -1; flex-direction: row; justify-content: center; gap: 8px; padding: 11px 4px; }
+.pm-coffee-row .pm-other-toggle b { font-size: 16px; line-height: 1; }
+.pm-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.pm-amounts button { padding: 11px 4px; border: 1.5px solid #f0d9ad; border-radius: 13px; background: #fffdfa; color: #b9762c; font-size: 14px; font-weight: 800; cursor: pointer; }

@@ -127,7 +127,7 @@ export function NotificationTimingScreen({
           aria-label={t('알림 시간')}
         />
       </label>
-      <div className="nt-time-note">{t('이 시간은 나중에 알림 기본 설정에서 바꿀 수 있어요.')}</div>
+      <div className="nt-time-note">{t('알림 기본 설정에서는 새 알림에 사용할 기본 시간을 바꿀 수 있어요.')}</div>
 
       <div className="nt-actions">
         <button className="nt-prev" type="button" onClick={onBack}>{t('이전')}</button>

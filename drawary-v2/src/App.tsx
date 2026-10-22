@@ -97,7 +97,7 @@ import './wide/wideSettings.css';
 import './screens/UnifiedHeader.css';
 import './screens/UnifiedButtons.css';
 import { WideDrawer } from './wide/WideDrawer';
-import { getLocale, t, K } from './i18n';
+import { dot, getLocale, t, K } from './i18n';
 import { closeOpenOverlay } from './flow/overlayBack';
 
 type StandaloneRoute = 'premium' | 'templates' | 'notification-common' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management' | 'backup-type' | 'backup-destination' | 'backup-success' | 'restore-file-picker' | 'restore-review' | 'restore-progress' | 'restore-success' | 'data-reset-confirm' | 'language-settings' | 'help-main' | 'faq' | 'guide' | 'info' | 'feedback';
@@ -244,7 +244,7 @@ export default function App() {
     const sum = summarizeRecord(fields, r);
     return [{
       id: r.id, drawerId: drawer.id, drawerName: drawer.name, drawerIcon: `drawer_icon_${drawer.iconKey}.webp`,
-      title: sum.title, meta: [sum.subtitle, sum.dateLabel].filter(Boolean).join(' · '),
+      title: sum.title, meta: [sum.subtitle, sum.dateLabel].filter(Boolean).join(dot()),
       searchableText: recordSearchText(fields, r),
     }];
   });
@@ -761,7 +761,7 @@ export default function App() {
       return <main className="drawary-app-shell" data-route="premium">
         <FixedCanvas height={844} grow>
           <PremiumScreen
-            prices={{ premium: '¥780', coffee: '¥300', latte: '¥600', cake: '¥1,000' }}
+            prices={{ premium: '¥1,200', coffee: '¥300', latte: '¥600', amounts: ['¥100', '¥500', '¥1,000', '¥2,000', '¥5,000', '¥10,000'] }}
             onBack={returnToTab}
             onBuyPremium={() => {}}
             onRestore={() => {}}
@@ -956,7 +956,7 @@ export default function App() {
             rules={drawerNotifRules.map((n) => ({
               id: n.id,
               fieldName: currentFields.find((f) => f.id === n.fieldId)?.name ?? '',
-              when: `${n.daysBefore === 0 ? t('당일') : t('{daysBefore}일 전', { daysBefore: n.daysBefore })} · ${n.time}`,
+              when: `${n.daysBefore === 0 ? t('당일') : t('{daysBefore}일 전', { daysBefore: n.daysBefore })}${dot()}${n.time}`,
             }))}
             onOpenRule={(id) => {
               const n = drawerNotifRules.find((x) => x.id === id);

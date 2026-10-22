@@ -160,7 +160,7 @@ export function TableFilterScreen({
 
             {rules.length >= 2 && (
               <div className="tf-section">
-                <strong className="tf-label">{t('조건을 어떻게 살펴볼까요?')}</strong>
+                <strong className="tf-label">{t('조건을 어떻게 적용할까요?')}</strong>
                 <div className="tf-match-mode">
                   <button
                     type="button"

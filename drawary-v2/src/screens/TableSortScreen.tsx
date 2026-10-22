@@ -9,8 +9,8 @@ export interface SortColumn { id: string; label: string; type: SortFieldType }
 export type { SortChoice };
 
 function sortLabels(type: SortFieldType) {
-  if (type === 'date') return [t('오래된순'), t('최신순')] as const;
-  if (['number', 'currency', 'rating'].includes(type)) return [t('낮은순'), t('높은순')] as const;
+  if (type === 'date') return [t('오래된 순'), t('최신순')] as const;
+  if (['number', 'currency', 'rating'].includes(type)) return [t('낮은 순'), t('높은 순')] as const;
   return [t('가나다순'), t('역순')] as const;
 }
 

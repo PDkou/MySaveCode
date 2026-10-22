@@ -100,7 +100,7 @@ export function RecurrenceCycleScreen({
       </section>
 
       <div className="rc-preview">
-        {t('{field}을 기준으로 {interval}{unit}마다 새 보관품을 만들어요.', { field: dateFieldName, interval, unit: t(meta.unit, { n: interval }) })}
+        {t('\'{field}\' 서랍 칸을 기준으로 {interval}{unit}마다 새 보관품을 만들어요.', { field: dateFieldName, interval, unit: t(meta.unit, { n: interval }) })}
       </div>
 
       <div className="rc-actions">

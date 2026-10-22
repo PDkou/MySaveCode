@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './PremiumScreen.css';
 import { t, tl, K } from '../i18n';
@@ -7,15 +8,18 @@ export interface PremiumPrices {
   premium: string;
   coffee: string;
   latte: string;
-  cake: string;
+  /** "다른 금액": Google Play has no typed amount, so these are separate support products at fixed amounts. */
+  amounts: readonly string[];
 }
+
+export type SupportKind = 'coffee' | 'latte' | { amount: number };
 
 interface Props {
   prices: PremiumPrices;
   onBack: () => void;
   onBuyPremium: () => void;
   onRestore: () => void;
-  onSupport: (kind: 'coffee' | 'latte' | 'cake') => void;
+  onSupport: (kind: SupportKind) => void;
 }
 
 const BENEFITS = [
@@ -28,11 +32,11 @@ const BENEFITS = [
 const SUPPORT = [
   { kind: 'coffee', label: K('커피 한 잔') },
   { kind: 'latte', label: K('라떼 한 잔') },
-  { kind: 'cake', label: K('케이크까지') },
 ] as const;
 
 /** "프리미엄": the one purchase that unlocks everything, plus the optional "coffee for the developer" support. */
 export function PremiumScreen({ prices, onBack, onBuyPremium, onRestore, onSupport }: Props) {
+  const [otherOpen, setOtherOpen] = useState(false);
   return (
     <section className="pm-screen">
       <ScreenHeader title={t('프리미엄')} onBack={onBack} backLabel={t('뒤로 가기')} height={72} />
@@ -71,7 +75,18 @@ export function PremiumScreen({ prices, onBack, onBuyPremium, onRestore, onSuppo
                 <b>{prices[kind]}</b>
               </button>
             ))}
+            <button type="button" className="pm-other-toggle" aria-expanded={otherOpen} onClick={() => setOtherOpen((v) => !v)}>
+              <span>{t('다른 금액')}</span>
+              <b>{otherOpen ? '−' : '+'}</b>
+            </button>
           </div>
+          {otherOpen && (
+            <div className="pm-amounts">
+              {prices.amounts.map((price, i) => (
+                <button key={price} type="button" onClick={() => onSupport({ amount: i })}>{price}</button>
+              ))}
+            </div>
+          )}
           <small>{t('후원은 몇 번이든 할 수 있어요.')}</small>
         </section>
       </div>

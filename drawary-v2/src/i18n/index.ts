@@ -68,20 +68,34 @@ export const withoutContext = (ko: string): string => ko.replace(/@[a-z]+$/, '')
 
 export const t = (ko: string, values?: Record<string, string | number>): string => translate(ko, current, values);
 
+/** Separator between two short facts on one line ("Today · 7 days before"); Japanese avoids the middle dot. */
+export const dot = (): string => (current === 'ja' ? ' / ' : ' · ');
+
 /** Marks a Korean string kept in a constant. Same value; call t() on it where it is shown. */
 export const K = (ko: string): string => ko;
 
 /** Like t(), but `{name}` can be filled with elements (bold text etc.), and `\n` is a line break. */
 export function tx(ko: string, values: Record<string, ReactNode>): ReactNode {
   return translate(ko, current).split(/(\{\w+\}|\n)/).map((part, i) => {
-    if (part === '\n') return createElement('br', { key: i });
+    if (part === '\n') return lineBreak(i);
     const name = /^\{(\w+)\}$/.exec(part)?.[1];
     return name && name in values ? createElement(Fragment, { key: i }, values[name]) : part;
   });
 }
 
+/**
+ * A `\n` in a translation. Korean keeps its hard line breaks (the screens were designed around
+ * them). Japanese and English text is a different length, so a forced break often leaves one word
+ * alone on a line; there the break becomes a soft one: the text only wraps when the lines do not
+ * fit side by side (`.tl-soft` sets balanced wrapping).
+ */
+function lineBreak(key: number): ReactNode {
+  if (current === 'ko') return createElement('br', { key });
+  return createElement(Fragment, { key }, current === 'en' ? ' ' : createElement('wbr'));
+}
+
 /** Like t(), with `\n` shown as a line break. */
 export function tl(ko: string, values?: Record<string, string | number>): ReactNode {
   const lines = t(ko, values).split('\n');
-  return lines.length === 1 ? lines[0] : lines.map((line, i) => createElement(Fragment, { key: i }, i > 0 && createElement('br'), line));
+  return lines.length === 1 ? lines[0] : lines.map((line, i) => createElement(Fragment, { key: i }, i > 0 && lineBreak(i), line));
 }

@@ -87,3 +87,17 @@ html:not([lang="ko"]) .drawary-suggestion-grid button { flex: none; padding: 0 1
   :where(button) { transition: none; }
   :where(button:not(:disabled)):active { scale: 1; }
 }
+
+/* Japanese / English: forced line breaks from the Korean layout are soft here (see tl() in i18n),
+   so let the browser break at phrase boundaries and keep the lines even instead of leaving one
+   word alone on the last line. Korean is untouched. */
+html[lang="ja"] body,
+html[lang="en"] body { text-wrap: pretty; }
+html[lang="ja"] body :is(h1, h2, h3, h4, p, small, strong, label, span, button, div),
+html[lang="en"] body :is(h1, h2, h3, h4, p, small, strong, label, span, button, div) { text-wrap: balance; }
+html[lang="ja"] body :is(h1, h2, h3, h4, p, small, strong, label, span, button, div, li) { line-break: strict; word-break: auto-phrase; }
+
+/* Hero cards: the mascot sits on the right, so the (longer) Japanese/English text keeps clear of it. */
+html:not([lang="ko"]) body .guide57-hero > :not(img) { max-width: calc(100% - 120px); }
+html:not([lang="ko"]) body .help55-hero > :not(img) { max-width: calc(100% - 112px); }
+html:not([lang="ko"]) body .fb59-hero > :not(img) { max-width: calc(100% - 124px); }

@@ -135,3 +135,11 @@ Nine ready-made drawers (최애 굿즈, 화장품, 읽은 책, 영화·드라마
 
 `src/screens/PremiumScreen.tsx` at `#/premium`: hero, what Premium includes (unlimited drawers, 5 themes, repeat, table export), one "프리미엄 시작 · price" button, "구매 복원", and the optional "개발자에게 커피 한 잔" support products (coffee / latte / cake). Prices on the screen are samples; Google Play billing is added with the Android build (one-time product for Premium, three consumable products for support). Not yet reachable from Settings and nothing is locked yet (free limits: 5 drawers, Lavender theme only, no repeat, no export).
 
+
+### 8.6 Japanese/English line breaks, "・", support amounts, copy QA
+
+- Japanese and English no longer get the Korean hard line breaks: `tl()`/`tx()` turn a `\n` into a space (en) or a `<wbr>` (ja) and `styles.css` balances the lines (`text-wrap`, `word-break: auto-phrase` for ja). Hero cards (guide, help, feedback) keep their text clear of the mascot in ja/en.
+- No "・" in any Japanese text (app and the Japanese parts of the privacy policy / terms); short facts on one line use `dot()` (" / " in Japanese, " · " otherwise).
+- Android `versionName` is "0.1.0" (versionCode 1), same as `package.json`.
+- Premium screen: coffee, latte and "다른 금액" (opens fixed amounts ¥100–¥10,000; Google Play has no typed amount, so each is its own support product). Sample Premium price ¥1,200.
+- Owner's copy QA (`Drawary_KO_JA_EN_Copy_QA_2026-10-22.md`, 81 suggestions) applied except: [8] EN "Ended" (status label, correct), [479] "Paused" (status label), [647] KO "선택" (small badge, kept), [387] JA "マイひきだし" (kept), [569/578] "After" (the filter is strictly after, so EN stays). [190] JA/EN were adjusted to the real `{count}` value ("3 items") and the drawer name that is already quoted.

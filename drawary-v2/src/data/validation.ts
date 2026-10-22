@@ -47,7 +47,7 @@ export function validateValue(field: Field, value: FieldValue | undefined, ignor
 
   if (isEmptyValue(value)) {
     // A checkbox is never "empty": unchecked is a valid answer.
-    if (field.required && field.kind !== 'check' && !ignoreRequired) return t('\'{name}\'을(를) 입력해 주세요.', { name: field.name });
+    if (field.required && field.kind !== 'check' && !ignoreRequired) return t('\'{name}\' 값을 입력해 주세요.', { name: field.name });
     return null;
   }
 
@@ -59,14 +59,14 @@ export function validateValue(field: Field, value: FieldValue | undefined, ignor
     case 'number':
     case 'currency':
       if (typeof value !== 'number' || !Number.isFinite(value)) return t('\'{name}\'에는 숫자를 입력해 주세요.', { name: field.name });
-      if (field.kind === 'currency' && !hasAtMostTwoDecimals(value)) return t('\'{name}\'은(는) 소수점 둘째 자리까지 입력할 수 있어요.', { name: field.name });
+      if (field.kind === 'currency' && !hasAtMostTwoDecimals(value)) return t('\'{name}\'에는 소수점 둘째 자리까지 입력할 수 있어요.', { name: field.name });
       return null;
     case 'date':
       return typeof value === 'string' && isRealDate(value) ? null : t('\'{name}\'의 날짜를 확인해 주세요.', { name: field.name });
     case 'select':
       return typeof value === 'string' && field.options.includes(value) ? null : t('\'{name}\'에서 목록에 있는 항목을 골라 주세요.', { name: field.name });
     case 'check':
-      return typeof value === 'boolean' ? null : t('\'{name}\'은(는) 체크하거나 해제만 할 수 있어요.', { name: field.name });
+      return typeof value === 'boolean' ? null : t('\'{name}\' 항목은 체크하거나 해제만 할 수 있어요.', { name: field.name });
     case 'rating':
       return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 5
         ? null

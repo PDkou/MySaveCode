@@ -39,7 +39,7 @@ export function RecurrenceCompleteScreen({
 
       <section className="rcx-message">
         <h2>{t('반복 설정을 저장했어요.')}</h2>
-        <p>{t('{field}을 기준으로 {cycle} {target} 보관품을 새로 만들어요.', { field: dateFieldName, cycle: cycleLabel, target: targetName })}</p>
+        <p>{t('\'{field}\' 서랍 칸을 기준으로 {cycle} \'{target}\' 보관품을 새로 만들어요.', { field: dateFieldName, cycle: cycleLabel, target: targetName })}</p>
       </section>
 
       <section className="rcx-summary">

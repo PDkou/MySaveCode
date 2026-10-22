@@ -79,7 +79,7 @@ describe('stats', () => {
     ];
     const ins = computeStats(drawers, fields, records, NOW, label).insights;
     expect(ins.map((i) => [i.drawerName, i.itemCount, i.tint])).toEqual([['화장품', 3, 'pink'], ['식물', 2, 'lavender'], ['책', 1, 'green']]);
-    expect(ins[0].insightLabel).toBe('가장 많은 서랍');
+    expect(ins[0].insightLabel).toBe('보관품이 가장 많은 서랍');
     expect(ins[1].insightLabel).toBe('다가오는 일정 1건');
     expect(ins[2].insightLabel).toBe('이번 달 추가 1개');
   });

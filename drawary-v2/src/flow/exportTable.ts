@@ -1,6 +1,6 @@
 import { formatValue } from './recordForm';
 import { cellText, type TableColumn, type TableRowData } from './tableQuery';
-import { t } from '../i18n';
+import { dot, t } from '../i18n';
 
 /**
  * Table export (#20's "•••" menu): the rows currently shown, with every column.
@@ -44,5 +44,5 @@ export function buildPrintHtml(drawerName: string, columns: readonly TableColumn
   const body = rows.length
     ? rows.map((r) => `<tr>${columns.map((c, i) => `<td${i === 0 ? ' class="first"' : ''}>${esc(cellText(c, r))}</td>`).join('')}</tr>`).join('')
     : `<tr><td colspan="${Math.max(columns.length, 1)}" class="none">${esc(t('보관품이 없어요.'))}</td></tr>`;
-  return `<h1>${esc(drawerName)}</h1><p class="meta">${esc(t('보관품 {n}개', { n: rows.length }))} · ${esc(printedOn)}</p><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  return `<h1>${esc(drawerName)}</h1><p class="meta">${esc(t('보관품 {n}개', { n: rows.length }))}${dot()}${esc(printedOn)}</p><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }

@@ -95,7 +95,7 @@
 
 [17]
   KO  지문/얼굴 인식을 확인하지 못했어요. 다시 시도해 주세요.
-  JA  指紋・顔認証を確認できませんでした。もう一度お試しください。
+  JA  指紋または顔認証を確認できませんでした。もう一度お試しください。
   EN  Couldn't verify your fingerprint or face. Please try again.
 
 [18]
@@ -200,18 +200,18 @@
 
 [38]
   KO  다른 창에서 앱이 열려 있는 것 같아요. 그 창을 닫고 다시 시도해 주세요.
-  JA  端末の保存領域が別のウィンドウで使用中です。
-  EN  Device storage is in use in another window.
+  JA  別のウィンドウでアプリが開いているようです。そのウィンドウを閉じて、もう一度お試しください。
+  EN  The app may be open in another window. Close that window and try again.
 
 [39]
   KO  저장하지 못했어요. 잠시 뒤에 다시 시도해 주세요.
-  JA  保存領域へのリクエストに失敗しました。
-  EN  The storage request failed.
+  JA  保存できませんでした。しばらくしてからもう一度お試しください。
+  EN  Couldn't save. Please try again in a moment.
 
 [40]
   KO  저장하지 못했어요. 다시 시도해 주세요.
-  JA  保存中にエラーが発生しました。
-  EN  An error occurred while saving.
+  JA  保存できませんでした。もう一度お試しください。
+  EN  Couldn't save. Please try again.
 
 [41]
   KO  저장이 중단됐어요.
@@ -364,7 +364,7 @@
   EN  A field named '{name}' already exists.
 
 [71]
-  KO  '{name}'을(를) 입력해 주세요.
+  KO  '{name}' 값을 입력해 주세요.
   JA  「{name}」を入力してください。
   EN  Please enter '{name}'.
 
@@ -379,7 +379,7 @@
   EN  Please enter a number for '{name}'.
 
 [74]
-  KO  '{name}'은(는) 소수점 둘째 자리까지 입력할 수 있어요.
+  KO  '{name}'에는 소수점 둘째 자리까지 입력할 수 있어요.
   JA  「{name}」は小数点以下2桁まで入力できます。
   EN  "{name}" accepts up to 2 decimal places.
 
@@ -394,7 +394,7 @@
   EN  Please choose one of the options for '{name}'.
 
 [77]
-  KO  '{name}'은(는) 체크하거나 해제만 할 수 있어요.
+  KO  '{name}' 항목은 체크하거나 해제만 할 수 있어요.
   JA  「{name}」はオン/オフの値にしてください。
   EN  '{name}' must be on or off.
 
@@ -410,8 +410,8 @@
 
 [80]
   KO  이 기기에서는 PIN을 안전하게 저장할 수 없어요.
-  JA  この環境ではPINを安全に保存できません（セキュア接続が必要です）。
-  EN  PIN can't be stored safely in this environment (a secure connection is required).
+  JA  この端末ではPINを安全に保存できません。
+  EN  This device can't securely store a PIN.
 
 [81]
   KO  PIN은 숫자 4자리여야 해요.
@@ -698,7 +698,7 @@
   EN  Backing up your data
 
 [137]
-  KO  잠시만 기다려주세요.
+  KO  잠시만 기다려 주세요.
   JA  しばらくお待ちください。
   EN  Please wait a moment.
 
@@ -815,7 +815,7 @@
 [160]
   KO  방금 정한 서랍 칸에 맞춰 ⏎ 첫 보관품부터 하나씩 담아보세요.
   JA  今決めた項目に合わせて ⏎ 最初のアイテムから1つずつ入れてみましょう。
-  EN  Add your first item, ⏎ one by one, using the fields you just set.
+  EN  Start with your first item, ⏎ using the fields you just set up.
 
 [161]
   KO  서랍 채우기
@@ -855,7 +855,7 @@
 [168]
   KO  백업한 파일을 보관해 두면 ⏎ 필요할 때 다시 가져올 수 있어요.
   JA  バックアップしたファイルを保管しておけば ⏎ 必要なときに読み込めます。
-  EN  Keep your backup file ⏎ and bring it back whenever you need it.
+  EN  Keep your backup file ⏎ so you can restore your records whenever you need them.
 
 [169]
   KO  백업과 복원
@@ -964,8 +964,8 @@
 
 [190]
   KO  {drawer} 서랍과 안에 담긴 ⏎ {count}이 모두 삭제돼요.
-  JA  {drawer}のひきだしと中に入っている ⏎ {count}がすべて削除されます。
-  EN  The drawer {drawer} and all ⏎ {count} inside will be deleted.
+  JA  {drawer}のひきだしと、中のアイテム（{count}）をすべて削除します。
+  EN  The drawer {drawer} and its contents ({count}) will be deleted.
 
 [191]
   KO  {n}개 보관품
@@ -974,7 +974,7 @@
 
 [192]
   KO  서랍 칸 설정과 알림·반복 설정도 함께 삭제돼요.
-  JA  項目の設定と、通知・繰り返しの設定も一緒に削除されます。
+  JA  項目の設定と、通知と繰り返しの設定も一緒に削除されます。
   EN  Field settings and notification/repeat settings will be deleted too.
 
 [193]
@@ -1084,7 +1084,7 @@
 
 [214]
   KO  손잡이
-  JA  ハンドル
+  JA  並べ替えハンドル
   EN  handle
 
 [215]
@@ -1185,7 +1185,7 @@
 [234]
   KO  구매처
   JA  購入先
-  EN  Store
+  EN  Purchased from
 
 [235]
   KO  사용기한
@@ -1200,7 +1200,7 @@
 [237]
   KO  용량
   JA  容量
-  EN  Size
+  EN  Volume
 
 [238]
   KO  한줄평
@@ -1219,12 +1219,12 @@
 
 [241]
   KO  서랍 이름 / 아이콘 변경
-  JA  名前・アイコンの変更
+  JA  名前とアイコンの変更
   EN  Change drawer name / icon
 
 [242]
   KO  정렬 / 필터 설정
-  JA  並べ替え・フィルターの設定
+  JA  並べ替えとフィルターの設定
   EN  Sort / filter settings
 
 [243]
@@ -1239,7 +1239,7 @@
 
 [245]
   KO  백업 / 내보내기
-  JA  バックアップ・エクスポート
+  JA  バックアップとエクスポート
   EN  Backup / export
 
 [246]
@@ -1249,7 +1249,7 @@
 
 [247]
   KO  {fields}개 서랍 칸 · {items}개 보관품
-  JA  項目{fields}個 · アイテム{items}件
+  JA  項目{fields}個、アイテム{items}件
   EN  {fields} {fields:field|fields} · {items} {items:item|items}
 
 ======================================================================
@@ -1268,12 +1268,12 @@
 
 [250]
   KO  데이터 · 백업
-  JA  データ・バックアップ
+  JA  データとバックアップ
   EN  Data & backup
 
 [251]
   KO  알림 · 반복
-  JA  通知・繰り返し
+  JA  通知と繰り返し
   EN  Alerts & repeats
 
 [252]
@@ -1288,8 +1288,8 @@
 
 [254]
   KO  아래 가운데 + 버튼을 누르면 새 서랍을 만들 수 있어요. 이름, 아이콘, 색을 고르고 서랍 칸을 정하면 끝이에요. 템플릿으로 시작해도 돼요.
-  JA  下の真ん中の＋ボタンから新しいひきだしを作れます。名前・アイコン・色を選び、項目を決めれば完成です。テンプレートから始めることもできます。
-  EN  Tap the + button in the middle at the bottom to make a drawer. Pick a name, icon and colour, then set its fields. You can also start from a template.
+  JA  下の真ん中の＋ボタンから新しいひきだしを作れます。名前、アイコン、色を選び、項目を決めれば完成です。テンプレートから始めることもできます。
+  EN  Tap the + button in the middle at the bottom to make a drawer. Pick a name, icon and color, then set its fields. You can also start from a template.
 
 [255]
   KO  서랍 칸은 나중에 수정할 수 있나요?
@@ -1298,7 +1298,7 @@
 
 [256]
   KO  서랍을 열고 오른쪽 위 •••에서 서랍 관리 → 서랍 칸 편집으로 가면 칸을 더하거나 이름을 바꾸고 순서를 옮길 수 있어요.
-  JA  ひきだしを開き、右上の•••から「ひきだし管理」→「項目の編集」へ進むと、項目の追加・名前の変更・並べ替えができます。
+  JA  ひきだしを開き、右上の•••から「ひきだし管理」→「項目の編集」へ進むと、項目の追加、名前の変更、並べ替えができます。
   EN  Open the drawer, tap ••• at the top right, then Manage drawer → Edit fields to add fields, rename them or change their order.
 
 [257]
@@ -1308,7 +1308,7 @@
 
 [258]
   KO  서랍을 열고 아래의 서랍 채우기 버튼을 누르면 보관품을 하나씩 추가할 수 있어요.
-  JA  ひきだしを開いて下の「ひきだしを満たす」ボタンを押すと、アイテムを1つずつ追加できます。
+  JA  ひきだしを開き、下の「ひきだしに入れる」ボタンをタップすると、アイテムを1つずつ追加できます。
   EN  Open a drawer and tap the Fill drawer button at the bottom to add items one by one.
 
 [259]
@@ -1318,7 +1318,7 @@
 
 [260]
   KO  보관품마다 사진을 최대 3장까지 담을 수 있어요. 서랍 채우기에서 사진 추가를 눌러 폰의 사진을 골라 주세요.
-  JA  アイテムごとに写真を3枚まで追加できます。「ひきだしを満たす」で「写真を追加」を押し、端末の写真を選んでください。
+  JA  アイテムごとに写真を3枚まで追加できます。「ひきだしに入れる」で「写真を追加」をタップし、端末の写真を選んでください。
   EN  Each item can hold up to 3 photos. In Fill drawer, tap Add photo and pick them from your phone.
 
 [261]
@@ -1327,9 +1327,9 @@
   EN  Where is my data stored?
 
 [262]
-  KO  Drawary의 기록은 모두 이 폰 안에만 저장돼요. 서버로 보내지 않아요. 백업은 설정 → 데이터 관리에서 직접 만들 수 있어요.
+  KO  Drawary의 기록은 모두 이 기기에만 저장돼요. 서버로 보내지 않아요. 백업은 설정 → 데이터 관리에서 직접 만들 수 있어요.
   JA  Drawaryの記録はすべてこの端末の中にだけ保存され、サーバーには送られません。バックアップは設定 → データ管理から作れます。
-  EN  Everything you record stays on this phone and is never sent to a server. You can make a backup in Settings → Data management.
+  EN  Everything you record stays on this device and is never sent to a server. You can make a backup in Settings → Data management.
 
 [263]
   KO  CSV나 PDF는 어디에서 내보내나요?
@@ -1388,7 +1388,7 @@
 
 [274]
   KO  설정 → 언어 설정에서 한국어, 日本語, English 중 하나를 고르고 적용을 누르세요.
-  JA  設定 → 言語設定で、한국어・日本語・Englishのどれかを選んで「適用」を押します。
+  JA  設定 → 言語設定で、한국어、日本語、Englishのどれかを選んで「適用」を押します。
   EN  In Settings → Language, pick 한국어, 日本語 or English and tap Apply.
 
 [275]
@@ -1489,12 +1489,12 @@
 [294]
   KO  어느 화면에서 어떤 문제가 있었나요? 발생한 순서대로 적어주세요.
   JA  どの画面でどんな問題がありましたか？起きた順に書いてください。
-  EN  Which screen had what problem? Please describe it in the order it happened.
+  EN  Which screen did the problem occur on? Please describe what happened, step by step.
 
 [295]
   KO  오류가 난 화면과 동작을 적어주시면 확인에 도움이 돼요.
   JA  不具合が出た画面と操作を書いていただけると確認しやすくなります。
-  EN  Telling us the screen and what you did helps us look into it.
+  EN  Tell us which screen you were on and what you were doing when the problem occurred.
 
 [296]
   KO  기능 요청
@@ -1529,7 +1529,7 @@
 [302]
   KO  응원 메시지
   JA  応援メッセージ
-  EN  Cheer message
+  EN  A note of encouragement
 
 [303]
   KO  Drawary에게 응원의 한마디를 남겨주세요.
@@ -1604,7 +1604,7 @@
 [317]
   KO  작은 의견 하나가 ⏎ 더 편리한 Drawary를 ⏎ 만들어요.
   JA  ひとつの小さなご意見が ⏎ より便利なDrawaryを ⏎ つくります。
-  EN  One small idea ⏎ makes Drawary ⏎ better for everyone.
+  EN  Even a small suggestion ⏎ helps make Drawary ⏎ easier to use.
 
 [318]
   KO  좋았던 점도, 아쉬웠던 점도 ⏎ 편하게 들려주세요.
@@ -1654,7 +1654,7 @@
 [327]
   KO  {drawerName} 서랍 채우기
   JA  {drawerName}に入れる
-  EN  Fill {drawerName} drawer
+  EN  Add items to {drawerName}
 
 [328]
   KO  등록한 사진
@@ -1703,7 +1703,7 @@
 
 [337]
   KO  보관품 이름, 메모, 서랍 이름 검색
-  JA  アイテム名・メモ・ひきだし名で検索
+  JA  アイテム名、メモ、ひきだし名で検索
   EN  Search items, notes, drawers
 
 [338]
@@ -1759,7 +1759,7 @@
 [348]
   KO  좋아하는 것들을 기록하고, ⏎ 더 특별하게 간직할 수 있어요.
   JA  好きなものを記録して、 ⏎ もっと特別に残せます。
-  EN  Record the things you love ⏎ and keep them even more special.
+  EN  Record the things you love ⏎ and treasure them in your own way.
 
 [349]
   KO  서랍 위에서 인사하는 마스코트
@@ -1848,7 +1848,7 @@
 
 [366]
   KO  검색·정렬·필터와 ⏎ CSV/PDF를 사용할 수 있어요.
-  JA  検索・並べ替え・フィルターと ⏎ CSV/PDFが使えます。
+  JA  検索、並べ替え、フィルターと ⏎ CSV/PDFが使えます。
   EN  Use search, sort, filters ⏎ and CSV/PDF export.
 
 [367]
@@ -1998,8 +1998,8 @@
 
 [396]
   KO  나만의 소중한 것들을, ⏎ 더 특별하게 간직해요.
-  JA  大切なものを、 ⏎ もっと特別に残しましょう。
-  EN  Keep what matters to you, ⏎ more specially.
+  JA  大切なものを、 ⏎ もっと特別な形で残しましょう。
+  EN  Keep what matters to you, ⏎ in your own special way.
 
 [397]
   KO  버전 정보
@@ -2153,7 +2153,7 @@
 [426]
   KO  반복 설정 완료
   JA  繰り返し設定の完了
-  EN  Repeat set up
+  EN  Repeat setup complete
 
 [427]
   KO  반복 설정을 저장했어요.
@@ -2161,13 +2161,13 @@
   EN  Your repeat rule is saved.
 
 [428]
-  KO  {field}을 기준으로 {cycle} {target} 보관품을 새로 만들어요.
+  KO  '{field}' 서랍 칸을 기준으로 {cycle} '{target}' 보관품을 새로 만들어요.
   JA  「{field}」を基準に、{cycle}「{target}」のアイテムを新しく作成します。
   EN  We'll create a new {target} item {cycle}, based on {field}.
 
 [429]
   KO  서랍 · 보관품
-  JA  ひきだし・アイテム
+  JA  ひきだしとアイテム
   EN  Drawer · Item
 
 [430]
@@ -2187,7 +2187,7 @@
 
 [433]
   KO  설정한 반복은 반복 관리에서 언제든 바꾸거나 멈출 수 있어요.
-  JA  設定した繰り返しは、繰り返しの管理からいつでも変更・停止できます。
+  JA  設定した繰り返しは、繰り返しの管理からいつでも変更や停止できます。
   EN  You can change or stop repeats anytime in Manage repeats.
 
 [434]
@@ -2213,7 +2213,7 @@
 [438]
   KO  몇 주마다 만들까요?
   JA  何週間ごとに作りますか？
-  EN  Every how many weeks?
+  EN  How many weeks apart?
 
 [439]
   KO  매달
@@ -2233,7 +2233,7 @@
 [442]
   KO  몇 개월마다 만들까요?
   JA  何か月ごとに作りますか？
-  EN  Every how many months?
+  EN  How many months apart?
 
 [443]
   KO  매년
@@ -2242,7 +2242,7 @@
 
 [444]
   KO  같은 월·일
-  JA  同じ月・日
+  JA  同じ月日
   EN  Same month and day
 
 [445]
@@ -2253,7 +2253,7 @@
 [446]
   KO  몇 년마다 만들까요?
   JA  何年ごとに作りますか？
-  EN  Every how many years?
+  EN  How many years apart?
 
 [447]
   KO  {interval}{unit}마다
@@ -2267,7 +2267,7 @@
 
 [449]
   KO  기준 날짜 · {field}
-  JA  基準日・{field}
+  JA  基準日：{field}
   EN  Based on · {field}
 
 [450]
@@ -2291,7 +2291,7 @@
   EN  We'll create the next item on the schedule you chose.
 
 [454]
-  KO  {field}을 기준으로 {interval}{unit}마다 새 보관품을 만들어요.
+  KO  '{field}' 서랍 칸을 기준으로 {interval}{unit}마다 새 보관품을 만들어요.
   JA  「{field}」を基準に、{interval}{unit}ごとに新しいアイテムを作成します。
   EN  We'll create a new item every {interval} {unit}, based on {field}.
 
@@ -2303,7 +2303,7 @@
 [456]
   KO  {count}개 생성 후 종료
   JA  {count}件作成後に終了
-  EN  Ends after {count} created
+  EN  Stop after creating {count} {count:item|items}
 
 [457]
   KO  {endDate}까지
@@ -2323,7 +2323,7 @@
 [460]
   KO  횟수 정하기
   JA  回数を決める
-  EN  Set a number
+  EN  Set an item count
 
 [461]
   KO  정한 횟수만큼 만든 뒤 자동으로 끝나요.
@@ -2343,12 +2343,12 @@
 [464]
   KO  새 보관품을 언제까지 만들까요?
   JA  新しいアイテムをいつまで作りますか？
-  EN  Until when should we create new items?
+  EN  When should we stop creating new items?
 
 [465]
   KO  반복을 계속할지, 횟수나 날짜를 정해 끝낼지 선택해 주세요.
   JA  繰り返しを続けるか、回数や日付を決めて終了するか選んでください。
-  EN  Choose whether to keep repeating, or end after a number or a date.
+  EN  Choose whether to keep repeating, stop after a set number of items, or set an end date.
 
 [466]
   KO  몇 개를 만들고 끝낼까요?
@@ -2387,7 +2387,7 @@
 
 [473]
   KO  날짜 서랍 칸을 기준으로 매주·매달·매년 원하는 주기에 맞춰 ⏎ 새 보관품을 만들 수 있어요.
-  JA  日付の項目を基準に、毎週・毎月・毎年など好きな周期で ⏎ 新しいアイテムを作成できます。
+  JA  日付の項目を基準に、毎週、毎月、毎年など好きな周期で ⏎ 新しいアイテムを作成できます。
   EN  Create new items weekly, monthly or yearly ⏎ based on a date field.
 
 [474]
@@ -2463,7 +2463,7 @@
 [488]
   KO  선택한 날짜를 기준으로 다음 보관품의 날짜가 계산돼요.
   JA  選んだ日付を基準に、次のアイテムの日付が計算されます。
-  EN  The next item's date is worked out from the date you chose.
+  EN  The next item's date is calculated from the date you chose.
 
 [489]
   KO  .zip 또는 .json 파일
@@ -2588,7 +2588,7 @@
 [513]
   KO  서랍과 기록
   JA  ひきだしと記録
-  EN  Records
+  EN  Drawers and records
 
 [514]
   KO  포함
@@ -2648,7 +2648,7 @@
 [525]
   KO  백업 내용을 모두 불러왔어요.
   JA  バックアップの内容をすべて読み込みました。
-  EN  Everything from your backup is loaded.
+  EN  Your backup data has been restored.
 
 [526]
   KO  복원된 항목
@@ -2757,7 +2757,7 @@
 
 [547]
   KO  한국어 · 日本語 · English
-  JA  한국어 · 日本語 · English
+  JA  한국어 / 日本語 / English
   EN  한국어 · 日本語 · English
 
 [548]
@@ -2786,8 +2786,8 @@
   EN  Manage the look, data and security of the app in one place.
 
 [553]
-  KO  가장 많은 서랍
-  JA  一番多いひきだし
+  KO  보관품이 가장 많은 서랍
+  JA  アイテムが最も多いひきだし
   EN  Fullest drawer
 
 [554]
@@ -2941,8 +2941,8 @@
   EN  No filters applied yet.
 
 [584]
-  KO  조건을 어떻게 살펴볼까요?
-  JA  条件をどのように見ますか？
+  KO  조건을 어떻게 적용할까요?
+  JA  条件をどう組み合わせますか？
   EN  How should the conditions work together?
 
 [585]
@@ -3066,7 +3066,7 @@
   EN  View only the items that match your conditions.
 
 [609]
-  KO  오래된순
+  KO  오래된 순
   JA  古い順
   EN  Oldest first
 
@@ -3076,12 +3076,12 @@
   EN  Newest first
 
 [611]
-  KO  낮은순
+  KO  낮은 순
   JA  低い順
   EN  Low to high
 
 [612]
-  KO  높은순
+  KO  높은 순
   JA  高い順
   EN  High to low
 
@@ -3347,12 +3347,12 @@
 
 [665]
   KO  {date} · 백업 파일 1개
-  JA  {date} · バックアップファイル1件
+  JA  {date}（バックアップファイル1件）
   EN  {date} · 1 backup file
 
 [666]
   KO  {drawers}개 서랍 · {records}개 기록
-  JA  ひきだし{drawers}個 · 記録{records}件
+  JA  ひきだし{drawers}個、記録{records}件
   EN  {drawers} {drawers:drawer|drawers} · {records} {records:record|records}
 
 [667]
@@ -3367,8 +3367,8 @@
 
 [669]
   KO  메일 앱을 열었어요. 보내기를 누르면 전달돼요.
-  JA  メールアプリを開きました。送信を押すと届きます。
-  EN  The mail app is open. Tap send to deliver it.
+  JA  メールアプリを開きました。「送信」をタップするとメールを送信できます。
+  EN  The mail app is open. Tap Send to send your message.
 
 [670]
   KO  메일 앱을 열지 못했어요. 메일 앱이 있는지 확인해 주세요.
@@ -3456,12 +3456,12 @@
 
 [686]
   KO  PIN 설정 또는 변경 화면으로 이동
-  JA  PINの設定・変更画面へ移動
+  JA  PINの設定と変更の画面へ移動
   EN  Go to set or change PIN
 
 [687]
   KO  PIN 설정 / 변경
-  JA  PINの設定・変更
+  JA  PINの設定と変更
   EN  Set / change PIN
 
 [688]
@@ -3531,7 +3531,7 @@
 
 [701]
   KO  전자제품
-  JA  家電
+  JA  電子機器
   EN  Electronics
 
 [702]
@@ -3592,7 +3592,7 @@
 [713]
   KO  변경 미리보기
   JA  変更プレビュー
-  EN  Preview
+  EN  Preview changes
 
 [714]
   KO  서랍 이름
@@ -3686,7 +3686,7 @@
 
 [732]
   KO  완료 여부처럼 켜고 끄기
-  JA  完了かどうかのようにオン・オフ
+  JA  完了かどうかのようにオンとオフ
   EN  On/off, like done or not
 
 [733]
@@ -3781,7 +3781,7 @@
 
 [751]
   KO  알림 쉬는 시간
-  JA  通知おやすみ時間
+  JA  通知のおやすみ時間
   EN  Quiet hours
 
 [752]
@@ -3792,7 +3792,7 @@
 [753]
   KO  쉬는 시간에 울릴 알림은 끝난 뒤에 알려드려요.
   JA  おやすみ時間に鳴るはずの通知は、終了後にお知らせします。
-  EN  Notifications due during quiet hours arrive when it ends.
+  EN  Notifications due during quiet hours are delivered when quiet hours end.
 
 [754]
   KO  쉬기 시작
@@ -3832,7 +3832,7 @@
 [761]
   KO  알림 설정 완료
   JA  通知設定の完了
-  EN  Notification set up
+  EN  Notification setup complete
 
 [762]
   KO  알림을 설정했어요.
@@ -3926,7 +3926,7 @@
 
 [780]
   KO  기본 알림 시간 · 알림 쉬는 시간
-  JA  デフォルトの通知時刻・おやすみ時間
+  JA  デフォルトの通知時刻とおやすみ時間
   EN  Default time · Quiet hours
 
 [781]
@@ -3946,7 +3946,7 @@
 
 [784]
   KO  선택한 날짜를 기준으로 언제, 몇 시에 알려드릴지 정해 주세요.
-  JA  選んだ日付を基準に、いつ・何時にお知らせするか決めてください。
+  JA  選んだ日付を基準に、いつ、何時にお知らせするか決めてください。
   EN  Choose when and at what time to notify you, based on the selected date.
 
 [785]
@@ -3990,9 +3990,9 @@
   EN  Tap to change the time
 
 [793]
-  KO  이 시간은 나중에 알림 기본 설정에서 바꿀 수 있어요.
-  JA  この時刻は、あとから通知のデフォルト設定で変更できます。
-  EN  You can change this time later in the default notification settings.
+  KO  알림 기본 설정에서는 새 알림에 사용할 기본 시간을 바꿀 수 있어요.
+  JA  通知のデフォルト設定では、新しい通知に使う時刻を変更できます。
+  EN  In default notification settings, you can change the time used for new notifications.
 
 [794]
   KO  알림 설정하기
@@ -4047,12 +4047,12 @@
 [804]
   KO  카드 보기, 표 보기 등 ⏎ 나에게 맞는 방식으로 기록을 확인할 수 있어요.
   JA  カード表示や表表示など ⏎ 自分に合った方法で記録を確認できます。
-  EN  Check your records as cards, ⏎ a table, or whatever suits you.
+  EN  View your records as cards ⏎ or in a table—whichever suits you best.
 
 [805]
   KO  중요한 일을 놓치지 않도록
   JA  大切なことを見逃さないように
-  EN  Never miss what's important
+  EN  Stay on top of what matters
 
 [806]
   KO  원하는 시간에 알림을 설정하고 ⏎ 소중한 일정을 챙길 수 있어요.
@@ -4226,7 +4226,7 @@
 [839]
   KO  만들고 싶은 서랍을 고르면 이름과 서랍 칸이 한 번에 채워져요.
   JA  作りたいひきだしを選ぶと、名前と項目がまとめて入ります。
-  EN  Pick a drawer and its name and fields are filled in at once.
+  EN  Choose a template to fill in the drawer name and fields automatically.
 
 [840]
   KO  직접 만들기
@@ -4251,7 +4251,7 @@
 [844]
   KO  최애 굿즈
   JA  推しグッズ
-  EN  Favorite goods
+  EN  Fan merch
 
 [845]
   KO  앨범, 포토카드, 굿즈를 모아요
@@ -4265,8 +4265,8 @@
 
 [847]
   KO  최애·그룹
-  JA  推し・グループ
-  EN  Favorite / group
+  JA  推しグループ
+  EN  Favorite artist / group
 
 [848]
   KO  종류
@@ -4311,11 +4311,11 @@
 [856]
   KO  색조
   JA  ポイントメイク
-  EN  Colour
+  EN  Makeup
 
 [857]
   KO  헤어·바디
-  JA  ヘア・ボディ
+  JA  ヘアとボディ
   EN  Hair & body
 
 [858]
@@ -4326,7 +4326,7 @@
 [859]
   KO  읽은 날과 한 줄 감상을 남겨요
   JA  読んだ日とひとこと感想を残します
-  EN  Save the date and a one-line thought
+  EN  Record when you read it and a short thought.
 
 [860]
   KO  제목
@@ -4345,7 +4345,7 @@
 
 [863]
   KO  영화·드라마
-  JA  映画・ドラマ
+  JA  映画とドラマ
   EN  Movies & shows
 
 [864]
@@ -4375,7 +4375,7 @@
 
 [869]
   KO  카페·맛집
-  JA  カフェ・グルメ
+  JA  カフェとグルメ
   EN  Cafés & restaurants
 
 [870]
@@ -4400,8 +4400,8 @@
 
 [874]
   KO  술집
-  JA  バー・居酒屋
-  EN  Bar
+  JA  バーと居酒屋
+  EN  Bars & pubs
 
 [875]
   KO  간 날
@@ -4411,7 +4411,7 @@
 [876]
   KO  물 준 날과 상태를 챙겨요
   JA  水やりの日と状態を管理します
-  EN  Look after watering dates and condition
+  EN  Track watering dates and plant health.
 
 [877]
   KO  식물 이름
@@ -4480,8 +4480,8 @@
 
 [890]
   KO  게임·음반
-  JA  ゲーム・音楽
-  EN  Games & music
+  JA  ゲームと音楽アルバム
+  EN  Games & music albums
 
 [891]
   KO  모은 게임과 음반을 정리해요
@@ -4495,13 +4495,13 @@
 
 [893]
   KO  플랫폼·형태
-  JA  プラットフォーム・形態
+  JA  プラットフォームと形態
   EN  Platform / format
 
 [894]
   KO  가계부
   JA  家計簿
-  EN  Budget
+  EN  Income & expenses
 
 [895]
   KO  쓴 돈과 받은 돈을 적어요
@@ -4511,7 +4511,7 @@
 [896]
   KO  구분
   JA  区分
-  EN  Kind
+  EN  Type
 
 [897]
   KO  지출
@@ -4541,17 +4541,17 @@
 [902]
   KO  생활
   JA  生活
-  EN  Living
+  EN  Household
 
 [903]
   KO  문화
-  JA  文化・娯楽
+  JA  文化と娯楽
   EN  Culture
 
 [904]
   KO  결제 수단
   JA  支払い方法
-  EN  Payment
+  EN  Payment method
 
 [905]
   KO  카드
@@ -4565,5 +4565,119 @@
 
 [907]
   KO  계좌이체
-  JA  口座振替
+  JA  銀行振込
   EN  Bank transfer
+
+======================================================================
+■ 프리미엄 화면  (22개)
+======================================================================
+
+[908]
+  KO  프리미엄
+  JA  プレミアム
+  EN  Premium
+
+[909]
+  KO  Drawary 프리미엄
+  JA  Drawary プレミアム
+  EN  Drawary Premium
+
+[910]
+  KO  한 번만 결제하면 계속 쓸 수 있어요. ⏎ 구독이 아니에요.
+  JA  一度のお支払いで、ずっと使えます。 ⏎ 定期購入ではありません。
+  EN  Pay once and keep it forever. ⏎ It is not a subscription.
+
+[911]
+  KO  프리미엄에 들어 있는 것
+  JA  プレミアムに含まれるもの
+  EN  What Premium includes
+
+[912]
+  KO  서랍 제한 없이
+  JA  ひきだしを無制限に
+  EN  Unlimited drawers
+
+[913]
+  KO  무료는 5개까지, 프리미엄은 개수에 제한이 없어요.
+  JA  無料は5個まで。プレミアムは個数の制限がありません。
+  EN  Free is limited to 5; Premium has no limit.
+
+[914]
+  KO  테마 5가지
+  JA  テーマ5種類
+  EN  5 themes
+
+[915]
+  KO  라벤더 말고도 코랄, 세이지, 머스터드, 스카이를 쓸 수 있어요.
+  JA  ラベンダーのほか、コーラル、セージ、マスタード、スカイが使えます。
+  EN  Besides Lavender: Coral, Sage, Mustard and Sky.
+
+[916]
+  KO  반복 기능
+  JA  繰り返し機能
+  EN  Repeat
+
+[917]
+  KO  날짜 칸을 기준으로 새 보관품을 자동으로 만들어요.
+  JA  日付の項目を基準に、アイテムを自動で作ります。
+  EN  Creates new items automatically from a date field.
+
+[918]
+  KO  표 내보내기
+  JA  表の書き出し
+  EN  Table export
+
+[919]
+  KO  표를 CSV나 PDF 파일로 내보내요.
+  JA  表をCSVやPDFファイルに書き出します。
+  EN  Export a table as a CSV or PDF file.
+
+[920]
+  KO  프리미엄 시작 · {price}
+  JA  プレミアムを始める（{price}）
+  EN  Get Premium · {price}
+
+[921]
+  KO  결제는 Google Play에서 처리돼요. 이 앱은 카드 정보를 받지 않아요.
+  JA  お支払いはGoogle Playで処理されます。このアプリがカード情報を受け取ることはありません。
+  EN  Payment is handled by Google Play. This app never receives your card details.
+
+[922]
+  KO  이미 구매하셨나요?
+  JA  すでに購入しましたか？
+  EN  Already bought it?
+
+[923]
+  KO  구매 복원
+  JA  購入を復元
+  EN  Restore purchase
+
+[924]
+  KO  개발자에게 커피 한 잔
+  JA  開発者にコーヒーを一杯
+  EN  Buy the developer a coffee
+
+[925]
+  KO  기능은 그대로예요. 마음에 드셨다면 힘이 나는 응원이 돼요.
+  JA  機能は変わりません。気に入っていただけたら、励みになります。
+  EN  Nothing unlocks. If you like the app, it keeps me going.
+
+[926]
+  KO  커피 한 잔
+  JA  コーヒー1杯
+  EN  A coffee
+
+[927]
+  KO  라떼 한 잔
+  JA  ラテ1杯
+  EN  A latte
+
+[928]
+  KO  다른 금액
+  JA  好きな金額
+  EN  Other amount
+
+[929]
+  KO  후원은 몇 번이든 할 수 있어요.
+  JA  何度でも応援できます。
+  EN  You can do this as many times as you like.

@@ -31,7 +31,7 @@ const FAQ_ITEMS: FaqItem[] = [
   { key: 'edit-columns', category: 'basic', question: K('서랍 칸은 나중에 수정할 수 있나요?'), answer: K('서랍을 열고 오른쪽 위 •••에서 서랍 관리 → 서랍 칸 편집으로 가면 칸을 더하거나 이름을 바꾸고 순서를 옮길 수 있어요.') },
   { key: 'add-collection', category: 'basic', question: K('보관품은 어떻게 추가하나요?'), answer: K('서랍을 열고 아래의 서랍 채우기 버튼을 누르면 보관품을 하나씩 추가할 수 있어요.') },
   { key: 'add-photo', category: 'basic', question: K('사진도 등록할 수 있나요?'), answer: K('보관품마다 사진을 최대 3장까지 담을 수 있어요. 서랍 채우기에서 사진 추가를 눌러 폰의 사진을 골라 주세요.') },
-  { key: 'data-storage', category: 'data', question: K('내 데이터는 어디에 저장되나요?'), answer: K('Drawary의 기록은 모두 이 폰 안에만 저장돼요. 서버로 보내지 않아요. 백업은 설정 → 데이터 관리에서 직접 만들 수 있어요.') },
+  { key: 'data-storage', category: 'data', question: K('내 데이터는 어디에 저장되나요?'), answer: K('Drawary의 기록은 모두 이 기기에만 저장돼요. 서버로 보내지 않아요. 백업은 설정 → 데이터 관리에서 직접 만들 수 있어요.') },
   { key: 'export', category: 'data', question: K('CSV나 PDF는 어디에서 내보내나요?'), answer: K('서랍의 표 보기 화면에서 오른쪽 위 •••를 누르면 CSV나 PDF로 내보낼 수 있어요.') },
   { key: 'backup-restore', category: 'data', question: K('백업은 어디에서 하나요?'), answer: K('설정 → 데이터 관리 → 백업하기에서 만들 수 있어요. 폰에 저장하거나 Google Drive로 보낼 수 있어요.') },
   { key: 'restore', category: 'data', question: K('백업한 데이터는 어떻게 복원하나요?'), answer: K('설정 → 데이터 관리 → 복원하기에서 백업 파일을 고르고 내용을 확인한 뒤 복원해요. 지금 있는 기록이 중요하다면 먼저 백업해 두세요.') },

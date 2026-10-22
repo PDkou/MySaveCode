@@ -75,7 +75,7 @@ export function computeStats(
     .sort((a, b) => b.n - a.n || a.order - b.order).slice(0, 4);
   const insights = ranked.map(({ d, n }, i) => {
     const upcomingHere = soonOf.get(d.id) ?? 0; const addedHere = addedOf.get(d.id) ?? 0;
-    const label = i === 0 && n > 0 ? K('가장 많은 서랍')
+    const label = i === 0 && n > 0 ? K('보관품이 가장 많은 서랍')
       : upcomingHere > 0 ? t('다가오는 일정 {n}건', { n: upcomingHere })
       : addedHere > 0 ? t('이번 달 추가 {n}개', { n: addedHere })
       : K('서랍 열기');

@@ -1,7 +1,7 @@
 import type { Drawer, Field, NotificationRule, RecordItem } from '../data/types';
 import { summarizeRecord } from './recordForm';
 import { applyQuietHours, type NotifyCommon } from './notifySettings';
-import { t } from '../i18n';
+import { dot, t } from '../i18n';
 
 export interface PlannedNotification {
   /** Stable per rule+record, so the native side can replace instead of duplicate. */
@@ -53,7 +53,7 @@ export function computeNotificationPlan(input: {
       out.push({
         key: `${rule.id}:${record.id}`, fireAt, drawerId: drawer.id, recordId: record.id, ruleId: rule.id,
         title: drawer.name,
-        body: `${title} · ${field.name} ${rule.daysBefore === 0 ? t('당일') : t('{daysBefore}일 전', { daysBefore: rule.daysBefore })}`,
+        body: `${title}${dot()}${field.name} ${rule.daysBefore === 0 ? t('당일') : t('{daysBefore}일 전', { daysBefore: rule.daysBefore })}`,
       });
     }
   }
