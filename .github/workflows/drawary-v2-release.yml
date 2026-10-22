@@ -14,7 +14,7 @@ name: Drawary V2 release AAB
 # Every upload to Play needs a higher versionCode than the one before: type the next number in the version_code box.
 on:
   # GitHub only lets you press "Run workflow" for workflows that exist on the default branch. Until this one is merged there, a
-  # push that touches this file builds version 2 once (version 1 used the old links and icon) (that is also how the signing secrets get tested).
+  # push that touches this file builds version 3 once (version 1 used the old links and icon, version 2 went to the internal test; that is also how the signing secrets get tested).
   push:
     branches: ['drawary/59-design-rebuild-20261014']
     paths: ['.github/workflows/drawary-v2-release.yml']
@@ -58,7 +58,7 @@ jobs:
 
       - name: Check the version code
         env:
-          VERSION_CODE: ${{ inputs.version_code || '2' }}
+          VERSION_CODE: ${{ inputs.version_code || '3' }}
         run: |
           case "$VERSION_CODE" in ''|*[!0-9]*|0) echo "::error::version_code must be a whole number of 1 or more"; exit 1;; esac
 
@@ -91,7 +91,7 @@ jobs:
       - name: gradlew bundleRelease
         working-directory: drawary-v2/android
         env:
-          VERSION_CODE: ${{ inputs.version_code || '2' }}
+          VERSION_CODE: ${{ inputs.version_code || '3' }}
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon -PversionCode="$VERSION_CODE" bundleRelease
