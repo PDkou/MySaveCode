@@ -7,3 +7,4 @@ dist-preview/
 *.log
 .DS_Store
 *.tsbuildinfo
+qa-screenshots/
