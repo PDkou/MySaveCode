@@ -9,8 +9,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <!-- Google Play Billing (Premium and the support products) adds com.android.vending.BILLING by itself. It talks to the
-         Play Store app, not to the network, so INTERNET stays out even if a library were to ask for it. -->
+    <!-- Google Play Billing (Premium and the support products) adds com.android.vending.BILLING and ACCESS_NETWORK_STATE
+         by itself (both are named in the privacy policy). It talks to the Play Store app, not to the network, so INTERNET
+         stays out even if a library were to ask for it. -->
     <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
 
     <!-- Mail apps are looked up for "피드백 보내기"; Android 11+ package visibility needs these. -->

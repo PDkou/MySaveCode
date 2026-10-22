@@ -9,7 +9,8 @@ if [[ "$FILE" == *.txt ]]; then DUMP="$(cat "$FILE")"; else
   if [ -z "$AAPT2" ]; then echo "aapt2 not found, permission check skipped"; exit 0; fi
   DUMP="$("$AAPT2" dump permissions "$FILE")"
 fi
-ALLOWED="android.permission.POST_NOTIFICATIONS android.permission.USE_BIOMETRIC android.permission.RECEIVE_BOOT_COMPLETED com.android.vending.BILLING"
+# ACCESS_NETWORK_STATE and BILLING come with the Google Play Billing library (the privacy policy names both); INTERNET must never be here.
+ALLOWED="android.permission.POST_NOTIFICATIONS android.permission.USE_BIOMETRIC android.permission.RECEIVE_BOOT_COMPLETED com.android.vending.BILLING android.permission.ACCESS_NETWORK_STATE"
 FOUND="$(printf '%s\n' "$DUMP" | grep -o "uses-permission[a-z0-9-]*: name='[^']*'" | sed "s/.*name='//;s/'$//" | sort -u)"
 echo "Permissions in the APK:"; printf '%s\n' "$FOUND" | sed 's/^/  /'
 BAD=0
