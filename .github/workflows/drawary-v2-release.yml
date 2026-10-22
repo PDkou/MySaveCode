@@ -4,8 +4,8 @@ name: Drawary V2 release AAB
 # Signing keeps the real app-signing key). The key lives only in GitHub Actions secrets and is never committed. Run it by hand
 # (Actions tab -> "Drawary V2 release AAB" -> Run workflow) whenever a new bundle is needed.
 #
-# Secrets (Settings -> Secrets and variables -> Actions). Either set the DRAWARY_* ones, or leave them out and the Hello, Today
-# upload key (HELLOTODAY_*, already stored for build-hellotoday-release) is used for this app too:
+# Secrets (Settings -> Secrets and variables -> Actions). Drawary has its own upload key, like the other apps in this repository
+# (HELLOTODAY_*, OPENEDAGAIN_*): one key per app.
 #   DRAWARY_KEYSTORE_BASE64    base64 of the upload keystore (.jks)
 #   DRAWARY_KEYSTORE_PASSWORD  store password
 #   DRAWARY_KEY_ALIAS          key alias
@@ -60,10 +60,10 @@ jobs:
       - name: Reconstruct the upload keystore from the secret
         working-directory: drawary-v2/android
         env:
-          KEYSTORE_BASE64: ${{ secrets.DRAWARY_KEYSTORE_BASE64 || secrets.HELLOTODAY_KEYSTORE_BASE64 }}
+          KEYSTORE_BASE64: ${{ secrets.DRAWARY_KEYSTORE_BASE64 }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "::error::No upload keystore secret is set (DRAWARY_KEYSTORE_BASE64, or HELLOTODAY_KEYSTORE_BASE64). Add it under Settings > Secrets and variables > Actions." >&2
+            echo "::error::DRAWARY_KEYSTORE_BASE64 secret is not set. Add it under Settings > Secrets and variables > Actions." >&2
             exit 1
           fi
           echo "$KEYSTORE_BASE64" | base64 -d > upload-key.jks
@@ -71,9 +71,9 @@ jobs:
       - name: Write keystore.properties
         working-directory: drawary-v2/android
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.DRAWARY_KEYSTORE_PASSWORD || secrets.HELLOTODAY_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.DRAWARY_KEY_ALIAS || secrets.HELLOTODAY_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.DRAWARY_KEY_PASSWORD || secrets.HELLOTODAY_KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.DRAWARY_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.DRAWARY_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.DRAWARY_KEY_PASSWORD }}
         run: |
           # storeFile must be absolute: app/build.gradle.kts resolves it from the app module directory.
           {
