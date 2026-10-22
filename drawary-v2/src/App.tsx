@@ -61,6 +61,7 @@ import { NOTIFY_COMMON_KEY, readNotifyCommon } from './flow/notifySettings';
 import { computeNotificationPlan } from './flow/notificationPlan';
 import { hasNativeBiometric, authenticateBiometric, deliverBackup, syncNotificationPlan, syncLanguage, hasNativeFeedback, hasNativeSave, sendNativeFeedback, setSecureScreen } from './data/nativeBridge';
 import * as repo from './data/repository';
+import { assertUniqueDrawerName } from './data/validation';
 import { createBackup, readBackup, type ParsedBackup } from './backup/backupFile';
 import { useAppLock } from './flow/useAppLock';
 import { applyTheme, readTheme, THEME_KEY } from './flow/theme';
@@ -888,7 +889,7 @@ function AppScreens() {
         <NewDrawerScreen
           initial={createDraft ?? undefined}
           onTemplates={() => navigate('templates')}
-          onNext={(draft) => { setCreateDraft(draft); navigate('drawer-fields'); }}
+          onNext={(draft) => { try { assertUniqueDrawerName(store.drawers, draft.name); } catch (e) { alertError(e); return; } setCreateDraft(draft); navigate('drawer-fields'); }}
           onDismiss={() => { resetCreateFlow(); returnToTab(); }}
         />
       </main>;

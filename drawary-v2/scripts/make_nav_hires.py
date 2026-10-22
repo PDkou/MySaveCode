@@ -58,6 +58,15 @@ a = np.asarray(ui.getchannel('A')).astype(float) / 255
 inside = a > 0.5
 dist = ndimage.distance_transform_edt(inside)
 a2 = np.clip((dist - 3.0) / 1.5, 0, 1) * a
+# the add icon art has a small stray nub under the disc (seen on a phone): clip the disc to a true circle,
+# fitted to the disc's own top and sides (the lower part is where the nub is, so it is left out of the fit)
+oy, ox = np.where(a2 > 0.5)
+upper = oy < oy.min() + (oy.max() - oy.min()) * 0.75
+cx_, radius = (ox[upper].min() + ox[upper].max()) / 2, (ox[upper].max() - ox[upper].min() + 1) / 2
+cy_ = oy.min() + radius - 0.5
+yy, xx = np.mgrid[0:a2.shape[0], 0:a2.shape[1]]
+circle = np.clip(radius - 0.5 - np.hypot(xx - cx_, yy - cy_), 0, 1)
+a2 = a2 * circle
 ui.putalpha(Image.fromarray(np.round(a2 * 255).astype(np.uint8), 'L'))
 out = Image.new('RGBA', (390 * S, 94 * S), (0, 0, 0, 0))
 out.paste(ui, ((px0 - GROW) * S, (py0 - GROW) * S), ui)

@@ -52,6 +52,20 @@ describe('drawers', () => {
     expect((await loadAll()).drawers).toHaveLength(0);
   });
 
+  it('does not allow two drawers with the same name, ignoring case and spaces', async () => {
+    await makeDrawer('Books');
+    await expect(makeDrawer('  books ')).rejects.toBeInstanceOf(ValidationError);
+    await expect(createDrawerWithFields({ name: 'BOOKS', iconKey: 'books', colorKey: 'blue' }, [{ name: '제목', kind: 'text', required: false, options: [] }])).rejects.toBeInstanceOf(ValidationError);
+    expect((await loadAll()).drawers).toHaveLength(1);
+  });
+
+  it('does not allow renaming a drawer to another drawer\'s name, but keeping its own name is fine', async () => {
+    const a = await makeDrawer('화장품');
+    const b = await makeDrawer('책');
+    await expect(updateDrawer(b.id, { name: ' 화장품' })).rejects.toBeInstanceOf(ValidationError);
+    await expect(updateDrawer(a.id, { name: '화장품', iconKey: 'books' })).resolves.toMatchObject({ name: '화장품', iconKey: 'books' });
+  });
+
   it('updates name, icon and color and bumps updatedAt', async () => {
     const d = await makeDrawer();
     await new Promise((r) => setTimeout(r, 5));

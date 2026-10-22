@@ -1,4 +1,4 @@
-import type { Field, FieldValue } from './types';
+import type { Drawer, Field, FieldValue } from './types';
 import { MAX_DRAWER_NAME_LENGTH, MAX_FIELD_NAME_LENGTH } from './types';
 import { t } from '../i18n';
 
@@ -24,6 +24,14 @@ export function assertUniqueFieldName(siblings: readonly Pick<Field, 'id' | 'nam
   const key = name.trim().toLowerCase();
   if (siblings.some((f) => f.id !== exceptId && f.name.trim().toLowerCase() === key)) {
     throw new ValidationError(t('\'{name}\' 서랍 칸이 이미 있어요.', { name }));
+  }
+}
+
+/** Two drawers may not share a name (the home cards, search results and the table header would look the same). */
+export function assertUniqueDrawerName(others: readonly Pick<Drawer, 'id' | 'name'>[], name: string, exceptId?: string): void {
+  const key = name.trim().toLowerCase();
+  if (others.some((d) => d.id !== exceptId && d.name.trim().toLowerCase() === key)) {
+    throw new ValidationError(t('\'{name}\' 서랍이 이미 있어요. 다른 이름을 써 주세요.', { name }));
   }
 }
 

@@ -4,7 +4,7 @@ import type {
 } from './types';
 import { MAX_NOTIFY_DAYS_BEFORE, MAX_RECORD_PHOTOS } from './types';
 import { firstIndexAfter, isFinishedAfter, dueOccurrences } from '../flow/recurrence';
-import { ValidationError, assertUniqueFieldName, cleanDrawerName, cleanFieldName, validateRecordValues } from './validation';
+import { ValidationError, assertUniqueDrawerName, assertUniqueFieldName, cleanDrawerName, cleanFieldName, validateRecordValues } from './validation';
 import { t } from '../i18n';
 
 export function newId(): string {
@@ -51,6 +51,7 @@ export async function createDrawer(input: DrawerInput): Promise<Drawer> {
   const name = cleanDrawerName(input.name);
   return withTx([STORES.drawers], 'readwrite', async (s) => {
     const existing = await req(s.drawers.getAll() as IDBRequest<Drawer[]>);
+    assertUniqueDrawerName(existing, name);
     const now = Date.now();
     const drawer: Drawer = {
       id: newId(), name, iconKey: input.iconKey, colorKey: input.colorKey,
@@ -73,6 +74,7 @@ export async function createDrawerWithFields(input: DrawerInput, fieldInputs: re
   norms.forEach((n, i) => assertUniqueFieldName(norms.slice(0, i).map((m, j) => ({ id: String(j), name: m.name })), n.name));
   return withTx([STORES.drawers, STORES.fields], 'readwrite', async (s) => {
     const existing = await req(s.drawers.getAll() as IDBRequest<Drawer[]>);
+    assertUniqueDrawerName(existing, name);
     const now = Date.now();
     const drawer: Drawer = {
       id: newId(), name, iconKey: input.iconKey, colorKey: input.colorKey,
@@ -93,6 +95,7 @@ export async function updateDrawer(id: string, patch: Partial<DrawerInput>): Pro
   return withTx([STORES.drawers], 'readwrite', async (s) => {
     const current = (await req(s.drawers.get(id))) as Drawer | undefined;
     if (!current) throw new ValidationError(t('서랍을 찾을 수 없어요.'));
+    if (patch.name !== undefined) assertUniqueDrawerName(await req(s.drawers.getAll() as IDBRequest<Drawer[]>), cleanDrawerName(patch.name), id);
     const next: Drawer = {
       ...current,
       ...(patch.name !== undefined ? { name: cleanDrawerName(patch.name) } : null),

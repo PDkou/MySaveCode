@@ -260,7 +260,14 @@
   font-weight: 800;
   color: #2d396c;
   min-width: 68px;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+/* "text-wrap: balance" for ja/en in styles.css would turn wrapping back on; this keeps the name on one line. */
+html body .stats-insight-row.stats-insight-row > strong,
+html body .stats-insight-row.stats-insight-row > .stats-insight-count { white-space: nowrap; text-wrap: nowrap; }
 
 .stats-insight-count {
   font-size: 12px;
@@ -268,10 +275,14 @@
   font-weight: 500;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stats-insight-pill {
-  flex: 0 0 116px;
+  flex: 0 0 auto;
+  min-width: 116px;
+  white-space: nowrap;
   background: var(--tc-fbf9ff,#fbf9ff);
   border: 1px solid var(--tc-e6dfff,#e6dfff);
   color: var(--tc-7657e8,#7150e7);

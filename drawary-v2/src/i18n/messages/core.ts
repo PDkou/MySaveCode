@@ -70,6 +70,7 @@ export const core: Messages = {
   '{label} 이름은 {max}자까지 입력할 수 있어요.': { ja: '{label}の名前は{max}文字まで入力できます。', en: 'The {label} name can be up to {max} characters.' },
   '서랍': { ja: 'ひきだし', en: 'drawer' },
   '서랍 칸': { ja: '項目', en: 'field' },
+  '\'{name}\' 서랍이 이미 있어요. 다른 이름을 써 주세요.': { ja: '「{name}」というひきだしはすでにあります。別の名前にしてください。', en: 'A drawer named \'{name}\' already exists. Please use a different name.' },
   '\'{name}\' 서랍 칸이 이미 있어요.': { ja: '「{name}」の項目はすでにあります。', en: 'A field named \'{name}\' already exists.' },
   '\'{name}\' 값을 입력해 주세요.': { ja: '「{name}」を入力してください。', en: 'Please enter \'{name}\'.' },
   '\'{name}\'에는 글자를 입력해 주세요.': { ja: '「{name}」にはテキストを入力してください。', en: 'Please enter text for \'{name}\'.' },

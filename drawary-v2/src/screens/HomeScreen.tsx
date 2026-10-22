@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import './HomeScreen.css';
 import { FixedCanvas } from '../components/FixedCanvas';
 import { drawerCardColor, drawerIconPlacement, drawerIconUrl } from '../data/drawerStyle';
@@ -67,6 +67,26 @@ export function HomeScreen({
   // pointer capture mid-drag; so move/up are tracked on window while dragging.
   const dragOrderRef = useRef<string[] | null>(null);
   dragOrderRef.current = dragOrder;
+
+  // The dragged card follows the finger: it is translated from where the grid would put it to where the
+  // finger is (minus the spot it was grabbed at). Screen pixels here; the CSS translate is in canvas pixels.
+  const wrapRefs = useRef(new Map<string, HTMLDivElement>());
+  const pointerRef = useRef({ x: 0, y: 0 });
+  const grabRef = useRef({ x: 0, y: 0 });
+  const shiftRef = useRef({ x: 0, y: 0 });
+  const followPointer = (id: string) => {
+    const el = wrapRefs.current.get(id);
+    const grid = gridRef.current;
+    if (!el || !grid) return;
+    const scale = grid.getBoundingClientRect().width / 390 || 1;
+    const rect = el.getBoundingClientRect();
+    const x = pointerRef.current.x - grabRef.current.x - (rect.left - shiftRef.current.x);
+    const y = pointerRef.current.y - grabRef.current.y - (rect.top - shiftRef.current.y);
+    shiftRef.current = { x, y };
+    el.style.transform = `translate(${x / scale}px, ${y / scale}px)`;
+  };
+  // When the other cards shuffle, the dragged one's grid cell changes: recompute so it stays under the finger.
+  useLayoutEffect(() => { if (dragId) followPointer(dragId); });
   const onReorderRef = useRef(onReorder);
   onReorderRef.current = onReorder;
 
@@ -75,6 +95,8 @@ export function HomeScreen({
     const move = (event: PointerEvent) => {
       const order = dragOrderRef.current;
       if (!order) return;
+      pointerRef.current = { x: event.clientX, y: event.clientY };
+      followPointer(dragId);
       const target = cellFromPointer(event.clientX, event.clientY, order.length);
       const from = order.indexOf(dragId);
       if (target === from) return;
@@ -84,6 +106,9 @@ export function HomeScreen({
       setDragOrder(next);
     };
     const end = () => {
+      const el = wrapRefs.current.get(dragId);
+      if (el) el.style.transform = '';
+      shiftRef.current = { x: 0, y: 0 };
       const order = dragOrderRef.current;
       if (order && order.some((id, i) => id !== drawersRef.current[i]?.id)) onReorderRef.current?.(order);
       setDragId(null);
@@ -102,6 +127,10 @@ export function HomeScreen({
 
   const startDrag = (id: string) => (event: ReactPointerEvent<HTMLButtonElement>) => {
     event.preventDefault();
+    const rect = wrapRefs.current.get(id)?.getBoundingClientRect();
+    pointerRef.current = { x: event.clientX, y: event.clientY };
+    grabRef.current = { x: event.clientX - (rect?.left ?? event.clientX), y: event.clientY - (rect?.top ?? event.clientY) };
+    shiftRef.current = { x: 0, y: 0 };
     setDragId(id);
     setDragOrder(drawers.map((d) => d.id));
   };
@@ -131,6 +160,7 @@ export function HomeScreen({
             {ordered.map((drawer) => (
               <div
                 key={drawer.id}
+                ref={(el) => { if (el) wrapRefs.current.set(drawer.id, el); else wrapRefs.current.delete(drawer.id); }}
                 className={`hs-card-wrap${dragId === drawer.id ? ' is-dragging' : ''}`}
               >
                 <button

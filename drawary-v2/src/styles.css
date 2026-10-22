@@ -101,3 +101,7 @@ html[lang="ja"] body :is(h1, h2, h3, h4, p, small, strong, label, span, button, 
 html:not([lang="ko"]) body .guide57-hero > :not(img) { max-width: calc(100% - 120px); }
 html:not([lang="ko"]) body .help55-hero > :not(img) { max-width: calc(100% - 112px); }
 html:not([lang="ko"]) body .fb59-hero > :not(img) { max-width: calc(100% - 124px); }
+
+/* The screens are drawn for one size and scale themselves (AppScaler / FixedCanvas): no pinch or double-tap zoom.
+   Scrolling and the photo viewer's own pinch (touch-action: none there) are unaffected. */
+html, body { touch-action: pan-x pan-y; }

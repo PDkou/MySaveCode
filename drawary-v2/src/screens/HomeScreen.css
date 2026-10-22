@@ -48,8 +48,10 @@
 .hs-scroll { position: absolute; left: 0; right: 0; top: 145px; bottom: 0; overflow-y: auto; scrollbar-width: none; }
 .hs-scroll::-webkit-scrollbar { display: none; }
 .hs-grid { display: grid; grid-template-columns: 165px 165px; grid-auto-rows: 158px; gap: 14px 16px; padding: 0 22px 24px; }
-.hs-card-wrap { position: relative; }
-.hs-card-wrap.is-dragging { z-index: 3; opacity: .92; filter: drop-shadow(0 8px 14px rgba(var(--tr-55-39-100,55,39,100), .22)); }
+.hs-card-wrap { position: relative; transition: transform .16s ease; }
+.hs-card-wrap.is-dragging { z-index: 3; opacity: .94; transition: none; filter: drop-shadow(0 10px 16px rgba(var(--tr-55-39-100,55,39,100), .28)); }
+.hs-card-wrap.is-dragging .hs-card { scale: 1.04; }
+@media (prefers-reduced-motion: reduce) { .hs-card-wrap { transition: none; } }
 .hs-card { position: relative; width: 165px; height: 158px; padding: 0; border: 0; border-radius: 18px; display: block; cursor: pointer; text-align: center; color: #13265f; }
 .hs-card:disabled { cursor: default; opacity: 1; }
 .hs-card-icon { position: absolute; max-width: none; user-select: none; }
