@@ -21,7 +21,7 @@ android {
     defaultConfig {
         applicationId = "com.howlingcreativestudio.drawary"
         // 29 = Android 10: MediaStore Downloads (backup/CSV saves without storage permission) and the framework
-        // fingerprint/face prompt. The only library is Google Play Billing (below); no AndroidX UI libraries.
+        // fingerprint/face prompt. The only library is Google Play Billing (below; it brings a few AndroidX parts of its own).
         minSdk = 29
         targetSdk = 36
         versionCode = 1
