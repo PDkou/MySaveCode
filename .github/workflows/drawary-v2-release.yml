@@ -1,0 +1,108 @@
+name: Drawary V2 release AAB
+
+# Builds the signed release bundle (.aab) of Drawary for a Google Play Console upload, signed with the UPLOAD key (Play App
+# Signing keeps the real app-signing key). The key lives only in GitHub Actions secrets and is never committed. Run it by hand
+# (Actions tab -> "Drawary V2 release AAB" -> Run workflow) whenever a new bundle is needed.
+#
+# Secrets (Settings -> Secrets and variables -> Actions). Either set the DRAWARY_* ones, or leave them out and the Hello, Today
+# upload key (HELLOTODAY_*, already stored for build-hellotoday-release) is used for this app too:
+#   DRAWARY_KEYSTORE_BASE64    base64 of the upload keystore (.jks)
+#   DRAWARY_KEYSTORE_PASSWORD  store password
+#   DRAWARY_KEY_ALIAS          key alias
+#   DRAWARY_KEY_PASSWORD       key password (often the same as the store password)
+#
+# Every upload to Play needs a higher versionCode than the one before: type the next number in the version_code box.
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: "versionCode for this upload (a whole number, higher than every earlier upload; first upload: 1)"
+        required: true
+        default: "1"
+        type: string
+      ref:
+        description: "Branch/tag/SHA to build (defaults to the branch the workflow runs from)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  bundle-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build the web app
+        working-directory: drawary-v2
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Check the version code
+        env:
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          case "$VERSION_CODE" in ''|*[!0-9]*|0) echo "::error::version_code must be a whole number of 1 or more"; exit 1;; esac
+
+      - name: Reconstruct the upload keystore from the secret
+        working-directory: drawary-v2/android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.DRAWARY_KEYSTORE_BASE64 || secrets.HELLOTODAY_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::No upload keystore secret is set (DRAWARY_KEYSTORE_BASE64, or HELLOTODAY_KEYSTORE_BASE64). Add it under Settings > Secrets and variables > Actions." >&2
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > upload-key.jks
+
+      - name: Write keystore.properties
+        working-directory: drawary-v2/android
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.DRAWARY_KEYSTORE_PASSWORD || secrets.HELLOTODAY_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.DRAWARY_KEY_ALIAS || secrets.HELLOTODAY_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.DRAWARY_KEY_PASSWORD || secrets.HELLOTODAY_KEY_PASSWORD }}
+        run: |
+          # storeFile must be absolute: app/build.gradle.kts resolves it from the app module directory.
+          {
+            echo "storeFile=$(pwd)/upload-key.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > keystore.properties
+
+      - name: gradlew bundleRelease
+        working-directory: drawary-v2/android
+        env:
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon -PversionCode="$VERSION_CODE" bundleRelease
+
+      - name: Show who signed the bundle (certificate fingerprints, not secrets)
+        working-directory: drawary-v2/android
+        run: |
+          jarsigner -verify -verbose:summary -certs app/build/outputs/bundle/release/*.aab | head -20 || true
+
+      - name: Clean up keystore material
+        if: always()
+        working-directory: drawary-v2/android
+        run: rm -f upload-key.jks keystore.properties
+
+      - name: Upload the signed release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: drawary-release-aab
+          path: drawary-v2/android/app/build/outputs/bundle/release/*.aab

@@ -24,7 +24,8 @@ android {
         // fingerprint/face prompt. The only library is Google Play Billing (below; it brings a few AndroidX parts of its own).
         minSdk = 29
         targetSdk = 36
-        versionCode = 1
+        // Play wants a higher versionCode for every upload: the release workflow passes -PversionCode=<n>.
+        versionCode = (project.findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
         versionName = "0.1.0"
         buildConfigField("String", "FEEDBACK_EMAIL", "\"${(project.findProperty("feedbackEmail") as String?) ?: ""}\"")
     }
