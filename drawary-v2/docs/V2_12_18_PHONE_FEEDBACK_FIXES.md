@@ -127,3 +127,7 @@ Found by measuring every screen at 390x844: back-arrow screens had title sizes 2
 - `src/screens/UnifiedButtons.css`: primary bottom buttons are the soft purple gradient of the backup "다음" (slightly deeper left end, faint text shadow for contrast), corner radius 13, height 54, 16 px / 800; secondary buttons ("이전", "취소", "나중에") have the same height and rounding, white with a thin border. Danger buttons stay red. Sheet buttons (sort / filter / confirm sheets) are untouched.
 - "서랍칸" -> "서랍 칸" everywhere in `src` (duplicate i18n keys merged).
 
+### 8.4 "템플릿으로 시작" (owner idea, preview awaiting approval)
+
+Nine ready-made drawers (최애 굿즈, 화장품, 읽은 책, 영화·드라마, 카페·맛집, 식물, 여행 기록, 게임·음반, 가계부) in `src/flow/drawerTemplates.ts`, translated in `src/i18n/messages/templates.ts`. New route `#/templates` (`TemplatePickerScreen`): a card per template, a sheet shows its fields, "이 템플릿으로 시작" fills the create-drawer flow (name, icon, colour, fields) and continues on the field list (#09), where everything can still be changed; nothing is stored until "서랍 만들기 완료하기". Entry points: "템플릿으로 시작" on the empty home and in the new-drawer sheet; "직접 만들기" goes to the empty sheet.
+

@@ -117,3 +117,5 @@
   display: flex; align-items: center;
   font-size: 11px; color: #6a748c; pointer-events: none;
 }
+
+.new-drawer-templates { display: block; margin: -2px 0 12px; padding: 0; border: 0; background: transparent; color: var(--tc-7a5cf0,#7a5cf0); font-size: 13px; font-weight: 800; letter-spacing: -.2px; cursor: pointer; text-align: left; }

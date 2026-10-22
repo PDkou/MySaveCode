@@ -23,6 +23,8 @@ import { BackupProgressScreen } from './screens/BackupProgressScreen';
 import { StatsScreen } from './screens/StatsScreen';
 import { computeStats } from './flow/stats';
 import { NewDrawerScreen } from './screens/NewDrawerScreen';
+import { TemplatePickerScreen } from './screens/TemplatePickerScreen';
+import { draftFieldsOf } from './flow/drawerTemplates';
 import { DrawerDetailScreen } from './screens/DrawerDetailScreen';
 import { RecordDetailScreen } from './screens/RecordDetailScreen';
 import { RecordEditScreen } from './screens/RecordEditScreen';
@@ -97,7 +99,7 @@ import { WideDrawer } from './wide/WideDrawer';
 import { getLocale, t, K } from './i18n';
 import { closeOpenOverlay } from './flow/overlayBack';
 
-type StandaloneRoute = 'notification-common' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management' | 'backup-type' | 'backup-destination' | 'backup-success' | 'restore-file-picker' | 'restore-review' | 'restore-progress' | 'restore-success' | 'data-reset-confirm' | 'language-settings' | 'help-main' | 'faq' | 'guide' | 'info' | 'feedback';
+type StandaloneRoute = 'templates' | 'notification-common' | 'drawer-fields' | 'splash' | 'onboarding' | 'home-empty' | 'new-field' | 'field-edit' | 'creation-complete' | 'fill-drawer' | 'backup-progress' | 'home-edit' | 'drawer-detail' | 'record-detail' | 'record-edit' | 'photo-viewer' | 'table-view' | 'drawer-manage' | 'name-icon-change' | 'drawer-fields-manage' | 'new-field-manage' | 'field-edit-manage' | 'notification-settings' | 'notification-date-field' | 'notification-timing' | 'notification-complete' | 'recurrence-management' | 'recurrence-target-date' | 'recurrence-cycle' | 'recurrence-end-condition' | 'recurrence-complete' | 'theme-settings' | 'security-settings' | 'lock-detail' | 'pin-setup' | 'app-lock' | 'data-management' | 'backup-type' | 'backup-destination' | 'backup-success' | 'restore-file-picker' | 'restore-review' | 'restore-progress' | 'restore-success' | 'data-reset-confirm' | 'language-settings' | 'help-main' | 'faq' | 'guide' | 'info' | 'feedback';
 type Route = BottomNavTab | 'create-drawer' | StandaloneRoute;
 const TABS: readonly BottomNavTab[] = ['home', 'search', 'stats', 'settings'];
 const NAMES: Record<Exclude<Route, StandaloneRoute>, string> = {
@@ -113,7 +115,7 @@ const SETTINGS_PANES: Partial<Record<Route, string>> = {
 /** The first-level settings screens that get their own wide arrangement (wide/wideSettings.css); the screens they lead to are shown magnified. */
 const WIDE_SETTINGS_PAGES: readonly Route[] = ['theme-settings', 'security-settings', 'data-management', 'language-settings', 'help-main', 'info', 'feedback'];
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
-const STANDALONE_ROUTES: readonly Route[] = ['notification-common', 'splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm', 'language-settings', 'help-main', 'faq', 'guide', 'info', 'feedback'];
+const STANDALONE_ROUTES: readonly Route[] = ['templates', 'notification-common', 'splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm', 'language-settings', 'help-main', 'faq', 'guide', 'info', 'feedback'];
 const parseRoute = (): Route => {
   const route = window.location.hash.replace(/^#\/?/, '');
   if (route === 'create-drawer' || STANDALONE_ROUTES.some(r => r === route) || TABS.some(tab => tab === route)) return route as Route;
@@ -517,6 +519,7 @@ export default function App() {
       case 'create-drawer': resetCreateFlow(); returnToTab(); return true;
       case 'drawer-fields': case 'field-edit': navigate(route === 'drawer-fields' ? 'create-drawer' : 'drawer-fields'); return true;
       case 'new-field': navigate('drawer-fields'); return true;
+      case 'templates': resetCreateFlow(); returnToTab(); return true;
       case 'creation-complete': case 'theme-settings': case 'security-settings': case 'data-management': case 'language-settings':
       case 'help-main': case 'info': case 'feedback': returnToTab(); return true;
       case 'fill-drawer': navigate(fillBack); return true;
@@ -751,6 +754,18 @@ export default function App() {
         </FixedCanvas>
       </main>;
     }
+    if (route === 'templates') {
+      // "템플릿으로 시작": picking one fills the create-drawer flow (name, look, fields) and continues on the field list, where everything can still be changed.
+      return <main className="drawary-app-shell" data-route="templates">
+        <FixedCanvas height={844} grow>
+          <TemplatePickerScreen
+            onBack={() => { resetCreateFlow(); returnToTab(); }}
+            onOwn={() => navigate('create-drawer')}
+            onPick={(tpl) => { setCreateDraft({ name: t(tpl.name), icon: tpl.iconKey, color: tpl.colorKey }); setDraftFields(draftFieldsOf(tpl)); navigate('drawer-fields'); }}
+          />
+        </FixedCanvas>
+      </main>;
+    }
     if (route === 'create-drawer') {
       // #08 새 서랍 만들기 (name/icon/color) -- the real first step of this
       // flow, reached from the home "+" action / bottom-nav "+" / empty
@@ -763,6 +778,7 @@ export default function App() {
         </section>
         <NewDrawerScreen
           initial={createDraft ?? undefined}
+          onTemplates={() => navigate('templates')}
           onNext={(draft) => { setCreateDraft(draft); navigate('drawer-fields'); }}
           onDismiss={() => { resetCreateFlow(); returnToTab(); }}
         />
@@ -1712,7 +1728,7 @@ export default function App() {
       // '#/home' conditional yet -- that needs a real drawer count from the
       // V2-12 data layer. Standalone here so it can be reviewed/tested now.
       return <main className="drawary-app-shell" data-route="home-empty">
-        <section className="drawary-route-panel"><HomeEmptyScreen onCreateDrawer={() => navigate('create-drawer')} /></section>
+        <section className="drawary-route-panel"><HomeEmptyScreen onCreateDrawer={() => navigate('create-drawer')} onTemplates={() => navigate('templates')} /></section>
         <footer className="drawary-shell-footer">
           <ResponsiveBottomNav active="home" onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />
         </footer>
@@ -1727,7 +1743,7 @@ export default function App() {
             // The whole app waits for the saved data (see the loading gate
             // above), so a returning user never sees a flash of the empty screen.
             store.drawers.length === 0 ? (
-              <HomeEmptyScreen onCreateDrawer={() => navigate('create-drawer')} />
+              <HomeEmptyScreen onCreateDrawer={() => navigate('create-drawer')} onTemplates={() => navigate('templates')} />
             ) : (
               <HomeScreen
                 drawers={homeCards}

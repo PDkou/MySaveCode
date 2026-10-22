@@ -34,6 +34,8 @@ interface NewDrawerScreenProps {
   /** Values to start from, so coming back from #09 keeps what was typed. */
   initial?: { name: string; icon: string; color: string };
   onNext: (draft: { name: string; icon: string; color: string }) => void;
+  /** "템플릿으로 시작": ready-made drawers instead of typing everything. */
+  onTemplates?: () => void;
   onDismiss: () => void;
 }
 
@@ -59,7 +61,7 @@ interface NewDrawerScreenProps {
  * "다음" button is `disabled={!name.trim()}`. Applied the same guard
  * below -- it was missing here.
  */
-export function NewDrawerScreen({ initial, onNext, onDismiss }: NewDrawerScreenProps) {
+export function NewDrawerScreen({ initial, onNext, onTemplates, onDismiss }: NewDrawerScreenProps) {
   const [name, setName] = useState(initial?.name ?? '');
   const [icon, setIcon] = useState(initial?.icon ?? ICON_OPTIONS[9].key);
   const [color, setColor] = useState<string>(initial?.color ?? 'pink');
@@ -71,6 +73,7 @@ export function NewDrawerScreen({ initial, onNext, onDismiss }: NewDrawerScreenP
         <div className="new-drawer-handle" />
         <h1>{t('새 서랍 만들기')}</h1>
         <p className="new-drawer-subtitle">{t('먼저 서랍의 이름과 분위기를 정해보세요.')}</p>
+        {onTemplates && <button type="button" className="new-drawer-templates" onClick={onTemplates}>{t('템플릿으로 시작')} ›</button>}
 
         <label className="new-drawer-label" htmlFor="new-drawer-name">{t('서랍 이름')}</label>
         <div className="new-drawer-input-wrap">

@@ -9,7 +9,7 @@ import { t, tl } from '../i18n';
 // /assets/home/. Not yet wired as the live '#/home' conditional -- there is
 // no real drawer count to decide empty-vs-filled against until V2-12 (data
 // layer). Exposed at its own QA route (#/home-empty) for now.
-export function HomeEmptyScreen({ onCreateDrawer }: { onCreateDrawer: () => void }) {
+export function HomeEmptyScreen({ onCreateDrawer, onTemplates }: { onCreateDrawer: () => void; onTemplates?: () => void }) {
   return (
     <FixedCanvas height={750}>
       <div className="home-screen-crop">
@@ -28,6 +28,7 @@ export function HomeEmptyScreen({ onCreateDrawer }: { onCreateDrawer: () => void
         <h2 className="he-title">{t('아직 만든 서랍이 없어요.')}</h2>
         <p className="he-sub">{tl('정리하고 싶은 것부터\n하나 만들어보세요.')}</p>
         <button type="button" className="he-cta" onClick={onCreateDrawer}>+ {t('첫 서랍 만들기')}</button>
+        {onTemplates && <button type="button" className="he-templates" onClick={onTemplates}>{t('템플릿으로 시작')}</button>}
       </div>
     </FixedCanvas>
   );
