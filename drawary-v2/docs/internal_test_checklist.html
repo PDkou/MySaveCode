@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drawary 내부 테스트 체크리스트</title>
+<style>
+  :root { --bg:#faf8f3; --card:#fff; --ink:#2b2740; --sub:#6d6884; --line:#e6e1f0; --accent:#6a5bb0; --ok:#3f8f6b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#16141f; --card:#201d2d; --ink:#ece9f6; --sub:#a29cb8; --line:#332f45; --accent:#a99bf0; --ok:#6cc79c; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 -apple-system, "Segoe UI", "Noto Sans KR", sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:20px 16px 80px; }
+  h1 { font-size:22px; margin:8px 0 4px; }
+  .sub { color:var(--sub); font-size:14px; margin:0 0 16px; }
+  .bar { position:sticky; top:0; background:var(--bg); padding:10px 0; z-index:2; border-bottom:1px solid var(--line); margin-bottom:16px; }
+  .bar .row { display:flex; justify-content:space-between; align-items:center; font-size:14px; color:var(--sub); }
+  .track { height:8px; background:var(--line); border-radius:4px; overflow:hidden; margin-top:6px; }
+  .fill { height:100%; width:0; background:var(--ok); transition:width .2s; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:6px 16px 12px; margin-bottom:16px; }
+  h2 { font-size:17px; margin:14px 0 4px; }
+  p.note { color:var(--sub); font-size:14px; margin:0 0 6px; }
+  label { display:flex; gap:12px; align-items:flex-start; padding:9px 0; border-top:1px solid var(--line); cursor:pointer; }
+  label:first-of-type { border-top:0; }
+  input[type=checkbox] { width:22px; height:22px; margin-top:2px; flex:none; accent-color:var(--accent); }
+  input:checked + span { color:var(--sub); text-decoration:line-through; }
+  button { font:inherit; font-size:14px; color:var(--accent); background:none; border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer; }
+  button:focus-visible, input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Drawary 내부 테스트 체크리스트</h1>
+  <p class="sub">체크한 내용은 이 기기의 브라우저에 저장돼요. 다른 기기와는 공유되지 않아요.</p>
+
+  <div class="bar">
+    <div class="row"><span id="count">0 / 0</span><button id="reset" type="button">전부 해제</button></div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+  </div>
+
+  <div id="list"></div>
+</main>
+
+<script>
+const GROUPS = [
+  { title: "A. Play Console 준비", note: "앱 파일 올리기와 결제 상품 준비", items: [
+    ["a1", "앱 만들기 (패키지 이름 com.howlingcreativestudio.drawary)", true],
+    ["a2", "AAB(버전 2)를 내부 테스트에 업로드", true],
+    ["a3", "출시 노트 붙여넣기, 버전 출시", false],
+    ["a4", "내부 테스트 상태가 \"사용 가능\"이에요", false],
+    ["a5", "테스터 탭 이메일 목록에 본인 Google 계정이 있어요", false],
+    ["a6", "테스터 참여 링크를 복사했어요", false],
+    ["a7", "premium_unlock 상품이 \"활성\"이고 가격이 ¥1,200이에요", true],
+    ["a8", "계정 설정 → 라이선스 테스트에 본인 계정이 있어요", true]
+  ]},
+  { title: "B. 폰에서 설치", note: "폰의 Play 스토어 계정과 같은 계정이어야 해요", items: [
+    ["b1", "폰의 Play 스토어 계정이 테스터 계정과 같아요"],
+    ["b2", "예전에 직접 설치한 Drawary를 지웠어요"],
+    ["b3", "참여 링크로 \"테스터 되기\" 후 설치했어요"],
+    ["b4", "앱이 열려요"]
+  ]},
+  { title: "C. 결제 (이번 테스트의 핵심)", note: "라이선스 테스트 계정이라 실제로 돈이 나가지 않아요", items: [
+    ["c1", "서랍 5개를 만든 뒤 6개째에서 결제 안내가 떠요"],
+    ["c2", "\"프리미엄 알아보기\"에서 가격이 보여요 (¥1,200, 한국어 폰은 원화)"],
+    ["c3", "구매를 누르면 Google Play 결제창이 떠요 (테스트 표시 확인)"],
+    ["c4", "구매하면 \"구매했어요\" 상태로 바뀌어요"],
+    ["c5", "서랍 6개째가 만들어져요"],
+    ["c6", "다른 테마, 반복 기능, CSV/PDF 내보내기가 열려요"],
+    ["c7", "앱을 완전히 종료했다가 다시 열어도 구매 상태가 유지돼요"],
+    ["c8", "앱을 지우고 다시 설치하면 구매가 복원돼요"],
+    ["c9", "Play 스토어 주문 내역에 테스트 주문이 보여요"],
+    ["c10", "결제창에서 취소해도 앱이 정상이에요"]
+  ]},
+  { title: "D. 앱 기본 동작", items: [
+    ["d1", "서랍 만들기, 사진 넣어서 담기, 수정, 삭제"],
+    ["d2", "검색, 표 보기, 정렬, 필터"],
+    ["d3", "알림이 정해진 시간에 와요 (알림 권한 허용 후)"],
+    ["d4", "반복 기록이 새 보관품으로 만들어져요"],
+    ["d5", "앱 잠금 PIN이 동작해요"],
+    ["d6", "지문 잠금이 동작해요"],
+    ["d7", "백업 만들기와 복원"],
+    ["d8", "한국어, 일본어, 영어로 바꿔도 글이 깨지지 않아요"],
+    ["d9", "폰을 가로로 돌려도 화면이 괜찮아요"],
+    ["d10", "정보 화면의 개인정보처리방침, 이용약관 링크가 브라우저로 열려요"]
+  ]},
+  { title: "E. 문제가 생기면", items: [
+    ["e1", "\"상품을 찾을 수 없음\"이면 상품이 활성인지, 같은 계정인지 확인했어요 (등록 후 반영에 몇 시간 걸릴 수 있어요)"],
+    ["e2", "문제가 생긴 화면과 문구를 캡처해서 개발 대화에 보냈어요"],
+    ["e3", "고친 뒤에는 버전 번호를 올려서 다시 올려야 한다는 것을 알아요"]
+  ]}
+];
+
+const KEY = "drawary_internal_test_checklist_v1";
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+
+const list = document.getElementById("list");
+const boxes = [];
+
+GROUPS.forEach(g => {
+  const sec = document.createElement("section");
+  const h = document.createElement("h2");
+  h.textContent = g.title;
+  sec.appendChild(h);
+  if (g.note) {
+    const p = document.createElement("p");
+    p.className = "note";
+    p.textContent = g.note;
+    sec.appendChild(p);
+  }
+  g.items.forEach(([id, text, dflt]) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.dataset.id = id;
+    input.checked = id in saved ? !!saved[id] : !!dflt;
+    const span = document.createElement("span");
+    span.textContent = text;
+    label.append(input, span);
+    sec.appendChild(label);
+    boxes.push(input);
+    input.addEventListener("change", () => { save(); update(); });
+  });
+  list.appendChild(sec);
+});
+
+function save() {
+  const out = {};
+  boxes.forEach(b => { out[b.dataset.id] = b.checked; });
+  try { localStorage.setItem(KEY, JSON.stringify(out)); } catch (e) {}
+}
+function update() {
+  const done = boxes.filter(b => b.checked).length;
+  document.getElementById("count").textContent = done + " / " + boxes.length + " 완료";
+  document.getElementById("fill").style.width = (boxes.length ? done / boxes.length * 100 : 0) + "%";
+}
+document.getElementById("reset").addEventListener("click", () => {
+  boxes.forEach(b => { b.checked = false; });
+  save(); update();
+});
+update();
+</script>
+</body>
+</html>
