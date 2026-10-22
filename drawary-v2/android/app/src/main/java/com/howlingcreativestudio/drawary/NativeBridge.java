@@ -47,8 +47,11 @@ final class NativeBridge {
         this.webView = webView;
     }
 
+    private BillingBridge billing;
+
     void shutdown() {
         worker.shutdownNow();
+        if (billing != null) billing.end();
     }
 
     static boolean savedSecure(Context context) {
@@ -243,13 +246,32 @@ final class NativeBridge {
         });
     }
 
+    // ---- Google Play purchases -----------------------------------------------------------------------------
+
+    private BillingBridge billing() {
+        if (billing == null) billing = new BillingBridge(activity, this);
+        return billing;
+    }
+
+    /** What the person owns and what the products cost: resolves `{ premium, prices }`. */
+    @JavascriptInterface
+    public void queryBilling(final int id) {
+        main.post(() -> billing().query(id));
+    }
+
+    /** Opens Google Play's purchase sheet; resolves 'ok' | 'owned' | 'cancelled' | 'pending' | 'error' | 'unavailable'. */
+    @JavascriptInterface
+    public void purchase(final int id, final String productId) {
+        main.post(() -> billing().purchase(id, productId));
+    }
+
     // ---- answers to the page -------------------------------------------------------------------------------
 
-    private void resolve(int id, String jsValue) {
+    void resolve(int id, String jsValue) {
         answer(id, true, jsValue);
     }
 
-    private void reject(int id, String message) {
+    void reject(int id, String message) {
         answer(id, false, JSONObject.quote(message));
     }
 

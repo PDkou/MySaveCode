@@ -1,5 +1,9 @@
 import type { Lang } from '../i18n';
 import type { PremiumPrices } from '../screens/PremiumScreen';
+import { PREMIUM_PRODUCT, SUPPORT_PRODUCTS } from './premium';
+
+/** Price texts by Google Play product id, as Play gives them (already in the store country's currency). */
+export type PremiumProductPrices = Partial<Record<string, string>>;
 
 /**
  * Prices shown on the Premium screen, in the currency of the language: Korean won, Japanese yen, US dollars.
@@ -23,8 +27,15 @@ export function formatPrice(amount: number, lang: Lang): string {
   return new Intl.NumberFormat(locale, { style: 'currency', currency: code, minimumFractionDigits: Number.isInteger(amount) ? 0 : 2, maximumFractionDigits: 2 }).format(amount).replace('\uFFE5', '\u00A5'); // the full-width yen sign looks too wide next to the other prices
 }
 
-export function premiumPrices(lang: Lang): PremiumPrices {
+/** The price texts to show: Play's own when it has answered (any missing one falls back to the sample), the samples otherwise. */
+export function premiumPrices(lang: Lang, play: PremiumProductPrices = {}): PremiumPrices {
   const a = AMOUNTS[lang];
   const f = (n: number) => formatPrice(n, lang);
-  return { premium: f(a.premium), coffee: f(a.coffee), latte: f(a.latte), amounts: a.tips.map(f) };
+  const tips = SUPPORT_PRODUCTS.slice(2);
+  return {
+    premium: play[PREMIUM_PRODUCT] ?? f(a.premium),
+    coffee: play.support_coffee ?? f(a.coffee),
+    latte: play.support_latte ?? f(a.latte),
+    amounts: a.tips.map((n, i) => play[tips[i]] ?? f(n)),
+  };
 }

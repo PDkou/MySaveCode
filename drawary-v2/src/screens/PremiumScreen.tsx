@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './PremiumScreen.css';
 import { t, tl, K } from '../i18n';
+import type { PremiumReason, SupportKind } from '../flow/premium';
 
 export interface PremiumPrices {
   /** Price texts as Google Play formats them for the person's country. */
@@ -12,10 +13,38 @@ export interface PremiumPrices {
   amounts: readonly string[];
 }
 
-export type SupportKind = 'coffee' | 'latte' | { amount: number };
+export type { SupportKind };
+
+/** A short answer shown at the bottom after a purchase attempt. */
+export type PremiumNotice = 'bought' | 'thanks' | 'restored' | 'nothing-to-restore' | 'pending' | 'error' | 'browser';
+
+const REASONS: Record<PremiumReason, string> = {
+  drawers: K('무료로는 서랍을 5개까지 만들 수 있어요.'),
+  theme: K('라벤더 말고 다른 테마는 프리미엄에서 쓸 수 있어요.'),
+  repeat: K('반복 기능은 프리미엄에서 쓸 수 있어요.'),
+  export: K('표 내보내기는 프리미엄에서 쓸 수 있어요.'),
+};
+
+const NOTICES: Record<PremiumNotice, string> = {
+  bought: K('프리미엄이 열렸어요. 고마워요!'),
+  thanks: K('고마워요! 큰 힘이 돼요.'),
+  restored: K('구매를 복원했어요.'),
+  'nothing-to-restore': K('복원할 구매 내역이 없어요.'),
+  pending: K('결제가 아직 처리 중이에요. 끝나면 자동으로 열려요.'),
+  error: K('결제하지 못했어요. 잠시 뒤에 다시 해 주세요.'),
+  browser: K('구매는 안드로이드 앱에서만 할 수 있어요.'),
+};
 
 interface Props {
   prices: PremiumPrices;
+  /** Premium is already unlocked. */
+  owned?: boolean;
+  /** What the person ran into on the way here (Free limit). */
+  reason?: PremiumReason | null;
+  notice?: PremiumNotice | null;
+  onNoticeDone?: () => void;
+  /** A purchase is open in Google Play: the buttons wait. */
+  busy?: boolean;
   onBack: () => void;
   onBuyPremium: () => void;
   onRestore: () => void;
@@ -35,12 +64,18 @@ const SUPPORT = [
 ] as const;
 
 /** "프리미엄": the one purchase that unlocks everything, plus the optional "coffee for the developer" support. */
-export function PremiumScreen({ prices, onBack, onBuyPremium, onRestore, onSupport }: Props) {
+export function PremiumScreen({ prices, owned = false, reason = null, notice = null, onNoticeDone, busy = false, onBack, onBuyPremium, onRestore, onSupport }: Props) {
   const [otherOpen, setOtherOpen] = useState(false);
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => onNoticeDone?.(), 4500);
+    return () => window.clearTimeout(timer);
+  }, [notice, onNoticeDone]);
   return (
     <section className="pm-screen">
       <ScreenHeader title={t('프리미엄')} onBack={onBack} backLabel={t('뒤로 가기')} height={72} />
       <div className="pm-body">
+        {!owned && reason && <p className="pm-reason" role="status">{t(REASONS[reason])}</p>}
         <div className="pm-hero">
           <div className="pm-hero-copy">
             <h2>{t('Drawary 프리미엄')}</h2>
@@ -59,9 +94,15 @@ export function PremiumScreen({ prices, onBack, onBuyPremium, onRestore, onSuppo
           ))}
         </ul>
 
-        <button type="button" className="pm-buy" onClick={onBuyPremium}>{t('프리미엄 시작 ({price})', { price: prices.premium })}</button>
-        <p className="pm-note">{t('결제는 Google Play에서 처리돼요. 이 앱은 카드 정보를 받지 않아요.')}</p>
-        <p className="pm-restore">{t('이미 구매하셨나요?')} <button type="button" onClick={onRestore}>{t('구매 복원')}</button></p>
+        {owned ? (
+          <p className="pm-owned">{t('프리미엄을 쓰고 있어요. 고마워요!')}</p>
+        ) : (
+          <>
+            <button type="button" className="pm-buy" disabled={busy} onClick={onBuyPremium}>{t('프리미엄 시작 ({price})', { price: prices.premium })}</button>
+            <p className="pm-note">{t('결제는 Google Play에서 처리돼요. 이 앱은 카드 정보를 받지 않아요.')}</p>
+            <p className="pm-restore">{t('이미 구매하셨나요?')} <button type="button" disabled={busy} onClick={onRestore}>{t('구매 복원')}</button></p>
+          </>
+        )}
 
         <section className="pm-coffee">
           <div className="pm-coffee-head">
@@ -70,18 +111,20 @@ export function PremiumScreen({ prices, onBack, onBuyPremium, onRestore, onSuppo
           </div>
           <div className="pm-coffee-row">
             {SUPPORT.map(({ kind, label }) => (
-              <button key={kind} type="button" onClick={() => onSupport(kind)}>
+              <button key={kind} type="button" disabled={busy} onClick={() => onSupport(kind)}>
                 <span>{t(label)}</span>
                 <b>{prices[kind]}</b>
               </button>
             ))}
-            <button type="button" className="pm-other-toggle" aria-haspopup="dialog" onClick={() => setOtherOpen(true)}>
+            <button type="button" className="pm-other-toggle" aria-haspopup="dialog" disabled={busy} onClick={() => setOtherOpen(true)}>
               <span>{t('개발자 기분 좋게 하기')}</span>
             </button>
           </div>
           <small>{t('후원은 몇 번이든 할 수 있어요.')}</small>
         </section>
       </div>
+
+      {notice && <div className="pm-toast" role="status">{t(NOTICES[notice])}</div>}
 
       {otherOpen && (
         <div className="pm-overlay">

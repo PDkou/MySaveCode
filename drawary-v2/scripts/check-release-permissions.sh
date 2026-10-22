@@ -9,7 +9,7 @@ if [[ "$FILE" == *.txt ]]; then DUMP="$(cat "$FILE")"; else
   if [ -z "$AAPT2" ]; then echo "aapt2 not found, permission check skipped"; exit 0; fi
   DUMP="$("$AAPT2" dump permissions "$FILE")"
 fi
-ALLOWED="android.permission.POST_NOTIFICATIONS android.permission.USE_BIOMETRIC android.permission.RECEIVE_BOOT_COMPLETED"
+ALLOWED="android.permission.POST_NOTIFICATIONS android.permission.USE_BIOMETRIC android.permission.RECEIVE_BOOT_COMPLETED com.android.vending.BILLING"
 FOUND="$(printf '%s\n' "$DUMP" | grep -o "uses-permission[a-z0-9-]*: name='[^']*'" | sed "s/.*name='//;s/'$//" | sort -u)"
 echo "Permissions in the APK:"; printf '%s\n' "$FOUND" | sed 's/^/  /'
 BAD=0

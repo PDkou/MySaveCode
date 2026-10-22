@@ -2,12 +2,12 @@ import { SETTINGS_ROWS, type SettingsHomeAction } from '../screens/SettingsHomeS
 import { t } from '../i18n';
 
 /**
- * Settings (#38) for landscape windows: the same seven rows as the approved list (same icons, titles and texts), laid out as a
+ * Settings (#38) for landscape windows: the same rows as the approved list (same icons, titles and texts), laid out as a
  * grid of cards that fills the window. A card opens that settings screen, magnified, with its own back arrow returning here.
  */
 export function WideSettingsGrid(props: SettingsHomeAction) {
   const handlers: Record<(typeof SETTINGS_ROWS)[number]['key'], (() => void) | undefined> = {
-    theme: props.onTheme, security: props.onSecurity, data: props.onData, language: props.onLanguage,
+    premium: props.onPremium, theme: props.onTheme, security: props.onSecurity, data: props.onData, language: props.onLanguage,
     help: props.onHelp, info: props.onInfo, feedback: props.onFeedback,
   };
   return (
@@ -27,7 +27,7 @@ export function WideSettingsGrid(props: SettingsHomeAction) {
         {SETTINGS_ROWS.map((row) => (
           <button key={row.key} type="button" className="wsg-card" onClick={handlers[row.key]}>
             <span className="wsg-icon"><img src={`/assets/ui-icons/${row.icon}`} alt="" /></span>
-            <span className="wsg-copy"><strong>{t(row.title)}</strong><span>{t(row.desc)}</span></span>
+            <span className="wsg-copy"><strong>{t(row.title)}</strong><span>{t(row.key === 'premium' && props.premium ? '프리미엄을 쓰고 있어요. 고마워요!' : row.desc)}</span></span>
             <span className="wsg-chev" aria-hidden="true">›</span>
           </button>
         ))}

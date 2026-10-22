@@ -46,6 +46,16 @@ export interface DrawaryNativeApi {
    * rejects with message 'cancelled' when the save window is closed without saving.
    */
   saveBackupToDrive?: (fileName: string, base64: string) => Promise<string>;
+  /**
+   * Asks Google Play what the person owns and what the products cost. Resolves with `{ premium: boolean, prices: { [productId]: priceText } }`
+   * (an object or its JSON); rejects when Play cannot be reached.
+   */
+  queryBilling?: () => Promise<unknown>;
+  /**
+   * Opens Google Play's purchase sheet for one product id. Resolves with 'ok' | 'owned' | 'cancelled' | 'pending' | 'error' | 'unavailable'
+   * (see src/data/billing.ts); never rejects. Support products are consumed right after a purchase so they can be bought again.
+   */
+  purchase?: (productId: string) => Promise<string>;
 }
 
 declare global {

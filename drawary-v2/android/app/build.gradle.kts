@@ -21,7 +21,7 @@ android {
     defaultConfig {
         applicationId = "com.howlingcreativestudio.drawary"
         // 29 = Android 10: MediaStore Downloads (backup/CSV saves without storage permission) and the framework
-        // fingerprint/face prompt. No library dependency at all (no AndroidX).
+        // fingerprint/face prompt. The only library is Google Play Billing (below); no AndroidX UI libraries.
         minSdk = 29
         targetSdk = 36
         versionCode = 1
@@ -65,6 +65,12 @@ android {
             assets.srcDir(layout.buildDirectory.dir("generated/web"))
         }
     }
+}
+
+dependencies {
+    // Premium and the "buy the developer a coffee" products (one-time, no subscription). Version 8 is what Google Play
+    // asks for from 2026-08-31. Its manifest adds com.android.vending.BILLING; it needs no INTERNET permission.
+    implementation("com.android.billingclient:billing:8.0.0")
 }
 
 // Copies the built web app; leaves out files that only the developer harness / store preparation use.

@@ -16,3 +16,12 @@ describe('premium prices follow the language', () => {
     for (const lang of ['ko', 'ja', 'en'] as const) expect(premiumPrices(lang).amounts).toHaveLength(6);
   });
 });
+
+describe('prices from Google Play', () => {
+  it('win over the samples, one by one', () => {
+    const p = premiumPrices('ja', { premium_unlock: '¥1,300', support_tip_2: '¥480' });
+    expect(p.premium).toBe('¥1,300');
+    expect(p.amounts[1]).toBe('¥480');
+    expect(p.coffee).toBe('¥300');
+  });
+});

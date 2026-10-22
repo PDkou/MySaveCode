@@ -23,6 +23,9 @@ import { t, K } from '../i18n';
 // per-screen candidate's bundled copy). So: this screen renders no nav at
 // all -- App.tsx supplies the real one externally, same as #03/#04/#05.
 export interface SettingsHomeAction {
+  onPremium?: () => void;
+  /** Premium is unlocked: the row says so instead of selling it. */
+  premium?: boolean;
   onTheme?: () => void;
   onSecurity?: () => void;
   onData?: () => void;
@@ -33,6 +36,7 @@ export interface SettingsHomeAction {
 }
 
 export const SETTINGS_ROWS = [
+  { key: 'premium', icon: 'icon_flower.webp', title: K('프리미엄'), desc: K('서랍 무제한, 테마, 반복, 내보내기') },
   { key: 'theme', icon: 'icon_theme.webp', title: K('테마 설정'), desc: K('앱의 분위기와 강조 색상을 바꿔요.') },
   { key: 'security', icon: 'icon_lock.webp', title: K('보안 설정'), desc: K('앱 잠금과 생체 인증을 관리해요.') },
   { key: 'data', icon: 'icon_upload.webp', title: K('데이터 관리'), desc: K('백업, 복원, 데이터 초기화를 관리해요.') },
@@ -44,6 +48,7 @@ export const SETTINGS_ROWS = [
 
 export function SettingsHomeScreen(props: SettingsHomeAction) {
   const handlers: Record<(typeof SETTINGS_ROWS)[number]['key'], (() => void) | undefined> = {
+    premium: props.onPremium,
     theme: props.onTheme,
     security: props.onSecurity,
     data: props.onData,
@@ -71,7 +76,7 @@ export function SettingsHomeScreen(props: SettingsHomeAction) {
           {SETTINGS_ROWS.map(row => (
             <button className="settings-home-row" type="button" key={row.key} onClick={handlers[row.key]}>
               <span className="settings-home-iconbox"><img src={`/assets/ui-icons/${row.icon}`} alt="" /></span>
-              <span className="settings-home-copy"><strong>{t(row.title)}</strong><span>{t(row.desc)}</span></span>
+              <span className="settings-home-copy"><strong>{t(row.title)}</strong><span>{t(row.key === 'premium' && props.premium ? '프리미엄을 쓰고 있어요. 고마워요!' : row.desc)}</span></span>
               <span className="settings-home-chev">›</span>
             </button>
           ))}

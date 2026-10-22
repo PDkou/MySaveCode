@@ -24,8 +24,10 @@ import { StatsScreen } from './screens/StatsScreen';
 import { computeStats } from './flow/stats';
 import { NewDrawerScreen } from './screens/NewDrawerScreen';
 import { TemplatePickerScreen } from './screens/TemplatePickerScreen';
-import { PremiumScreen } from './screens/PremiumScreen';
-import { premiumPrices } from './flow/premiumPrices';
+import { PremiumScreen, type PremiumNotice } from './screens/PremiumScreen';
+import { PREMIUM_KEY, PREMIUM_PRODUCT, gateForRoute, isPremium, supportProductId, themeFor, type PremiumReason } from './flow/premium';
+import { hasNativeBilling, purchaseProduct, queryBilling } from './data/billing';
+import { premiumPrices, type PremiumProductPrices } from './flow/premiumPrices';
 import { draftFieldsOf } from './flow/drawerTemplates';
 import { DrawerDetailScreen } from './screens/DrawerDetailScreen';
 import { RecordDetailScreen } from './screens/RecordDetailScreen';
@@ -146,6 +148,15 @@ export default function App() {
   const store = useStore();
   const [currentDrawerId, setCurrentDrawerId] = useState<string | null>(null);
 
+  // Premium: the purchase flag is saved in the settings; the Android shell re-checks it with Google Play whenever the app opens.
+  const premium = isPremium(store.settings);
+  const gateRef = useRef({ premium: false, drawerCount: 0 });
+  gateRef.current = { premium, drawerCount: store.drawers.length };
+  const [premiumReason, setPremiumReason] = useState<PremiumReason | null>(null);
+  const [premiumNotice, setPremiumNotice] = useState<PremiumNotice | null>(null);
+  const [purchaseBusy, setPurchaseBusy] = useState(false);
+  const [playPrices, setPlayPrices] = useState<PremiumProductPrices>({});
+
   // Create-drawer flow (#08 -> #09 -> #10/#11 -> #12). Everything the user
   // enters lives here until "서랍 만들기 완료하기", which saves the drawer and
   // all its fields in one transaction; backing out saves nothing.
@@ -226,6 +237,7 @@ export default function App() {
   // "•••" -> CSV / PDF: exactly the rows the table shows right now (filter, sort and search applied).
   const exportTable = (kind: 'csv' | 'pdf', shown: ReturnType<typeof toRows>) => {
     if (!currentDrawer) return;
+    if (!gateRef.current.premium) { openPremium('export'); return; }
     if (kind === 'csv') {
       void saveBlob(new Blob([buildCsv(tableColumns, shown)], { type: 'text/csv;charset=utf-8' }), exportFileName(currentDrawer.name, 'csv'))
         // A browser shows its own download bar; the Android app says where the file went.
@@ -362,8 +374,56 @@ export default function App() {
   useEffect(() => { if (store.status === 'ready') syncLanguage(language); }, [store.status, language]);
 
   // #39 테마: the saved choice is put on the page whenever it changes (and once the saved data has loaded).
-  const theme = readTheme(store.settings);
+  const savedTheme = readTheme(store.settings);
+  const theme = themeFor(savedTheme, premium); // Free shows Lavender; the saved choice comes back with Premium
   useEffect(() => { if (store.status === 'ready') applyTheme(theme); }, [store.status, theme]);
+
+  // Premium check with Google Play: when the app opens and each time it comes back to the foreground. Only an answer from Play
+  // changes the saved flag (a refund or another phone); without an answer (offline, no Play) the saved flag stays.
+  const syncPremium = useCallback(async () => {
+    const snapshot = await queryBilling();
+    if (!snapshot) return null;
+    setPlayPrices(snapshot.prices);
+    if (snapshot.premium !== gateRef.current.premium) await actions.setSetting(PREMIUM_KEY, snapshot.premium);
+    return snapshot;
+  }, []);
+  useEffect(() => {
+    if (store.status !== 'ready' || !hasNativeBilling()) return;
+    void syncPremium().catch((e: unknown) => console.error('could not check Premium with Google Play', e));
+    const onVisible = () => { if (document.visibilityState === 'visible') void syncPremium().catch(() => undefined); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [store.status, syncPremium]);
+
+  const buyPremium = async () => {
+    if (!hasNativeBilling()) { setPremiumNotice('browser'); return; }
+    setPurchaseBusy(true);
+    try {
+      const result = await purchaseProduct(PREMIUM_PRODUCT);
+      if (result === 'ok' || result === 'owned') { await syncPremium(); setPremiumNotice('bought'); }
+      else if (result === 'pending') setPremiumNotice('pending');
+      else if (result !== 'cancelled') setPremiumNotice('error');
+    } finally { setPurchaseBusy(false); }
+  };
+  const restorePurchase = async () => {
+    if (!hasNativeBilling()) { setPremiumNotice('browser'); return; }
+    setPurchaseBusy(true);
+    try {
+      const snapshot = await syncPremium();
+      setPremiumNotice(!snapshot ? 'error' : snapshot.premium ? 'restored' : 'nothing-to-restore');
+    } finally { setPurchaseBusy(false); }
+  };
+  const buySupport = async (kind: Parameters<typeof supportProductId>[0]) => {
+    if (!hasNativeBilling()) { setPremiumNotice('browser'); return; }
+    setPurchaseBusy(true);
+    try {
+      const result = await purchaseProduct(supportProductId(kind));
+      if (result === 'ok') setPremiumNotice('thanks');
+      else if (result === 'pending') setPremiumNotice('pending');
+      else if (result !== 'cancelled') setPremiumNotice('error');
+    } finally { setPurchaseBusy(false); }
+  };
+  const openPremium = (reason: PremiumReason | null = null) => { setPremiumReason(reason); navigate('premium'); };
 
   // #44-#53 백업/복원/초기화.
   const [backupMode, setBackupMode] = useState<BackupMode>('include');
@@ -443,14 +503,24 @@ export default function App() {
   const [faqTopic, setFaqTopic] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    const update = () => { const next = parseRoute(); if (isTab(next)) lastTabRef.current = next; setRoute(next); };
+    const update = () => {
+      const next = parseRoute();
+      const blocked = gateForRoute(next, gateRef.current);
+      if (blocked) { setPremiumReason(blocked); window.location.hash = '#/premium'; return; } // a typed or restored address cannot skip the Free limits either
+      if (isTab(next)) lastTabRef.current = next;
+      setRoute(next);
+    };
     window.addEventListener('hashchange', update);
     return () => window.removeEventListener('hashchange', update);
   }, []);
 
   // `replace` swaps the current history entry instead of adding one, so the Android back button never returns to
   // the splash / the onboarding it just left.
-  const navigate = useCallback((to: Route, replace = false) => {
+  const navigate = useCallback((requested: Route, replace = false) => {
+    // Free-version limits: a screen Free does not include opens the Premium screen instead, which says why.
+    const blocked = gateForRoute(requested, gateRef.current);
+    if (blocked) setPremiumReason(blocked);
+    const to: Route = blocked ? 'premium' : requested;
     if (isTab(to)) lastTabRef.current = to;
     const next = `#/${to}`;
     if (window.location.hash === next) { setRoute(to); return; }
@@ -685,6 +755,8 @@ export default function App() {
         {route === 'settings' ? (
           <div className="wide-scroll">
             <WideSettingsGrid
+              premium={premium}
+              onPremium={() => openPremium()}
               onTheme={() => navigate('theme-settings')}
               onSecurity={() => navigate('security-settings')}
               onData={() => navigate('data-management')}
@@ -758,15 +830,20 @@ export default function App() {
       </main>;
     }
     if (route === 'premium') {
-      // The purchase itself is not connected yet (Google Play billing comes with the Android build); the prices shown are samples in the currency of the language (src/flow/premiumPrices.ts).
+      // Prices: Google Play's own once it has answered (Android app); until then (and in a browser) samples in the currency of the language (src/flow/premiumPrices.ts).
       return <main className="drawary-app-shell" data-route="premium">
         <FixedCanvas height={844} grow>
           <PremiumScreen
-            prices={premiumPrices(language)}
+            prices={premiumPrices(language, playPrices)}
+            owned={premium}
+            reason={premiumReason}
+            notice={premiumNotice}
+            onNoticeDone={() => setPremiumNotice(null)}
+            busy={purchaseBusy}
             onBack={returnToTab}
-            onBuyPremium={() => {}}
-            onRestore={() => {}}
-            onSupport={() => {}}
+            onBuyPremium={() => { void buyPremium(); }}
+            onRestore={() => { void restorePurchase(); }}
+            onSupport={(kind) => { void buySupport(kind); }}
           />
         </FixedCanvas>
       </main>;
@@ -1205,7 +1282,7 @@ export default function App() {
       // ThemeSettingsScreen.tsx's own header comment. Back returns to #38.
       return <main className="drawary-app-shell" data-route="theme-settings">
         <FixedCanvas height={844}>
-          <ThemeSettingsScreen bigPreview={layout === 'wide'} previewDrawers={homeCards} initialTheme={theme} onBack={returnToTab} onThemeChange={(id) => { void actions.setSetting(THEME_KEY, id).catch(alertError); }} />
+          <ThemeSettingsScreen bigPreview={layout === 'wide'} previewDrawers={homeCards} initialTheme={theme} onBack={returnToTab} onThemeChange={(id) => { if (!premium && id !== 'lavender') { openPremium('theme'); return; } void actions.setSetting(THEME_KEY, id).catch(alertError); }} />
         </FixedCanvas>
       </main>;
     }
@@ -1783,6 +1860,8 @@ export default function App() {
             // #55, 정보->#58, 피드백->#59 -- all real routes now (final
             // batch of the 59 screens).
             <SettingsHomeScreen
+              premium={premium}
+              onPremium={() => openPremium()}
               onTheme={() => navigate('theme-settings')}
               onSecurity={() => navigate('security-settings')}
               onData={() => navigate('data-management')}

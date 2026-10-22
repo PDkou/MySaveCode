@@ -1,7 +1,7 @@
 # Drawary Android app (WebView shell)
 
 The whole app is the web app (`../dist`, built by `npm run build`) packed into the APK and shown in one WebView.
-Nothing else is needed on the phone: no server, no account, **no INTERNET permission**.
+Nothing else is needed on the phone: no server, no account, **no INTERNET permission**. Purchases (Premium, coffee support) go through Google Play Billing, which talks to the Play Store app on the phone.
 
 ## Build
 
@@ -21,6 +21,7 @@ Feedback address: `feedbackEmail` in `android/gradle.properties` (db5704@gmail.c
 | `AssetServer.java` | Serves `assets/www/` at `https://appassets.androidplatform.net/` (secure origin for `crypto.subtle`, no `file://`); blocks every other address; adds a Content-Security-Policy and injects `assets/native_shim.js` into `index.html`. |
 | `assets/native_shim.js` | Turns the Java object `__DrawaryAndroid` into `window.DrawaryNative` (the contract in `src/data/nativeBridge.ts`), wrapping the calls that finish later in Promises. |
 | `NativeBridge.java` | The Java side of that contract: reminders, fingerprint/face, save file, print, screen protection, feedback mail. |
+| `BillingBridge.java` | Google Play Billing for the one-time products (`premium_unlock`, `support_coffee`, `support_latte`, `support_tip_1..6`; ids in `src/flow/premium.ts`): asks what is owned and the prices (`queryBilling`), opens the purchase sheet (`purchase`), acknowledges Premium, consumes the support products so they can be bought again. The web app only keeps the yes/no result (`premium` setting) and re-checks with Play whenever it opens. |
 | `NotificationScheduler.java` + `ReminderReceiver` + `BootReceiver` | Reminders while the app is closed (see below). |
 | `MainActivity.startDriveSave` + `NativeBridge.saveBackupToDrive` | "Google Drive" backup: the file goes straight to the Google Drive app's own "save to Drive" screen (account and folder chosen there); without the Drive app the phone's own save window opens. No sign-in, OAuth client or network permission in this app. The Drive screen gives no result, so #48 says "sent to Google Drive", not "saved". Restore from Drive: the restore screen's file chooser lists Drive as well. |
 | `FileSaver.java` | Backup / CSV to `Download/Drawary` through MediaStore (no storage permission). |
