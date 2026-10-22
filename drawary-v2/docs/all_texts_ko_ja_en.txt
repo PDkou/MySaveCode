@@ -4569,7 +4569,7 @@
   EN  Bank transfer
 
 ======================================================================
-■ 프리미엄 화면  (22개)
+■ 프리미엄 화면  (24개)
 ======================================================================
 
 [908]
@@ -4673,11 +4673,21 @@
   EN  A latte
 
 [928]
-  KO  다른 금액
-  JA  好きな金額
-  EN  Other amount
+  KO  커피 말고 맛있는 거 사주기
+  JA  コーヒーより、おいしいものをごちそうする
+  EN  Treat me to something tastier
 
 [929]
+  KO  맛있는 거 사주기
+  JA  おいしいものをごちそうする
+  EN  Treat me to something tasty
+
+[930]
+  KO  마음 가는 만큼 골라 주세요.
+  JA  お気持ちの分だけ選んでください。
+  EN  Pick whatever feels right.
+
+[931]
   KO  후원은 몇 번이든 할 수 있어요.
   JA  何度でも応援できます。
   EN  You can do this as many times as you like.

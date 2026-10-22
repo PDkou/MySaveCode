@@ -22,6 +22,8 @@ export const premium: Messages = {
   '기능은 그대로예요. 마음에 드셨다면 힘이 나는 응원이 돼요.': { ja: '機能は変わりません。気に入っていただけたら、励みになります。', en: 'Nothing unlocks. If you like the app, it keeps me going.' },
   '커피 한 잔': { ja: 'コーヒー1杯', en: 'A coffee' },
   '라떼 한 잔': { ja: 'ラテ1杯', en: 'A latte' },
-  '다른 금액': { ja: '好きな金額', en: 'Other amount' },
+  '커피 말고 맛있는 거 사주기': { ja: 'コーヒーより、おいしいものをごちそうする', en: 'Treat me to something tastier' },
+  '맛있는 거 사주기': { ja: 'おいしいものをごちそうする', en: 'Treat me to something tasty' },
+  '마음 가는 만큼 골라 주세요.': { ja: 'お気持ちの分だけ選んでください。', en: 'Pick whatever feels right.' },
   '후원은 몇 번이든 할 수 있어요.': { ja: '何度でも応援できます。', en: 'You can do this as many times as you like.' },
 };

@@ -1,4 +1,4 @@
-.pm-screen { width: 390px; min-height: 844px; background: #fff9ee; display: flex; flex-direction: column; color: #1b2d65; }
+.pm-screen { position: relative; width: 390px; min-height: 844px; background: #fff9ee; display: flex; flex-direction: column; color: #1b2d65; }
 .pm-body { padding: 0 20px 28px; }
 .pm-hero { position: relative; display: flex; align-items: center; justify-content: space-between; min-height: 138px; padding: 18px 8px 18px 20px; border-radius: 22px; background: var(--tc-f4efff,#f4efff); overflow: hidden; }
 .pm-hero-copy h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.4px; }
@@ -28,6 +28,11 @@
 .pm-coffee small { display: block; margin-top: 10px; text-align: center; font-size: 11px; font-weight: 600; color: #a1855d; }
 
 .pm-coffee-row .pm-other-toggle { grid-column: 1 / -1; flex-direction: row; justify-content: center; gap: 8px; padding: 11px 4px; }
-.pm-coffee-row .pm-other-toggle b { font-size: 16px; line-height: 1; }
-.pm-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+.pm-overlay { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 0 28px; }
+.pm-backdrop { position: absolute; inset: 0; border: 0; background: rgba(0, 0, 0, .38); }
+.pm-modal { position: relative; width: 100%; max-width: 334px; padding: 22px 18px 16px; border-radius: 22px; background: #fff9ee; box-shadow: 0 12px 40px rgba(0, 0, 0, .22); text-align: center; }
+.pm-modal h2 { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -.4px; }
+.pm-modal p { margin: 5px 0 0; font-size: 12.5px; font-weight: 600; color: #647096; }
+.pm-modal-close { width: 100%; margin-top: 12px; padding: 10px 0; border: 0; background: transparent; color: #8a92b3; font-size: 13px; font-weight: 700; cursor: pointer; }
+.pm-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
 .pm-amounts button { padding: 11px 4px; border: 1.5px solid #f0d9ad; border-radius: 13px; background: #fffdfa; color: #b9762c; font-size: 14px; font-weight: 800; cursor: pointer; }

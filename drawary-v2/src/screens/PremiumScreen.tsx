@@ -75,21 +75,29 @@ export function PremiumScreen({ prices, onBack, onBuyPremium, onRestore, onSuppo
                 <b>{prices[kind]}</b>
               </button>
             ))}
-            <button type="button" className="pm-other-toggle" aria-expanded={otherOpen} onClick={() => setOtherOpen((v) => !v)}>
-              <span>{t('다른 금액')}</span>
-              <b>{otherOpen ? '−' : '+'}</b>
+            <button type="button" className="pm-other-toggle" aria-haspopup="dialog" onClick={() => setOtherOpen(true)}>
+              <span>{t('커피 말고 맛있는 거 사주기')}</span>
             </button>
           </div>
-          {otherOpen && (
-            <div className="pm-amounts">
-              {prices.amounts.map((price, i) => (
-                <button key={price} type="button" onClick={() => onSupport({ amount: i })}>{price}</button>
-              ))}
-            </div>
-          )}
           <small>{t('후원은 몇 번이든 할 수 있어요.')}</small>
         </section>
       </div>
+
+      {otherOpen && (
+        <div className="pm-overlay">
+          <button type="button" className="pm-backdrop" aria-label={t('닫기')} onClick={() => setOtherOpen(false)} />
+          <div className="pm-modal" role="dialog" aria-modal="true" aria-label={t('맛있는 거 사주기')}>
+            <h2>{t('맛있는 거 사주기')}</h2>
+            <p>{t('마음 가는 만큼 골라 주세요.')}</p>
+            <div className="pm-amounts">
+              {prices.amounts.map((price, i) => (
+                <button key={price} type="button" onClick={() => { setOtherOpen(false); onSupport({ amount: i }); }}>{price}</button>
+              ))}
+            </div>
+            <button type="button" className="pm-modal-close" onClick={() => setOtherOpen(false)}>{t('닫기')}</button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
