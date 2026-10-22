@@ -71,7 +71,7 @@ export function RecurrenceEndConditionScreen({
         <span className="red-summary-icon"><img src="/assets/field-types/field_date.webp" alt="" /></span>
         <span className="red-summary-copy">
           <strong>{targetName}</strong>
-          <span>{dateFieldName} · {cycleLabel}</span>
+          <span>{dateFieldName}, {cycleLabel}</span>
         </span>
         <span className="red-summary-tag">{t('새 보관품 생성')}</span>
       </section>

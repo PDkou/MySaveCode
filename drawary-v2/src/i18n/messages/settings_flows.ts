@@ -102,7 +102,7 @@ export const settings_flows: Messages = {
   '설정한 날짜가 다가오면\n알려드려요.': { ja: '設定した日付が近づいたら\nお知らせします。', en: 'We\'ll let you know\nwhen the date is near.' },
   '이 서랍에 있는 날짜 서랍 칸을 기준으로\n필요한 시점에 알림을 받을 수 있어요.': { ja: 'このひきだしの日付の項目を基準に、\n必要なタイミングで通知を受け取れます。', en: 'Get notified at the right time\nbased on a date field in this drawer.' },
   '이 서랍의 알림': { ja: 'このひきだしの通知', en: 'Notifications for this drawer' },
-  '기본 알림 시간 · 알림 쉬는 시간': { ja: 'デフォルトの通知時刻とおやすみ時間', en: 'Default time · Quiet hours' },
+  '기본 알림 시간과 알림 쉬는 시간': { ja: 'デフォルトの通知時刻とおやすみ時間', en: 'Default time and quiet hours' },
   '알림 추가하기를 누르면 먼저 날짜 서랍 칸을 선택해요.': { ja: '「通知を追加」をタップすると、まず日付の項目を選びます。', en: 'Tap "Add notification" to choose a date field first.' },
   '{days}일 전': { ja: '{days}日前', en: '{days} {days:day|days} before' },
   '언제 알려드릴까요?': { ja: 'いつお知らせしましょうか？', en: 'When should we notify you?' },

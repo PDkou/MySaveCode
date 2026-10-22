@@ -28,7 +28,7 @@ export interface NotificationSettingsScreenProps {
  * `NotificationSettings.tsx`/`notification-settings.css` -- only asset
  * paths remapped to this app's nested asset convention. Reached from
  * #24's "알림 설정" row. "알림 추가하기" -> #30. CONFIRMED.md's "알림
- * 공통 설정" (기본 알림 시간 · 알림 쉬는 시간) has no destination screen
+ * 공통 설정" (기본 알림 시간과 알림 쉬는 시간) has no destination screen
  * among #29-#37, so `onOpenCommonSettings` stays the caller's own no-op,
  * same reasoning as other not-yet-built destinations.
  *
@@ -62,7 +62,7 @@ export function NotificationSettingsScreen({
         <div className="ns-drawer-icon"><img src={drawerIconUri} alt="" /></div>
         <div className="ns-context-copy">
           <strong>{drawerName}</strong>
-          <span>{t('{fields}개 서랍 칸 · {items}개 보관품', { fields: fieldCount, items: recordCount })}</span>
+          <span>{t('{fields}개 서랍 칸, {items}개 보관품', { fields: fieldCount, items: recordCount })}</span>
         </div>
       </section>
 
@@ -96,7 +96,7 @@ export function NotificationSettingsScreen({
         <div className="ns-common-icon"><img src="/assets/ui-icons/icon_notification.webp" alt="" /></div>
         <div className="ns-common-copy">
           <strong>{t('알림 공통 설정')}</strong>
-          <span>{t('기본 알림 시간 · 알림 쉬는 시간')}</span>
+          <span>{t('기본 알림 시간과 알림 쉬는 시간')}</span>
         </div>
         <div className="ns-chev">›</div>
       </button>

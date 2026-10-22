@@ -2,15 +2,15 @@
 만든 날: 2026-10-22
 
 읽는 법
-  · 번호마다 KO(한국어, 원문) → JA(일본어) → EN(영어) 순서입니다.
-  · {n}, {name}, {count} 처럼 중괄호로 싸인 것은 앱이 숫자나 이름을 넣는 자리이니 그대로 두세요.
-  · ⏎ 는 화면에서 줄이 바뀌는 곳입니다.
-  · {n:item|items} 는 영어에서 개수에 따라 단수/복수를 고르는 표시입니다.
-  · @event, @op, @opt 가 붙은 것은 같은 낱말이 쓰임새마다 다르게 번역될 때 구분하는 꼬리표라서, 화면에는 보이지 않습니다.
-  · 수정할 곳은 번호와 언어(KO/JA/EN)를 알려주세요. 예) "123번 JA를 ~로".
+  - 번호마다 KO(한국어, 원문) → JA(일본어) → EN(영어) 순서입니다.
+  - {n}, {name}, {count} 처럼 중괄호로 싸인 것은 앱이 숫자나 이름을 넣는 자리이니 그대로 두세요.
+  - ⏎ 는 화면에서 줄이 바뀌는 곳입니다.
+  - {n:item|items} 는 영어에서 개수에 따라 단수/복수를 고르는 표시입니다.
+  - @event, @op, @opt 가 붙은 것은 같은 낱말이 쓰임새마다 다르게 번역될 때 구분하는 꼬리표라서, 화면에는 보이지 않습니다.
+  - 수정할 곳은 번호와 언어(KO/JA/EN)를 알려주세요. 예) "123번 JA를 ~로".
 
 ======================================================================
-■ 공통 (이름·기본 문구·오류 메시지)  (120개)
+■ 공통 (이름, 기본 문구, 오류 메시지)  (120개)
 ======================================================================
 
 [1]
@@ -614,7 +614,7 @@
   EN  Delete last digit
 
 ======================================================================
-■ 백업·복원·초기화·서랍 만들기·서랍 칸  (127개)
+■ 백업, 복원, 초기화, 서랍 만들기, 서랍 칸  (127개)
 ======================================================================
 
 [121]
@@ -973,7 +973,7 @@
   EN  {n} {n:item|items}
 
 [192]
-  KO  서랍 칸 설정과 알림·반복 설정도 함께 삭제돼요.
+  KO  서랍 칸 설정과 알림과 반복 설정도 함께 삭제돼요.
   JA  項目の設定と、通知と繰り返しの設定も一緒に削除されます。
   EN  Field settings and notification/repeat settings will be deleted too.
 
@@ -1248,12 +1248,12 @@
   EN  Delete drawer
 
 [247]
-  KO  {fields}개 서랍 칸 · {items}개 보관품
+  KO  {fields}개 서랍 칸, {items}개 보관품
   JA  項目{fields}個、アイテム{items}件
-  EN  {fields} {fields:field|fields} · {items} {items:item|items}
+  EN  {fields} {fields:field|fields}, {items} {items:item|items}
 
 ======================================================================
-■ 도움말·FAQ·가이드·정보·피드백  (159개)
+■ 도움말, FAQ, 가이드, 정보, 피드백  (159개)
 ======================================================================
 
 [248]
@@ -1267,12 +1267,12 @@
   EN  Basics
 
 [250]
-  KO  데이터 · 백업
+  KO  데이터와 백업
   JA  データとバックアップ
   EN  Data & backup
 
 [251]
-  KO  알림 · 반복
+  KO  알림과 반복
   JA  通知と繰り返し
   EN  Alerts & repeats
 
@@ -1847,7 +1847,7 @@
   EN  Illustration of viewing contents as cards and a table
 
 [366]
-  KO  검색·정렬·필터와 ⏎ CSV/PDF를 사용할 수 있어요.
+  KO  검색, 정렬, 필터와 ⏎ CSV/PDF를 사용할 수 있어요.
   JA  検索、並べ替え、フィルターと ⏎ CSV/PDFが使えます。
   EN  Use search, sort, filters ⏎ and CSV/PDF export.
 
@@ -2052,7 +2052,7 @@
   EN  Version {version}
 
 ======================================================================
-■ 반복·알림·표 보기·정렬/필터·테마·통계·검색  (272개)
+■ 반복, 알림, 표 보기, 정렬과 필터, 테마, 통계, 검색  (272개)
 ======================================================================
 
 [407]
@@ -2166,9 +2166,9 @@
   EN  We'll create a new {target} item {cycle}, based on {field}.
 
 [429]
-  KO  서랍 · 보관품
+  KO  서랍과 보관품
   JA  ひきだしとアイテム
-  EN  Drawer · Item
+  EN  Drawer and item
 
 [430]
   KO  새 보관품 생성
@@ -2241,7 +2241,7 @@
   EN  every year
 
 [444]
-  KO  같은 월·일
+  KO  같은 월과 일
   JA  同じ月日
   EN  Same month and day
 
@@ -2266,9 +2266,9 @@
   EN  Repeat schedule
 
 [449]
-  KO  기준 날짜 · {field}
+  KO  기준 날짜: {field}
   JA  基準日：{field}
-  EN  Based on · {field}
+  EN  Based on: {field}
 
 [450]
   KO  얼마마다 새 보관품을 만들까요?
@@ -2386,7 +2386,7 @@
   EN  Creates the next item automatically.
 
 [473]
-  KO  날짜 서랍 칸을 기준으로 매주·매달·매년 원하는 주기에 맞춰 ⏎ 새 보관품을 만들 수 있어요.
+  KO  날짜 서랍 칸을 기준으로 매주, 매달, 매년 원하는 주기에 맞춰 ⏎ 새 보관품을 만들 수 있어요.
   JA  日付の項目を基準に、毎週、毎月、毎年など好きな周期で ⏎ 新しいアイテムを作成できます。
   EN  Create new items weekly, monthly or yearly ⏎ based on a date field.
 
@@ -2756,9 +2756,9 @@
   EN  Language
 
 [547]
-  KO  한국어 · 日本語 · English
-  JA  한국어 / 日本語 / English
-  EN  한국어 · 日本語 · English
+  KO  한국어, 日本語, English
+  JA  한국어, 日本語, English
+  EN  한국어, 日本語, English
 
 [548]
   KO  FAQ와 사용 가이드를 확인해요.
@@ -3346,14 +3346,14 @@
   EN  Enter your current PIN ⏎ to continue the reset.
 
 [665]
-  KO  {date} · 백업 파일 1개
+  KO  {date} (백업 파일 1개)
   JA  {date}（バックアップファイル1件）
-  EN  {date} · 1 backup file
+  EN  {date} (1 backup file)
 
 [666]
-  KO  {drawers}개 서랍 · {records}개 기록
+  KO  {drawers}개 서랍, {records}개 기록
   JA  ひきだし{drawers}個、記録{records}件
-  EN  {drawers} {drawers:drawer|drawers} · {records} {records:record|records}
+  EN  {drawers} {drawers:drawer|drawers}, {records} {records:record|records}
 
 [667]
   KO  {n}장
@@ -3416,7 +3416,7 @@
   EN  Cards
 
 ======================================================================
-■ 설정·보안·PIN·알림 공통·온보딩  (159개)
+■ 설정, 보안, PIN, 알림 공통, 온보딩  (159개)
 ======================================================================
 
 [679]
@@ -3925,9 +3925,9 @@
   EN  Notifications for this drawer
 
 [780]
-  KO  기본 알림 시간 · 알림 쉬는 시간
+  KO  기본 알림 시간과 알림 쉬는 시간
   JA  デフォルトの通知時刻とおやすみ時間
-  EN  Default time · Quiet hours
+  EN  Default time and quiet hours
 
 [781]
   KO  알림 추가하기를 누르면 먼저 날짜 서랍 칸을 선택해요.
@@ -4264,7 +4264,7 @@
   EN  Item name
 
 [847]
-  KO  최애·그룹
+  KO  최애 그룹
   JA  推しグループ
   EN  Favorite artist / group
 
@@ -4314,7 +4314,7 @@
   EN  Makeup
 
 [857]
-  KO  헤어·바디
+  KO  헤어와 바디
   JA  ヘアとボディ
   EN  Hair & body
 
@@ -4344,7 +4344,7 @@
   EN  Date read
 
 [863]
-  KO  영화·드라마
+  KO  영화와 드라마
   JA  映画とドラマ
   EN  Movies & shows
 
@@ -4374,7 +4374,7 @@
   EN  Date watched
 
 [869]
-  KO  카페·맛집
+  KO  카페와 맛집
   JA  カフェとグルメ
   EN  Cafés & restaurants
 
@@ -4479,7 +4479,7 @@
   EN  Went with
 
 [890]
-  KO  게임·음반
+  KO  게임과 음반
   JA  ゲームと音楽アルバム
   EN  Games & music albums
 
@@ -4494,7 +4494,7 @@
   EN  Merch
 
 [893]
-  KO  플랫폼·형태
+  KO  플랫폼과 형태
   JA  プラットフォームと形態
   EN  Platform / format
 
@@ -4633,9 +4633,9 @@
   EN  Export a table as a CSV or PDF file.
 
 [920]
-  KO  프리미엄 시작 · {price}
+  KO  프리미엄 시작 ({price})
   JA  プレミアムを始める（{price}）
-  EN  Get Premium · {price}
+  EN  Get Premium ({price})
 
 [921]
   KO  결제는 Google Play에서 처리돼요. 이 앱은 카드 정보를 받지 않아요.

@@ -46,8 +46,8 @@ export function RecurrenceCompleteScreen({
         <div className="rcx-row">
           <div className="rcx-icon"><img src={drawerIconUri} alt="" /></div>
           <div className="rcx-copy">
-            <span>{t('서랍 · 보관품')}</span>
-            <strong>{drawerName} · {targetName}</strong>
+            <span>{t('서랍과 보관품')}</span>
+            <strong>{drawerName}, {targetName}</strong>
           </div>
           <div className="rcx-value">{t('새 보관품 생성')}</div>
         </div>

@@ -59,7 +59,7 @@ export function PremiumScreen({ prices, onBack, onBuyPremium, onRestore, onSuppo
           ))}
         </ul>
 
-        <button type="button" className="pm-buy" onClick={onBuyPremium}>{t('프리미엄 시작 · {price}', { price: prices.premium })}</button>
+        <button type="button" className="pm-buy" onClick={onBuyPremium}>{t('프리미엄 시작 ({price})', { price: prices.premium })}</button>
         <p className="pm-note">{t('결제는 Google Play에서 처리돼요. 이 앱은 카드 정보를 받지 않아요.')}</p>
         <p className="pm-restore">{t('이미 구매하셨나요?')} <button type="button" onClick={onRestore}>{t('구매 복원')}</button></p>
 

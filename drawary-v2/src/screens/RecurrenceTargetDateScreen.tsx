@@ -69,7 +69,7 @@ export function RecurrenceTargetDateScreen({
         <div className="rtd-drawer-icon"><img src={drawerIconUri} alt="" /></div>
         <div className="rtd-context-copy">
           <strong>{drawerName}</strong>
-          <span>{t('{fields}개 서랍 칸 · {items}개 보관품', { fields: fieldCount, items: itemCount })}</span>
+          <span>{t('{fields}개 서랍 칸, {items}개 보관품', { fields: fieldCount, items: itemCount })}</span>
         </div>
       </section>
 

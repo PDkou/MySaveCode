@@ -14,7 +14,7 @@ export const premium: Messages = {
   '날짜 칸을 기준으로 새 보관품을 자동으로 만들어요.': { ja: '日付の項目を基準に、アイテムを自動で作ります。', en: 'Creates new items automatically from a date field.' },
   '표 내보내기': { ja: '表の書き出し', en: 'Table export' },
   '표를 CSV나 PDF 파일로 내보내요.': { ja: '表をCSVやPDFファイルに書き出します。', en: 'Export a table as a CSV or PDF file.' },
-  '프리미엄 시작 · {price}': { ja: 'プレミアムを始める（{price}）', en: 'Get Premium · {price}' },
+  '프리미엄 시작 ({price})': { ja: 'プレミアムを始める（{price}）', en: 'Get Premium ({price})' },
   '결제는 Google Play에서 처리돼요. 이 앱은 카드 정보를 받지 않아요.': { ja: 'お支払いはGoogle Playで処理されます。このアプリがカード情報を受け取ることはありません。', en: 'Payment is handled by Google Play. This app never receives your card details.' },
   '이미 구매하셨나요?': { ja: 'すでに購入しましたか？', en: 'Already bought it?' },
   '구매 복원': { ja: '購入を復元', en: 'Restore purchase' },

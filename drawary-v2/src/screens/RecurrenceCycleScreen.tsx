@@ -20,7 +20,7 @@ export interface RecurrenceCycleScreenProps {
 export const CYCLE_META = {
   weekly: { label: K('매주'), sub: K('같은 요일'), unit: K('주'), question: K('몇 주마다 만들까요?'), image: '/assets/states/recurrence/state_recurrence_weekly.webp' },
   monthly: { label: K('매달'), sub: K('같은 날짜'), unit: K('개월'), question: K('몇 개월마다 만들까요?'), image: '/assets/states/recurrence/state_recurrence_monthly.webp' },
-  yearly: { label: K('매년'), sub: K('같은 월·일'), unit: K('년'), question: K('몇 년마다 만들까요?'), image: '/assets/states/recurrence/state_recurrence_yearly.webp' },
+  yearly: { label: K('매년'), sub: K('같은 월과 일'), unit: K('년'), question: K('몇 년마다 만들까요?'), image: '/assets/states/recurrence/state_recurrence_yearly.webp' },
 } as const;
 
 export function cycleLabel(cycle: RecurrenceCycle, interval: number): string {
@@ -56,7 +56,7 @@ export function RecurrenceCycleScreen({
         <span className="rc-summary-icon"><img src="/assets/field-types/field_date.webp" alt="" /></span>
         <span className="rc-summary-copy">
           <strong>{targetName}</strong>
-          <span>{t('기준 날짜 · {field}', { field: dateFieldName })}</span>
+          <span>{t('기준 날짜: {field}', { field: dateFieldName })}</span>
         </span>
         <span className="rc-summary-tag">{t('새 보관품 생성')}</span>
       </section>

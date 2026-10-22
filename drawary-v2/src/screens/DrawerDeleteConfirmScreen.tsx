@@ -29,7 +29,7 @@ export function DrawerDeleteConfirmScreen({ drawerName, recordCount, onCancel, o
         <h2 id="drawer-delete-title">{t('이 서랍을 삭제할까요?')}</h2>
         <p>
           {tx('{drawer} 서랍과 안에 담긴\n{count}이 모두 삭제돼요.', { drawer: <strong>‘{drawerName}’</strong>, count: <strong>{t('{n}개 보관품', { n: recordCount })}</strong> })}
-          <span className="ddc-detail">{t('서랍 칸 설정과 알림·반복 설정도 함께 삭제돼요.')}</span>
+          <span className="ddc-detail">{t('서랍 칸 설정과 알림과 반복 설정도 함께 삭제돼요.')}</span>
           <span className="ddc-warning">{t('삭제한 뒤에는 되돌릴 수 없어요.')}</span>
         </p>
         <div className="ddc-actions">

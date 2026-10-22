@@ -59,7 +59,7 @@ export function RecurrenceManagementScreen({
         <div className="rm-drawer-icon"><img src={drawerIconUri} alt="" /></div>
         <div className="rm-context-copy">
           <strong>{drawerName}</strong>
-          <span>{t('{fields}개 서랍 칸 · {items}개 보관품', { fields: fieldCount, items: itemCount })}</span>
+          <span>{t('{fields}개 서랍 칸, {items}개 보관품', { fields: fieldCount, items: itemCount })}</span>
         </div>
       </section>
 
@@ -71,7 +71,7 @@ export function RecurrenceManagementScreen({
 
           <section className="rm-message">
             <h2>{t('다음 보관품을 자동으로 만들어요.')}</h2>
-            <p>{tl('날짜 서랍 칸을 기준으로 매주·매달·매년 원하는 주기에 맞춰\n새 보관품을 만들 수 있어요.')}</p>
+            <p>{tl('날짜 서랍 칸을 기준으로 매주, 매달, 매년 원하는 주기에 맞춰\n새 보관품을 만들 수 있어요.')}</p>
           </section>
 
           <button className="rm-primary" type="button" onClick={onAdd}>
@@ -111,7 +111,7 @@ export function RecurrenceManagementScreen({
                 onClick={() => onOpenRule?.(rule.id)}
               >
                 <strong>{rule.targetLabel}</strong>
-                <span>{rule.cycleLabel} · {rule.dateFieldName}</span>
+                <span>{rule.cycleLabel}, {rule.dateFieldName}</span>
                 <em>{rule.statusLabel ?? (rule.enabled ? t('사용 중') : t('일시 정지'))}</em>
               </button>
             ))}

@@ -72,7 +72,7 @@ export const backup_data: Messages = {
   '이 서랍을 삭제할까요?': { ja: 'このひきだしを削除しますか？', en: 'Delete this drawer?' },
   '{drawer} 서랍과 안에 담긴\n{count}이 모두 삭제돼요.': { ja: '{drawer}のひきだしと、中のアイテム（{count}）をすべて削除します。', en: 'The drawer {drawer} and its contents ({count}) will be deleted.' },
   '{n}개 보관품': { ja: 'アイテム{n}件', en: '{n} {n:item|items}' },
-  '서랍 칸 설정과 알림·반복 설정도 함께 삭제돼요.': { ja: '項目の設定と、通知と繰り返しの設定も一緒に削除されます。', en: 'Field settings and notification/repeat settings will be deleted too.' },
+  '서랍 칸 설정과 알림과 반복 설정도 함께 삭제돼요.': { ja: '項目の設定と、通知と繰り返しの設定も一緒に削除されます。', en: 'Field settings and notification/repeat settings will be deleted too.' },
   '삭제한 뒤에는 되돌릴 수 없어요.': { ja: '削除したあとは元に戻せません。', en: 'This can\'t be undone.' },
   '삭제하기': { ja: '削除する', en: 'Delete' },
   '보관품 {recordCount}개': { ja: 'アイテム{recordCount}件', en: '{recordCount} {recordCount:item|items}' },
@@ -127,5 +127,5 @@ export const backup_data: Messages = {
   '반복 관리': { ja: '繰り返しの管理', en: 'Manage repeats' },
   '백업 / 내보내기': { ja: 'バックアップとエクスポート', en: 'Backup / export' },
   '서랍 삭제': { ja: 'ひきだしを削除', en: 'Delete drawer' },
-  '{fields}개 서랍 칸 · {items}개 보관품': { ja: '項目{fields}個、アイテム{items}件', en: '{fields} {fields:field|fields} · {items} {items:item|items}' },
+  '{fields}개 서랍 칸, {items}개 보관품': { ja: '項目{fields}個、アイテム{items}件', en: '{fields} {fields:field|fields}, {items} {items:item|items}' },
 };

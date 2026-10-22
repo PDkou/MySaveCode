@@ -1391,9 +1391,9 @@ export default function App() {
         <FixedCanvas height={844}>
           <RestoreReviewScreen
             fileName={restorePlan.fileName}
-            fileDetails={t('{date} · 백업 파일 1개', { date: when })}
+            fileDetails={t('{date} (백업 파일 1개)', { date: when })}
             hasPhotos={sum.includesPhotos}
-            recordSummary={t('{drawers}개 서랍 · {records}개 기록', { drawers: sum.drawers, records: sum.records })}
+            recordSummary={t('{drawers}개 서랍, {records}개 기록', { drawers: sum.drawers, records: sum.records })}
             photoSummary={t('{n}장', { n: sum.photos })}
             onBack={() => navigate('restore-file-picker')}
             onConfirmRestore={() => { if (sec.appLock) setPinGate('restore'); else navigate('restore-progress'); }}
@@ -1417,7 +1417,7 @@ export default function App() {
       return <main className="drawary-app-shell" data-route="restore-success">
         <FixedCanvas height={844}>
           <RestoreSuccessScreen
-            recordCount={t('{drawers}개 서랍 · {records}개 기록', { drawers: sum?.drawers ?? 0, records: sum?.records ?? 0 })}
+            recordCount={t('{drawers}개 서랍, {records}개 기록', { drawers: sum?.drawers ?? 0, records: sum?.records ?? 0 })}
             photoCount={t('{n}장', { n: sum?.photos ?? 0 })}
             settingsStatus={t('복원 완료')}
             onBack={() => navigate('data-management')}
@@ -1801,9 +1801,9 @@ export default function App() {
             />
           ) : tabRoute ? (
             <div className="drawary-dev-only">
-              <div className="drawary-dev-flag">개발 검수용 · 확정 화면 아님</div>
+              <div className="drawary-dev-flag">개발 검수용, 확정 화면 아님</div>
               <h1 id="drawary-dev-screen-title">{t(NAMES[route])}</h1>
-              <p>V2-08 공통 하단바·화면 이동 동작 확인</p>
+              <p>V2-08 공통 하단바와 화면 이동 동작 확인</p>
               <p className="drawary-dev-detail">이 영역의 실제 확정 화면은 후속 구현 단계에서 연결합니다.</p>
             </div>
           ) : null}

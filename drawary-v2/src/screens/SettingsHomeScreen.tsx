@@ -36,7 +36,7 @@ export const SETTINGS_ROWS = [
   { key: 'theme', icon: 'icon_theme.webp', title: K('테마 설정'), desc: K('앱의 분위기와 강조 색상을 바꿔요.') },
   { key: 'security', icon: 'icon_lock.webp', title: K('보안 설정'), desc: K('앱 잠금과 생체 인증을 관리해요.') },
   { key: 'data', icon: 'icon_upload.webp', title: K('데이터 관리'), desc: K('백업, 복원, 데이터 초기화를 관리해요.') },
-  { key: 'language', icon: 'icon_language.webp', title: K('언어 설정'), desc: K('한국어 · 日本語 · English') },
+  { key: 'language', icon: 'icon_language.webp', title: K('언어 설정'), desc: K('한국어, 日本語, English') },
   { key: 'help', icon: 'icon_help.webp', title: K('도움말'), desc: K('FAQ와 사용 가이드를 확인해요.') },
   { key: 'info', icon: 'icon_info.webp', title: K('정보'), desc: K('버전, 약관, 오픈소스 정보를 확인해요.') },
   { key: 'feedback', icon: 'icon_edit.webp', title: K('피드백'), desc: K('개선 제안이나 오류를 알려주세요.') },

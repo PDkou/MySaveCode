@@ -14,15 +14,15 @@ interface FaqItem {
 const CATEGORY_TABS: { id: FaqCategory; label: string }[] = [
   { id: 'all', label: K('전체') },
   { id: 'basic', label: K('기본 사용') },
-  { id: 'data', label: K('데이터 · 백업') },
-  { id: 'repeat', label: K('알림 · 반복') },
+  { id: 'data', label: K('데이터와 백업') },
+  { id: 'repeat', label: K('알림과 반복') },
   { id: 'settings', label: K('앱 설정') },
 ];
 
 const CATEGORY_LABELS: Record<Exclude<FaqCategory, 'all'>, string> = {
   basic: K('기본 사용'),
-  data: K('데이터 · 백업'),
-  repeat: K('알림 · 반복'),
+  data: K('데이터와 백업'),
+  repeat: K('알림과 반복'),
   settings: K('앱 설정'),
 };
 

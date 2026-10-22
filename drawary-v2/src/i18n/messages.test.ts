@@ -77,7 +77,7 @@ describe('translations', () => {
 
   it('has no Korean left in the code outside t()/K() (except sample fixtures)', () => {
     // Demo/fixture defaults that callers always override, and developer-only text.
-    const ALLOWED = /^(화장품|롬앤 쥬시래스팅 틴트|립 틴트|쿠션 파운데이션|클리오 킬커버 쿠션|아이섀도우 팔레트|데이지크 새도우 팔레트|향수|샤넬 코코 마드모아젤|구매일|가격|메모|2024\. 03\. 12\. \(화\)|발색이 자연스럽고 지속력이 좋아요\.|개발 검수용 · 확정 화면 아님|V2-08 공통 하단바·화면 이동 동작 확인|이 영역의 실제 확정 화면은 후속 구현 단계에서 연결합니다\.|반복 보관품을 만들지 못했어요|알림 목록을 보내지 못했어요|사진을 불러오지 못했어요|화면 보호를 바꾸지 못했어요)$/;
+    const ALLOWED = /^(화장품|롬앤 쥬시래스팅 틴트|립 틴트|쿠션 파운데이션|클리오 킬커버 쿠션|아이섀도우 팔레트|데이지크 새도우 팔레트|향수|샤넬 코코 마드모아젤|구매일|가격|메모|2024\. 03\. 12\. \(화\)|발색이 자연스럽고 지속력이 좋아요\.|개발 검수용, 확정 화면 아님|V2-08 공통 하단바와 화면 이동 동작 확인|이 영역의 실제 확정 화면은 후속 구현 단계에서 연결합니다\.|반복 보관품을 만들지 못했어요|알림 목록을 보내지 못했어요|사진을 불러오지 못했어요|화면 보호를 바꾸지 못했어요)$/;
     const SKIP = /(screenManifest|LanguageSettingsScreen|drawerStyle)\./;
     const left: string[] = [];
     for (const f of sourceFiles(SRC)) {

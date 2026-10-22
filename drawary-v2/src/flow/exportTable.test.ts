@@ -41,7 +41,7 @@ describe('export file names and printable table', () => {
   it('escapes HTML and shows what the screen shows', () => {
     const html = buildPrintHtml('A<b>', cols, rows.slice(0, 1), '2026. 10. 20.');
     expect(html).toContain('<h1>A&lt;b&gt;</h1>');
-    expect(html).toContain('보관품 1개 · 2026. 10. 20.');
+    expect(html).toContain('보관품 1개, 2026. 10. 20.');
     expect(html).toContain('립 &quot;틴트&quot;, 코랄');
     expect(html).toContain('2024. 03. 12.');
     expect(html).toContain('13,000');

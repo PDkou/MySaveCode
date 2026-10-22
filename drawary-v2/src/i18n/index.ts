@@ -68,8 +68,8 @@ export const withoutContext = (ko: string): string => ko.replace(/@[a-z]+$/, '')
 
 export const t = (ko: string, values?: Record<string, string | number>): string => translate(ko, current, values);
 
-/** Separator between two short facts on one line ("Today · 7 days before"); Japanese avoids the middle dot. */
-export const dot = (): string => (current === 'ja' ? ' / ' : ' · ');
+/** Separator between two short facts on one line ("Today, 7 days before"). */
+export const dot = (): string => (current === 'ja' ? '、' : ', ');
 
 /** Marks a Korean string kept in a constant. Same value; call t() on it where it is shown. */
 export const K = (ko: string): string => ko;

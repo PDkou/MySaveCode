@@ -116,7 +116,7 @@ export function DrawerManageScreen({
         </div>
         <div className="dm-summary-copy">
           <strong>{drawerName}</strong>
-          <span>{t('{fields}개 서랍 칸 · {items}개 보관품', { fields: fieldCount, items: recordCount })}</span>
+          <span>{t('{fields}개 서랍 칸, {items}개 보관품', { fields: fieldCount, items: recordCount })}</span>
         </div>
       </section>
 

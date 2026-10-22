@@ -16,14 +16,14 @@ describe('notification plan', () => {
   it('fires N days before the date at the rule time, soonest first, with a readable text', () => {
     const plan = computeNotificationPlan({ rules: [rule('r1', 'exp', 7)], drawers: [drawer], fields, records, now });
     expect(plan.map((p) => [p.recordId, p.fireAt])).toEqual([['a', at(2026, 11, 3, 9, 0)]]);
-    expect(plan[0]).toMatchObject({ title: '화장품', body: '선크림 · 사용기한 7일 전', key: 'r1:a', drawerId: 'd', ruleId: 'r1' });
+    expect(plan[0]).toMatchObject({ title: '화장품', body: '선크림, 사용기한 7일 전', key: 'r1:a', drawerId: 'd', ruleId: 'r1' });
   });
 
   it('skips moments already past, records without a date, and today at an earlier time', () => {
     expect(computeNotificationPlan({ rules: [rule('r', 'exp', 7)], drawers: [drawer], fields, records, now }).map((p) => p.recordId)).toEqual(['a']);
     const day0 = computeNotificationPlan({ rules: [rule('r', 'exp', 0, '08:00'), rule('s', 'exp', 0, '18:00')], drawers: [drawer], fields, records: [rec('t', { n: '오늘', exp: '2026-10-20' })], now });
     expect(day0.map((p) => p.key)).toEqual(['s:t']); // 08:00 already passed, 18:00 has not
-    expect(day0[0].body).toBe('오늘 · 사용기한 당일');
+    expect(day0[0].body).toBe('오늘, 사용기한 당일');
   });
 
   it('handles month boundaries when subtracting days', () => {

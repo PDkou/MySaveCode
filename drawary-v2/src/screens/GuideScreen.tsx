@@ -79,7 +79,7 @@ export function GuideScreen({ onBack, onNavigate }: GuideScreenProps) {
             </span>
             <span className="guide57-step-copy">
               <h2>{t('표로 보기')}</h2>
-              <p>{tl('검색·정렬·필터와\nCSV/PDF를 사용할 수 있어요.')}</p>
+              <p>{tl('검색, 정렬, 필터와\nCSV/PDF를 사용할 수 있어요.')}</p>
               <span className="guide57-step-path">{tl('서랍 상세\n→ 표로 보기')}</span>
             </span>
           </button>
