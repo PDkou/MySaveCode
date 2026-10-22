@@ -22,8 +22,8 @@ export const premium: Messages = {
   '기능은 그대로예요. 마음에 드셨다면 힘이 나는 응원이 돼요.': { ja: '機能は変わりません。気に入っていただけたら、励みになります。', en: 'Nothing unlocks. If you like the app, it keeps me going.' },
   '커피 한 잔': { ja: 'コーヒー1杯', en: 'A coffee' },
   '라떼 한 잔': { ja: 'ラテ1杯', en: 'A latte' },
-  '배고픈 개발자에게 밥 사주기': { ja: 'おなかをすかせた開発者にごはんを', en: 'Feed the hungry developer' },
-  '얼마나 배불리 먹일까요?': { ja: 'どのくらい食べさせてくれますか？', en: 'How big a meal?' },
-  '배부르면 업데이트가 빨라질지도 몰라요.': { ja: '満腹になると、アップデートが早くなるかも。', en: 'A full stomach might speed up updates.' },
+  '개발자 기분 좋게 하기': { ja: '開発者をいい気分にする', en: 'Cheer up the developer' },
+  '얼만큼 기분 좋게 하려구요?': { ja: 'どのくらいご機嫌にしますか？', en: 'How big a mood boost?' },
+  '기부니가 좋은 개발자는 더 좋은 앱을 만들걸요?': { ja: 'ご機嫌な開発者は、もっといいアプリを作りますよ？', en: 'A happy developer makes a better app, right?' },
   '후원은 몇 번이든 할 수 있어요.': { ja: '何度でも応援できます。', en: 'You can do this as many times as you like.' },
 };

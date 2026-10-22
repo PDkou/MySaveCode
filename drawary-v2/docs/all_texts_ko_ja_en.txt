@@ -4673,19 +4673,19 @@
   EN  A latte
 
 [928]
-  KO  배고픈 개발자에게 밥 사주기
-  JA  おなかをすかせた開発者にごはんを
-  EN  Feed the hungry developer
+  KO  개발자 기분 좋게 하기
+  JA  開発者をいい気分にする
+  EN  Cheer up the developer
 
 [929]
-  KO  얼마나 배불리 먹일까요?
-  JA  どのくらい食べさせてくれますか？
-  EN  How big a meal?
+  KO  얼만큼 기분 좋게 하려구요?
+  JA  どのくらいご機嫌にしますか？
+  EN  How big a mood boost?
 
 [930]
-  KO  배부르면 업데이트가 빨라질지도 몰라요.
-  JA  満腹になると、アップデートが早くなるかも。
-  EN  A full stomach might speed up updates.
+  KO  기부니가 좋은 개발자는 더 좋은 앱을 만들걸요?
+  JA  ご機嫌な開発者は、もっといいアプリを作りますよ？
+  EN  A happy developer makes a better app, right?
 
 [931]
   KO  후원은 몇 번이든 할 수 있어요.
