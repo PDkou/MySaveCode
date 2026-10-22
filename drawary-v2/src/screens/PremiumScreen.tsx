@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './PremiumScreen.css';
 import { t, tl, K } from '../i18n';
-import type { PremiumReason, SupportKind } from '../flow/premium';
+import { SUPPORT_PURCHASES_ENABLED, type PremiumReason, type SupportKind } from '../flow/premium';
 
 export interface PremiumPrices {
   /** Price texts as Google Play formats them for the person's country. */
@@ -104,7 +104,7 @@ export function PremiumScreen({ prices, owned = false, reason = null, notice = n
           </>
         )}
 
-        <section className="pm-coffee">
+        {SUPPORT_PURCHASES_ENABLED && <section className="pm-coffee">
           <div className="pm-coffee-head">
             <img src="/assets/drawer-icons/drawer_icon_cafe.webp" alt="" />
             <div><h3>{t('개발자에게 커피 한 잔')}</h3><p>{t('기능은 그대로예요. 마음에 드셨다면 힘이 나는 응원이 돼요.')}</p></div>
@@ -121,12 +121,12 @@ export function PremiumScreen({ prices, owned = false, reason = null, notice = n
             </button>
           </div>
           <small>{t('후원은 몇 번이든 할 수 있어요.')}</small>
-        </section>
+        </section>}
       </div>
 
       {notice && <div className="pm-toast" role="status">{t(NOTICES[notice])}</div>}
 
-      {otherOpen && (
+      {SUPPORT_PURCHASES_ENABLED && otherOpen && (
         <div className="pm-overlay">
           <button type="button" className="pm-backdrop" aria-label={t('닫기')} onClick={() => setOtherOpen(false)} />
           <div className="pm-modal" role="dialog" aria-modal="true" aria-label={t('얼만큼 기분 좋게 하려구요?')}>

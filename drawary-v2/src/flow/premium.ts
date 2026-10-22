@@ -9,6 +9,12 @@ import { DEFAULT_THEME, type ThemeId } from './theme';
 export const PREMIUM_KEY = 'premium';
 export const FREE_DRAWER_LIMIT = 5;
 
+/**
+ * The "buy the developer a coffee" support products (they unlock nothing). Google Play's rules for such tips are to be confirmed
+ * before release; set this to false to hide the whole support section and ship Premium only.
+ */
+export const SUPPORT_PURCHASES_ENABLED = true;
+
 /** What the person tried that Free does not include; the Premium screen says it at the top. */
 export type PremiumReason = 'drawers' | 'theme' | 'repeat' | 'export';
 
