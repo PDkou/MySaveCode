@@ -25,6 +25,7 @@ import { computeStats } from './flow/stats';
 import { NewDrawerScreen } from './screens/NewDrawerScreen';
 import { TemplatePickerScreen } from './screens/TemplatePickerScreen';
 import { PremiumScreen } from './screens/PremiumScreen';
+import { premiumPrices } from './flow/premiumPrices';
 import { draftFieldsOf } from './flow/drawerTemplates';
 import { DrawerDetailScreen } from './screens/DrawerDetailScreen';
 import { RecordDetailScreen } from './screens/RecordDetailScreen';
@@ -757,11 +758,11 @@ export default function App() {
       </main>;
     }
     if (route === 'premium') {
-      // The purchase itself is not connected yet (Google Play billing comes with the Android build); the prices shown are samples.
+      // The purchase itself is not connected yet (Google Play billing comes with the Android build); the prices shown are samples in the currency of the language (src/flow/premiumPrices.ts).
       return <main className="drawary-app-shell" data-route="premium">
         <FixedCanvas height={844} grow>
           <PremiumScreen
-            prices={{ premium: '¥1,200', coffee: '¥300', latte: '¥600', amounts: ['¥100', '¥500', '¥1,000', '¥2,000', '¥5,000', '¥10,000'] }}
+            prices={premiumPrices(language)}
             onBack={returnToTab}
             onBuyPremium={() => {}}
             onRestore={() => {}}
