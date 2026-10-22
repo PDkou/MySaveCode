@@ -1,0 +1,4569 @@
+﻿Drawary 앱 안의 모든 문구 (한국어 / 日本語 / English)
+만든 날: 2026-10-22
+
+읽는 법
+  · 번호마다 KO(한국어, 원문) → JA(일본어) → EN(영어) 순서입니다.
+  · {n}, {name}, {count} 처럼 중괄호로 싸인 것은 앱이 숫자나 이름을 넣는 자리이니 그대로 두세요.
+  · ⏎ 는 화면에서 줄이 바뀌는 곳입니다.
+  · {n:item|items} 는 영어에서 개수에 따라 단수/복수를 고르는 표시입니다.
+  · @event, @op, @opt 가 붙은 것은 같은 낱말이 쓰임새마다 다르게 번역될 때 구분하는 꼬리표라서, 화면에는 보이지 않습니다.
+  · 수정할 곳은 번호와 언어(KO/JA/EN)를 알려주세요. 예) "123번 JA를 ~로".
+
+======================================================================
+■ 공통 (이름·기본 문구·오류 메시지)  (120개)
+======================================================================
+
+[1]
+  KO  홈
+  JA  ホーム
+  EN  Home
+
+[2]
+  KO  검색
+  JA  検索
+  EN  Search
+
+[3]
+  KO  통계
+  JA  統計
+  EN  Stats
+
+[4]
+  KO  설정
+  JA  設定
+  EN  Settings
+
+[5]
+  KO  새 서랍 만들기
+  JA  新しいひきだしを作る
+  EN  New drawer
+
+[6]
+  KO  저장하지 못했어요.
+  JA  保存できませんでした。
+  EN  Couldn't save.
+
+[7]
+  KO  서랍 이름을 먼저 정해 주세요.
+  JA  先にひきだしの名前を決めてください。
+  EN  Please name your drawer first.
+
+[8]
+  KO  종료
+  JA  終了
+  EN  Ended
+
+[9]
+  KO  {createdCount}개 만들었어요
+  JA  {createdCount}件作成済み
+  EN  {createdCount} created
+
+[10]
+  KO  당일
+  JA  当日
+  EN  On the day
+
+[11]
+  KO  {daysBefore}일 전
+  JA  {daysBefore}日前
+  EN  {daysBefore} {daysBefore:day|days} before
+
+[12]
+  KO  '{field}' {when} {time} 알림을 삭제할까요?
+  JA  「{field}」{when} {time}の通知を削除しますか？
+  EN  Delete the '{field}' notification ({when}, {time})?
+
+[13]
+  KO  '{targetLabel}' 반복 설정을 삭제할까요? ⏎ 이미 만들어진 보관품은 그대로 남아요.
+  JA  「{targetLabel}」の繰り返し設定を削除しますか？ ⏎ すでに作成されたアイテムはそのまま残ります。
+  EN  Delete the repeat rule for '{targetLabel}'? ⏎ Items already created will stay.
+
+[14]
+  KO  이 보관품에는 '{field}' 날짜가 없어요. 날짜를 먼저 채워 주세요.
+  JA  このアイテムには「{field}」の日付がありません。先に日付を入力してください。
+  EN  This item has no '{field}' date. Please fill in the date first.
+
+[15]
+  KO  날짜
+  JA  日付
+  EN  Date
+
+[16]
+  KO  반복할 보관품 선택
+  JA  繰り返すアイテムを選択
+  EN  Choose an item to repeat
+
+[17]
+  KO  지문/얼굴 인식을 확인하지 못했어요. 다시 시도해 주세요.
+  JA  指紋・顔認証を確認できませんでした。もう一度お試しください。
+  EN  Couldn't verify your fingerprint or face. Please try again.
+
+[18]
+  KO  사진 포함 백업
+  JA  写真を含むバックアップ
+  EN  Backup with photos
+
+[19]
+  KO  사진 제외 백업
+  JA  写真を除くバックアップ
+  EN  Backup without photos
+
+[20]
+  KO  복원 완료
+  JA  復元完了
+  EN  Restore complete
+
+[21]
+  KO  서랍 칸 편집
+  JA  項目を編集
+  EN  Edit fields
+
+[22]
+  KO  완료
+  JA  完了
+  EN  Done
+
+[23]
+  KO  {length}개 서랍 칸
+  JA  項目{length}個
+  EN  {length} {length:field|fields}
+
+[24]
+  KO  지우려는 선택 항목을 쓰고 있는 보관품 {affected}개에서 그 값이 사라져요. 계속할까요?
+  JA  削除する選択肢を使っているアイテム{affected}件の値が消えます。続けますか？
+  EN  The values of {affected} {affected:item|items} using the removed options will be cleared. Continue?
+
+[25]
+  KO   ⏎ 보관품 {count}개와 사진도 함께 삭제돼요.
+  JA   ⏎ アイテム{count}件と写真も一緒に削除されます。
+  EN   ⏎ {count} {count:item|items} and their photos will be deleted too.
+
+[26]
+  KO  '{name}' 서랍을 삭제할까요?{detail} ⏎ 삭제한 내용은 되돌릴 수 없어요.
+  JA  「{name}」のひきだしを削除しますか？{detail} ⏎ 削除した内容は元に戻せません。
+  EN  Delete the drawer '{name}'?{detail} ⏎ This can't be undone.
+
+[27]
+  KO  삭제하지 못했어요.
+  JA  削除できませんでした。
+  EN  Couldn't delete.
+
+[28]
+  KO  순서를 바꾸지 못했어요.
+  JA  並べ替えできませんでした。
+  EN  Couldn't change the order.
+
+[29]
+  KO  하단 메뉴
+  JA  下部メニュー
+  EN  Bottom menu
+
+[30]
+  KO  선택 안 함
+  JA  選択しない
+  EN  None
+
+[31]
+  KO  체크함
+  JA  チェック済み
+  EN  Checked
+
+[32]
+  KO  체크 안 함
+  JA  未チェック
+  EN  Unchecked
+
+[33]
+  KO  {name} 별점
+  JA  {name}の評価
+  EN  {name} rating
+
+[34]
+  KO  {n}점
+  JA  {n}点
+  EN  {n} {n:point|points}
+
+[35]
+  KO  이전 화면
+  JA  前の画面
+  EN  Back
+
+[36]
+  KO  이 기기에서는 저장 공간을 쓸 수 없어요.
+  JA  この環境では端末の保存領域を使えません。
+  EN  Device storage isn't available here.
+
+[37]
+  KO  저장 공간을 열 수 없어요.
+  JA  端末の保存領域を開けません。
+  EN  Couldn't open device storage.
+
+[38]
+  KO  다른 창에서 앱이 열려 있는 것 같아요. 그 창을 닫고 다시 시도해 주세요.
+  JA  端末の保存領域が別のウィンドウで使用中です。
+  EN  Device storage is in use in another window.
+
+[39]
+  KO  저장하지 못했어요. 잠시 뒤에 다시 시도해 주세요.
+  JA  保存領域へのリクエストに失敗しました。
+  EN  The storage request failed.
+
+[40]
+  KO  저장하지 못했어요. 다시 시도해 주세요.
+  JA  保存中にエラーが発生しました。
+  EN  An error occurred while saving.
+
+[41]
+  KO  저장이 중단됐어요.
+  JA  保存が中断されました。
+  EN  Saving was interrupted.
+
+[42]
+  KO  서랍 칸을 하나 이상 만들어 주세요.
+  JA  項目を1つ以上作ってください。
+  EN  Please create at least one field.
+
+[43]
+  KO  서랍을 찾을 수 없어요.
+  JA  ひきだしが見つかりません。
+  EN  Couldn't find the drawer.
+
+[44]
+  KO  서랍 순서를 바꾸지 못했어요.
+  JA  ひきだしの順番を変更できませんでした。
+  EN  Couldn't change the drawer order.
+
+[45]
+  KO  선택 항목은 2개 이상 필요해요.
+  JA  選択肢は2つ以上必要です。
+  EN  At least 2 options are needed.
+
+[46]
+  KO  같은 선택 항목이 여러 개 있어요.
+  JA  同じ選択肢が複数あります。
+  EN  There are duplicate options.
+
+[47]
+  KO  서랍 칸을 찾을 수 없어요.
+  JA  項目が見つかりません。
+  EN  Couldn't find the field.
+
+[48]
+  KO  서랍 칸 순서를 바꾸지 못했어요.
+  JA  項目の順番を変更できませんでした。
+  EN  Couldn't change the field order.
+
+[49]
+  KO  서랍 칸은 최소 1개 있어야 해요.
+  JA  項目は最低1つ必要です。
+  EN  A drawer needs at least one field.
+
+[50]
+  KO  사진은 최대 {MAX_RECORD_PHOTOS}장까지 등록할 수 있어요.
+  JA  写真は最大{MAX_RECORD_PHOTOS}枚まで登録できます。
+  EN  You can add up to {MAX_RECORD_PHOTOS} photos.
+
+[51]
+  KO  이미지 파일만 등록할 수 있어요.
+  JA  画像ファイルのみ登録できます。
+  EN  Only image files can be added.
+
+[52]
+  KO  보관품을 찾을 수 없어요.
+  JA  アイテムが見つかりません。
+  EN  Couldn't find the item.
+
+[53]
+  KO  알림 시점은 당일부터 {MAX_NOTIFY_DAYS_BEFORE}일 전까지 정할 수 있어요.
+  JA  通知のタイミングは当日から{MAX_NOTIFY_DAYS_BEFORE}日前まで設定できます。
+  EN  You can set the notification from the same day up to {MAX_NOTIFY_DAYS_BEFORE} days before.
+
+[54]
+  KO  알림 시간을 확인해 주세요.
+  JA  通知時刻を確認してください。
+  EN  Please check the notification time.
+
+[55]
+  KO  날짜 서랍 칸을 골라 주세요.
+  JA  日付の項目を選んでください。
+  EN  Please choose a date field.
+
+[56]
+  KO  같은 알림이 이미 있어요.
+  JA  同じ通知がすでにあります。
+  EN  That notification already exists.
+
+[57]
+  KO  반복 주기를 골라 주세요.
+  JA  繰り返しの周期を選んでください。
+  EN  Please choose how often to repeat.
+
+[58]
+  KO  반복 간격은 1 이상으로 정해 주세요.
+  JA  繰り返しの間隔は1以上にしてください。
+  EN  The repeat interval must be 1 or more.
+
+[59]
+  KO  만들 횟수는 1 이상으로 정해 주세요.
+  JA  作成回数は1以上にしてください。
+  EN  The number to create must be 1 or more.
+
+[60]
+  KO  종료 날짜는 오늘 이후로 정해 주세요.
+  JA  終了日は今日より後にしてください。
+  EN  The end date must be after today.
+
+[61]
+  KO  기준이 될 날짜 서랍 칸을 골라 주세요.
+  JA  基準となる日付の項目を選んでください。
+  EN  Please choose the date field to base it on.
+
+[62]
+  KO  반복할 보관품을 찾을 수 없어요.
+  JA  繰り返すアイテムが見つかりません。
+  EN  Couldn't find the item to repeat.
+
+[63]
+  KO  이 보관품에는 '{name}' 날짜가 없어요. 날짜를 먼저 채워 주세요.
+  JA  このアイテムには「{name}」の日付がありません。先に日付を入力してください。
+  EN  This item has no '{name}' date. Please fill in the date first.
+
+[64]
+  KO  같은 반복 설정이 이미 있어요.
+  JA  同じ繰り返し設定がすでにあります。
+  EN  That repeat rule already exists.
+
+[65]
+  KO  데이터를 불러오지 못했어요.
+  JA  データを読み込めませんでした。
+  EN  Couldn't load your data.
+
+[66]
+  KO  {label} 이름을 입력해 주세요.
+  JA  {label}の名前を入力してください。
+  EN  Please enter a name for the {label}.
+
+[67]
+  KO  {label} 이름은 {max}자까지 입력할 수 있어요.
+  JA  {label}の名前は{max}文字まで入力できます。
+  EN  The {label} name can be up to {max} characters.
+
+[68]
+  KO  서랍
+  JA  ひきだし
+  EN  drawer
+
+[69]
+  KO  서랍 칸
+  JA  項目
+  EN  field
+
+[70]
+  KO  '{name}' 서랍 칸이 이미 있어요.
+  JA  「{name}」の項目はすでにあります。
+  EN  A field named '{name}' already exists.
+
+[71]
+  KO  '{name}'을(를) 입력해 주세요.
+  JA  「{name}」を入力してください。
+  EN  Please enter '{name}'.
+
+[72]
+  KO  '{name}'에는 글자를 입력해 주세요.
+  JA  「{name}」にはテキストを入力してください。
+  EN  Please enter text for '{name}'.
+
+[73]
+  KO  '{name}'에는 숫자를 입력해 주세요.
+  JA  「{name}」には数字を入力してください。
+  EN  Please enter a number for '{name}'.
+
+[74]
+  KO  '{name}'은(는) 소수점 둘째 자리까지 입력할 수 있어요.
+  JA  「{name}」は小数点以下2桁まで入力できます。
+  EN  "{name}" accepts up to 2 decimal places.
+
+[75]
+  KO  '{name}'의 날짜를 확인해 주세요.
+  JA  「{name}」の日付を確認してください。
+  EN  Please check the date for '{name}'.
+
+[76]
+  KO  '{name}'에서 목록에 있는 항목을 골라 주세요.
+  JA  「{name}」で一覧の中から選んでください。
+  EN  Please choose one of the options for '{name}'.
+
+[77]
+  KO  '{name}'은(는) 체크하거나 해제만 할 수 있어요.
+  JA  「{name}」はオン/オフの値にしてください。
+  EN  '{name}' must be on or off.
+
+[78]
+  KO  '{name}'의 별점은 0~5 사이여야 해요.
+  JA  「{name}」の評価は0〜5の間にしてください。
+  EN  The rating for '{name}' must be between 0 and 5.
+
+[79]
+  KO  이 서랍에 없는 서랍 칸이에요.
+  JA  このひきだしにない項目です。
+  EN  That field isn't in this drawer.
+
+[80]
+  KO  이 기기에서는 PIN을 안전하게 저장할 수 없어요.
+  JA  この環境ではPINを安全に保存できません（セキュア接続が必要です）。
+  EN  PIN can't be stored safely in this environment (a secure connection is required).
+
+[81]
+  KO  PIN은 숫자 4자리여야 해요.
+  JA  PINは4桁の数字にしてください。
+  EN  The PIN must be 4 digits.
+
+[82]
+  KO  너무 많이 틀렸어요. {seconds}초 뒤에 다시 입력해 주세요.
+  JA  間違いが多すぎます。{seconds}秒後にもう一度入力してください。
+  EN  Too many wrong tries. Please try again in {seconds} seconds.
+
+[83]
+  KO  PIN이 일치하지 않아요. 다시 입력해 주세요.
+  JA  PINが一致しません。もう一度入力してください。
+  EN  The PIN doesn't match. Please try again.
+
+[84]
+  KO  제품명
+  JA  製品名
+  EN  Product name
+
+[85]
+  KO  구매일
+  JA  購入日
+  EN  Purchase date
+
+[86]
+  KO  가격
+  JA  価格
+  EN  Price
+
+[87]
+  KO  메모
+  JA  メモ
+  EN  Notes
+
+[88]
+  KO  보관품이 없어요.
+  JA  アイテムがありません。
+  EN  No items.
+
+[89]
+  KO  보관품 {n}개
+  JA  アイテム{n}件
+  EN  {n} {n:item|items}
+
+[90]
+  KO   (다음 날)
+  JA  （翌日）
+  EN   (next day)
+
+[91]
+  KO  일
+  JA  日
+  EN  Sun
+
+[92]
+  KO  월
+  JA  月
+  EN  Mon
+
+[93]
+  KO  화
+  JA  火
+  EN  Tue
+
+[94]
+  KO  수
+  JA  水
+  EN  Wed
+
+[95]
+  KO  목
+  JA  木
+  EN  Thu
+
+[96]
+  KO  금
+  JA  金
+  EN  Fri
+
+[97]
+  KO  토
+  JA  土
+  EN  Sat
+
+[98]
+  KO  이름 없는 보관품
+  JA  名前のないアイテム
+  EN  Untitled item
+
+[99]
+  KO  반복 주기를 계산할 수 없어요.
+  JA  繰り返しの周期を計算できません。
+  EN  Couldn't work out the repeat schedule.
+
+[100]
+  KO  {photoCount}장
+  JA  {photoCount}枚
+  EN  {photoCount} {photoCount:photo|photos}
+
+[101]
+  KO  내용을 입력해 주세요.
+  JA  内容を入力してください。
+  EN  Please enter something.
+
+[102]
+  KO  날짜를 확인해 주세요.
+  JA  日付を確認してください。
+  EN  Please check the date.
+
+[103]
+  KO  시작 날짜가 끝 날짜보다 늦어요.
+  JA  開始日が終了日より後になっています。
+  EN  The start date is after the end date.
+
+[104]
+  KO  숫자를 입력해 주세요.
+  JA  数字を入力してください。
+  EN  Please enter a number.
+
+[105]
+  KO  작은 값을 앞에 입력해 주세요.
+  JA  小さい値を先に入力してください。
+  EN  Please enter the smaller value first.
+
+[106]
+  KO  확인하지 못했어요. 다시 시도해 주세요.
+  JA  確認できませんでした。もう一度お試しください。
+  EN  Couldn't verify. Please try again.
+
+[107]
+  KO  앱 잠금
+  JA  アプリロック
+  EN  App lock
+
+[108]
+  KO  내 서랍 열기
+  JA  ひきだしを開く
+  EN  Open my drawers
+
+[109]
+  KO  PIN 안내
+  JA  PINのご案内
+  EN  About the PIN
+
+[110]
+  KO  내 서랍을 열어볼까요?
+  JA  ひきだしを開きますか？
+  EN  Ready to open your drawers?
+
+[111]
+  KO  PIN을 입력하면 ⏎ 저장한 기록을 볼 수 있어요.
+  JA  PINを入力すると ⏎ 保存した記録を見られます。
+  EN  Enter your PIN to ⏎ see your saved records.
+
+[112]
+  KO  잠금 해제 완료
+  JA  ロック解除完了
+  EN  Unlocked
+
+[113]
+  KO  PIN 입력
+  JA  PIN入力
+  EN  Enter PIN
+
+[114]
+  KO  열림
+  JA  開いています
+  EN  Open
+
+[115]
+  KO  잠금 상태
+  JA  ロック中
+  EN  Locked
+
+[116]
+  KO  내 서랍을 열었어요.
+  JA  ひきだしを開きました。
+  EN  Your drawers are open.
+
+[117]
+  KO  설정한 4자리 PIN을 입력해 주세요.
+  JA  設定した4桁のPINを入力してください。
+  EN  Please enter your 4-digit PIN.
+
+[118]
+  KO  PIN 4자리 입력 상태
+  JA  PIN4桁の入力状況
+  EN  4-digit PIN entry
+
+[119]
+  KO  PIN 숫자 키패드
+  JA  PIN数字キーパッド
+  EN  PIN keypad
+
+[120]
+  KO  마지막 숫자 지우기
+  JA  最後の数字を消す
+  EN  Delete last digit
+
+======================================================================
+■ 백업·복원·초기화·서랍 만들기·서랍 칸  (127개)
+======================================================================
+
+[121]
+  KO  백업하기
+  JA  バックアップする
+  EN  Back up
+
+[122]
+  KO  백업 종류 선택으로 돌아가기
+  JA  バックアップ種類の選択に戻る
+  EN  Back to backup type
+
+[123]
+  KO  저장 위치 선택
+  JA  保存先の選択
+  EN  Choose where to save
+
+[124]
+  KO  백업 파일을 ⏎ 어디에 보관할까요?
+  JA  バックアップファイルは ⏎ どこに ⏎ 保存しますか？
+  EN  Where should we ⏎ keep your ⏎ backup file?
+
+[125]
+  KO  원하는 저장 위치를 ⏎ 선택해 주세요.
+  JA  保存先を ⏎ 選んでください。
+  EN  Choose where ⏎ to save it.
+
+[126]
+  KO  저장할 곳
+  JA  保存先
+  EN  Save to
+
+[127]
+  KO  이 기기에 저장
+  JA  この端末に保存
+  EN  Save on this device
+
+[128]
+  KO  원하는 폴더에 ⏎ 백업 파일을 저장해요.
+  JA  好きなフォルダに ⏎ バックアップファイルを保存します。
+  EN  Save the backup file ⏎ to a folder you choose.
+
+[129]
+  KO  Google Drive에 ⏎ 백업 파일을 보관해요.
+  JA  Google Driveに ⏎ バックアップファイルを保管します。
+  EN  Keep the backup file ⏎ in Google Drive.
+
+[130]
+  KO  다음 단계에서 저장할 폴더를 ⏎ 고를 수 있어요.
+  JA  次のステップで保存するフォルダを ⏎ 選びます。
+  EN  You'll choose the folder ⏎ in the next step.
+
+[131]
+  KO  다음
+  JA  次へ
+  EN  Next
+
+[132]
+  KO  뒤로 가기
+  JA  戻る
+  EN  Back
+
+[133]
+  KO  백업 진행 상태
+  JA  バックアップの進行状況
+  EN  Backup progress
+
+[134]
+  KO  노란 폴더를 든 Drawary 마스코트
+  JA  黄色いフォルダを持つDrawaryのマスコット
+  EN  Drawary mascot holding a yellow folder
+
+[135]
+  KO  백업 진행 중
+  JA  バックアップ中
+  EN  Backing up
+
+[136]
+  KO  백업하고 있어요
+  JA  バックアップしています
+  EN  Backing up your data
+
+[137]
+  KO  잠시만 기다려주세요.
+  JA  しばらくお待ちください。
+  EN  Please wait a moment.
+
+[138]
+  KO  데이터를 안전하게 정리하고 있어요.
+  JA  データを安全にまとめています。
+  EN  We're safely packing up your data.
+
+[139]
+  KO  백업 완료 화면
+  JA  バックアップ完了画面
+  EN  Backup complete
+
+[140]
+  KO  백업 완료 내용
+  JA  バックアップ完了の内容
+  EN  Backup details
+
+[141]
+  KO  백업을 완료하고 확인 표시를 든 서랍장 마스코트
+  JA  バックアップを完了してチェックマークを持つひきだしのマスコット
+  EN  Drawer mascot holding a check mark after finishing the backup
+
+[142]
+  KO  백업이 완료됐어요!
+  JA  バックアップが完了しました！
+  EN  Backup complete!
+
+[143]
+  KO  저장 위치: {place}
+  JA  保存先：{place}
+  EN  Saved to: {place}
+
+[144]
+  KO  확인
+  JA  確認
+  EN  OK
+
+[145]
+  KO  사진 포함
+  JA  写真を含む
+  EN  With photos
+
+[146]
+  KO  서랍과 기록, 사진을 함께 저장해요.
+  JA  ひきだしと記録、写真を一緒に保存します。
+  EN  Saves your drawers, records and photos.
+
+[147]
+  KO  사진 제외
+  JA  写真を除く
+  EN  Without photos
+
+[148]
+  KO  사진을 제외하고 기록만 저장해요.
+  JA  写真を除いて記録だけ保存します。
+  EN  Saves records only, without photos.
+
+[149]
+  KO  데이터 관리로 돌아가기
+  JA  データ管理に戻る
+  EN  Back to data management
+
+[150]
+  KO  백업할 내용 선택
+  JA  バックアップする内容の選択
+  EN  Choose what to back up
+
+[151]
+  KO  백업 안내
+  JA  バックアップのご案内
+  EN  About backups
+
+[152]
+  KO  내 기록을 안전하게 보관해요
+  JA  記録を安全に保管
+  EN  Keep your records safe
+
+[153]
+  KO  사진도 함께 담을지 ⏎ 선택해 주세요.
+  JA  写真も一緒に含めるか ⏎ 選んでください。
+  EN  Choose whether to ⏎ include photos.
+
+[154]
+  KO  백업 종류
+  JA  バックアップの種類
+  EN  Backup type
+
+[155]
+  KO  {title} 백업 선택
+  JA  {title}のバックアップを選択
+  EN  Choose backup: {title}
+
+[156]
+  KO  다음 단계에서 저장 위치를 고를 수 있어요.
+  JA  次のステップで保存先を選べます。
+  EN  You can choose where to save in the next step.
+
+[157]
+  KO  {name} 서랍을 만들었어요.
+  JA  「{name}」のひきだしを作りました。
+  EN  Your {name} drawer is ready.
+
+[158]
+  KO  이제 서랍을 채워볼까요?
+  JA  さっそくひきだしにアイテムを入れてみましょう。
+  EN  Ready to fill your drawer?
+
+[159]
+  KO  서랍 칸 {n}개 준비 완료
+  JA  項目{n}個の準備ができました
+  EN  {n} {n:field|fields} ready
+
+[160]
+  KO  방금 정한 서랍 칸에 맞춰 ⏎ 첫 보관품부터 하나씩 담아보세요.
+  JA  今決めた項目に合わせて ⏎ 最初のアイテムから1つずつ入れてみましょう。
+  EN  Add your first item, ⏎ one by one, using the fields you just set.
+
+[161]
+  KO  서랍 채우기
+  JA  ひきだしに入れる
+  EN  Fill drawer
+
+[162]
+  KO  나중에
+  JA  あとで
+  EN  Later
+
+[163]
+  KO  설정으로 돌아가기
+  JA  設定に戻る
+  EN  Back to settings
+
+[164]
+  KO  데이터 관리
+  JA  データ管理
+  EN  Data management
+
+[165]
+  KO  내 기록 관리하기
+  JA  記録を管理する
+  EN  Manage my records
+
+[166]
+  KO  기록 관리 안내
+  JA  記録管理のご案内
+  EN  About record management
+
+[167]
+  KO  소중한 기록을 안전하게
+  JA  大切な記録を安全に
+  EN  Keep your records safe
+
+[168]
+  KO  백업한 파일을 보관해 두면 ⏎ 필요할 때 다시 가져올 수 있어요.
+  JA  バックアップしたファイルを保管しておけば ⏎ 必要なときに読み込めます。
+  EN  Keep your backup file ⏎ and bring it back whenever you need it.
+
+[169]
+  KO  백업과 복원
+  JA  バックアップと復元
+  EN  Backup and restore
+
+[170]
+  KO  백업하기, 백업 종류 선택 화면으로
+  JA  バックアップする、バックアップ種類の選択画面へ
+  EN  Back up, go to backup type
+
+[171]
+  KO  서랍과 기록을 파일로 저장해요.
+  JA  ひきだしと記録をファイルに保存します。
+  EN  Save your drawers and records to a file.
+
+[172]
+  KO  복원하기, 복원 파일 선택 화면으로
+  JA  復元する、復元ファイルの選択画面へ
+  EN  Restore, go to choose restore file
+
+[173]
+  KO  복원하기
+  JA  復元する
+  EN  Restore
+
+[174]
+  KO  저장해 둔 백업 파일을 불러와요.
+  JA  バックアップファイルを読み込みます。
+  EN  Load a backup file you saved.
+
+[175]
+  KO  데이터 초기화
+  JA  データの初期化
+  EN  Reset data
+
+[176]
+  KO  데이터 정리
+  JA  データの整理
+  EN  Clean up data
+
+[177]
+  KO  데이터 초기화 확인 화면으로
+  JA  データ初期化の確認画面へ
+  EN  Go to reset confirmation
+
+[178]
+  KO  기기에 저장된 기록을 모두 삭제해요.
+  JA  端末に保存された記録をすべて削除します。
+  EN  Delete all records saved on this device.
+
+[179]
+  KO  데이터 초기화 확인 화면
+  JA  データ初期化の確認画面
+  EN  Reset confirmation
+
+[180]
+  KO  주의 표시를 든 Drawary 마스코트
+  JA  注意マークを持つDrawaryのマスコット
+  EN  Drawary mascot holding a warning sign
+
+[181]
+  KO  정말 초기화할까요?
+  JA  本当に初期化しますか？
+  EN  Reset everything?
+
+[182]
+  KO  이 기기에 저장된 Drawary 데이터를 ⏎ 초기화하려고 해요.
+  JA  この端末に保存されたDrawaryのデータを ⏎ 初期化しようとしています。
+  EN  You're about to reset all Drawary data ⏎ saved on this device.
+
+[183]
+  KO  초기화 전에 확인해 주세요
+  JA  初期化の前にご確認ください
+  EN  Please check before resetting
+
+[184]
+  KO  서랍과 기록, 앱 설정 등의 데이터가 삭제돼요.
+  JA  ひきだしや記録、アプリ設定などのデータが削除されます。
+  EN  Your drawers, records and app settings will be deleted.
+
+[185]
+  KO  삭제한 내용은 되돌릴 수 없어요.
+  JA  削除した内容は元に戻せません。
+  EN  Deleted data can't be restored.
+
+[186]
+  KO  필요한 기록은 먼저 백업해 주세요.
+  JA  必要な記録は先にバックアップしてください。
+  EN  Please back up anything you need first.
+
+[187]
+  KO  초기화 안내를 확인했어요
+  JA  初期化の注意事項を確認しました
+  EN  I've read the reset notice
+
+[188]
+  KO  취소
+  JA  キャンセル
+  EN  Cancel
+
+[189]
+  KO  이 서랍을 삭제할까요?
+  JA  このひきだしを削除しますか？
+  EN  Delete this drawer?
+
+[190]
+  KO  {drawer} 서랍과 안에 담긴 ⏎ {count}이 모두 삭제돼요.
+  JA  {drawer}のひきだしと中に入っている ⏎ {count}がすべて削除されます。
+  EN  The drawer {drawer} and all ⏎ {count} inside will be deleted.
+
+[191]
+  KO  {n}개 보관품
+  JA  アイテム{n}件
+  EN  {n} {n:item|items}
+
+[192]
+  KO  서랍 칸 설정과 알림·반복 설정도 함께 삭제돼요.
+  JA  項目の設定と、通知・繰り返しの設定も一緒に削除されます。
+  EN  Field settings and notification/repeat settings will be deleted too.
+
+[193]
+  KO  삭제한 뒤에는 되돌릴 수 없어요.
+  JA  削除したあとは元に戻せません。
+  EN  This can't be undone.
+
+[194]
+  KO  삭제하기
+  JA  削除する
+  EN  Delete
+
+[195]
+  KO  보관품 {recordCount}개
+  JA  アイテム{recordCount}件
+  EN  {recordCount} {recordCount:item|items}
+
+[196]
+  KO  서랍 메뉴
+  JA  ひきだしメニュー
+  EN  Drawer menu
+
+[197]
+  KO  표로 보기
+  JA  表で見る
+  EN  View as table
+
+[198]
+  KO  서랍 관리
+  JA  ひきだしの管理
+  EN  Manage drawer
+
+[199]
+  KO  보관품 검색하기
+  JA  アイテムを検索
+  EN  Search items
+
+[200]
+  KO  필터
+  JA  フィルター
+  EN  Filter
+
+[201]
+  KO  글자
+  JA  テキスト
+  EN  Text
+
+[202]
+  KO  브랜드
+  JA  ブランド
+  EN  Brand
+
+[203]
+  KO  카테고리
+  JA  カテゴリー
+  EN  Category
+
+[204]
+  KO  선택
+  JA  選択
+  EN  Select
+
+[205]
+  KO  금액
+  JA  金額
+  EN  Amount
+
+[206]
+  KO  별점
+  JA  評価
+  EN  Rating
+
+[207]
+  KO  긴 글
+  JA  長文
+  EN  Long text
+
+[208]
+  KO  스킨케어
+  JA  スキンケア
+  EN  Skincare
+
+[209]
+  KO  메이크업
+  JA  メイクアップ
+  EN  Makeup
+
+[210]
+  KO  향수
+  JA  香水
+  EN  Perfume
+
+[211]
+  KO  서랍 칸 정하기
+  JA  項目を決める
+  EN  Set up fields
+
+[212]
+  KO  이 서랍에 어떤 내용을 기록할까요? ⏎ 원하는 서랍 칸을 직접 정할 수 있어요.
+  JA  このひきだしにどんな内容を記録しますか？ ⏎ 好きな項目を自分で決められます。
+  EN  What would you like to record in this drawer? ⏎ You can set up your own fields.
+
+[213]
+  KO  {field}을 누르면 수정할 수 있고, ⏎ 오른쪽 {handle}를 끌면 순서를 바꿀 수 있어요.
+  JA  {field}をタップすると編集でき、 ⏎ 右の{handle}をドラッグすると順番を変えられます。
+  EN  Tap a {field} to edit it, ⏎ and drag the {handle} on the right to reorder.
+
+[214]
+  KO  손잡이
+  JA  ハンドル
+  EN  handle
+
+[215]
+  KO  {name} 수정
+  JA  {name}を編集
+  EN  Edit {name}
+
+[216]
+  KO  {name} 순서 변경
+  JA  {name}の順番を変更
+  EN  Reorder {name}
+
+[217]
+  KO  ＋ 서랍 칸 추가
+  JA  ＋ 項目を追加
+  EN  ＋ Add field
+
+[218]
+  KO  서랍 만들기 완료하기
+  JA  ひきだしの作成を完了
+  EN  Finish creating drawer
+
+[219]
+  KO  서랍 칸 수정
+  JA  項目の編集
+  EN  Edit field
+
+[220]
+  KO  서랍 칸 이름
+  JA  項目名
+  EN  Field name
+
+[221]
+  KO  서랍 칸 종류
+  JA  項目の種類
+  EN  Field type
+
+[222]
+  KO  선택 옵션
+  JA  選択肢
+  EN  Options
+
+[223]
+  KO  옵션 {n}
+  JA  選択肢{n}
+  EN  Option {n}
+
+[224]
+  KO  ＋ 옵션 추가
+  JA  ＋ 選択肢を追加
+  EN  ＋ Add option
+
+[225]
+  KO  필수로 채우기
+  JA  必須にする
+  EN  Make required
+
+[226]
+  KO  보관품을 담을 때 꼭 채워야 하는 서랍 칸이에요.
+  JA  アイテムを入れるときに必ず入力が必要な項目です。
+  EN  A field that must be filled in when adding an item.
+
+[227]
+  KO  필수 입력
+  JA  必須入力
+  EN  Required
+
+[228]
+  KO  저장하기
+  JA  保存する
+  EN  Save
+
+[229]
+  KO  서랍 칸 삭제
+  JA  項目を削除
+  EN  Delete field
+
+[230]
+  KO  삭제한 서랍 칸의 기존 입력값은 함께 사라져요.
+  JA  削除した項目に入力済みの値も一緒に消えます。
+  EN  Values already entered in a deleted field are removed too.
+
+[231]
+  KO  서랍 칸 삭제 확인
+  JA  項目削除の確認
+  EN  Confirm deleting field
+
+[232]
+  KO  이 서랍 칸을 삭제할까요?
+  JA  この項目を削除しますか？
+  EN  Delete this field?
+
+[233]
+  KO  '{name}' 서랍 칸과 여기에 담긴 입력값이 함께 삭제돼요. ⏎ 삭제한 뒤에는 되돌릴 수 없어요.
+  JA  「{name}」の項目と、そこに入力された値が一緒に削除されます。 ⏎ 削除したあとは元に戻せません。
+  EN  The field '{name}' and the values entered in it will be deleted. ⏎ This can't be undone.
+
+[234]
+  KO  구매처
+  JA  購入先
+  EN  Store
+
+[235]
+  KO  사용기한
+  JA  使用期限
+  EN  Expiry date
+
+[236]
+  KO  색상
+  JA  色
+  EN  Color
+
+[237]
+  KO  용량
+  JA  容量
+  EN  Size
+
+[238]
+  KO  한줄평
+  JA  ひとこと感想
+  EN  Short review
+
+[239]
+  KO  이 서랍에 어떤 내용을 기록할까요? ⏎ 원하는 항목을 직접 정할 수 있어요.
+  JA  このひきだしにどんな内容を記録しますか？ ⏎ 好きな項目を自分で決められます。
+  EN  What would you like to record in this drawer? ⏎ You can set up your own fields.
+
+[240]
+  KO  이런 항목은 어때요?
+  JA  こんな項目はいかがですか？
+  EN  How about these?
+
+[241]
+  KO  서랍 이름 / 아이콘 변경
+  JA  名前・アイコンの変更
+  EN  Change drawer name / icon
+
+[242]
+  KO  정렬 / 필터 설정
+  JA  並べ替え・フィルターの設定
+  EN  Sort / filter settings
+
+[243]
+  KO  알림 설정
+  JA  通知設定
+  EN  Notification settings
+
+[244]
+  KO  반복 관리
+  JA  繰り返しの管理
+  EN  Manage repeats
+
+[245]
+  KO  백업 / 내보내기
+  JA  バックアップ・エクスポート
+  EN  Backup / export
+
+[246]
+  KO  서랍 삭제
+  JA  ひきだしを削除
+  EN  Delete drawer
+
+[247]
+  KO  {fields}개 서랍 칸 · {items}개 보관품
+  JA  項目{fields}個 · アイテム{items}件
+  EN  {fields} {fields:field|fields} · {items} {items:item|items}
+
+======================================================================
+■ 도움말·FAQ·가이드·정보·피드백  (159개)
+======================================================================
+
+[248]
+  KO  전체
+  JA  すべて
+  EN  All
+
+[249]
+  KO  기본 사용
+  JA  基本の使い方
+  EN  Basics
+
+[250]
+  KO  데이터 · 백업
+  JA  データ・バックアップ
+  EN  Data & backup
+
+[251]
+  KO  알림 · 반복
+  JA  通知・繰り返し
+  EN  Alerts & repeats
+
+[252]
+  KO  앱 설정
+  JA  アプリ設定
+  EN  App settings
+
+[253]
+  KO  새 서랍은 어떻게 만들어요?
+  JA  新しいひきだしはどうやって作りますか？
+  EN  How do I create a new drawer?
+
+[254]
+  KO  아래 가운데 + 버튼을 누르면 새 서랍을 만들 수 있어요. 이름, 아이콘, 색을 고르고 서랍 칸을 정하면 끝이에요. 템플릿으로 시작해도 돼요.
+  JA  下の真ん中の＋ボタンから新しいひきだしを作れます。名前・アイコン・色を選び、項目を決めれば完成です。テンプレートから始めることもできます。
+  EN  Tap the + button in the middle at the bottom to make a drawer. Pick a name, icon and colour, then set its fields. You can also start from a template.
+
+[255]
+  KO  서랍 칸은 나중에 수정할 수 있나요?
+  JA  項目はあとから変更できますか？
+  EN  Can I change fields later?
+
+[256]
+  KO  서랍을 열고 오른쪽 위 •••에서 서랍 관리 → 서랍 칸 편집으로 가면 칸을 더하거나 이름을 바꾸고 순서를 옮길 수 있어요.
+  JA  ひきだしを開き、右上の•••から「ひきだし管理」→「項目の編集」へ進むと、項目の追加・名前の変更・並べ替えができます。
+  EN  Open the drawer, tap ••• at the top right, then Manage drawer → Edit fields to add fields, rename them or change their order.
+
+[257]
+  KO  보관품은 어떻게 추가하나요?
+  JA  アイテムはどうやって追加しますか？
+  EN  How do I add an item?
+
+[258]
+  KO  서랍을 열고 아래의 서랍 채우기 버튼을 누르면 보관품을 하나씩 추가할 수 있어요.
+  JA  ひきだしを開いて下の「ひきだしを満たす」ボタンを押すと、アイテムを1つずつ追加できます。
+  EN  Open a drawer and tap the Fill drawer button at the bottom to add items one by one.
+
+[259]
+  KO  사진도 등록할 수 있나요?
+  JA  写真も登録できますか？
+  EN  Can I add photos?
+
+[260]
+  KO  보관품마다 사진을 최대 3장까지 담을 수 있어요. 서랍 채우기에서 사진 추가를 눌러 폰의 사진을 골라 주세요.
+  JA  アイテムごとに写真を3枚まで追加できます。「ひきだしを満たす」で「写真を追加」を押し、端末の写真を選んでください。
+  EN  Each item can hold up to 3 photos. In Fill drawer, tap Add photo and pick them from your phone.
+
+[261]
+  KO  내 데이터는 어디에 저장되나요?
+  JA  データはどこに保存されますか？
+  EN  Where is my data stored?
+
+[262]
+  KO  Drawary의 기록은 모두 이 폰 안에만 저장돼요. 서버로 보내지 않아요. 백업은 설정 → 데이터 관리에서 직접 만들 수 있어요.
+  JA  Drawaryの記録はすべてこの端末の中にだけ保存され、サーバーには送られません。バックアップは設定 → データ管理から作れます。
+  EN  Everything you record stays on this phone and is never sent to a server. You can make a backup in Settings → Data management.
+
+[263]
+  KO  CSV나 PDF는 어디에서 내보내나요?
+  JA  CSVやPDFはどこから書き出せますか？
+  EN  Where can I export CSV or PDF?
+
+[264]
+  KO  서랍의 표 보기 화면에서 오른쪽 위 •••를 누르면 CSV나 PDF로 내보낼 수 있어요.
+  JA  ひきだしの表表示で右上の•••を押すと、CSVまたはPDFで書き出せます。
+  EN  On a drawer's table view, tap ••• at the top right to export as CSV or PDF.
+
+[265]
+  KO  백업은 어디에서 하나요?
+  JA  バックアップはどこでできますか？
+  EN  Where do I back up?
+
+[266]
+  KO  설정 → 데이터 관리 → 백업하기에서 만들 수 있어요. 폰에 저장하거나 Google Drive로 보낼 수 있어요.
+  JA  設定 → データ管理 →「バックアップ」から作れます。端末に保存するか、Google Driveへ送れます。
+  EN  Go to Settings → Data management → Back up. You can save it on the phone or send it to Google Drive.
+
+[267]
+  KO  백업한 데이터는 어떻게 복원하나요?
+  JA  バックアップしたデータはどうやって復元しますか？
+  EN  How do I restore backed-up data?
+
+[268]
+  KO  설정 → 데이터 관리 → 복원하기에서 백업 파일을 고르고 내용을 확인한 뒤 복원해요. 지금 있는 기록이 중요하다면 먼저 백업해 두세요.
+  JA  設定 → データ管理 →「復元」でバックアップファイルを選び、内容を確認してから復元します。今ある記録が大切なら、先にバックアップしておいてください。
+  EN  Go to Settings → Data management → Restore, pick a backup file, check what it contains and restore. If your current records matter, back them up first.
+
+[269]
+  KO  알림은 어디에서 설정하나요?
+  JA  通知はどこで設定しますか？
+  EN  Where do I set up notifications?
+
+[270]
+  KO  서랍을 열고 ••• → 서랍 관리 → 알림 설정에서 날짜 칸을 기준으로 알림을 만들 수 있어요.
+  JA  ひきだしを開いて••• →「ひきだし管理」→「通知設定」から、日付の項目を基準に通知を作れます。
+  EN  Open a drawer, then ••• → Manage drawer → Notifications to set reminders based on a date field.
+
+[271]
+  KO  반복 설정은 어디에서 하나요?
+  JA  繰り返しの設定はどこでしますか？
+  EN  Where do I set up repeats?
+
+[272]
+  KO  서랍을 열고 ••• → 서랍 관리 → 반복 관리에서 날짜 칸을 기준으로 새 보관품을 자동으로 만들 수 있어요.
+  JA  ひきだしを開いて••• →「ひきだし管理」→「繰り返し管理」から、日付の項目を基準にアイテムを自動で作れます。
+  EN  Open a drawer, then ••• → Manage drawer → Repeat to create new items automatically from a date field.
+
+[273]
+  KO  언어는 어디에서 변경하나요?
+  JA  言語はどこで変更しますか？
+  EN  Where do I change the language?
+
+[274]
+  KO  설정 → 언어 설정에서 한국어, 日本語, English 중 하나를 고르고 적용을 누르세요.
+  JA  設定 → 言語設定で、한국어・日本語・Englishのどれかを選んで「適用」を押します。
+  EN  In Settings → Language, pick 한국어, 日本語 or English and tap Apply.
+
+[275]
+  KO  테마는 어디에서 바꾸나요?
+  JA  テーマはどこで変更しますか？
+  EN  Where do I change the theme?
+
+[276]
+  KO  설정 → 테마에서 원하는 색상을 선택할 수 있어요.
+  JA  設定 → テーマで好きな色を選べます。
+  EN  Choose the color you like in Settings → Theme.
+
+[277]
+  KO  앱 잠금은 어떻게 설정하나요?
+  JA  アプリロックはどうやって設定しますか？
+  EN  How do I set up the app lock?
+
+[278]
+  KO  설정 → 보안 설정에서 PIN을 만들고 앱 잠금을 켤 수 있어요. 지문이나 얼굴로 여는 것도 함께 켤 수 있어요.
+  JA  設定 → セキュリティ設定でPINを作り、アプリロックをオンにできます。指紋や顔で開く設定も一緒にオンにできます。
+  EN  In Settings → Security, make a PIN and turn on the app lock. You can also turn on fingerprint or face unlock.
+
+[279]
+  KO  자주 묻는 질문
+  JA  よくある質問
+  EN  FAQ
+
+[280]
+  KO  도움말로 돌아가기
+  JA  ヘルプに戻る
+  EN  Back to help
+
+[281]
+  KO  질문 검색 및 분류
+  JA  質問の検索と分類
+  EN  Search and categories
+
+[282]
+  KO  궁금한 내용을 검색해보세요
+  JA  知りたいことを検索してみましょう
+  EN  Search for what you'd like to know
+
+[283]
+  KO  질문 검색
+  JA  質問を検索
+  EN  Search questions
+
+[284]
+  KO  검색어 지우기
+  JA  検索ワードを消す
+  EN  Clear search
+
+[285]
+  KO  자주 묻는 질문 분류
+  JA  よくある質問のカテゴリー
+  EN  FAQ categories
+
+[286]
+  KO  궁금한 내용을 확인해보세요
+  JA  気になる内容を確認しましょう
+  EN  Find your answer
+
+[287]
+  KO  검색하거나 분류를 골라 빠르게 찾을 수 있어요.
+  JA  検索したり分類を選んで、すばやく見つけられます。
+  EN  Search or pick a topic to find it quickly.
+
+[288]
+  KO  검색 결과가 없어요. ⏎ 다른 검색어를 입력해보세요.
+  JA  検索結果がありません。 ⏎ 別の言葉で検索してみてください。
+  EN  No results. ⏎ Try a different search.
+
+[289]
+  KO  검색어와 필터는 함께 사용할 수 있어요.
+  JA  検索ワードとフィルターは一緒に使えます。
+  EN  You can use search and filters together.
+
+[290]
+  KO  개선 제안
+  JA  改善の提案
+  EN  Suggestion
+
+[291]
+  KO  어떤 점이 불편했나요? 이렇게 바뀌면 좋겠다는 생각도 좋아요.
+  JA  不便だった点は何ですか？こう変わったらいいなというご意見も歓迎です。
+  EN  What felt inconvenient? Ideas for how it could be better are welcome too.
+
+[292]
+  KO  어떤 화면에서 느낀 점인지 알려주시면 도움이 돼요.
+  JA  どの画面で感じたことか教えていただけると助かります。
+  EN  It helps if you tell us which screen you mean.
+
+[293]
+  KO  오류 제보
+  JA  不具合の報告
+  EN  Bug report
+
+[294]
+  KO  어느 화면에서 어떤 문제가 있었나요? 발생한 순서대로 적어주세요.
+  JA  どの画面でどんな問題がありましたか？起きた順に書いてください。
+  EN  Which screen had what problem? Please describe it in the order it happened.
+
+[295]
+  KO  오류가 난 화면과 동작을 적어주시면 확인에 도움이 돼요.
+  JA  不具合が出た画面と操作を書いていただけると確認しやすくなります。
+  EN  Telling us the screen and what you did helps us look into it.
+
+[296]
+  KO  기능 요청
+  JA  機能のリクエスト
+  EN  Feature request
+
+[297]
+  KO  어떤 기능이 있으면 좋을까요? 사용하는 상황도 알려주세요.
+  JA  どんな機能があるといいですか？使う場面も教えてください。
+  EN  What feature would you like? Tell us how you'd use it.
+
+[298]
+  KO  어떤 상황에서 필요한지 함께 알려주시면 좋아요.
+  JA  どんな場面で必要か一緒に教えてください。
+  EN  It helps to know when you'd need it.
+
+[299]
+  KO  기타
+  JA  その他
+  EN  Other
+
+[300]
+  KO  하고 싶은 이야기를 자유롭게 남겨주세요.
+  JA  伝えたいことを自由にお書きください。
+  EN  Feel free to tell us anything.
+
+[301]
+  KO  칭찬, 질문, 다른 의견도 모두 환영해요.
+  JA  お褒めの言葉やご質問、ほかのご意見も歓迎です。
+  EN  Compliments, questions and other thoughts are all welcome.
+
+[302]
+  KO  응원 메시지
+  JA  応援メッセージ
+  EN  Cheer message
+
+[303]
+  KO  Drawary에게 응원의 한마디를 남겨주세요.
+  JA  Drawaryへ応援のひとことをお寄せください。
+  EN  Leave a few kind words for Drawary.
+
+[304]
+  KO  남겨주신 응원은 Drawary를 만드는 큰 힘이 돼요.
+  JA  いただいた応援は、Drawaryをつくる大きな力になります。
+  EN  Your kind words give us great strength to keep building Drawary.
+
+[305]
+  KO  오류 화면이 있다면 첨부해 주세요. (선택)
+  JA  不具合の画面があれば添付してください。（任意）
+  EN  Attach a screenshot of the problem if you have one. (optional)
+
+[306]
+  KO  PNG, JPG, WebP 이미지를 선택해 주세요.
+  JA  PNG、JPG、WebPの画像を選んでください。
+  EN  Please choose a PNG, JPG or WebP image.
+
+[307]
+  KO  이미지 파일만 첨부할 수 있어요.
+  JA  画像ファイルのみ添付できます。
+  EN  Only image files can be attached.
+
+[308]
+  KO  8MB 이하 이미지를 선택해 주세요.
+  JA  8MB以下の画像を選んでください。
+  EN  Please choose an image of 8MB or less.
+
+[309]
+  KO  이미지 파일은 8MB 이하로 선택해 주세요.
+  JA  画像ファイルは8MB以下のものを選んでください。
+  EN  Image files must be 8MB or less.
+
+[310]
+  KO  피드백 내용을 입력해 주세요.
+  JA  フィードバックの内容を入力してください。
+  EN  Please enter your feedback.
+
+[311]
+  KO  이메일 주소를 확인해 주세요.
+  JA  メールアドレスを確認してください。
+  EN  Please check the email address.
+
+[312]
+  KO  지금은 미리보기라서 보낼 수 없어요.
+  JA  今はプレビューのため送信できません。
+  EN  This is a preview, so it cannot be sent.
+
+[313]
+  KO  Drawary 피드백 화면
+  JA  Drawaryフィードバック画面
+  EN  Drawary feedback
+
+[314]
+  KO  피드백
+  JA  フィードバック
+  EN  Feedback
+
+[315]
+  KO  피드백 안내
+  JA  フィードバックのご案内
+  EN  About feedback
+
+[316]
+  KO  의견을 들려주세요
+  JA  ご意見をお聞かせください
+  EN  Tell us what you think
+
+[317]
+  KO  작은 의견 하나가 ⏎ 더 편리한 Drawary를 ⏎ 만들어요.
+  JA  ひとつの小さなご意見が ⏎ より便利なDrawaryを ⏎ つくります。
+  EN  One small idea ⏎ makes Drawary ⏎ better for everyone.
+
+[318]
+  KO  좋았던 점도, 아쉬웠던 점도 ⏎ 편하게 들려주세요.
+  JA  良かった点も改善点も ⏎ 気軽にお聞かせください。
+  EN  Share what you liked ⏎ or what to improve.
+
+[319]
+  KO  어떤 이야기인가요?
+  JA  どんなお話ですか？
+  EN  What's it about?
+
+[320]
+  KO  피드백 종류 선택
+  JA  フィードバックの種類を選択
+  EN  Choose a feedback type
+
+[321]
+  KO  내용
+  JA  内容
+  EN  Message
+
+[322]
+  KO  화면 사진 첨부
+  JA  画面の写真を添付
+  EN  Attach a screenshot
+
+[323]
+  KO  답변 받을 이메일
+  JA  返信先のメールアドレス
+  EN  Email for a reply
+
+[324]
+  KO  답변이 필요한 경우에만 적어주세요. 입력하지 않아도 돼요.
+  JA  返信が必要な場合のみ入力してください。空欄でも大丈夫です。
+  EN  Only fill this in if you'd like a reply. It's optional.
+
+[325]
+  KO  피드백 보내기
+  JA  フィードバックを送る
+  EN  Send feedback
+
+[326]
+  KO  입력하신 내용을 확인한 뒤 보내주세요.
+  JA  入力内容を確認してから送信してください。
+  EN  Please check what you wrote before sending.
+
+[327]
+  KO  {drawerName} 서랍 채우기
+  JA  {drawerName}に入れる
+  EN  Fill {drawerName} drawer
+
+[328]
+  KO  등록한 사진
+  JA  登録した写真
+  EN  Added photo
+
+[329]
+  KO  등록한 보관품 사진
+  JA  登録したアイテムの写真
+  EN  Item photo
+
+[330]
+  KO  현재 사진 삭제
+  JA  現在の写真を削除
+  EN  Remove current photo
+
+[331]
+  KO  사진 추가
+  JA  写真を追加
+  EN  Add photo
+
+[332]
+  KO  등록한 사진 목록
+  JA  登録した写真の一覧
+  EN  Added photos
+
+[333]
+  KO  사진 더 담기
+  JA  写真をさらに追加
+  EN  Add more photos
+
+[334]
+  KO  사진 추가하기
+  JA  写真を追加する
+  EN  Add photos
+
+[335]
+  KO  담기
+  JA  追加する
+  EN  Add
+
+[336]
+  KO  모든 서랍의 보관품을 한 번에 찾아보세요.
+  JA  すべてのひきだしのアイテムを一度に検索できます。
+  EN  Search items in all your drawers at once.
+
+[337]
+  KO  보관품 이름, 메모, 서랍 이름 검색
+  JA  アイテム名・メモ・ひきだし名で検索
+  EN  Search items, notes, drawers
+
+[338]
+  KO  찾고 싶은 보관품이 있나요?
+  JA  探したいアイテムはありますか？
+  EN  Looking for an item?
+
+[339]
+  KO  검색어를 입력하면 ⏎ 모든 서랍에서 함께 찾아드려요.
+  JA  検索ワードを入力すると ⏎ すべてのひきだしからまとめて探します。
+  EN  Type a keyword and we'll ⏎ search every drawer for you.
+
+[340]
+  KO  검색 결과가 없어요.
+  JA  検索結果がありません。
+  EN  No results.
+
+[341]
+  KO  다른 검색어로 다시 찾아보세요.
+  JA  別の言葉でもう一度検索してみてください。
+  EN  Try searching with a different word.
+
+[342]
+  KO  검색 결과
+  JA  検索結果
+  EN  Results
+
+[343]
+  KO  {n}건
+  JA  {n}件
+  EN  {n} {n:result|results}
+
+[344]
+  KO  Drawary 사용 가이드
+  JA  Drawary使い方ガイド
+  EN  Drawary guide
+
+[345]
+  KO  사용 가이드
+  JA  使い方ガイド
+  EN  User guide
+
+[346]
+  KO  Drawary와 함께
+  JA  Drawaryと一緒に
+  EN  With Drawary
+
+[347]
+  KO  나만의 소중한 ⏎ 서랍을 만들어보세요!
+  JA  あなただけの大切な ⏎ ひきだしを作りましょう！
+  EN  Create your own ⏎ special drawers!
+
+[348]
+  KO  좋아하는 것들을 기록하고, ⏎ 더 특별하게 간직할 수 있어요.
+  JA  好きなものを記録して、 ⏎ もっと特別に残せます。
+  EN  Record the things you love ⏎ and keep them even more special.
+
+[349]
+  KO  서랍 위에서 인사하는 마스코트
+  JA  ひきだしの上であいさつするマスコット
+  EN  Mascot waving on top of a drawer
+
+[350]
+  KO  사용 순서
+  JA  使い方の流れ
+  EN  How it works
+
+[351]
+  KO  1. 서랍 만들기
+  JA  1. ひきだしを作る
+  EN  1. Create a drawer
+
+[352]
+  KO  + 버튼을 눌러요
+  JA  ＋ボタンをタップします
+  EN  Tap the + button
+
+[353]
+  KO  서랍 만들기
+  JA  ひきだしを作る
+  EN  Create a drawer
+
+[354]
+  KO  정리하고 싶은 주제로 ⏎ 새 서랍을 만들어요.
+  JA  整理したいテーマで ⏎ 新しいひきだしを作ります。
+  EN  Make a new drawer ⏎ for any topic you want to organize.
+
+[355]
+  KO  홈 → + 버튼 ⏎ → 새 서랍 만들기
+  JA  ホーム → ＋ボタン ⏎ → 新しいひきだしを作る
+  EN  Home → + button ⏎ → New drawer
+
+[356]
+  KO  2. 서랍 칸 정하기
+  JA  2. 項目を決める
+  EN  2. Set up fields
+
+[357]
+  KO  아이콘으로 서랍 칸을 정하는 안내 일러스트
+  JA  アイコンで項目を決める説明イラスト
+  EN  Illustration of choosing fields with icons
+
+[358]
+  KO  기록할 정보 칸을 ⏎ 자유롭게 정해요.
+  JA  記録する情報の項目を ⏎ 自由に決めます。
+  EN  Choose the fields ⏎ you want to record.
+
+[359]
+  KO  새 서랍 만들기 ⏎ → 서랍 칸 정하기
+  JA  新しいひきだしを作る ⏎ → 項目を決める
+  EN  New drawer ⏎ → Set up fields
+
+[360]
+  KO  3. 서랍 채우기
+  JA  3. ひきだしに入れる
+  EN  3. Fill the drawer
+
+[361]
+  KO  사진과 메모로 서랍을 채우는 안내 일러스트
+  JA  写真とメモでひきだしを満たす説明イラスト
+  EN  Illustration of filling a drawer with photos and notes
+
+[362]
+  KO  보관품을 하나씩 추가해 ⏎ 내용을 채워요.
+  JA  アイテムを1つずつ追加して ⏎ 内容を入力します。
+  EN  Add items one by one ⏎ and fill in the details.
+
+[363]
+  KO  서랍 상세 → + 버튼 ⏎ → 서랍 채우기
+  JA  ひきだし詳細 → ＋ボタン ⏎ → ひきだしに入れる
+  EN  Drawer details → + button ⏎ → Fill drawer
+
+[364]
+  KO  4. 표로 보기
+  JA  4. 表で見る
+  EN  4. View as a table
+
+[365]
+  KO  카드와 표 형태로 내용을 보는 안내 일러스트
+  JA  カードと表の形で内容を見る説明イラスト
+  EN  Illustration of viewing contents as cards and a table
+
+[366]
+  KO  검색·정렬·필터와 ⏎ CSV/PDF를 사용할 수 있어요.
+  JA  検索・並べ替え・フィルターと ⏎ CSV/PDFが使えます。
+  EN  Use search, sort, filters ⏎ and CSV/PDF export.
+
+[367]
+  KO  서랍 상세 ⏎ → 표로 보기
+  JA  ひきだし詳細 ⏎ → 表で見る
+  EN  Drawer details ⏎ → View as table
+
+[368]
+  KO  도움말 메인
+  JA  ヘルプ
+  EN  Help
+
+[369]
+  KO  도움말
+  JA  ヘルプ
+  EN  Help
+
+[370]
+  KO  도움말 안내
+  JA  ヘルプのご案内
+  EN  About help
+
+[371]
+  KO  무엇이 궁금한가요?
+  JA  知りたいことは何ですか？
+  EN  What can we help with?
+
+[372]
+  KO  필요한 도움을 ⏎ 빠르게 찾아보세요.
+  JA  必要なヘルプを ⏎ すばやく探しましょう。
+  EN  Find the help ⏎ you need, fast.
+
+[373]
+  KO  궁금한 내용을 선택하면 ⏎ 필요한 안내를 확인할 수 있어요.
+  JA  知りたい内容を選ぶと ⏎ 必要な案内を確認できます。
+  EN  Choose a topic ⏎ to see the guidance you need.
+
+[374]
+  KO  손을 흔드는 Drawary 마스코트
+  JA  手を振るDrawaryのマスコット
+  EN  Drawary mascot waving
+
+[375]
+  KO  도움말 메뉴
+  JA  ヘルプメニュー
+  EN  Help menu
+
+[376]
+  KO  자주 궁금해하는 내용을 ⏎ 빠르게 확인해요.
+  JA  よくある疑問を ⏎ すばやく確認できます。
+  EN  Quickly check the ⏎ things people ask most.
+
+[377]
+  KO  Drawary의 주요 기능을 ⏎ 그림으로 쉽게 알아봐요.
+  JA  Drawaryの主な機能を ⏎ イラストでわかりやすく紹介します。
+  EN  Learn Drawary's main features ⏎ with simple pictures.
+
+[378]
+  KO  빠른 도움말
+  JA  クイックヘルプ
+  EN  Quick help
+
+[379]
+  KO  백업과 복원은 어디에서 하나요?
+  JA  バックアップと復元はどこでしますか？
+  EN  Where do I back up and restore?
+
+[380]
+  KO  필요한 내용을 찾지 못했다면 설정의 피드백에서 알려주세요.
+  JA  見つからない場合は、設定のフィードバックからお知らせください。
+  EN  If you can't find what you need, let us know in Settings → Feedback.
+
+[381]
+  KO  첫 서랍 만들기
+  JA  最初のひきだしを作る
+  EN  Create your first drawer
+
+[382]
+  KO  나만의 소중한 것들을, 더 특별하게
+  JA  大切なものを、もっと特別に
+  EN  Make what matters to you more special
+
+[383]
+  KO  요약
+  JA  サマリー
+  EN  Summary
+
+[384]
+  KO  내 서랍 {n}
+  JA  ひきだし {n}
+  EN  Drawers {n}
+
+[385]
+  KO  {n}개
+  JA  {n}個
+  EN  {n}
+
+[386]
+  KO  보관품 {n}
+  JA  アイテム {n}
+  EN  Items {n}
+
+[387]
+  KO  내 서랍
+  JA  マイひきだし
+  EN  My drawers
+
+[388]
+  KO  편집
+  JA  編集
+  EN  Edit
+
+[389]
+  KO  {name} 서랍
+  JA  「{name}」ひきだし
+  EN  {name} drawer
+
+[390]
+  KO  {name} 서랍 삭제
+  JA  「{name}」ひきだしを削除
+  EN  Delete {name} drawer
+
+[391]
+  KO  {name} 서랍 순서 변경
+  JA  「{name}」ひきだしの順番を変更
+  EN  Reorder {name} drawer
+
+[392]
+  KO  Drawary 정보 화면
+  JA  Drawary情報画面
+  EN  About Drawary
+
+[393]
+  KO  정보
+  JA  情報
+  EN  About
+
+[394]
+  KO  Drawary 브랜드 소개
+  JA  Drawaryブランド紹介
+  EN  About the Drawary brand
+
+[395]
+  KO  Drawary 꽃 로고
+  JA  Drawaryの花のロゴ
+  EN  Drawary flower logo
+
+[396]
+  KO  나만의 소중한 것들을, ⏎ 더 특별하게 간직해요.
+  JA  大切なものを、 ⏎ もっと特別に残しましょう。
+  EN  Keep what matters to you, ⏎ more specially.
+
+[397]
+  KO  버전 정보
+  JA  バージョン情報
+  EN  Version info
+
+[398]
+  KO  앱 정보
+  JA  アプリ情報
+  EN  App info
+
+[399]
+  KO  앱 정보 메뉴
+  JA  アプリ情報メニュー
+  EN  App info menu
+
+[400]
+  KO  현재 버전
+  JA  現在のバージョン
+  EN  Current version
+
+[401]
+  KO  개인정보 처리방침
+  JA  プライバシーポリシー
+  EN  Privacy policy
+
+[402]
+  KO  이용약관
+  JA  利用規約
+  EN  Terms of use
+
+[403]
+  KO  오픈소스 라이선스
+  JA  オープンソースライセンス
+  EN  Open source licenses
+
+[404]
+  KO  Drawary 소개
+  JA  Drawaryについて
+  EN  About Drawary
+
+[405]
+  KO  Drawary는 서랍을 만들어 좋아하는 것들을 내 방식대로 기록해 두는 개인 정리 앱이에요.
+  JA  Drawaryは、ひきだしを作って好きなものを自分なりに記録しておく、個人向けの整理アプリです。
+  EN  Drawary is a personal organizer: make drawers and keep track of the things you love your own way.
+
+[406]
+  KO  버전 {version}
+  JA  バージョン {version}
+  EN  Version {version}
+
+======================================================================
+■ 반복·알림·표 보기·정렬/필터·테마·통계·검색  (272개)
+======================================================================
+
+[407]
+  KO  이 보관품을 삭제할까요?
+  JA  このアイテムを削除しますか？
+  EN  Delete this item?
+
+[408]
+  KO  {title} 보관품과 ⏎ 입력한 내용이 서랍에서 삭제돼요.
+  JA  アイテム{title}と ⏎ 入力した内容がひきだしから削除されます。
+  EN  The item {title} and ⏎ everything you entered will be deleted from the drawer.
+
+[409]
+  KO  보관품 상세
+  JA  アイテムの詳細
+  EN  Item details
+
+[410]
+  KO  보관품 메뉴
+  JA  アイテムメニュー
+  EN  Item menu
+
+[411]
+  KO  보관품 삭제
+  JA  アイテムを削除
+  EN  Delete item
+
+[412]
+  KO  사진 크게 보기
+  JA  写真を拡大
+  EN  View photo larger
+
+[413]
+  KO  {title} 사진
+  JA  {title}の写真
+  EN  Photo of {title}
+
+[414]
+  KO  사진 없음
+  JA  写真なし
+  EN  No photo
+
+[415]
+  KO  수정하기
+  JA  編集する
+  EN  Edit
+
+[416]
+  KO  보관품 수정
+  JA  アイテムの編集
+  EN  Edit item
+
+[417]
+  KO  {drawerName} 서랍
+  JA  「{drawerName}」ひきだし
+  EN  {drawerName} drawer
+
+[418]
+  KO  사진 제거
+  JA  写真を削除
+  EN  Remove photos
+
+[419]
+  KO  사진 선택
+  JA  写真を選択
+  EN  Choose photos
+
+[420]
+  KO  사진 바꾸기
+  JA  写真を変更
+  EN  Change photos
+
+[421]
+  KO  사진 선택하기
+  JA  写真を選ぶ
+  EN  Choose photos
+
+[422]
+  KO  수정 완료
+  JA  編集完了
+  EN  Save changes
+
+[423]
+  KO  보관품 선택
+  JA  アイテムを選択
+  EN  Choose item
+
+[424]
+  KO  반복해서 만들 보관품을 골라 주세요.
+  JA  繰り返し作成するアイテムを選んでください。
+  EN  Choose the item to repeat.
+
+[425]
+  KO  보관품 검색
+  JA  アイテムを検索
+  EN  Search items
+
+[426]
+  KO  반복 설정 완료
+  JA  繰り返し設定の完了
+  EN  Repeat set up
+
+[427]
+  KO  반복 설정을 저장했어요.
+  JA  繰り返し設定を保存しました。
+  EN  Your repeat rule is saved.
+
+[428]
+  KO  {field}을 기준으로 {cycle} {target} 보관품을 새로 만들어요.
+  JA  「{field}」を基準に、{cycle}「{target}」のアイテムを新しく作成します。
+  EN  We'll create a new {target} item {cycle}, based on {field}.
+
+[429]
+  KO  서랍 · 보관품
+  JA  ひきだし・アイテム
+  EN  Drawer · Item
+
+[430]
+  KO  새 보관품 생성
+  JA  新しいアイテムを作成
+  EN  Creates a new item
+
+[431]
+  KO  종료 조건
+  JA  終了条件
+  EN  End condition
+
+[432]
+  KO  사용 중
+  JA  使用中
+  EN  Active
+
+[433]
+  KO  설정한 반복은 반복 관리에서 언제든 바꾸거나 멈출 수 있어요.
+  JA  設定した繰り返しは、繰り返しの管理からいつでも変更・停止できます。
+  EN  You can change or stop repeats anytime in Manage repeats.
+
+[434]
+  KO  반복 더 추가하기
+  JA  繰り返しをさらに追加
+  EN  Add another repeat
+
+[435]
+  KO  매주
+  JA  毎週
+  EN  every week
+
+[436]
+  KO  같은 요일
+  JA  同じ曜日
+  EN  Same weekday
+
+[437]
+  KO  주
+  JA  {n:週間|週間}
+  EN  {n:week|weeks}
+
+[438]
+  KO  몇 주마다 만들까요?
+  JA  何週間ごとに作りますか？
+  EN  Every how many weeks?
+
+[439]
+  KO  매달
+  JA  毎月
+  EN  every month
+
+[440]
+  KO  같은 날짜
+  JA  同じ日付
+  EN  Same date
+
+[441]
+  KO  개월
+  JA  {n:か月|か月}
+  EN  {n:month|months}
+
+[442]
+  KO  몇 개월마다 만들까요?
+  JA  何か月ごとに作りますか？
+  EN  Every how many months?
+
+[443]
+  KO  매년
+  JA  毎年
+  EN  every year
+
+[444]
+  KO  같은 월·일
+  JA  同じ月・日
+  EN  Same month and day
+
+[445]
+  KO  년
+  JA  {n:年|年}
+  EN  {n:year|years}
+
+[446]
+  KO  몇 년마다 만들까요?
+  JA  何年ごとに作りますか？
+  EN  Every how many years?
+
+[447]
+  KO  {interval}{unit}마다
+  JA  {interval}{unit}ごと
+  EN  every {interval} {unit}
+
+[448]
+  KO  반복 주기 설정
+  JA  繰り返し周期の設定
+  EN  Repeat schedule
+
+[449]
+  KO  기준 날짜 · {field}
+  JA  基準日・{field}
+  EN  Based on · {field}
+
+[450]
+  KO  얼마마다 새 보관품을 만들까요?
+  JA  どのくらいの間隔で新しいアイテムを作りますか？
+  EN  How often should we create a new item?
+
+[451]
+  KO  반복 주기를 선택해 주세요.
+  JA  繰り返しの周期を選んでください。
+  EN  Please choose how often to repeat.
+
+[452]
+  KO  반복 간격
+  JA  繰り返しの間隔
+  EN  Interval
+
+[453]
+  KO  선택한 주기에 맞춰 다음 보관품을 만들어요.
+  JA  選んだ周期に合わせて次のアイテムを作成します。
+  EN  We'll create the next item on the schedule you chose.
+
+[454]
+  KO  {field}을 기준으로 {interval}{unit}마다 새 보관품을 만들어요.
+  JA  「{field}」を基準に、{interval}{unit}ごとに新しいアイテムを作成します。
+  EN  We'll create a new item every {interval} {unit}, based on {field}.
+
+[455]
+  KO  계속 만들기
+  JA  ずっと作り続ける
+  EN  Keep creating
+
+[456]
+  KO  {count}개 생성 후 종료
+  JA  {count}件作成後に終了
+  EN  Ends after {count} created
+
+[457]
+  KO  {endDate}까지
+  JA  {endDate}まで
+  EN  Until {endDate}
+
+[458]
+  KO  날짜 정하기
+  JA  日付を決める
+  EN  Set an end date
+
+[459]
+  KO  직접 멈출 때까지 계속 새 보관품을 만들어요.
+  JA  自分で止めるまで、新しいアイテムを作り続けます。
+  EN  Keeps creating new items until you stop it.
+
+[460]
+  KO  횟수 정하기
+  JA  回数を決める
+  EN  Set a number
+
+[461]
+  KO  정한 횟수만큼 만든 뒤 자동으로 끝나요.
+  JA  決めた回数だけ作成したら自動的に終了します。
+  EN  Ends automatically after creating that many.
+
+[462]
+  KO  정한 날짜까지만 새 보관품을 만들어요.
+  JA  決めた日付まで新しいアイテムを作成します。
+  EN  Creates new items only up to the date you set.
+
+[463]
+  KO  반복 종료 설정
+  JA  繰り返しの終了設定
+  EN  End of repeat
+
+[464]
+  KO  새 보관품을 언제까지 만들까요?
+  JA  新しいアイテムをいつまで作りますか？
+  EN  Until when should we create new items?
+
+[465]
+  KO  반복을 계속할지, 횟수나 날짜를 정해 끝낼지 선택해 주세요.
+  JA  繰り返しを続けるか、回数や日付を決めて終了するか選んでください。
+  EN  Choose whether to keep repeating, or end after a number or a date.
+
+[466]
+  KO  몇 개를 만들고 끝낼까요?
+  JA  いくつ作成したら終了しますか？
+  EN  How many should we create before stopping?
+
+[467]
+  KO  현재 보관품은 횟수에 포함하지 않아요.
+  JA  現在のアイテムは回数に含まれません。
+  EN  The current item isn't counted.
+
+[468]
+  KO  마지막 기준 날짜
+  JA  最後の基準日
+  EN  Last base date
+
+[469]
+  KO  이 날짜를 넘기면 더 이상 만들지 않아요.
+  JA  この日付を過ぎると、それ以上作成しません。
+  EN  Nothing is created after this date.
+
+[470]
+  KO  종료 조건은 나중에 반복 관리에서 언제든 바꿀 수 있어요.
+  JA  終了条件は、あとから繰り返しの管理でいつでも変更できます。
+  EN  You can change the end condition anytime later in Manage repeats.
+
+[471]
+  KO  반복 설정하기
+  JA  繰り返しを設定する
+  EN  Set repeat
+
+[472]
+  KO  다음 보관품을 자동으로 만들어요.
+  JA  次のアイテムを自動で作成します。
+  EN  Creates the next item automatically.
+
+[473]
+  KO  날짜 서랍 칸을 기준으로 매주·매달·매년 원하는 주기에 맞춰 ⏎ 새 보관품을 만들 수 있어요.
+  JA  日付の項目を基準に、毎週・毎月・毎年など好きな周期で ⏎ 新しいアイテムを作成できます。
+  EN  Create new items weekly, monthly or yearly ⏎ based on a date field.
+
+[474]
+  KO  설정된 반복
+  JA  設定済みの繰り返し
+  EN  Your repeats
+
+[475]
+  KO  0개
+  JA  0個
+  EN  0
+
+[476]
+  KO  아직 반복 설정이 없어요.
+  JA  まだ繰り返し設定がありません。
+  EN  No repeats set up yet.
+
+[477]
+  KO  반복을 설정하면 다음 주기의 ⏎ 보관품이 자동으로 만들어져요.
+  JA  繰り返しを設定すると、次の周期の ⏎ アイテムが自動で作成されます。
+  EN  Set up a repeat and the next item ⏎ is created for you automatically.
+
+[478]
+  KO  반복 설정 추가하기
+  JA  繰り返し設定を追加
+  EN  Add repeat
+
+[479]
+  KO  일시 정지
+  JA  一時停止
+  EN  Paused
+
+[480]
+  KO  반복 설정은 이 서랍의 보관품에만 적용돼요.
+  JA  繰り返し設定は、このひきだしのアイテムにのみ適用されます。
+  EN  Repeats apply only to items in this drawer.
+
+[481]
+  KO  어떤 보관품을 반복해서 만들까요?
+  JA  どのアイテムを繰り返し作成しますか？
+  EN  Which item should we repeat?
+
+[482]
+  KO  반복할 보관품과 기준이 될 날짜 서랍 칸을 선택해 주세요.
+  JA  繰り返すアイテムと、基準となる日付の項目を選んでください。
+  EN  Choose the item to repeat and the date field to base it on.
+
+[483]
+  KO  반복할 보관품
+  JA  繰り返すアイテム
+  EN  Item to repeat
+
+[484]
+  KO  보관품을 선택해 주세요
+  JA  アイテムを選んでください
+  EN  Please choose an item
+
+[485]
+  KO  {drawerName} 서랍의 보관품
+  JA  「{drawerName}」ひきだしのアイテム
+  EN  Items in the {drawerName} drawer
+
+[486]
+  KO  {itemCount}개 보관품 중 선택
+  JA  アイテム{itemCount}件から選択
+  EN  Choose from {itemCount} {itemCount:item|items}
+
+[487]
+  KO  이 서랍에는 날짜 서랍 칸이 없어요. 날짜 서랍 칸을 먼저 추가해 주세요.
+  JA  このひきだしには日付の項目がありません。先に日付の項目を追加してください。
+  EN  This drawer has no date field. Please add a date field first.
+
+[488]
+  KO  선택한 날짜를 기준으로 다음 보관품의 날짜가 계산돼요.
+  JA  選んだ日付を基準に、次のアイテムの日付が計算されます。
+  EN  The next item's date is worked out from the date you chose.
+
+[489]
+  KO  .zip 또는 .json 파일
+  JA  .zip または .json ファイル
+  EN  .zip or .json file
+
+[490]
+  KO  복원 파일 선택 화면
+  JA  復元ファイルの選択画面
+  EN  Choose restore file
+
+[491]
+  KO  복원
+  JA  復元
+  EN  Restore
+
+[492]
+  KO  복원할 파일 선택
+  JA  復元するファイルを選択
+  EN  Choose a file to restore
+
+[493]
+  KO  복원을 준비하는 서랍장 마스코트
+  JA  復元を準備するひきだしのマスコット
+  EN  Drawer mascot getting ready to restore
+
+[494]
+  KO  복원할 백업 파일을 선택해 주세요
+  JA  復元するファイルを選んでください
+  EN  Choose a backup file to restore
+
+[495]
+  KO  Drawary 백업 파일을 불러와 ⏎ 기록과 설정을 복원할 수 있어요.
+  JA  Drawaryのバックアップファイルを読み込んで ⏎ 記録と設定を復元できます。
+  EN  Load a Drawary backup file ⏎ to restore your records and settings.
+
+[496]
+  KO  백업 파일 선택
+  JA  バックアップファイルを選択
+  EN  Choose backup file
+
+[497]
+  KO  파일을 선택하면 복원할 내용을 먼저 확인할 수 있어요.
+  JA  ファイルを選ぶと、復元する内容を先に確認できます。
+  EN  Choose a file to check what will be restored first.
+
+[498]
+  KO  파일 선택
+  JA  ファイルを選ぶ
+  EN  Choose file
+
+[499]
+  KO  Drawary 백업 파일을 선택해 주세요
+  JA  Drawaryのバックアップファイルを選んでください
+  EN  Please choose a Drawary backup file
+
+[500]
+  KO  복원 진행 화면
+  JA  復元の進行画面
+  EN  Restore in progress
+
+[501]
+  KO  복원 중
+  JA  復元中
+  EN  Restoring
+
+[502]
+  KO  복원 진행 상태
+  JA  復元の進行状況
+  EN  Restore progress
+
+[503]
+  KO  파일 복원을 안내하는 Drawary 마스코트
+  JA  ファイルの復元を案内するDrawaryのマスコット
+  EN  Drawary mascot guiding the restore
+
+[504]
+  KO  복원 진행 중
+  JA  復元の進行中
+  EN  Restore in progress
+
+[505]
+  KO  복원하고 있어요
+  JA  復元しています
+  EN  Restoring your data
+
+[506]
+  KO  백업 내용을 불러오고 있어요.
+  JA  バックアップの内容を読み込んでいます。
+  EN  Loading your backup.
+
+[507]
+  KO  복원 내용 확인 화면
+  JA  復元内容の確認画面
+  EN  Check restore contents
+
+[508]
+  KO  복원 내용 확인
+  JA  復元内容の確認
+  EN  Check restore contents
+
+[509]
+  KO  백업 파일에 포함된 내용
+  JA  バックアップファイルに含まれる内容
+  EN  What's in the backup file
+
+[510]
+  KO  선택된 백업 파일
+  JA  選択したバックアップファイル
+  EN  Selected backup file
+
+[511]
+  KO  복원할 내용
+  JA  復元する内容
+  EN  What will be restored
+
+[512]
+  KO  복원 예정 항목
+  JA  復元予定の項目
+  EN  Items to restore
+
+[513]
+  KO  서랍과 기록
+  JA  ひきだしと記録
+  EN  Records
+
+[514]
+  KO  포함
+  JA  含まれる
+  EN  Included
+
+[515]
+  KO  복원 전에 내용을 한 번 더 확인해 주세요
+  JA  復元の前に内容をもう一度ご確認ください
+  EN  Please check the contents once more before restoring
+
+[516]
+  KO  중요한 기록이 있다면 복원 전에 ⏎ 먼저 백업해 두면 안전해요.
+  JA  大切なデータがある場合は、復元の前に ⏎ 先にバックアップしておくことをおすすめします。
+  EN  If you have important data, we recommend ⏎ backing it up before restoring.
+
+[517]
+  KO  복원 시작
+  JA  復元を開始
+  EN  Start restore
+
+[518]
+  KO  복원을 시작할까요?
+  JA  復元を開始しますか？
+  EN  Start restoring?
+
+[519]
+  KO  선택한 백업 파일의 내용을 불러와요. ⏎ 지금 있는 중요한 기록은 먼저 백업해 두세요.
+  JA  選択したバックアップファイルの内容を読み込みます。 ⏎ 復元の前に、大切なデータは先にバックアップしてください。
+  EN  This loads the contents of the backup file you chose. ⏎ Please back up important data before restoring.
+
+[520]
+  KO  계속
+  JA  続ける
+  EN  Continue
+
+[521]
+  KO  복원 완료 화면
+  JA  復元完了画面
+  EN  Restore complete
+
+[522]
+  KO  복원 완료 결과
+  JA  復元完了の結果
+  EN  Restore results
+
+[523]
+  KO  복원 성공 표시를 든 Drawary 마스코트
+  JA  復元成功のマークを持つDrawaryのマスコット
+  EN  Drawary mascot holding a success sign
+
+[524]
+  KO  복원이 완료됐어요!
+  JA  復元が完了しました！
+  EN  Restore complete!
+
+[525]
+  KO  백업 내용을 모두 불러왔어요.
+  JA  バックアップの内容をすべて読み込みました。
+  EN  Everything from your backup is loaded.
+
+[526]
+  KO  복원된 항목
+  JA  復元された項目
+  EN  Restored items
+
+[527]
+  KO  앱 잠금을 먼저 켜 주세요.
+  JA  先にアプリロックをオンにしてください。
+  EN  Please turn on app lock first.
+
+[528]
+  KO  이 기기에서는 사용할 수 없어요.
+  JA  この端末では使用できません。
+  EN  Not available on this device.
+
+[529]
+  KO  지문이나 얼굴 인식으로 잠금을 풀어요.
+  JA  指紋や顔認証でロックを解除します。
+  EN  Unlock with your fingerprint or face.
+
+[530]
+  KO  보안 설정
+  JA  セキュリティ設定
+  EN  Security settings
+
+[531]
+  KO  내 서랍 보호하기
+  JA  ひきだしを守る
+  EN  Protect my drawers
+
+[532]
+  KO  앱을 열 때 잠금을 설정하고 ⏎ 내 기록을 보호할 수 있어요.
+  JA  アプリを開くときのロックを設定して ⏎ 記録を守れます。
+  EN  Set a lock for opening the app ⏎ and keep your records protected.
+
+[533]
+  KO  보안 항목
+  JA  セキュリティ項目
+  EN  Security items
+
+[534]
+  KO  앱 잠금 설정 상세로 이동
+  JA  アプリロックの設定詳細へ移動
+  EN  Go to app lock details
+
+[535]
+  KO  PIN과 잠금 방식을 관리해요.
+  JA  PINとロック方式を管理します。
+  EN  Manage your PIN and lock method.
+
+[536]
+  KO  생체 인증
+  JA  生体認証
+  EN  Biometrics
+
+[537]
+  KO  생체 인증 사용
+  JA  生体認証を使う
+  EN  Use biometrics
+
+[538]
+  KO  자동 잠금
+  JA  自動ロック
+  EN  Auto-lock
+
+[539]
+  KO  앱을 벗어나면 자동으로 잠가요.
+  JA  アプリを離れると自動でロックします。
+  EN  Locks automatically when you leave the app.
+
+[540]
+  KO  자동 잠금 사용
+  JA  自動ロックを使う
+  EN  Use auto-lock
+
+[541]
+  KO  보안 설정은 이 기기에서만 사용돼요. ⏎ 언제든 설정을 바꿀 수 있어요.
+  JA  セキュリティ設定はこの端末でのみ使われます。 ⏎ いつでも設定を変更できます。
+  EN  Security settings are used on this device only. ⏎ You can change them anytime.
+
+[542]
+  KO  테마 설정
+  JA  テーマ設定
+  EN  Theme
+
+[543]
+  KO  앱의 분위기와 강조 색상을 바꿔요.
+  JA  アプリの雰囲気とアクセントカラーを変更します。
+  EN  Change the look and accent color of the app.
+
+[544]
+  KO  앱 잠금과 생체 인증을 관리해요.
+  JA  アプリロックと生体認証を管理します。
+  EN  Manage app lock and biometrics.
+
+[545]
+  KO  백업, 복원, 데이터 초기화를 관리해요.
+  JA  バックアップ、復元、データの初期化を管理します。
+  EN  Manage backup, restore and data reset.
+
+[546]
+  KO  언어 설정
+  JA  言語設定
+  EN  Language
+
+[547]
+  KO  한국어 · 日本語 · English
+  JA  한국어 · 日本語 · English
+  EN  한국어 · 日本語 · English
+
+[548]
+  KO  FAQ와 사용 가이드를 확인해요.
+  JA  FAQと使い方ガイドを確認します。
+  EN  Check the FAQ and the user guide.
+
+[549]
+  KO  버전, 약관, 오픈소스 정보를 확인해요.
+  JA  バージョン、規約、オープンソース情報を確認します。
+  EN  See the version, terms and open source info.
+
+[550]
+  KO  개선 제안이나 오류를 알려주세요.
+  JA  改善の提案や不具合をお知らせください。
+  EN  Send us suggestions or report problems.
+
+[551]
+  KO  Drawary 설정
+  JA  Drawary設定
+  EN  Drawary settings
+
+[552]
+  KO  앱의 분위기와 데이터, 보안을 한곳에서 관리할 수 있어요.
+  JA  アプリの雰囲気、データ、セキュリティを1か所で管理できます。
+  EN  Manage the look, data and security of the app in one place.
+
+[553]
+  KO  가장 많은 서랍
+  JA  一番多いひきだし
+  EN  Fullest drawer
+
+[554]
+  KO  내 서랍 {n}개
+  JA  ひきだし{n}個
+  EN  {n} {n:drawer|drawers}
+
+[555]
+  KO  이번 달 추가
+  JA  今月の追加
+  EN  Added this month
+
+[556]
+  KO  +{n}개
+  JA  +{n}件
+  EN  +{n}
+
+[557]
+  KO  다가오는 일정
+  JA  今後の予定
+  EN  Upcoming
+
+[558]
+  KO  가장 가까운 일정 {n}일 후
+  JA  一番近い予定は{n}日後
+  EN  Next one in {n} {n:day|days}
+
+[559]
+  KO  최근 기록
+  JA  最近の記録
+  EN  Recent records
+
+[560]
+  KO  최근 6개월 동안 추가된 보관품 수예요.
+  JA  直近6か月間に追加されたアイテム数です。
+  EN  Items added over the last 6 months.
+
+[561]
+  KO  {n}일 후
+  JA  {n}日後
+  EN  In {n} {n:day|days}
+
+[562]
+  KO  서랍별 인사이트
+  JA  ひきだし別インサイト
+  EN  Insights by drawer
+
+[563]
+  KO  일치
+  JA  一致
+  EN  Equals
+
+[564]
+  KO  비어 있음
+  JA  空
+  EN  Is empty
+
+[565]
+  KO  비어 있지 않음
+  JA  空ではない
+  EN  Is not empty
+
+[566]
+  KO  이상
+  JA  以上
+  EN  At least
+
+[567]
+  KO  이하
+  JA  以下
+  EN  At most
+
+[568]
+  KO  범위
+  JA  範囲
+  EN  Between
+
+[569]
+  KO  이후
+  JA  以降
+  EN  After
+
+[570]
+  KO  체크됨
+  JA  チェック済み
+  EN  Checked
+
+[571]
+  KO  체크 안 됨
+  JA  未チェック
+  EN  Unchecked
+
+[572]
+  KO  사진 있음
+  JA  写真あり
+  EN  Has photo
+
+[573]
+  KO  '{v}' 포함
+  JA  「{v}」を含む
+  EN  Contains '{v}'
+
+[574]
+  KO  '{v}'와 일치
+  JA  「{v}」と一致
+  EN  Equals '{v}'
+
+[575]
+  KO  {v} 이상
+  JA  {v}以上
+  EN  {v} or more
+
+[576]
+  KO  {v} 이하
+  JA  {v}以下
+  EN  {v} or less
+
+[577]
+  KO  {v} 이전
+  JA  {v}以前
+  EN  Before {v}
+
+[578]
+  KO  {v} 이후
+  JA  {v}以降
+  EN  After {v}
+
+[579]
+  KO  조건에 맞는 보관품만 골라서 볼 수 있어요.
+  JA  条件に合うアイテムだけを絞り込んで見られます。
+  EN  Show only the items that match your conditions.
+
+[580]
+  KO  초기화
+  JA  リセット
+  EN  Reset
+
+[581]
+  KO  적용 중인 필터
+  JA  適用中のフィルター
+  EN  Active filters
+
+[582]
+  KO  {label} 필터 삭제
+  JA  {label}のフィルターを削除
+  EN  Remove {label} filter
+
+[583]
+  KO  아직 적용된 필터가 없어요.
+  JA  まだ適用されたフィルターがありません。
+  EN  No filters applied yet.
+
+[584]
+  KO  조건을 어떻게 살펴볼까요?
+  JA  条件をどのように見ますか？
+  EN  How should the conditions work together?
+
+[585]
+  KO  모두 맞는 보관품
+  JA  すべてに合うアイテム
+  EN  Items matching all
+
+[586]
+  KO  모든 조건에 맞는 것만 봐요.
+  JA  すべての条件に合うものだけ表示します。
+  EN  Shows only items that meet every condition.
+
+[587]
+  KO  하나라도 맞는 보관품
+  JA  どれかに合うアイテム
+  EN  Items matching any
+
+[588]
+  KO  조건 중 하나라도 맞으면 봐요.
+  JA  条件のどれか1つでも合えば表示します。
+  EN  Shows items that meet at least one condition.
+
+[589]
+  KO  빠르게 추가
+  JA  すばやく追加
+  EN  Quick add
+
+[590]
+  KO  다른 서랍 칸에서 선택 ›
+  JA  別の項目から選ぶ ›
+  EN  Choose another field ›
+
+[591]
+  KO  조건에 맞는 보관품 {n}
+  JA  条件に合うアイテム{n}
+  EN  Items matching: {n}
+
+[592]
+  KO  적용하기
+  JA  適用する
+  EN  Apply
+
+[593]
+  KO  필터할 서랍 칸 선택
+  JA  フィルターする項目を選択
+  EN  Choose a field to filter
+
+[594]
+  KO  조건을 걸 서랍 칸을 골라주세요.
+  JA  条件を設定する項目を選んでください。
+  EN  Choose the field to set a condition on.
+
+[595]
+  KO  서랍 칸 검색
+  JA  項目を検索
+  EN  Search fields
+
+[596]
+  KO  {name} 필터
+  JA  {name}のフィルター
+  EN  {name} filter
+
+[597]
+  KO  이 서랍 칸에 적용할 조건을 정해요.
+  JA  この項目に適用する条件を決めます。
+  EN  Set the condition for this field.
+
+[598]
+  KO  조건
+  JA  条件
+  EN  Condition
+
+[599]
+  KO  시작 날짜
+  JA  開始日
+  EN  Start date
+
+[600]
+  KO  끝 날짜
+  JA  終了日
+  EN  End date
+
+[601]
+  KO  작은 값
+  JA  小さい値
+  EN  Smaller value
+
+[602]
+  KO  값
+  JA  値
+  EN  Value
+
+[603]
+  KO  큰 값
+  JA  大きい値
+  EN  Larger value
+
+[604]
+  KO  이 조건 추가
+  JA  この条件を追加
+  EN  Add this condition
+
+[605]
+  KO  정렬이나 필터 중에서 골라 주세요.
+  JA  並べ替えかフィルターを選んでください。
+  EN  Choose sort or filter.
+
+[606]
+  KO  정렬
+  JA  並べ替え
+  EN  Sort
+
+[607]
+  KO  보관품을 어떤 순서로 볼지 정해요.
+  JA  アイテムをどの順番で見るか決めます。
+  EN  Choose the order you view items in.
+
+[608]
+  KO  조건에 맞는 보관품만 골라서 봐요.
+  JA  条件に合うアイテムだけを絞り込んで見ます。
+  EN  View only the items that match your conditions.
+
+[609]
+  KO  오래된순
+  JA  古い順
+  EN  Oldest first
+
+[610]
+  KO  최신순
+  JA  新しい順
+  EN  Newest first
+
+[611]
+  KO  낮은순
+  JA  低い順
+  EN  Low to high
+
+[612]
+  KO  높은순
+  JA  高い順
+  EN  High to low
+
+[613]
+  KO  가나다순
+  JA  五十音順
+  EN  A to Z
+
+[614]
+  KO  역순
+  JA  逆順
+  EN  Reverse
+
+[615]
+  KO  정렬 기준
+  JA  並べ替えの基準
+  EN  Sort by
+
+[616]
+  KO  순서
+  JA  順序
+  EN  Order
+
+[617]
+  KO  정렬 기준 선택
+  JA  並べ替えの基準を選択
+  EN  Choose sort field
+
+[618]
+  KO  정렬할 서랍 칸을 골라주세요.
+  JA  並べ替える項目を選んでください。
+  EN  Choose the field to sort by.
+
+[619]
+  KO  표 보기
+  JA  表で見る
+  EN  Table view
+
+[620]
+  KO  표 내보내기 메뉴
+  JA  表のエクスポートメニュー
+  EN  Export table menu
+
+[621]
+  KO  CSV로 내보내기
+  JA  CSVでエクスポート
+  EN  Export as CSV
+
+[622]
+  KO  PDF로 내보내기
+  JA  PDFでエクスポート
+  EN  Export as PDF
+
+[623]
+  KO  서랍 칸을 표로 한눈에 볼 수 있어요.
+  JA  項目を表で一目で確認できます。
+  EN  See all your fields in a table at a glance.
+
+[624]
+  KO  표에서 검색하기
+  JA  表の中を検索
+  EN  Search in table
+
+[625]
+  KO  검색 결과 {n}
+  JA  検索結果 {n}
+  EN  Results {n}
+
+[626]
+  KO  표 도구
+  JA  表のツール
+  EN  Table tools
+
+[627]
+  KO  정렬 (적용 중)
+  JA  並べ替え（適用中）
+  EN  Sort (active)
+
+[628]
+  KO  필터 ({activeFilters}개 적용 중)
+  JA  フィルター（{activeFilters}件適用中）
+  EN  Filter ({activeFilters} active)
+
+[629]
+  KO  아직 담은 보관품이 없어요.
+  JA  まだアイテムがありません。
+  EN  No items yet.
+
+[630]
+  KO  ← 옆으로 밀어 더 보기 →
+  JA  ← 横にスワイプしてもっと見る →
+  EN  ← Swipe sideways to see more →
+
+[631]
+  KO  라벤더
+  JA  ラベンダー
+  EN  Lavender
+
+[632]
+  KO  보라색 둥근 꽃
+  JA  紫色の丸い花
+  EN  Round purple flower
+
+[633]
+  KO  코랄
+  JA  コーラル
+  EN  Coral
+
+[634]
+  KO  코랄색 튤립 꽃
+  JA  コーラル色のチューリップ
+  EN  Coral tulip
+
+[635]
+  KO  세이지
+  JA  セージ
+  EN  Sage
+
+[636]
+  KO  연녹색 꽃과 잎
+  JA  薄緑色の花と葉
+  EN  Pale green flower and leaves
+
+[637]
+  KO  머스타드
+  JA  マスタード
+  EN  Mustard
+
+[638]
+  KO  노란색 데이지 꽃
+  JA  黄色いデイジー
+  EN  Yellow daisy
+
+[639]
+  KO  스카이
+  JA  スカイ
+  EN  Sky
+
+[640]
+  KO  하늘색 종 모양 꽃
+  JA  空色のベル形の花
+  EN  Sky-blue bell flower
+
+[641]
+  KO  테마
+  JA  テーマ
+  EN  Theme
+
+[642]
+  KO  테마 스타일
+  JA  テーマスタイル
+  EN  Theme style
+
+[643]
+  KO  테마 선택
+  JA  テーマを選択
+  EN  Choose a theme
+
+[644]
+  KO  선택한 테마는 앱 전체의 색과 장식에 적용돼요.
+  JA  テーマはアプリ全体の主な色と装飾に適用されます。
+  EN  Applies to the app's main colors and decorations.
+
+[645]
+  KO  {interval}{unit}
+  JA  {interval}{unit}
+  EN  {interval} {unit}
+
+[646]
+  KO  포함@op
+  JA  含む
+  EN  Contains
+
+[647]
+  KO  선택@opt
+  JA  任意
+  EN  Optional
+
+[648]
+  KO  {n}건@event
+  JA  {n}件
+  EN  {n} {n:event|events}
+
+[649]
+  KO  아직 만든 서랍이 없어요.
+  JA  まだひきだしがありません。
+  EN  No drawers yet.
+
+[650]
+  KO  정리하고 싶은 것부터 ⏎ 하나 만들어보세요.
+  JA  整理したいものから ⏎ ひとつ作ってみましょう。
+  EN  Start with something ⏎ you'd like to organize.
+
+[651]
+  KO  다가오는 일정 {n}건
+  JA  今後の予定{n}件
+  EN  {n} upcoming {n:event|events}
+
+[652]
+  KO  이번 달 추가 {n}개
+  JA  今月の追加{n}件
+  EN  {n} added this month
+
+[653]
+  KO  서랍 열기
+  JA  ひきだしを開く
+  EN  Open drawer
+
+[654]
+  KO  지난달보다 {n}
+  JA  先月より {n}
+  EN  {n} vs last month
+
+[655]
+  KO  예정된 일정이 없어요.
+  JA  予定はありません。
+  EN  Nothing coming up.
+
+[656]
+  KO  탭하면 해당 서랍으로 이동해요.
+  JA  タップするとそのひきだしに移動します。
+  EN  Tap to open that drawer.
+
+[657]
+  KO  아직 서랍이 없어요.
+  JA  まだひきだしがありません。
+  EN  No drawers yet.
+
+[658]
+  KO  백업 파일이 손상되어 읽을 수 없어요.
+  JA  バックアップファイルが壊れていて読み込めません。
+  EN  The backup file is damaged and can't be read.
+
+[659]
+  KO  Drawary 백업 파일이 아니에요. .zip 또는 .json 백업 파일을 선택해 주세요.
+  JA  Drawaryのバックアップファイルではありません。.zipまたは.jsonのバックアップファイルを選んでください。
+  EN  This isn't a Drawary backup file. Please choose a .zip or .json backup file.
+
+[660]
+  KO  더 새로운 버전의 Drawary에서 만든 백업이에요. 앱을 업데이트한 뒤 다시 시도해 주세요.
+  JA  より新しいバージョンのDrawaryで作られたバックアップです。アプリを更新してからもう一度お試しください。
+  EN  This backup was made by a newer version of Drawary. Please update the app and try again.
+
+[661]
+  KO  파일이 너무 커서 복원할 수 없어요.
+  JA  ファイルが大きすぎて復元できません。
+  EN  The file is too large to restore.
+
+[662]
+  KO  Google Drive 백업은 안드로이드 앱에서 사용할 수 있어요.
+  JA  Google Driveへのバックアップは、Androidアプリで利用できます。
+  EN  Google Drive backup is available in the Android app.
+
+[663]
+  KO  지금 쓰는 PIN을 입력하면 ⏎ 복원을 계속할 수 있어요.
+  JA  現在のPINを入力すると ⏎ 復元を続けられます。
+  EN  Enter your current PIN ⏎ to continue the restore.
+
+[664]
+  KO  지금 쓰는 PIN을 입력하면 ⏎ 초기화를 계속할 수 있어요.
+  JA  現在のPINを入力すると ⏎ 初期化を続けられます。
+  EN  Enter your current PIN ⏎ to continue the reset.
+
+[665]
+  KO  {date} · 백업 파일 1개
+  JA  {date} · バックアップファイル1件
+  EN  {date} · 1 backup file
+
+[666]
+  KO  {drawers}개 서랍 · {records}개 기록
+  JA  ひきだし{drawers}個 · 記録{records}件
+  EN  {drawers} {drawers:drawer|drawers} · {records} {records:record|records}
+
+[667]
+  KO  {n}장
+  JA  {n}枚
+  EN  {n} {n:photo|photos}
+
+[668]
+  KO  {place}에 저장했어요.
+  JA  {place}に保存しました。
+  EN  Saved to {place}.
+
+[669]
+  KO  메일 앱을 열었어요. 보내기를 누르면 전달돼요.
+  JA  メールアプリを開きました。送信を押すと届きます。
+  EN  The mail app is open. Tap send to deliver it.
+
+[670]
+  KO  메일 앱을 열지 못했어요. 메일 앱이 있는지 확인해 주세요.
+  JA  メールアプリを開けませんでした。メールアプリがあるか確認してください。
+  EN  Couldn't open a mail app. Please check that one is installed.
+
+[671]
+  KO  저장을 취소했어요.
+  JA  保存をキャンセルしました。
+  EN  Saving was cancelled.
+
+[672]
+  KO  Google Drive에 저장하지 못했어요.
+  JA  Google Driveに保存できませんでした。
+  EN  Couldn't save to Google Drive.
+
+[673]
+  KO  아니요
+  JA  いいえ
+  EN  No
+
+[674]
+  KO  왼쪽에서 고르면 여기에 열려요.
+  JA  左で選ぶと、ここに開きます。
+  EN  Pick something on the left and it opens here.
+
+[675]
+  KO  보관품을 고르면 여기에 보여요.
+  JA  アイテムを選ぶと、ここに表示されます。
+  EN  Pick an item and it shows up here.
+
+[676]
+  KO  서랍 목록
+  JA  ひきだし一覧
+  EN  Drawer list
+
+[677]
+  KO  모든 서랍
+  JA  すべてのひきだし
+  EN  All drawers
+
+[678]
+  KO  카드 보기
+  JA  カード表示
+  EN  Cards
+
+======================================================================
+■ 설정·보안·PIN·알림 공통·온보딩  (159개)
+======================================================================
+
+[679]
+  KO  보안 설정으로 돌아가기
+  JA  セキュリティ設定に戻る
+  EN  Back to security settings
+
+[680]
+  KO  잠금 관리
+  JA  ロック管理
+  EN  Lock management
+
+[681]
+  KO  내 서랍을 안전하게
+  JA  ひきだしを安全に
+  EN  Keep my drawers safe
+
+[682]
+  KO  나만 아는 PIN으로 ⏎ 소중한 기록을 보호해요.
+  JA  自分だけのPINで ⏎ 大切な記録を守ります。
+  EN  Protect your records ⏎ with a PIN only you know.
+
+[683]
+  KO  잠금 관리 항목
+  JA  ロック管理の項目
+  EN  Lock management items
+
+[684]
+  KO  앱 잠금 사용
+  JA  アプリロックを使う
+  EN  Use app lock
+
+[685]
+  KO  앱을 열 때 PIN을 입력해요.
+  JA  アプリを開くときにPINを入力します。
+  EN  Enter your PIN when opening the app.
+
+[686]
+  KO  PIN 설정 또는 변경 화면으로 이동
+  JA  PINの設定・変更画面へ移動
+  EN  Go to set or change PIN
+
+[687]
+  KO  PIN 설정 / 변경
+  JA  PINの設定・変更
+  EN  Set / change PIN
+
+[688]
+  KO  잠금에 사용할 PIN을 관리해요.
+  JA  ロックに使うPINを管理します。
+  EN  Manage the PIN used for the lock.
+
+[689]
+  KO  앱 잠금을 사용하려면 먼저 PIN을 설정해 주세요. ⏎ PIN은 이 기기에만 저장돼요.
+  JA  アプリロックを使うには、先にPINを設定してください。 ⏎ PINはこの端末にのみ保存されます。
+  EN  To use the app lock, set a PIN first. ⏎ The PIN is stored on this device only.
+
+[690]
+  KO  화장품
+  JA  コスメ
+  EN  Cosmetics
+
+[691]
+  KO  책
+  JA  本
+  EN  Books
+
+[692]
+  KO  식물
+  JA  植物
+  EN  Plants
+
+[693]
+  KO  여행
+  JA  旅行
+  EN  Travel
+
+[694]
+  KO  옷
+  JA  服
+  EN  Clothes
+
+[695]
+  KO  카페
+  JA  カフェ
+  EN  Cafe
+
+[696]
+  KO  사진
+  JA  写真
+  EN  Photos
+
+[697]
+  KO  반려동물
+  JA  ペット
+  EN  Pets
+
+[698]
+  KO  집
+  JA  家
+  EN  Home
+
+[699]
+  KO  음식
+  JA  食べ物
+  EN  Food
+
+[700]
+  KO  금융
+  JA  金融
+  EN  Finance
+
+[701]
+  KO  전자제품
+  JA  家電
+  EN  Electronics
+
+[702]
+  KO  게임
+  JA  ゲーム
+  EN  Games
+
+[703]
+  KO  음악
+  JA  音楽
+  EN  Music
+
+[704]
+  KO  선물
+  JA  ギフト
+  EN  Gifts
+
+[705]
+  KO  건강
+  JA  健康
+  EN  Health
+
+[706]
+  KO  운동
+  JA  運動
+  EN  Fitness
+
+[707]
+  KO  자동차
+  JA  車
+  EN  Car
+
+[708]
+  KO  문서
+  JA  書類
+  EN  Documents
+
+[709]
+  KO  쇼핑
+  JA  ショッピング
+  EN  Shopping
+
+[710]
+  KO  영화
+  JA  映画
+  EN  Movies
+
+[711]
+  KO  취미
+  JA  趣味
+  EN  Hobbies
+
+[712]
+  KO  육아
+  JA  育児
+  EN  Parenting
+
+[713]
+  KO  변경 미리보기
+  JA  変更プレビュー
+  EN  Preview
+
+[714]
+  KO  서랍 이름
+  JA  ひきだしの名前
+  EN  Drawer name
+
+[715]
+  KO  서랍 이름을 입력해 주세요.
+  JA  ひきだしの名前を入力してください。
+  EN  Please enter a drawer name.
+
+[716]
+  KO  아이콘
+  JA  アイコン
+  EN  Icon
+
+[717]
+  KO  하나를 골라주세요.
+  JA  1つ選んでください。
+  EN  Pick one.
+
+[718]
+  KO  저장
+  JA  保存
+  EN  Save
+
+[719]
+  KO  닫기
+  JA  閉じる
+  EN  Close
+
+[720]
+  KO  먼저 서랍의 이름과 분위기를 정해보세요.
+  JA  まず、ひきだしの名前と雰囲気を決めましょう。
+  EN  Start by choosing a name and a look for your drawer.
+
+[721]
+  KO  예: 화장품
+  JA  例：コスメ
+  EN  e.g. Cosmetics
+
+[722]
+  KO  서랍 색상
+  JA  ひきだしの色
+  EN  Drawer color
+
+[723]
+  KO  이름, 제목처럼 짧은 글
+  JA  名前やタイトルのような短い文
+  EN  Short text like a name or title
+
+[724]
+  KO  메모나 감상처럼 긴 내용
+  JA  メモや感想のような長い内容
+  EN  Longer text like notes or thoughts
+
+[725]
+  KO  숫자
+  JA  数字
+  EN  Number
+
+[726]
+  KO  개수, 용량처럼 숫자 입력
+  JA  個数や容量など数字を入力
+  EN  Numbers like count or size
+
+[727]
+  KO  가격이나 비용 입력
+  JA  価格や費用を入力
+  EN  Enter a price or cost
+
+[728]
+  KO  구매일, 방문일처럼 날짜 선택
+  JA  購入日や訪問日など日付を選択
+  EN  Pick a date like purchase or visit day
+
+[729]
+  KO  사진을 등록할 때
+  JA  写真を登録するとき
+  EN  For adding photos
+
+[730]
+  KO  여러 옵션 중 하나를 선택
+  JA  複数の選択肢から1つを選ぶ
+  EN  Choose one of several options
+
+[731]
+  KO  체크
+  JA  チェック
+  EN  Checkbox
+
+[732]
+  KO  완료 여부처럼 켜고 끄기
+  JA  完了かどうかのようにオン・オフ
+  EN  On/off, like done or not
+
+[733]
+  KO  별점으로 평가
+  JA  星で評価
+  EN  Rate with stars
+
+[734]
+  KO  링크
+  JA  リンク
+  EN  Link
+
+[735]
+  KO  웹사이트나 참고 링크
+  JA  ウェブサイトや参考リンク
+  EN  A website or reference link
+
+[736]
+  KO  옵션 1
+  JA  選択肢1
+  EN  Option 1
+
+[737]
+  KO  옵션 2
+  JA  選択肢2
+  EN  Option 2
+
+[738]
+  KO  옵션 3
+  JA  選択肢3
+  EN  Option 3
+
+[739]
+  KO  서랍 칸 종류 선택
+  JA  項目の種類を選択
+  EN  Choose field type
+
+[740]
+  KO  서랍에 담아둘 내용에 맞는 ⏎ 서랍 칸 종류를 골라주세요.
+  JA  ひきだしに入れる内容に合った ⏎ 項目の種類を選んでください。
+  EN  Choose the field type ⏎ that fits what you'll store.
+
+[741]
+  KO  서랍 칸 추가
+  JA  項目を追加
+  EN  Add field
+
+[742]
+  KO  이전 단계
+  JA  前のステップ
+  EN  Previous step
+
+[743]
+  KO  예) 브랜드, 색상, 카테고리
+  JA  例）ブランド、色、カテゴリー
+  EN  e.g. brand, color, category
+
+[744]
+  KO  옵션 {n} 삭제
+  JA  選択肢{n}を削除
+  EN  Delete option {n}
+
+[745]
+  KO  추가하기
+  JA  追加する
+  EN  Add
+
+[746]
+  KO  알림 공통 설정
+  JA  通知の共通設定
+  EN  Common notification settings
+
+[747]
+  KO  기본 알림 시간
+  JA  通知のデフォルト時刻
+  EN  Default notification time
+
+[748]
+  KO  새 알림의 기본 시간
+  JA  新しい通知のデフォルト時刻
+  EN  Default time for new notifications
+
+[749]
+  KO  알림을 추가할 때 이 시간으로 시작해요.
+  JA  通知を追加するとき、この時刻から始まります。
+  EN  New notifications start at this time.
+
+[750]
+  KO  이미 만든 알림의 시간은 바뀌지 않아요.
+  JA  すでに作成した通知の時刻は変わりません。
+  EN  Existing notifications keep their time.
+
+[751]
+  KO  알림 쉬는 시간
+  JA  通知おやすみ時間
+  EN  Quiet hours
+
+[752]
+  KO  알림 쉬는 시간 사용
+  JA  通知おやすみ時間を使う
+  EN  Use quiet hours
+
+[753]
+  KO  쉬는 시간에 울릴 알림은 끝난 뒤에 알려드려요.
+  JA  おやすみ時間に鳴るはずの通知は、終了後にお知らせします。
+  EN  Notifications due during quiet hours arrive when it ends.
+
+[754]
+  KO  쉬기 시작
+  JA  おやすみ開始
+  EN  Quiet from
+
+[755]
+  KO  이 시간부터 알림을 쉬어요.
+  JA  この時刻から通知をおやすみします。
+  EN  Notifications pause from this time.
+
+[756]
+  KO  쉬기 끝
+  JA  おやすみ終了
+  EN  Quiet until
+
+[757]
+  KO  이 시간이 되면 다시 알려드려요.
+  JA  この時刻になったら再びお知らせします。
+  EN  Notifications resume at this time.
+
+[758]
+  KO  시작과 끝이 같으면 쉬는 시간이 없어요.
+  JA  開始と終了が同じだと、おやすみ時間はありません。
+  EN  If start and end are the same, there are no quiet hours.
+
+[759]
+  KO  쉬는 시간: {range}
+  JA  おやすみ時間：{range}
+  EN  Quiet hours: {range}
+
+[760]
+  KO  설정은 모든 서랍의 알림에 바로 적용돼요.
+  JA  設定はすべてのひきだしの通知にすぐ反映されます。
+  EN  Settings apply right away to every drawer's notifications.
+
+[761]
+  KO  알림 설정 완료
+  JA  通知設定の完了
+  EN  Notification set up
+
+[762]
+  KO  알림을 설정했어요.
+  JA  通知を設定しました。
+  EN  Your notification is set.
+
+[763]
+  KO  설정한 날짜가 다가오면 잊지 않도록 알려드릴게요.
+  JA  設定した日付が近づいたら、忘れないようにお知らせします。
+  EN  We'll remind you when the date gets close.
+
+[764]
+  KO  {itemCount}개 보관품
+  JA  アイテム{itemCount}件
+  EN  {itemCount} {itemCount:item|items}
+
+[765]
+  KO  기준 날짜
+  JA  基準日
+  EN  Based on
+
+[766]
+  KO  알림 시간
+  JA  通知時刻
+  EN  Notification time
+
+[767]
+  KO  알림 켜짐
+  JA  通知オン
+  EN  Notifications on
+
+[768]
+  KO  설정한 알림은 서랍 관리의 알림 설정에서 언제든 바꿀 수 있어요.
+  JA  設定した通知は、ひきだし管理の通知設定からいつでも変更できます。
+  EN  You can change this anytime in Manage drawer → Notification settings.
+
+[769]
+  KO  알림 더 추가하기
+  JA  通知をさらに追加
+  EN  Add another notification
+
+[770]
+  KO  알림 추가하기
+  JA  通知を追加
+  EN  Add notification
+
+[771]
+  KO  알림을 추가할 서랍
+  JA  通知を追加するひきだし
+  EN  Drawer for the notification
+
+[772]
+  KO  어떤 날짜를 기준으로 알림을 받을까요?
+  JA  どの日付を基準に通知を受け取りますか？
+  EN  Which date should the notification be based on?
+
+[773]
+  KO  알림 기준으로 사용할 날짜 서랍 칸을 선택해 주세요.
+  JA  通知の基準にする日付の項目を選んでください。
+  EN  Choose the date field to base the notification on.
+
+[774]
+  KO  날짜 서랍 칸
+  JA  日付の項目
+  EN  Date field
+
+[775]
+  KO  선택됨
+  JA  選択中
+  EN  Selected
+
+[776]
+  KO  이전
+  JA  前へ
+  EN  Back
+
+[777]
+  KO  설정한 날짜가 다가오면 ⏎ 알려드려요.
+  JA  設定した日付が近づいたら ⏎ お知らせします。
+  EN  We'll let you know ⏎ when the date is near.
+
+[778]
+  KO  이 서랍에 있는 날짜 서랍 칸을 기준으로 ⏎ 필요한 시점에 알림을 받을 수 있어요.
+  JA  このひきだしの日付の項目を基準に、 ⏎ 必要なタイミングで通知を受け取れます。
+  EN  Get notified at the right time ⏎ based on a date field in this drawer.
+
+[779]
+  KO  이 서랍의 알림
+  JA  このひきだしの通知
+  EN  Notifications for this drawer
+
+[780]
+  KO  기본 알림 시간 · 알림 쉬는 시간
+  JA  デフォルトの通知時刻・おやすみ時間
+  EN  Default time · Quiet hours
+
+[781]
+  KO  알림 추가하기를 누르면 먼저 날짜 서랍 칸을 선택해요.
+  JA  「通知を追加」をタップすると、まず日付の項目を選びます。
+  EN  Tap "Add notification" to choose a date field first.
+
+[782]
+  KO  {days}일 전
+  JA  {days}日前
+  EN  {days} {days:day|days} before
+
+[783]
+  KO  언제 알려드릴까요?
+  JA  いつお知らせしましょうか？
+  EN  When should we notify you?
+
+[784]
+  KO  선택한 날짜를 기준으로 언제, 몇 시에 알려드릴지 정해 주세요.
+  JA  選んだ日付を基準に、いつ・何時にお知らせするか決めてください。
+  EN  Choose when and at what time to notify you, based on the selected date.
+
+[785]
+  KO  알림 기준 날짜
+  JA  通知の基準日
+  EN  Notification date field
+
+[786]
+  KO  알림 시점
+  JA  通知のタイミング
+  EN  When to notify
+
+[787]
+  KO  직접 설정하기
+  JA  自分で設定する
+  EN  Set your own
+
+[788]
+  KO  감소
+  JA  減らす
+  EN  Decrease
+
+[789]
+  KO  {n}일 전
+  JA  {n}日前
+  EN  {n} {n:day|days} before
+
+[790]
+  KO  증가
+  JA  増やす
+  EN  Increase
+
+[791]
+  KO  알림을 받을 시간
+  JA  通知を受け取る時刻
+  EN  Time to be notified
+
+[792]
+  KO  누르면 시간을 바꿀 수 있어요
+  JA  タップすると時刻を変更できます
+  EN  Tap to change the time
+
+[793]
+  KO  이 시간은 나중에 알림 기본 설정에서 바꿀 수 있어요.
+  JA  この時刻は、あとから通知のデフォルト設定で変更できます。
+  EN  You can change this time later in the default notification settings.
+
+[794]
+  KO  알림 설정하기
+  JA  通知を設定する
+  EN  Set notification
+
+[795]
+  KO  나만의 소중한 것들을, ⏎ 더 특별하게
+  JA  大切なものを、 ⏎ もっと特別に
+  EN  Make what matters to you ⏎ more special
+
+[796]
+  KO  Drawary와 함께 ⏎ 일상을 기록해보세요.
+  JA  Drawaryと一緒に ⏎ 毎日を記録しましょう。
+  EN  Record your everyday life ⏎ with Drawary.
+
+[797]
+  KO  나만의 서랍을 만들어보세요
+  JA  あなただけのひきだしを作りましょう
+  EN  Create your own drawers
+
+[798]
+  KO  좋아하는 주제로 서랍을 만들고 ⏎ 소중한 것들을 정리할 수 있어요.
+  JA  好きなテーマでひきだしを作って ⏎ 大切なものを整理できます。
+  EN  Make drawers for topics you love ⏎ and organize what matters.
+
+[799]
+  KO  아이콘으로 서랍을 꾸며보세요
+  JA  アイコンでひきだしを飾りましょう
+  EN  Decorate drawers with icons
+
+[800]
+  KO  다양한 아이콘 중에서 ⏎ 내 서랍에 어울리는 아이콘을 선택하세요.
+  JA  たくさんのアイコンから ⏎ ひきだしに合うものを選びましょう。
+  EN  Pick the icon that suits ⏎ each drawer from many choices.
+
+[801]
+  KO  소중한 것들을 채워보세요
+  JA  大切なものを入れてみましょう
+  EN  Fill them with what matters
+
+[802]
+  KO  사진, 메모, 링크 등 ⏎ 다양한 방식으로 기록할 수 있어요.
+  JA  写真、メモ、リンクなど ⏎ いろいろな方法で記録できます。
+  EN  Record with photos, notes, ⏎ links and more.
+
+[803]
+  KO  원하는 방식으로 둘러보세요
+  JA  好きな見方で見てみましょう
+  EN  Browse your way
+
+[804]
+  KO  카드 보기, 표 보기 등 ⏎ 나에게 맞는 방식으로 기록을 확인할 수 있어요.
+  JA  カード表示や表表示など ⏎ 自分に合った方法で記録を確認できます。
+  EN  Check your records as cards, ⏎ a table, or whatever suits you.
+
+[805]
+  KO  중요한 일을 놓치지 않도록
+  JA  大切なことを見逃さないように
+  EN  Never miss what's important
+
+[806]
+  KO  원하는 시간에 알림을 설정하고 ⏎ 소중한 일정을 챙길 수 있어요.
+  JA  好きな時間に通知を設定して ⏎ 大切な予定を忘れずに管理できます。
+  EN  Set reminders at the time you like ⏎ and keep track of important dates.
+
+[807]
+  KO  백업 파일을 만들어 두면 ⏎ 폰을 바꿔도 기록을 옮길 수 있어요.
+  JA  バックアップファイルを作っておけば、 ⏎ 機種変更でも記録を移せます。
+  EN  Make a backup file and you can ⏎ move your records to a new phone.
+
+[808]
+  KO  이제 나만의 이야기를 시작해 보세요
+  JA  さあ、あなただけのお話を始めましょう
+  EN  Now start your own story
+
+[809]
+  KO  Drawary가 ⏎ 언제나 함께할게요.
+  JA  Drawaryが ⏎ いつもそばにいます。
+  EN  Drawary will be ⏎ with you always.
+
+[810]
+  KO  건너뛰기
+  JA  スキップ
+  EN  Skip
+
+[811]
+  KO  시작하기
+  JA  はじめる
+  EN  Get started
+
+[812]
+  KO  사진 보기 닫기
+  JA  写真ビューアを閉じる
+  EN  Close photo viewer
+
+[813]
+  KO  보관품 사진 {n}
+  JA  アイテムの写真 {n}
+  EN  Item photo {n}
+
+[814]
+  KO  사진 목록
+  JA  写真一覧
+  EN  Photo list
+
+[815]
+  KO  {n}번째 사진 보기
+  JA  {n}枚目の写真を見る
+  EN  View photo {n}
+
+[816]
+  KO  현재 PIN 입력
+  JA  現在のPINを入力
+  EN  Enter current PIN
+
+[817]
+  KO  새 PIN 입력
+  JA  新しいPINを入力
+  EN  Enter new PIN
+
+[818]
+  KO  PIN 한 번 더 입력
+  JA  PINをもう一度入力
+  EN  Enter PIN again
+
+[819]
+  KO  PIN 설정 완료
+  JA  PIN設定完了
+  EN  PIN set
+
+[820]
+  KO  1 / 2 단계
+  JA  ステップ 1 / 2
+  EN  Step 1 / 2
+
+[821]
+  KO  2 / 2 단계
+  JA  ステップ 2 / 2
+  EN  Step 2 / 2
+
+[822]
+  KO  지금 쓰는 4자리 PIN을 입력해 주세요.
+  JA  現在使っている4桁のPINを入力してください。
+  EN  Please enter your current 4-digit PIN.
+
+[823]
+  KO  숫자 4자리를 입력해 주세요.
+  JA  4桁の数字を入力してください。
+  EN  Please enter 4 digits.
+
+[824]
+  KO  같은 PIN을 한 번 더 입력해 주세요.
+  JA  同じPINをもう一度入力してください。
+  EN  Please enter the same PIN again.
+
+[825]
+  KO  PIN 입력을 확인했어요.
+  JA  PINの入力を確認しました。
+  EN  PIN confirmed.
+
+[826]
+  KO  PIN을 설정했어요.
+  JA  PINを設定しました。
+  EN  Your PIN is set.
+
+[827]
+  KO  앱 잠금으로 돌아가기
+  JA  アプリロックに戻る
+  EN  Back to app lock
+
+[828]
+  KO  PIN 확인
+  JA  PINの確認
+  EN  Confirm PIN
+
+[829]
+  KO  PIN 설정
+  JA  PIN設定
+  EN  Set PIN
+
+[830]
+  KO  PIN 확인하기
+  JA  PINを確認する
+  EN  Confirm your PIN
+
+[831]
+  KO  PIN 만들기
+  JA  PINを作る
+  EN  Create a PIN
+
+[832]
+  KO  본인이 맞는지 확인해요
+  JA  ご本人かどうか確認します
+  EN  Let's make sure it's you
+
+[833]
+  KO  지금 쓰는 PIN을 입력하면 ⏎ 앱 잠금을 끌 수 있어요.
+  JA  現在のPINを入力すると ⏎ アプリロックをオフにできます。
+  EN  Enter your current PIN ⏎ to turn off the app lock.
+
+[834]
+  KO  소중한 기록을 지켜요
+  JA  大切な記録を守ります
+  EN  Protect your records
+
+[835]
+  KO  4자리 PIN을 설정해 ⏎ 내 서랍을 안전하게 잠가요.
+  JA  4桁のPINを設定して ⏎ ひきだしを安全にロックします。
+  EN  Set a 4-digit PIN ⏎ to lock your drawers safely.
+
+[836]
+  KO  PIN은 이 기기에서만 사용돼요. ⏎ 잊어버리면 복구할 수 없어요.
+  JA  PINはこの端末でのみ使われます。 ⏎ 忘れると復元できません。
+  EN  The PIN is used on this device only. ⏎ If you forget it, it can't be recovered.
+
+[837]
+  KO  PIN은 이 기기에서만 사용돼요. ⏎ 다음 단계에서 한 번 더 확인해요.
+  JA  PINはこの端末でのみ使われます。 ⏎ 次のステップでもう一度確認します。
+  EN  The PIN is used on this device only. ⏎ You'll confirm it once more next.
+
+======================================================================
+■ 템플릿으로 시작  (70개)
+======================================================================
+
+[838]
+  KO  템플릿으로 시작
+  JA  テンプレートで始める
+  EN  Start from a template
+
+[839]
+  KO  만들고 싶은 서랍을 고르면 이름과 서랍 칸이 한 번에 채워져요.
+  JA  作りたいひきだしを選ぶと、名前と項目がまとめて入ります。
+  EN  Pick a drawer and its name and fields are filled in at once.
+
+[840]
+  KO  직접 만들기
+  JA  自分で作る
+  EN  Make my own
+
+[841]
+  KO  이 템플릿에 들어 있는 서랍 칸
+  JA  このテンプレートの項目
+  EN  Fields in this template
+
+[842]
+  KO  이 템플릿으로 시작
+  JA  このテンプレートで始める
+  EN  Use this template
+
+[843]
+  KO  다음 화면에서 이름과 서랍 칸을 마음대로 바꿀 수 있어요.
+  JA  次の画面で、名前や項目を自由に変えられます。
+  EN  You can change the name and fields on the next screen.
+
+[844]
+  KO  최애 굿즈
+  JA  推しグッズ
+  EN  Favorite goods
+
+[845]
+  KO  앨범, 포토카드, 굿즈를 모아요
+  JA  アルバムやフォトカード、グッズをまとめます
+  EN  Collect albums, photo cards and merch
+
+[846]
+  KO  굿즈 이름
+  JA  グッズ名
+  EN  Item name
+
+[847]
+  KO  최애·그룹
+  JA  推し・グループ
+  EN  Favorite / group
+
+[848]
+  KO  종류
+  JA  種類
+  EN  Type
+
+[849]
+  KO  앨범
+  JA  アルバム
+  EN  Album
+
+[850]
+  KO  포토카드
+  JA  フォトカード
+  EN  Photo card
+
+[851]
+  KO  키링
+  JA  キーリング
+  EN  Keyring
+
+[852]
+  KO  의류
+  JA  衣類
+  EN  Clothing
+
+[853]
+  KO  수량
+  JA  数量
+  EN  Quantity
+
+[854]
+  KO  사용 기한과 후기를 기록해요
+  JA  使用期限とレビューを記録します
+  EN  Track expiry dates and reviews
+
+[855]
+  KO  베이스
+  JA  ベース
+  EN  Base
+
+[856]
+  KO  색조
+  JA  ポイントメイク
+  EN  Colour
+
+[857]
+  KO  헤어·바디
+  JA  ヘア・ボディ
+  EN  Hair & body
+
+[858]
+  KO  읽은 책
+  JA  読んだ本
+  EN  Books I read
+
+[859]
+  KO  읽은 날과 한 줄 감상을 남겨요
+  JA  読んだ日とひとこと感想を残します
+  EN  Save the date and a one-line thought
+
+[860]
+  KO  제목
+  JA  タイトル
+  EN  Title
+
+[861]
+  KO  저자
+  JA  著者
+  EN  Author
+
+[862]
+  KO  읽은 날
+  JA  読んだ日
+  EN  Date read
+
+[863]
+  KO  영화·드라마
+  JA  映画・ドラマ
+  EN  Movies & shows
+
+[864]
+  KO  본 작품과 별점을 모아요
+  JA  観た作品と評価をまとめます
+  EN  Keep what you watched and your ratings
+
+[865]
+  KO  드라마
+  JA  ドラマ
+  EN  Series
+
+[866]
+  KO  애니메이션
+  JA  アニメ
+  EN  Animation
+
+[867]
+  KO  다큐멘터리
+  JA  ドキュメンタリー
+  EN  Documentary
+
+[868]
+  KO  본 날
+  JA  観た日
+  EN  Date watched
+
+[869]
+  KO  카페·맛집
+  JA  カフェ・グルメ
+  EN  Cafés & restaurants
+
+[870]
+  KO  다녀온 가게를 기억해요
+  JA  訪れたお店を記録します
+  EN  Remember the places you visited
+
+[871]
+  KO  가게 이름
+  JA  お店の名前
+  EN  Place name
+
+[872]
+  KO  식당
+  JA  レストラン
+  EN  Restaurant
+
+[873]
+  KO  빵집
+  JA  ベーカリー
+  EN  Bakery
+
+[874]
+  KO  술집
+  JA  バー・居酒屋
+  EN  Bar
+
+[875]
+  KO  간 날
+  JA  行った日
+  EN  Date visited
+
+[876]
+  KO  물 준 날과 상태를 챙겨요
+  JA  水やりの日と状態を管理します
+  EN  Look after watering dates and condition
+
+[877]
+  KO  식물 이름
+  JA  植物の名前
+  EN  Plant name
+
+[878]
+  KO  들인 날
+  JA  迎えた日
+  EN  Date brought home
+
+[879]
+  KO  물 준 날
+  JA  水やりをした日
+  EN  Last watered
+
+[880]
+  KO  상태
+  JA  状態
+  EN  Condition
+
+[881]
+  KO  건강해요
+  JA  元気
+  EN  Healthy
+
+[882]
+  KO  시들었어요
+  JA  元気がない
+  EN  Wilting
+
+[883]
+  KO  분갈이가 필요해요
+  JA  植え替えが必要
+  EN  Needs repotting
+
+[884]
+  KO  여행 기록
+  JA  旅の記録
+  EN  Trips
+
+[885]
+  KO  다녀온 곳과 경비를 남겨요
+  JA  訪れた場所と費用を残します
+  EN  Save where you went and what it cost
+
+[886]
+  KO  장소
+  JA  場所
+  EN  Place
+
+[887]
+  KO  여행 날
+  JA  旅行の日
+  EN  Trip date
+
+[888]
+  KO  경비
+  JA  費用
+  EN  Cost
+
+[889]
+  KO  함께한 사람
+  JA  一緒に行った人
+  EN  Went with
+
+[890]
+  KO  게임·음반
+  JA  ゲーム・音楽
+  EN  Games & music
+
+[891]
+  KO  모은 게임과 음반을 정리해요
+  JA  集めたゲームや音楽を整理します
+  EN  Sort the games and records you collect
+
+[892]
+  KO  굿즈
+  JA  グッズ
+  EN  Merch
+
+[893]
+  KO  플랫폼·형태
+  JA  プラットフォーム・形態
+  EN  Platform / format
+
+[894]
+  KO  가계부
+  JA  家計簿
+  EN  Budget
+
+[895]
+  KO  쓴 돈과 받은 돈을 적어요
+  JA  使ったお金と入ったお金を記録します
+  EN  Note what you spent and received
+
+[896]
+  KO  구분
+  JA  区分
+  EN  Kind
+
+[897]
+  KO  지출
+  JA  支出
+  EN  Expense
+
+[898]
+  KO  수입
+  JA  収入
+  EN  Income
+
+[899]
+  KO  분류
+  JA  分類
+  EN  Category
+
+[900]
+  KO  식비
+  JA  食費
+  EN  Food
+
+[901]
+  KO  교통
+  JA  交通
+  EN  Transport
+
+[902]
+  KO  생활
+  JA  生活
+  EN  Living
+
+[903]
+  KO  문화
+  JA  文化・娯楽
+  EN  Culture
+
+[904]
+  KO  결제 수단
+  JA  支払い方法
+  EN  Payment
+
+[905]
+  KO  카드
+  JA  カード
+  EN  Card
+
+[906]
+  KO  현금
+  JA  現金
+  EN  Cash
+
+[907]
+  KO  계좌이체
+  JA  口座振替
+  EN  Bank transfer
