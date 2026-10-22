@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import './InfoScreen.css';
-import { t, tl } from '../i18n';
+import { getLang, t, tl } from '../i18n';
 
-export type InfoDestination = 'privacy' | 'terms' | 'licenses';
+export type InfoDestination = 'privacy' | 'terms' | 'tokushoho' | 'licenses';
 
 export interface InfoScreenProps {
   onBack?: () => void;
@@ -51,6 +51,11 @@ export function InfoScreen({ onBack, onNavigate }: InfoScreenProps) {
           <button className="info58-row info58-row-action" type="button" onClick={() => onNavigate?.('terms')}>
             <span className="info58-item-name">{t('이용약관')}</span><span className="info58-chevron" aria-hidden="true" />
           </button>
+          {getLang() === 'ja' && (
+            <button className="info58-row info58-row-action" type="button" onClick={() => onNavigate?.('tokushoho')}>
+              <span className="info58-item-name">{t('특정상거래법 표기')}</span><span className="info58-chevron" aria-hidden="true" />
+            </button>
+          )}
           <button className="info58-row info58-row-action" type="button" onClick={() => onNavigate?.('licenses')}>
             <span className="info58-item-name">{t('오픈소스 라이선스')}</span><span className="info58-chevron" aria-hidden="true" />
           </button>

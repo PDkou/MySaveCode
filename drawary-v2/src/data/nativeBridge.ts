@@ -56,6 +56,8 @@ export interface DrawaryNativeApi {
    * (see src/data/billing.ts); never rejects. Support products are consumed right after a purchase so they can be bought again.
    */
   purchase?: (productId: string) => Promise<string>;
+  /** Opens a web address (the studio's privacy policy / terms pages) in the phone's browser. Only the studio's own https addresses are opened. */
+  openLink?: (url: string) => void;
 }
 
 declare global {

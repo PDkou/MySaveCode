@@ -29,6 +29,7 @@ import { PremiumPrompt } from './screens/PremiumPrompt';
 import { askPremium, closePremiumPrompt, setPremiumScreenReason, takePremiumPrompt, usePremiumUi } from './flow/premiumPrompt';
 import { PREMIUM_KEY, PREMIUM_PRODUCT, gateForRoute, isPremium, supportProductId, themeFor, type PremiumReason } from './flow/premium';
 import { hasNativeBilling, purchaseProduct, queryBilling } from './data/billing';
+import { openLegal } from './data/legalLinks';
 import { premiumPrices, type PremiumProductPrices } from './flow/premiumPrices';
 import { draftFieldsOf } from './flow/drawerTemplates';
 import { DrawerDetailScreen } from './screens/DrawerDetailScreen';
@@ -1602,7 +1603,7 @@ function AppScreens() {
       // among the 59 approved screens, so those three stay no-ops.
       return <main className="drawary-app-shell" data-route="info">
         <FixedCanvas height={844}>
-          <InfoScreen onBack={returnToTab} onNavigate={() => {}} />
+          <InfoScreen onBack={returnToTab} onNavigate={(destination) => { if (destination !== 'licenses') openLegal(destination, language); }} />
         </FixedCanvas>
       </main>;
     }

@@ -31,6 +31,7 @@
     printPage: function () { A.printPage(); },
     setSecureScreen: function (secure) { A.setSecureScreen(!!secure); },
     sendFeedback: function (json) { return call('sendFeedback', [json]).then(function (v) { return v === true; }); },
+    openLink: function (url) { A.openLink(String(url)); },
     queryBilling: function () { return call('queryBilling', []); },
     purchase: function (productId) { return call('purchase', [String(productId)]).catch(function () { return 'error'; }); }
   };

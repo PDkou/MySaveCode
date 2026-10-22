@@ -217,6 +217,16 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** The page asked to open an address (NativeBridge.openLink): only https pages of the studio's own sites. */
+    void openStudioLink(String url) {
+        Uri uri = Uri.parse(url == null ? "" : url);
+        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase(java.util.Locale.ROOT);
+        boolean studio = "howlingcreativestudio.jp".equals(host) || "howlingcreativestudio.com".equals(host)
+                || host.endsWith(".howlingcreativestudio.jp") || host.endsWith(".howlingcreativestudio.com");
+        if (!"https".equals(uri.getScheme()) || !studio) return;
+        openExternally(uri);
+    }
+
     private void openExternally(Uri uri) {
         String scheme = uri.getScheme();
         if (!"http".equals(scheme) && !"https".equals(scheme) && !"mailto".equals(scheme)) return;

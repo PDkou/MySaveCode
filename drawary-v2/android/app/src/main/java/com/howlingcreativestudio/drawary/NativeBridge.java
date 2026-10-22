@@ -246,6 +246,14 @@ final class NativeBridge {
         });
     }
 
+    // ---- web pages -----------------------------------------------------------------------------------------
+
+    /** Opens one of the studio's own pages (privacy policy, terms) in the browser; any other address is ignored. */
+    @JavascriptInterface
+    public void openLink(final String url) {
+        main.post(() -> activity.openStudioLink(url));
+    }
+
     // ---- Google Play purchases -----------------------------------------------------------------------------
 
     private BillingBridge billing() {
