@@ -35,7 +35,9 @@ const search = read('src/screens/GlobalSearchScreen.tsx');
 const newDrawerCSS = read('src/screens/NewDrawerScreen.css');
 check(sha256('public/assets/global-search-approved/brand.webp')==='c30c2858726c583e3c7a0aacecce055431cd2ec2aa91944b885129d22cfd735e', '#05 approved brand bytes changed');
 check(sha256('public/assets/global-search-approved/search_empty.webp')==='8959228f8decff0878d5e9fc35f6388efd5d92a558c4003bb8680555b27b59a2', '#05 approved mascot bytes changed');
-check(search.includes('/assets/global-search-approved/brand.webp') && search.includes('/assets/global-search-approved/search_empty.webp'), '#05 source assets disconnected');
+// 2026-10-21 (owner-approved): the logo on every tab screen is the shared, themed lockup (same size and place on home, search, stats, settings),
+// so the search screen no longer uses its own small brand.webp; the approved file itself stays locked above.
+check(search.includes('/assets/brand/brand_lockup_horizontal.webp') && search.includes('/assets/global-search-approved/search_empty.webp'), '#05 source assets disconnected');
 check(search.includes('모든 서랍에서 함께 찾아드려요.'), '#05 approved empty-state copy changed');
 check(newDrawerCSS.includes('#08 approved 390x844 sheet:'), '#08 approved sheet geometry override removed');
 if (!process.exitCode) console.log('Final approval source guards passed (#05, #08, #55, #59). Pixel audit remains separate.');
