@@ -25,6 +25,8 @@ import { computeStats } from './flow/stats';
 import { NewDrawerScreen } from './screens/NewDrawerScreen';
 import { TemplatePickerScreen } from './screens/TemplatePickerScreen';
 import { PremiumScreen, type PremiumNotice } from './screens/PremiumScreen';
+import { PremiumPrompt } from './screens/PremiumPrompt';
+import { askPremium, closePremiumPrompt, setPremiumScreenReason, takePremiumPrompt, usePremiumUi } from './flow/premiumPrompt';
 import { PREMIUM_KEY, PREMIUM_PRODUCT, gateForRoute, isPremium, supportProductId, themeFor, type PremiumReason } from './flow/premium';
 import { hasNativeBilling, purchaseProduct, queryBilling } from './data/billing';
 import { premiumPrices, type PremiumProductPrices } from './flow/premiumPrices';
@@ -138,7 +140,18 @@ const BOOT_FADE_MS = 250;
 const onboardingSeen = (): boolean => {
   try { return localStorage.getItem('drawary_onboarding_done') === '1'; } catch { return false; }
 };
+/** The app plus the "결제할까요?" dialog that any screen can open when a Free limit is reached. */
 export default function App() {
+  const ui = usePremiumUi();
+  return (
+    <>
+      <AppScreens />
+      {ui.prompt && <PremiumPrompt reason={ui.prompt} onMore={() => { takePremiumPrompt(); window.location.hash = '#/premium'; }} onLater={closePremiumPrompt} />}
+    </>
+  );
+}
+
+function AppScreens() {
   const [route, setRoute] = useState<Route>(parseRoute);
   // 'splash' only on a cold start without a route in the address; 'fading' is its last moments.
   const [boot, setBoot] = useState<'splash' | 'fading' | 'done'>(() => (window.location.hash === '' || window.location.hash === '#' ? 'splash' : 'done'));
@@ -152,7 +165,8 @@ export default function App() {
   const premium = isPremium(store.settings);
   const gateRef = useRef({ premium: false, drawerCount: 0 });
   gateRef.current = { premium, drawerCount: store.drawers.length };
-  const [premiumReason, setPremiumReason] = useState<PremiumReason | null>(null);
+  const premiumReason = usePremiumUi().reason;
+  const setPremiumReason = setPremiumScreenReason;
   const [premiumNotice, setPremiumNotice] = useState<PremiumNotice | null>(null);
   const [purchaseBusy, setPurchaseBusy] = useState(false);
   const [playPrices, setPlayPrices] = useState<PremiumProductPrices>({});
@@ -237,7 +251,7 @@ export default function App() {
   // "•••" -> CSV / PDF: exactly the rows the table shows right now (filter, sort and search applied).
   const exportTable = (kind: 'csv' | 'pdf', shown: ReturnType<typeof toRows>) => {
     if (!currentDrawer) return;
-    if (!gateRef.current.premium) { openPremium('export'); return; }
+    if (!gateRef.current.premium) { askPremium('export'); return; }
     if (kind === 'csv') {
       void saveBlob(new Blob([buildCsv(tableColumns, shown)], { type: 'text/csv;charset=utf-8' }), exportFileName(currentDrawer.name, 'csv'))
         // A browser shows its own download bar; the Android app says where the file went.
@@ -517,10 +531,10 @@ export default function App() {
   // `replace` swaps the current history entry instead of adding one, so the Android back button never returns to
   // the splash / the onboarding it just left.
   const navigate = useCallback((requested: Route, replace = false) => {
-    // Free-version limits: a screen Free does not include opens the Premium screen instead, which says why.
+    // A screen Free does not include asks "결제할까요?" in a small dialog instead of opening (the person stays where they are).
     const blocked = gateForRoute(requested, gateRef.current);
-    if (blocked) setPremiumReason(blocked);
-    const to: Route = blocked ? 'premium' : requested;
+    if (blocked) { askPremium(blocked); return; }
+    const to: Route = requested;
     if (isTab(to)) lastTabRef.current = to;
     const next = `#/${to}`;
     if (window.location.hash === next) { setRoute(to); return; }
@@ -1282,7 +1296,7 @@ export default function App() {
       // ThemeSettingsScreen.tsx's own header comment. Back returns to #38.
       return <main className="drawary-app-shell" data-route="theme-settings">
         <FixedCanvas height={844}>
-          <ThemeSettingsScreen bigPreview={layout === 'wide'} previewDrawers={homeCards} initialTheme={theme} onBack={returnToTab} onThemeChange={(id) => { if (!premium && id !== 'lavender') { openPremium('theme'); return; } void actions.setSetting(THEME_KEY, id).catch(alertError); }} />
+          <ThemeSettingsScreen bigPreview={layout === 'wide'} previewDrawers={homeCards} initialTheme={theme} onBack={returnToTab} onThemeChange={(id) => { if (!premium && id !== 'lavender') { askPremium('theme'); return; } void actions.setSetting(THEME_KEY, id).catch(alertError); }} />
         </FixedCanvas>
       </main>;
     }

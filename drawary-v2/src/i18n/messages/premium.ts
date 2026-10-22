@@ -2,7 +2,6 @@ import type { Messages } from './index';
 
 /** The Premium screen (one purchase that unlocks everything) and the "coffee for the developer" support products. */
 export const premium: Messages = {
-  '프리미엄': { ja: 'プレミアム', en: 'Premium' },
   'Drawary 프리미엄': { ja: 'Drawary プレミアム', en: 'Drawary Premium' },
   '한 번만 결제하면 계속 쓸 수 있어요.\n구독이 아니에요.': { ja: '一度のお支払いで、ずっと使えます。\n定期購入ではありません。', en: 'Pay once and keep it forever.\nIt is not a subscription.' },
   '프리미엄에 들어 있는 것': { ja: 'プレミアムに含まれるもの', en: 'What Premium includes' },
@@ -39,4 +38,12 @@ export const premium: Messages = {
   '구매는 안드로이드 앱에서만 할 수 있어요.': { ja: '購入はAndroidアプリでのみ行えます。', en: 'Purchases can only be made in the Android app.' },
   '프리미엄을 쓰고 있어요. 고마워요!': { ja: 'プレミアムをご利用中です。ありがとうございます！', en: 'You have Premium. Thank you!' },
   '서랍 무제한, 테마, 반복, 내보내기': { ja: 'ひきだし無制限、テーマ、繰り返しなど', en: 'Unlimited drawers, themes, repeat and export.' },
+  '서랍이 가득 찼어요': { ja: 'ひきだしがいっぱいです', en: 'Your drawers are full' },
+  '다른 색이 궁금하세요?': { ja: '他の色も気になりますか？', en: 'Curious about other colors?' },
+  '자동으로 채워 볼까요?': { ja: '自動で作ってみますか？', en: 'Want it to fill in by itself?' },
+  '파일로 내보낼까요?': { ja: 'ファイルに書き出しますか？', en: 'Want to export a file?' },
+  '{body}\n한 번만 결제하면 계속 쓸 수 있어요.': { ja: '{body}\n一度のお支払いで、ずっと使えます。', en: '{body}\nPay once and keep it forever.' },
+  '프리미엄 알아보기': { ja: 'プレミアムを見てみる', en: 'See Premium' },
+  '서랍장 키우기': { ja: 'ひきだし帳を広げる', en: 'Grow your drawers' },
+  '서랍장이 활짝 열려 있어요. 고마워요!': { ja: 'ひきだし帳が広がっています。ありがとうございます！', en: 'Your drawers are wide open. Thank you!' },
 };

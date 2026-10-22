@@ -4569,190 +4569,225 @@
   EN  Bank transfer
 
 ======================================================================
-■ 프리미엄 화면  (37개)
+■ 프리미엄 화면  (44개)
 ======================================================================
 
 [908]
-  KO  프리미엄
-  JA  プレミアム
-  EN  Premium
-
-[909]
   KO  Drawary 프리미엄
   JA  Drawary プレミアム
   EN  Drawary Premium
 
-[910]
+[909]
   KO  한 번만 결제하면 계속 쓸 수 있어요. ⏎ 구독이 아니에요.
   JA  一度のお支払いで、ずっと使えます。 ⏎ 定期購入ではありません。
   EN  Pay once and keep it forever. ⏎ It is not a subscription.
 
-[911]
+[910]
   KO  프리미엄에 들어 있는 것
   JA  プレミアムに含まれるもの
   EN  What Premium includes
 
-[912]
+[911]
   KO  서랍 제한 없이
   JA  ひきだしを無制限に
   EN  Unlimited drawers
 
-[913]
+[912]
   KO  무료는 5개까지, 프리미엄은 개수에 제한이 없어요.
   JA  無料は5個まで。プレミアムは個数の制限がありません。
   EN  Free is limited to 5; Premium has no limit.
 
-[914]
+[913]
   KO  테마 5가지
   JA  テーマ5種類
   EN  5 themes
 
-[915]
+[914]
   KO  라벤더 말고도 코랄, 세이지, 머스터드, 스카이를 쓸 수 있어요.
   JA  ラベンダーのほか、コーラル、セージ、マスタード、スカイが使えます。
   EN  Besides Lavender: Coral, Sage, Mustard and Sky.
 
-[916]
+[915]
   KO  반복 기능
   JA  繰り返し機能
   EN  Repeat
 
-[917]
+[916]
   KO  날짜 칸을 기준으로 새 보관품을 자동으로 만들어요.
   JA  日付の項目を基準に、アイテムを自動で作ります。
   EN  Creates new items automatically from a date field.
 
-[918]
+[917]
   KO  표 내보내기
   JA  表の書き出し
   EN  Table export
 
-[919]
+[918]
   KO  표를 CSV나 PDF 파일로 내보내요.
   JA  表をCSVやPDFファイルに書き出します。
   EN  Export a table as a CSV or PDF file.
 
-[920]
+[919]
   KO  프리미엄 시작 ({price})
   JA  プレミアムを始める（{price}）
   EN  Get Premium ({price})
 
-[921]
+[920]
   KO  결제는 Google Play에서 처리돼요. 이 앱은 카드 정보를 받지 않아요.
   JA  お支払いはGoogle Playで処理されます。このアプリがカード情報を受け取ることはありません。
   EN  Payment is handled by Google Play. This app never receives your card details.
 
-[922]
+[921]
   KO  이미 구매하셨나요?
   JA  すでに購入しましたか？
   EN  Already bought it?
 
-[923]
+[922]
   KO  구매 복원
   JA  購入を復元
   EN  Restore purchase
 
-[924]
+[923]
   KO  개발자에게 커피 한 잔
   JA  開発者にコーヒーを一杯
   EN  Buy the developer a coffee
 
-[925]
+[924]
   KO  기능은 그대로예요. 마음에 드셨다면 힘이 나는 응원이 돼요.
   JA  機能は変わりません。気に入っていただけたら、励みになります。
   EN  Nothing unlocks. If you like the app, it keeps me going.
 
-[926]
+[925]
   KO  커피 한 잔
   JA  コーヒー1杯
   EN  A coffee
 
-[927]
+[926]
   KO  라떼 한 잔
   JA  ラテ1杯
   EN  A latte
 
-[928]
+[927]
   KO  개발자 기분 좋게 하기
   JA  開発者をいい気分にする
   EN  Cheer up the developer
 
-[929]
+[928]
   KO  얼만큼 기분 좋게 하려구요?
   JA  どのくらいご機嫌にしますか？
   EN  How big a mood boost?
 
-[930]
+[929]
   KO  기부니가 좋은 개발자는 더 좋은 앱을 만들걸요?
   JA  ご機嫌な開発者は、もっといいアプリを作りますよ？
   EN  A happy developer makes a better app, right?
 
-[931]
+[930]
   KO  후원은 몇 번이든 할 수 있어요.
   JA  何度でも応援できます。
   EN  You can do this as many times as you like.
 
-[932]
+[931]
   KO  무료로는 서랍을 5개까지 만들 수 있어요.
   JA  無料ではひきだしを5個まで作れます。
   EN  Free lets you make up to 5 drawers.
 
-[933]
+[932]
   KO  라벤더 말고 다른 테마는 프리미엄에서 쓸 수 있어요.
   JA  ラベンダー以外のテーマはプレミアムで使えます。
   EN  Themes other than Lavender come with Premium.
 
-[934]
+[933]
   KO  반복 기능은 프리미엄에서 쓸 수 있어요.
   JA  繰り返し機能はプレミアムで使えます。
   EN  Repeat comes with Premium.
 
-[935]
+[934]
   KO  표 내보내기는 프리미엄에서 쓸 수 있어요.
   JA  表の書き出しはプレミアムで使えます。
   EN  Table export comes with Premium.
 
-[936]
+[935]
   KO  프리미엄이 열렸어요. 고마워요!
   JA  プレミアムが使えるようになりました。ありがとうございます！
   EN  Premium is unlocked. Thank you!
 
-[937]
+[936]
   KO  고마워요! 큰 힘이 돼요.
   JA  ありがとうございます！ とても励みになります。
   EN  Thank you! It means a lot.
 
-[938]
+[937]
   KO  구매를 복원했어요.
   JA  購入を復元しました。
   EN  Your purchase is restored.
 
-[939]
+[938]
   KO  복원할 구매 내역이 없어요.
   JA  復元できる購入履歴がありません。
   EN  There is no purchase to restore.
 
-[940]
+[939]
   KO  결제가 아직 처리 중이에요. 끝나면 자동으로 열려요.
   JA  お支払いはまだ処理中です。完了すると自動で使えるようになります。
   EN  The payment is still being processed. Premium unlocks by itself when it finishes.
 
-[941]
+[940]
   KO  결제하지 못했어요. 잠시 뒤에 다시 해 주세요.
   JA  お支払いできませんでした。しばらくしてからもう一度お試しください。
   EN  The payment did not go through. Please try again in a moment.
 
-[942]
+[941]
   KO  구매는 안드로이드 앱에서만 할 수 있어요.
   JA  購入はAndroidアプリでのみ行えます。
   EN  Purchases can only be made in the Android app.
 
-[943]
+[942]
   KO  프리미엄을 쓰고 있어요. 고마워요!
   JA  プレミアムをご利用中です。ありがとうございます！
   EN  You have Premium. Thank you!
 
-[944]
+[943]
   KO  서랍 무제한, 테마, 반복, 내보내기
   JA  ひきだし無制限、テーマ、繰り返しなど
   EN  Unlimited drawers, themes, repeat and export.
+
+[944]
+  KO  서랍이 가득 찼어요
+  JA  ひきだしがいっぱいです
+  EN  Your drawers are full
+
+[945]
+  KO  다른 색이 궁금하세요?
+  JA  他の色も気になりますか？
+  EN  Curious about other colors?
+
+[946]
+  KO  자동으로 채워 볼까요?
+  JA  自動で作ってみますか？
+  EN  Want it to fill in by itself?
+
+[947]
+  KO  파일로 내보낼까요?
+  JA  ファイルに書き出しますか？
+  EN  Want to export a file?
+
+[948]
+  KO  {body} ⏎ 한 번만 결제하면 계속 쓸 수 있어요.
+  JA  {body} ⏎ 一度のお支払いで、ずっと使えます。
+  EN  {body} ⏎ Pay once and keep it forever.
+
+[949]
+  KO  프리미엄 알아보기
+  JA  プレミアムを見てみる
+  EN  See Premium
+
+[950]
+  KO  서랍장 키우기
+  JA  ひきだし帳を広げる
+  EN  Grow your drawers
+
+[951]
+  KO  서랍장이 활짝 열려 있어요. 고마워요!
+  JA  ひきだし帳が広がっています。ありがとうございます！
+  EN  Your drawers are wide open. Thank you!

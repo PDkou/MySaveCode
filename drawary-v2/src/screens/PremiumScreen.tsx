@@ -73,7 +73,7 @@ export function PremiumScreen({ prices, owned = false, reason = null, notice = n
   }, [notice, onNoticeDone]);
   return (
     <section className="pm-screen">
-      <ScreenHeader title={t('프리미엄')} onBack={onBack} backLabel={t('뒤로 가기')} height={72} />
+      <ScreenHeader title={t('서랍장 키우기')} onBack={onBack} backLabel={t('뒤로 가기')} height={72} />
       <div className="pm-body">
         {!owned && reason && <p className="pm-reason" role="status">{t(REASONS[reason])}</p>}
         <div className="pm-hero">
