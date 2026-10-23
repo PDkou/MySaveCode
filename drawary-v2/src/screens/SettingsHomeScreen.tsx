@@ -39,7 +39,7 @@ export interface SettingsHomeAction {
 }
 
 export const SETTINGS_ROWS = [
-  { key: 'premium', icon: '/assets/drawer-icons/drawer_icon_gifts.webp', title: K('서랍장 키우기'), desc: K('서랍 무제한, 테마, 반복, 내보내기') },
+  { key: 'premium', icon: 'icon_premium.webp', title: K('서랍장 키우기'), desc: K('서랍 무제한, 테마, 반복, 내보내기') },
   { key: 'theme', icon: 'icon_theme.webp', title: K('테마 설정'), desc: K('앱의 분위기와 강조 색상을 바꿔요.') },
   { key: 'security', icon: 'icon_lock.webp', title: K('보안 설정'), desc: K('앱 잠금과 생체 인증을 관리해요.') },
   { key: 'data', icon: 'icon_upload.webp', title: K('데이터 관리'), desc: K('백업, 복원, 데이터 초기화를 관리해요.') },
