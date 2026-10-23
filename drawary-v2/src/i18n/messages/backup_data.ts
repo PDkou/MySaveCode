@@ -127,6 +127,8 @@ export const backup_data: Messages = {
   '반복 관리': { ja: '繰り返しの管理', en: 'Manage repeats' },
   '백업 / 내보내기': { ja: 'バックアップとエクスポート', en: 'Backup / export' },
   '서랍 삭제': { ja: 'ひきだしを削除', en: 'Delete drawer' },
+  '입력한 내용이 사라져요. 나갈까요?': { ja: '入力した内容が消えます。戻りますか？', en: 'What you entered will be lost. Leave?' },
+  '입력한 내용이 사라져요. 닫을까요?': { ja: '入力した内容が消えます。閉じますか？', en: 'What you entered will be lost. Close it?' },
   '엑셀 같은 앱에서 열 수 있는 파일로 저장해요.': { ja: 'Excelなどのアプリで開けるファイルとして保存します。', en: 'Saves a file you can open in apps like Excel.' },
   '보기 좋은 표 모양의 파일로 저장해요.': { ja: '見やすい表の形のファイルとして保存します。', en: 'Saves a file laid out as a neat table.' },
   '저장할 곳은 파일을 만든 뒤에 직접 고를 수 있어요.': { ja: '保存先はファイルを作ったあとに自分で選べます。', en: 'You choose where to save once the file is ready.' },

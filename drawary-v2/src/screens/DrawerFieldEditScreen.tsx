@@ -136,7 +136,7 @@ export function DrawerFieldEditScreen({ field, onBack, onSave, onDelete }: Drawe
         <button className="df-delete" onClick={() => setDeleteOpen(true)}><img src="/assets/ui-icons/icon_delete.webp" alt="" /> {t('서랍 칸 삭제')}</button>
         <p className="df-edit-danger-note">{t('삭제한 서랍 칸의 기존 입력값은 함께 사라져요.')}</p>
         {deleteOpen && (
-          <div className="df-modal-backdrop">
+          <div className="df-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeleteOpen(false); }}>
             <section className="df-confirm-sheet" role="dialog" aria-modal="true" aria-label={t('서랍 칸 삭제 확인')}>
               <div className="df-sheet-handle" />
               <div className="df-confirm-icon"><img src="/assets/ui-icons/icon_delete.webp" alt="" /></div>

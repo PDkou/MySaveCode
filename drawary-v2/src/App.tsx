@@ -99,6 +99,7 @@ import { DrawerSidebar } from './wide/DrawerSidebar';
 import { WideHome } from './wide/WideHome';
 import { WideEmptyHome } from './wide/WideEmptyHome';
 import { WideSheet } from './wide/WideSheet';
+import { installOutsideDismiss } from './components/outsideDismiss';
 import { WideSettingsGrid } from './wide/WideSettingsGrid';
 import { PaneMagnifier } from './wide/PaneMagnifier';
 import './wide/wideSettings.css';
@@ -603,6 +604,22 @@ function AppScreens() {
 
   // The phone's back button (Android shell): does what the screen's own back arrow does. Anything open on top (dialog,
   // menu, PIN gate) closes first; on Home (or the lock screen) it returns false and the shell leaves the app.
+  // Leaving a form (filling a drawer, editing an item) after typing or adding photos asks first, so a slip of the back button does not
+  // throw the work away. Nothing typed: it just leaves.
+  const formTypedRef = useRef(false);
+  useEffect(() => { formTypedRef.current = false; }, [route]);
+  useEffect(() => {
+    const typed = () => { formTypedRef.current = true; };
+    document.addEventListener('input', typed, true);
+    return () => document.removeEventListener('input', typed, true);
+  }, []);
+  const leaveForm = (extraDirty: boolean, go: () => void) => {
+    if ((formTypedRef.current || extraDirty) && !window.confirm(t('입력한 내용이 사라져요. 나갈까요?'))) return;
+    go();
+  };
+  const leaveFill = () => leaveForm(fillPhotos.length > 0, () => navigate(fillBack));
+  const leaveEdit = () => leaveForm(editPhotos !== null, () => { setEditPhotos(null); navigate('record-detail'); });
+
   const hardwareBack = (): boolean => {
     if (boot !== 'done') return true;
     if (lock.locked) return false;
@@ -625,7 +642,7 @@ function AppScreens() {
       case 'premium': returnToTab(); return true;
       case 'creation-complete': case 'theme-settings': case 'security-settings': case 'data-management': case 'language-settings':
       case 'help-main': case 'info': case 'feedback': returnToTab(); return true;
-      case 'fill-drawer': navigate(fillBack); return true;
+      case 'fill-drawer': leaveFill(); return true;
       case 'drawer-detail': setRecordQuery(''); returnToTab(); return true;
       case 'table-view': case 'drawer-manage': navigate('drawer-detail'); return true;
       case 'notification-settings': case 'recurrence-management': case 'notification-complete': case 'recurrence-complete':
@@ -646,13 +663,14 @@ function AppScreens() {
       case 'faq': case 'guide': navigate('help-main'); return true;
       case 'record-detail': navigate(recordBack); return true;
       case 'photo-viewer': navigate('record-detail'); return true;
-      case 'record-edit': setEditPhotos(null); navigate('record-detail'); return true;
+      case 'record-edit': leaveEdit(); return true;
       case 'home-edit': navigate('home'); return true;
       default: return false;
     }
   };
   const hardwareBackRef = useRef(hardwareBack);
   hardwareBackRef.current = hardwareBack;
+  useEffect(() => installOutsideDismiss(), []);
   useEffect(() => {
     window.__drawaryBack = () => hardwareBackRef.current();
     return () => { delete window.__drawaryBack; };
@@ -872,8 +890,19 @@ function AppScreens() {
       'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete'];
     const fieldsFamily: readonly Route[] = ['drawer-fields', 'new-field', 'field-edit'];
     const formSheets: Partial<Record<Route, number>> = { 'fill-drawer': 900, 'record-edit': 900, 'create-drawer': 600, premium: 900, templates: 900 };
+    // A tap on the dimmed area closes the whole sheet (back to the screen behind it), not just one step of it.
+    const closeSheet = () => {
+      if (manageFamily.includes(route)) navigate('drawer-detail');
+      else if (fieldsFamily.includes(route) || route === 'create-drawer' || route === 'templates') { resetCreateFlow(); returnToTab(); }
+      else if (route === 'fill-drawer') navigate(fillBack);
+      else if (route === 'record-edit') { setEditPhotos(null); navigate('record-detail'); }
+      else if (route === 'photo-viewer') navigate('record-detail');
+      else if (route === 'premium' || route === 'notification-common') returnToTab();
+      else hardwareBack();
+    };
+    const unsaved = fieldsFamily.includes(route) ? draftFields !== null : route === 'fill-drawer' ? fillPhotos.length > 0 : route === 'record-edit' ? editPhotos !== null : false;
     const splitSheet = (menuRoute: Route) => (
-      <WideSheet width={1000}>
+      <WideSheet width={1000} onDismiss={closeSheet} dirty={unsaved} routeKey={route}>
         <div className="wide-sheet-split">
           <div className="wide-sheet-menu"><PaneMagnifier max={1}>{renderRoute(menuRoute, true, true)}</PaneMagnifier></div>
           <div className="wide-sheet-detail">
@@ -888,8 +917,8 @@ function AppScreens() {
       : manageFamily.includes(route) ? splitSheet('drawer-manage')
       : fieldsFamily.includes(route) ? splitSheet('drawer-fields')
       : formSheets[route] !== undefined
-        ? <WideSheet width={formSheets[route]}><div className="wide-sheet-scroll">{renderRoute(route, true, true)}</div></WideSheet>
-        : <WideSheet><PaneMagnifier max={1.2}>{renderRoute(route, true)}</PaneMagnifier></WideSheet>;
+        ? <WideSheet width={formSheets[route]} onDismiss={closeSheet} dirty={unsaved} routeKey={route}><div className="wide-sheet-scroll">{renderRoute(route, true, true)}</div></WideSheet>
+        : <WideSheet onDismiss={closeSheet} dirty={unsaved} routeKey={route}><PaneMagnifier max={1.2}>{renderRoute(route, true)}</PaneMagnifier></WideSheet>;
     return renderLandscape(context, 'wide', sheet) ?? renderRoute(route, true);
   };
   // Every screen's markup, picked by route. Phones and portrait tablets draw just one of them; a wide window (landscape tablet,
@@ -1032,7 +1061,7 @@ function AppScreens() {
             fields={currentFields}
             photoUris={fillUrls}
             saving={recordSaving}
-            onBack={() => navigate(fillBack)}
+            onBack={leaveFill}
             onPickPhotos={() => { void pickMorePhotos(fillPhotos, setFillPhotos); }}
             onRemovePhoto={(i) => setFillPhotos((prev) => prev.filter((_, j) => j !== i))}
             onSave={(draft) => { void guardedSave(async () => {
@@ -1876,7 +1905,7 @@ function AppScreens() {
             initialDraft={draftFromRecord(currentFields, selectedRecord)}
             photoUri={shownPhoto}
             saving={recordSaving}
-            onBack={() => { setEditPhotos(null); navigate('record-detail'); }}
+            onBack={leaveEdit}
             onPickPhoto={() => { void (async () => {
               try {
                 const files = await pickRecordPhotos();

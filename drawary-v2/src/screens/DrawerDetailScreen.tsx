@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ScreenHeader } from '../components/ScreenHeader';
 import './DrawerDetailScreen.css';
 import { t } from '../i18n';
+import { useScrollMemory } from '../components/useScrollMemory';
 
 export interface DrawerRecordSummary {
   id: string;
@@ -64,6 +65,7 @@ export function DrawerDetailScreen({
   onFillDrawer,
 }: DrawerDetailScreenProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const listScroll = useScrollMemory(`dd:${drawerName}`);
 
   return (
     <section className="dd-screen">
@@ -114,7 +116,7 @@ export function DrawerDetailScreen({
         </button>
       </section>
 
-      <section className="dd-list">
+      <section className="dd-list" {...listScroll}>
         {records.map((record) => (
           <button
             className="dd-record"

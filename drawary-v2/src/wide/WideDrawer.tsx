@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import type { DrawerRecordSummary } from '../screens/DrawerDetailScreen';
 import '../screens/DrawerDetailScreen.css';
 import { t } from '../i18n';
+import { useScrollMemory } from '../components/useScrollMemory';
 
 export interface WideChip { key: string; label: string }
 
@@ -35,6 +36,7 @@ interface WideDrawerProps {
  */
 export function WideDrawer(p: WideDrawerProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const listScroll = useScrollMemory(`wd:${p.drawerName}:${p.kind}`);
   const thumb = (r: DrawerRecordSummary) => (
     <div className="dd-thumb">
       {r.thumbnailUri
@@ -90,7 +92,7 @@ export function WideDrawer(p: WideDrawerProps) {
 
         {p.kind === 'wide' ? (
           <div className="wd-split">
-            <div className="wd-list">
+            <div className="wd-list" {...listScroll}>
               {empty && <p className="wd-empty">{p.recordCount === 0 ? t('아직 담은 보관품이 없어요.') : t('검색 결과가 없어요.')}</p>}
               {p.records.map((r) => (
                 <button key={r.id} type="button" className={`dd-record wd-row${r.id === p.selectedId ? ' is-selected' : ''}`} aria-current={r.id === p.selectedId ? 'true' : undefined} onClick={() => p.onSelect(r.id)}>
@@ -107,7 +109,7 @@ export function WideDrawer(p: WideDrawerProps) {
             <div className="wd-detail">{p.detail}</div>
           </div>
         ) : (
-          <div className="wd-cards">
+          <div className="wd-cards" {...listScroll}>
             {empty && <p className="wd-empty">{p.recordCount === 0 ? t('아직 담은 보관품이 없어요.') : t('검색 결과가 없어요.')}</p>}
             {p.records.map((r) => (
               <button key={r.id} type="button" className="wd-card" onClick={() => p.onSelect(r.id)}>
