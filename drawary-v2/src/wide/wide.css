@@ -169,7 +169,7 @@
 .pane-magnifier-inner > .drawary-app-shell { max-width: none; width: 100%; height: 100%; margin: 0; }
 
 /* ---- sheets over the wide screens (WideSheet) ---- */
-.wide-sheet-layer { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 20px 24px; }
+.wide-sheet-layer { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 14px 24px; }
 .wide-sheet-scrim { position: absolute; inset: 0; background: rgba(var(--tr-36-32-55,36,32,55), .34); backdrop-filter: blur(1.5px); }
 .wide-sheet { position: relative; max-width: 100%; height: 100%; max-height: 860px; display: flex; flex-direction: column; overflow: hidden; border-radius: 26px; background: #fffaf2; box-shadow: 0 24px 64px rgba(var(--tr-69-52-99,69,52,99), .28); }
 .wide-sheet .pane-magnifier { flex: 1 1 auto; }
@@ -181,3 +181,9 @@
 .wide-sheet-detail { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #fffaf2; }
 .wide-sheet-detail .wide-hint { margin: auto; padding: 0 40px; text-align: center; color: var(--tc-6b6785,#6b6785); font-size: 15px; line-height: 1.6; }
 .wide-sheet .pane-magnifier-inner > .drawary-app-shell { background: transparent; }
+/* the management menu on the left is a little tighter than on the phone, so all its rows fit above the nav on an 800 px high window */
+.wide-sheet-menu .uf-header { height: 62px !important; }
+.wide-sheet-menu .dm-screen { padding-bottom: 14px; }
+.wide-sheet-menu .dm-summary { min-height: 78px; margin-bottom: 10px; padding-top: 10px; padding-bottom: 10px; }
+.wide-sheet-menu .dm-card { margin-bottom: 10px; }
+.wide-sheet-menu .dm-row { height: 54px; }
