@@ -95,10 +95,12 @@ export function PhotoViewerScreen({
     if (pointers.current.size === 2) {
       const [a, b] = Array.from(pointers.current.values());
       const nextDistance = distance(a, b);
-      if (lastDistance.current) {
-        setScale((currentScale) =>
-          clampScale(currentScale * (nextDistance / lastDistance.current!))
-        );
+      // Read the old distance now: the state updater below runs later, after the ref has been overwritten,
+      // and would then always see a ratio of 1 (the pinch never zoomed).
+      const previousDistance = lastDistance.current;
+      if (previousDistance) {
+        const ratio = nextDistance / previousDistance;
+        setScale((currentScale) => clampScale(currentScale * ratio));
       }
       lastDistance.current = nextDistance;
       return;
