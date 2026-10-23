@@ -53,6 +53,7 @@ export const core: Messages = {
   '사진은 최대 {MAX_RECORD_PHOTOS}장까지 등록할 수 있어요.': { ja: '写真は最大{MAX_RECORD_PHOTOS}枚まで登録できます。', en: 'You can add up to {MAX_RECORD_PHOTOS} photos.' },
   '사진을 가져오지 못했어요. 다시 골라 주세요.': { ja: '写真を取得できませんでした。もう一度選んでください。', en: 'Could not get the photo. Please choose it again.' },
   '사진을 읽지 못했어요. 다른 사진으로 다시 골라 주세요.': { ja: '写真を読み込めませんでした。別の写真を選び直してください。', en: 'Could not read the photo. Please choose a different one.' },
+  '이 사진 형식({type})은 화면에 표시할 수 없어요. JPEG나 PNG 사진을 골라 주세요.': { ja: 'この写真の形式（{type}）は表示できません。JPEGまたはPNGの写真を選んでください。', en: 'This photo format ({type}) cannot be shown. Please choose a JPEG or PNG photo.' },
   '이미지 파일만 등록할 수 있어요.': { ja: '画像ファイルのみ登録できます。', en: 'Only image files can be added.' },
   '보관품을 찾을 수 없어요.': { ja: 'アイテムが見つかりません。', en: 'Couldn\'t find the item.' },
   '알림 시점은 당일부터 {MAX_NOTIFY_DAYS_BEFORE}일 전까지 정할 수 있어요.': { ja: '通知のタイミングは当日から{MAX_NOTIFY_DAYS_BEFORE}日前まで設定できます。', en: 'You can set the notification from the same day up to {MAX_NOTIFY_DAYS_BEFORE} days before.' },

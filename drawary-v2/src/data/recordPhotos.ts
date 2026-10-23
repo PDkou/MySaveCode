@@ -26,6 +26,21 @@ export async function withImageType(file: File): Promise<File> {
 }
 
 /**
+ * Whether the page can draw this picture. Some phones hand over HEIC/HEIF photos: they read fine but the WebView cannot show
+ * them, so the screen would stay empty without a word. Where the page cannot test this (no createImageBitmap), it says yes.
+ */
+async function canShow(photo: Blob): Promise<boolean> {
+  if (typeof createImageBitmap !== 'function') return true;
+  try {
+    const bitmap = await createImageBitmap(photo);
+    bitmap.close();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Turns what the chooser handed over into pictures held in memory. A chosen file is only a handle to the phone's
  * gallery: reading it later can fail (a cloud photo, a permission that ended with the chooser), and the page would then show
  * nothing and say nothing. So the bytes are read right now, and a picture that cannot be read is reported.
@@ -33,16 +48,23 @@ export async function withImageType(file: File): Promise<File> {
 export async function collectPhotos(files: readonly File[]): Promise<File[]> {
   if (files.length === 0) throw new Error(t('사진을 가져오지 못했어요. 다시 골라 주세요.'));
   const photos: File[] = [];
+  const cannotShow: string[] = [];
   let notImages = 0;
   for (const file of files.slice(0, MAX_RECORD_PHOTOS)) {
     try {
       const typed = await withImageType(file);
       if (!typed.type.startsWith('image/')) { notImages += 1; continue; }
       const bytes = await typed.arrayBuffer();
-      if (bytes.byteLength > 0) photos.push(new File([bytes], typed.name, { type: typed.type, lastModified: typed.lastModified }));
+      if (bytes.byteLength === 0) continue;
+      const photo = new File([bytes], typed.name, { type: typed.type, lastModified: typed.lastModified });
+      if (!(await canShow(photo))) { cannotShow.push(typed.type); continue; }
+      photos.push(photo);
     } catch { /* counted below */ }
   }
-  if (photos.length === 0) throw new Error(notImages === files.length ? t('이미지 파일만 등록할 수 있어요.') : t('사진을 읽지 못했어요. 다른 사진으로 다시 골라 주세요.'));
+  if (photos.length === 0) {
+    if (cannotShow.length > 0) throw new Error(t('이 사진 형식({type})은 화면에 표시할 수 없어요. JPEG나 PNG 사진을 골라 주세요.', { type: cannotShow[0] }));
+    throw new Error(notImages === files.length ? t('이미지 파일만 등록할 수 있어요.') : t('사진을 읽지 못했어요. 다른 사진으로 다시 골라 주세요.'));
+  }
   return photos;
 }
 
