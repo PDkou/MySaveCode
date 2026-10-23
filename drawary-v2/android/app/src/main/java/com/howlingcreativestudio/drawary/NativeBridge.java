@@ -17,8 +17,11 @@ import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -179,6 +182,48 @@ final class NativeBridge {
                 resolve(id, JSONObject.quote(placeName(uri)));
             } catch (Exception e) {
                 Log.w(TAG, "Saving the backup failed", e);
+                reject(id, "failed");
+            }
+        });
+    }
+
+    // ---- photos --------------------------------------------------------------------------------------------
+
+    /**
+     * Opens the system photo picker (see MainActivity.startPhotoPick). Answers `{ photos: [{ name, data }], failed, reason }`,
+     * each photo a JPEG as base64; rejects with "cancelled" when nothing was picked.
+     */
+    @JavascriptInterface
+    public void pickPhotos(final int id, final int max) {
+        main.post(() -> activity.startPhotoPick(id, Math.max(1, Math.min(max, 10))));
+    }
+
+    /** The person picked these: read them (slow) off the main thread and answer. */
+    void photosPicked(final int id, final java.util.List<android.net.Uri> uris) {
+        worker.execute(() -> {
+            JSONArray photos = new JSONArray();
+            int failed = 0;
+            String reason = "";
+            for (int i = 0; i < uris.size(); i++) {
+                try {
+                    byte[] jpeg = PhotoReader.toJpeg(activity, uris.get(i));
+                    JSONObject photo = new JSONObject();
+                    photo.put("name", PhotoReader.jpegName(activity, uris.get(i), i));
+                    photo.put("data", Base64.encodeToString(jpeg, Base64.NO_WRAP));
+                    photos.put(photo);
+                } catch (IOException | JSONException | RuntimeException | OutOfMemoryError e) {
+                    Log.w(TAG, "Reading a picked photo failed", e);
+                    failed++;
+                    reason = e.getClass().getSimpleName() + ": " + e.getMessage();
+                }
+            }
+            try {
+                JSONObject answer = new JSONObject();
+                answer.put("photos", photos);
+                answer.put("failed", failed);
+                answer.put("reason", reason);
+                resolve(id, answer.toString());
+            } catch (JSONException e) {
                 reject(id, "failed");
             }
         });

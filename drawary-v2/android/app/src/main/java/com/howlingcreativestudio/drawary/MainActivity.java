@@ -5,10 +5,12 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
@@ -35,11 +37,14 @@ public class MainActivity extends Activity {
     static final int REQ_FILE_CHOOSER = 1001;
     static final int REQ_NOTIFICATIONS = 1002;
     static final int REQ_DRIVE_SAVE = 1003;
+    static final int REQ_PHOTOS = 1004;
     private static final String DRIVE_PACKAGE = "com.google.android.apps.docs";
 
     private WebView webView;
     private NativeBridge bridge;
     private ValueCallback<Uri[]> fileCallback;
+    private int photoPickId = -1;
+    private int photoPickMax = 3;
     private int drivePendingId = -1;
     private byte[] drivePendingBytes;
     private Object backCallback; // an OnBackInvokedCallback on Android 13+
@@ -181,6 +186,37 @@ public class MainActivity extends Activity {
      * (the person picks account and folder there). Without the Drive app: the phone's own save window (Google Drive is one
      * of its places when installed). Either way this app needs no sign-in and no network permission.
      */
+    /**
+     * The page asks for pictures (NativeBridge.pickPhotos). Android 13+ opens the system photo picker, which needs no permission;
+     * older phones open the usual "choose a picture" window. The pictures come back through onActivityResult.
+     */
+    void startPhotoPick(int id, int max) {
+        if (photoPickId != -1) bridge.cancelled(photoPickId);
+        photoPickId = id;
+        photoPickMax = max;
+        Intent intent = null;
+        if (Build.VERSION.SDK_INT >= 33) {
+            intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+            if (max > 1) intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, Math.min(max, MediaStore.getPickImagesMaxLimit()));
+        }
+        for (int attempt = 0; attempt < 2; attempt++) {
+            if (intent == null) {
+                intent = new Intent(Intent.ACTION_GET_CONTENT)
+                        .addCategory(Intent.CATEGORY_OPENABLE)
+                        .setType("image/*")
+                        .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, max > 1);
+            }
+            try {
+                startActivityForResult(intent, REQ_PHOTOS);
+                return;
+            } catch (ActivityNotFoundException e) {
+                intent = null; // the system picker is missing: try the older window once
+            }
+        }
+        photoPickId = -1;
+        bridge.failed(id);
+    }
+
     void startDriveSave(int id, String fileName, byte[] bytes, java.io.File file) {
         if (drivePendingBytes != null) {
             bridge.failed(id);
@@ -273,6 +309,26 @@ public class MainActivity extends Activity {
                 fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
                 fileCallback = null;
             }
+            return;
+        }
+        if (requestCode == REQ_PHOTOS) {
+            int id = photoPickId;
+            photoPickId = -1;
+            if (id == -1) return;
+            java.util.List<Uri> uris = new java.util.ArrayList<>();
+            if (resultCode == RESULT_OK && data != null) {
+                ClipData clip = data.getClipData();
+                if (clip != null) {
+                    for (int i = 0; i < clip.getItemCount() && uris.size() < photoPickMax; i++) {
+                        Uri uri = clip.getItemAt(i).getUri();
+                        if (uri != null) uris.add(uri);
+                    }
+                } else if (data.getData() != null) {
+                    uris.add(data.getData());
+                }
+            }
+            if (uris.isEmpty()) bridge.cancelled(id);
+            else bridge.photosPicked(id, uris);
             return;
         }
         if (requestCode == REQ_DRIVE_SAVE) {

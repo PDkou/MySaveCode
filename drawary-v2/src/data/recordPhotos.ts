@@ -1,6 +1,7 @@
 import { MAX_RECORD_PHOTOS } from './types';
 import { endAutoLockSuspension, suspendAutoLock } from './appLockGuard';
 import { t } from '../i18n';
+import type { NativePhotoResult } from './nativeBridge';
 
 const MAGIC: readonly { type: string; test: (b: Uint8Array) => boolean }[] = [
   { type: 'image/jpeg', test: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
@@ -76,7 +77,7 @@ export async function collectPhotos(files: readonly File[]): Promise<File[]> {
  * file only handles picking. On Android the WebView shell must implement the
  * file chooser for this to open anything (V2-13+, Android QA).
  */
-export function pickRecordPhotos(): Promise<File[]> {
+function pickWithInput(): Promise<File[]> {
   return new Promise((resolve, reject) => {
     suspendAutoLock(60_000); // the chooser can take a while; finish() ends it early below
     const input = document.createElement('input');
@@ -100,4 +101,38 @@ export function pickRecordPhotos(): Promise<File[]> {
     document.body.appendChild(input);
     input.click();
   });
+}
+
+/** Pictures that came from the phone's own picker (already JPEGs as base64) as files; a failure to read any is reported. */
+export function photosFromNative(result: NativePhotoResult): File[] {
+  const files = result.photos.map((p) => {
+    const bin = atob(p.data);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+    return new File([bytes], p.name, { type: 'image/jpeg' });
+  });
+  if (files.length === 0) {
+    const why = result.reason ? ` (${result.reason})` : '';
+    throw new Error(`${t('사진을 읽지 못했어요. 다른 사진으로 다시 골라 주세요.')}${why}`);
+  }
+  return files.slice(0, MAX_RECORD_PHOTOS);
+}
+
+/**
+ * Opens the picture picker (up to MAX_RECORD_PHOTOS) and resolves with the chosen pictures, or [] when the person closes it.
+ * In the Android app the phone's own photo picker is used (the shell reads, scales and converts the pictures itself); in a plain
+ * browser the page's file chooser is.
+ */
+export async function pickRecordPhotos(): Promise<File[]> {
+  const native = typeof window !== 'undefined' ? window.DrawaryNative : undefined;
+  if (typeof native?.pickPhotos !== 'function') return pickWithInput();
+  suspendAutoLock(120_000); // the picker covers the app for a while
+  try {
+    return photosFromNative(await native.pickPhotos(MAX_RECORD_PHOTOS));
+  } catch (e) {
+    if (e instanceof Error && e.message === 'cancelled') return [];
+    throw e;
+  } finally {
+    endAutoLockSuspension();
+  }
 }

@@ -56,6 +56,12 @@ export interface DrawaryNativeApi {
    * (see src/data/billing.ts); never rejects. Support products are consumed right after a purchase so they can be bought again.
    */
   purchase?: (productId: string) => Promise<string>;
+  /**
+   * Opens the phone's photo picker (up to `max` pictures) and resolves with `{ photos: [{ name, data }], failed, reason }`: each picture is
+   * already a JPEG (scaled down, HEIC converted, camera rotation applied) as base64; `failed` pictures could not be read (`reason` says why).
+   * Rejects with message 'cancelled' when nothing was picked.
+   */
+  pickPhotos?: (max: number) => Promise<NativePhotoResult>;
   /** Opens a web address (the studio's privacy policy / terms pages) in the phone's browser. Only the studio's own https addresses are opened. */
   openLink?: (url: string) => void;
 }
@@ -93,6 +99,12 @@ export async function authenticateBiometric(): Promise<boolean> {
   if (!hasNativeBiometric()) return false;
   try { return (await window.DrawaryNative!.authenticateBiometric!()) === true; }
   catch { return false; }
+}
+
+export interface NativePhotoResult {
+  photos: { name: string; data: string }[];
+  failed: number;
+  reason: string;
 }
 
 export interface NativeFeedback {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collectPhotos, withImageType } from './recordPhotos';
+import { collectPhotos, photosFromNative, withImageType } from './recordPhotos';
 
 const file = (bytes: number[], type: string, name = 'a') => new File([new Uint8Array(bytes)], name, { type });
 
@@ -43,5 +43,27 @@ describe('collectPhotos', () => {
   it('uses the pictures it could read and drops the rest', async () => {
     const photos = await collectPhotos([file([0x68, 0x69], 'text/plain'), file([1, 2, 3], 'image/png', 'b.png')]);
     expect(photos.map((p) => p.name)).toEqual(['b.png']);
+  });
+});
+
+describe('photosFromNative', () => {
+  const b64 = (bytes: number[]) => btoa(String.fromCharCode(...bytes));
+
+  it('turns the shell\'s base64 JPEGs into files', () => {
+    const files = photosFromNative({ photos: [{ name: 'a.jpg', data: b64([0xff, 0xd8, 0xff, 1, 2]) }, { name: 'b.jpg', data: b64([0xff, 0xd8, 0xff, 3]) }], failed: 0, reason: '' });
+    expect(files.map((f) => [f.name, f.type, f.size])).toEqual([['a.jpg', 'image/jpeg', 5], ['b.jpg', 'image/jpeg', 4]]);
+  });
+
+  it('keeps the pictures that could be read and reports nothing when some failed', () => {
+    expect(photosFromNative({ photos: [{ name: 'a.jpg', data: b64([1, 2, 3]) }], failed: 1, reason: 'X' })).toHaveLength(1);
+  });
+
+  it('says why when no picture could be read', () => {
+    expect(() => photosFromNative({ photos: [], failed: 2, reason: 'DecodeException: bad' })).toThrow('DecodeException: bad');
+  });
+
+  it('never returns more than the record can hold', () => {
+    const many = Array.from({ length: 5 }, (_, i) => ({ name: `${i}.jpg`, data: b64([i + 1]) }));
+    expect(photosFromNative({ photos: many, failed: 0, reason: '' })).toHaveLength(3);
   });
 });
