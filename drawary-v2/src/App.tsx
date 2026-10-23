@@ -120,11 +120,18 @@ const NAMES: Record<Exclude<Route, StandaloneRoute>, string> = {
 const SETTINGS_PANES: Partial<Record<Route, string>> = {
   settings: 'theme', 'theme-settings': 'theme',
   'security-settings': 'security', 'lock-detail': 'security', 'pin-setup': 'security',
-  'data-management': 'data', 'backup-type': 'data', 'backup-destination': 'data', 'backup-success': 'data', 'restore-file-picker': 'data', 'restore-review': 'data', 'restore-success': 'data', 'data-reset-confirm': 'data',
+  'data-management': 'data', 'backup-type': 'data', 'backup-destination': 'data', 'backup-progress': 'data', 'backup-success': 'data', 'restore-file-picker': 'data', 'restore-review': 'data', 'restore-progress': 'data', 'restore-success': 'data', 'data-reset-confirm': 'data',
   'language-settings': 'language', 'help-main': 'help', faq: 'help', guide: 'help', info: 'info', feedback: 'feedback',
 };
 /** The first-level settings screens that get their own wide arrangement (wide/wideSettings.css); the screens they lead to are shown magnified. */
-const WIDE_SETTINGS_PAGES: readonly Route[] = ['theme-settings', 'security-settings', 'data-management', 'language-settings', 'help-main', 'info', 'feedback'];
+const WIDE_SETTINGS_PAGES: readonly Route[] = ['theme-settings', 'security-settings', 'data-management', 'language-settings', 'help-main', 'faq', 'guide', 'info', 'feedback'];
+/** The screens a first-level settings screen leads to open, in a wide window, as a sheet over that screen: [the screen behind, the sheet's width, whether a tap outside closes it]. */
+const SETTINGS_SHEETS: Partial<Record<Route, readonly [Route, number, boolean]>> = {
+  'lock-detail': ['security-settings', 480, true], 'pin-setup': ['security-settings', 440, true],
+  'backup-type': ['data-management', 500, true], 'backup-destination': ['data-management', 500, true], 'backup-progress': ['data-management', 480, false], 'backup-success': ['data-management', 480, true],
+  'restore-file-picker': ['data-management', 480, true], 'restore-review': ['data-management', 480, true], 'restore-progress': ['data-management', 480, false], 'restore-success': ['data-management', 480, true],
+  'data-reset-confirm': ['data-management', 480, true]
+};
 const isTab = (route: Route): route is BottomNavTab => TABS.some(tab => tab === route);
 const STANDALONE_ROUTES: readonly Route[] = ['premium', 'templates', 'notification-common', 'splash', 'onboarding', 'home-empty', 'new-field', 'field-edit', 'creation-complete', 'fill-drawer', 'backup-progress', 'home-edit', 'drawer-fields', 'drawer-detail', 'record-detail', 'record-edit', 'photo-viewer', 'table-view', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage', 'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete', 'theme-settings', 'security-settings', 'lock-detail', 'pin-setup', 'app-lock', 'data-management', 'backup-type', 'backup-destination', 'backup-success', 'restore-file-picker', 'restore-review', 'restore-progress', 'restore-success', 'data-reset-confirm', 'language-settings', 'help-main', 'faq', 'guide', 'info', 'feedback'];
 const parseRoute = (): Route => {
@@ -832,6 +839,15 @@ function AppScreens() {
           />
         </div>
       </WideFrame>;
+    }
+    const settingsSheet = SETTINGS_SHEETS[route];
+    if (settingsSheet && kind === 'wide') {
+      const [behind, width, dismissible] = settingsSheet;
+      return renderLandscape(behind, kind, (
+        <WideSheet width={width} onDismiss={dismissible ? () => navigate(behind) : undefined} routeKey={route}>
+          <PaneMagnifier max={1.15}>{renderRoute(route, true)}</PaneMagnifier>
+        </WideSheet>
+      ));
     }
     if (SETTINGS_PANES[route] !== undefined && (kind === 'wide' || route === 'settings')) {
       // The settings tab is a card grid; a card opens that settings screen (and the screens it leads to) magnified, and the screen's own back arrow leads back.
