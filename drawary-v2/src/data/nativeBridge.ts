@@ -69,6 +69,8 @@ export interface DrawaryNativeApi {
   pickPhotos?: (max: number) => Promise<NativePhotoResult>;
   /** Opens a web address (the studio's privacy policy / terms pages) in the phone's browser. Only the studio's own https addresses are opened. */
   openLink?: (url: string) => void;
+  /** Opens an address saved in a record's link field (http/https only, any site) in the phone's browser. */
+  openWebLink?: (url: string) => void;
 }
 
 declare global {

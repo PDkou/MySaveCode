@@ -312,6 +312,12 @@ final class NativeBridge {
         main.post(() -> activity.openStudioLink(url));
     }
 
+    /** Opens a web address the person saved in a link field (http or https only) in the browser. */
+    @JavascriptInterface
+    public void openWebLink(final String url) {
+        main.post(() -> activity.openWebLink(url));
+    }
+
     // ---- Google Play purchases -----------------------------------------------------------------------------
 
     private BillingBridge billing() {

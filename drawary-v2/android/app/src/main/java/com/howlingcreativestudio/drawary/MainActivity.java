@@ -282,6 +282,14 @@ public class MainActivity extends Activity {
         openExternally(uri);
     }
 
+    /** A link the person saved in a record: only http and https pages, on any site. */
+    void openWebLink(String url) {
+        Uri uri = Uri.parse(url == null ? "" : url.trim());
+        String scheme = uri.getScheme();
+        if (!"http".equals(scheme) && !"https".equals(scheme)) return;
+        openExternally(uri);
+    }
+
     private void openExternally(Uri uri) {
         String scheme = uri.getScheme();
         if (!"http".equals(scheme) && !"https".equals(scheme) && !"mailto".equals(scheme)) return;

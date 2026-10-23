@@ -3,6 +3,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import './RecordDetailScreen.css';
 import { RecordDeleteConfirmScreen } from './RecordDeleteConfirmScreen';
 import { t } from '../i18n';
+import { normalizeWebLink, openWebLink } from '../data/userLinks';
 
 export type RecordFieldType =
   | 'text'
@@ -161,7 +162,11 @@ export function RecordDetailScreen({
                 />
                 <span>{field.label}</span>
               </dt>
-              <dd>{field.value}</dd>
+              <dd>
+                {field.type === 'link' && normalizeWebLink(field.value) ? (
+                  <button type="button" className="rd-link" onClick={() => openWebLink(field.value)}>{field.value}</button>
+                ) : field.value}
+              </dd>
             </div>
           ))}
         </dl>
