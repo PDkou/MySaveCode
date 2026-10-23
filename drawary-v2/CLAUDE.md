@@ -66,3 +66,8 @@
 3. Resolve the missing compiled React browser QA of #01 as available, then implement #02 onboarded 8-page flow and transition behavior from approved source; integrate #03/#04 exactly into the V2 app without altering the approved footer.
 4. Run real build and browser QA; commit only verified changes. Build failures and missing references must be reported explicitly.
 5. Continue autonomously within available approved source packages, without per-screen user approvals. Request additional final source archives for #05 onward in BATCHES; do not infer designs from screenshot names or project history.
+
+## Release versioning (user rule, 2026-10-22)
+
+- Every new build that goes to Google Play gets a new version NAME as well as a higher versionCode: middle number = a new feature, last number = a bug fix or small change, first number = a major release (only the user decides that; official release is expected to be 1.0.0).
+- Change the name with `node scripts/bump-version.mjs x.y.z` (updates package.json, package-lock.json, android/app/build.gradle.kts), then commit; see `docs/RELEASE_AAB.md`. Builds 1-3 were all 0.1.0; build 4 is the first to follow this rule.
