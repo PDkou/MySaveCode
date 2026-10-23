@@ -27,6 +27,8 @@ interface FillDrawerScreenProps {
   photoUris: string[];
   /** True while the record is being saved, so a double tap cannot add it twice. */
   saving?: boolean;
+  /** In the wide window: the form is laid out in two columns (photos left, fields right) instead of the phone's single column. */
+  wide?: boolean;
   onBack?: () => void;
   onPickPhotos?: () => void;
   onRemovePhoto?: (index: number) => void;
@@ -39,6 +41,7 @@ export function FillDrawerScreen({
   maxPhotos = MAX_RECORD_PHOTOS,
   photoUris,
   saving = false,
+  wide = false,
   onBack,
   onPickPhotos,
   onRemovePhoto,
@@ -52,10 +55,11 @@ export function FillDrawerScreen({
   const activePhoto = photoUris[shownIndex];
 
   return (
-    <section className="fd-screen">
+    <section className={`fd-screen${wide ? ' fd-screen--wide' : ''}`}>
       <ScreenHeader variant="stacked" title={t('{drawerName} 서랍 채우기', { drawerName })} onBack={onBack} height={91} />
 
       <section className="fd-content">
+        <div className="fd-photo-col">
         {hasPhoto ? (
           <section className="fd-photo-card" aria-label={t('등록한 사진')}>
             <img className="fd-photo" src={activePhoto} alt={t('등록한 보관품 사진')} />
@@ -95,6 +99,9 @@ export function FillDrawerScreen({
           </button>
         )}
 
+        </div>
+
+        <div className="fd-fields-col">
         {fields.filter((f) => hasControl(f.kind)).map((field) => (
           <div key={field.id}>
             <label className="fd-label" htmlFor={`fd-${field.id}`}>{field.name}{field.required && <> <em>*</em></>}</label>
@@ -117,6 +124,7 @@ export function FillDrawerScreen({
           
           {t('담기')}
         </button>
+        </div>
       </section>
     </section>
   );

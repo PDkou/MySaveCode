@@ -119,3 +119,8 @@
 }
 
 .new-drawer-templates { position: absolute; right: 20px; top: 30px; margin: 0; padding: 0; border: 0; background: transparent; color: var(--tc-7a5cf0,#7a5cf0); font-size: 13px; font-weight: 800; letter-spacing: -.2px; cursor: pointer; }
+
+/* inside a sheet of the wide window (the sheet is the dialog; no second backdrop or bottom sheet) */
+.new-drawer-overlay.is-embedded { position: static; display: block; }
+.new-drawer-overlay.is-embedded .new-drawer-backdrop, .new-drawer-overlay.is-embedded .new-drawer-handle { display: none; }
+.new-drawer-overlay.is-embedded .new-drawer-sheet { max-height: none; border-radius: 0; box-shadow: none; padding: 26px 28px 28px; background: transparent; }

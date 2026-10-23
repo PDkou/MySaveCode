@@ -14,6 +14,8 @@ interface RecordEditScreenProps {
   /** What the form starts with; mount the screen with a `key` per record. */
   initialDraft: RecordDraft;
   saving?: boolean;
+  /** In the wide window: two columns (photo left, fields right). */
+  wide?: boolean;
   onBack?: () => void;
   onPickPhoto?: () => void;
   onRemovePhoto?: () => void;
@@ -66,6 +68,7 @@ export function RecordEditScreen({
   fields,
   initialDraft,
   saving = false,
+  wide = false,
   onBack,
   onPickPhoto,
   onRemovePhoto,
@@ -74,10 +77,11 @@ export function RecordEditScreen({
   const [draft, setDraft] = useState<RecordDraft>(initialDraft);
 
   return (
-    <section className="re-screen">
+    <section className={`re-screen${wide ? ' re-screen--wide' : ''}`}>
       <ScreenHeader variant="stacked" title={t('보관품 수정')} subtitle={t('{drawerName} 서랍', { drawerName })} onBack={onBack} height={94} />
 
       <section className="re-content">
+        <div className="re-photo-col">
         {photoUri ? (
           <section className="re-photo-card">
             <img className="re-photo" src={photoUri} alt={t('등록한 보관품 사진')} />
@@ -94,6 +98,9 @@ export function RecordEditScreen({
           <span>{photoUri ? t('사진 바꾸기') : t('사진 선택하기')}</span>
         </button>
 
+        </div>
+
+        <div className="re-fields-col">
         <div className="re-fields">
           {fields.filter((f) => hasControl(f.kind)).map((field) => (
             <div className="re-field" key={field.id}>
@@ -115,6 +122,7 @@ export function RecordEditScreen({
           
           {t('수정 완료')}
         </button>
+        </div>
       </section>
     </section>
   );

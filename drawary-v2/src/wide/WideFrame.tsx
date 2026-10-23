@@ -6,12 +6,13 @@ import './wide.css';
  * 390 wide, centered, on the same white band as on a phone). 'land' = landscape phone (no sidebar), 'wide' = landscape tablet /
  * unfolded foldable. The window's height is the frame's height, so each part scrolls on its own and the nav is always reachable.
  */
-export function WideFrame({ kind, route, sidebar, nav, children }: { kind: 'land' | 'wide'; route: string; sidebar?: ReactNode; nav: ReactNode; children: ReactNode }) {
+export function WideFrame({ kind, route, sidebar, nav, overlay, children }: { kind: 'land' | 'wide'; route: string; sidebar?: ReactNode; nav: ReactNode; /** A sheet shown over the content (see WideSheet). */ overlay?: ReactNode; children: ReactNode }) {
   return (
     <main className={`drawary-app-shell wide-app wide-app--${kind}`} data-route={route} data-layout={kind}>
       <div className="wide-body">
         {sidebar}
         <div className="wide-main">{children}</div>
+        {overlay}
       </div>
       <footer className="drawary-shell-footer wide-nav">{nav}</footer>
     </main>

@@ -77,3 +77,13 @@ button,input,textarea{font:inherit}
   background:linear-gradient(90deg,var(--tc-7853e8,#7853e8),var(--tc-845fe9,#845fe9));color:#fff;font-size:16px;font-weight:800;
   letter-spacing:-.4px;box-shadow:0 8px 14px rgba(var(--tr-112-75-218,112,75,218),.18);
 }
+
+/* wide window only: see FillDrawerScreen.css */
+.re-photo-col, .re-fields-col { display: contents; }
+.re-screen--wide { width: 100%; height: auto; overflow: visible; }
+.re-screen--wide .re-content { display: grid; grid-template-columns: 320px minmax(0, 1fr); column-gap: 32px; align-items: start; padding: 0 32px 28px; }
+.re-screen--wide .re-photo-col, .re-screen--wide .re-fields-col { display: block; }
+.re-screen--wide .re-photo-col { position: sticky; top: 0; }
+.re-screen--wide .re-fields { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; margin-top: 0; }
+.re-screen--wide .re-field:first-child { margin-top: 12px; }
+.re-screen--wide .re-field:has(.re-textarea-wrap) { grid-column: 1 / -1; }

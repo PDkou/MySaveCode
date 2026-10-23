@@ -37,6 +37,8 @@ interface NewDrawerScreenProps {
   /** "템플릿으로 시작": ready-made drawers instead of typing everything. */
   onTemplates?: () => void;
   onDismiss: () => void;
+  /** Shown inside a sheet of the wide window: a plain block, without its own dimmed backdrop and bottom-sheet look. */
+  embedded?: boolean;
 }
 
 /**
@@ -61,13 +63,13 @@ interface NewDrawerScreenProps {
  * "다음" button is `disabled={!name.trim()}`. Applied the same guard
  * below -- it was missing here.
  */
-export function NewDrawerScreen({ initial, onNext, onTemplates, onDismiss }: NewDrawerScreenProps) {
+export function NewDrawerScreen({ initial, onNext, onTemplates, onDismiss, embedded = false }: NewDrawerScreenProps) {
   const [name, setName] = useState(initial?.name ?? '');
   const [icon, setIcon] = useState(initial?.icon ?? ICON_OPTIONS[9].key);
   const [color, setColor] = useState<string>(initial?.color ?? 'pink');
 
   return (
-    <div className="new-drawer-overlay">
+    <div className={`new-drawer-overlay${embedded ? ' is-embedded' : ''}`}>
       <button type="button" className="new-drawer-backdrop" aria-label={t('닫기')} onClick={onDismiss} />
       <div className="new-drawer-sheet" role="dialog" aria-label={t('새 서랍 만들기')}>
         <div className="new-drawer-handle" />

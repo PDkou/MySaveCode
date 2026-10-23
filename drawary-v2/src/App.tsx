@@ -98,6 +98,7 @@ import { WideFrame } from './wide/WideFrame';
 import { DrawerSidebar } from './wide/DrawerSidebar';
 import { WideHome } from './wide/WideHome';
 import { WideEmptyHome } from './wide/WideEmptyHome';
+import { WideSheet } from './wide/WideSheet';
 import { WideSettingsGrid } from './wide/WideSettingsGrid';
 import { PaneMagnifier } from './wide/PaneMagnifier';
 import './wide/wideSettings.css';
@@ -702,7 +703,7 @@ function AppScreens() {
   const reorderDrawers = (ids: string[]) => {
     actions.reorderDrawers(ids).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('순서를 바꾸지 못했어요.')));
   };
-  const renderLandscape = (route: Route, kind: 'land' | 'wide'): ReactElement | null => {
+  const renderLandscape = (route: Route, kind: 'land' | 'wide', overlay?: ReactElement): ReactElement | null => {
     // The tab that is lit: the tab screen itself, the settings tab for every settings screen, else the tab this was opened from.
     const activeTab: BottomNavTab = isTab(route) ? route : SETTINGS_PANES[route] ? 'settings' : lastTabRef.current;
     const nav = <ResponsiveBottomNav active={activeTab} onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />;
@@ -710,8 +711,13 @@ function AppScreens() {
       ? <DrawerSidebar drawers={homeCards} totalRecords={store.records.length} activeId={activeId} onSelect={onSelect} />
       : undefined;
     const hasDrawers = store.drawers.length > 0;
+    if (route === 'home' && !hasDrawers && kind === 'wide') {
+      return <WideFrame kind="wide" route="home" nav={nav} overlay={overlay} sidebar={<DrawerSidebar drawers={[]} totalRecords={0} activeId={null} onSelect={() => undefined} />}>
+        <WideEmptyHome onCreateDrawer={() => navigate('create-drawer')} onTemplates={() => navigate('templates')} />
+      </WideFrame>;
+    }
     if (route === 'home' && hasDrawers) {
-      return <WideFrame kind={kind} route="home" nav={nav} sidebar={sidebar(null, (id) => { setCurrentDrawerId(id); navigate('drawer-detail'); })}>
+      return <WideFrame kind={kind} route="home" nav={nav} overlay={overlay} sidebar={sidebar(null, (id) => { setCurrentDrawerId(id); navigate('drawer-detail'); })}>
         <WideHome
           drawers={homeCards}
           totalRecords={store.records.length}
@@ -723,7 +729,7 @@ function AppScreens() {
       </WideFrame>;
     }
     if (route === 'home-edit' && hasDrawers) {
-      return <WideFrame kind={kind} route="home-edit" nav={nav} sidebar={sidebar(null, () => undefined)}>
+      return <WideFrame kind={kind} route="home-edit" nav={nav} overlay={overlay} sidebar={sidebar(null, () => undefined)}>
         <WideHome
           editing
           drawers={homeCards}
@@ -745,7 +751,7 @@ function AppScreens() {
       });
       const paneRecord = selectedRecord && selectedRecord.drawerId === currentDrawer.id ? selectedRecord : undefined;
       const detail = kind === 'wide' ? recordPane(paneRecord, 'drawer-detail', t('보관품을 고르면 여기에 보여요.')) : undefined;
-      return <WideFrame kind={kind} route="drawer-detail" nav={nav}>
+      return <WideFrame kind={kind} route="drawer-detail" nav={nav} overlay={overlay}>
         <WideDrawer
           kind={kind}
           drawerName={currentDrawer.name}
@@ -769,7 +775,7 @@ function AppScreens() {
       </WideFrame>;
     }
     if (route === 'table-view' && currentDrawer) {
-      return <WideFrame kind={kind} route="table-view" nav={nav} sidebar={sidebar(currentDrawer.id, (id) => setCurrentDrawerId(id))}>
+      return <WideFrame kind={kind} route="table-view" nav={nav} overlay={overlay} sidebar={sidebar(currentDrawer.id, (id) => setCurrentDrawerId(id))}>
         <TableViewScreen
           fill
           key={currentDrawer.id}
@@ -787,7 +793,7 @@ function AppScreens() {
       </WideFrame>;
     }
     if (route === 'stats') {
-      return <WideFrame kind={kind} route="stats" nav={nav}>
+      return <WideFrame kind={kind} route="stats" nav={nav} overlay={overlay}>
         <div className="wide-scroll">
           <StatsScreen
             wide
@@ -799,7 +805,7 @@ function AppScreens() {
     }
     if (SETTINGS_PANES[route] !== undefined && (kind === 'wide' || route === 'settings')) {
       // The settings tab is a card grid; a card opens that settings screen (and the screens it leads to) magnified, and the screen's own back arrow leads back.
-      return <WideFrame kind={kind} route={route} nav={nav}>
+      return <WideFrame kind={kind} route={route} nav={nav} overlay={overlay}>
         {route === 'settings' ? (
           <div className="wide-scroll">
             <WideSettingsGrid
@@ -821,7 +827,7 @@ function AppScreens() {
     if (kind !== 'wide') return null;
     if (route === 'search') {
       const paneRecord = selectedRecord && selectedRecord.drawerId === currentDrawer?.id ? selectedRecord : undefined;
-      return <WideFrame kind={kind} route="search" nav={nav}>
+      return <WideFrame kind={kind} route="search" nav={nav} overlay={overlay}>
         <div className="wide-two">
           <div className="wide-two-list">
             <GlobalSearchScreen
@@ -837,22 +843,27 @@ function AppScreens() {
     }
     return null;
   };
-  // A screen that has no wide arrangement of its own (the empty home, creating a drawer, filling it, editing an item, premium, ...):
-  // the phone screen is shown magnified in the middle of the same frame as everything else (full-width nav band at the bottom,
-  // centered), instead of beside a second phone column. The empty home gets the drawer list's place on the left too.
+  // A screen that belongs to a flow and has no wide arrangement of its own (creating a drawer, filling it, editing an item, premium, the
+  // notification and repeat steps, ...) opens as a sheet in the middle of the wide window, over the screen it came from. The frame around it
+  // (drawer list, the full-width nav band) is the same as on every other wide screen.
   const renderWideFallback = (route: Route): ReactElement => {
-    const activeTab: BottomNavTab = isTab(route) ? route : SETTINGS_PANES[route] ? 'settings' : lastTabRef.current;
-    const nav = <ResponsiveBottomNav active={activeTab} onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />;
-    if (route === 'home' || route === 'home-empty') {
-      return <WideFrame kind="wide" route="home" nav={nav} sidebar={<DrawerSidebar drawers={[]} totalRecords={0} activeId={null} onSelect={() => undefined} />}>
-        <WideEmptyHome onCreateDrawer={() => navigate('create-drawer')} onTemplates={() => navigate('templates')} />
-      </WideFrame>;
-    }
-    return <WideFrame kind="wide" route={route} nav={nav}><PaneMagnifier>{renderRoute(route, true)}</PaneMagnifier></WideFrame>;
+    const fromDrawer = ['fill-drawer', 'record-edit', 'photo-viewer', 'drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage',
+      'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management', 'recurrence-target-date',
+      'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete'].includes(route);
+    const context: Route = route === 'home' || route === 'home-empty' ? 'home'
+      : route === 'premium' || route === 'notification-common' ? 'settings'
+      : fromDrawer && currentDrawer ? 'drawer-detail' : 'home';
+    // forms get a sheet of their own width and scroll in it (the filling and editing forms in two columns); the other screens are shown magnified
+    const formSheets: Partial<Record<Route, number>> = { 'fill-drawer': 900, 'record-edit': 900, 'create-drawer': 600 };
+    const sheet = route === 'home' || route === 'home-empty' ? undefined
+      : formSheets[route] !== undefined
+        ? <WideSheet width={formSheets[route]}><div className="wide-sheet-scroll">{renderRoute(route, true, true)}</div></WideSheet>
+        : <WideSheet><PaneMagnifier max={1.2}>{renderRoute(route, true)}</PaneMagnifier></WideSheet>;
+    return renderLandscape(context, 'wide', sheet) ?? renderRoute(route, true);
   };
   // Every screen's markup, picked by route. Phones and portrait tablets draw just one of them; a wide window (landscape tablet,
   // unfolded foldable) draws its own arrangement (see renderLandscape / renderWideFallback), so this is a function of the route instead of the open route.
-  const renderRoute = (route: Route, phoneOnly = false): ReactElement => {
+  const renderRoute = (route: Route, phoneOnly = false, inSheet = false): ReactElement => {
     if (!phoneOnly && layout !== 'single') {
       const landscape = renderLandscape(route, layout);
       if (landscape) return landscape;
@@ -928,10 +939,11 @@ function AppScreens() {
       // (no approved source; see NewDrawerScreen.tsx). What is typed is kept
       // in the create-flow draft, so coming back from #09 shows it again.
       return <main className="drawary-app-shell" data-route="create-drawer">
-        <section className="drawary-route-panel drawary-dimmed-home" aria-hidden="true">
+        {!inSheet && <section className="drawary-route-panel drawary-dimmed-home" aria-hidden="true">
           <HomeScreen drawers={homeCards} totalRecords={store.records.length} />
-        </section>
+        </section>}
         <NewDrawerScreen
+          embedded={inSheet}
           initial={createDraft ?? undefined}
           onTemplates={() => navigate('templates')}
           onNext={(draft) => { try { assertUniqueDrawerName(store.drawers, draft.name); } catch (e) { alertError(e); return; } setCreateDraft(draft); navigate('drawer-fields'); }}
@@ -977,9 +989,9 @@ function AppScreens() {
       // and its photos in one transaction and shows it in #15. Back returns to
       // #12 or #15, whichever opened it.
       if (!currentDrawer) return <main className="drawary-app-shell" data-route="fill-drawer" />;
-      return <main className="drawary-app-shell" data-route="fill-drawer">
-        <FixedCanvas height={844} grow>
+      const fillBody = (
           <FillDrawerScreen
+            wide={inSheet}
             key={fillKey}
             drawerName={currentDrawer.name}
             fields={currentFields}
@@ -995,7 +1007,9 @@ function AppScreens() {
               navigate('drawer-detail');
             }); }}
           />
-        </FixedCanvas>
+      );
+      return <main className="drawary-app-shell" data-route="fill-drawer">
+        {inSheet ? fillBody : <FixedCanvas height={844} grow>{fillBody}</FixedCanvas>}
       </main>;
     }
     if (route === 'drawer-detail') {
@@ -1817,9 +1831,9 @@ function AppScreens() {
       const shownPhoto = editPhotos !== null
         ? (editPhotos.length ? (editUrls[0] ?? selectedPhotos.urls[0] ?? '') : '')
         : (selectedPhotos.urls[0] ?? '');
-      return <main className="drawary-app-shell" data-route="record-edit">
-        <FixedCanvas height={844} grow>
+      const editBody = (
           <RecordEditScreen
+            wide={inSheet}
             key={`${selectedRecord.id}:${editKey}`}
             drawerName={currentDrawer.name}
             fields={currentFields}
@@ -1841,7 +1855,9 @@ function AppScreens() {
               navigate('record-detail');
             }); }}
           />
-        </FixedCanvas>
+      );
+      return <main className="drawary-app-shell" data-route="record-edit">
+        {inSheet ? editBody : <FixedCanvas height={844} grow>{editBody}</FixedCanvas>}
       </main>;
     }
     if (route === 'backup-progress') {
