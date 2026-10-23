@@ -26,7 +26,7 @@ android {
         targetSdk = 36
         // Play wants a higher versionCode for every upload: the release workflow passes -PversionCode=<n>.
         versionCode = (project.findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
-        versionName = "0.1.4"
+        versionName = "0.1.5"
         buildConfigField("String", "FEEDBACK_EMAIL", "\"${(project.findProperty("feedbackEmail") as String?) ?: ""}\"")
     }
 
