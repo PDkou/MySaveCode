@@ -1,6 +1,7 @@
 """
 Makes the theme versions of the accent-coloured artwork (UI icons, field-type
 icons, bottom-nav parts): public/assets-theme/<theme>/<dir>/<file>.
+(Drawn .svg icons get their hex colours shifted the same way.)
 Only pixels in the lavender hue family change (feathered at the edges), so
 white, pink, yellow, skin and outlines stay exactly as approved. The originals
 are never touched. The mascot, status illustrations, drawer category icons,
@@ -8,11 +9,11 @@ splash, app icon and store images are NOT recoloured (character / category colou
 logo (brand_lockup_horizontal, brand_symbol_flower_small, the search screen's brand.webp) is, at the owner's request.
 Run from drawary-v2/:  python3 scripts/make_theme_assets.py
 """
-import glob, os, sys
+import glob, os, re, sys
 import numpy as np
 from PIL import Image
 sys.path.insert(0, os.path.dirname(__file__))
-from theme_colors import THEMES
+from theme_colors import THEMES, shift
 
 DIRS = ['ui-icons', 'field-types', 'nav']
 # in-app header logos only: (folder, file)
@@ -134,6 +135,18 @@ if __name__ == '__main__':
     n = 0
     for d in DIRS:
         for f in sorted(glob.glob(f'public/assets/{d}/*')):
+            if f.lower().endswith('.svg'):                        # a drawn icon: its accent colours are shifted like the CSS ones
+                text = open(f, encoding='utf-8').read()
+                for theme in THEMES:
+                    def recolor_hex(m, theme=theme):
+                        h = m.group(1)
+                        r, g, b = shift(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), theme)
+                        return f'#{r:02x}{g:02x}{b:02x}'
+                    dst = f'public/assets-theme/{theme}/{d}/{os.path.basename(f)}'
+                    os.makedirs(os.path.dirname(dst), exist_ok=True)
+                    open(dst, 'w', encoding='utf-8').write(re.sub(r'#([0-9a-fA-F]{6})\b', recolor_hex, text))
+                    n += 1
+                continue
             if not f.lower().endswith(('.webp', '.png')): continue
             src = Image.open(f)
             for theme in THEMES:
