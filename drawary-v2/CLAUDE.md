@@ -70,4 +70,4 @@
 ## Release versioning (user rule, 2026-10-22)
 
 - Every new build that goes to Google Play gets a new version NAME as well as a higher versionCode: middle number = a new feature, last number = a bug fix or small change, first number = a major release (only the user decides that; official release is expected to be 1.0.0).
-- Change the name with `node scripts/bump-version.mjs x.y.z` (updates package.json, package-lock.json, android/app/build.gradle.kts), then commit; see `docs/RELEASE_AAB.md`. Builds 1-3 were all 0.1.0 inside the app (the user typed "0.1.1" as the Play release name of build 3). Build 4 is the first to follow this rule: 0.1.2; build 5: 0.1.3.
+- Change the name with `node scripts/bump-version.mjs x.y.z` (updates package.json, package-lock.json, android/app/build.gradle.kts), then commit; see `docs/RELEASE_AAB.md`. Builds 1-3 were all 0.1.0 inside the app (the user typed "0.1.1" as the Play release name of build 3). Build 4 is the first to follow this rule: 0.1.2; build 5: 0.1.3; build 6: 0.1.4.
