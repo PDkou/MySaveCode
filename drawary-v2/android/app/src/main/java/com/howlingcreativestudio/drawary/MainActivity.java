@@ -149,7 +149,12 @@ public class MainActivity extends Activity {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
                 try {
-                    startActivityForResult(params.createIntent(), REQ_FILE_CHOOSER);
+                    Intent choose = params.createIntent();
+                    // Backups are saved in Download/Drawary (FileSaver): open the picker there first. When the folder is not
+                    // there, or the phone's picker ignores this, it simply opens where it usually does and the person browses.
+                    choose.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, android.provider.DocumentsContract.buildDocumentUri(
+                            "com.android.externalstorage.documents", "primary:Download/Drawary"));
+                    startActivityForResult(choose, REQ_FILE_CHOOSER);
                 } catch (ActivityNotFoundException e) {
                     fileCallback = null;
                     callback.onReceiveValue(null);
