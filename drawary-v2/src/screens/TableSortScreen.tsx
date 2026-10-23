@@ -3,6 +3,7 @@ import './TableSortScreen.css';
 
 import type { ColumnType, SortChoice } from '../flow/tableQuery';
 import { t } from '../i18n';
+import { revealSheet } from '../components/revealSheet';
 
 export type SortFieldType = ColumnType;
 export interface SortColumn { id: string; label: string; type: SortFieldType }
@@ -70,7 +71,7 @@ export function TableSortScreen({
   }, [sortable, query]);
 
   return (
-    <div className="sv3-backdrop" role="presentation" onClick={onCancel}>
+    <div className="sv3-backdrop" ref={revealSheet} role="presentation" onClick={onCancel}>
       <section className="sv3-sheet" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="sv3-handle" />
         {mode === 'sort' ? (

@@ -7,6 +7,7 @@ import { TableFilterScreen } from './TableFilterScreen';
 import type { TableColumn, TableRowData, TableViewState } from '../flow/tableQuery';
 import { EMPTY_VIEW } from '../flow/tableQuery';
 import { DrawerDeleteConfirmScreen } from './DrawerDeleteConfirmScreen';
+import { DrawerExportSheet } from './DrawerExportSheet';
 import { t } from '../i18n';
 
 interface DrawerManageRow {
@@ -34,7 +35,9 @@ interface DrawerManageScreenProps {
   onEditFields?: () => void;
   onNotificationSettings?: () => void;
   onRecurrenceManage?: () => void;
-  onBackupExport?: () => void;
+  /** 백업 / 내보내기: this drawer's table as a file (the rows the table view shows). */
+  onExportCsv?: () => void;
+  onExportPdf?: () => void;
   onDeleteDrawer?: () => void;
 }
 
@@ -65,8 +68,9 @@ interface DrawerManageScreenProps {
  * the drawer's real table view -- the same sort/filter #20 opens with.] #28 reuses #18's
  * delete-sheet pattern; confirming calls the caller's onDeleteDrawer,
  * which per CONFIRMED.md ("삭제 후 홈 복귀") is responsible for the
- * actual navigate-home. #29/#33/backup still have no destination screen,
- * so those three rows stay the caller's own no-op handler.
+ * actual navigate-home. 백업 / 내보내기 has no approved destination screen;
+ * it opens a small sheet in the same style as #27's (DrawerExportSheet) with
+ * CSV and PDF.
  */
 export function DrawerManageScreen({
   activeKey,
@@ -83,13 +87,15 @@ export function DrawerManageScreen({
   onEditFields,
   onNotificationSettings,
   onRecurrenceManage,
-  onBackupExport,
+  onExportCsv,
+  onExportPdf,
   onDeleteDrawer,
 }: DrawerManageScreenProps) {
   const [sortFilterOpen, setSortFilterOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const groups: DrawerManageRow[][] = [
     [
@@ -102,7 +108,7 @@ export function DrawerManageScreen({
       { key: 'recurrence', label: t('반복 관리'), icon: '/assets/ui-icons/icon_refresh.webp', onClick: onRecurrenceManage },
     ],
     [
-      { key: 'backup', label: t('백업 / 내보내기'), icon: '/assets/ui-icons/icon_share.webp', onClick: onBackupExport },
+      { key: 'backup', label: t('백업 / 내보내기'), icon: '/assets/ui-icons/icon_share.webp', onClick: () => setExportOpen(true) },
     ],
     [
       { key: 'delete', label: t('서랍 삭제'), icon: '/assets/ui-icons/icon_delete.webp', danger: true, onClick: () => setDeleteConfirmOpen(true) },
@@ -167,6 +173,14 @@ export function DrawerManageScreen({
           recentFieldIds={[...tableView.rules].reverse().map((r) => r.columnId)}
           onCancel={() => setFilterOpen(false)}
           onApply={(rules, matchMode) => { onTableViewChange?.({ ...tableView, rules, matchMode }); setFilterOpen(false); }}
+        />
+      )}
+
+      {exportOpen && (
+        <DrawerExportSheet
+          onCancel={() => setExportOpen(false)}
+          onCsv={() => { setExportOpen(false); onExportCsv?.(); }}
+          onPdf={() => { setExportOpen(false); onExportPdf?.(); }}
         />
       )}
 

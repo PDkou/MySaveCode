@@ -1,5 +1,6 @@
 import './DrawerDeleteConfirmScreen.css';
 import { t, tx } from '../i18n';
+import { revealSheet } from '../components/revealSheet';
 
 export interface DrawerDeleteConfirmScreenProps {
   drawerName: string;
@@ -22,7 +23,7 @@ export interface DrawerDeleteConfirmScreenProps {
  */
 export function DrawerDeleteConfirmScreen({ drawerName, recordCount, onCancel, onDelete }: DrawerDeleteConfirmScreenProps) {
   return (
-    <div className="ddc-backdrop" role="presentation" onClick={onCancel}>
+    <div className="ddc-backdrop" ref={revealSheet} role="presentation" onClick={onCancel}>
       <section className="ddc-sheet" role="dialog" aria-modal="true" aria-labelledby="drawer-delete-title" onClick={(e) => e.stopPropagation()}>
         <div className="ddc-handle" />
         <div className="ddc-icon"><img src="/assets/ui-icons/icon_delete.webp" alt="" /></div>

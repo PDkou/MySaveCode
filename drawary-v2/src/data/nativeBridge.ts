@@ -30,6 +30,11 @@ export interface DrawaryNativeApi {
    * show (e.g. "Download/Drawary"). `base64` is the whole file. Rejects when it cannot be saved.
    */
   saveFile?: (fileName: string, mimeType: string, base64: string) => Promise<string>;
+  /**
+   * Like saveFile, but the person chooses where the file goes: the phone's own "save as" window opens. Resolves with the place
+   * to show; rejects with message 'cancelled' when the window is closed without saving.
+   */
+  saveFileAs?: (fileName: string, mimeType: string, base64: string) => Promise<string>;
   /** Opens the system print / "save as PDF" dialog for the page (a WebView cannot do `window.print()` itself). */
   printPage?: () => void;
   /** True = the screen must not be captured or shown in the recent-apps list (the app lock is on). */
@@ -160,4 +165,23 @@ export async function deliverBackup(destination: 'device' | 'drive', fileName: s
     }
   }
   return saveBlob(blob, fileName);
+}
+
+/**
+ * Hands a generated file (CSV, PDF) to the person and lets them choose the place. Android shell: the phone's save window.
+ * Plain browser: an ordinary download. Rejects with message 'cancelled' when the person closes the window.
+ */
+export async function saveBlobAs(blob: Blob, fileName: string): Promise<string> {
+  const native = typeof window === 'undefined' ? undefined : window.DrawaryNative;
+  if (typeof native?.saveFileAs !== 'function') return saveBlob(blob, fileName);
+  // The save window takes this app to the background for as long as the person needs.
+  suspendAutoLock(120_000);
+  try {
+    const place = await native.saveFileAs(fileName, blob.type || 'application/octet-stream', await blobToBase64(blob));
+    endAutoLockSuspension(20_000);
+    return place;
+  } catch (e) {
+    endAutoLockSuspension();
+    throw e;
+  }
 }

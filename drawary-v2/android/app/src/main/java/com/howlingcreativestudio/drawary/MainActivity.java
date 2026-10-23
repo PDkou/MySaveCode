@@ -238,6 +238,20 @@ public class MainActivity extends Activity {
         } catch (ActivityNotFoundException | SecurityException e) {
             // no Google Drive app: the phone's own save window below
         }
+        openSaveWindow(id, fileName, mime, bytes);
+    }
+
+    /** A file the person asked for (CSV, PDF): the phone's own save window opens so they choose where it goes. */
+    void startFileSave(int id, String fileName, String mimeType, byte[] bytes) {
+        if (drivePendingBytes != null) {
+            bridge.failed(id);
+            return;
+        }
+        openSaveWindow(id, fileName, mimeType == null || mimeType.isEmpty() ? "application/octet-stream" : mimeType, bytes);
+    }
+
+    /** The system "save as" window; the result arrives in onActivityResult (REQ_DRIVE_SAVE) and writes the bytes there. */
+    private void openSaveWindow(int id, String fileName, String mime, byte[] bytes) {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)
                 .setType(mime)

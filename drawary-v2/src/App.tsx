@@ -38,9 +38,9 @@ import { RecordEditScreen } from './screens/RecordEditScreen';
 import { PhotoViewerScreen } from './screens/PhotoViewerScreen';
 import { pickRecordPhotos } from './data/recordPhotos';
 import { useFirstPhotoUrls, useObjectUrls, usePhotoCounts, useRecordPhotos } from './data/photoHooks';
-import { columnsOf, EMPTY_VIEW, toRows, type TableViewState } from './flow/tableQuery';
-import { buildCsv, buildPrintHtml, exportFileName } from './flow/exportTable';
-import { printHtml, saveBlob } from './data/fileSave';
+import { applyView, columnsOf, EMPTY_VIEW, toRows, type TableViewState } from './flow/tableQuery';
+import { buildCsv, exportFileName } from './flow/exportTable';
+import { renderTablePdf } from './flow/tablePdf';
 import { MAX_RECORD_PHOTOS } from './data/types';
 import {
   draftFromRecord, draftToValues, formatValue, hasControl, recordMatches, recordSearchText, summarizeRecord,
@@ -59,7 +59,7 @@ import { RecordPickerSheet } from './screens/RecordPickerSheet';
 import { NotificationCommonSettingsScreen } from './screens/NotificationCommonSettingsScreen';
 import { NOTIFY_COMMON_KEY, readNotifyCommon } from './flow/notifySettings';
 import { computeNotificationPlan } from './flow/notificationPlan';
-import { hasNativeBiometric, authenticateBiometric, deliverBackup, syncNotificationPlan, syncLanguage, hasNativeFeedback, hasNativeSave, sendNativeFeedback, setSecureScreen } from './data/nativeBridge';
+import { hasNativeBiometric, authenticateBiometric, deliverBackup, syncNotificationPlan, syncLanguage, hasNativeFeedback, hasNativeSave, sendNativeFeedback, setSecureScreen, saveBlobAs } from './data/nativeBridge';
 import * as repo from './data/repository';
 import { assertUniqueDrawerName } from './data/validation';
 import { createBackup, readBackup, type ParsedBackup } from './backup/backupFile';
@@ -257,16 +257,22 @@ function AppScreens() {
   const savedView = currentDrawer ? (store.settings[`tableview.${currentDrawer.id}`] as TableViewState | undefined) : undefined;
   const tableView: TableViewState = savedView && Array.isArray(savedView.rules) ? savedView : EMPTY_VIEW;
   // "•••" -> CSV / PDF: exactly the rows the table shows right now (filter, sort and search applied).
+  const exportingRef = useRef(false);
   const exportTable = (kind: 'csv' | 'pdf', shown: ReturnType<typeof toRows>) => {
-    if (!currentDrawer) return;
+    if (!currentDrawer || exportingRef.current) return;
     if (!gateRef.current.premium) { askPremium('export'); return; }
-    if (kind === 'csv') {
-      void saveBlob(new Blob([buildCsv(tableColumns, shown)], { type: 'text/csv;charset=utf-8' }), exportFileName(currentDrawer.name, 'csv'))
-        // A browser shows its own download bar; the Android app says where the file went.
-        .then((place) => { if (hasNativeSave()) window.alert(t('{place}에 저장했어요.', { place })); })
-        .catch(alertError);
-    }
-    else printHtml(buildPrintHtml(currentDrawer.name, tableColumns, shown, new Date().toLocaleDateString(getLocale())));
+    exportingRef.current = true;
+    const name = currentDrawer.name;
+    void (async () => {
+      const blob = kind === 'csv'
+        ? new Blob([buildCsv(tableColumns, shown)], { type: 'text/csv;charset=utf-8' })
+        : await renderTablePdf(name, tableColumns, shown, new Date().toLocaleDateString(getLocale())).catch(() => { throw new Error(t('PDF를 만들지 못했어요. 다시 시도해 주세요.')); });
+      // The person picks the place (the phone's save window); a browser shows its own download bar.
+      const place = await saveBlobAs(blob, exportFileName(name, kind));
+      if (hasNativeSave()) window.alert(t('{place}에 저장했어요.', { place }));
+    })()
+      .catch((e: unknown) => { if (!(e instanceof Error && e.message === 'cancelled')) alertError(e); })
+      .finally(() => { exportingRef.current = false; });
   };
   const saveTableView = (view: TableViewState) => {
     if (currentDrawer) void actions.setSetting(`tableview.${currentDrawer.id}`, view).catch(alertError);
@@ -1099,8 +1105,7 @@ function AppScreens() {
       // deleting calls this onDeleteDrawer, which per #28's CONFIRMED.md
       // ("삭제 후 홈 복귀") returns all the way to the home tab. 알림 설정
       // -> #29, 반복 관리 -> #33 (both real routes below). 백업/내보내기
-      // has no destination screen among #25-#37, so that one row stays an
-      // intentional no-op.
+      // opens a small sheet: this drawer's table as CSV / PDF.
       return <main className="drawary-app-shell" data-route="drawer-manage">
         <FixedCanvas height={844} grow>
           <DrawerManageScreen
@@ -1118,7 +1123,8 @@ function AppScreens() {
             onEditFields={() => navigate('drawer-fields-manage')}
             onNotificationSettings={() => navigate('notification-settings')}
             onRecurrenceManage={() => navigate('recurrence-management')}
-            onBackupExport={() => {}}
+            onExportCsv={() => exportTable('csv', applyView(tableRows, tableColumns, tableView))}
+            onExportPdf={() => exportTable('pdf', applyView(tableRows, tableColumns, tableView))}
             onDeleteDrawer={() => { if (!currentDrawer) return; void guardedSave(async () => {
               await actions.deleteDrawer(currentDrawer.id);
               setCurrentDrawerId(null); setRecordDetailId(null); setRecordQuery('');

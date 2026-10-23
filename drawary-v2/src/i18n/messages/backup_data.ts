@@ -127,5 +127,10 @@ export const backup_data: Messages = {
   '반복 관리': { ja: '繰り返しの管理', en: 'Manage repeats' },
   '백업 / 내보내기': { ja: 'バックアップとエクスポート', en: 'Backup / export' },
   '서랍 삭제': { ja: 'ひきだしを削除', en: 'Delete drawer' },
+  '엑셀 같은 앱에서 열 수 있는 파일로 저장해요.': { ja: 'Excelなどのアプリで開けるファイルとして保存します。', en: 'Saves a file you can open in apps like Excel.' },
+  '보기 좋은 표 모양의 파일로 저장해요.': { ja: '見やすい表の形のファイルとして保存します。', en: 'Saves a file laid out as a neat table.' },
+  '저장할 곳은 파일을 만든 뒤에 직접 고를 수 있어요.': { ja: '保存先はファイルを作ったあとに自分で選べます。', en: 'You choose where to save once the file is ready.' },
+  'CSV와 PDF에는 표 보기에서 정한 정렬과 필터가 그대로 적용돼요.': { ja: 'CSVとPDFには、表表示で決めた並べ替えとフィルターがそのまま反映されます。', en: 'CSV and PDF use the sort and filters set in the table view.' },
+  'PDF를 만들지 못했어요. 다시 시도해 주세요.': { ja: 'PDFを作成できませんでした。もう一度お試しください。', en: "Couldn't make the PDF. Please try again." },
   '{fields}개 서랍 칸, {items}개 보관품': { ja: '項目{fields}個、アイテム{items}件', en: '{fields} {fields:field|fields}, {items} {items:item|items}' },
 };

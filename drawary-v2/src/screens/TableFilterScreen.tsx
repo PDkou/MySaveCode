@@ -6,6 +6,7 @@ import {
   type ColumnType, type FilterRule, type MatchMode, type Operator, type TableColumn, type TableRowData,
 } from '../flow/tableQuery';
 import { getLocale, t, tx, K } from '../i18n';
+import { revealSheet } from '../components/revealSheet';
 
 export type { FilterRule };
 
@@ -119,7 +120,7 @@ export function TableFilterScreen({
   };
 
   return (
-    <div className="tf-backdrop" role="presentation" onClick={onCancel}>
+    <div className="tf-backdrop" ref={revealSheet} role="presentation" onClick={onCancel}>
       <section className="tf-sheet" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="tf-handle" />
 

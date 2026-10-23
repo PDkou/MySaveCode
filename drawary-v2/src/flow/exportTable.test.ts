@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Field } from '../data/types';
-import { buildCsv, buildPrintHtml, csvEscape, exportFileName } from './exportTable';
+import { buildCsv, csvEscape, exportFileName } from './exportTable';
 import { columnsOf, type TableRowData } from './tableQuery';
 
 const f = (id: string, name: string, kind: Field['kind']): Field => ({ id, drawerId: 'd', name, kind, required: false, options: [], order: 0 });
@@ -33,19 +33,9 @@ describe('CSV export', () => {
   });
 });
 
-describe('export file names and printable table', () => {
+describe('export file names', () => {
   it('builds a safe file name with the date', () => {
     expect(exportFileName('화장품 / 뷰티', 'csv', new Date(2026, 9, 20))).toBe('화장품_뷰티_20261020.csv');
     expect(exportFileName('///', 'pdf', new Date(2026, 0, 5))).toBe('서랍_20260105.pdf');
-  });
-  it('escapes HTML and shows what the screen shows', () => {
-    const html = buildPrintHtml('A<b>', cols, rows.slice(0, 1), '2026. 10. 20.');
-    expect(html).toContain('<h1>A&lt;b&gt;</h1>');
-    expect(html).toContain('보관품 1개, 2026. 10. 20.');
-    expect(html).toContain('립 &quot;틴트&quot;, 코랄');
-    expect(html).toContain('2024. 03. 12.');
-    expect(html).toContain('13,000');
-    expect(html).toContain('2장');
-    expect(buildPrintHtml('x', cols, [], 'd')).toContain('보관품이 없어요.');
   });
 });

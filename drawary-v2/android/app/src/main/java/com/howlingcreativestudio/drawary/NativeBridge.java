@@ -148,6 +148,19 @@ final class NativeBridge {
         });
     }
 
+    /** Like saveFile, but the person chooses the place: the phone's own save window opens (see MainActivity.startFileSave). */
+    @JavascriptInterface
+    public void saveFileAs(final int id, final String fileName, final String mimeType, final String base64) {
+        worker.execute(() -> {
+            try {
+                final byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+                main.post(() -> activity.startFileSave(id, fileName, mimeType, bytes));
+            } catch (IllegalArgumentException e) {
+                reject(id, "failed");
+            }
+        });
+    }
+
     /**
      * "Google Drive" backup: the backup file is handed straight to the Google Drive app's "save to Drive" screen; without
      * the Drive app the phone's own save window opens instead (see MainActivity.startDriveSave).

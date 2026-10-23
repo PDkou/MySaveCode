@@ -1,5 +1,6 @@
 import './TableSortFilterEntryScreen.css';
 import { t } from '../i18n';
+import { revealSheet } from '../components/revealSheet';
 
 export interface TableSortFilterEntryScreenProps {
   onCancel?: () => void;
@@ -22,7 +23,7 @@ export interface TableSortFilterEntryScreenProps {
  */
 export function TableSortFilterEntryScreen({ onCancel, onPickSort, onPickFilter }: TableSortFilterEntryScreenProps) {
   return (
-    <div className="tsf-backdrop" role="presentation" onClick={onCancel}>
+    <div className="tsf-backdrop" ref={revealSheet} role="presentation" onClick={onCancel}>
       <section className="tsf-sheet" role="dialog" aria-modal="true" aria-labelledby="sort-filter-entry-title" onClick={(e) => e.stopPropagation()}>
         <div className="tsf-handle" />
         <header className="tsf-head">
