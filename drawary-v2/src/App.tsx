@@ -93,11 +93,11 @@ import { GuideScreen, type GuideRoute } from './screens/GuideScreen';
 import { InfoScreen } from './screens/InfoScreen';
 import { FeedbackScreen } from './screens/FeedbackScreen';
 import { FixedCanvas } from './components/FixedCanvas';
-import { WideSplit } from './components/WideSplit';
 import { useAppLayout } from './components/appLayout';
 import { WideFrame } from './wide/WideFrame';
 import { DrawerSidebar } from './wide/DrawerSidebar';
 import { WideHome } from './wide/WideHome';
+import { WideEmptyHome } from './wide/WideEmptyHome';
 import { WideSettingsGrid } from './wide/WideSettingsGrid';
 import { PaneMagnifier } from './wide/PaneMagnifier';
 import './wide/wideSettings.css';
@@ -571,7 +571,7 @@ function AppScreens() {
     const recordRoute = route === 'record-detail' || route === 'record-edit' || route === 'photo-viewer';
     const manageRoute = route === 'drawer-manage' || route === 'name-icon-change' || route === 'drawer-fields-manage'
       || route === 'new-field-manage' || route === 'field-edit-manage';
-    if ((route === 'drawer-detail' || route === 'fill-drawer' || route === 'table-view' || recordRoute || manageRoute) && !currentDrawer) navigate('home');
+    if ((route === 'drawer-detail' || route === 'fill-drawer' || route === 'table-view' || route === 'home-edit' || recordRoute || manageRoute) && !currentDrawer) navigate('home');
     else if (route === 'field-edit-manage' && !manageField) navigate('drawer-fields-manage');
     else if (recordRoute && !selectedRecord) navigate('drawer-detail');
     else if ((route === 'restore-review' || route === 'restore-progress') && !restorePlan) navigate('restore-file-picker');
@@ -688,6 +688,20 @@ function AppScreens() {
       />
     );
   };
+  // The home editor (#6), on the phone and in the wide window: delete asks first (a drawer takes its fields, items and photos
+  // with it); reorder is a drag on the card's handle.
+  const deleteDrawerAsking = (id: string) => {
+    const target = drawerById(store, id);
+    if (!target) return;
+    const count = recordsOf(store, id).length;
+    const detail = count > 0 ? t('\n보관품 {count}개와 사진도 함께 삭제돼요.', { count }) : '';
+    if (window.confirm(t('\'{name}\' 서랍을 삭제할까요?{detail}\n삭제한 내용은 되돌릴 수 없어요.', { name: target.name, detail }))) {
+      actions.deleteDrawer(id).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('삭제하지 못했어요.')));
+    }
+  };
+  const reorderDrawers = (ids: string[]) => {
+    actions.reorderDrawers(ids).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('순서를 바꾸지 못했어요.')));
+  };
   const renderLandscape = (route: Route, kind: 'land' | 'wide'): ReactElement | null => {
     // The tab that is lit: the tab screen itself, the settings tab for every settings screen, else the tab this was opened from.
     const activeTab: BottomNavTab = isTab(route) ? route : SETTINGS_PANES[route] ? 'settings' : lastTabRef.current;
@@ -705,6 +719,22 @@ function AppScreens() {
           onOpenDrawer={(id) => { setCurrentDrawerId(id); navigate('drawer-detail'); }}
           onCreateDrawer={() => navigate('create-drawer')}
           onEdit={() => navigate('home-edit')}
+        />
+      </WideFrame>;
+    }
+    if (route === 'home-edit' && hasDrawers) {
+      return <WideFrame kind={kind} route="home-edit" nav={nav} sidebar={sidebar(null, () => undefined)}>
+        <WideHome
+          editing
+          drawers={homeCards}
+          totalRecords={store.records.length}
+          withBrand={kind === 'land'}
+          onOpenDrawer={() => undefined}
+          onCreateDrawer={() => navigate('create-drawer')}
+          onEdit={() => undefined}
+          onDone={() => navigate('home')}
+          onDeleteDrawer={deleteDrawerAsking}
+          onReorder={reorderDrawers}
         />
       </WideFrame>;
     }
@@ -807,8 +837,21 @@ function AppScreens() {
     }
     return null;
   };
+  // A screen that has no wide arrangement of its own (the empty home, creating a drawer, filling it, editing an item, premium, ...):
+  // the phone screen is shown magnified in the middle of the same frame as everything else (full-width nav band at the bottom,
+  // centered), instead of beside a second phone column. The empty home gets the drawer list's place on the left too.
+  const renderWideFallback = (route: Route): ReactElement => {
+    const activeTab: BottomNavTab = isTab(route) ? route : SETTINGS_PANES[route] ? 'settings' : lastTabRef.current;
+    const nav = <ResponsiveBottomNav active={activeTab} onNavigate={navigate} onCreateDrawer={() => navigate('create-drawer')} />;
+    if (route === 'home' || route === 'home-empty') {
+      return <WideFrame kind="wide" route="home" nav={nav} sidebar={<DrawerSidebar drawers={[]} totalRecords={0} activeId={null} onSelect={() => undefined} />}>
+        <WideEmptyHome onCreateDrawer={() => navigate('create-drawer')} onTemplates={() => navigate('templates')} />
+      </WideFrame>;
+    }
+    return <WideFrame kind="wide" route={route} nav={nav}><PaneMagnifier>{renderRoute(route, true)}</PaneMagnifier></WideFrame>;
+  };
   // Every screen's markup, picked by route. Phones and portrait tablets draw just one of them; a wide window (landscape tablet,
-  // unfolded foldable) draws two side by side (see WideSplit), so this is a function of the route instead of the open route.
+  // unfolded foldable) draws its own arrangement (see renderLandscape / renderWideFallback), so this is a function of the route instead of the open route.
   const renderRoute = (route: Route, phoneOnly = false): ReactElement => {
     if (!phoneOnly && layout !== 'single') {
       const landscape = renderLandscape(route, layout);
@@ -1819,16 +1862,8 @@ function AppScreens() {
             totalRecords={store.records.length}
             onDone={() => navigate('home')}
             onCreateDrawer={() => navigate('create-drawer')}
-            onDeleteDrawer={(id) => {
-              const target = drawerById(store, id);
-              if (!target) return;
-              const count = recordsOf(store, id).length;
-              const detail = count > 0 ? t('\n보관품 {count}개와 사진도 함께 삭제돼요.', { count }) : '';
-              if (window.confirm(t('\'{name}\' 서랍을 삭제할까요?{detail}\n삭제한 내용은 되돌릴 수 없어요.', { name: target.name, detail }))) {
-                actions.deleteDrawer(id).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('삭제하지 못했어요.')));
-              }
-            }}
-            onReorder={(ids) => { actions.reorderDrawers(ids).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('순서를 바꾸지 못했어요.'))); }}
+            onDeleteDrawer={deleteDrawerAsking}
+            onReorder={reorderDrawers}
           />
         </section>
         <footer className="drawary-shell-footer">
@@ -1919,9 +1954,6 @@ function AppScreens() {
   const fullWidth = route === 'splash' || route === 'onboarding' || route === 'app-lock' || route === 'backup-progress' || route === 'restore-progress' || route === 'home-edit';
   const ownLayout = (store.drawers.length > 0 && (route === 'home' || route === 'drawer-detail' || route === 'table-view'))
     || route === 'stats' || (layout === 'wide' && (route === 'search' || SETTINGS_PANES[route] !== undefined));
-  if (layout === 'wide' && !fullWidth && !ownLayout) {
-    const tab = isTab(route) ? route : lastTabRef.current;
-    return <WideSplit left={renderRoute(tab, true)} right={isTab(route) ? null : renderRoute(route, true)} />;
-  }
+  if (layout === 'wide' && !fullWidth && !ownLayout) return renderWideFallback(route);
   return renderRoute(route);
 }

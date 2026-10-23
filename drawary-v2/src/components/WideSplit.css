@@ -1,8 +1,0 @@
-/* Two columns of exactly one phone width (430) with a thin divider; the shell inside each keeps its own 430 max width. */
-.wide-split { display: flex; justify-content: center; height: 100dvh; background: #fffaf2; }
-.drawary-scaler .wide-split { height: 100%; }
-.wide-pane { position: relative; flex: 1 1 430px; max-width: 430px; min-width: 0; height: 100%; min-height: 0; overflow: hidden; }
-.wide-pane > .drawary-app-shell, .wide-pane > .backup-progress-app { height: 100%; }
-.wide-pane--list { margin-right: clamp(0px, 3vw, 24px); border-right: 1px solid rgba(var(--tr-97-78-140,97,78,140), .14); }
-.wide-pane--detail { border-left: 0; }
-.wide-hint { display: grid; place-items: center; height: 100%; margin: 0; padding: 0 48px; text-align: center; color: var(--tc-6b6785,#6b6785); font-size: 15px; line-height: 1.6; }

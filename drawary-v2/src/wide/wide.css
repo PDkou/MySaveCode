@@ -3,7 +3,9 @@
 .drawary-app-shell.wide-app { max-width: none; margin: 0; width: 100%; padding-top: 0; overflow: hidden; background: #fffaf2; }
 .wide-body { flex: 1 1 auto; min-height: 0; display: flex; }
 .wide-main { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
-.drawary-app-shell .wide-nav { background: #fefdf9; border-top: 1px solid rgba(var(--tr-97-78-140,97,78,140), .1); }
+/* The nav picture has its own 1 px top edge (390 px wide, a little darker in the middle). The band's line is drawn on that same row, so the
+   two read as one line across the whole window instead of a short darker piece on a longer, lighter one. */
+.drawary-app-shell .wide-nav { background: linear-gradient(to bottom, #efebe8 0, #efebe8 1px, #fefdf9 1px); border-top: 0; }
 
 /* ---- sidebar ---- */
 .wide-sidebar { flex: 0 0 232px; display: flex; flex-direction: column; gap: 14px; padding: 18px 14px 14px; border-right: 1px solid rgba(var(--tr-97-78-140,97,78,140), .12); overflow: hidden; }
@@ -30,10 +32,19 @@
 .wide-home-counts b { color: var(--tc-7657df,#7657df); font-weight: 700; }
 .wide-home-edit { display: flex; align-items: center; gap: 5px; padding: 0; border: 0; background: transparent; color: #647096; font-size: 13px; cursor: pointer; }
 .wide-home-edit img { width: 20px; height: 20px; object-fit: contain; }
+.wide-home-done { padding: 0; border: 0; background: transparent; color: var(--tc-7657e8,#7150e7); font-size: 15px; font-weight: 700; cursor: pointer; }
 .wide-home-grid { display: grid; grid-template-columns: repeat(auto-fill, 165px); gap: 16px; justify-content: start; }
 .wide-home-grid .hs-card { height: 158px; }
 .wide-app--land .wide-home { padding: 14px 22px 16px; }
 .wide-app--land .wide-home-grid { gap: 12px; zoom: .8; }
+
+/* ---- home with no drawer yet (#4) ---- */
+.wide-empty { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 24px 28px; text-align: center; }
+.wide-empty img { width: 260px; max-width: 60%; height: auto; margin-bottom: 14px; }
+.wide-empty h1 { margin: 0; font-size: 20px; line-height: 30px; font-weight: 700; color: #13265f; letter-spacing: -.3px; }
+.wide-empty p { margin: 8px 0 24px; font-size: 14.5px; line-height: 25px; color: #5d6f9c; letter-spacing: -.2px; }
+.wide-empty-cta { width: 323px; max-width: 100%; height: 56px; border: 0; border-radius: 28px; background: linear-gradient(90deg, var(--tc-7958df,#7958df), var(--tc-8867e9,#8867e9)); color: #fff; font-size: 17px; font-weight: 700; letter-spacing: .3px; cursor: pointer; }
+.wide-empty-templates { width: 323px; max-width: 100%; height: 54px; margin-top: 12px; border: 1.5px solid var(--tc-ddd3f7,#ddd3f7); border-radius: 13px; background: #fffdfb; color: var(--tc-6a5a9a,#6a5a9a); font-size: 15px; font-weight: 700; cursor: pointer; }
 
 /* ---- drawer (#15) ---- */
 .wd { flex: 1 1 auto; min-height: 0; display: flex; background: #fffaf0; color: #123f96; }

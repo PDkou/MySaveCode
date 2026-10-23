@@ -105,3 +105,9 @@ html:not([lang="ko"]) body .fb59-hero > :not(img) { max-width: calc(100% - 124px
 /* The screens are drawn for one size and scale themselves (AppScaler / FixedCanvas): no pinch or double-tap zoom.
    Scrolling and the photo viewer's own pinch (touch-action: none there) are unaffected. */
 html, body { touch-action: pan-x pan-y; }
+
+/* It is an app, not a web page: pressing and holding text does not select or copy it, and holding a picture or link shows no menu.
+   Text the person types stays selectable (to move the cursor, cut, copy, paste). */
+html, body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
+img { -webkit-user-drag: none; }

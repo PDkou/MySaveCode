@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useRef } from 'react';
 import './HomeScreen.css';
 import { FixedCanvas } from '../components/FixedCanvas';
+import { useGridReorder } from '../components/useGridReorder';
 import { drawerCardColor, drawerIconPlacement, drawerIconUrl } from '../data/drawerStyle';
 import { t, tx } from '../i18n';
 
@@ -32,108 +33,21 @@ interface HomeScreenProps {
   onReorder?: (idsInOrder: string[]) => void;
 }
 
-const COL_PITCH = 181; // card 165 + gap 16
-const ROW_PITCH = 172; // card 158 + gap 14
-
 export function HomeScreen({
   drawers, totalRecords, mode = 'view',
   onOpenDrawer, onCreateDrawer, onEdit, onDone, onDeleteDrawer, onReorder,
 }: HomeScreenProps) {
   const editing = mode === 'edit';
   const gridRef = useRef<HTMLDivElement>(null);
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [dragOrder, setDragOrder] = useState<string[] | null>(null);
-
-  const drawersRef = useRef(drawers);
-  drawersRef.current = drawers;
-
-  const ordered = dragOrder
-    ? dragOrder.map((id) => drawers.find((d) => d.id === id)).filter((d): d is HomeDrawerCard => !!d)
-    : drawers;
-
-  const cellFromPointer = (clientX: number, clientY: number, count: number): number => {
-    const grid = gridRef.current;
-    if (!grid) return 0;
-    const rect = grid.getBoundingClientRect();
-    const scale = rect.width / 390 || 1;
-    const x = (clientX - rect.left) / scale - 22;
-    const y = (clientY - rect.top) / scale;
-    const col = Math.min(1, Math.max(0, Math.floor(x / COL_PITCH)));
-    const row = Math.max(0, Math.floor(y / ROW_PITCH));
-    return Math.min(count - 1, row * 2 + col);
-  };
-
-  // Reordering moves the dragged card's DOM node, which drops element-level
-  // pointer capture mid-drag; so move/up are tracked on window while dragging.
-  const dragOrderRef = useRef<string[] | null>(null);
-  dragOrderRef.current = dragOrder;
-
-  // The dragged card follows the finger: it is translated from where the grid would put it to where the
-  // finger is (minus the spot it was grabbed at). Screen pixels here; the CSS translate is in canvas pixels.
-  const wrapRefs = useRef(new Map<string, HTMLDivElement>());
-  const pointerRef = useRef({ x: 0, y: 0 });
-  const grabRef = useRef({ x: 0, y: 0 });
-  const shiftRef = useRef({ x: 0, y: 0 });
-  const followPointer = (id: string) => {
-    const el = wrapRefs.current.get(id);
-    const grid = gridRef.current;
-    if (!el || !grid) return;
-    const scale = grid.getBoundingClientRect().width / 390 || 1;
-    const rect = el.getBoundingClientRect();
-    const x = pointerRef.current.x - grabRef.current.x - (rect.left - shiftRef.current.x);
-    const y = pointerRef.current.y - grabRef.current.y - (rect.top - shiftRef.current.y);
-    shiftRef.current = { x, y };
-    el.style.transform = `translate(${x / scale}px, ${y / scale}px)`;
-  };
-  // When the other cards shuffle, the dragged one's grid cell changes: recompute so it stays under the finger.
-  useLayoutEffect(() => { if (dragId) followPointer(dragId); });
-  const onReorderRef = useRef(onReorder);
-  onReorderRef.current = onReorder;
-
-  useEffect(() => {
-    if (!dragId) return;
-    const move = (event: PointerEvent) => {
-      const order = dragOrderRef.current;
-      if (!order) return;
-      pointerRef.current = { x: event.clientX, y: event.clientY };
-      followPointer(dragId);
-      const target = cellFromPointer(event.clientX, event.clientY, order.length);
-      const from = order.indexOf(dragId);
-      if (target === from) return;
-      const next = order.filter((id) => id !== dragId);
-      next.splice(target, 0, dragId);
-      dragOrderRef.current = next;
-      setDragOrder(next);
-    };
-    const end = () => {
-      const el = wrapRefs.current.get(dragId);
-      if (el) el.style.transform = '';
-      shiftRef.current = { x: 0, y: 0 };
-      const order = dragOrderRef.current;
-      if (order && order.some((id, i) => id !== drawersRef.current[i]?.id)) onReorderRef.current?.(order);
-      setDragId(null);
-      setDragOrder(null);
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', end);
-    window.addEventListener('pointercancel', end);
-    return () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', end);
-      window.removeEventListener('pointercancel', end);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dragId]);
-
-  const startDrag = (id: string) => (event: ReactPointerEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    const rect = wrapRefs.current.get(id)?.getBoundingClientRect();
-    pointerRef.current = { x: event.clientX, y: event.clientY };
-    grabRef.current = { x: event.clientX - (rect?.left ?? event.clientX), y: event.clientY - (rect?.top ?? event.clientY) };
-    shiftRef.current = { x: 0, y: 0 };
-    setDragId(id);
-    setDragOrder(drawers.map((d) => d.id));
-  };
+  const reorder = useGridReorder({
+    ids: drawers.map((d) => d.id),
+    scale: () => (gridRef.current ? gridRef.current.getBoundingClientRect().width / 390 : 1),
+    onCommit: onReorder,
+  });
+  const dragId = reorder.dragId;
+  const ordered = reorder.order
+    .map((id) => drawers.find((d) => d.id === id))
+    .filter((d): d is HomeDrawerCard => !!d);
 
   return (
     <FixedCanvas height={750}>
@@ -160,7 +74,7 @@ export function HomeScreen({
             {ordered.map((drawer) => (
               <div
                 key={drawer.id}
-                ref={(el) => { if (el) wrapRefs.current.set(drawer.id, el); else wrapRefs.current.delete(drawer.id); }}
+                ref={reorder.wrapRef(drawer.id)}
                 className={`hs-card-wrap${dragId === drawer.id ? ' is-dragging' : ''}`}
               >
                 <button
@@ -189,7 +103,7 @@ export function HomeScreen({
                       type="button"
                       className="hs-action hs-action--reorder"
                       aria-label={t('{name} 서랍 순서 변경', { name: drawer.name })}
-                      onPointerDown={startDrag(drawer.id)}
+                      onPointerDown={reorder.start(drawer.id)}
                     >
                       <img src="/assets/ui-icons/icon_reorder.svg" alt="" width={20} height={20} draggable={false} />
                     </button>
