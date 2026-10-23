@@ -29,7 +29,7 @@ export const premium: Messages = {
   '라벤더 말고 다른 테마는 프리미엄에서 쓸 수 있어요.': { ja: 'ラベンダー以外のテーマはプレミアムで使えます。', en: 'Themes other than Lavender come with Premium.' },
   '반복 기능은 프리미엄에서 쓸 수 있어요.': { ja: '繰り返し機能はプレミアムで使えます。', en: 'Repeat comes with Premium.' },
   '표 내보내기는 프리미엄에서 쓸 수 있어요.': { ja: '表の書き出しはプレミアムで使えます。', en: 'Table export comes with Premium.' },
-  '프리미엄이 열렸어요. 고마워요!': { ja: 'プレミアムが使えるようになりました。ありがとうございます！', en: 'Premium is unlocked. Thank you!' },
+  '프리미엄이 열렸어요.\n고마워요!': { ja: 'プレミアムが使えるようになりました。\nありがとうございます！', en: 'Premium is unlocked.\nThank you!' },
   '고마워요! 큰 힘이 돼요.': { ja: 'ありがとうございます！ とても励みになります。', en: 'Thank you! It means a lot.' },
   '구매를 복원했어요.': { ja: '購入を復元しました。', en: 'Your purchase is restored.' },
   '복원할 구매 내역이 없어요.': { ja: '復元できる購入履歴がありません。', en: 'There is no purchase to restore.' },

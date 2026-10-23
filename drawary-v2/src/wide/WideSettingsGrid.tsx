@@ -1,4 +1,4 @@
-import { SETTINGS_ROWS, type SettingsHomeAction } from '../screens/SettingsHomeScreen';
+import { SETTINGS_ROWS, settingsIconSrc, type SettingsHomeAction } from '../screens/SettingsHomeScreen';
 import { t, K } from '../i18n';
 
 /**
@@ -26,7 +26,7 @@ export function WideSettingsGrid(props: SettingsHomeAction) {
       <div className="wsg-grid">
         {SETTINGS_ROWS.map((row) => (
           <button key={row.key} type="button" className="wsg-card" onClick={handlers[row.key]}>
-            <span className="wsg-icon"><img src={`/assets/ui-icons/${row.icon}`} alt="" /></span>
+            <span className="wsg-icon"><img src={settingsIconSrc(row.icon)} alt="" /></span>
             <span className="wsg-copy"><strong>{t(row.title)}</strong><span>{t(row.key === 'premium' && props.premium ? K('서랍장이 활짝 열려 있어요. 고마워요!') : row.desc)}</span></span>
             <span className="wsg-chev" aria-hidden="true">›</span>
           </button>

@@ -17,6 +17,7 @@ export function themedSrc(src: string, theme: ThemeId): string | null {
   const m = PATH.exec(src);
   if (!m) return null;
   const [, base, dir, file] = m;
+  if (file.includes('..')) return null; // a path that climbs out of the folder is not one of the themed pictures
   if (ONLY[dir] && !ONLY[dir].includes(file)) return null;
   return theme === DEFAULT_THEME ? `${base}assets/${dir}/${file}` : `${base}assets-theme/${theme}/${dir}/${file}`;
 }

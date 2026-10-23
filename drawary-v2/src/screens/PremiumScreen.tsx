@@ -26,7 +26,7 @@ const REASONS: Record<PremiumReason, string> = {
 };
 
 const NOTICES: Record<PremiumNotice, string> = {
-  bought: K('프리미엄이 열렸어요. 고마워요!'),
+  bought: K('프리미엄이 열렸어요.\n고마워요!'),
   thanks: K('고마워요! 큰 힘이 돼요.'),
   restored: K('구매를 복원했어요.'),
   'nothing-to-restore': K('복원할 구매 내역이 없어요.'),
@@ -124,7 +124,7 @@ export function PremiumScreen({ prices, owned = false, reason = null, notice = n
         </section>}
       </div>
 
-      {notice && <div className="pm-toast" role="status">{t(NOTICES[notice])}</div>}
+      {notice && <div className="pm-toast" role="status">{tl(NOTICES[notice])}</div>}
 
       {SUPPORT_PURCHASES_ENABLED && otherOpen && (
         <div className="pm-overlay">
