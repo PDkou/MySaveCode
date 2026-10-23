@@ -1,0 +1,4 @@
+.drawary-toast-wrap { position: fixed; left: 0; right: 0; bottom: calc(112px + env(safe-area-inset-bottom, 0px)); z-index: 200; display: flex; justify-content: center; pointer-events: none; padding: 0 24px; }
+.drawary-toast { max-width: 100%; padding: 11px 20px; border-radius: 999px; background: rgba(var(--tr-36-32-55, 36, 32, 55), .92); color: #fff; font-size: 14px; font-weight: 700; line-height: 1.35; text-align: center; box-shadow: 0 8px 22px rgba(var(--tr-36-32-55, 36, 32, 55), .28); animation: drawary-toast-in .22s ease-out; }
+@keyframes drawary-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .drawary-toast { animation: none; } }

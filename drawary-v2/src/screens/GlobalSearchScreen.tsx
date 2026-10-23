@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import './GlobalSearchScreen.css';
 import { FixedCanvas } from '../components/FixedCanvas';
 import { t, tl } from '../i18n';
+import { useScrollMemory } from '../components/useScrollMemory';
 
 // Ported from GlobalSearch_NEW_CANDIDATE.tsx (#05, source_code_verification:
 // CANDIDATE_SOURCE_NEEDS_PARITY). Per
@@ -36,6 +37,8 @@ export function GlobalSearchScreen({ records, onOpenRecord, query: controlledQue
   const query = controlledQuery ?? ownQuery;
   const setQuery = (value: string) => { setOwnQuery(value); onQueryChange?.(value); };
   const q = query.trim().toLocaleLowerCase();
+  // One place per search text: coming back from a result lands where it was, a new search starts at the top.
+  const resultsScroll = useScrollMemory(`search:${q}`);
 
   const results = useMemo(() => {
     if (!q) return [];
@@ -67,7 +70,7 @@ export function GlobalSearchScreen({ records, onOpenRecord, query: controlledQue
         {query && <button type="button" onClick={() => setQuery('')} aria-label={t('검색어 지우기')}>×</button>}
       </div>
 
-      <section className="global-search-content">
+      <section className="global-search-content" {...resultsScroll}>
         {!q && (
           <div className="global-search-empty">
             <img src="/assets/global-search-approved/search_empty.webp" alt="" />

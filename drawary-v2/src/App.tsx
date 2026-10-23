@@ -100,6 +100,7 @@ import { WideHome } from './wide/WideHome';
 import { WideEmptyHome } from './wide/WideEmptyHome';
 import { WideSheet } from './wide/WideSheet';
 import { installOutsideDismiss } from './components/outsideDismiss';
+import { showToast } from './components/toast';
 import { WideSettingsGrid } from './wide/WideSettingsGrid';
 import { PaneMagnifier } from './wide/PaneMagnifier';
 import './wide/wideSettings.css';
@@ -270,7 +271,7 @@ function AppScreens() {
         : await renderTablePdf(name, tableColumns, shown, new Date().toLocaleDateString(getLocale())).catch(() => { throw new Error(t('PDF를 만들지 못했어요. 다시 시도해 주세요.')); });
       // The person picks the place (the phone's save window); a browser shows its own download bar.
       const place = await saveBlobAs(blob, exportFileName(name, kind));
-      if (hasNativeSave()) window.alert(t('{place}에 저장했어요.', { place }));
+      if (hasNativeSave()) showToast(t('{place}에 저장했어요.', { place }));
     })()
       .catch((e: unknown) => { if (!(e instanceof Error && e.message === 'cancelled')) alertError(e); })
       .finally(() => { exportingRef.current = false; });
@@ -713,7 +714,7 @@ function AppScreens() {
         photoLoading={selectedPhotos.blobs === null}
         fields={recordFieldRows(rec)}
         onEdit={() => { setRecordBack(back); setEditPhotos(null); setEditKey((k) => k + 1); navigate('record-edit'); }}
-        onDelete={() => { void guardedSave(async () => { await actions.deleteRecord(rec.id); setRecordDetailId(null); }); }}
+        onDelete={() => { void guardedSave(async () => { await actions.deleteRecord(rec.id); setRecordDetailId(null); showToast(t('보관품을 삭제했어요.')); }); }}
         onOpenPhoto={() => { setRecordBack(back); navigate('photo-viewer'); }}
       />
     );
@@ -726,7 +727,7 @@ function AppScreens() {
     const count = recordsOf(store, id).length;
     const detail = count > 0 ? t('\n보관품 {count}개와 사진도 함께 삭제돼요.', { count }) : '';
     if (window.confirm(t('\'{name}\' 서랍을 삭제할까요?{detail}\n삭제한 내용은 되돌릴 수 없어요.', { name: target.name, detail }))) {
-      actions.deleteDrawer(id).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('삭제하지 못했어요.')));
+      actions.deleteDrawer(id).then(() => showToast(t('서랍을 삭제했어요.'))).catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('삭제하지 못했어요.')));
     }
   };
   const reorderDrawers = (ids: string[]) => {
@@ -1069,6 +1070,7 @@ function AppScreens() {
               setPhotoVersion((v) => v + 1);
               setFillPhotos([]);
               navigate('drawer-detail');
+              showToast(t('보관품을 담았어요.'));
             }); }}
           />
       );
@@ -1156,6 +1158,7 @@ function AppScreens() {
             onExportPdf={() => exportTable('pdf', applyView(tableRows, tableColumns, tableView))}
             onDeleteDrawer={() => { if (!currentDrawer) return; void guardedSave(async () => {
               await actions.deleteDrawer(currentDrawer.id);
+              showToast(t('서랍을 삭제했어요.'));
               setCurrentDrawerId(null); setRecordDetailId(null); setRecordQuery('');
               navigate('home');
             }); }}
@@ -1180,7 +1183,7 @@ function AppScreens() {
               const n = drawerNotifRules.find((x) => x.id === id);
               const field = currentFields.find((f) => f.id === n?.fieldId);
               if (n && window.confirm(t("'{field}' {when} {time} 알림을 삭제할까요?", { field: field?.name ?? '', when: n.daysBefore === 0 ? t('당일') : t('{daysBefore}일 전', { daysBefore: n.daysBefore }), time: n.time }))) {
-                void actions.deleteNotificationRule(id).catch(alertError);
+                void actions.deleteNotificationRule(id).then(() => showToast(t('알림을 삭제했어요.'))).catch(alertError);
               }
             }}
             fieldCount={currentFields.length}
@@ -1284,7 +1287,7 @@ function AppScreens() {
             onOpenRule={(id) => {
               const r = store.recurrenceRules.find((x) => x.id === id);
               if (r && window.confirm(t('\'{targetLabel}\' 반복 설정을 삭제할까요?\n이미 만들어진 보관품은 그대로 남아요.', { targetLabel: r.targetLabel }))) {
-                void actions.deleteRecurrenceRule(id).catch(alertError);
+                void actions.deleteRecurrenceRule(id).then(() => showToast(t('반복 설정을 삭제했어요.'))).catch(alertError);
               }
             }}
           />
@@ -1761,7 +1764,7 @@ function AppScreens() {
             onSave={({ name, iconId }) => {
               if (!currentDrawer) return;
               actions.updateDrawer(currentDrawer.id, { name, iconKey: iconId })
-                .then(() => navigate('drawer-manage'))
+                .then(() => { navigate('drawer-manage'); showToast(t('서랍 이름과 아이콘을 바꿨어요.')); })
                 .catch((e: unknown) => window.alert(e instanceof Error ? e.message : t('저장하지 못했어요.')));
             }}
           />
@@ -1814,7 +1817,7 @@ function AppScreens() {
         <FixedCanvas height={844} grow>
           <NewFieldScreen
             onBack={() => navigate('drawer-fields-manage')}
-            onAdd={(data) => { void actions.addField(currentDrawer.id, data).then(() => navigate('drawer-fields-manage')).catch(alertError); }}
+            onAdd={(data) => { void actions.addField(currentDrawer.id, data).then(() => { navigate('drawer-fields-manage'); showToast(t('서랍 칸을 저장했어요.')); }).catch(alertError); }}
           />
         </FixedCanvas>
       </main>;
@@ -1838,9 +1841,9 @@ function AppScreens() {
                 ? currentRecords.filter((r) => typeof r.values[manageField.id] === 'string' && removed.includes(r.values[manageField.id] as string)).length
                 : 0;
               if (affected > 0 && !window.confirm(t('지우려는 선택 항목을 쓰고 있는 보관품 {affected}개에서 그 값이 사라져요. 계속할까요?', { affected }))) return;
-              void actions.updateField(manageField.id, patch).then(() => navigate('drawer-fields-manage')).catch(alertError);
+              void actions.updateField(manageField.id, patch).then(() => { navigate('drawer-fields-manage'); showToast(t('서랍 칸을 저장했어요.')); }).catch(alertError);
             }}
-            onDelete={() => { void actions.deleteField(manageField.id).then(() => { setManageFieldId(null); navigate('drawer-fields-manage'); }).catch(alertError); }}
+            onDelete={() => { void actions.deleteField(manageField.id).then(() => { setManageFieldId(null); navigate('drawer-fields-manage'); showToast(t('서랍 칸을 삭제했어요.')); }).catch(alertError); }}
           />
         </FixedCanvas>
       </main>;
@@ -1868,6 +1871,7 @@ function AppScreens() {
               await actions.deleteRecord(id);
               setRecordDetailId(null);
               navigate(recordBack);
+              showToast(t('보관품을 삭제했어요.'));
             }); }}
             onOpenPhoto={() => navigate('photo-viewer')}
           />
@@ -1918,6 +1922,7 @@ function AppScreens() {
               setPhotoVersion((v) => v + 1);
               setEditPhotos(null);
               navigate('record-detail');
+              showToast(t('보관품을 수정했어요.'));
             }); }}
           />
       );
