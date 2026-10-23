@@ -9,7 +9,7 @@ export interface DrawerExportSheetProps {
 }
 
 /**
- * 서랍 관리's "백업 / 내보내기". No approved design exists for it, so it is drawn with #27's sheet (the same classes): this
+ * 서랍 관리's "내보내기". No approved design exists for it, so it is drawn with #27's sheet (the same classes): this
  * drawer's table as a CSV or PDF file (the 표 보기 menu does the same). The whole-app backup stays in 설정 > 데이터 관리.
  */
 export function DrawerExportSheet({ onCancel, onCsv, onPdf }: DrawerExportSheetProps) {
@@ -22,7 +22,7 @@ export function DrawerExportSheet({ onCancel, onCsv, onPdf }: DrawerExportSheetP
       <section className="tsf-sheet" role="dialog" aria-modal="true" aria-labelledby="drawer-export-title" onClick={(e) => e.stopPropagation()}>
         <div className="tsf-handle" />
         <header className="tsf-head">
-          <h2 id="drawer-export-title">{t('백업 / 내보내기')}</h2>
+          <h2 id="drawer-export-title">{t('내보내기')}</h2>
           <p>{t('저장할 곳은 파일을 만든 뒤에 직접 고를 수 있어요.')}</p>
         </header>
         <div className="tsf-options">

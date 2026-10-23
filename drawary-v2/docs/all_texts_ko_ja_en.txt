@@ -1238,9 +1238,9 @@
   EN  Manage repeats
 
 [245]
-  KO  백업 / 내보내기
-  JA  バックアップとエクスポート
-  EN  Backup / export
+  KO  내보내기
+  JA  エクスポート
+  EN  Export
 
 [246]
   KO  서랍 삭제

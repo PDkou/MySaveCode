@@ -35,7 +35,7 @@ interface DrawerManageScreenProps {
   onEditFields?: () => void;
   onNotificationSettings?: () => void;
   onRecurrenceManage?: () => void;
-  /** 백업 / 내보내기: this drawer's table as a file (the rows the table view shows). */
+  /** 내보내기: this drawer's table as a file (the rows the table view shows). */
   onExportCsv?: () => void;
   onExportPdf?: () => void;
   onDeleteDrawer?: () => void;
@@ -68,7 +68,7 @@ interface DrawerManageScreenProps {
  * the drawer's real table view -- the same sort/filter #20 opens with.] #28 reuses #18's
  * delete-sheet pattern; confirming calls the caller's onDeleteDrawer,
  * which per CONFIRMED.md ("삭제 후 홈 복귀") is responsible for the
- * actual navigate-home. 백업 / 내보내기 has no approved destination screen;
+ * actual navigate-home. 내보내기 (was 백업 / 내보내기 in the approved text; the whole-app backup lives in 설정) has no approved destination screen;
  * it opens a small sheet in the same style as #27's (DrawerExportSheet) with
  * CSV and PDF.
  */
@@ -108,7 +108,7 @@ export function DrawerManageScreen({
       { key: 'recurrence', label: t('반복 관리'), icon: '/assets/ui-icons/icon_refresh.webp', onClick: onRecurrenceManage },
     ],
     [
-      { key: 'backup', label: t('백업 / 내보내기'), icon: '/assets/ui-icons/icon_share.webp', onClick: () => setExportOpen(true) },
+      { key: 'backup', label: t('내보내기'), icon: '/assets/ui-icons/icon_share.webp', onClick: () => setExportOpen(true) },
     ],
     [
       { key: 'delete', label: t('서랍 삭제'), icon: '/assets/ui-icons/icon_delete.webp', danger: true, onClick: () => setDeleteConfirmOpen(true) },

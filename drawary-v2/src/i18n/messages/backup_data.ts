@@ -125,7 +125,7 @@ export const backup_data: Messages = {
   '정렬 / 필터 설정': { ja: '並べ替えとフィルターの設定', en: 'Sort / filter settings' },
   '알림 설정': { ja: '通知設定', en: 'Notification settings' },
   '반복 관리': { ja: '繰り返しの管理', en: 'Manage repeats' },
-  '백업 / 내보내기': { ja: 'バックアップとエクスポート', en: 'Backup / export' },
+  '내보내기': { ja: 'エクスポート', en: 'Export' },
   '서랍 삭제': { ja: 'ひきだしを削除', en: 'Delete drawer' },
   '입력한 내용이 사라져요. 나갈까요?': { ja: '入力した内容が消えます。戻りますか？', en: 'What you entered will be lost. Leave?' },
   '입력한 내용이 사라져요. 닫을까요?': { ja: '入力した内容が消えます。閉じますか？', en: 'What you entered will be lost. Close it?' },
