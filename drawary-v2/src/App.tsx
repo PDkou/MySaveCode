@@ -156,6 +156,11 @@ export default function App() {
 
 function AppScreens() {
   const [route, setRoute] = useState<Route>(parseRoute);
+  // In the wide management sheet: which row of the drawer menu belongs to the open screen.
+  const manageActiveKey = route === 'name-icon-change' ? 'rename'
+    : route === 'drawer-fields-manage' || route === 'new-field-manage' || route === 'field-edit-manage' ? 'fields'
+    : route.startsWith('notification-') ? 'notifications'
+    : route.startsWith('recurrence-') ? 'recurrence' : undefined;
   // 'splash' only on a cold start without a route in the address; 'fading' is its last moments.
   const [boot, setBoot] = useState<'splash' | 'fading' | 'done'>(() => (window.location.hash === '' || window.location.hash === '#' ? 'splash' : 'done'));
   const [bootTimeUp, setBootTimeUp] = useState(false);
@@ -853,9 +858,29 @@ function AppScreens() {
     const context: Route = route === 'home' || route === 'home-empty' ? 'home'
       : route === 'premium' || route === 'notification-common' ? 'settings'
       : fromDrawer && currentDrawer ? 'drawer-detail' : 'home';
-    // forms get a sheet of their own width and scroll in it (the filling and editing forms in two columns); the other screens are shown magnified
-    const formSheets: Partial<Record<Route, number>> = { 'fill-drawer': 900, 'record-edit': 900, 'create-drawer': 600 };
+    // The flows that have a menu or a list on one side open as ONE sheet with the menu on the left and what it opens on the right
+    // (the drawer's management menu with its screens, the field list with its editors); forms get a sheet of their own width and scroll
+    // in it (filling and editing in two columns); every other screen is shown magnified in a sheet.
+    const manageFamily: readonly Route[] = ['drawer-manage', 'name-icon-change', 'drawer-fields-manage', 'new-field-manage', 'field-edit-manage',
+      'notification-settings', 'notification-date-field', 'notification-timing', 'notification-complete', 'recurrence-management',
+      'recurrence-target-date', 'recurrence-cycle', 'recurrence-end-condition', 'recurrence-complete'];
+    const fieldsFamily: readonly Route[] = ['drawer-fields', 'new-field', 'field-edit'];
+    const formSheets: Partial<Record<Route, number>> = { 'fill-drawer': 900, 'record-edit': 900, 'create-drawer': 600, premium: 900, templates: 900 };
+    const splitSheet = (menuRoute: Route) => (
+      <WideSheet width={1000}>
+        <div className="wide-sheet-split">
+          <div className="wide-sheet-menu"><PaneMagnifier max={1}>{renderRoute(menuRoute, true, true)}</PaneMagnifier></div>
+          <div className="wide-sheet-detail">
+            {route === menuRoute
+              ? <p className="wide-hint">{t('왼쪽에서 고르면 여기에 열려요.')}</p>
+              : <PaneMagnifier max={1.2}>{renderRoute(route, true, true)}</PaneMagnifier>}
+          </div>
+        </div>
+      </WideSheet>
+    );
     const sheet = route === 'home' || route === 'home-empty' ? undefined
+      : manageFamily.includes(route) ? splitSheet('drawer-manage')
+      : fieldsFamily.includes(route) ? splitSheet('drawer-fields')
       : formSheets[route] !== undefined
         ? <WideSheet width={formSheets[route]}><div className="wide-sheet-scroll">{renderRoute(route, true, true)}</div></WideSheet>
         : <WideSheet><PaneMagnifier max={1.2}>{renderRoute(route, true)}</PaneMagnifier></WideSheet>;
@@ -903,9 +928,9 @@ function AppScreens() {
     }
     if (route === 'premium') {
       // Prices: Google Play's own once it has answered (Android app); until then (and in a browser) samples in the currency of the language (src/flow/premiumPrices.ts).
-      return <main className="drawary-app-shell" data-route="premium">
-        <FixedCanvas height={844} grow>
+      const premiumBody = (
           <PremiumScreen
+            wide={inSheet}
             prices={premiumPrices(language, playPrices)}
             owned={premium}
             reason={premiumReason}
@@ -917,19 +942,23 @@ function AppScreens() {
             onRestore={() => { void restorePurchase(); }}
             onSupport={(kind) => { void buySupport(kind); }}
           />
-        </FixedCanvas>
+      );
+      return <main className="drawary-app-shell" data-route="premium">
+        {inSheet ? premiumBody : <FixedCanvas height={844} grow>{premiumBody}</FixedCanvas>}
       </main>;
     }
     if (route === 'templates') {
       // "템플릿으로 시작": picking one fills the create-drawer flow (name, look, fields) and continues on the field list, where everything can still be changed.
-      return <main className="drawary-app-shell" data-route="templates">
-        <FixedCanvas height={844} grow>
+      const templatesBody = (
           <TemplatePickerScreen
+            wide={inSheet}
             onBack={() => { resetCreateFlow(); returnToTab(); }}
             onOwn={() => navigate('create-drawer')}
             onPick={(tpl) => { setCreateDraft({ name: t(tpl.name), icon: tpl.iconKey, color: tpl.colorKey }); setDraftFields(draftFieldsOf(tpl)); navigate('drawer-fields'); }}
           />
-        </FixedCanvas>
+      );
+      return <main className="drawary-app-shell" data-route="templates">
+        {inSheet ? templatesBody : <FixedCanvas height={844} grow>{templatesBody}</FixedCanvas>}
       </main>;
     }
     if (route === 'create-drawer') {
@@ -1075,6 +1104,7 @@ function AppScreens() {
       return <main className="drawary-app-shell" data-route="drawer-manage">
         <FixedCanvas height={844} grow>
           <DrawerManageScreen
+            activeKey={inSheet ? manageActiveKey : undefined}
             drawerName={drawerDetailName}
             drawerIconUri={`/assets/drawer-icons/drawer_icon_${drawerIconId}.webp`}
             fieldCount={currentFields.length}

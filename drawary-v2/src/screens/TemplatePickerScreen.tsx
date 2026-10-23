@@ -6,6 +6,8 @@ import { DRAWER_TEMPLATES, type DrawerTemplate } from '../flow/drawerTemplates';
 import { t } from '../i18n';
 
 interface Props {
+  /** In the wide window's sheet: three columns of templates. */
+  wide?: boolean;
   onBack: () => void;
   /** The person chose a template: the create-drawer flow starts with its name, look and fields filled in. */
   onPick: (template: DrawerTemplate) => void;
@@ -16,11 +18,11 @@ interface Props {
 const cardColor = (key: string) => (DRAWER_COLORS.find((c) => c.key === key) ?? DRAWER_COLORS[0]).card;
 
 /** "템플릿으로 시작": ready-made drawers (name, look, fields) to start from instead of an empty drawer. */
-export function TemplatePickerScreen({ onBack, onPick, onOwn }: Props) {
+export function TemplatePickerScreen({ wide = false, onBack, onPick, onOwn }: Props) {
   const [open, setOpen] = useState<DrawerTemplate | null>(null);
 
   return (
-    <section className="tp-screen">
+    <section className={`tp-screen${wide ? ' tp-screen--wide' : ''}`}>
       <ScreenHeader title={t('템플릿으로 시작')} onBack={onBack} backLabel={t('뒤로 가기')} height={72} />
       <p className="tp-intro">{t('만들고 싶은 서랍을 고르면 이름과 서랍 칸이 한 번에 채워져요.')}</p>
       <div className="tp-grid">

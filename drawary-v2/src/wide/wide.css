@@ -175,3 +175,9 @@
 .wide-sheet .pane-magnifier { flex: 1 1 auto; }
 .wide-sheet-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .wide-sheet .drawary-app-shell { max-width: none; height: auto; overflow: visible; background: transparent; padding-top: 0; }
+/* menu on the left, what it opens on the right (the drawer's management, the field list with its editors) */
+.wide-sheet-split { flex: 1 1 auto; min-height: 0; display: flex; }
+.wide-sheet-menu { flex: 0 0 410px; min-width: 0; display: flex; flex-direction: column; border-right: 1px solid rgba(var(--tr-97-78-140,97,78,140), .14); }
+.wide-sheet-detail { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #fffaf2; }
+.wide-sheet-detail .wide-hint { margin: auto; padding: 0 40px; text-align: center; color: var(--tc-6b6785,#6b6785); font-size: 15px; line-height: 1.6; }
+.wide-sheet .pane-magnifier-inner > .drawary-app-shell { background: transparent; }

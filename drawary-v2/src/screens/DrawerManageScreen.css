@@ -49,3 +49,5 @@
 .dm-row.danger .dm-row-icon img{opacity:.95}
 
 html body .dm-screen > .uf-header{margin:0 -20px}
+.dm-row.is-active{background:var(--tc-f7f1ff,#f7f1ff)}
+.dm-row.is-active .dm-row-label{color:var(--tc-6c51db,#6c51db)}

@@ -41,3 +41,12 @@
 .pm-owned { margin: 18px 0 0; padding: 15px 14px; border-radius: 13px; background: var(--tc-f4efff,#f4efff); color: var(--tc-6a5a9a,#6a5a9a); font-size: 14px; font-weight: 800; text-align: center; }
 .pm-buy:disabled, .pm-coffee-row button:disabled { opacity: .55; cursor: default; }
 .pm-toast { position: fixed; left: 50%; bottom: 28px; z-index: 40; transform: translateX(-50%); max-width: 330px; padding: 12px 18px; border-radius: 14px; background: rgba(40, 57, 109, .94); color: #fff; font-size: 13px; font-weight: 700; line-height: 1.45; text-align: center; box-shadow: 0 6px 24px rgba(0, 0, 0, .22); }
+
+/* wide window only: the two groups add no box of their own on the phone */
+.pm-col-a, .pm-col-b { display: contents; }
+.pm-screen--wide { width: 100%; min-height: 0; }
+.pm-screen--wide .pm-body { display: grid; grid-template-columns: 340px minmax(0, 1fr); column-gap: 32px; align-items: start; padding: 0 32px 32px; }
+.pm-screen--wide .pm-col-a, .pm-screen--wide .pm-col-b { display: block; }
+.pm-screen--wide .pm-hero { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 6px; padding: 22px 20px 8px; }
+.pm-screen--wide .pm-hero img { width: 180px; align-self: center; }
+.pm-screen--wide .pm-label { margin-top: 0; }

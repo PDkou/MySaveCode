@@ -18,6 +18,8 @@ interface DrawerManageRow {
 }
 
 interface DrawerManageScreenProps {
+  /** In the wide window's management sheet: the row whose screen is open on the right. */
+  activeKey?: string;
   drawerName?: string;
   drawerIconUri?: string;
   fieldCount?: number;
@@ -67,6 +69,7 @@ interface DrawerManageScreenProps {
  * so those three rows stay the caller's own no-op handler.
  */
 export function DrawerManageScreen({
+  activeKey,
   drawerName = '화장품',
   drawerIconUri = '/assets/drawer-icons/drawer_icon_cosmetics.webp',
   fieldCount = 4,
@@ -126,7 +129,7 @@ export function DrawerManageScreen({
             <button
               key={row.key}
               type="button"
-              className={row.danger ? 'dm-row danger' : 'dm-row'}
+              className={`dm-row${row.danger ? ' danger' : ''}${row.key === activeKey ? ' is-active' : ''}`}
               onClick={row.onClick}
             >
               <span className="dm-row-icon"><img src={row.icon} alt="" /></span>

@@ -45,7 +45,9 @@ export function FixedCanvas({ height, grow = false, children }: { height: number
       const byWidth = host.offsetWidth / REFERENCE_WIDTH;
       const portrait = window.innerHeight >= window.innerWidth;
       // landscape phones scroll instead (shrinking would make everything tiny); tablets are big enough to fit in any orientation
-      const fitsHeight = height >= FULL_SCREEN_MIN_HEIGHT && (portrait || isTabletWindow());
+      // inside a sheet or a magnified pane of the wide window the pane scrolls, so the screen keeps its size
+      const inPane = !!host.closest('.pane-magnifier, .wide-sheet');
+      const fitsHeight = !inPane && height >= FULL_SCREEN_MIN_HEIGHT && (portrait || isTabletWindow());
       const byHeight = fitsHeight ? (window.innerHeight / app - host.getBoundingClientRect().top / app) / height : Infinity;
       setScale(Math.max(MIN_SCALE, Math.min(1, byWidth, byHeight)));
     };

@@ -36,6 +36,8 @@ const NOTICES: Record<PremiumNotice, string> = {
 };
 
 interface Props {
+  /** In the wide window's sheet: two columns (hero left, what is included and the buy button right). */
+  wide?: boolean;
   prices: PremiumPrices;
   /** Premium is already unlocked. */
   owned?: boolean;
@@ -64,7 +66,7 @@ const SUPPORT = [
 ] as const;
 
 /** "프리미엄": the one purchase that unlocks everything, plus the optional "coffee for the developer" support. */
-export function PremiumScreen({ prices, owned = false, reason = null, notice = null, onNoticeDone, busy = false, onBack, onBuyPremium, onRestore, onSupport }: Props) {
+export function PremiumScreen({ wide = false, prices, owned = false, reason = null, notice = null, onNoticeDone, busy = false, onBack, onBuyPremium, onRestore, onSupport }: Props) {
   const [otherOpen, setOtherOpen] = useState(false);
   useEffect(() => {
     if (!notice) return;
@@ -72,9 +74,10 @@ export function PremiumScreen({ prices, owned = false, reason = null, notice = n
     return () => window.clearTimeout(timer);
   }, [notice, onNoticeDone]);
   return (
-    <section className="pm-screen">
+    <section className={`pm-screen${wide ? ' pm-screen--wide' : ''}`}>
       <ScreenHeader title={t('서랍장 키우기')} onBack={onBack} backLabel={t('뒤로 가기')} height={72} />
       <div className="pm-body">
+        <div className="pm-col-a">
         {!owned && reason && <p className="pm-reason" role="status">{t(REASONS[reason])}</p>}
         <div className="pm-hero">
           <div className="pm-hero-copy">
@@ -84,6 +87,9 @@ export function PremiumScreen({ prices, owned = false, reason = null, notice = n
           <img src="/assets/mascot/mascot_celebrate.webp" alt="" draggable={false} />
         </div>
 
+        </div>
+
+        <div className="pm-col-b">
         <h3 className="pm-label">{t('프리미엄에 들어 있는 것')}</h3>
         <ul className="pm-benefits">
           {BENEFITS.map((b) => (
@@ -122,6 +128,7 @@ export function PremiumScreen({ prices, owned = false, reason = null, notice = n
           </div>
           <small>{t('후원은 몇 번이든 할 수 있어요.')}</small>
         </section>}
+        </div>
       </div>
 
       {notice && <div className="pm-toast" role="status">{tl(NOTICES[notice])}</div>}
