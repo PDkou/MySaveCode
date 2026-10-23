@@ -37,3 +37,14 @@
   100%{opacity:1;transform:none}
 }
 .splash-screen.fading { opacity: 0; }
+
+/* Tablet: the splash fills the whole window (no phone-width band) and the lockup is drawn larger. Sizes are in the layout's own
+   pixels (container units), because the viewport units would be the magnified window's. The art and the animation are the same. */
+html[data-tablet="1"] .drawary-splash-route { max-width: none; }
+html[data-tablet="1"] .splash-screen { container-type: size; gap: 7cqmin; }
+html[data-tablet="1"] .splash-logo { width: min(62cqmin, 560px); }
+html[data-tablet="1"] .splash-mascot { width: min(25cqmin, 230px); }
+html[data-tablet="1"] .splash-decor { width: 7cqmin; height: 7cqmin; }
+html[data-tablet="1"] .decor-tr { width: 5.4cqmin; height: 5.4cqmin; }
+html[data-tablet="1"] .decor-bl { width: 5.8cqmin; height: 5.8cqmin; }
+html[data-tablet="1"] .decor-br { width: 5cqmin; height: 5cqmin; }

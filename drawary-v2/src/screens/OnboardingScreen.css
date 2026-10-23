@@ -123,3 +123,16 @@
 .onboarding-card.complete .onboarding-copy { top: 218px; }
 .onboarding-card.complete .onboarding-copy h1 { font-size: 20px; }
 .onboarding-card.complete .onboarding-copy p { font-size: 16px; }
+
+/* Tablet: the screen fills the whole window and the card is magnified as one piece (the --ob-scale set by the screen), so the
+   approved card keeps its proportions. The loose sprites from the splash fill the empty corners. */
+html[data-tablet="1"] .drawary-onboarding-route { max-width: none; }
+.onboarding-screen { position: relative; overflow: hidden; }
+.onboarding-card { transform: scale(var(--ob-scale, 1)); flex: none; z-index: 1; }
+.onboarding-decor { display: none; }
+html[data-tablet="1"] .onboarding-decor { display: block; position: absolute; opacity: .9; width: 7cqmin; height: 7cqmin; pointer-events: none; z-index: 0; }
+html[data-tablet="1"] .onboarding-screen { container-type: size; }
+html[data-tablet="1"] .onboarding-decor.decor-tl { top: 12%; left: 10%; }
+html[data-tablet="1"] .onboarding-decor.decor-tr { top: 16%; right: 12%; width: 5.4cqmin; height: 5.4cqmin; }
+html[data-tablet="1"] .onboarding-decor.decor-bl { bottom: 16%; left: 14%; width: 5.8cqmin; height: 5.8cqmin; }
+html[data-tablet="1"] .onboarding-decor.decor-br { bottom: 20%; right: 10%; width: 5cqmin; height: 5cqmin; }

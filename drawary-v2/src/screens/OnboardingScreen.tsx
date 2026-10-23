@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import './OnboardingScreen.css';
 import { t, tl } from '../i18n';
+import { isTabletWindow } from '../components/appScale';
 
 // Ported from the user-approved
 // Drawary_02_ONBOARDING_FINAL_CONFIRMED/OnboardingScreen_FINAL_CONFIRMED.tsx
@@ -27,8 +28,32 @@ const slides = () => [
   { id: 'complete', title: <>{t('이제 나만의 이야기를 시작해 보세요')}</>, body: <>{tl('Drawary가\n언제나 함께할게요.')}</> },
 ];
 
+const DECOR = [
+  { file: 'decor_001.webp', className: 'decor-tl' },
+  { file: 'decor_019.webp', className: 'decor-tr' },
+  { file: 'decor_013.webp', className: 'decor-bl' },
+  { file: 'decor_020.webp', className: 'decor-br' },
+];
+const CARD_W = 368;
+const CARD_H = 387;
+
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const SLIDES = slides();
+  // On a tablet the card is magnified to fit the screen it is drawn in (1 on phones).
+  const screenRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = screenRef.current;
+    if (!el) return;
+    const fit = () => {
+      if (!isTabletWindow()) { el.style.removeProperty('--ob-scale'); return; }
+      const k = Math.min(el.clientWidth * 0.84 / CARD_W, el.clientHeight * 0.74 / CARD_H);
+      el.style.setProperty('--ob-scale', String(Math.max(1, Math.min(2.2, k)).toFixed(3)));
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const [index, setIndex] = useState(0);
   const startX = useRef<number | null>(null);
   const slide = SLIDES[index];
@@ -60,7 +85,8 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  return <div className="onboarding-screen">
+  return <div className="onboarding-screen" ref={screenRef}>
+    {DECOR.map(({ file, className }) => <img key={file} className={`onboarding-decor ${className}`} src={`/assets/splash-approved/${file}`} alt="" aria-hidden="true" />)}
     <section className={`onboarding-card ${last ? 'complete' : ''}`}
       onTouchStart={e => { startX.current = e.changedTouches[0].clientX; }}
       onTouchEnd={e => {

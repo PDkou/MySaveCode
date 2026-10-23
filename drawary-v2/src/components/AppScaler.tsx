@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { appScaleFor, layoutKindFor, setAppScale } from './appScale';
+import { appScaleFor, isTabletWindow, layoutKindFor, setAppScale } from './appScale';
 import { setAppLayout } from './appLayout';
 
 /**
@@ -27,7 +27,9 @@ export function AppScaler({ children }: { children: ReactNode }) {
   const s = appScaleFor(size.w, size.h);
   setAppScale(s);
   const layout = layoutKindFor(size.w, size.h);
+  const tablet = isTabletWindow(size.w, size.h);
   useEffect(() => { setAppLayout(layout); document.documentElement.dataset.layoutKind = layout; }, [layout]);
+  useEffect(() => { document.documentElement.dataset.tablet = tablet ? '1' : '0'; }, [tablet]);
   if (s === 1) return <>{children}</>;
   return (
     <div className="drawary-scaler" style={{ width: size.w / s, height: size.h / s, transform: `scale(${s})` }}>
