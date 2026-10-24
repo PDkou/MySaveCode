@@ -144,7 +144,7 @@ export function assemblePdf(pages: readonly { jpeg: Uint8Array; w: number; h: nu
 
 const FONT = "'Noto Sans CJK KR','Noto Sans KR','Noto Sans JP','Noto Sans CJK JP',sans-serif";
 /** Canvas pixels per CSS pixel: sharp enough to read small text, small enough to keep the file light. */
-const SCALE = 1.7;
+const SCALE = 1.5;
 
 /** The table as a PDF file (needs a browser/WebView canvas). */
 export async function renderTablePdf(drawerName: string, columns: readonly TableColumn[], rows: readonly TableRowData[], printedOn: string): Promise<Blob> {
@@ -198,7 +198,7 @@ export async function renderTablePdf(drawerName: string, columns: readonly Table
     ctx.textAlign = 'right';
     ctx.fillText(`${p + 1} / ${layout.pages.length}`, PAGE_W - MARGIN, PAGE_H - MARGIN - 12);
     ctx.textAlign = 'left';
-    const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+    const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8));
     if (!blob) throw new Error('jpeg');
     jpegs.push({ jpeg: new Uint8Array(await blob.arrayBuffer()), w: canvas.width, h: canvas.height });
   }

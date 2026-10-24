@@ -1,6 +1,15 @@
 import { suspendAutoLock } from './appLockGuard';
 
 export async function blobToBase64(blob: Blob): Promise<string> {
+  // The browser's own encoder is much faster than building the text by hand (a PDF can be several MB).
+  if (typeof FileReader !== 'undefined') {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => { const text = String(reader.result); resolve(text.slice(text.indexOf(',') + 1)); };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  }
   const bytes = new Uint8Array(await blob.arrayBuffer());
   let binary = '';
   for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));

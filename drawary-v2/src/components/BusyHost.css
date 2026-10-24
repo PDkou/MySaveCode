@@ -1,0 +1,6 @@
+.drawary-busy-layer { position: fixed; inset: 0; z-index: 300; display: flex; justify-content: center; background: radial-gradient(ellipse 110% 66% at 50% 46%, #fffdfa 0%, #fcf6ec 100%); }
+.drawary-busy-layer .backup-progress-app { height: 100%; }
+/* the ring turns on its own layer, so the page is not repainted for every frame while the PDF is being drawn */
+.drawary-busy-layer .backup-progress-ring { will-change: transform; }
+.drawary-busy-layer .backup-progress-app, .drawary-busy-layer .backup-progress-panel { contain: paint; }
+.drawary-busy-layer .backup-progress-ring { animation: backup-progress-ring-rotate 1.2s steps(12) infinite; }

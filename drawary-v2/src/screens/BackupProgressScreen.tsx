@@ -4,8 +4,11 @@ import './BackupProgressScreen.css';
 import { t } from '../i18n';
 
 interface BackupProgressScreenProps {
-  onBack: () => void;
+  /** Without it the screen has no back arrow (used for a wait that cannot be left, like making a PDF). */
+  onBack?: () => void;
   onComplete?: () => void;
+  /** The approved copy is the default; the same screen is reused for other short waits with their own words. */
+  copy?: { title: string; heading: string; lines: string[]; status: string };
 }
 
 /** #47 백업 진행. Ported verbatim from the user-confirmed standalone source
@@ -18,7 +21,7 @@ interface BackupProgressScreenProps {
  *
  * V2-12 step 5: the backup file is really made and handed over by App.tsx, which moves on to #48 itself; `onComplete`
  * (a fixed demo delay) is no longer used by the app and stays only for the standalone QA route. */
-export function BackupProgressScreen({ onBack, onComplete }: BackupProgressScreenProps) {
+export function BackupProgressScreen({ onBack, onComplete, copy }: BackupProgressScreenProps) {
   useEffect(() => {
     if (!onComplete) return;
     const timer = setTimeout(onComplete, 1600);
@@ -27,14 +30,14 @@ export function BackupProgressScreen({ onBack, onComplete }: BackupProgressScree
 
   return (
     <section className="backup-progress-app">
-      <ScreenHeader title={t('백업하기')} onBack={onBack} backLabel={t('뒤로 가기')} height={81} />
-      <section className="backup-progress-panel" aria-label={t('백업 진행 상태')}>
+      <ScreenHeader title={copy?.title ?? t('백업하기')} onBack={onBack} backLabel={t('뒤로 가기')} height={81} />
+      <section className="backup-progress-panel" aria-label={copy?.title ?? t('백업 진행 상태')}>
         <img
           className="backup-progress-illustration"
           src="/assets/mascot/mascot_backup_progress.webp"
           alt={t('노란 폴더를 든 Drawary 마스코트')}
         />
-        <svg className="backup-progress-ring" viewBox="0 0 50 50" role="status" aria-label={t('백업 진행 중')}>
+        <svg className="backup-progress-ring" viewBox="0 0 50 50" role="status" aria-label={copy?.status ?? t('백업 진행 중')}>
           <circle cx="25" cy="25" r="20" fill="none" stroke="#e5dcfb" strokeWidth="7" />
           <circle
             cx="25" cy="25" r="20" fill="none" stroke="#9260f3" strokeWidth="7"
@@ -42,9 +45,18 @@ export function BackupProgressScreen({ onBack, onComplete }: BackupProgressScree
           />
         </svg>
         <div className="backup-progress-copy" aria-live="polite">
-          <h2>{t('백업하고 있어요')}</h2>
-          <p>{t('잠시만 기다려 주세요.')}</p>
-          <p>{t('데이터를 안전하게 정리하고 있어요.')}</p>
+          {copy ? (
+            <>
+              <h2>{copy.heading}</h2>
+              {copy.lines.map((line) => <p key={line}>{line}</p>)}
+            </>
+          ) : (
+            <>
+              <h2>{t('백업하고 있어요')}</h2>
+              <p>{t('잠시만 기다려 주세요.')}</p>
+              <p>{t('데이터를 안전하게 정리하고 있어요.')}</p>
+            </>
+          )}
         </div>
       </section>
     </section>

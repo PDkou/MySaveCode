@@ -101,6 +101,7 @@ import { WideEmptyHome } from './wide/WideEmptyHome';
 import { WideSheet } from './wide/WideSheet';
 import { installOutsideDismiss } from './components/outsideDismiss';
 import { showToast } from './components/toast';
+import { hideBusy, nextPaint, showBusy } from './components/busy';
 import { WideSettingsGrid } from './wide/WideSettingsGrid';
 import { PaneMagnifier } from './wide/PaneMagnifier';
 import './wide/wideSettings.css';
@@ -273,15 +274,21 @@ function AppScreens() {
     exportingRef.current = true;
     const name = currentDrawer.name;
     void (async () => {
-      const blob = kind === 'csv'
-        ? new Blob([buildCsv(tableColumns, shown)], { type: 'text/csv;charset=utf-8' })
-        : await renderTablePdf(name, tableColumns, shown, new Date().toLocaleDateString(getLocale())).catch(() => { throw new Error(t('PDF를 만들지 못했어요. 다시 시도해 주세요.')); });
+      let blob: Blob;
+      if (kind === 'csv') blob = new Blob([buildCsv(tableColumns, shown)], { type: 'text/csv;charset=utf-8' });
+      else {
+        // Making the PDF takes a few seconds: say so on a waiting screen (the same one the backup uses). It stays until the phone's
+        // save window has taken over, so there is no moment where nothing seems to happen.
+        showBusy({ title: t('PDF로 내보내기'), heading: t('PDF를 만들고 있어요'), lines: [t('잠시만 기다려 주세요.'), t('표를 한 쪽씩 정리하고 있어요.')], status: t('PDF 만드는 중') });
+        await nextPaint();
+        blob = await renderTablePdf(name, tableColumns, shown, new Date().toLocaleDateString(getLocale())).catch(() => { throw new Error(t('PDF를 만들지 못했어요. 다시 시도해 주세요.')); });
+      }
       // The person picks the place (the phone's save window); a browser shows its own download bar.
       const place = await saveBlobAs(blob, exportFileName(name, kind));
       if (hasNativeSave()) showToast(t('{place}에 저장했어요.', { place }));
     })()
-      .catch((e: unknown) => { if (!(e instanceof Error && e.message === 'cancelled')) alertError(e); })
-      .finally(() => { exportingRef.current = false; });
+      .catch((e: unknown) => { hideBusy(); if (!(e instanceof Error && e.message === 'cancelled')) alertError(e); })
+      .finally(() => { hideBusy(); exportingRef.current = false; });
   };
   const saveTableView = (view: TableViewState) => {
     if (currentDrawer) void actions.setSetting(`tableview.${currentDrawer.id}`, view).catch(alertError);
