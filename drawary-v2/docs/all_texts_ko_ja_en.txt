@@ -653,7 +653,7 @@
   EN  Save on this device
 
 [128]
-  KO  원하는 폴더에 ⏎ 백업 파일을 저장해요.
+  KO  다운로드의 Drawary 폴더에 ⏎ 백업 파일을 저장해요.
   JA  好きなフォルダに ⏎ バックアップファイルを保存します。
   EN  Save the backup file ⏎ to a folder you choose.
 

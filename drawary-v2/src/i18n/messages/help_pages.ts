@@ -17,7 +17,7 @@ export const help_pages: Messages = {
   '내 데이터는 어디에 저장되나요?': { ja: 'データはどこに保存されますか？', en: 'Where is my data stored?' },
   'Drawary의 기록은 모두 이 기기에만 저장돼요. 서버로 보내지 않아요. 백업은 설정 → 데이터 관리에서 직접 만들 수 있어요.': { ja: 'Drawaryの記録はすべてこの端末の中にだけ保存され、サーバーには送られません。バックアップは設定 → データ管理から作れます。', en: 'Everything you record stays on this device and is never sent to a server. You can make a backup in Settings → Data management.' },
   'CSV나 PDF는 어디에서 내보내나요?': { ja: 'CSVやPDFはどこから書き出せますか？', en: 'Where can I export CSV or PDF?' },
-  '서랍의 표 보기 화면에서 오른쪽 위 •••를 누르면 CSV나 PDF로 내보낼 수 있어요.': { ja: 'ひきだしの表表示で右上の•••を押すと、CSVまたはPDFで書き出せます。', en: 'On a drawer\'s table view, tap ••• at the top right to export as CSV or PDF.' },
+  '서랍의 표 보기 화면에서 오른쪽 위 •••를 누르거나, 서랍 관리의 "내보내기"에서 CSV나 PDF로 내보낼 수 있어요. 저장할 곳은 직접 고를 수 있어요.': { ja: 'ひきだしの表表示で右上の•••を押すか、ひきだしの管理の「エクスポート」から、CSVまたはPDFで書き出せます。保存先は自分で選べます。', en: 'On a drawer\'s table view tap ••• at the top right, or use Export in drawer management, to save as CSV or PDF. You choose where to save it.' },
   '백업은 어디에서 하나요?': { ja: 'バックアップはどこでできますか？', en: 'Where do I back up?' },
   '설정 → 데이터 관리 → 백업하기에서 만들 수 있어요. 폰에 저장하거나 Google Drive로 보낼 수 있어요.': { ja: '設定 → データ管理 →「バックアップ」から作れます。端末に保存するか、Google Driveへ送れます。', en: 'Go to Settings → Data management → Back up. You can save it on the phone or send it to Google Drive.' },
   '백업한 데이터는 어떻게 복원하나요?': { ja: 'バックアップしたデータはどうやって復元しますか？', en: 'How do I restore backed-up data?' },
