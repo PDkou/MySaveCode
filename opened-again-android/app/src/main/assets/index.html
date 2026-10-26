@@ -137,8 +137,8 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    background onto a new .tabbtn-icon wrapper sized as an actual
    square around the icon only, so the highlight reads as a proper
    rounded square badge instead of a wide pill behind icon+label. */
-.tabbtn-icon{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center}
-.tabbtn img{width:44px;height:44px;object-fit:contain;opacity:.5}
+.tabbtn-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+.tabbtn img{width:50px;height:50px;object-fit:contain;opacity:.5}
 .tabbtn span{font-size:12px;font-weight:800}
 .tabbtn.active{color:#332C28}
 .tabbtn.active .tabbtn-icon{background:#F3EBDE}
@@ -758,7 +758,7 @@ const N=window.OpenedAgainNative;
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.142.0';
+const APP_VERSION='0.143.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
