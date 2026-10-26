@@ -1,6 +1,9 @@
 # backup
 
-`Drawary_backup_20261026.zip` keeps every tracked file of this branch except `drawary-v2/` (991 files: game, business-quest-app,
-category-data-app, drawary-app, family-quest-app, reports, web_test, ORG.md, CLAUDE.md, README.md, .github, ...) as of 2026-10-26.
+`Drawary_backup_20261026.zip` keeps the Drawary-related files that used to be on the `drawary/59-design-rebuild-20261014` branch
+(state of 2026-10-26, before the cleanup), 1,701 files:
 
-The Drawary app (`drawary-v2/`) moved to its own repository, `PDkou/drawary`, with its full history.
+- `drawary-v2/` the Drawary app (now in its own repository, `PDkou/drawary`, with its full history)
+- `drawary-app/` the older Drawary Android app
+- `category-data-app/` the earlier category/data app Drawary grew out of
+- `.github/workflows/` the Drawary workflows (`drawary-v2-*`, `build-drawary-*`)
