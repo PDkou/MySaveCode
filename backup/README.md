@@ -9,7 +9,7 @@ Everything related to Drawary that was on the `drawary/59-design-rebuild-2026101
 - `README.md`, `.gitignore` the root files that mention Drawary
 - `.github/workflows/` every Drawary workflow (`drawary-v2-*`, `build-drawary-*`)
 
-## Drawary_history_20261026.bundle.part00 / 01 / 02: the git history
+## Drawary_history_20261026.bundle.part00 / 01: the git history
 One git bundle of the whole branch history (every commit), split into three pieces because GitHub does not take files over 100 MB.
 To restore it:
 
