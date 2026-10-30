@@ -30,6 +30,18 @@
 // generated per-frame images (the file names suggest the latter). Flip this
 // back to true once someone's actually looked at it running and decided
 // it's good enough; don't flip it just because the file list looks complete.
+//
+// 2026-10 product note: this is now expected to come back for
+// family-quest-app ONLY -- a house-cleaning minigame doesn't fit
+// business-quest-app's workplace framing (team decision, not yet true as of
+// this flag's current "both apps identically" wiring described above).
+// Re-enabling for family-quest-app alone needs real lib/appMode.ts branching
+// added at this flag's call sites first, not just flipping the boolean --
+// also note business-quest-app/public/art/cleaner/ doesn't have the asset
+// files that exist under family-quest-app/public/ (same @core-shared
+// component references them by a path only one app's public/ dir serves),
+// so even a business-quest-app-scoped revert of this flag would need those
+// copied over (or the branching to skip rendering them) first.
 export const GAME_FEATURES_ENABLED = false;
 
 // Character shop (CharacterShopModal, outfit purchases/equip) -- the
