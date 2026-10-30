@@ -136,8 +136,8 @@ function PrivacyPolicyKo() {
           연락처(이메일): {SUPPORT_EMAIL}
         </p>
         <p className="privacy-hint">
-          아직 사업자등록 전 개인 프로젝트 단계로, 사업자등록번호 등 정보는 등록 이후 이 페이지에 추가로
-          게시됩니다.
+          일본에서 개인사업자(開業届)로 등록되어 있습니다(屋号: {OPERATOR_NAME}). 인보이스 제도(적격청구서
+          발행사업자) 등록은 아직 전이며, 등록 완료 시 등록번호를 이 페이지에 추가로 게시합니다.
         </p>
       </section>
 
@@ -282,7 +282,8 @@ function PrivacyPolicyJa() {
           連絡先(メール): {SUPPORT_EMAIL}
         </p>
         <p className="privacy-hint">
-          現在は法人登記前の個人プロジェクト段階のため、法人情報等は登記後に本ページへ追記します。
+          個人事業主として開業届を提出済みです(屋号: {OPERATOR_NAME})。インボイス制度(適格請求書発行事業者)への登録は
+          まだ完了しておらず、登録が完了次第、登録番号を本ページに追記します。
         </p>
       </section>
 
