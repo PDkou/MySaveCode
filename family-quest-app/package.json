@@ -17,6 +17,7 @@
     "@capacitor/android": "^8.5.0",
     "@capacitor/core": "^8.5.0",
     "@capacitor/push-notifications": "^8.1.2",
+    "@capacitor/splash-screen": "^8.0.2",
     "@revenuecat/purchases-capacitor": "^13.4.2",
     "@supabase/supabase-js": "^2.110.8",
     "i18next": "^26.3.6",

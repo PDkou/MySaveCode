@@ -67,10 +67,21 @@ android` 실행 시 기본으로 깔아주는 스톡 로고**(흰 배경에 파�
   회사용으로 새로 만드는 온보딩 장면(`design/ui-visual-system.md` "8-1. Company Quest 첫 실행
   환영 장면" 프롬프트 참고)이 나오는 대로 그걸 스플래시로도 같이 씀 -- 새 이미지를 스플래시
   전용으로 따로 안 만들어도 됨.
-- 남은 작업: `@capacitor/splash-screen` 플러그인 설치 + `npx cap sync`로 각 해상도별
-  `drawable*/splash.png`를 이 온보딩 이미지로 교체.
-- 급한 건 아님(스토어 등록 자체를 실기기 검증 전까지 보류 중이라 `README.md`/`FEATURES.md`
-  13번 참고) -- Company Quest 온보딩 이미지가 나오는 시점에 같이 처리하면 됨.
+- **Family Quest는 완료** (2026-10) -- `@capacitor/splash-screen` 플러그인 설치,
+  `capacitor.config.ts`에 플러그인 설정(`backgroundColor: '#182640'`,
+  `androidScaleType: 'CENTER_CROP'`, `launchShowDuration: 2000` 등) 추가, `npx cap sync`
+  실행, 그리고 `public/illustrations/onboarding.png`를 11개 해상도 버킷(`drawable`,
+  `drawable-{land,port}-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}`)별 `splash.png`로 center-crop해서
+  교체까지 끝남. 이미지 리사이즈는 이 환경에 ImageMagick/sharp/Pillow가 없어서 Playwright로
+  각 밀도의 정확한 픽셀 크기만큼 뷰포트를 잡고 `background-size: cover`로 스크린샷을 떠서
+  만들었습니다(스크립트는 세션 스크래치패드에만 있고 저장소에는 없음 -- 1회성 변환이라 재실행
+  스크립트를 레포에 남기지 않음, 필요하면 같은 방식으로 다시 만들 수 있음).
+- Company Quest는 **아직 보류** -- `business-quest-app`은 `android/` 스캐폴드 자체가 없고,
+  지금 `public/illustrations/onboarding.png`는 Family Quest 이미지를 그대로 복사해 쓰는
+  임시 상태(진짜 회사용 장면이 아님). 회사용 온보딩 장면 AI 프롬프트는
+  `design/ui-visual-system.md` "8-1. Company Quest 첫 실행 환영 장면"에 있음 -- 이 이미지가
+  나오고 `android/` 스캐폴드가 생기면 Family Quest와 같은 방식(플러그인 설치+`cap sync`+
+  11개 해상도 center-crop)으로 그대로 반복하면 됨.
 
 ## 겸사겸사: `index.html`의 `meta description`도 낡음
 
