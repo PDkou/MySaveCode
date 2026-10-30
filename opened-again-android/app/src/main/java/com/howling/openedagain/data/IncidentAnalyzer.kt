@@ -70,6 +70,22 @@ class IncidentAnalyzer(private val context: Context, private val history: Histor
         return SessionBuilder().build(raw, nowMs = end)
     }
 
+    // v0.145: backs NativeBridge.getTrackedApps() (the settings "앱 관리"
+    // toggle list). applyUserExcludes=false is deliberate -- a package the
+    // user already excluded must still appear here, or there would be no
+    // way to see it and turn it back on. Only the unconditional home-
+    // launcher filter still applies (see UsageEventCollector.collect()'s
+    // own comment). A 30-day lookback is a practical compromise: long
+    // enough to surface apps used only occasionally, short enough that a
+    // long-uninstalled app's stale entry eventually drops off on its own
+    // without needing any extra cleanup logic.
+    fun knownPackages(lookbackDays: Int = 30): List<String> {
+        val end = System.currentTimeMillis()
+        val start = end - lookbackDays * 24L * 60 * 60 * 1000
+        val raw = UsageEventCollector(context).collect(start, end, applyUserExcludes = false)
+        return raw.mapNotNull { it.packageName }.distinct()
+    }
+
     // v0.72: index.html's own home-screen incident names only exist as JS
     // string tables (`names` in index.html), unreachable from a native
     // notification fired while the WebView isn't even running -- persisted

@@ -5548,3 +5548,59 @@ hidden`이 없어서(단순 flex 중앙정렬 박스) 그림이 잘리지 않고
 겹치지 않는 것도 확인. `node --check`로 스크립트 블록 문법 확인.
 순수 CSS 변경이라 네이티브 컴파일 검증은 필요 없음. 커밋/푸시 후 CI
 트리거.
+
+## v0.145 — 앱별 추적 토글 (시스템 앱 기본 꺼짐)
+
+**배경**: 이전에 director가 "넥슨플레이나 스마트폰을 켜는것으로만
+집계되는 데이터들... 시계앱이라던가... 순수 자기가 열어본 앱만을
+대상으로 할 수 있나?"라고 물었던 것의 구현. 패키지명을 개발자가 미리
+하드코딩하는 방식은 "내폰은 그러한데 다른 폰은 다른게 떠있고 다들
+각자니까 힘든거야"라는 이유로 기각하고, 대신 "시스템 앱은 기본
+꺼짐으로 시작하되 전부 토글로 켜고 끌 수 있게" 하는 방향으로 합의 --
+"비공개 테스트 시작하면 알려줄게"로 미뤄뒀다가, 비공개 테스트 트랙
+출시 및 도플리 등록을 마친 지금 "지금 그거 하자"로 착수.
+
+**설계**: `AppTrackingPrefs`(신규) -- SharedPreferences에 사용자가
+명시적으로 켠/끈 패키지 두 세트(`app_toggle_included`/
+`app_toggle_excluded`)만 저장하고, 둘 다에 없는 패키지는 매번
+`PackageManager`의 `FLAG_SYSTEM`/`FLAG_UPDATED_SYSTEM_APP`로 계산한
+기본값(시스템 앱 -> 제외, 그 외 -> 포함)을 그대로 따름 -- 그래서
+새로 설치되거나 업데이트된 앱도 마이그레이션 없이 항상 올바른
+기본값으로 시작함.
+
+**구현**:
+- `AppTrackingPrefs.kt`(신규): `isSystemApp()`/`isExcluded()`/
+  `setOverride()`.
+- `UsageEventCollector.collect()`에 `applyUserExcludes` 파라미터 추가
+  (기본 true) -- 실제 분석 경로(`analyzeToday()` 등)는 그대로 제외
+  필터를 적용하지만, 설정 화면의 토글 목록(`IncidentAnalyzer.
+  knownPackages()`)은 `false`로 호출 -- 이미 제외한 앱도 목록에 계속
+  보여야 다시 켤 수 있기 때문. 기존 홈 런처 필터는 두 경우 모두
+  무조건 적용(사용자가 토글할 대상이 아니었던 노이즈라 그대로 둠).
+- `IncidentAnalyzer.knownPackages(lookbackDays=30)`: 최근 30일 사용
+  이벤트에서 패키지명만 중복 제거해서 뽑음(`applyUserExcludes=false`
+  로 수집).
+- `NativeBridge.kt`: `getTrackedApps(): String`(패키지명/라벨/
+  시스템여부/현재포함여부 JSON 배열), `setAppTracked(packageName,
+  included: Boolean)` 추가. 둘 다 기존 `-keepclassmembers`
+  proguard 규칙이 클래스 전체를 대상으로 하므로 별도 규칙 추가 불필요.
+- `index.html`: 설정 "데이터" 그룹에 "추적 앱 관리" 행 추가 ->
+  `openAppTrackingSheet()` -- 앱 라벨/패키지명 + 토글 스위치 목록.
+  새 `.switch`/`.app-track-row` CSS(필 스위치 컴포넌트, 기존
+  --line/--muted/#6758F5 팔레트 재사용). `toggleAppTracked()`가
+  `N.setAppTracked()`로 바로 반영, 체크박스 자체 상태관리라 별도
+  리렌더 불필요.
+
+버전 145/0.145.0. 검증: Playwright로 (1) `N` 없는 프리뷰 모드에서
+빈 상태("아직 기록된 앱이 없어요") 정상 렌더 확인, (2)
+`page.addInitScript()`로 `window.OpenedAgainNative`를 페이지 스크립트
+평가 전에 주입해 가짜 앱 3개(일반 앱 2개 켜짐, 시스템 앱 1개 꺼짐)로
+목록이 라벨/패키지명/스위치 상태 모두 정확히 렌더되는지 스크린샷으로
+확인, (3) 스위치 클릭 시 `N.setAppTracked('com.kakao.talk', false)`가
+정확한 인자로 호출되는 것까지 확인. `node --check`로 스크립트 블록
+문법 확인. 네이티브 Kotlin 변경(AppTrackingPrefs/UsageEventCollector/
+IncidentAnalyzer/NativeBridge)은 이 샌드박스에 Android SDK가 없어
+로컬 컴파일/실기기 확인 둘 다 불가능 -- CI 디버그 빌드 컴파일 성공
+여부가 유일한 검증 수단이고, 실제 시스템 앱 분류가 기기별로 의도대로
+동작하는지와 토글 UI 전체 플로우의 최종 확인은 director 쪽 실기기
+테스트가 필요함을 공유. 커밋/푸시 후 CI 트리거.

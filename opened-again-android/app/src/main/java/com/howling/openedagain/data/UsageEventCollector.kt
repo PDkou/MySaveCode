@@ -37,12 +37,21 @@ class UsageEventCollector(private val context: Context) {
         context.packageManager.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName
     }.getOrNull()
 
-    fun collect(startMs: Long, endMs: Long): List<AppUsageEvent> {
+    // v0.145: `applyUserExcludes` defaults to true for every real analysis
+    // path (analyzeToday()/debugSessionsToday()), but NativeBridge.
+    // getTrackedApps() calls this with it set to false -- the settings
+    // toggle list needs to see every package that actually appeared in
+    // usage (including ones the user already excluded), or an excluded
+    // package would vanish from the list and could never be turned back
+    // on. The unconditional launcher filter still always applies either
+    // way, since that one was never user-togglable noise to begin with.
+    fun collect(startMs: Long, endMs: Long, applyUserExcludes: Boolean = true): List<AppUsageEvent> {
         val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val events = usm.queryEvents(startMs, endMs)
         val result = mutableListOf<AppUsageEvent>()
         val e = UsageEvents.Event()
         val launcherPkg = defaultLauncherPackage()
+        val systemAppCache = mutableMapOf<String, Boolean>()
         while (events.hasNextEvent()) {
             events.getNextEvent(e)
             val type = when (e.eventType) {
@@ -53,7 +62,11 @@ class UsageEventCollector(private val context: Context) {
                 UsageEvents.Event.KEYGUARD_HIDDEN -> EventType.UNLOCK
                 else -> null
             } ?: continue
-            if ((type == EventType.FOREGROUND || type == EventType.BACKGROUND) && e.packageName == launcherPkg) continue
+            if (type == EventType.FOREGROUND || type == EventType.BACKGROUND) {
+                if (e.packageName == launcherPkg) continue
+                if (applyUserExcludes && e.packageName != null &&
+                    AppTrackingPrefs.isExcluded(context, e.packageName, systemAppCache)) continue
+            }
             result += AppUsageEvent(e.packageName, type, e.timeStamp)
         }
         return result

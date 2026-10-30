@@ -13,6 +13,7 @@ import androidx.work.WorkManager
 import com.howling.openedagain.core.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import com.howling.openedagain.data.AppTrackingPrefs
 import com.howling.openedagain.data.HistoryRepository
 import com.howling.openedagain.data.IncidentAnalyzer
 import com.howling.openedagain.ui.ShareCardRenderer
@@ -593,6 +594,36 @@ class NativeBridge(
         val pm = activity.packageManager
         pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
     }.getOrDefault("")
+
+    // v0.145: director-requested filter -- settings "앱 관리" list. Backed by
+    // AppTrackingPrefs (see its own comment for the system-app-default +
+    // user-override design) and UsageEventCollector's applyUserExcludes
+    // flag. analyzer.knownPackages() deliberately does NOT apply the
+    // user's own exclude toggles (an already-excluded package must still
+    // show up here, or there'd be no way to turn it back on) -- it only
+    // ever drops the device's own home launcher, same as every other
+    // analysis path.
+    @JavascriptInterface
+    fun getTrackedApps(): String {
+        val pm = activity.packageManager
+        val systemAppCache = mutableMapOf<String, Boolean>()
+        val arr = JSONArray()
+        analyzer.knownPackages().sorted().forEach { pkg ->
+            val label = runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
+            arr.put(JSONObject().apply {
+                put("packageName", pkg)
+                put("label", label)
+                put("isSystem", AppTrackingPrefs.isSystemApp(activity, pkg, systemAppCache))
+                put("included", !AppTrackingPrefs.isExcluded(activity, pkg, systemAppCache))
+            })
+        }
+        return arr.toString()
+    }
+
+    @JavascriptInterface
+    fun setAppTracked(packageName: String, included: Boolean) {
+        AppTrackingPrefs.setOverride(activity, packageName, included)
+    }
 
     private fun incidentToJson(i: DetectedIncident) = JSONObject().apply {
         put("type", i.type.name)
