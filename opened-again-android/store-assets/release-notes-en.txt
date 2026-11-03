@@ -1,1 +1,1 @@
-Bug fixes (language switch not updating some text, lost records around midnight) and a new "Manage tracked apps" setting -- apps like Clock/Calculator are excluded automatically, and you can turn any app on or off yourself. If anything feels off, let us know at db5704@gmail.com.
+Bug fixes (language switch not updating some text, lost records around midnight), tab bar icon size adjustments, and a new "Manage tracked apps" setting -- apps like Clock/Calculator are excluded automatically, and you can turn any app on or off yourself.
