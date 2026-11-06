@@ -5604,3 +5604,103 @@ IncidentAnalyzer/NativeBridge)은 이 샌드박스에 Android SDK가 없어
 여부가 유일한 검증 수단이고, 실제 시스템 앱 분류가 기기별로 의도대로
 동작하는지와 토글 UI 전체 플로우의 최종 확인은 director 쪽 실기기
 테스트가 필요함을 공유. 커밋/푸시 후 CI 트리거.
+
+## v0.146 — 전체 코드 검수 24건 수정
+
+**배경**: director 요청으로 `code-review` 스킬(high effort, 8개
+관점 병렬 서브에이전트: 라인별/불변조건제거/크로스파일 교차검증 3종 +
+재사용/단순화/효율/altitude/컨벤션)을 opened-again-android 전체
+코드베이스(`app/`/`core/`/`index.html`)에 대해 돌려 24건을 찾아
+`ReportFindings`로 보고. director가 "다 고쳐줘"로 전부 수정 지시.
+
+**구현** (실제 버그 6건):
+- `NativeBridge.resetAllData()`: 리셋해도 `ReminderScheduler`/
+  `IncidentCheckScheduler`가 계속 armed 상태로 남아있던 것과,
+  `todays_card_date/type/rarity` 플래그가 `reveal_shown_date`처럼
+  같이 지워지지 않던 것(삭제된 사건을 계속 가리키는 알림이 뜰 수
+  있었음) 수정.
+- `NativeBridge.shareIncident()`: 유일하게 `runCatching` 가드가
+  없던 JSON 파싱 브리지 메서드 -- 잘못된 enum 값/JSON이면 브리지
+  스레드에서 그대로 크래시.
+- `ShareCardRenderer.kt`: 공유 카드에 항상 고정 `"CASE #4821"`
+  플레이스홀더가 박혀 있어서(5개 등급 전부 동일), 인앱에서 보여주는
+  실제 번호와 늘 달랐던 것을 index.html의 `caseNo(i)` 공식과 동일한
+  `caseNo()`를 네이티브에 포팅해 해결(sum of char codes × 17 mod
+  10000 -- 순수 함수라 JS 브리지로 새 데이터를 넘길 필요 없음).
+  `wrapLines()`가 공백으로만 분리해서 일본어처럼 띄어쓰기 없는
+  텍스트는 폭 체크 없이 통째로 한 줄에 그려지던 버그(`cur.isEmpty()`
+  예외 처리가 첫 "단어"를 무조건 통과시켰음) -- 단어 단위로도 안
+  맞으면 문자 단위로 쪼개는 `breakByChar()`로 대체. `stat`(사건
+  상세 설명) 텍스트가 폭 체크 없이 한 줄로만 그려져 길면 패널
+  밖으로 흘러나가던 것 -- `wrapLines()`로 줄바꿈 적용하고, 그 아래
+  `quote`의 시작 Y좌표도 고정값 대신 `stat`이 실제로 몇 줄을
+  차지했는지에 맞춰 동적으로 계산.
+- `index.html`'s `read()`: `N.analyzeToday()`가 실기기에서 예외를
+  던지면(Room/UsageStatsManager 오류, JSON 깨짐 등) 프리뷰 모드와
+  똑같이 `demo()`의 가짜 샘플 사건을 보여주던 것 -- 실제 기기
+  오류와 "그냥 N이 없는 프리뷰"를 구분해서, 실패 시에는 새 `{error:
+  true}` 빈 상태("오늘의 기록을 불러오지 못했습니다" + 다시 시도
+  버튼)를 보여주도록 분리. 권한 미허용 화면과도 별개임(권한은 있는데
+  다른 게 깨진 경우).
+
+**구현** (성능 4건):
+- `SessionBuilder.kt`: 방문마다 `screenOffTimes.any{}`로 전체
+  리스트를 재스캔하던 O(N×M) -- 양쪽 다 정렬돼 있고 하한값이 단조
+  증가하므로 포인터 하나로 O(N+M)로 축소.
+- `AppTrackingPrefs`/`UsageEventCollector`: `collect()`의 이벤트
+  루프 안에서 매 이벤트마다 include/exclude StringSet 두 개를
+  SharedPreferences에서 다시 읽던 것 -- `loadOverrides()`로 호출당
+  한 번만 읽어 재사용하는 오버로드 추가(`systemAppCache`가 이미
+  하던 방식과 동일).
+- `HistoryRepository.record()`: 사건 하나당 `insertDiscoveryIfNew()`
+  한 번씩 호출(암묵적 트랜잭션 N개) -- `List<Entity>`를 받는
+  `insertDiscoveriesIfNew()`로 바꿔 단일 트랜잭션으로.
+- `index.html`'s `computeStreak()`: `header()`가 호출될 때마다(=매
+  `render()`) 매번 처음부터 다시 걸어서 계산 -- `state.history.days`가
+  실제로 갈아끼워지는 `refresh()` 안에서만 `state.streak`로 캐시,
+  `header()`는 그 캐시만 읽음. `compactPkg()`가 `N.appLabel()`
+  브리지를 호출마다 다시 타던 것 -- `render()`마다 비우는
+  패키지명 캐시로 메모이즈.
+
+**정리/중복 제거**: `localDateKey()`/`"app_prefs"`+`"language"`
+읽기/`appLabel()` 조회/`archiveRarityClass()`/`backgroundAsset()`의
+size·suffix 도출이 각각 3곳 이상 따로 구현돼 있던 것을 공용 함수
+하나씩으로 통합(`IncidentAnalyzer.localDateKey()`를 companion으로
+공개, 신규 `Context.appPrefs()` 확장 함수, `getTrackedApps()`가
+`appLabel()` 재사용, `archiveRarityClass()`가 `rarityClass()` 호출,
+`ShareCardRenderer`의 `backgroundSizeSuffix()` 분리). index.html의
+`isOpalHidden()` 헬퍼로 `i.type==='HIDDEN_NIGHT_ACTIVITY'` 중복 체크
+통합(단, `rarityBadge()`/`cardPatternBg()`가 그 값으로 하는 일 자체는
+의도적으로 서로 반대 방향이라 그대로 둠), `iconFor()`/
+`sceneMarkUrl()`의 6단 삼항연산자 체인을 `names`/`punch` 테이블과
+같은 룩업 객체 방식으로 교체. 가장 큰 정리는 index.html 전역에
+흩어진 `try{N&&N.X&&N.X(args)}catch(e){}` 형태 20곳 전부를 `callNative()`
+한 함수로, `open*Sheet()`/`open*Confirm()` 12곳이 각자 다시 쓰던
+`#overlay`/`.modal`/`.sheet` 셸을 `sheetModal(bodyHtml, footerHtml)`
+하나로, `requestReviewManual`/`purchaseRemoveAds`/`restorePurchases`
+세 개의 거의 동일한 "프리뷰면 토스트, 아니면 네이티브 호출" 함수를
+`previewGuardedNativeCall()`로 통합.
+
+**검토 후 변경 안 함**: `demo()`의 `type.startsWith('HIDDEN')` 네이밍
+컨벤션은 `IncidentDetector.kt`를 확인한 결과 HIDDEN_LOOP/
+HIDDEN_NIGHT_ACTIVITY가 항상 Rarity.HIDDEN이라는 이미 문서화된
+불변조건과 정확히 일치하는 것을 확인 -- 프리뷰 전용 샘플 데이터라
+실제 위험도도 낮고, 추측이 아니라 검증된 전제라 그대로 둠(주석으로
+근거만 남김).
+
+버전 146/0.146.0. 검증: `node --check`로 추출한 스크립트 블록 문법
+확인. Playwright로 (1) 리팩터 전/후 12개 sheet 모달 각각의 렌더
+HTML을 직접 diff -- `exitApp` 버튼의 `onclick`이 의도한 대로
+`callNative('exitApp')`로 바뀐 것 한 곳만 다르고 나머지는 바이트
+단위로 동일함을 확인, (2) `callNative`/`sheetModal`로 바뀐 호출
+지점들이 실제로 올바른 인자로 네이티브 메서드를 호출하는지
+(`resetAllData`, `setAppTracked('com.test.app', false)`,
+`exitApp` 클릭 시 호출됨) 직접 확인, (3) `N.analyzeToday()`가
+예외를 던지는 경우와 프리뷰(N 없음) 두 시나리오를 각각 띄워 전자는
+새 에러 상태를, 후자는 기존 `demo()` 가짜 데이터를 그대로 보여주는
+것으로 분기가 올바름을 확인, (4) 전체 탭(cases/records/archive/
+settings) 순회 + 모든 설정 시트를 열었을 때 콘솔/페이지 에러 0건.
+네이티브 Kotlin 변경은 이 샌드박스에 Android SDK가 없어 로컬
+컴파일/실기기 확인 둘 다 불가능 -- 각 diff를 직접 다시 읽으며
+타입/시그니처가 호출부와 일치하는지 수동 검토했지만, CI 디버그 빌드
+컴파일 성공 여부가 유일한 자동 검증 수단임. 커밋/푸시 후 CI 트리거.

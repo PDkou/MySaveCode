@@ -9,7 +9,6 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.howling.openedagain.data.HistoryRepository
 import com.howling.openedagain.data.IncidentAnalyzer
-import java.time.LocalDate
 
 /**
  * v0.72: fires every ~4 hours (see IncidentCheckScheduler) to re-run the
@@ -69,7 +68,7 @@ class IncidentCheckWorker(context: Context, params: WorkerParameters) : Worker(c
     // prefix) to the local one -- matches IncidentAnalyzer.localDateKey(),
     // and this worker's own "already notified for today" reset (line 58)
     // used to flip at 9am KST instead of local midnight because of it.
-    private fun todayKey(): String = LocalDate.now().toString()
+    private fun todayKey(): String = IncidentAnalyzer.localDateKey()
 
     private fun notifyMultipleIncidents(context: Context, count: Int) {
         // Reuses ReminderScheduler's own channel -- one settings toggle
@@ -79,7 +78,7 @@ class IncidentCheckWorker(context: Context, params: WorkerParameters) : Worker(c
         // both together rather than splitting into two the user would have
         // to manage separately.
         ReminderScheduler.ensureChannel(context)
-        val lang = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).getString("language", "ko")
+        val lang = context.appPrefs().getString("language", "ko")
 
         val openAppIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP

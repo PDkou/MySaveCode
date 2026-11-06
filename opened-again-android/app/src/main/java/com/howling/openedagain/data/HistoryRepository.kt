@@ -43,7 +43,7 @@ class HistoryRepository(context: Context) {
     fun record(incidents: List<DetectedIncident>) {
         if (incidents.isEmpty()) return
         val now = System.currentTimeMillis()
-        incidents.forEach { dao.insertDiscoveryIfNew(DiscoveryEntity(it.type.name, it.rarity.name, now)) }
+        dao.insertDiscoveriesIfNew(incidents.map { DiscoveryEntity(it.type.name, it.rarity.name, now) })
     }
 
     fun isDiscovered(type: IncidentType, rarity: Rarity? = null): Boolean =

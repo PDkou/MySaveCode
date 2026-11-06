@@ -36,15 +36,35 @@ object AppTrackingPrefs {
         return result
     }
 
+    /** The explicit include/exclude override sets, snapshotted once so a caller looping over many packages/events doesn't re-read SharedPreferences each time -- see [isExcluded]'s overload below. */
+    data class Overrides(val included: Set<String>, val excluded: Set<String>)
+
+    fun loadOverrides(context: Context): Overrides {
+        val p = prefs(context)
+        return Overrides(
+            p.getStringSet(KEY_INCLUDED, emptySet()) ?: emptySet(),
+            p.getStringSet(KEY_EXCLUDED, emptySet()) ?: emptySet()
+        )
+    }
+
     // Explicit user overrides win over the computed default (system app ->
     // excluded, everything else -> included). A package the user has never
     // touched falls through to that default every time, so newly-updated
     // OEM apps/newly-installed third-party apps always start at the
     // sensible default without needing their own migration step.
-    fun isExcluded(context: Context, packageName: String, systemAppCache: MutableMap<String, Boolean>? = null): Boolean {
-        val p = prefs(context)
-        if (p.getStringSet(KEY_INCLUDED, emptySet())?.contains(packageName) == true) return false
-        if (p.getStringSet(KEY_EXCLUDED, emptySet())?.contains(packageName) == true) return true
+    fun isExcluded(context: Context, packageName: String, systemAppCache: MutableMap<String, Boolean>? = null): Boolean =
+        isExcluded(loadOverrides(context), context, packageName, systemAppCache)
+
+    // v0.146 fix: UsageEventCollector.collect() used to call the overload
+    // above once per raw usage event, re-reading (and re-copying) both
+    // StringSets from SharedPreferences on every single event even though
+    // the sets themselves never change mid-collection -- this overload lets
+    // a caller load them exactly once (loadOverrides()) and reuse that
+    // snapshot across the whole loop, same as systemAppCache already does
+    // for the PackageManager lookup.
+    fun isExcluded(overrides: Overrides, context: Context, packageName: String, systemAppCache: MutableMap<String, Boolean>? = null): Boolean {
+        if (overrides.included.contains(packageName)) return false
+        if (overrides.excluded.contains(packageName)) return true
         return isSystemApp(context, packageName, systemAppCache)
     }
 

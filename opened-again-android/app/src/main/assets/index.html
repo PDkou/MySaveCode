@@ -767,12 +767,35 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 <body><main class="app" id="app"></main><div id="overlay"></div>
 <script>
 const N=window.OpenedAgainNative;
+// v0.146 fix: ~20 call sites throughout this file were each retyping
+// try{N&&N.method&&N.method(args)}catch(e){} (or, for value-returning
+// calls, N&&N.method?N.method():fallback inside their own try/catch) --
+// every one of those is "call this bridge method if N and the method both
+// exist, and never let a bridge exception reach JS." One helper for all of
+// them. Returns the call's actual result, or undefined if N/the method is
+// missing or it throws -- callers that need a specific fallback (false/
+// null/etc.) apply `?? fallback` themselves, same as they did inline before.
+function callNative(method,...args){
+  try{if(N&&typeof N[method]==='function')return N[method](...args)}catch(e){}
+  return undefined;
+}
+// v0.146 fix: every open*Sheet()/open*Confirm() function retyped this exact
+// #overlay/.modal/.sheet/.sheet-handle/.sheet-scroll shell (12 call sites) --
+// bodyHtml is whatever goes inside .sheet-scroll (a detail-title plus
+// content, same as every caller already built by hand); footerHtml is
+// whatever follows it (a single .sheet-close button, or a .sheet-actions
+// cancel+action pair) -- callers build both exactly as before, this only
+// removes the repeated shell markup around them.
+function sheetModal(bodyHtml,footerHtml){
+  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll">${bodyHtml}</div>${footerHtml}</div></div>`;
+}
+const sheetCloseButton=()=>`<button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button>`;
 // v0.43: single source of truth for the version string shown in the "앱
 // 정보" settings row and its detail sheet -- still has to be kept in sync
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='0.145.0';
+const APP_VERSION='0.146.0';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
@@ -800,7 +823,7 @@ const skipReveal=params.get('reveal')==='0';
 // English strings exist throughout via l(ko, ja, en) but are not exposed yet —
 // flip `supported` back to include 'en' when English becomes a real target.
 const supported=['ko','ja'];const detected=(navigator.language||'ko').slice(0,2);
-const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false,dailyReminder:false,reminderHour:21,reminderMinute:0},onboardStep:1,tab:params.get('tab')||'cases',data:null,detailItem:null,revealItem:null,exitConfirmOpen:false,history:{days:{},discoveries:{},revealShownDate:null},weeklyHighlight:null,recordsFilter:null,debugBuild:false};
+const state={settings:{language:supported.includes(detected)?detected:'ko',onboardingSeen:false,dailyReminder:false,reminderHour:21,reminderMinute:0},onboardStep:1,tab:params.get('tab')||'cases',data:null,detailItem:null,revealItem:null,exitConfirmOpen:false,history:{days:{},discoveries:{},revealShownDate:null},weeklyHighlight:null,recordsFilter:null,debugBuild:false,streak:0};
 function l(ko,ja,en){return state.settings.language==='ko'?ko:state.settings.language==='ja'?ja:en}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 // v0.140: director-reported bug fix -- this used to be
@@ -823,6 +846,11 @@ function todayKey(){return dateKey(new Date())}
 // weekRecap() already uses, just unbounded instead of capped at 7.
 // Shown in header() only once it reaches 2+ so a brand-new user's first
 // day doesn't get a badge for having done nothing yet.
+// v0.146 fix: header() used to call this directly, re-walking the whole
+// streak on every render() (every tab switch, modal open/close, etc.)
+// even though state.history.days only actually changes inside refresh()
+// -- refresh() now caches the result on state.streak and header() just
+// reads that.
 function computeStreak(){
   let streak=0;
   for(let i=0;;i++){
@@ -856,10 +884,22 @@ function fmtMs(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/6000
 // resolves the real installed-app label via PackageManager; falls back to
 // the old split('.').pop() behavior if that comes back empty (app
 // uninstalled since, lookup failure, or N unavailable in preview mode).
+// v0.146 fix: the same handful of packageNames (today's cards, the records
+// list, archive filters) get passed through this on every single render(),
+// each call previously re-crossing the N.appLabel() JS bridge even for a
+// package already resolved a moment earlier in the same pass. Memoized by
+// packageName here; render() clears the cache at the start of each pass
+// (see its own comment) so a label genuinely changing (app update/reinstall)
+// is never stuck stale for the life of the WebView.
+let _pkgLabelCache={};
 function compactPkg(p){
   if(!p)return l('앱','アプリ','App');
-  try{if(N&&N.appLabel){const label=N.appLabel(p);if(label)return label}}catch(e){}
-  return p.split('.').pop().replace(/_/g,' ')
+  if(p in _pkgLabelCache)return _pkgLabelCache[p];
+  let label;
+  try{if(N&&N.appLabel){const native=N.appLabel(p);label=native||null}}catch(e){label=null}
+  const result=label||p.split('.').pop().replace(/_/g,' ');
+  _pkgLabelCache[p]=result;
+  return result;
 }
 // v0.66: director feedback -- "무슨앱을 들어갔는지 어떤일이일어나서
 // 이걸얻었는지 자세히 알려줬음 좋겠음" (too unfriendly -- want to know
@@ -937,8 +977,23 @@ function detail(i){
     default:return l('오늘의 사용 기록에서 발견되었습니다.','本日の利用記録から発見されました。','Found in today\'s usage record.')
   }
 }
+// v0.146 review: `type.startsWith('HIDDEN')` below (preview/demo sample
+// data only, never real device data) was flagged as a fragile naming
+// convention -- left as-is after checking IncidentDetector.kt: HIDDEN_LOOP
+// and HIDDEN_NIGHT_ACTIVITY are the only two IncidentTypes and are always
+// Rarity.HIDDEN (see this file's own v0.31 comment on incidentIllustrationAsset
+// nearby), so the prefix match is already a correct, documented invariant,
+// not a guess -- no behavior change made here.
 function demo(){return {permission:true,summary:{totalUsageMs:8580000,openCount:37,switchCount:84,uniqueApps:9,unlockSessions:24,nightUsageMs:2100000,topPackages:[{packageName:'com.instagram.android',durationMs:3180000},{packageName:'com.google.android.youtube',durationMs:2220000},{packageName:'com.kakao.talk',durationMs:1080000}]},report:{totalIncidents:5,hiddenCount:1,legendaryCount:1,cards:[{type:'HIDDEN_LOOP',rarity:'HIDDEN',score:220,primaryPackage:'com.instagram.android',secondaryPackage:'com.google.android.youtube',metrics:{switches:8}},{type:'NIGHT_PATROL',rarity:'EPIC',score:80,topPackage:'com.kakao.talk',metrics:{uniqueApps:8,durationMs:2100000}},{type:'RETURN_TO_START',rarity:'RARE',score:44,primaryPackage:'com.instagram.android',metrics:{visits:6,uniqueApps:4}},{type:'QUICK_EXIT',rarity:'NORMAL',score:18,primaryPackage:'com.kakao.talk',metrics:{count:5}},{type:'HUNDRED_VISITS',rarity:'LEGENDARY',score:112,primaryPackage:'com.google.android.youtube',metrics:{opens:104}}]},archive:{discoveredCount:8,items:Object.keys(names).map((type,i)=>({type,hidden:type.startsWith('HIDDEN'),found:i<8||type==='HIDDEN_LOOP'}))}}}
-function read(){if(preview||!N)return demo();try{return JSON.parse(N.analyzeToday())}catch(e){return demo()}}
+// v0.146 fix: a real N.analyzeToday() failure on a live device (Room/
+// UsageStatsManager exception, malformed JSON, etc.) used to fall back to
+// demo() -- the same fabricated sample incidents/stats shown in preview
+// mode -- which silently presented fake data as if it were the user's own.
+// Preview/no-N (genuinely nothing real to show) still shows demo() exactly
+// as before; an actual exception on a real device now surfaces as a
+// distinct {error:true} empty state instead (see render()'s own check)
+// so the user sees "couldn't load" rather than invented cases.
+function read(){if(preview||!N)return demo();try{return JSON.parse(N.analyzeToday())}catch(e){return {permission:true,error:true,summary:null,report:{totalIncidents:0,hiddenCount:0,legendaryCount:0,cards:[]},archive:{discoveredCount:0,items:[]}}}}
 // v0.70: NativeBridge.analyzeToday() now records today's day-history row
 // and any newly-discovered cards straight into Room itself (see its own
 // v0.70 comment) -- this function used to do that job here in JS, storing
@@ -1001,7 +1056,7 @@ function shouldShowReveal(d){
 // checkbox) rather than silently calling into Play's review API in the
 // background -- N.shouldShowAutoReviewPrompt() is a sync read (see
 // NativeBridge.kt) of whether that checkbox has ever been ticked before.
-function dismissReveal(){const wasTopRarity=state.revealItem&&(state.revealItem.rarity==='LEGENDARY'||state.revealItem.rarity==='HIDDEN');state.history.revealShownDate=todayKey();try{N&&N.setRevealShownDate&&N.setRevealShownDate(todayKey())}catch(e){}state.revealItem=null;render();if(wasTopRarity){let shouldAsk=false;try{shouldAsk=N&&N.shouldShowAutoReviewPrompt?N.shouldShowAutoReviewPrompt():false}catch(e){}if(shouldAsk)openAutoReviewPrompt()}}
+function dismissReveal(){const wasTopRarity=state.revealItem&&(state.revealItem.rarity==='LEGENDARY'||state.revealItem.rarity==='HIDDEN');state.history.revealShownDate=todayKey();callNative('setRevealShownDate',todayKey());state.revealItem=null;render();if(wasTopRarity){const shouldAsk=callNative('shouldShowAutoReviewPrompt')??false;if(shouldAsk)openAutoReviewPrompt()}}
 // v0.120: the review sheet dismissReveal() opens above for LEGENDARY/HIDDEN
 // discoveries. Plain HTML checkbox (#reviewOptOutCheck) has no app-state
 // binding of its own -- its checked value is only ever read at close time
@@ -1014,19 +1069,20 @@ function openAutoReviewPrompt(){
 }
 function closeAutoReviewPrompt(){
   const optOut=document.getElementById('reviewOptOutCheck')?.checked;
-  if(optOut){try{N&&N.dismissAutoReviewPromptForever&&N.dismissAutoReviewPromptForever()}catch(e){}}
+  if(optOut)callNative('dismissAutoReviewPromptForever');
   closeOverlay();
 }
 // Actually going through with the review is itself a reason to stop
 // offering this sheet again, regardless of whether the checkbox was ticked.
 function confirmAutoReviewPrompt(){
-  try{N&&N.dismissAutoReviewPromptForever&&N.dismissAutoReviewPromptForever()}catch(e){}
+  callNative('dismissAutoReviewPromptForever');
   closeOverlay();
   requestReviewManual();
 }
 function refresh(){
   state.data=read();
   if(N)loadHistoryFromNative();else persistSnapshotForPreview(state.data);
+  state.streak=computeStreak();
   if(shouldShowReveal(state.data))state.revealItem=state.data.report.cards[0];
   render()
 }
@@ -1121,21 +1177,29 @@ function openExitConfirm(){
   // uses (no cooldown -- an explicit tap here should always go through),
   // and doesn't touch exitConfirmOpen/closeOverlay() -- tapping it doesn't
   // close this sheet, so 취소/종료 are still both right there afterward.
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('앱 종료','アプリを終了','Exit app')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0;text-align:center">${l('정말 종료하시겠습니까?','本当に終了しますか？','Are you sure you want to exit?')}</p><div id="exitAdSlot" style="width:100%;height:64px;margin-top:14px;border-radius:16px;background:rgba(0,0,0,.03)"></div><button class="share" style="width:100%;margin-top:10px" onclick="requestReviewManual()">⭐ ${l('앱 평가하기','アプリを評価する','Rate this app')}</button></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="N&&N.exitApp&&N.exitApp()">${l('종료','終了','Exit')}</button></div></div></div>`;
+  sheetModal(`<div class="detail-title">${l('앱 종료','アプリを終了','Exit app')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0;text-align:center">${l('정말 종료하시겠습니까?','本当に終了しますか？','Are you sure you want to exit?')}</p><div id="exitAdSlot" style="width:100%;height:64px;margin-top:14px;border-radius:16px;background:rgba(0,0,0,.03)"></div><button class="share" style="width:100%;margin-top:10px" onclick="requestReviewManual()">⭐ ${l('앱 평가하기','アプリを評価する','Rate this app')}</button>`,`<div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="callNative('exitApp')">${l('종료','終了','Exit')}</button></div>`);
   state.exitConfirmOpen=true;
   requestAnimationFrame(syncExitAd);
 }
 function syncExitAd(){
-  let adsRemoved=false;try{adsRemoved=N&&N.isAdsRemoved?N.isAdsRemoved():false}catch(e){}
+  const adsRemoved=callNative('isAdsRemoved')??false;
   if(adsRemoved)return;
   const slot=document.getElementById('exitAdSlot');
   if(!slot)return;
   const r=slot.getBoundingClientRect();
   if(r.width<=0||r.height<=0)return;
-  try{N&&N.showExitAd&&N.showExitAd(r.left,r.top,r.width,r.height)}catch(e){}
+  callNative('showExitAd',r.left,r.top,r.width,r.height);
 }
-function share(i,format){if(preview||!N){toast(l('미리보기에서는 공유가 실행되지 않습니다.','プレビューでは共有は実行されません。','Sharing is disabled in preview.'));return}try{N.shareIncident(JSON.stringify(i),txt(names,i.type),txt(punch,i.type),detail(i),format,state.settings.language)}catch(e){}}
-function rarityClass(i){if(i.rarity!=='HIDDEN')return i.rarity.toLowerCase();return i.type==='HIDDEN_NIGHT_ACTIVITY'?'hidden opal':'hidden'}
+function share(i,format){if(preview||!N){toast(l('미리보기에서는 공유가 실행되지 않습니다.','プレビューでは共有は実行されません。','Sharing is disabled in preview.'));return}callNative('shareIncident',JSON.stringify(i),txt(names,i.type),txt(punch,i.type),detail(i),format,state.settings.language)}
+// v0.146 fix: `i.type==='HIDDEN_NIGHT_ACTIVITY'` (the HIDDEN rarity's two
+// visual sub-families) was the same literal check re-typed in rarityClass/
+// rarityBadge/cardPatternBg. Pulled into one helper -- note this does NOT
+// unify what each function then DOES with it: rarityBadge's hidden_01/02
+// and cardPatternBg's hidden_01/02 deliberately point opposite directions
+// (see each function's own comment), only the boolean test itself was
+// duplicated.
+function isOpalHidden(i){return i.type==='HIDDEN_NIGHT_ACTIVITY'}
+function rarityClass(i){if(i.rarity!=='HIDDEN')return i.rarity.toLowerCase();return isOpalHidden(i)?'hidden opal':'hidden'}
 // v0.23: replaced the old baked round-badge image (visual/badges/*.png,
 // icon+pill already flattened into one PNG) with a CSS-built pill (the
 // long-defined-but-unused .rarity class) carrying a small rarity_symbol
@@ -1146,7 +1210,7 @@ function rarityClass(i){if(i.rarity!=='HIDDEN')return i.rarity.toLowerCase();ret
 // is the dark ANOMALY symbol, hidden_02 the pale OPAL one) -- this is the
 // OPPOSITE direction from ShareCardRenderer.kt's share-BACKGROUND pack,
 // which is its own separate asset family; never assume the two agree.
-function rarityBadge(i){const map={NORMAL:'rarity_normal.webp',RARE:'rarity_rare.webp',EPIC:'rarity_epic.webp',LEGENDARY:'rarity_legendary.webp'};const opal=i.type==='HIDDEN_NIGHT_ACTIVITY';const sym=i.rarity==='HIDDEN'?(opal?'rarity_hidden_02.webp':'rarity_hidden_01.webp'):map[i.rarity];const label=i.rarity==='HIDDEN'?(opal?'HIDDEN 02':'HIDDEN 01'):i.rarity;return `<span class="rarity"><img class="rarity-symbol" src="visual/brand/rarity_symbols/${sym}" alt="">${esc(label)}</span>`}
+function rarityBadge(i){const map={NORMAL:'rarity_normal.webp',RARE:'rarity_rare.webp',EPIC:'rarity_epic.webp',LEGENDARY:'rarity_legendary.webp'};const opal=isOpalHidden(i);const sym=i.rarity==='HIDDEN'?(opal?'rarity_hidden_02.webp':'rarity_hidden_01.webp'):map[i.rarity];const label=i.rarity==='HIDDEN'?(opal?'HIDDEN 02':'HIDDEN 01'):i.rarity;return `<span class="rarity"><img class="rarity-symbol" src="visual/brand/rarity_symbols/${sym}" alt="">${esc(label)}</span>`}
 // v0.25: "사건 카드 배경이 단조롭다"는 지적을 받고, 카드 왼쪽(텍스트 영역)이
 // 등급별 플랫 그라데이션 틴트(`--glow`)뿐이라 밋밋해 보이던 것에 낮은
 // 불투명도의 등급별 배경 무늬를 얹음. 새 이미지를 따로 만들지 않고 v0.22의
@@ -1157,7 +1221,7 @@ function rarityBadge(i){const map={NORMAL:'rarity_normal.webp',RARE:'rarity_rare
 // opal=true→hidden_01, opal=false→hidden_02)을 따름 -- `rarityBadge()`
 // 위 두 줄 위의 hidden_01/02(프레임/심볼 계열, 반대 방향)와 헷갈리지 않게
 // 별도 매핑.
-function cardPatternBg(i){const opal=i.type==='HIDDEN_NIGHT_ACTIVITY';const name=i.rarity==='HIDDEN'?(opal?'hidden_01':'hidden_02'):i.rarity.toLowerCase();return `visual/backgrounds/share/1080x1080/bg_${name}_square.webp`}
+function cardPatternBg(i){const opal=isOpalHidden(i);const name=i.rarity==='HIDDEN'?(opal?'hidden_01':'hidden_02'):i.rarity.toLowerCase();return `visual/backgrounds/share/1080x1080/bg_${name}_square.webp`}
 // v0.14 asset pack: character/additional/ was merged into character/basic/,
 // character/expressions/* was fully replaced with a new "_phone" set (the
 // old exp_suspicious.png etc. are gone), moni_sit_phone.png/moni_sleep.png/
@@ -1242,8 +1306,12 @@ function incidentArt(basePath, type, rarity){
 // Build the thumbnail from the same live, safe pieces the main card()
 // uses instead: MONI's pose (incidentVisual) on the rarity's own tint
 // (the --scene custom property already defined per .normal/.rare/...).
-function archiveRarityClass(type,rarity){if(rarity!=='HIDDEN')return (rarity||'normal').toLowerCase();return type==='HIDDEN_NIGHT_ACTIVITY'?'hidden opal':'hidden'}
-function iconFor(i){return i.type==='NIGHT_PATROL'?'🌙':i.type==='HUNDRED_VISITS'?'👑':i.type==='RETURN_TO_START'?'↩️':i.type==='QUICK_EXIT'?'⏱️':i.type==='HIDDEN_LOOP'?'♾️':i.type==='HIDDEN_NIGHT_ACTIVITY'?'✨':'🐾'}
+function archiveRarityClass(type,rarity){return rarityClass({type,rarity:rarity||'NORMAL'})}
+// v0.146 fix: was a 6-deep ternary chain -- a lookup object matches the
+// `names`/`punch` table convention already used for every other
+// per-incident-type table in this file.
+const ICON_FOR={NIGHT_PATROL:'🌙',HUNDRED_VISITS:'👑',RETURN_TO_START:'↩️',QUICK_EXIT:'⏱️',HIDDEN_LOOP:'♾️',HIDDEN_NIGHT_ACTIVITY:'✨'};
+function iconFor(i){return ICON_FOR[i.type]||'🐾'}
 // v0.128: director -- "두번째 빨간색 동그라미의 달은 아마 그냥
 // 이모지잖아?" -- confirmed .scene-mark was a bare OS emoji (same
 // per-OEM rendering inconsistency as the old settings icons, v0.93).
@@ -1251,7 +1319,8 @@ function iconFor(i){return i.type==='NIGHT_PATROL'?'🌙':i.type==='HUNDRED_VISI
 // visual/ui/icons/unlabeled/ folder. Scoped to .scene-mark only --
 // iconFor() above still backs .case-row-icon (the small home-list rows),
 // which wasn't part of this request and stays emoji for now.
-function sceneMarkUrl(i){const key=i.type==='NIGHT_PATROL'?'night_patrol':i.type==='HUNDRED_VISITS'?'hundred_visits':i.type==='RETURN_TO_START'?'return_to_start':i.type==='QUICK_EXIT'?'quick_exit':i.type==='HIDDEN_LOOP'?'hidden_loop':i.type==='HIDDEN_NIGHT_ACTIVITY'?'hidden_night_activity':'default';return `visual/ui/icons/unlabeled/icon_scene_${key}.webp`}
+const SCENE_MARK_KEY={NIGHT_PATROL:'night_patrol',HUNDRED_VISITS:'hundred_visits',RETURN_TO_START:'return_to_start',QUICK_EXIT:'quick_exit',HIDDEN_LOOP:'hidden_loop',HIDDEN_NIGHT_ACTIVITY:'hidden_night_activity'};
+function sceneMarkUrl(i){const key=SCENE_MARK_KEY[i.type]||'default';return `visual/ui/icons/unlabeled/icon_scene_${key}.webp`}
 function caseNo(i){return String(Math.abs((i.type||'CASE').split('').reduce((a,c)=>a+c.charCodeAt(0),0)*17)%10000).padStart(4,'0')}
 function card(i,featured=false){
   // v0.27: EPIC/LEGENDARY-only "impact" layer -- a big faint rarity symbol
@@ -1607,14 +1676,14 @@ function mountHolo(){
 // is the one real place to change it now (v0.94: openLanguageSheet(), see
 // that function's own comment -- replaced the original instant-cycle
 // cycleLang() this comment used to mention).
-function header(){const logo=state.settings.language==='ja'?'visual/logo/logo_jp.webp':'visual/logo/logo_ko.webp';const streak=computeStreak();const streakBadge=streak>=2?`<span class="streak-badge">🔥 ${l(`${streak}일 연속`,`${streak}日連続`,`${streak}-day streak`)}</span>`:'';return `<div class="brand"><img class="avatar" src="visual/app-icon/legacy/app_icon_phone.webp"><div class="brand-main"><img class="brand-logo" src="${logo}" alt="Opened Again"><div class="sub">${l('내 폰이 오늘도 보고 있었다.','スマホは今日も見ていました。','Your phone was watching again.')}</div></div></div><div class="date">${new Date().toLocaleDateString()}${streakBadge}</div>`}
+function header(){const logo=state.settings.language==='ja'?'visual/logo/logo_jp.webp':'visual/logo/logo_ko.webp';const streak=state.streak;const streakBadge=streak>=2?`<span class="streak-badge">🔥 ${l(`${streak}일 연속`,`${streak}日連続`,`${streak}-day streak`)}</span>`:'';return `<div class="brand"><img class="avatar" src="visual/app-icon/legacy/app_icon_phone.webp"><div class="brand-main"><img class="brand-logo" src="${logo}" alt="Opened Again"><div class="sub">${l('내 폰이 오늘도 보고 있었다.','スマホは今日も見ていました。','Your phone was watching again.')}</div></div></div><div class="date">${new Date().toLocaleDateString()}${streakBadge}</div>`}
 // v0.47: mirrors the current language into NativeBridge.setLanguage() so
 // DailyReminderReceiver (native code, no access to this WebView's own
 // localStorage) can show its notification in the same language the user
 // actually sees in-app. Called on every language change and once at
 // startup, in case a reminder ever fires before the user touches the
 // language row again.
-function syncLanguageToNative(){try{N&&N.setLanguage&&N.setLanguage(state.settings.language)}catch(e){}}
+function syncLanguageToNative(){callNative('setLanguage',state.settings.language)}
 // v0.94: replaces the old cycleLang() (instant switch on tap) -- director
 // feedback that a setting actually changing behavior should be pick-then-
 // apply, not applied the instant you touch the row. Native radio inputs
@@ -1624,7 +1693,7 @@ function syncLanguageToNative(){try{N&&N.setLanguage&&N.setLanguage(state.settin
 function openLanguageSheet(){
   const cur=state.settings.language;
   const opt=(code,label)=>`<label class="lang-option"><input type="radio" name="langPick" value="${code}"${cur===code?' checked':''}><span>${label}</span></label>`;
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('언어 선택','言語選択','Select language')}</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">${opt('ko','한국어')}${opt('ja','日本語')}</div></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="applyLangSelection()">${l('적용','適用','Apply')}</button></div></div></div>`;
+  sheetModal(`<div class="detail-title">${l('언어 선택','言語選択','Select language')}</div><div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">${opt('ko','한국어')}${opt('ja','日本語')}</div>`,`<div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="applyLangSelection()">${l('적용','適用','Apply')}</button></div>`);
 }
 function applyLangSelection(){
   const picked=document.querySelector('input[name="langPick"]:checked');
@@ -1789,7 +1858,7 @@ function openArchiveDetail(type){
     // showing a HIDDEN type's art before it's actually been discovered.
     if(!found.length)return;
     const art=incidentArt(artBase,type,'HIDDEN');
-    document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('사건 보관함 상세','事件保管庫詳細','Archive detail')}</div><div class="archive-detail-hero"><img src="${art}" alt=""><b>${esc(txt(names,type))}</b><span>“${esc(txt(punch,type))}”</span></div></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+    sheetModal(`<div class="detail-title">${l('사건 보관함 상세','事件保管庫詳細','Archive detail')}</div><div class="archive-detail-hero"><img src="${art}" alt=""><b>${esc(txt(names,type))}</b><span>“${esc(txt(punch,type))}”</span></div>`,sheetCloseButton());
     return;
   }
   const rarities=['NORMAL','RARE','EPIC','LEGENDARY'];
@@ -1798,7 +1867,7 @@ function openArchiveDetail(type){
     const style=got?` style="background-image:url('${incidentArt(artBase,type,r)}')"`:'';
     return `<div class="rarity-cell ${got?r.toLowerCase():'locked'}">${got?'':'<span class="lock-paw">🐾</span>'}<div class="rarity-cell-visual"${style}>${got?'':'<span>?</span>'}</div><span>${got?r:'???'}</span></div>`;
   }).join('');
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('등급별 수집 현황','等級別コレクション','Collection by rarity')}</div><div class="archive-detail-head"><b>${esc(txt(names,type))}</b><span>${found.length}/4 ${l('등급 수집','等級収集','rarities')}</span></div><div class="rarity-cell-grid">${cells}</div></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+  sheetModal(`<div class="detail-title">${l('등급별 수집 현황','等級別コレクション','Collection by rarity')}</div><div class="archive-detail-head"><b>${esc(txt(names,type))}</b><span>${found.length}/4 ${l('등급 수집','等級収集','rarities')}</span></div><div class="rarity-cell-grid">${cells}</div>`,sheetCloseButton());
 }
 // v0.47: director-approved feature add -- state.history.days has been
 // silently accumulating one entry per day (via persistSnapshot(), since
@@ -1893,14 +1962,14 @@ function records(d){const s=d.summary||{};const rows=[[l('사용 시간','使用
 // to yet -- at least acknowledges the tap with a toast instead of silently
 // doing nothing.
 function settings(){
-  let hasAccess=null;try{hasAccess=N?N.hasUsageAccess():null}catch(e){}
+  const hasAccess=callNative('hasUsageAccess')??null;
   const accessLabel=hasAccess===true?l('허용됨','許可済み','Allowed'):hasAccess===false?l('허용 필요 · 탭해서 이동','許可が必要 · タップで移動','Needs permission -- tap to open'):l('탭해서 확인','タップして確認','Tap to check');
   // v0.76: director feedback -- this row used to hardcode "탭해서 허용하기"
   // (tap to allow) unconditionally, so it still said "not allowed" even
   // right after the user granted it during onboarding -- same fallback
   // style as accessLabel above, now reading the real status via the new
   // N.hasNotificationPermission() bridge instead.
-  let hasNotifAccess=null;try{hasNotifAccess=N&&N.hasNotificationPermission?N.hasNotificationPermission():null}catch(e){}
+  const hasNotifAccess=callNative('hasNotificationPermission')??null;
   const notifLabel=hasNotifAccess===true?l('허용됨','許可済み','Allowed'):hasNotifAccess===false?l('허용 필요 · 탭해서 허용','許可が必要 · タップで許可','Needs permission -- tap to allow'):l('탭해서 확인','タップして確認','Tap to check');
   const row=(icon,title,sub,onclick,clickable=true)=>`<div class="settings-row${clickable?'':' static'}"${onclick?` onclick="${onclick}"`:''}>${icon}<div class="settings-row-text"><b>${title}</b><span>${sub}</span></div>${clickable?'<span class="settings-chevron">›</span>':''}</div>`;
   // v0.121: director feedback -- the whole UI icon set ("앱 아이콘이나
@@ -1921,7 +1990,7 @@ function settings(){
   // covers returning from the native Play Billing purchase sheet; no extra
   // native-to-JS push needed). Defaults to "not removed" in preview/no-N
   // contexts, same fallback style as hasAccess above.
-  let adsRemoved=false;try{adsRemoved=N&&N.isAdsRemoved?N.isAdsRemoved():false}catch(e){}
+  const adsRemoved=callNative('isAdsRemoved')??false;
   const adsRow=adsRemoved
     ? row(imgIcon('removeAds'),l('광고 제거','広告を削除','Remove ads'),l('구매 완료 · 광고가 표시되지 않습니다','購入済み · 広告は表示されません','Purchased -- ads are hidden'),null,false)
     : row(imgIcon('removeAds'),l('광고 제거','広告を削除','Remove ads'),l('탭해서 구매하기 (배너 광고 제거)','タップして購入(バナー広告を削除)','Tap to buy (removes the banner ad)'),'purchaseRemoveAds()');
@@ -1992,17 +2061,26 @@ ${row(dbgIcon('📡'),'백그라운드 체크 상태 보기','여러 사건 발�
 // runs when tapped -- the automatic trigger's gating lives entirely in
 // whether openAutoReviewPrompt() gets shown in the first place
 // (dismissReveal()), not here.
+// v0.146 fix: these three were near-identical "bail out with a preview-mode
+// toast, otherwise call straight into N" functions, differing only in the
+// toast message and which bridge method to call -- previewGuardedNativeCall()
+// is that shared shape; each function below just supplies its own message
+// and method name (and, for restorePurchases, its own extra follow-up toast,
+// which previewGuardedNativeCall()'s return value lets it skip in preview
+// exactly as the original early-return did).
+function previewGuardedNativeCall(previewMessage,method){
+  if(preview||!N){toast(previewMessage);return false}
+  callNative(method);
+  return true;
+}
 function requestReviewManual(){
-  if(preview||!N){toast(l('미리보기에서는 실행되지 않습니다.','プレビューでは実行されません。','Not available in preview.'));return}
-  try{N.requestReviewManual&&N.requestReviewManual()}catch(e){}
+  previewGuardedNativeCall(l('미리보기에서는 실행되지 않습니다.','プレビューでは実行されません。','Not available in preview.'),'requestReviewManual');
 }
 function purchaseRemoveAds(){
-  if(preview||!N){toast(l('미리보기에서는 구매를 진행할 수 없습니다.','プレビューでは購入できません。','Purchases are disabled in preview.'));return}
-  try{N.purchaseRemoveAds&&N.purchaseRemoveAds()}catch(e){}
+  previewGuardedNativeCall(l('미리보기에서는 구매를 진행할 수 없습니다.','プレビューでは購入できません。','Purchases are disabled in preview.'),'purchaseRemoveAds');
 }
 function restorePurchases(){
-  if(preview||!N){toast(l('미리보기에서는 복원을 진행할 수 없습니다.','プレビューでは復元できません。','Restoring is disabled in preview.'));return}
-  try{N.restorePurchases&&N.restorePurchases()}catch(e){}
+  if(!previewGuardedNativeCall(l('미리보기에서는 복원을 진행할 수 없습니다.','プレビューでは復元できません。','Restoring is disabled in preview.'),'restorePurchases'))return;
   toast(l('구매 내역을 확인하고 있습니다...','購入履歴を確認しています…','Checking your purchase history...'));
 }
 // v0.43: destructive, so it goes through a confirmation sheet rather than
@@ -2011,7 +2089,7 @@ function restorePurchases(){
 // .sheet-actions footer (cancel + danger) instead of the usual single
 // .sheet-close.
 function openResetConfirm(){
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('데이터 초기화','データの初期化','Reset data')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0">${l('오늘까지 모은 모든 기록과 보관함 카드가 이 기기에서 완전히 삭제됩니다. 이 작업은 되돌릴 수 없습니다.','これまでに集めた記録と保管庫のカードがこの端末から完全に削除されます。この操作は元に戻せません。','All records and archived cards collected so far will be permanently deleted from this device. This cannot be undone.')}</p></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="danger" onclick="resetAllData()">${l('초기화','初期化','Reset')}</button></div></div></div>`;
+  sheetModal(`<div class="detail-title">${l('데이터 초기화','データの初期化','Reset data')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0">${l('오늘까지 모은 모든 기록과 보관함 카드가 이 기기에서 완전히 삭제됩니다. 이 작업은 되돌릴 수 없습니다.','これまでに集めた記録と保管庫のカードがこの端末から完全に削除されます。この操作は元に戻せません。','All records and archived cards collected so far will be permanently deleted from this device. This cannot be undone.')}</p>`,`<div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="danger" onclick="resetAllData()">${l('초기화','初期化','Reset')}</button></div>`);
 }
 // v0.70: clears the native Room history (NativeBridge.kt's resetAllData()/
 // HistoryRepository.reset()) plus this in-memory cache, then re-runs
@@ -2020,7 +2098,7 @@ function openResetConfirm(){
 // half-reset state.
 function resetAllData(){
   localStorage.removeItem('opened_again_state');
-  try{N&&N.resetAllData&&N.resetAllData()}catch(e){}
+  callNative('resetAllData');
   state.history={days:{},discoveries:{},revealShownDate:null};
   state.weeklyHighlight=null;
   state.recordsFilter=null;
@@ -2056,7 +2134,7 @@ function openReminderSheet(){
   const mm=String(state.settings.reminderMinute).padStart(2,'0');
   const isOn=state.settings.dailyReminder;
   const opt=(val,label,checked)=>`<label class="lang-option"><input type="radio" name="reminderOn" value="${val}"${checked?' checked':''} onchange="toggleReminderTimeEnabled()"><span>${label}</span></label>`;
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('일일 리마인더','デイリーリマインダー','Daily reminder')}</div><div style="display:flex;flex-direction:column;gap:8px;margin:4px 0 14px">${opt('on',l('알림 켜기','通知をオンにする','Turn notifications on'),isOn)}${opt('off',l('알림 끄기','通知をオフにする','Turn notifications off'),!isOn)}</div><div style="display:flex;flex-direction:column;gap:14px;align-items:center;padding:6px 0"><input type="time" id="reminderTimeInput" class="reminder-time-input" value="${hh}:${mm}"${isOn?'':' disabled'} style="font-size:22px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)"><p style="font-size:12px;color:var(--muted);text-align:center;margin:0">${l('이 시간에 오늘의 사건을 알려드리고, 하루 중 사건이 여러 건 쌓이면 따로도 알려드려요. 꺼두면 이 앱이 예약한 알림이 모두 취소돼요.','この時間に今日の事件をお知らせし、一日の中で複数の事件が発生した場合も別途お知らせします。オフにすると、このアプリが予約した通知はすべてキャンセルされます。','We\'ll tell you about today\'s cases at this time, and separately if several incidents pile up during the day. Turning it off cancels every notification this app has scheduled.')}</p></div></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="applyReminderSettings()">${l('적용','適用','Apply')}</button></div></div></div>`;
+  sheetModal(`<div class="detail-title">${l('일일 리마인더','デイリーリマインダー','Daily reminder')}</div><div style="display:flex;flex-direction:column;gap:8px;margin:4px 0 14px">${opt('on',l('알림 켜기','通知をオンにする','Turn notifications on'),isOn)}${opt('off',l('알림 끄기','通知をオフにする','Turn notifications off'),!isOn)}</div><div style="display:flex;flex-direction:column;gap:14px;align-items:center;padding:6px 0"><input type="time" id="reminderTimeInput" class="reminder-time-input" value="${hh}:${mm}"${isOn?'':' disabled'} style="font-size:22px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)"><p style="font-size:12px;color:var(--muted);text-align:center;margin:0">${l('이 시간에 오늘의 사건을 알려드리고, 하루 중 사건이 여러 건 쌓이면 따로도 알려드려요. 꺼두면 이 앱이 예약한 알림이 모두 취소돼요.','この時間に今日の事件をお知らせし、一日の中で複数の事件が発生した場合も別途お知らせします。オフにすると、このアプリが予約した通知はすべてキャンセルされます。','We\'ll tell you about today\'s cases at this time, and separately if several incidents pile up during the day. Turning it off cancels every notification this app has scheduled.')}</p></div>`,`<div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="applyReminderSettings()">${l('적용','適用','Apply')}</button></div>`);
 }
 function toggleReminderTimeEnabled(){
   const picked=document.querySelector('input[name="reminderOn"]:checked');
@@ -2073,11 +2151,11 @@ function applyReminderSettings(){
     state.settings.reminderHour=h;state.settings.reminderMinute=m;
     state.settings.dailyReminder=true;
     save();
-    try{N&&N.requestNotificationPermission&&N.requestNotificationPermission()}catch(e){}
-    try{N&&N.scheduleDailyReminder&&N.scheduleDailyReminder(h,m)}catch(e){}
+    callNative('requestNotificationPermission');
+    callNative('scheduleDailyReminder',h,m);
   }else{
     state.settings.dailyReminder=false;save();
-    try{N&&N.cancelDailyReminder&&N.cancelDailyReminder()}catch(e){}
+    callNative('cancelDailyReminder');
   }
   closeOverlay();
   render();
@@ -2093,10 +2171,10 @@ function applyReminderSettings(){
 // .sheet/.sheet-actions shell as openResetConfirm() above, just a
 // "confirm" button instead of "danger".
 function openExportConfirm(){
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('데이터 내보내기','データのエクスポート','Export data')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0">${l('지금까지 모은 기록과 보관함 카드를 백업 파일로 만들어 공유 메뉴로 저장/전송할 수 있어요.','これまでに集めた記録と保管庫のカードをバックアップファイルとして作成し、共有メニューで保存・送信できます。','Your records and archived cards so far are packaged as a backup file you can save or send via the share menu.')}</p></div><div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="exportBackupData()">${l('내보내기','エクスポート','Export')}</button></div></div></div>`;
+  sheetModal(`<div class="detail-title">${l('데이터 내보내기','データのエクスポート','Export data')}</div><p style="font-size:13px;line-height:1.6;color:var(--muted);margin:4px 0 0">${l('지금까지 모은 기록과 보관함 카드를 백업 파일로 만들어 공유 메뉴로 저장/전송할 수 있어요.','これまでに集めた記録と保管庫のカードをバックアップファイルとして作成し、共有メニューで保存・送信できます。','Your records and archived cards so far are packaged as a backup file you can save or send via the share menu.')}</p>`,`<div class="sheet-actions"><button class="cancel" onclick="closeOverlay()">${l('취소','キャンセル','Cancel')}</button><button class="confirm" onclick="exportBackupData()">${l('내보내기','エクスポート','Export')}</button></div>`);
 }
 function exportBackupData(){
-  try{N&&N.exportBackup&&N.exportBackup(JSON.stringify({schemaVersion:BACKUP_SCHEMA_VERSION,settings:state.settings,history:state.history}))}catch(e){}
+  callNative('exportBackup',JSON.stringify({schemaVersion:BACKUP_SCHEMA_VERSION,settings:state.settings,history:state.history}));
   closeOverlay();
 }
 // v0.86: debug-only diagnostic (see NativeBridge.debugSessionsToday()'s own
@@ -2140,7 +2218,7 @@ function openDebugSessionsSheet(){
       ${pass?`<div style="color:#2e7d32;font-weight:700;margin-top:2px">HIDDEN_LOOP 조건 충족! (${esc(compactPkg(top2[0]))} ↔ ${esc(compactPkg(top2[1]))})</div>`:''}
     </div>`;
   }).join('')||`<div class="empty">${l('오늘 기록된 세션이 없습니다.','本日のセッションがありません。','No sessions recorded today.')}</div>`;
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">오늘 세션 로그 (Debug)</div><p style="font-size:12px;color:var(--muted);margin:4px 0 12px">HIDDEN_LOOP 조건: 전환 12회 이상, 전체 5분 이내 (가장 많이 오간 두 앱이 자동으로 대표 앱이 됨)</p>${rows}</div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+  sheetModal(`<div class="detail-title">오늘 세션 로그 (Debug)</div><p style="font-size:12px;color:var(--muted);margin:4px 0 12px">HIDDEN_LOOP 조건: 전환 12회 이상, 전체 5분 이내 (가장 많이 오간 두 앱이 자동으로 대표 앱이 됨)</p>${rows}`,sheetCloseButton());
 }
 // v0.92: director report -- the "여러 사건 발생" background notification
 // (IncidentCheckWorker, every ~4h) never arrived even with the daily
@@ -2169,7 +2247,7 @@ function openDebugIncidentCheckSheet(){
       <b>마지막으로 실제 알림을 보낸 날짜</b>: ${esc(s.lastNotifiedDate||'없음')}<br>
       <b>그때 알린 사건 수</b>: ${s.lastNotifiedCount>=0?s.lastNotifiedCount:'-'}
     </div>`;
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">백그라운드 체크 상태 (Debug)</div><p style="font-size:12px;color:var(--muted);margin:4px 0 12px">4시간마다 백그라운드에서 돌아야 하는 작업의 실제 상태입니다. "마지막 실행 시각"이 계속 갱신 안 되면 작업 자체가 안 돌고 있는 것, 채널이 "차단됨"이면 작업은 도는데 알림만 막힌 것입니다.</p>${body}</div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+  sheetModal(`<div class="detail-title">백그라운드 체크 상태 (Debug)</div><p style="font-size:12px;color:var(--muted);margin:4px 0 12px">4시간마다 백그라운드에서 돌아야 하는 작업의 실제 상태입니다. "마지막 실행 시각"이 계속 갱신 안 되면 작업 자체가 안 돌고 있는 것, 채널이 "차단됨"이면 작업은 도는데 알림만 막힌 것입니다.</p>${body}`,sheetCloseButton());
 }
 // v0.145: director-requested filter -- apps that only ever appear because
 // the phone was turned on or a background service auto-launched them
@@ -2185,19 +2263,19 @@ function openDebugIncidentCheckSheet(){
 // AppTrackingPrefs.kt's own comment for the full default/override design.
 function openAppTrackingSheet(){
   let apps=[];
-  try{apps=N&&N.getTrackedApps?JSON.parse(N.getTrackedApps()):[]}catch(e){apps=[]}
+  try{apps=JSON.parse(callNative('getTrackedApps')||'[]')}catch(e){apps=[]}
   const rows=apps.length?apps.map(a=>`<div class="app-track-row"><div class="app-track-text"><b>${esc(a.label)}</b><span>${esc(a.packageName)}</span></div><label class="switch"><input type="checkbox" ${a.included?'checked':''} onchange="toggleAppTracked('${a.packageName}',this.checked)"><span class="switch-track"></span></label></div>`).join('')
     :`<p style="font-size:13px;color:var(--muted);text-align:center;padding:16px 0">${l('아직 기록된 앱이 없어요','まだ記録されたアプリがありません','No apps recorded yet')}</p>`;
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('추적 앱 관리','追跡アプリの管理','Manage tracked apps')}</div><p style="font-size:12px;color:var(--muted);line-height:1.6;margin:2px 0 10px">${l('꺼두면 그 앱은 사건 카드 분석에서 제외돼요. 시계·계산기 같은 시스템 앱은 기본적으로 꺼져 있어요.','オフにすると、そのアプリは事件カードの分析から除外されます。時計・電卓などのシステムアプリは初期状態でオフです。','Turn an app off to exclude it from incident analysis. System apps like Clock or Calculator start off by default.')}</p>${rows}</div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+  sheetModal(`<div class="detail-title">${l('추적 앱 관리','追跡アプリの管理','Manage tracked apps')}</div><p style="font-size:12px;color:var(--muted);line-height:1.6;margin:2px 0 10px">${l('꺼두면 그 앱은 사건 카드 분석에서 제외돼요. 시계·계산기 같은 시스템 앱은 기본적으로 꺼져 있어요.','オフにすると、そのアプリは事件カードの分析から除外されます。時計・電卓などのシステムアプリは初期状態でオフです。','Turn an app off to exclude it from incident analysis. System apps like Clock or Calculator start off by default.')}</p>${rows}`,sheetCloseButton());
 }
 function toggleAppTracked(pkg,included){
-  try{N&&N.setAppTracked&&N.setAppTracked(pkg,included)}catch(e){}
+  callNative('setAppTracked',pkg,included);
 }
 function openHelpSheet(){
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('도움말','ヘルプ','Help')}</div><p style="font-size:13px;line-height:1.7;color:var(--ink);margin:4px 0 0">${l('모니는 스마트폰의 사용 기록을 매일 조사해 특이한 습관을 사건 카드로 정리해 드려요. 홈 탭에서 오늘의 사건을, 기록 탭에서 오늘 하루의 숫자를, 보관함 탭에서 지금까지 모은 카드를 확인할 수 있어요. 모든 기록은 이 기기 안에만 저장되고 서버로 전송되지 않아요.','MONIはスマホの利用記録を毎日調べて、気になる習慣を事件カードにまとめます。ホームで今日の事件を、記録で本日の数字を、保管庫でこれまで集めたカードを確認できます。すべての記録はこの端末内にのみ保存され、サーバーへは送信されません。','MONI investigates your phone usage every day and turns odd habits into incident cards. Check today\'s case on Home, today\'s numbers on Records, and everything you\'ve collected on Archive. Every record stays on this device only and is never sent to a server.')}</p></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+  sheetModal(`<div class="detail-title">${l('도움말','ヘルプ','Help')}</div><p style="font-size:13px;line-height:1.7;color:var(--ink);margin:4px 0 0">${l('모니는 스마트폰의 사용 기록을 매일 조사해 특이한 습관을 사건 카드로 정리해 드려요. 홈 탭에서 오늘의 사건을, 기록 탭에서 오늘 하루의 숫자를, 보관함 탭에서 지금까지 모은 카드를 확인할 수 있어요. 모든 기록은 이 기기 안에만 저장되고 서버로 전송되지 않아요.','MONIはスマホの利用記録を毎日調べて、気になる習慣を事件カードにまとめます。ホームで今日の事件を、記録で本日の数字を、保管庫でこれまで集めたカードを確認できます。すべての記録はこの端末内にのみ保存され、サーバーへは送信されません。','MONI investigates your phone usage every day and turns odd habits into incident cards. Check today\'s case on Home, today\'s numbers on Records, and everything you\'ve collected on Archive. Every record stays on this device only and is never sent to a server.')}</p>`,sheetCloseButton());
 }
 function openAboutSheet(){
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('앱 정보','アプリ情報','About')}</div><div style="text-align:center;padding:6px 0 2px"><b style="font-size:16px">${l('또 열었네?','また開いた？','Opened Again?')}</b><div style="font-size:12px;color:var(--muted);margin-top:4px">v${APP_VERSION} · Howling Creative Studio</div></div></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+  sheetModal(`<div class="detail-title">${l('앱 정보','アプリ情報','About')}</div><div style="text-align:center;padding:6px 0 2px"><b style="font-size:16px">${l('또 열었네?','また開いた？','Opened Again?')}</b><div style="font-size:12px;color:var(--muted);margin-top:4px">v${APP_VERSION} · Howling Creative Studio</div></div>`,sheetCloseButton());
 }
 // v0.47: director-approved feature add -- an in-app privacy notice draft
 // (PACKAGE_USAGE_STATS-based apps generally need one before store review,
@@ -2233,9 +2311,9 @@ function openPrivacySheet(){
     `<b>収集する情報</b><br>Androidの「使用状況へのアクセス」権限で得られるアプリ利用イベント(パッケージ名、発生時刻、起動/切替/画面オン・オフ/ロック解除)のみを読み取ります。氏名、連絡先、位置情報、メッセージ内容、他アプリの実際のコンテンツは一切収集しません。<br><br><b>保存場所</b><br>すべての記録はこの端末内にのみ保存されます(アプリストレージ・SharedPreferences)。外部サーバーへは送信されず、第三者と共有されません。<br><br><b>権限の利用目的</b><br>・使用状況へのアクセス: 本日の事件カード作成の分析にのみ使用<br>・通知: リマインダーなどアプリ内通知機能にのみ使用<br><br><b>広告とアプリ内課金</b><br>記録・保管庫画面と終了確認画面にはGoogle AdMobの広告が表示される場合があり、「広告を削除」の購入はGoogle Playの決済システムで処理されます。この2つはGoogleのサービスであり、上記の利用状況分析とは別にインターネット接続が必要で、Google自身のポリシーに従って広告識別子など端末情報を扱う場合があります。このアプリが直接収集する利用記録自体は引き続き端末外へ送信されません。「広告を削除」を購入すると、この端末での広告表示はすべて停止します。<br><br><b>データの削除</b><br>設定 → データ管理からいつでも端末上の全記録を完全に削除でき、アプリを削除すると残っていた記録も一緒に削除されます。<br><br><b>お問い合わせ</b><br>db5704@gmail.com<br><br><span style="color:var(--muted);font-size:11px">最終更新: 2026年9月14日・この画面はコードの動作に基づく草案で、ストア申請前にレビューが必要です。</span>`,
     `<b>Data collected</b><br>Only app usage events provided by Android's Usage Access permission (package name, timestamp, foreground/background/screen on-off/unlock). No name, contacts, location, message content, or other apps' actual content is ever collected.<br><br><b>Where it's stored</b><br>Everything stays on this device (app storage/SharedPreferences). Nothing is sent to a server or shared with anyone.<br><br><b>Why each permission is used</b><br>· Usage Access: only to analyze today's activity into incident cards<br>· Notifications: only for in-app reminders<br><br><b>Ads & in-app purchase</b><br>The Records/Archive screens and the exit-confirmation screen may show Google AdMob ads, and the "Remove ads" purchase is processed through Google Play's billing system. Both are Google services, separate from the usage analysis described above -- they require an internet connection and may handle device information such as an advertising ID under Google's own policies. The usage data this app itself collects still never leaves the device. Buying "Remove ads" stops all ads on this device.<br><br><b>Deleting your data</b><br>Settings → Data lets you erase everything on this device at any time; uninstalling the app removes it too.<br><br><b>Contact</b><br>db5704@gmail.com<br><br><span style="color:var(--muted);font-size:11px">Last updated: September 14, 2026 · This draft reflects the code's actual behavior and needs review before any store submission.</span>`
   );
-  document.getElementById('overlay').innerHTML=`<div class="modal" onclick="if(event.target===this)closeOverlay()"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-scroll"><div class="detail-title">${l('개인정보처리방침','プライバシーポリシー','Privacy policy')}</div><p style="font-size:13px;line-height:1.7;color:var(--ink);margin:4px 0 0">${body}</p></div><button class="sheet-close" onclick="closeOverlay()">${l('닫기','閉じる','Close')}</button></div></div>`;
+  sheetModal(`<div class="detail-title">${l('개인정보처리방침','プライバシーポリシー','Privacy policy')}</div><p style="font-size:13px;line-height:1.7;color:var(--ink);margin:4px 0 0">${body}</p>`,sheetCloseButton());
 }
-function closeOverlay(){const wasExit=state.exitConfirmOpen;document.getElementById('overlay').innerHTML='';state.exitConfirmOpen=false;if(wasExit){try{N&&N.hideExitAd&&N.hideExitAd()}catch(e){}}syncBannerVisibility()}
+function closeOverlay(){const wasExit=state.exitConfirmOpen;document.getElementById('overlay').innerHTML='';state.exitConfirmOpen=false;if(wasExit)callNative('hideExitAd');syncBannerVisibility()}
 // v0.35: incident card detail is now a full-screen page (back arrow +
 // centered rarity pill + share icon header, stats box, single share
 // button) instead of a bottom-sheet modal, matching art/reference/
@@ -2545,10 +2623,10 @@ function onboardNext(){state.onboardStep=2;render()}
 // uses) as part of finishing onboarding, instead of stopping at the home
 // tab's gate and waiting for a second, separate tap there.
 function onboardFinish(allow){
-  if(allow){try{N&&N.requestNotificationPermission&&N.requestNotificationPermission()}catch(e){}}
+  if(allow)callNative('requestNotificationPermission');
   state.settings.onboardingSeen=true;save();state.onboardStep=1;
-  let hasAccess=null;try{hasAccess=N?N.hasUsageAccess():null}catch(e){}
-  if(hasAccess===false){try{N.openUsageSettings()}catch(e){}}
+  const hasAccess=callNative('hasUsageAccess')??null;
+  if(hasAccess===false)callNative('openUsageSettings');
   render()
 }
 // v0.65: director-approved monetization -- native banner ad shown ONLY on
@@ -2568,7 +2646,7 @@ function syncBannerVisibility(){
   // the other way (hiding the banner even ON records/archive while those
   // are open).
   const show=(!skipOnboarding&&!state.settings.onboardingSeen)?false:!!(!state.revealItem&&!state.detailItem&&(state.tab==='records'||state.tab==='archive'));
-  try{N&&N.setBannerVisible&&N.setBannerVisible(show)}catch(e){}
+  callNative('setBannerVisible',show);
 }
 function render(){
   // v0.41: every branch below replaces #app's innerHTML wholesale, which
@@ -2578,6 +2656,7 @@ function render(){
   // its own comment, but this avoids even one wasted frame).
   stopHolo();
   syncBannerVisibility();
+  _pkgLabelCache={};
   const root=document.getElementById('app');if(!skipOnboarding&&!state.settings.onboardingSeen){root.className='app onboard';root.innerHTML=onboardScreen();return}
   // v0.60: the daily card-reveal overlay (see refresh()/revealScreen())
   // fully replaces #app's content too, same shape as the detailItem
@@ -2621,6 +2700,13 @@ function render(){
   // below so a user who hasn't granted access yet still has somewhere to
   // go via the bottom tab bar instead of being fully stuck.
   if(state.tab==='settings'){html+=settings();html+=tabs();root.innerHTML=html;return}
-  const d=state.data||read();state.data=d;if(!d.permission){const permDeco=`<span class="permission-deco" style="left:10%;top:38%;animation-delay:0s">🐾</span><span class="permission-deco" style="right:12%;top:46%;animation-delay:.6s;font-size:16px">✨</span><span class="permission-deco" style="left:20%;top:55%;animation-delay:1.2s;font-size:18px">✨</span><span class="permission-deco" style="right:16%;top:62%;animation-delay:.3s">🐾</span><span class="permission-deco" style="left:12%;top:70%;animation-delay:.9s;font-size:16px">✨</span><span class="permission-deco" style="right:10%;top:77%;animation-delay:1.5s">🐾</span><span class="permission-deco" style="left:48%;top:84%;animation-delay:.4s;font-size:16px">✨</span>`;html+=permDeco+`<div class="permission"><h2>${l('모니가 사건을 조사하려면','MONIが事件を調べるには','To let MONI investigate')}</h2><p>${l('앱 사용 기록을 기기 안에서 분석하기 위한 사용정보 접근 권한이 필요합니다. 기록 내용은 서버로 보내지 않습니다.','端末内でアプリ利用記録を分析するため、使用状況へのアクセスが必要です。記録内容はサーバーへ送信しません。','Usage access is required to analyze app activity on-device. Your records are not sent to a server.')}</p><button class="primary" onclick="N&&N.openUsageSettings()">${l('사용정보 접근 허용','使用状況へのアクセスを許可','Allow usage access')}</button></div>`;html+=tabs();root.innerHTML=html;return}html+=state.tab==='cases'?cases(d):state.tab==='archive'?archive(d):records(d);html+=`<div class="foot">MONI · SMALL HABITS, BIG STORIES.</div>`;html+=tabs();root.innerHTML=html}
+  const d=state.data||read();state.data=d;if(!d.permission){const permDeco=`<span class="permission-deco" style="left:10%;top:38%;animation-delay:0s">🐾</span><span class="permission-deco" style="right:12%;top:46%;animation-delay:.6s;font-size:16px">✨</span><span class="permission-deco" style="left:20%;top:55%;animation-delay:1.2s;font-size:18px">✨</span><span class="permission-deco" style="right:16%;top:62%;animation-delay:.3s">🐾</span><span class="permission-deco" style="left:12%;top:70%;animation-delay:.9s;font-size:16px">✨</span><span class="permission-deco" style="right:10%;top:77%;animation-delay:1.5s">🐾</span><span class="permission-deco" style="left:48%;top:84%;animation-delay:.4s;font-size:16px">✨</span>`;html+=permDeco+`<div class="permission"><h2>${l('모니가 사건을 조사하려면','MONIが事件を調べるには','To let MONI investigate')}</h2><p>${l('앱 사용 기록을 기기 안에서 분석하기 위한 사용정보 접근 권한이 필요합니다. 기록 내용은 서버로 보내지 않습니다.','端末内でアプリ利用記録を分析するため、使用状況へのアクセスが必要です。記録内容はサーバーへ送信しません。','Usage access is required to analyze app activity on-device. Your records are not sent to a server.')}</p><button class="primary" onclick="N&&N.openUsageSettings()">${l('사용정보 접근 허용','使用状況へのアクセスを許可','Allow usage access')}</button></div>`;html+=tabs();root.innerHTML=html;return}
+  // v0.146 fix: read()'s genuine-failure state (N threw/returned bad JSON
+  // on a real device) -- distinct from both the permission screen above
+  // (user HAS permission; something else broke) and from a legitimately
+  // empty day (that's just cards:[], no `error` flag, handled normally by
+  // cases()/archive()/records() below).
+  if(d.error){html+=`<div class="permission"><h2>${l('오늘의 기록을 불러오지 못했습니다','本日の記録を読み込めませんでした','Couldn\'t load today\'s data')}</h2><p>${l('잠시 후 다시 시도해주세요.','しばらくしてから再度お試しください。','Please try again in a moment.')}</p><button class="primary" onclick="refresh()">${l('다시 시도','再試行','Retry')}</button></div>`;html+=tabs();root.innerHTML=html;return}
+  html+=state.tab==='cases'?cases(d):state.tab==='archive'?archive(d):records(d);html+=`<div class="foot">MONI · SMALL HABITS, BIG STORIES.</div>`;html+=tabs();root.innerHTML=html}
 restore();syncLanguageToNative();refresh();
 </script></body></html>

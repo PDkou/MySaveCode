@@ -2,6 +2,7 @@ package com.howling.openedagain.data
 
 import android.app.AppOpsManager
 import android.content.Context
+import com.howling.openedagain.appPrefs
 import com.howling.openedagain.core.DailyReportEngine
 import com.howling.openedagain.core.DailySummaryEngine
 import com.howling.openedagain.core.DailyUsageSummary
@@ -99,7 +100,7 @@ class IncidentAnalyzer(private val context: Context, private val history: Histor
     // automatically also the most complete picture.
     private fun rememberTodaysCard(report: DailyReport) {
         val rep = report.representative ?: return
-        context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).edit()
+        context.appPrefs().edit()
             .putString("todays_card_date", localDateKey())
             .putString("todays_card_type", rep.type.name)
             .putString("todays_card_rarity", rep.rarity.name)
@@ -118,8 +119,10 @@ class IncidentAnalyzer(private val context: Context, private val history: Histor
     // and what a user means by "today"), so the key is changed to match
     // the window instead of changing the window to match the key.
     // index.html's own todayKey()/weekRecap() must use the same local-date
-    // convention -- see that file's own v0.140 comment.
-    private fun localDateKey(): String = LocalDate.now().toString()
+    // convention -- see that file's own v0.140 comment. Public (via
+    // companion) so IncidentCheckWorker/DailyReminderReceiver share this
+    // single definition instead of each re-deriving LocalDate.now().toString().
+    private fun localDateKey(): String = Companion.localDateKey()
 
     private fun summaryToJson(s: DailyUsageSummary) = JSONObject().apply {
         put("startTime", s.startTime)
@@ -136,6 +139,8 @@ class IncidentAnalyzer(private val context: Context, private val history: Histor
     }
 
     companion object {
+        fun localDateKey(): String = LocalDate.now().toString()
+
         fun hasUsageAccess(context: Context): Boolean {
             val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
             val mode = appOps.unsafeCheckOpNoThrow(

@@ -8,7 +8,7 @@ import androidx.room.Entity
 // table. firstSeenAt is new (the old Set had no timestamp at all) and
 // isn't surfaced anywhere yet, but costs nothing to keep and is exactly
 // the kind of thing a future "언제 처음 발견했는지" stat would want --
-// HistoryDao.insertDiscoveryIfNew() ignores the insert on conflict so a
+// HistoryDao.insertDiscoveriesIfNew() ignores the insert on conflict so a
 // rediscovery never overwrites the original timestamp.
 @Entity(tableName = "discovery", primaryKeys = ["type", "rarity"])
 data class DiscoveryEntity(

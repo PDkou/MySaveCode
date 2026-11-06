@@ -308,7 +308,22 @@ class ShareCardRenderer(private val context: Context) {
             textSize = s(28f)
             color = pal.text
         }
-        drawTextTopLeft(c, stat, sx(CardLayout.INFO.left + 26f), sy(CardLayout.INFO.top + 26f), statPaint)
+        // v0.146: code-review finding -- this used to be a single
+        // drawTextTopLeft() call with no width check at all (unlike the
+        // title, which shrinks, and the quote right below, which wraps).
+        // Any incident whose detail(i) sentence is long enough ran straight
+        // off the panel's right edge. Give it the same wrapLines()
+        // treatment as the quote, and advance the quote's own start
+        // position by however many lines that actually took instead of a
+        // position baked in for exactly one line.
+        val statWrapWidth = s(CardLayout.INFO.width() - 52f)
+        val statLines = wrapLines(stat, statPaint, statWrapWidth)
+        val statLineHeight = s(32f)
+        var statY = sy(CardLayout.INFO.top + 26f)
+        for (line in statLines) {
+            drawTextTopLeft(c, line, sx(CardLayout.INFO.left + 26f), statY, statPaint)
+            statY += statLineHeight
+        }
 
         val quotePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             typeface = titleTypeface
@@ -317,7 +332,7 @@ class ShareCardRenderer(private val context: Context) {
         }
         val wrapWidth = s(CardLayout.INFO.width() - 52f)
         val quoteLines = wrapLines("“$quote”", quotePaint, wrapWidth)
-        var qy = sy(CardLayout.INFO.top + 68f)
+        var qy = statY + s(10f)
         val lineHeight = s(44f)
         for (line in quoteLines) {
             drawTextTopLeft(c, line, sx(CardLayout.INFO.left + 26f), qy, quotePaint)
@@ -338,17 +353,22 @@ class ShareCardRenderer(private val context: Context) {
         }
         c.drawPath(diamondPath, paint)
 
-        // 8. Case tag + logo, footer row inside the info panel. The case
-        // number is a fixed placeholder carried over unchanged from every
-        // confirmed mockup render (CASE #4821 on all 5 rarities) -- not a
-        // real per-share incident id; wiring a real one in is a follow-up,
-        // not part of this visual-design port.
+        // 8. Case tag + logo, footer row inside the info panel.
+        // v0.146: code-review finding -- this was a fixed "CASE #4821"
+        // placeholder carried over unchanged from every mockup render, so
+        // the shared PNG always contradicted the real number index.html's
+        // own card()/detailPage() just showed in-app (caseNo(i) there).
+        // caseNo() is a pure, deterministic function of the incident type
+        // string alone (sum of char codes * 17 mod 10000) -- no new data
+        // needs crossing the JS bridge, so this just ports that exact
+        // formula to recompute the same number natively from
+        // incident.type.name.
         val caseTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             typeface = sansBoldTypeface
             textSize = s(22f)
             color = pal.text
         }
-        val caseText = "CASE #4821"
+        val caseText = "CASE #${caseNo(incident.type.name)}"
         val caseTextWidth = caseTextPaint.measureText(caseText)
         val caseBox = RectF(
             sx(CardLayout.INFO.left + 46f), sy(CardLayout.INFO.bottom - 58f),
@@ -518,20 +538,64 @@ class ShareCardRenderer(private val context: Context) {
         canvas.drawText(text, x, yTop - paint.ascent(), paint)
     }
 
+    // v0.146: exact port of index.html's caseNo(i) -- `String(Math.abs((i.type
+    // ||'CASE').split('').reduce((a,c)=>a+c.charCodeAt(0),0)*17)%10000).
+    // padStart(4,'0')`. JS's charCodeAt(0) and Kotlin's Char.code both give
+    // the UTF-16 code unit, and every IncidentType name is plain ASCII, so
+    // this produces byte-identical output to the in-app JS version for the
+    // same type string.
+    private fun caseNo(type: String): String {
+        val sum = type.sumOf { it.code } * 17
+        return (sum % 10000).toString().padStart(4, '0')
+    }
+
+    // v0.146: code-review finding -- splitting on " " alone never wraps
+    // Japanese (no inter-word spaces), because the old `|| cur.isEmpty()`
+    // unconditionally accepted the very first "word" as a trial line no
+    // matter how wide it measured -- and for space-less text the whole
+    // string IS the first (and only) word. Falls back to breaking by
+    // character whenever a single word/line doesn't fit even on its own,
+    // which both fixes that case and is the typographically correct way to
+    // wrap CJK text (no inter-word spaces to break on in the first place).
     private fun wrapLines(text: String, paint: Paint, maxWidth: Float): List<String> {
         val words = text.split(" ")
         val lines = mutableListOf<String>()
         var cur = ""
         for (w in words) {
             val trial = if (cur.isEmpty()) w else "$cur $w"
-            if (paint.measureText(trial) <= maxWidth || cur.isEmpty()) {
+            if (paint.measureText(trial) <= maxWidth) {
                 cur = trial
-            } else {
+                continue
+            }
+            if (cur.isNotEmpty()) {
                 lines.add(cur)
                 cur = w
+            } else {
+                cur = w
+            }
+            if (paint.measureText(cur) > maxWidth) {
+                val broken = breakByChar(cur, paint, maxWidth)
+                lines.addAll(broken.dropLast(1))
+                cur = broken.last()
             }
         }
         if (cur.isNotEmpty()) lines.add(cur)
+        return lines
+    }
+
+    private fun breakByChar(text: String, paint: Paint, maxWidth: Float): List<String> {
+        val lines = mutableListOf<String>()
+        var cur = ""
+        for (ch in text) {
+            val trial = cur + ch
+            if (cur.isEmpty() || paint.measureText(trial) <= maxWidth) {
+                cur = trial
+            } else {
+                lines.add(cur)
+                cur = ch.toString()
+            }
+        }
+        lines.add(cur)
         return lines
     }
 
@@ -648,9 +712,14 @@ class ShareCardRenderer(private val context: Context) {
     // medallionAsset() above have relied on since before this file's own
     // v0.53 redesign -- no decoding logic changes needed here, only the
     // asset filename extensions.
-    private fun backgroundAsset(rarity: Rarity, opal: Boolean, format: Format): String {
+    private fun backgroundSizeSuffix(format: Format): Pair<String, String> {
         val size = if (format == Format.STORY) "1080x1920" else "1080x1080"
         val suffix = if (format == Format.STORY) "vertical" else "square"
+        return size to suffix
+    }
+
+    private fun backgroundAsset(rarity: Rarity, opal: Boolean, format: Format): String {
+        val (size, suffix) = backgroundSizeSuffix(format)
         val rarityName = when (rarity) {
             Rarity.NORMAL -> "normal"
             Rarity.RARE -> "rare"
@@ -662,8 +731,7 @@ class ShareCardRenderer(private val context: Context) {
     }
 
     private fun commonBackgroundAsset(format: Format): String {
-        val size = if (format == Format.STORY) "1080x1920" else "1080x1080"
-        val suffix = if (format == Format.STORY) "vertical" else "square"
+        val (size, suffix) = backgroundSizeSuffix(format)
         return "backgrounds/share/$size/bg_common_$suffix.webp"
     }
 

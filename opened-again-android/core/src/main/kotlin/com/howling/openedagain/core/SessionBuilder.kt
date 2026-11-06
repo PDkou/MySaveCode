@@ -76,6 +76,13 @@ class SessionBuilder(private val config: DetectionConfig = DetectionConfig()) {
             bucket = mutableListOf()
         }
 
+        // screenOffTimes is sorted (filtered from the already-sorted `sorted`
+        // list) and last.endTime only ever grows as v advances through
+        // `visits` (also sorted), so a single shared pointer -- advanced
+        // past entries older than the current lower bound and never
+        // rewound -- replaces the O(N*M) `any{}` rescan of the whole list
+        // on every visit.
+        var screenOffIdx = 0
         for (v in visits) {
             if (bucket.isEmpty()) {
                 bucket += v
@@ -83,7 +90,8 @@ class SessionBuilder(private val config: DetectionConfig = DetectionConfig()) {
             }
             val last = bucket.last()
             val gap = v.startTime - last.endTime
-            val screenOffBetween = screenOffTimes.any { it in last.endTime..v.startTime }
+            while (screenOffIdx < screenOffTimes.size && screenOffTimes[screenOffIdx] < last.endTime) screenOffIdx++
+            val screenOffBetween = screenOffIdx < screenOffTimes.size && screenOffTimes[screenOffIdx] <= v.startTime
             if (gap <= config.sessionGapMs && !screenOffBetween) bucket += v else {
                 flush(); bucket += v
             }

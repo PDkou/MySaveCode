@@ -6,7 +6,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import java.time.LocalDate
+import com.howling.openedagain.data.IncidentAnalyzer
 
 /**
  * Fires once a day (see ReminderScheduler) to nudge the user back into the
@@ -40,7 +40,7 @@ class DailyReminderReceiver : BroadcastReceiver() {
         // so a reminder fired while the app isn't running still matches
         // what the user actually sees in-app, not just the device's
         // system locale.
-        val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val prefs = context.appPrefs()
         val lang = prefs.getString("language", "ko")
         val title = if (lang == "ja") "また開いた？" else "또 열었네?"
         val body = todaysCardBody(prefs, lang) ?: genericBody(lang)
@@ -73,7 +73,7 @@ class DailyReminderReceiver : BroadcastReceiver() {
         // v0.140: must match IncidentAnalyzer.localDateKey() (local
         // calendar date, not UTC) -- see that function's own v0.140
         // comment for why.
-        val today = LocalDate.now().toString()
+        val today = IncidentAnalyzer.localDateKey()
         if (prefs.getString("todays_card_date", null) != today) return null
         val type = prefs.getString("todays_card_type", null) ?: return null
         val rarity = prefs.getString("todays_card_rarity", null) ?: return null

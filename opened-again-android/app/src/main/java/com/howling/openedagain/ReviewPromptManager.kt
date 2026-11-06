@@ -1,7 +1,6 @@
 package com.howling.openedagain
 
 import android.app.Activity
-import android.content.Context
 import com.google.android.play.core.review.ReviewManagerFactory
 
 /**
@@ -33,7 +32,7 @@ import com.google.android.play.core.review.ReviewManagerFactory
  * are meant to always work whenever tapped.
  */
 class ReviewPromptManager(private val activity: Activity) {
-    private val prefs get() = activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    private val prefs get() = activity.appPrefs()
     private val reviewManager = ReviewManagerFactory.create(activity)
 
     /** Whether index.html's auto-prompt sheet should still be offered after a LEGENDARY/HIDDEN discovery. */

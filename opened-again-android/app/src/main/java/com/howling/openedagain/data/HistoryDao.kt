@@ -26,8 +26,12 @@ interface HistoryDao {
     @Query("DELETE FROM day_history")
     fun clearDays()
 
+    // v0.146 fix: HistoryRepository.record() used to call a singular
+    // insertDiscoveryIfNew(DiscoveryEntity) once per incident in a loop,
+    // each a separate implicit transaction -- Room runs a List<Entity>
+    // @Insert as a single transaction instead.
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertDiscoveryIfNew(discovery: DiscoveryEntity)
+    fun insertDiscoveriesIfNew(discoveries: List<DiscoveryEntity>)
 
     @Query("SELECT * FROM discovery WHERE type = :type AND rarity = :rarity LIMIT 1")
     fun getDiscovery(type: String, rarity: String): DiscoveryEntity?

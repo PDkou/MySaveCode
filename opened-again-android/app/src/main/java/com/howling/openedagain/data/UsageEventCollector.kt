@@ -52,6 +52,10 @@ class UsageEventCollector(private val context: Context) {
         val e = UsageEvents.Event()
         val launcherPkg = defaultLauncherPackage()
         val systemAppCache = mutableMapOf<String, Boolean>()
+        // Loaded once per collect() call instead of re-reading both
+        // StringSets from SharedPreferences on every foreground/background
+        // event below -- see AppTrackingPrefs.isExcluded()'s Overrides overload.
+        val overrides = if (applyUserExcludes) AppTrackingPrefs.loadOverrides(context) else null
         while (events.hasNextEvent()) {
             events.getNextEvent(e)
             val type = when (e.eventType) {
@@ -64,8 +68,8 @@ class UsageEventCollector(private val context: Context) {
             } ?: continue
             if (type == EventType.FOREGROUND || type == EventType.BACKGROUND) {
                 if (e.packageName == launcherPkg) continue
-                if (applyUserExcludes && e.packageName != null &&
-                    AppTrackingPrefs.isExcluded(context, e.packageName, systemAppCache)) continue
+                if (overrides != null && e.packageName != null &&
+                    AppTrackingPrefs.isExcluded(overrides, context, e.packageName, systemAppCache)) continue
             }
             result += AppUsageEvent(e.packageName, type, e.timeStamp)
         }

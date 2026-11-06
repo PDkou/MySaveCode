@@ -37,7 +37,7 @@ class NativeBridge(
     // getRevealShownDate()/setRevealShownDate()) since it's a single small
     // flag, not "history" data structured enough to warrant its own Room
     // table the way days/discoveries now do (see HistoryRepository.kt).
-    private val prefs get() = activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    private val prefs get() = activity.appPrefs()
 
     // v0.72: the actual analysis pipeline moved to IncidentAnalyzer (see its
     // own header comment) so the new background IncidentCheckWorker can run
@@ -96,7 +96,7 @@ class NativeBridge(
     @JavascriptInterface
     fun openUsageSettings() {
         activity.runOnUiThread {
-            val lang = activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).getString("language", "ko")
+            val lang = prefs.getString("language", "ko")
             val appName = if (lang == "ja") "また開いた？" else "또 열었네?"
             val guide = if (lang == "ja")
                 "\"${appName}\"を探してオンにしてください（検索アイコンがあれば名前で検索も可能です）"
@@ -369,22 +369,32 @@ class NativeBridge(
         return JSONObject().put("type", hit.type).put("rarity", hit.rarity).toString()
     }
 
+    // v0.146: code-review finding -- this was the one JSON-parsing bridge
+    // method in the file with no runCatching guard (appLabel/getTrackedApps/
+    // debugIncidentCheckStatus/exportBackup all wrap their fallible calls).
+    // Every current JS call site (share()) only ever passes a real enum
+    // literal so this was latent, not reachable today, but malformed JSON
+    // or a stale/renamed enum name would otherwise throw uncaught on the
+    // bridge thread and crash the app instead of silently no-op'ing the way
+    // JS's own `try{N.shareIncident(...)}catch(e){}` wrapper implies.
     @JavascriptInterface
     fun shareIncident(incidentJson: String, title: String, punchline: String, detail: String, format: String, lang: String) {
-        val obj = JSONObject(incidentJson)
-        val incident = DetectedIncident(
-            type = IncidentType.valueOf(obj.getString("type")),
-            rarity = Rarity.valueOf(obj.getString("rarity")),
-            score = obj.optInt("score", 0),
-            startTime = obj.optLong("startTime", 0L),
-            endTime = obj.optLong("endTime", 0L),
-            primaryPackage = obj.optString("primaryPackage").takeIf { it.isNotBlank() && it != "null" }
-        )
-        val cardFormat = if (format.equals("story", true)) ShareCardRenderer.Format.STORY else ShareCardRenderer.Format.SQUARE
-        activity.runOnUiThread {
-            val renderer = ShareCardRenderer(activity)
-            val bitmap = renderer.render(incident, title, punchline, detail, cardFormat, lang)
-            renderer.saveAndShare(bitmap, activity.getString(R.string.share_chooser))
+        runCatching {
+            val obj = JSONObject(incidentJson)
+            val incident = DetectedIncident(
+                type = IncidentType.valueOf(obj.getString("type")),
+                rarity = Rarity.valueOf(obj.getString("rarity")),
+                score = obj.optInt("score", 0),
+                startTime = obj.optLong("startTime", 0L),
+                endTime = obj.optLong("endTime", 0L),
+                primaryPackage = obj.optString("primaryPackage").takeIf { it.isNotBlank() && it != "null" }
+            )
+            val cardFormat = if (format.equals("story", true)) ShareCardRenderer.Format.STORY else ShareCardRenderer.Format.SQUARE
+            activity.runOnUiThread {
+                val renderer = ShareCardRenderer(activity)
+                val bitmap = renderer.render(incident, title, punchline, detail, cardFormat, lang)
+                renderer.saveAndShare(bitmap, activity.getString(R.string.share_chooser))
+            }
         }
     }
 
@@ -397,10 +407,27 @@ class NativeBridge(
     // state.history cache alongside it, so both copies of "what has this
     // device found so far" are wiped together instead of drifting out of
     // sync.
+    // v0.146: code-review finding -- this used to leave two things behind
+    // after a "reset": (1) the daily reminder's AlarmManager alarm and
+    // IncidentCheckScheduler's WorkManager job stayed armed even though
+    // index.html's own settings re-init to dailyReminder:false on the next
+    // cold start (its localStorage copy is wiped too), so the UI reads
+    // "off" while native notifications kept firing; (2) "todays_card_date/
+    // type/rarity" (written by IncidentAnalyzer.rememberTodaysCard(), read
+    // by DailyReminderReceiver) were never cleared like their sibling
+    // "reveal_shown_date" flag right above, so a reset could leave a
+    // notification pointing at an incident the reset just deleted.
     @JavascriptInterface
     fun resetAllData() {
         history.reset()
-        prefs.edit().remove("reveal_shown_date").apply()
+        prefs.edit()
+            .remove("reveal_shown_date")
+            .remove("todays_card_date")
+            .remove("todays_card_type")
+            .remove("todays_card_rarity")
+            .apply()
+        ReminderScheduler.cancel(activity)
+        IncidentCheckScheduler.cancel(activity)
     }
 
     // v0.44: director feedback -- the home-tab back press should confirm
@@ -578,7 +605,7 @@ class NativeBridge(
     // that setting normally lives only in the WebView's own localStorage.
     @JavascriptInterface
     fun setLanguage(lang: String) {
-        activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE).edit().putString("language", lang).apply()
+        prefs.edit().putString("language", lang).apply()
     }
 
     // v0.51: director feedback -- "가장 오래 본 앱 이름이 앱이름으로 나왔으면
@@ -605,16 +632,16 @@ class NativeBridge(
     // analysis path.
     @JavascriptInterface
     fun getTrackedApps(): String {
-        val pm = activity.packageManager
         val systemAppCache = mutableMapOf<String, Boolean>()
+        val overrides = AppTrackingPrefs.loadOverrides(activity)
         val arr = JSONArray()
         analyzer.knownPackages().sorted().forEach { pkg ->
-            val label = runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
+            val label = appLabel(pkg).ifEmpty { pkg }
             arr.put(JSONObject().apply {
                 put("packageName", pkg)
                 put("label", label)
                 put("isSystem", AppTrackingPrefs.isSystemApp(activity, pkg, systemAppCache))
-                put("included", !AppTrackingPrefs.isExcluded(activity, pkg, systemAppCache))
+                put("included", !AppTrackingPrefs.isExcluded(overrides, activity, pkg, systemAppCache))
             })
         }
         return arr.toString()
