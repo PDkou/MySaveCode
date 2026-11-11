@@ -1,1 +1,1 @@
-"Opened Again?" is officially here! MONI investigates your smartphone habits every day like a detective and turns them into fun "incident cards" -- from NORMAL all the way up to legendary LEGENDARY, plus hidden HIDDEN cases. Collect a new card every day, save your favorites as an image to share with friends, and pick exactly which apps get tracked from Settings. Every bit of analysis stays on your device -- nothing is ever sent anywhere.
+Bug fix: "Leave a review" did nothing when tapped. It now takes you straight to the store page to leave a review.
