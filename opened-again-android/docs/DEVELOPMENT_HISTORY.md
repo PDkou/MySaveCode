@@ -5722,3 +5722,50 @@ versionCode가 반드시 증가해야 하므로, 이미 빌드됐던 146과 구�
 버전 147/1.0.0. 검증: `node --check`로 스크립트 블록 문법 확인 --
 순수 버전 문자열 변경이라 로직 자체에 대한 추가 검증은 필요 없음.
 커밋/푸시 후 릴리스(서명) 빌드 트리거.
+
+## v1.0.1 — 출시 전 정리 2건 (개인정보방침 초안 문구, 리뷰 버튼)
+
+**배경**: director가 프로덕션 신청 이후 다음 빌드에 반영할 두 가지를
+지적: (1) 설정의 개인정보처리방침 화면 맨 아래에 "이 화면은 코드
+동작 기준 초안이며 스토어 등록 전 검토가 필요합니다" 같은 개발용
+안내 문구가 그대로 실사용자에게 보이고 있었음 -- 릴리스 버전답게
+정리 필요. (2) "리뷰 남기기"(설정 행 / 앱종료 모달의 "⭐ 앱 평가하기"
+버튼 / LEGENDARY·HIDDEN 발견 후 자동 안내 시트)를 탭해도 아무
+팝업도 뜨지 않음 -- Google Play In-App Review API 자체의 알려진
+동작(자체 쿼터가 대부분의 요청을 조용히 건너뛰며, 앱 쪽에서는 그걸
+감지하거나 재시도할 방법이 없음)이라 코드 버그로 고칠 수 있는
+부분이 아니었음. director 의견: 그냥 스토어 페이지로 이동시켜서
+직접 남기게 하는 편이 낫겠다는 판단.
+
+**구현**:
+- `index.html`'s `openPrivacySheet()`: ko/ja/en 세 버전 모두에서
+  "최종 수정: ..." 뒤에 붙어있던 "이 화면은 초안이며 검토가
+  필요합니다" 류의 문구를 제거하고 날짜만 오늘(2026-11-11)로 갱신.
+  문의 이메일(`db5704@gmail.com`)은 개인정보처리방침에 실제로
+  필요한 연락처라 그대로 유지.
+- `ReviewPromptManager.kt`: Play In-App Review API
+  (`ReviewManagerFactory`/`requestReviewFlow`/`launchReviewFlow`)를
+  완전히 걷어내고, 패키지명으로 `market://details?id=...` 인텐트를
+  직접 여는 `openStoreListing()`으로 교체(Play 스토어 앱이 없으면
+  `https://play.google.com/store/apps/details?id=...` 웹 링크로
+  폴백). `shouldShowAutoPrompt()`/`setAutoPromptOptedOut()`(LEGENDARY/
+  HIDDEN 발견 후 앱 자체 확인 시트를 또 보여줄지 여부)는 그대로 둠 --
+  director가 지적한 건 "탭했을 때 실제로 일어나는 일"이지, 그 전의
+  확인 시트 UX 자체가 아니었음.
+- `NativeBridge.kt`'s `requestReviewManual()`: `reviewPromptManager.
+  requestReviewNow{}` 호출을 `reviewPromptManager.openStoreListing()`
+  로 교체. 세 호출부(설정 행/앱종료 모달/자동 확인 시트의 확인 버튼)
+  모두 JS 쪽 함수명(`requestReviewManual()`)은 그대로라 index.html
+  변경 없이 네이티브 구현만 바뀜.
+- `app/build.gradle.kts`: 더 이상 쓰지 않는
+  `com.google.android.play:review-ktx` 의존성 제거.
+
+버전 148/1.0.1. 검증: Playwright로 `requestReviewManual()` 호출 시
+네이티브 브리지가 (목으로) 정상 호출되는 것과, 개인정보처리방침
+시트 텍스트에 "검토가 필요"/"초안" 문구가 더 이상 없고 "최종 수정"
+날짜가 갱신된 것을 확인. `node --check`로 스크립트 블록 문법 확인.
+네이티브 Kotlin 변경(ReviewPromptManager/NativeBridge)은 이 샌드박스에
+Android SDK가 없어 로컬 컴파일/실기기 확인 둘 다 불가능 -- diff를
+직접 다시 읽으며 타입/시그니처 확인, `market://` 인텐트가 실제
+Play 스토어 앱으로 연결되는지는 director 쪽 실기기 확인이 필요함.
+커밋/푸시 후 CI(디버그) + 릴리스(서명) 빌드 모두 트리거.

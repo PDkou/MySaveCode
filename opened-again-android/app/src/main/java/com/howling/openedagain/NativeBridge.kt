@@ -588,14 +588,16 @@ class NativeBridge(
         reviewPromptManager.setAutoPromptOptedOut()
     }
 
-    // v0.117/v0.118: manual trigger that actually launches Play's review
-    // flow -- called from the auto-prompt sheet's own confirm button, the
-    // "리뷰 남기기" row in Settings, and the exit-confirm modal's "⭐ 앱
-    // 평가하기" button alike. Always runs when tapped; none of those three
-    // call sites gate it any further themselves.
+    // v0.117/v0.118: manual trigger -- called from the auto-prompt sheet's
+    // own confirm button, the "리뷰 남기기" row in Settings, and the
+    // exit-confirm modal's "⭐ 앱 평가하기" button alike. Always runs when
+    // tapped; none of those three call sites gate it any further themselves.
+    // v0.147: director reported Play's In-App Review API never actually
+    // showed its popup -- see ReviewPromptManager's own v0.147 comment.
+    // Opens the Play Store listing directly instead, which always works.
     @JavascriptInterface
     fun requestReviewManual() {
-        activity.runOnUiThread { reviewPromptManager.requestReviewNow {} }
+        activity.runOnUiThread { reviewPromptManager.openStoreListing() }
     }
 
     // v0.47: mirrors index.html's state.settings.language into a small
