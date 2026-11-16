@@ -150,7 +150,18 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
    than at spaces. word-break:keep-all is the standard fix for Korean/
    Japanese text specifically -- breaks only where there's an actual word
    boundary (spaces), never splitting a word like 찾았어요 apart. */
-.hero h2{margin:0;font-size:21px;letter-spacing:-.8px;word-break:keep-all}.hero p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.55;max-width:310px;word-break:keep-all}
+.hero h2{margin:0;font-size:21px;letter-spacing:-.8px;word-break:keep-all;overflow-wrap:anywhere}.hero p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.55;max-width:310px;word-break:keep-all;overflow-wrap:anywhere}
+/* v0.148: found while fixing the hero-moni clipping bug above -- Chromium's
+   word-break:keep-all treats a Latin+CJK run with no space as ONE
+   unbreakable chunk (several HERO_QUIP_POOL lines start with the Latin
+   "MONI" directly followed by Japanese, e.g. "MONIの本日の報告書が届きま
+   した。"), so it never wrapped at all and silently overflowed its own box
+   instead (h2.scrollWidth 311 vs. its actual 224px box, confirmed via a
+   forced render) -- which is exactly what let it visually run into/behind
+   hero-moni above once that box was correctly narrowed. overflow-wrap:
+   anywhere is a pure fallback: it only forces a break when keep-all's own
+   wrapping still leaves a chunk wider than the box, so every other title
+   that already wrapped fine keeps wrapping exactly the same way. */
 /* v0.49: director feedback -- "홈화면에 사용한 시간의 비율이 이상함."
    4 equal-width columns worked for opens/unlocks/cases (1-2 digit
    numbers) but the usage-time cell's actual content (`fmtMs()`, e.g.
@@ -648,7 +659,19 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .hero.hero-day{background-image:linear-gradient(90deg,rgba(255,249,240,.88),rgba(255,249,240,.58)),url('visual/backgrounds/bg_room_day.webp');background-size:cover;background-position:center}
 .hero.hero-dusk{background-image:linear-gradient(90deg,rgba(255,249,240,.88),rgba(255,249,240,.58)),url('visual/backgrounds/bg_room_night.webp');background-size:cover;background-position:center}
 .hero.hero-night{background-image:linear-gradient(90deg,rgba(255,249,240,.88),rgba(255,249,240,.58)),url('visual/backgrounds/bg_city_night.webp');background-size:cover;background-position:center}
-.hero .hero-moni{width:120px;height:108px;object-fit:contain;border-radius:0;background:transparent;cursor:pointer}
+.hero .hero-moni{width:120px;height:108px;object-fit:contain;border-radius:0;background:transparent;cursor:pointer;flex-shrink:0}
+/* v0.148: director-reported bug -- MONI got visibly clipped on the right
+   edge of the hero card on a real device (long greeting text, e.g. "MONIの
+   本日の報告書が届きました。"). Flex items default to min-width:auto, so
+   this unconstrained text <div> (hero's first child) refused to shrink
+   below its own longest unbroken line's width, squeezing hero-moni's own
+   box past the hero's right edge instead -- overflow:hidden on .hero then
+   clipped whatever didn't fit, cutting MONI's own image mid-body instead
+   of the image staying full-size and the text wrapping around it. Giving
+   the text column min-width:0 (letting flexbox actually shrink/wrap it)
+   plus hero-moni's own flex-shrink:0 above (so MONI never gets squeezed
+   smaller than its real 120x108 box either) fixes both sides of the fight. */
+.hero>div:first-child{min-width:0;flex:1 1 0}
 .scene{background-size:cover!important;background-position:center!important}
 /* v0.41: EPIC/LEGENDARY holofoil canvas overlay -- see createCardHolo() JS
    comment for the full story.
@@ -795,7 +818,7 @@ const sheetCloseButton=()=>`<button class="sheet-close" onclick="closeOverlay()"
 // with app/build.gradle.kts's versionName by hand (no bridge call exposes
 // it to JS, see settings()'s own longstanding comment), but at least isn't
 // duplicated a second time within this file anymore.
-const APP_VERSION='1.0.1';
+const APP_VERSION='1.0.2';
 // v0.63: director asked for a general pass over what else needs fixing --
 // docs/OPEN_ISSUES_AND_NEXT.md had flagged since early on that the backup
 // JSON (save()'s localStorage/native copy, and exportBackupData()'s
