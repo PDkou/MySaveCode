@@ -368,7 +368,12 @@ class ShareCardRenderer(private val context: Context) {
             textSize = s(22f)
             color = pal.text
         }
-        val caseText = "CASE #${caseNo(incident.type.name)}"
+        // v0.149: CHRISTMAS_SPECIAL gets a fixed "XMAS" case tag instead of
+        // the usual hashed number -- it's a one-off seasonal card, not a
+        // detected pattern, so a real-looking CASE# would be misleading.
+        // index.html's own caseNo(i) must special-case it the same way.
+        val caseText = if (incident.type == IncidentType.CHRISTMAS_SPECIAL) "CASE #XMAS"
+            else "CASE #${caseNo(incident.type.name)}"
         val caseTextWidth = caseTextPaint.measureText(caseText)
         val caseBox = RectF(
             sx(CardLayout.INFO.left + 46f), sy(CardLayout.INFO.bottom - 58f),
@@ -696,6 +701,7 @@ class ShareCardRenderer(private val context: Context) {
         Rarity.EPIC -> "brand/rarity_symbols/rarity_epic.webp"
         Rarity.LEGENDARY -> "brand/rarity_symbols/rarity_legendary.webp"
         Rarity.HIDDEN -> null
+        Rarity.SPECIAL -> "brand/rarity_symbols/rarity_special.webp"
     }
 
     // backgrounds/share/<size>/bg_<rarity>_<square|vertical>.webp -- the
@@ -726,6 +732,7 @@ class ShareCardRenderer(private val context: Context) {
             Rarity.EPIC -> "epic"
             Rarity.LEGENDARY -> "legendary"
             Rarity.HIDDEN -> if (opal) "hidden_01" else "hidden_02"
+            Rarity.SPECIAL -> "special"
         }
         return "backgrounds/share/$size/bg_${rarityName}_$suffix.webp"
     }
@@ -780,6 +787,7 @@ class ShareCardRenderer(private val context: Context) {
         IncidentType.DAWN_SURVIVOR -> "incidents/card_ready/incident_dawn_survivor.webp"
         IncidentType.HIDDEN_LOOP -> "incidents/card_ready/incident_hidden_loop.webp"
         IncidentType.HIDDEN_NIGHT_ACTIVITY -> "incidents/card_ready/incident_hidden_night_activity.webp"
+        IncidentType.CHRISTMAS_SPECIAL -> "incidents/card_ready/incident_christmas_special.webp"
     }
 
     // -- generic bitmap helpers ---------------------------------------------

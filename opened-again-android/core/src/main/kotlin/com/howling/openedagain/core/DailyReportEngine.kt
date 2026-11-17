@@ -28,5 +28,6 @@ class DailyReportEngine {
         Rarity.EPIC -> 3
         Rarity.LEGENDARY -> 4
         Rarity.HIDDEN -> 5
+        Rarity.SPECIAL -> 6
     }
 }

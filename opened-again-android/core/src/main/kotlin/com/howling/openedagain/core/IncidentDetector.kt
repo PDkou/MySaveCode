@@ -291,6 +291,12 @@ class IncidentDetector(
         Rarity.EPIC -> 60
         Rarity.LEGENDARY -> 100
         Rarity.HIDDEN -> 200
+        // v0.149: never actually produced by this detector (see
+        // IncidentType.CHRISTMAS_SPECIAL's own comment) -- IncidentAnalyzer
+        // assigns CHRISTMAS_SPECIAL's score directly instead of calling
+        // incident()/baseScore() here. Branch only exists to keep this
+        // `when` exhaustive now that Rarity has a SPECIAL case.
+        Rarity.SPECIAL -> 300
     }
 
     private fun resolve(input: List<DetectedIncident>): List<DetectedIncident> {

@@ -7,7 +7,10 @@ import com.howling.openedagain.core.DailyReportEngine
 import com.howling.openedagain.core.DailySummaryEngine
 import com.howling.openedagain.core.DailyUsageSummary
 import com.howling.openedagain.core.DailyReport
+import com.howling.openedagain.core.DetectedIncident
 import com.howling.openedagain.core.IncidentDetector
+import com.howling.openedagain.core.IncidentType
+import com.howling.openedagain.core.Rarity
 import com.howling.openedagain.core.SessionBuilder
 import com.howling.openedagain.core.UsageSession
 import org.json.JSONArray
@@ -41,7 +44,7 @@ class IncidentAnalyzer(private val context: Context, private val history: Histor
         val end = System.currentTimeMillis()
         val raw = UsageEventCollector(context).collect(start, end)
         val sessions = SessionBuilder().build(raw, nowMs = end)
-        val incidents = IncidentDetector(zoneId = zone).detectDay(sessions)
+        val incidents = IncidentDetector(zoneId = zone).detectDay(sessions) + listOfNotNull(christmasSpecialIncident(zone))
         history.record(incidents)
         val report = DailyReportEngine().build(incidents)
         val summary = DailySummaryEngine(zone).build(sessions)
@@ -49,6 +52,30 @@ class IncidentAnalyzer(private val context: Context, private val history: Histor
         history.recordDay(localDateKey(), summaryJson, report.totalIncidents, report.hiddenCount, report.legendaryCount)
         rememberTodaysCard(report)
         return Result(report, summary, summaryJson)
+    }
+
+    // v0.149: director-requested seasonal event card -- granted purely by
+    // calendar date (Dec 24-25 local time), not detected from any usage
+    // pattern, so it lives here rather than inside IncidentDetector.
+    // detectDay() (core's own unit tests call that directly and would
+    // otherwise flake on exactly those two dates each year -- see
+    // IncidentType.CHRISTMAS_SPECIAL's own comment). Re-evaluated fresh on
+    // every analyzeToday() call like everything else here, so it simply
+    // stops appearing once the date window passes; no persisted "already
+    // granted" flag needed since there's nothing to grant more than once a
+    // day -- HistoryRepository's own (type, rarity) conflict-ignore already
+    // keeps its firstSeenAt from being overwritten on a later day.
+    private fun christmasSpecialIncident(zone: ZoneId): DetectedIncident? {
+        val today = LocalDate.now(zone)
+        if (today.monthValue != 12 || today.dayOfMonth !in 24..25) return null
+        val dayStartMs = today.atStartOfDay(zone).toInstant().toEpochMilli()
+        return DetectedIncident(
+            type = IncidentType.CHRISTMAS_SPECIAL,
+            rarity = Rarity.SPECIAL,
+            score = 300,
+            startTime = dayStartMs,
+            endTime = dayStartMs
+        )
     }
 
     // v0.86: director report -- deliberately repeating an alternating-two-app

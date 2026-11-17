@@ -82,6 +82,18 @@ object CardStyle {
             text = Color.rgb(220, 245, 250), panel = Color.rgb(10, 30, 48),
             medalFix = 1.0f, fx = 0, chipTextColor = Color.rgb(6, 28, 34)
         )
+        // v0.149: director-requested Christmas seasonal card (Dec 24-25,
+        // see IncidentAnalyzer.christmasSpecialIncident()) -- a deep
+        // crimson/forest-green pairing instead of any existing rarity's
+        // tone, same top-tier sparkle level (fx=2) as LEGENDARY. medalFix
+        // is a placeholder 1.0f until the real medallion art
+        // (cards/medallions/special.webp) exists to check against (see
+        // this class's own doc comment on what medalFix corrects for).
+        Rarity.SPECIAL -> TcgPalette(
+            border = Color.rgb(200, 30, 40), glow = Color.rgb(255, 120, 130),
+            text = Color.rgb(25, 70, 35), panel = Color.rgb(255, 248, 235),
+            medalFix = 1.0f, fx = 2, chipTextColor = Color.rgb(255, 255, 255)
+        )
     }
 
     /** Null for NORMAL/RARE -- those keep the plain flat [TcgPalette.text] ink color. */
@@ -103,6 +115,15 @@ object CardStyle {
                 Color.rgb(210, 110, 235)
             ),
             outline = Color.rgb(3, 14, 20), glow = Color.rgb(210, 210, 250), vertical = false
+        )
+        Rarity.SPECIAL -> FoilTitleStyle(
+            // Red-to-green Christmas sweep with a warm gold glow (ornament
+            // sparkle), vertical like EPIC/LEGENDARY -- SPECIAL's panel is
+            // light (see tcgPalette() above), so a horizontal sweep would
+            // risk the same light-background legibility issue those two
+            // already avoid by going vertical.
+            colors = intArrayOf(Color.rgb(200, 30, 40), Color.rgb(20, 110, 60)),
+            outline = Color.rgb(20, 40, 20), glow = Color.rgb(255, 215, 120), vertical = true
         )
         else -> null
     }

@@ -21,7 +21,12 @@ data class UsageSession(
     val durationMs: Long get() = (endTime - startTime).coerceAtLeast(0)
 }
 
-enum class Rarity { NORMAL, RARE, EPIC, LEGENDARY, HIDDEN }
+// v0.149: SPECIAL appended at the end on purpose -- Rarity is a plain enum
+// (no custom ordinal), and DetectorRegression.kt's `it.rarity >= Rarity.EPIC`
+// relies on declaration order for comparison. Appending keeps every
+// existing rarity's ordinal (and so every existing >=/< comparison)
+// unchanged; inserting it anywhere else would silently shift them.
+enum class Rarity { NORMAL, RARE, EPIC, LEGENDARY, HIDDEN, SPECIAL }
 
 enum class IncidentType {
     QUICK_EXIT,
@@ -37,7 +42,15 @@ enum class IncidentType {
     DIGITAL_LOST,
     DAWN_SURVIVOR,
     HIDDEN_LOOP,
-    HIDDEN_NIGHT_ACTIVITY
+    HIDDEN_NIGHT_ACTIVITY,
+    // v0.149: director-requested seasonal event card -- always Rarity.SPECIAL,
+    // granted by calendar date (Dec 24-25) rather than detected from usage
+    // patterns. See IncidentAnalyzer.christmasSpecialIncident() for why that
+    // lives in the app module instead of here: IncidentDetector.detectDay()
+    // is exercised by core's own wall-clock-independent unit tests
+    // (DetectorRegression.kt/DetectorSmoke.kt), and a date-gated incident
+    // injected there would make those tests flaky around Dec 24-25.
+    CHRISTMAS_SPECIAL
 }
 
 data class DetectedIncident(

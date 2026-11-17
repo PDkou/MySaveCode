@@ -249,6 +249,7 @@ body{background:radial-gradient(circle at 12% 4%,#fff9f1 0 14%,transparent 30%),
 .case-row .rarity{flex-shrink:0}
 .normal{--border:var(--normal);--badgeText:#393939;--glow:linear-gradient(120deg,#fff,#ececec);--scene:linear-gradient(160deg,#f9f9f9,#ececec)}.rare{--border:var(--rare);--glow:linear-gradient(120deg,#C9EAFF,#F7FBFF);--scene:linear-gradient(160deg,#E8F6FF,#CDEAFF)}.epic{--border:var(--epic);--glow:linear-gradient(120deg,#E6D1FF,#FFDCFB);--scene:linear-gradient(160deg,#302557,#6C478F)}.legendary{--border:var(--legend);--badgeText:#5E4300;--glow:linear-gradient(120deg,#FFE697,#FFF6C7);--scene:radial-gradient(circle at 50% 28%,#FFF9C6,#F2C43E 65%,#B47913)}
 .hidden{--border:#0AB6D4;--glow:linear-gradient(135deg,#031923,#0A4C67);--scene:radial-gradient(circle at 50% 30%,#104F68,#061A26 75%);background:#071C29;color:#E9FBFF;box-shadow:0 16px 38px rgba(0,31,45,.28)}.hidden.opal{--border:#DDE8FF;--badgeText:#342D46;--glow:linear-gradient(135deg,#FFE9F7,#DFF8FF,#EEE0FF,#FFF6C6);--scene:linear-gradient(145deg,#271E57,#453A84 45%,#B963B6);background:#FBF8FF;color:#342D46}.hidden .detail,.hidden .case-id{color:#B9DFE8}.hidden.opal .detail,.hidden.opal .case-id{color:#675E7E}.hidden .share{color:#E9FBFF;border-color:#23647A;background:#0A2938}.hidden.opal .share{color:#4B4161;background:rgba(255,255,255,.76);border-color:#D8CDE8}
+.special{--border:#C81E28;--glow:linear-gradient(135deg,#C81E28,#146E3C);--scene:radial-gradient(circle at 50% 30%,#2A5C3A,#7A1B22 75%);background:#FFF8EB;color:#194623;box-shadow:0 16px 38px rgba(200,30,40,.28)}.special .detail,.special .case-id{color:#5C3A1E}.special .share{color:#FFF8EB;border-color:#146E3C;background:#C81E28}
 .featured{transform:translateZ(0)}.featured .card-body{grid-template-columns:1fr 1fr}.featured .scene{min-height:155px}.featured .scene img{width:135px;height:135px}
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .stat{position:relative;background:white;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 5px 14px rgba(70,50,35,.04);overflow:hidden}
@@ -895,10 +896,10 @@ function computeStreak(){
 // shape instead of {settings,history} together.
 function save(){const payload={schemaVersion:BACKUP_SCHEMA_VERSION,settings:state.settings};localStorage.setItem('opened_again_state',JSON.stringify(payload))}
 function restore(){const raw=localStorage.getItem('opened_again_state');if(raw){try{const x=JSON.parse(raw);Object.assign(state.settings,x.settings||{})}catch(e){}}}
-const RARITY_RANK={NORMAL:0,RARE:1,EPIC:2,LEGENDARY:3,HIDDEN:4};
+const RARITY_RANK={NORMAL:0,RARE:1,EPIC:2,LEGENDARY:3,HIDDEN:4,SPECIAL:5};
 function bestRarity(list){return list.slice().sort((a,b)=>(RARITY_RANK[b]??0)-(RARITY_RANK[a]??0))[0]}
-const names={QUICK_EXIT:['5초컷','5秒撤退','5-second exit'],REENTRY:['재입장 사건','出戻り事件','Re-entry'],REGULAR:['단골손님','常連客','Regular'],RETURN_TO_START:['원점 회귀','振り出しに戻る','Back to start'],PATROL:['목적불명 순찰','目的地不明','Aimless patrol'],ESCAPE_FAILED:['탈출 실패','脱出失敗','Escape failed'],FIRST_CONTACT:['오늘의 첫 상대','本日の第一声','First contact'],NIGHT_PATROL:['심야 순찰','深夜巡回','Night patrol'],APP_WANDERING:['앱 방황','アプリ徘徊','App wandering'],HUNDRED_VISITS:['100회 방문','100回訪問','100 visits'],DIGITAL_LOST:['디지털 미아','デジタル迷子','Digital lost'],DAWN_SURVIVOR:['새벽 생존자','夜明けの生存者','Dawn survivor'],HIDDEN_LOOP:['무한루프','無限ループ','Infinite loop'],HIDDEN_NIGHT_ACTIVITY:['미확인 야간 활동','未確認夜間活動','Unidentified night activity']};
-const punch={QUICK_EXIT:['무엇을 확인했는지는 알 수 없습니다.','何を確認したのかは不明です。','What you checked remains unknown.'],REENTRY:['방금 나온 곳 맞습니다.','さっき出たばかりです。','You were just here.'],REGULAR:['직원보다 자주 방문하고 있습니다.','店員より頻繁に来ています。','You visit more often than the staff.'],RETURN_TO_START:['결국 처음으로 돌아왔습니다.','最終的に元の場所へ戻りました。','You eventually returned to the beginning.'],PATROL:['목적지는 확인되지 않았습니다.','目的地は確認できませんでした。','No destination was confirmed.'],ESCAPE_FAILED:['탈출 시도는 실패했습니다.','脱出には失敗しました。','The escape attempt failed.'],FIRST_CONTACT:['오늘의 첫 인사를 휴대폰과 나눴습니다.','今日最初の挨拶はスマホでした。','Your first hello went to your phone.'],NIGHT_PATROL:['수면과의 접촉은 확인되지 않았습니다.','睡眠との接触は確認されていません。','No contact with sleep was confirmed.'],APP_WANDERING:['이동은 많았지만 목적은 확인되지 않았습니다.','移動は多いものの目的は不明です。','Lots of movement. Purpose unknown.'],HUNDRED_VISITS:['별도의 출입증 발급을 검토하십시오.','専用の入館証をご検討ください。','Consider applying for a permanent pass.'],DIGITAL_LOST:['본인의 목적을 찾지 못한 채 종료되었습니다.','目的を見つけられないまま終了しました。','The session ended without finding its purpose.'],DAWN_SURVIVOR:['아직도 깨어 있는 것으로 확인되었습니다.','まだ起きていることを確認しました。','You were confirmed to still be awake.'],HIDDEN_LOOP:['출구는 존재했던 것으로 추정됩니다.','出口は存在していたものと推定されます。','An exit is believed to have existed.'],HIDDEN_NIGHT_ACTIVITY:['무엇을 확인하고 있었는지는 불명입니다.','何を確認していたのかは不明です。','What was being checked remains unknown.']};
+const names={QUICK_EXIT:['5초컷','5秒撤退','5-second exit'],REENTRY:['재입장 사건','出戻り事件','Re-entry'],REGULAR:['단골손님','常連客','Regular'],RETURN_TO_START:['원점 회귀','振り出しに戻る','Back to start'],PATROL:['목적불명 순찰','目的地不明','Aimless patrol'],ESCAPE_FAILED:['탈출 실패','脱出失敗','Escape failed'],FIRST_CONTACT:['오늘의 첫 상대','本日の第一声','First contact'],NIGHT_PATROL:['심야 순찰','深夜巡回','Night patrol'],APP_WANDERING:['앱 방황','アプリ徘徊','App wandering'],HUNDRED_VISITS:['100회 방문','100回訪問','100 visits'],DIGITAL_LOST:['디지털 미아','デジタル迷子','Digital lost'],DAWN_SURVIVOR:['새벽 생존자','夜明けの生存者','Dawn survivor'],HIDDEN_LOOP:['무한루프','無限ループ','Infinite loop'],HIDDEN_NIGHT_ACTIVITY:['미확인 야간 활동','未確認夜間活動','Unidentified night activity'],CHRISTMAS_SPECIAL:['크리스마스 특별 수사','クリスマス特別捜査','Christmas Special Case']};
+const punch={QUICK_EXIT:['무엇을 확인했는지는 알 수 없습니다.','何を確認したのかは不明です。','What you checked remains unknown.'],REENTRY:['방금 나온 곳 맞습니다.','さっき出たばかりです。','You were just here.'],REGULAR:['직원보다 자주 방문하고 있습니다.','店員より頻繁に来ています。','You visit more often than the staff.'],RETURN_TO_START:['결국 처음으로 돌아왔습니다.','最終的に元の場所へ戻りました。','You eventually returned to the beginning.'],PATROL:['목적지는 확인되지 않았습니다.','目的地は確認できませんでした。','No destination was confirmed.'],ESCAPE_FAILED:['탈출 시도는 실패했습니다.','脱出には失敗しました。','The escape attempt failed.'],FIRST_CONTACT:['오늘의 첫 인사를 휴대폰과 나눴습니다.','今日最初の挨拶はスマホでした。','Your first hello went to your phone.'],NIGHT_PATROL:['수면과의 접촉은 확인되지 않았습니다.','睡眠との接触は確認されていません。','No contact with sleep was confirmed.'],APP_WANDERING:['이동은 많았지만 목적은 확인되지 않았습니다.','移動は多いものの目的は不明です。','Lots of movement. Purpose unknown.'],HUNDRED_VISITS:['별도의 출입증 발급을 검토하십시오.','専用の入館証をご検討ください。','Consider applying for a permanent pass.'],DIGITAL_LOST:['본인의 목적을 찾지 못한 채 종료되었습니다.','目的を見つけられないまま終了しました。','The session ended without finding its purpose.'],DAWN_SURVIVOR:['아직도 깨어 있는 것으로 확인되었습니다.','まだ起きていることを確認しました。','You were confirmed to still be awake.'],HIDDEN_LOOP:['출구는 존재했던 것으로 추정됩니다.','出口は存在していたものと推定されます。','An exit is believed to have existed.'],HIDDEN_NIGHT_ACTIVITY:['무엇을 확인하고 있었는지는 불명입니다.','何を確認していたのかは不明です。','What was being checked remains unknown.'],CHRISTMAS_SPECIAL:['산타의 흔적을 발견했다냥!','サンタの痕跡を発見したニャ！','Found traces of Santa, nyan!']};
 function txt(map,type){const a=map[type]||[type,type,type];return state.settings.language==='ko'?a[0]:state.settings.language==='ja'?a[1]:a[2]}
 function fmtMs(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);return h?`${h}${l('시간','時間','h')} ${m}${l('분','分','m')}`:`${m}${l('분','分','m')}`}
 // v0.51: director feedback -- this used to just show the package name's
@@ -997,6 +998,8 @@ function detail(i){
     case'HIDDEN_NIGHT_ACTIVITY':
       return top?l(`심야에 '${top}' 앱 등을 ${m.unlockSessions||0}번 짧게 확인했어요 (총 ${fmtDurShort(m.totalUsageMs)})`,`深夜に「${top}」などを${m.unlockSessions||0}回、短く確認しました(計${fmtDurShort(m.totalUsageMs)})`,`Checked apps like ${top} briefly ${m.unlockSessions||0} times at night (${fmtDurShort(m.totalUsageMs)} total)`)
         :l(`심야 짧은 접속 ${m.unlockSessions||0}회`,`深夜の短い接続 ${m.unlockSessions||0}回`,`${m.unlockSessions||0} short night checks`);
+    case'CHRISTMAS_SPECIAL':
+      return l('산타클로스가 다녀간 흔적이 스마트폰 곳곳에서 발견되었어요','サンタクロースが訪れた痕跡がスマホの至る所で見つかりました','Traces of Santa\'s visit were found all over your phone');
     default:return l('오늘의 사용 기록에서 발견되었습니다.','本日の利用記録から発見されました。','Found in today\'s usage record.')
   }
 }
@@ -1233,7 +1236,7 @@ function rarityClass(i){if(i.rarity!=='HIDDEN')return i.rarity.toLowerCase();ret
 // is the dark ANOMALY symbol, hidden_02 the pale OPAL one) -- this is the
 // OPPOSITE direction from ShareCardRenderer.kt's share-BACKGROUND pack,
 // which is its own separate asset family; never assume the two agree.
-function rarityBadge(i){const map={NORMAL:'rarity_normal.webp',RARE:'rarity_rare.webp',EPIC:'rarity_epic.webp',LEGENDARY:'rarity_legendary.webp'};const opal=isOpalHidden(i);const sym=i.rarity==='HIDDEN'?(opal?'rarity_hidden_02.webp':'rarity_hidden_01.webp'):map[i.rarity];const label=i.rarity==='HIDDEN'?(opal?'HIDDEN 02':'HIDDEN 01'):i.rarity;return `<span class="rarity"><img class="rarity-symbol" src="visual/brand/rarity_symbols/${sym}" alt="">${esc(label)}</span>`}
+function rarityBadge(i){const map={NORMAL:'rarity_normal.webp',RARE:'rarity_rare.webp',EPIC:'rarity_epic.webp',LEGENDARY:'rarity_legendary.webp',SPECIAL:'rarity_special.webp'};const opal=isOpalHidden(i);const sym=i.rarity==='HIDDEN'?(opal?'rarity_hidden_02.webp':'rarity_hidden_01.webp'):map[i.rarity];const label=i.rarity==='HIDDEN'?(opal?'HIDDEN 02':'HIDDEN 01'):i.rarity;return `<span class="rarity"><img class="rarity-symbol" src="visual/brand/rarity_symbols/${sym}" alt="">${esc(label)}</span>`}
 // v0.25: "사건 카드 배경이 단조롭다"는 지적을 받고, 카드 왼쪽(텍스트 영역)이
 // 등급별 플랫 그라데이션 틴트(`--glow`)뿐이라 밋밋해 보이던 것에 낮은
 // 불투명도의 등급별 배경 무늬를 얹음. 새 이미지를 따로 만들지 않고 v0.22의
@@ -1289,7 +1292,8 @@ function incidentVisual(type){const map={
  DIGITAL_LOST:['visual/incidents/card_ready/incident_digital_lost.webp','visual/backgrounds/bg_city_night.webp','scene'],
  DAWN_SURVIVOR:['visual/incidents/card_ready/incident_dawn_survivor.webp','visual/backgrounds/bg_room_night.webp','scene'],
  HIDDEN_LOOP:['visual/incidents/card_ready/incident_hidden_loop.webp','visual/backgrounds/bg_city_night.webp','scene'],
- HIDDEN_NIGHT_ACTIVITY:['visual/incidents/card_ready/incident_hidden_night_activity.webp','visual/backgrounds/bg_room_night.webp','scene']};
+ HIDDEN_NIGHT_ACTIVITY:['visual/incidents/card_ready/incident_hidden_night_activity.webp','visual/backgrounds/bg_room_night.webp','scene'],
+ CHRISTMAS_SPECIAL:['visual/incidents/card_ready/incident_christmas_special.webp','visual/backgrounds/bg_room_night.webp','scene']};
  return map[type]||['visual/character/basic/moni_default.webp','visual/backgrounds/bg_room_day.webp','overlay']}
 // v0.31: per-rarity illustration variants (docs/ASSET_REQUESTS_FOR_DESIGN.md
 // item 6, 2026-09-09 -- "다양성이 중요하니까 등급별로 다르게" -- the same
@@ -1333,7 +1337,7 @@ function archiveRarityClass(type,rarity){return rarityClass({type,rarity:rarity|
 // v0.146 fix: was a 6-deep ternary chain -- a lookup object matches the
 // `names`/`punch` table convention already used for every other
 // per-incident-type table in this file.
-const ICON_FOR={NIGHT_PATROL:'🌙',HUNDRED_VISITS:'👑',RETURN_TO_START:'↩️',QUICK_EXIT:'⏱️',HIDDEN_LOOP:'♾️',HIDDEN_NIGHT_ACTIVITY:'✨'};
+const ICON_FOR={NIGHT_PATROL:'🌙',HUNDRED_VISITS:'👑',RETURN_TO_START:'↩️',QUICK_EXIT:'⏱️',HIDDEN_LOOP:'♾️',HIDDEN_NIGHT_ACTIVITY:'✨',CHRISTMAS_SPECIAL:'🎄'};
 function iconFor(i){return ICON_FOR[i.type]||'🐾'}
 // v0.128: director -- "두번째 빨간색 동그라미의 달은 아마 그냥
 // 이모지잖아?" -- confirmed .scene-mark was a bare OS emoji (same
@@ -1342,9 +1346,12 @@ function iconFor(i){return ICON_FOR[i.type]||'🐾'}
 // visual/ui/icons/unlabeled/ folder. Scoped to .scene-mark only --
 // iconFor() above still backs .case-row-icon (the small home-list rows),
 // which wasn't part of this request and stays emoji for now.
-const SCENE_MARK_KEY={NIGHT_PATROL:'night_patrol',HUNDRED_VISITS:'hundred_visits',RETURN_TO_START:'return_to_start',QUICK_EXIT:'quick_exit',HIDDEN_LOOP:'hidden_loop',HIDDEN_NIGHT_ACTIVITY:'hidden_night_activity'};
+const SCENE_MARK_KEY={NIGHT_PATROL:'night_patrol',HUNDRED_VISITS:'hundred_visits',RETURN_TO_START:'return_to_start',QUICK_EXIT:'quick_exit',HIDDEN_LOOP:'hidden_loop',HIDDEN_NIGHT_ACTIVITY:'hidden_night_activity',CHRISTMAS_SPECIAL:'christmas_special'};
 function sceneMarkUrl(i){const key=SCENE_MARK_KEY[i.type]||'default';return `visual/ui/icons/unlabeled/icon_scene_${key}.webp`}
-function caseNo(i){return String(Math.abs((i.type||'CASE').split('').reduce((a,c)=>a+c.charCodeAt(0),0)*17)%10000).padStart(4,'0')}
+// v0.149: mirrors ShareCardRenderer.kt's CASE #XMAS special-case -- the
+// director-requested seasonal card gets a fixed case number instead of the
+// usual type-name hash, same on the home/detail card and the share card.
+function caseNo(i){if(i.type==='CHRISTMAS_SPECIAL')return'XMAS';return String(Math.abs((i.type||'CASE').split('').reduce((a,c)=>a+c.charCodeAt(0),0)*17)%10000).padStart(4,'0')}
 function card(i,featured=false){
   // v0.27: EPIC/LEGENDARY-only "impact" layer -- a big faint rarity symbol
   // watermark. Gated on i.rarity directly rather than rarityClass(i)'s
@@ -1875,12 +1882,15 @@ function archive(d){const items=d.archive?.items||[];const found=Object.keys(sta
 function openArchiveDetail(type){
   const found=state.history.discoveries[type]||[];
   const [artBase]=incidentVisual(type);
-  if(type.startsWith('HIDDEN')){
-    // HIDDEN types are only ever clickable once found (see archive()'s
-    // clickAttr, gated on `locked`), but guard here too rather than ever
-    // showing a HIDDEN type's art before it's actually been discovered.
+  if(type.startsWith('HIDDEN')||type==='CHRISTMAS_SPECIAL'){
+    // HIDDEN types (and the seasonal CHRISTMAS_SPECIAL) are only ever
+    // clickable once found (see archive()'s clickAttr, gated on `locked`),
+    // but guard here too rather than ever showing a type's art before it's
+    // actually been discovered. Both only ever have exactly one possible
+    // rarity, so it's derived directly rather than read off `found`.
     if(!found.length)return;
-    const art=incidentArt(artBase,type,'HIDDEN');
+    const singleRarity=type.startsWith('HIDDEN')?'HIDDEN':'SPECIAL';
+    const art=incidentArt(artBase,type,singleRarity);
     sheetModal(`<div class="detail-title">${l('사건 보관함 상세','事件保管庫詳細','Archive detail')}</div><div class="archive-detail-hero"><img src="${art}" alt=""><b>${esc(txt(names,type))}</b><span>“${esc(txt(punch,type))}”</span></div>`,sheetCloseButton());
     return;
   }
@@ -2066,6 +2076,7 @@ ${state.debugBuild?(()=>{
   return `<div class="section-title"><h2>Debug</h2></div><div class="settings-list">
 ${row(dbgIcon('🐛'),'HIDDEN_LOOP 미리보기','실기기 카드/공유 확인용 (디버그 빌드 전용)',"debugPreviewHidden('HIDDEN_LOOP')")}
 ${row(dbgIcon('🐛'),'HIDDEN_NIGHT_ACTIVITY 미리보기','실기기 카드/공유 확인용 (디버그 빌드 전용)',"debugPreviewHidden('HIDDEN_NIGHT_ACTIVITY')")}
+${row(dbgIcon('🎄'),'CHRISTMAS_SPECIAL 미리보기','12/24~25 기간 외에도 실기기 카드/공유 확인용 (디버그 빌드 전용)','debugPreviewChristmas()')}
 ${row(dbgIcon('🔍'),'오늘 세션 로그 보기','HIDDEN_LOOP이 왜 안 뜨는지 실제 데이터로 확인','openDebugSessionsSheet()')}
 ${row(dbgIcon('📡'),'백그라운드 체크 상태 보기','여러 사건 발생 알림이 왜 안 왔는지 확인','openDebugIncidentCheckSheet()')}
 </div>`
@@ -2394,6 +2405,7 @@ function tcgPalette(rarity){switch(rarity){
   case'EPIC':return{border:'#9669C8',glow:'#C396EB',text:'#37234E',panel:'#ECE0FA',chip:'#FFFFFF'};
   case'LEGENDARY':return{border:'#CDA03C',glow:'#F0CD6E',text:'#46320C',panel:'#FCF0D2',chip:'#1E140A'};
   case'HIDDEN':return{border:'#46AFC3',glow:'#6EDCEB',text:'#DCF5FA',panel:'#0A1E30',chip:'#061C22'};
+  case'SPECIAL':return{border:'#C81E28',glow:'#FF7882',text:'#194623',panel:'#FFF8EB',chip:'#FFFFFF'};
   default:return{border:'#B2AEA6',glow:'#C8C4BC',text:'#36312D',panel:'#FFFFFF',chip:'#37322E'};
 }}
 // v0.53: mirrors CardStyle.kt's CardStyle.foilTitle() -- EPIC/LEGENDARY/
@@ -2403,6 +2415,7 @@ function foilTitleStyle(rarity){switch(rarity){
   case'EPIC':return{colors:['#965FC8','#4B1E78'],outline:'#230C37',glow:'#BE8CEB'};
   case'LEGENDARY':return{colors:['#BE8C2D','#6E480C'],outline:'#301E05',glow:'#FAD26E'};
   case'HIDDEN':return{colors:['#FF5A5A','#FFB93C','#F0E646','#5ADC78','#50C8EB','#7882F5','#D26EEB'],outline:'#030E14',glow:'#D2D2FA'};
+  case'SPECIAL':return{colors:['#C81E28','#146E3C'],outline:'#142814',glow:'#FFD778'};
   default:return null;
 }}
 // v0.60: director feedback -- "레전더리는 금색 에픽은 보라색으로
@@ -2416,6 +2429,7 @@ function holoSpectrum(rarity){switch(rarity){
   case'LEGENDARY':return['#FFEFAF','#FFD166','#F5B841','#FFF6D9','#E0A94C','#FFE9A0','#CDA03C'];
   case'EPIC':return['#E6D1FF','#A86CFF','#7542DD','#F0DFFF','#9669C8','#C396EB','#5B2FA8'];
   case'HIDDEN':return foilTitleStyle('HIDDEN').colors;
+  case'SPECIAL':return['#C81E28','#E85A64','#146E3C','#FFD778','#1E8F4E','#FF7882','#C81E28'];
   default:return['#7542DD','#48B4ED','#89E6D7','#F0DDFA','#D78CE4','#9770E8','#5BD2DF'];
 }}
 // Same HIDDEN-opal-variant logic as cardPatternBg() above, just pointed at
@@ -2453,7 +2467,7 @@ function detailPage(i){const m=i.metrics||{};const [artBase,bg,mode]=incidentVis
   // separate function); v0.60 adds HIDDEN to the holo effect specifically,
   // now that it gets its own dedicated rainbow spectrum (holoSpectrum())
   // instead of just inheriting whatever EPIC/LEGENDARY used.
-  const impact=rarity==='EPIC'||rarity==='LEGENDARY'||rarity==='HIDDEN';
+  const impact=rarity==='EPIC'||rarity==='LEGENDARY'||rarity==='HIDDEN'||rarity==='SPECIAL';
   const frameUrl=`visual/cards/frame_bg/${rarity.toLowerCase()}.webp`;
   const medallionUrl=`visual/cards/medallions/${rarity.toLowerCase()}.webp`;
   const symbolUrl=rarity==='HIDDEN'?'visual/brand/rarity_symbols/rarity_hidden_01.webp':`visual/brand/rarity_symbols/rarity_${rarity.toLowerCase()}.webp`;
@@ -2544,6 +2558,14 @@ function debugPreviewHidden(type){
     :{type:'HIDDEN_NIGHT_ACTIVITY',rarity:'HIDDEN',topPackage:'com.kakao.talk',metrics:{unlockSessions:6,totalUsageMs:600000}};
   openDetail(i);
 }
+// v0.149: debugPreviewHidden() above only ever needs to preview the two
+// always-available HIDDEN types; this is the same escape hatch for
+// CHRISTMAS_SPECIAL, whose real detection is calendar-gated to Dec 24-25
+// (see IncidentAnalyzer.christmasSpecialIncident()) and so would otherwise
+// be unpreviewable on a debug build the other ~363 days of the year.
+function debugPreviewChristmas(){
+  openDetail({type:'CHRISTMAS_SPECIAL',rarity:'SPECIAL'});
+}
 function closeDetail(){state.detailItem=null;window.scrollTo(0,0);render()}
 // v0.60: director feedback -- "저녁9시?에 통계로 알려줄때 앱을 열때
 // 가장 많이 접근된 카드를 뙇하고 보여주면 더 좋을꺼같아 어떤어떤
@@ -2563,7 +2585,7 @@ function revealScreen(i){
   const rarity=i.rarity||'NORMAL';
   const pal=tcgPalette(rarity);
   const foil=foilTitleStyle(rarity);
-  const impact=rarity==='EPIC'||rarity==='LEGENDARY'||rarity==='HIDDEN';
+  const impact=rarity==='EPIC'||rarity==='LEGENDARY'||rarity==='HIDDEN'||rarity==='SPECIAL';
   const [artBase,bg,mode]=incidentVisual(i.type);const art=incidentArt(artBase,i.type,i.rarity);const sceneBg=mode==='scene'?art:bg;
   const frameUrl=`visual/cards/frame_bg/${rarity.toLowerCase()}.webp`;
   const medallionUrl=`visual/cards/medallions/${rarity.toLowerCase()}.webp`;
