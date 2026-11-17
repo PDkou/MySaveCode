@@ -21,6 +21,13 @@ object IncidentCatalog {
         IncidentDefinition(IncidentType.DIGITAL_LOST),
         IncidentDefinition(IncidentType.DAWN_SURVIVOR),
         IncidentDefinition(IncidentType.HIDDEN_LOOP, hidden = true),
-        IncidentDefinition(IncidentType.HIDDEN_NIGHT_ACTIVITY, hidden = true)
+        IncidentDefinition(IncidentType.HIDDEN_NIGHT_ACTIVITY, hidden = true),
+        // v0.149: without an entry here, NativeBridge.analyzeToday()'s
+        // archive.items never lists CHRISTMAS_SPECIAL at all, so the
+        // 보관함 (archive) screen would never show a cell for it even
+        // after it's been found -- hidden=false since it's not a
+        // rarity-chance discovery like HIDDEN_LOOP/HIDDEN_NIGHT_ACTIVITY,
+        // just a calendar-gated catalog entry.
+        IncidentDefinition(IncidentType.CHRISTMAS_SPECIAL)
     )
 }
