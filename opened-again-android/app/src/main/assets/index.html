@@ -898,8 +898,8 @@ function save(){const payload={schemaVersion:BACKUP_SCHEMA_VERSION,settings:stat
 function restore(){const raw=localStorage.getItem('opened_again_state');if(raw){try{const x=JSON.parse(raw);Object.assign(state.settings,x.settings||{})}catch(e){}}}
 const RARITY_RANK={NORMAL:0,RARE:1,EPIC:2,LEGENDARY:3,HIDDEN:4,SPECIAL:5};
 function bestRarity(list){return list.slice().sort((a,b)=>(RARITY_RANK[b]??0)-(RARITY_RANK[a]??0))[0]}
-const names={QUICK_EXIT:['5초컷','5秒撤退','5-second exit'],REENTRY:['재입장 사건','出戻り事件','Re-entry'],REGULAR:['단골손님','常連客','Regular'],RETURN_TO_START:['원점 회귀','振り出しに戻る','Back to start'],PATROL:['목적불명 순찰','目的地不明','Aimless patrol'],ESCAPE_FAILED:['탈출 실패','脱出失敗','Escape failed'],FIRST_CONTACT:['오늘의 첫 상대','本日の第一声','First contact'],NIGHT_PATROL:['심야 순찰','深夜巡回','Night patrol'],APP_WANDERING:['앱 방황','アプリ徘徊','App wandering'],HUNDRED_VISITS:['100회 방문','100回訪問','100 visits'],DIGITAL_LOST:['디지털 미아','デジタル迷子','Digital lost'],DAWN_SURVIVOR:['새벽 생존자','夜明けの生存者','Dawn survivor'],HIDDEN_LOOP:['무한루프','無限ループ','Infinite loop'],HIDDEN_NIGHT_ACTIVITY:['미확인 야간 활동','未確認夜間活動','Unidentified night activity'],CHRISTMAS_SPECIAL:['크리스마스 특별 수사','クリスマス特別捜査','Christmas Special Case']};
-const punch={QUICK_EXIT:['무엇을 확인했는지는 알 수 없습니다.','何を確認したのかは不明です。','What you checked remains unknown.'],REENTRY:['방금 나온 곳 맞습니다.','さっき出たばかりです。','You were just here.'],REGULAR:['직원보다 자주 방문하고 있습니다.','店員より頻繁に来ています。','You visit more often than the staff.'],RETURN_TO_START:['결국 처음으로 돌아왔습니다.','最終的に元の場所へ戻りました。','You eventually returned to the beginning.'],PATROL:['목적지는 확인되지 않았습니다.','目的地は確認できませんでした。','No destination was confirmed.'],ESCAPE_FAILED:['탈출 시도는 실패했습니다.','脱出には失敗しました。','The escape attempt failed.'],FIRST_CONTACT:['오늘의 첫 인사를 휴대폰과 나눴습니다.','今日最初の挨拶はスマホでした。','Your first hello went to your phone.'],NIGHT_PATROL:['수면과의 접촉은 확인되지 않았습니다.','睡眠との接触は確認されていません。','No contact with sleep was confirmed.'],APP_WANDERING:['이동은 많았지만 목적은 확인되지 않았습니다.','移動は多いものの目的は不明です。','Lots of movement. Purpose unknown.'],HUNDRED_VISITS:['별도의 출입증 발급을 검토하십시오.','専用の入館証をご検討ください。','Consider applying for a permanent pass.'],DIGITAL_LOST:['본인의 목적을 찾지 못한 채 종료되었습니다.','目的を見つけられないまま終了しました。','The session ended without finding its purpose.'],DAWN_SURVIVOR:['아직도 깨어 있는 것으로 확인되었습니다.','まだ起きていることを確認しました。','You were confirmed to still be awake.'],HIDDEN_LOOP:['출구는 존재했던 것으로 추정됩니다.','出口は存在していたものと推定されます。','An exit is believed to have existed.'],HIDDEN_NIGHT_ACTIVITY:['무엇을 확인하고 있었는지는 불명입니다.','何を確認していたのかは不明です。','What was being checked remains unknown.'],CHRISTMAS_SPECIAL:['산타의 흔적을 발견했다냥!','サンタの痕跡を発見したニャ！','Found traces of Santa, nyan!']};
+const names={QUICK_EXIT:['5초컷','5秒撤退','5-second exit'],REENTRY:['재입장 사건','出戻り事件','Re-entry'],REGULAR:['단골손님','常連客','Regular'],RETURN_TO_START:['원점 회귀','振り出しに戻る','Back to start'],PATROL:['목적불명 순찰','目的地不明','Aimless patrol'],ESCAPE_FAILED:['탈출 실패','脱出失敗','Escape failed'],FIRST_CONTACT:['오늘의 첫 상대','本日の第一声','First contact'],NIGHT_PATROL:['심야 순찰','深夜巡回','Night patrol'],APP_WANDERING:['앱 방황','アプリ徘徊','App wandering'],HUNDRED_VISITS:['100회 방문','100回訪問','100 visits'],DIGITAL_LOST:['디지털 미아','デジタル迷子','Digital lost'],DAWN_SURVIVOR:['새벽 생존자','夜明けの生存者','Dawn survivor'],HIDDEN_LOOP:['무한루프','無限ループ','Infinite loop'],HIDDEN_NIGHT_ACTIVITY:['미확인 야간 활동','未確認夜間活動','Unidentified night activity'],CHRISTMAS_SPECIAL:['굴뚝 침입 사건','煙突侵入事件','Chimney break-in case']};
+const punch={QUICK_EXIT:['무엇을 확인했는지는 알 수 없습니다.','何を確認したのかは不明です。','What you checked remains unknown.'],REENTRY:['방금 나온 곳 맞습니다.','さっき出たばかりです。','You were just here.'],REGULAR:['직원보다 자주 방문하고 있습니다.','店員より頻繁に来ています。','You visit more often than the staff.'],RETURN_TO_START:['결국 처음으로 돌아왔습니다.','最終的に元の場所へ戻りました。','You eventually returned to the beginning.'],PATROL:['목적지는 확인되지 않았습니다.','目的地は確認できませんでした。','No destination was confirmed.'],ESCAPE_FAILED:['탈출 시도는 실패했습니다.','脱出には失敗しました。','The escape attempt failed.'],FIRST_CONTACT:['오늘의 첫 인사를 휴대폰과 나눴습니다.','今日最初の挨拶はスマホでした。','Your first hello went to your phone.'],NIGHT_PATROL:['수면과의 접촉은 확인되지 않았습니다.','睡眠との接触は確認されていません。','No contact with sleep was confirmed.'],APP_WANDERING:['이동은 많았지만 목적은 확인되지 않았습니다.','移動は多いものの目的は不明です。','Lots of movement. Purpose unknown.'],HUNDRED_VISITS:['별도의 출입증 발급을 검토하십시오.','専用の入館証をご検討ください。','Consider applying for a permanent pass.'],DIGITAL_LOST:['본인의 목적을 찾지 못한 채 종료되었습니다.','目的を見つけられないまま終了しました。','The session ended without finding its purpose.'],DAWN_SURVIVOR:['아직도 깨어 있는 것으로 확인되었습니다.','まだ起きていることを確認しました。','You were confirmed to still be awake.'],HIDDEN_LOOP:['출구는 존재했던 것으로 추정됩니다.','出口は存在していたものと推定されます。','An exit is believed to have existed.'],HIDDEN_NIGHT_ACTIVITY:['무엇을 확인하고 있었는지는 불명입니다.','何を確認していたのかは不明です。','What was being checked remains unknown.'],CHRISTMAS_SPECIAL:['선물은 고맙지만, 신분증부터다냥!','プレゼントはありがたいけど、身分証からだニャ！','Thanks for the gift, but ID first, nyan!']};
 function txt(map,type){const a=map[type]||[type,type,type];return state.settings.language==='ko'?a[0]:state.settings.language==='ja'?a[1]:a[2]}
 function fmtMs(ms){const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);return h?`${h}${l('시간','時間','h')} ${m}${l('분','分','m')}`:`${m}${l('분','分','m')}`}
 // v0.51: director feedback -- this used to just show the package name's
@@ -999,7 +999,7 @@ function detail(i){
       return top?l(`심야에 '${top}' 앱 등을 ${m.unlockSessions||0}번 짧게 확인했어요 (총 ${fmtDurShort(m.totalUsageMs)})`,`深夜に「${top}」などを${m.unlockSessions||0}回、短く確認しました(計${fmtDurShort(m.totalUsageMs)})`,`Checked apps like ${top} briefly ${m.unlockSessions||0} times at night (${fmtDurShort(m.totalUsageMs)} total)`)
         :l(`심야 짧은 접속 ${m.unlockSessions||0}회`,`深夜の短い接続 ${m.unlockSessions||0}回`,`${m.unlockSessions||0} short night checks`);
     case'CHRISTMAS_SPECIAL':
-      return l('산타클로스가 다녀간 흔적이 스마트폰 곳곳에서 발견되었어요','サンタクロースが訪れた痕跡がスマホの至る所で見つかりました','Traces of Santa\'s visit were found all over your phone');
+      return l('굴뚝을 타고 침입한 산타클로스를 현행범으로 붙잡았어요','煙突から侵入したサンタクロースを現行犯で確保しました','Caught Santa red-handed breaking in through the chimney');
     default:return l('오늘의 사용 기록에서 발견되었습니다.','本日の利用記録から発見されました。','Found in today\'s usage record.')
   }
 }
@@ -1346,12 +1346,12 @@ function iconFor(i){return ICON_FOR[i.type]||'🐾'}
 // visual/ui/icons/unlabeled/ folder. Scoped to .scene-mark only --
 // iconFor() above still backs .case-row-icon (the small home-list rows),
 // which wasn't part of this request and stays emoji for now.
-// CHRISTMAS_SPECIAL deliberately has no entry here -- the small scene-mark
-// icon set (this folder) is separate from the 6 main card assets GPT
-// delivered for the feature, so it falls back to the generic default mark
-// below rather than pointing at an icon_scene_christmas_special.webp that
-// doesn't exist on disk.
-const SCENE_MARK_KEY={NIGHT_PATROL:'night_patrol',HUNDRED_VISITS:'hundred_visits',RETURN_TO_START:'return_to_start',QUICK_EXIT:'quick_exit',HIDDEN_LOOP:'hidden_loop',HIDDEN_NIGHT_ACTIVITY:'hidden_night_activity'};
+// v0.149: icon_scene_christmas_special.webp didn't exist at first (the
+// generic default detective-magnifying-glass mark was showing instead,
+// looking out of place on a Christmas card), so director: "이거 쓰라는거임
+// 오른쪽 위에" -- reuse the same snowflake as the rarity symbol. The file
+// is just that snowflake resized to this folder's 300x300 convention.
+const SCENE_MARK_KEY={NIGHT_PATROL:'night_patrol',HUNDRED_VISITS:'hundred_visits',RETURN_TO_START:'return_to_start',QUICK_EXIT:'quick_exit',HIDDEN_LOOP:'hidden_loop',HIDDEN_NIGHT_ACTIVITY:'hidden_night_activity',CHRISTMAS_SPECIAL:'christmas_special'};
 function sceneMarkUrl(i){const key=SCENE_MARK_KEY[i.type]||'default';return `visual/ui/icons/unlabeled/icon_scene_${key}.webp`}
 // v0.149: mirrors ShareCardRenderer.kt's CASE #XMAS special-case -- the
 // director-requested seasonal card gets a fixed case number instead of the
