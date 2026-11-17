@@ -1346,7 +1346,12 @@ function iconFor(i){return ICON_FOR[i.type]||'🐾'}
 // visual/ui/icons/unlabeled/ folder. Scoped to .scene-mark only --
 // iconFor() above still backs .case-row-icon (the small home-list rows),
 // which wasn't part of this request and stays emoji for now.
-const SCENE_MARK_KEY={NIGHT_PATROL:'night_patrol',HUNDRED_VISITS:'hundred_visits',RETURN_TO_START:'return_to_start',QUICK_EXIT:'quick_exit',HIDDEN_LOOP:'hidden_loop',HIDDEN_NIGHT_ACTIVITY:'hidden_night_activity',CHRISTMAS_SPECIAL:'christmas_special'};
+// CHRISTMAS_SPECIAL deliberately has no entry here -- the small scene-mark
+// icon set (this folder) is separate from the 6 main card assets GPT
+// delivered for the feature, so it falls back to the generic default mark
+// below rather than pointing at an icon_scene_christmas_special.webp that
+// doesn't exist on disk.
+const SCENE_MARK_KEY={NIGHT_PATROL:'night_patrol',HUNDRED_VISITS:'hundred_visits',RETURN_TO_START:'return_to_start',QUICK_EXIT:'quick_exit',HIDDEN_LOOP:'hidden_loop',HIDDEN_NIGHT_ACTIVITY:'hidden_night_activity'};
 function sceneMarkUrl(i){const key=SCENE_MARK_KEY[i.type]||'default';return `visual/ui/icons/unlabeled/icon_scene_${key}.webp`}
 // v0.149: mirrors ShareCardRenderer.kt's CASE #XMAS special-case -- the
 // director-requested seasonal card gets a fixed case number instead of the
