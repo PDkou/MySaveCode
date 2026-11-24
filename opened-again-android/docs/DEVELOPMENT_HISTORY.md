@@ -5816,3 +5816,80 @@ ko/ja 두 언어, 360px/412px 두 뷰포트에서 `h2.scrollWidth>clientWidth`
 콘솔 에러 0건. `node --check` 통과. 순수 CSS 변경이라 네이티브 컴파일
 검증은 필요 없음. 커밋/푸시 후 CI(디버그) + 릴리스(서명) 빌드 모두
 트리거.
+
+## v1.0.3 — 크리스마스 SPECIAL 카드 + 홀리데이 앱 아이콘
+
+**배경**: director가 레전더리 카드 샘플을 보여달라고 한 뒤 "이걸
+토대로 크리스마스 카드를 만들어야겠어 스페셜등급으로"라며 자체 제작
+목업 이미지를 공유. 확인 질문에 "특정 기간(12/24~25) 동안 자동 지급"
+방식과 "GPT용 핸드오프 패킷"을 director가 직접 만들 테니 코드 쪽은
+미리 준비해달라는 데 합의("응 미리 준비해줘"). 이후 director가 실제
+GPT로 생성한 6장의 에셋(프레임/메달리온/레어도 심볼/사건 일러스트/
+공유용 정사각형·세로 배경)을 전달, 카드 문구도 director 쪽 레퍼런스로
+확정("굴뚝 침입 사건" / "선물은 고맙지만, 신분증부터다냥!"). 마지막으로
+director가 Play 콘솔 스토어 등록 아이콘을 같은 톤의 새 크리스마스
+이미지로 직접 교체한 뒤, 앱 내 런처 아이콘도 맞춰야 하지 않겠냐고
+물어 함께 교체.
+
+**구현**:
+- `core/Models.kt`: `Rarity` enum 맨 뒤에 `SPECIAL` 추가(기존
+  `DetectorRegression.kt`의 `>= Rarity.EPIC` 비교가 선언 순서에
+  의존하므로 반드시 끝에 추가), `IncidentType`에 `CHRISTMAS_SPECIAL`
+  추가.
+- `core/IncidentDetector.kt`/`core/DailyReportEngine.kt`: `baseScore`/
+  `rarityWeight`에 `Rarity.SPECIAL` 분기 추가(exhaustive `when` 유지).
+- `core/IncidentCatalog.kt`: `IncidentType.CHRISTMAS_SPECIAL` 항목
+  추가 -- 이게 빠지면 `NativeBridge.analyzeToday()`의 `archive.items`에
+  아예 안 잡혀서, 코드가 다 맞아도 실기기 보관함 화면엔 칸 자체가
+  영원히 안 뜨는 상태였음(director의 "보관함이나 홈화면에도 잘
+  나옴?" 질문으로 직접 찾아서 고침).
+- `app/.../IncidentAnalyzer.kt`: `christmasSpecialIncident(zone)` 추가
+  -- 매일 호출되는 `analyzeToday()`에서 기기 로컬 날짜가 12/24~25일
+  때만 고정 점수(300) SPECIAL 카드를 끼워 넣음. `IncidentDetector.
+  detectDay()` 안이 아니라 여기 둔 이유: 그쪽은 core 모듈 자체
+  테스트(`DetectorRegression.kt`/`DetectorSmoke.kt`)가 직접 호출하는
+  경로라, 날짜 분기가 거기 있으면 매년 12/24~25에만 테스트가
+  flaky해짐.
+- `app/.../ShareCardRenderer.kt`/`CardStyle.kt`: 기존 등급별 애셋 경로
+  함수(`raritySymbolAsset`/`backgroundAsset`/`incidentIllustrationBase`)
+  대부분이 `rarity.name.lowercase()` 식으로 이미 일반화돼 있어서
+  `SPECIAL` 분기만 추가하면 끝났음. `CASE #${caseNo(...)}` 생성부만
+  `CHRISTMAS_SPECIAL`일 때 해시 대신 고정 문자열 `"CASE #XMAS"`를
+  내보내도록 분기 추가. `CardStyle`에 크리스마스 톤(진홍/숲녹색)
+  `TcgPalette`/`FoilTitleStyle` 추가.
+- `index.html`: `names`/`punch`/`detail()`에 director 확정 문구 반영,
+  `RARITY_RANK`/`rarityBadge()`의 맵(실제 함수 공백이었음 -- 없으면
+  `<img>` src가 `undefined`)/`incidentVisual()`/`caseNo()`(`CASE #XMAS`
+  미러링)/CSS `.special` 룰 추가, `tcgPalette()`/`foilTitleStyle()`/
+  `holoSpectrum()`의 JS 미러에도 동일한 크리스마스 톤 추가하고
+  `impact`(홀로 이펙트) 플래그에 SPECIAL 포함. `openArchiveDetail()`의
+  "등급 하나뿐인 타입" 분기 조건을 `type.startsWith('HIDDEN')`에서
+  `||type==='CHRISTMAS_SPECIAL'`로 확장하고 하드코딩된 `'HIDDEN'`
+  인자를 타입별로 분기하도록 일반화. 디버그 빌드 전용
+  `debugPreviewChristmas()`/설정 행 추가(12/24~25 기간 외에도 실기기
+  확인 가능). director 피드백으로 두 차례 더 수정: (1) 카드 아트
+  우상단 "scene-mark" 배지가 전용 아이콘이 없어 기본값(돋보기+발바닥
+  탐정 배지)으로 떨어지던 것을 director 지정 눈꽃 이미지로 교체,
+  (2) 1차 임시 문구를 director 최종 확정 문구로 교체.
+- 앱 런처 아이콘: `art/ADAPTIVE_ICON_SPEC.md` v2가 문서화한 것과 같은
+  공정으로 v3 세트 생성 -- 어댑티브 아이콘 foreground를 Android
+  66/108 안전영역 비율로 축소해 중앙 배치하고, 소스 이미지 모서리
+  톤에서 뽑은 짙은 소나무색 방사형 그라데이션을 배경 레이어로 사용.
+  레거시 `ic_launcher`/`ic_launcher_round`(minSdk=29라 실기기에
+  실제로는 절대 안 쓰임, 툴링 완결성용)는 소스에 둥근 모서리가 미리
+  없어서 라운드사각형/원형 마스크를 직접 적용해 생성. 원형/스쿼클
+  마스크 합성 테스트로 모니/폰/돋보기가 두 크롭 모두에서 안 잘리는 것
+  확인.
+
+버전 150/1.0.3. 검증: Playwright로 실제 `render()` 전체 파이프라인을
+구동해 홈 화면("오늘의 사건" 카드), 보관함 그리드(15칸, 발견 후
+카드 표시 확인), 보관함 단일 카드 상세 시트, 공유 텍스트(`CASE
+#XMAS`)까지 전부 깨진 이미지/콘솔 에러 0건으로 확인. `node --check`
+통과. 네이티브 Kotlin 변경(core 5개 파일 + app 2개 파일)은 CI 디버그
+빌드가 두 차례 모두 성공(enum 끝에 추가한 `Rarity.SPECIAL`로 인해
+`core`의 기존 ordinal 비교 테스트가 깨지지 않는 것 포함)하는 것으로
+컴파일 검증, 이 샌드박스엔 Android SDK가 없어 로컬 컴파일/실기기
+테스트는 불가능. 아이콘 교체는 리소스 전용 변경이라 별도 네이티브
+로직 검증 불필요, CI로 빌드만 재확인. 실기기에서의 최종 모양/12월
+24~25일 실제 동작 확인은 director 쪽 몫으로 남음. 커밋/푸시 후
+CI(디버그) + 릴리스(서명) 빌드 모두 트리거.

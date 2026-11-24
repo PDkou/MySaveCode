@@ -1,1 +1,2 @@
-Bug fix: "Leave a review" did nothing when tapped. It now takes you straight to the store page to leave a review.
+🎄 A limited-time Christmas SPECIAL card is here: open the app on Dec 24-25 and MONI will uncover a special case. You can also find it in the archive afterward.
+The app icon has also switched to a holiday look!
